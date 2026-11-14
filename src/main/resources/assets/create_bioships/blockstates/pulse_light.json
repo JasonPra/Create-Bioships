@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "create_bioships:block/pulse_light"
+    },
+    "lit=true": {
+      "model": "create_bioships:block/pulse_light_on"
+    }
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "textures": {
+    "all": "create_bioships:block/pulse_light",
+    "particle": "create_bioships:block/pulse_light"
+  },
+  "elements": [
+    {
+      "from": [
+        4,
+        10,
+        4
+      ],
+      "to": [
+        12,
+        16,
+        12
+      ],
+      "faces": {
+        "up": {
+          "texture": "#all"
+        },
+        "down": {
+          "texture": "#all"
+        },
+        "north": {
+          "texture": "#all"
+        },
+        "south": {
+          "texture": "#all"
+        },
+        "east": {
+          "texture": "#all"
+        },
+        "west": {
+          "texture": "#all"
+        }
+      },
+      "shade": true
+    }
+  ]
+}

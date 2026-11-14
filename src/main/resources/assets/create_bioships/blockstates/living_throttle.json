@@ -17,6 +17,51 @@
     },
     "throttle=5": {
       "model": "create_bioships:block/living_throttle_5"
+    },
+    "throttle=6": {
+      "model": "create_bioships:block/living_throttle_6"
+    },
+    "throttle=7": {
+      "model": "create_bioships:block/living_throttle_7"
+    },
+    "throttle=8": {
+      "model": "create_bioships:block/living_throttle_8"
+    },
+    "throttle=9": {
+      "model": "create_bioships:block/living_throttle_9"
+    },
+    "throttle=10": {
+      "model": "create_bioships:block/living_throttle_10"
+    },
+    "throttle=11": {
+      "model": "create_bioships:block/living_throttle_11"
+    },
+    "throttle=12": {
+      "model": "create_bioships:block/living_throttle_12"
+    },
+    "throttle=13": {
+      "model": "create_bioships:block/living_throttle_13"
+    },
+    "throttle=14": {
+      "model": "create_bioships:block/living_throttle_14"
+    },
+    "throttle=15": {
+      "model": "create_bioships:block/living_throttle_15"
+    },
+    "throttle=16": {
+      "model": "create_bioships:block/living_throttle_16"
+    },
+    "throttle=17": {
+      "model": "create_bioships:block/living_throttle_17"
+    },
+    "throttle=18": {
+      "model": "create_bioships:block/living_throttle_18"
+    },
+    "throttle=19": {
+      "model": "create_bioships:block/living_throttle_19"
+    },
+    "throttle=20": {
+      "model": "create_bioships:block/living_throttle_20"
     }
   }
 }

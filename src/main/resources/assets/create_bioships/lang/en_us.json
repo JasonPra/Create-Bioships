@@ -2,11 +2,11 @@
   "itemGroup.create_bioships": "Create Bioships",
   "block.create_bioships.living_core": "Living Ship Core",
   "block.create_bioships.living_hull": "Living Hull",
-  "block.create_bioships.tentacle": "Bioship Tendril",
+  "block.create_bioships.tentacle": "Flagellum Root",
   "message.create_bioships.dormant": "Dormant. Assemble this core into a Sable structure to awaken it.",
   "message.create_bioships.secondary": "Only one living core can lead this structure. Separate the extra cores.",
   "message.create_bioships.status": "%s | Biomass %s/%s | Levitite %s/%s | Food %s/%s | %s | Trust %s",
-  "message.create_bioships.obstructed": "Growth needs clear air around the core: 5 wide, 7 long, 3 below and 1 above.",
+  "message.create_bioships.obstructed": "Growth needs clear air: 9 wide, 11 long, 1 below and 4 above the core. Allow 6 blocks below for flagella.",
   "stage.create_bioships.0": "Hatchling",
   "stage.create_bioships.1": "Growing",
   "stage.create_bioships.2": "Dinghy",
@@ -33,5 +33,13 @@
   "message.create_bioships.helm": "Helm: %s (%s) | Left/right grips steer; center or sneak straightens",
   "helm.create_bioships.port": "Port",
   "helm.create_bioships.starboard": "Starboard",
-  "helm.create_bioships.center": "Amidships"
+  "helm.create_bioships.center": "Amidships",
+  "block.create_bioships.pulse_light": "Bioluminescent Pulse",
+  "block.create_bioships.living_mouth": "Living Maw",
+  "message.create_bioships.mouth_growth": "Mouth development: %s/32 additional biomass",
+  "gui.create_bioships.neutral": "Neutral / Stop",
+  "gui.create_bioships.thrust": "Thrust: %s%%",
+  "gui.create_bioships.reverse": "Full astern",
+  "gui.create_bioships.ahead": "Full ahead",
+  "gui.create_bioships.slider_hint": "Drag the slider; the center is neutral."
 }
