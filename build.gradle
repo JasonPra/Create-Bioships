@@ -10,6 +10,11 @@ group = mod_group_id
 
 repositories {
     mavenLocal()
+    maven {
+        name = 'CurseMaven'
+        url = uri('https://cursemaven.com')
+        content { includeGroup 'curse.maven' }
+    }
 }
 
 base {
@@ -95,27 +100,32 @@ neoForge {
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 
+configurations {
+    dependencyMods
+    implementation.extendsFrom dependencyMods
+}
+
 dependencies {
-    // Example mod dependency with JEI
-    // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
-    // compileOnly "mezz.jei:jei-${mc_version}-common-api:${jei_version}"
-    // compileOnly "mezz.jei:jei-${mc_version}-forge-api:${jei_version}"
-    // runtimeOnly "mezz.jei:jei-${mc_version}-forge:${jei_version}"
+    dependencyMods "curse.maven:sable-1312371:${sable_file_id}"
+    dependencyMods "curse.maven:create-aeronautics-676721:${aeronautics_file_id}"
+    dependencyMods "curse.maven:create-328085:${create_file_id}"
+}
 
-    // Example mod dependency using a mod jar from ./libs with a flat dir repository
-    // This maps to ./libs/coolmod-${mc_version}-${coolmod_version}.jar
-    // The group id is ignored when searching -- in this case, it is "blank"
-    // implementation "blank:coolmod-${mc_version}:${coolmod_version}"
+// CurseMaven has no transitive metadata. Expose bundled libraries to javac;
+// NeoForge loads them from the original mod JARs at runtime.
+var extractBundledApis = tasks.register('extractBundledApis', Sync) {
+    from({ configurations.dependencyMods.collect { zipTree(it) } }) {
+        include 'META-INF/jarjar/*.jar'
+        eachFile { path = name }
+        includeEmptyDirs = false
+    }
+    into layout.buildDirectory.dir('bundled-apis')
+}
 
-    // Example mod dependency using a file as dependency
-    // implementation files("libs/coolmod-${mc_version}-${coolmod_version}.jar")
-
-    // Example project dependency using a sister or child project:
-    // implementation project(":myproject")
-
-    // For more info:
-    // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
-    // http://www.gradle.org/docs/current/userguide/dependency_management.html
+dependencies {
+    compileOnly files(fileTree(layout.buildDirectory.dir('bundled-apis')) {
+        include '*.jar'
+    }).builtBy(extractBundledApis)
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.
