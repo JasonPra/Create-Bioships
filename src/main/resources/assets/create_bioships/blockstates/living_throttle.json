@@ -1,0 +1,22 @@
+{
+  "variants": {
+    "throttle=0": {
+      "model": "create_bioships:block/living_throttle_0"
+    },
+    "throttle=1": {
+      "model": "create_bioships:block/living_throttle_1"
+    },
+    "throttle=2": {
+      "model": "create_bioships:block/living_throttle_2"
+    },
+    "throttle=3": {
+      "model": "create_bioships:block/living_throttle_3"
+    },
+    "throttle=4": {
+      "model": "create_bioships:block/living_throttle_4"
+    },
+    "throttle=5": {
+      "model": "create_bioships:block/living_throttle_5"
+    }
+  }
+}

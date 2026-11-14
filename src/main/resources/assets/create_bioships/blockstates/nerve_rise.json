@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "active=false": {
+      "model": "create_bioships:block/nerve_rise"
+    },
+    "active=true": {
+      "model": "create_bioships:block/nerve_rise_active"
+    }
+  }
+}

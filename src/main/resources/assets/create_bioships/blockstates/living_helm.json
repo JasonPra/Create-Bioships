@@ -1,0 +1,25 @@
+{
+  "variants": {
+    "steering=0": {
+      "model": "create_bioships:block/living_helm_0"
+    },
+    "steering=1": {
+      "model": "create_bioships:block/living_helm_1"
+    },
+    "steering=2": {
+      "model": "create_bioships:block/living_helm_2"
+    },
+    "steering=3": {
+      "model": "create_bioships:block/living_helm_3"
+    },
+    "steering=4": {
+      "model": "create_bioships:block/living_helm_4"
+    },
+    "steering=5": {
+      "model": "create_bioships:block/living_helm_5"
+    },
+    "steering=6": {
+      "model": "create_bioships:block/living_helm_6"
+    }
+  }
+}
