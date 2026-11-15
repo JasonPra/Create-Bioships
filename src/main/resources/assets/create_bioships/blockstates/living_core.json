@@ -1,7 +1,16 @@
 {
   "variants": {
-    "": {
-      "model": "create_bioships:block/living_core"
+    "active=false,blink=false": {
+      "model": "create_bioships:block/core_dormant"
+    },
+    "active=false,blink=true": {
+      "model": "create_bioships:block/core_dormant"
+    },
+    "active=true,blink=false": {
+      "model": "create_bioships:block/core_awake"
+    },
+    "active=true,blink=true": {
+      "model": "create_bioships:block/core_closed"
     }
   }
 }

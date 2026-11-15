@@ -8,6 +8,7 @@
     "minecraft:rabbit",
     "minecraft:zombie",
     "minecraft:husk",
-    "minecraft:drowned"
+    "minecraft:drowned",
+    "minecraft:villager"
   ]
 }

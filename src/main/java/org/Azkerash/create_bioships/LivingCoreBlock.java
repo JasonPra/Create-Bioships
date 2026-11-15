@@ -12,9 +12,23 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 
 public class LivingCoreBlock extends BaseEntityBlock {
+    public static final net.minecraft.world.level.block.state.properties.BooleanProperty ACTIVE = net.minecraft.world.level.block.state.properties.BooleanProperty.create("active");
+    public static final net.minecraft.world.level.block.state.properties.BooleanProperty BLINK = net.minecraft.world.level.block.state.properties.BooleanProperty.create("blink");
     public static final MapCodec<LivingCoreBlock> CODEC = simpleCodec(LivingCoreBlock::new);
-    public LivingCoreBlock(Properties properties) { super(properties); }
+    public LivingCoreBlock(Properties properties) { super(properties); registerDefaultState(stateDefinition.any().setValue(ACTIVE, false).setValue(BLINK, false)); }
+    @Override protected void createBlockStateDefinition(net.minecraft.world.level.block.state.StateDefinition.Builder<net.minecraft.world.level.block.Block, BlockState> builder) { builder.add(ACTIVE, BLINK); }
     @Override protected MapCodec<? extends BaseEntityBlock> codec() { return CODEC; }
+    @Override public void setPlacedBy(Level level, BlockPos pos, BlockState state, net.minecraft.world.entity.LivingEntity placer, ItemStack stack) {
+        super.setPlacedBy(level, pos, state, placer, stack);
+        if (level instanceof net.minecraft.server.level.ServerLevel server) BioshipIntegration.awaken(server, pos);
+    }
+    @Override protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean moved) {
+        super.onPlace(state, level, pos, oldState, moved);
+        if (!level.isClientSide && !oldState.is(this)) level.scheduleTick(pos, this, 1);
+    }
+    @Override protected void tick(BlockState state, net.minecraft.server.level.ServerLevel level, BlockPos pos, net.minecraft.util.RandomSource random) {
+        BioshipIntegration.awaken(level, pos);
+    }
     @Override protected RenderShape getRenderShape(BlockState state) { return RenderShape.MODEL; }
     @Override public BlockEntity newBlockEntity(BlockPos pos, BlockState state) { return new LivingCoreBlockEntity(pos, state); }
     @Override public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {

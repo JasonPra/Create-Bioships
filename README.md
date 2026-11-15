@@ -1,44 +1,48 @@
 # Create Bioships
 
-A biological airship for **Minecraft 1.21.1, NeoForge 21.1.266, Java 21**. A creative-only core awakens inside a Sable structure, eats materials, and grows a living body.
+Living airships for Minecraft 1.21.1, NeoForge 21.1.266, and Java 21.
 
-## Raise a ship
+## Raising a bioship
 
-1. Take **Living Ship Core** from the **Create Bioships** Creative tab. There is no recipe yet.
-2. Place it in open space and assemble **only the core** using Sable’s existing assembly tools. The dormant, unassembled core cannot eat.
-3. Feed the awakened core **8 levitite** and **64 meat or rotten flesh**, one item per interaction. The first levitite enables buoyancy. A hatchling that landed rises gently to make room for its appendages. Pearlescent levitite works too.
-4. Allow a **9-by-11** footprint, **4 blocks above** the core for the roof, and **6 blocks below** for swimming tentacles. The connected body grows over about **22 seconds**. Obstructions pause growth; it never clears existing blocks to make room.
-5. Board through the rear entrance. The roofed cockpit has purple windows, a skylight, a clear aisle, a fleshy perch with Create’s riding behavior, and four pulsing bioluminescent lights.
-6. Feed **32 additional meat or rotten flesh** after the first body finishes to develop its underside mouth. Mouth development persists and waits for a clear growth cell. A destroyed mouth does not regrow automatically.
+1. Place a **Living Ship Core** on level ground with room around it. It automatically becomes a Sable physics object when placed. The core and living structure cannot be manually disassembled with Aeronautics/Simulated assemblers or extracted into Create contraptions. Mining and damage remain possible.
+2. Put Biomancy machines within three blocks of the eye. Every second it assimilates nearby machines, retaining their block entities and unrelated inventory. Detached machines are drawn into a vacant attachment beside the core. Machines already attached to the ship extend assimilation to their immediate neighbors. Eligible machines are listed in `create_bioships:assimilable_machines`.
+3. Assimilate a **Biomancy Maw Hopper** to provide a mouth. The eye itself cannot eat. Right-click the integrated maw with food or amalgam; other interactions still use Biomancy’s normal machine behavior.
+4. Accumulate **64 biomass** to grow the dinghy. Nearby Biomancy flesh and construction materials stored in integrated machines count toward this total, with **no hunger restoration or trust reward**. Only the amount needed is consumed; unrelated contents remain. Construction tags are `create_bioships:construction_flesh` and `create_bioships:construction_biomass`. The ship never harvests its own attached tissue for food.
+5. Feeding fresh meat through the maw also supplies growth material and nutrition. **Rotten flesh is poisonous**, as are swallowed zombies. Skeletons supply no food. Keep roughly **9 blocks of width, 15 of length, and 7 above the core** clear. Growth pauses at obstructions instead of overwriting them. The lower body forms at core height, with a raised cabin and rear boarding steps, so growth does not require an automatic climb.
+6. Feed **8 Levitite Blend Buckets** through the maw to incorporate the fluid amalgam. Empty buckets are returned. Each dose develops a luminous, veined organ beneath the hull after the body matures. **Flight requires the finished body and all eight organs**; biomass alone never supplies lift. Solid levitite blocks are not food. The ingredient is configurable through `create_bioships:levitite_amalgam`; Aeronautics 1.3.2 names its fluid “Levitite Blend.”
+7. Board through the living valve door. The tapered carapace, vaulted cabin, translucent dermal windows, enhanced captain’s cradle, pulsing lights, and blinking active core replace the old glass box layout. Existing completed prototype ships are not rebuilt automatically; use a fresh core for this layout.
 
-This layout is larger than the first prototype. **Grow a fresh core to try it**: existing ships are not automatically rebuilt. Legacy block IDs remain registered so old prototype worlds can load.
+![Grown organic hull](docs/screenshots/organic-hull.png)
 
-## Cockpit controls
+The core and door are creative-only for now. There are no crafting recipes.
 
-- **Throttle:** a thin emissive panel beside the perch. Right-click to open its draggable slider. **−100%** is full astern, **0%** is neutral, and **+100%** is full ahead. The screen has a neutral button; sneak-clicking the panel also stops thrust. Its illuminated marker follows the setting. Reverse is integrated here; there is no reverse pad.
-- **Helm:** the actual **Simulated steering wheel shipped with Aeronautics**, rather than a separate click-to-step imitation. Hold the wheel and move the mouse using its native interaction, angle settings, and overlay. The dependency’s normal goggles/overlay rules apply. The grown wheel uses a crimson fungal-wood finish. Its angle steers the Sable body.
-- **Altitude:** two small nerve pads on the starboard side command ascent/descent. Empty-hand clicking latches them; adjacent redstone activates them too. There are no strafe controls in the new cabin.
-- **Rest:** empty-hand clicking the core pauses propulsion, steering, autonomous food-seeking, and tentacle attacks/grabbing while retaining buoyancy. Sneak-click the core to inspect needs without toggling rest.
+## Physical cockpit controls
 
-All propulsion comes from the living appendages. There is no mechanical propeller. Throttle, helm, and nerve states persist with the structure. Slider messages are validated on the server against range, dimension, block type, and allowed values.
+- **Thrust tendon:** hold right-click and move the mouse vertically. Positive settings drive ahead, negative settings reverse, and Shift centers the control. The flesh handle moves in the world. No screen opens.
+- **Buoyancy tendon:** the same interaction combines ascent, descent, and neutral altitude hold. Set positive trim to lift off after amalgam incorporation.
+- **Helm:** Simulated’s actual steering wheel bundled with Aeronautics, with its native hold interaction and overlay. The grown wheel uses crimson fungal wood.
+- **Hunting nerve:** a physical, latching pad enables local food hunting. Redstone can activate it too. It starts off.
+- **Rest:** empty-hand clicking the core rests or wakes the creature. Sneak-click inspects its needs. A cooperative resting ship retains developed buoyancy while suspending commands and hunting. An aggressive ship can refuse to rest.
 
-![Signed biological throttle slider](docs/screenshots/throttle.png)
+A small signed tendon readout appears while interacting **only when wearing aviation or Create goggles**. Thrust and vertical trim persist; server packets validate reach through Sable’s moving structure transform, block type, and setting bounds.
 
-## Functional flagella
+![Physical throttle with aviation goggles](docs/screenshots/physical-throttle.png)
 
-The six root organs render articulated travelling waves instead of hanging static block columns. The wave reverses with reverse throttle. Intact, unoccupied flagella contribute to propulsion and steering; losing limbs reduces performance, and a limb holding prey is temporarily unavailable for swimming. Levitite provides buoyancy independently, so losing every flagellum leaves the ship afloat but unable to propel itself.
+## Appetite and trust
 
-Tentacles can reach nearby entities below the ship, pull them upward, and attack them. They target nearby hostile monsters defensively and edible creatures when hungry. Targets must be visible and within reach; different limbs reserve different prey. Grabs time out or release when targets leave reach, the limb is removed, or the ship rests. The system uses bounded pulling velocity, not permanent entity attachments or gravity changes.
+Larger bodies need more food: each second consumes `1 + floor((body blocks - 1) / 64)` satiety units, based on the actual loaded structure. Fresh meat restores 70 units, up to 1200. Stored construction tissue is not sustenance. Hunger drains while the ship is loaded.
 
-Once the mouth has developed and is physically present, tentacles bring prey toward it. A bite that kills an edible target nourishes the ship. Without a mouth, tentacles can grab and attack but cannot turn living prey into nutrition. The `create_bioships:edible_entities` entity-type tag defines edible animals and undead. Players, passengers, invulnerable entities, and tamed animals are excluded from prey selection.
+Starvation lowers trust, which ranges from −100 to +100. Below zero, the ship becomes aggressive, refuses helm commands, and attacks nearby living targets even with hunting disabled. Feeding fresh food rebuilds trust. Striking the eye lowers trust.
 
-## Hunger and temperament
+Permitted hunting seeks visible food locally and uses the flagella to capture prey. A consumed creature restores 80 units, less than two hand-fed meat items, and gives no trust reward. Farm animals, villagers, and other players may become prey. A cooperative ship excludes its first feeder, passengers, creative/spectator players, invulnerable entities, and tame pets; aggression also threatens its former captain and pets. Skeletons can be attacked defensively but are never eaten for nutrition. Zombies poison the creature: toxins drain satiety, reduce trust, and weaken its response until they wear off. Poison and captain identity persist across saves.
 
-Hunger decreases while the structure is loaded. Meat restores 70 seconds of satiety; rotten flesh restores 40, up to 20 minutes. Its diet is defined by `create_bioships:biomass`. After growth and mouth development, food continues to maintain the creature.
+## Living propulsion
 
-Feeding improves trust; striking the core lowers it. Hungry or wary ships respond more slowly. Grumpy ships hesitate periodically, while buoyancy remains active. Uncommanded hungry ships can also approach visible dropped meat. These are initial autonomous behaviors, not full navigation or a finished companion AI.
+Six articulated flagella propel and steer the rigid body without mechanical propellers. Intact limbs contribute swimming strength; grabbing occupies a limb, and losing limbs reduces propulsion. Developed amalgam organs supply buoyancy separately. Destroying an organ disables flight until its tissue is repaired; destroying every flagellum leaves a flight-capable ship without swimming thrust.
 
-## Development and checks
+Tentacles select visible targets within six blocks, pull with bounded velocity, and bite at an actual mouth. Destroying or removing the mouth prevents prey nutrition and hand feeding. Captures time out or release when targets leave reach or a cooperative ship rests. Local scent-following is an initial behavior, not full obstacle navigation.
+
+## Development
 
 ```sh
 ./gradlew build
@@ -46,16 +50,14 @@ Feeding improves trust; striking the core lowers it. Hungry or wary ships respon
 ./gradlew runClient
 ```
 
-Eight unit tests cover needs, resource thresholds, bounded state, and flagellum stroke/availability. Seven development-only GameTests cover dormant feeding, signed slider validation, redstone altitude controls, enclosed growth and persistence, actual forward/reverse motion and native-helm steering, limb loss, obstruction protection, mouth development, grabbing, attacks, prey nutrition, stable hover, and pulsing cabin lights. Test fixtures in `src/gameTest` are excluded from the shipped JAR.
+Unit tests cover separate growth/flight thresholds, construction without nutrition, size-dependent appetite, negative trust, hunting efficiency, poison, persistence bounds, and flagellum strokes. Development-only GameTests cover real Sable assembly, machine assimilation and inventory retention, disassembly protection, grounded growth, signed physical controls, native steering, propulsion, organ development, mouth-gated prey feeding, and cabin lighting. Test fixtures are excluded from the shipped JAR. GameTests use a fresh world under `build/gametest-run`, separate from client/server worlds, and place ships at separate locations near the origin.
 
 | Dependency | Version | CurseForge file |
 | --- | --- | --- |
 | Sable | 2.0.6 | 9043865 |
 | Create Aeronautics | 1.3.2 | 8763471 |
 | Create | 6.0.10 | 7963363 |
+| Biomancy Reforged | 2.9.11.0 | 9429985 |
+| GeckoLib (required by Biomancy) | 4.9.3 | 8893490 |
 
-Sable provides moving block structures and rigid-body simulation. Aeronautics provides levitite and the bundled Simulated helm/assembly interaction. Create provides the perch’s riding behavior and redstone automation options.
-
-Physics tests run near the origin: the native simulation showed horizontal precision loss at the runner’s randomized multi-million-block coordinates. Further growth stages, limb regeneration, advanced navigation, and more complex personalities remain future work.
-
-Client smoke checks also covered model loading, articulated flagellum rendering, the cockpit instruments, opening the signed slider, and a full-reverse update verified on the server.
+Physics tests run near the origin because the native simulation loses horizontal precision at the test runner’s randomized multi-million-block locations. Further growth stages, limb regeneration, and advanced navigation remain future work.

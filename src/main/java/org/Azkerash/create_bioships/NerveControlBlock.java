@@ -16,6 +16,7 @@ public class NerveControlBlock extends Block {
     public static final BooleanProperty LATCHED = BooleanProperty.create("latched");
     public static final BooleanProperty ACTIVE = BooleanProperty.create("active");
     public enum Command {
+        HUNT("hunt", 1, -2, 0, 0, 0),
         BACK("back", 0, 2, -1, 0, 0),
         LEFT("left", -1, 0, 0, -1, 0), RIGHT("right", 1, 0, 0, 1, 0),
         RISE("rise", -1, -1, 0, 0, 1), DIVE("dive", 1, -1, 0, 0, -1);

@@ -1,0 +1,11 @@
+{
+  "replace": false,
+  "values": [
+    "biomancy:flesh_bits",
+    "biomancy:living_flesh",
+    "biomancy:flesh",
+    "biomancy:packed_flesh",
+    "biomancy:fibrous_flesh",
+    "#create_bioships:biomass"
+  ]
+}

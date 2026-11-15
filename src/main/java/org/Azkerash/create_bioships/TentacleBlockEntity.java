@@ -42,10 +42,17 @@ public class TentacleBlockEntity extends BlockEntity implements BlockEntitySubLe
             for (BlockPos offset : DinghyGrowth.FLAGELLA) if (core.getBlockPos().offset(offset).equals(worldPosition)) return core;
         return null;
     }
-    private boolean valid(LivingEntity entity, LivingCoreBlockEntity core) {
-        if (!entity.isAlive() || entity instanceof Player || entity.isSpectator() || entity.isPassenger() || entity.isInvulnerable()
-                || entity instanceof TamableAnimal tame && tame.isTame()) return false;
-        return entity instanceof Monster || core.hungry() && entity.getType().is(PREY);
+    boolean valid(LivingEntity entity, LivingCoreBlockEntity core) {
+        if (!entity.isAlive() || entity.isSpectator() || entity.isPassenger() || entity.isInvulnerable()
+                || entity instanceof Player player && player.isCreative()) return false;
+        if (core.aggressive()) return true;
+        if (entity instanceof Player && core.isCaptain(entity)) return false;
+        if (entity instanceof TamableAnimal tame && tame.isTame()) return false;
+        return entity instanceof Monster || core.hungry() && core.huntingAllowed() && edible(entity);
+    }
+    static boolean edible(LivingEntity entity) {
+        if (entity instanceof net.minecraft.world.entity.monster.AbstractSkeleton) return false;
+        return entity instanceof Player || entity instanceof net.minecraft.world.entity.npc.Villager || entity.getType().is(PREY);
     }
     private boolean claimed(ServerSubLevel ship, UUID entity) {
         for (var actor : ship.getPlot().getBlockEntityActors())
@@ -89,9 +96,9 @@ public class TentacleBlockEntity extends BlockEntity implements BlockEntitySubLe
         prey.hurtMarked = true; prey.fallDistance = 0;
         if (heldTicks % 20 == 0) {
             boolean bite = core.hasMouth() && distance < 1.8;
-            boolean edible = prey.getType().is(PREY);
+            boolean edible = edible(prey);
             boolean hurt = prey.hurt(server.damageSources().generic(), bite ? 6 : 2);
-            if (hurt && !prey.isAlive() && bite && edible) core.eatPrey();
+            if (hurt && !prey.isAlive() && bite && edible) core.eatPrey(prey instanceof net.minecraft.world.entity.monster.Zombie);
             if (!prey.isAlive()) { release(); return; }
         }
         if (heldTicks >= 160) release();
@@ -101,7 +108,7 @@ public class TentacleBlockEntity extends BlockEntity implements BlockEntitySubLe
         if (hit.getType() == HitResult.Type.MISS) return true;
         // The mouth itself must not make a captured creature disappear from the limb's sight.
         return core.hasMouth() && to.distanceToSqr(core.mouthPosition(ship)) < 3.24
-                && hit.getBlockPos().equals(core.getBlockPos().offset(DinghyGrowth.MOUTH));
+                && hit.getBlockPos().equals(core.mouthBlock());
     }
     @Override public ClientboundBlockEntityDataPacket getUpdatePacket() { return ClientboundBlockEntityDataPacket.create(this); }
     @Override public CompoundTag getUpdateTag(HolderLookup.Provider registries) { CompoundTag tag = new CompoundTag(); tag.putInt("TargetEntity", clientTarget); return tag; }

@@ -1,0 +1,15 @@
+{
+  "replace": false,
+  "values": [
+    "biomancy:primordial_cradle",
+    "biomancy:decomposer",
+    "biomancy:digester",
+    "biomancy:bio_forge",
+    "biomancy:bio_lab",
+    "biomancy:maw_hopper",
+    "biomancy:storage_sac",
+    "biomancy:chrysalis",
+    "biomancy:fleshkin_chest",
+    "biomancy:tongue"
+  ]
+}

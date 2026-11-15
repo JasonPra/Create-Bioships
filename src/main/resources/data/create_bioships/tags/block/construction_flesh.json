@@ -1,0 +1,17 @@
+{
+  "replace": false,
+  "values": [
+    "biomancy:flesh",
+    "biomancy:packed_flesh",
+    "biomancy:fibrous_flesh",
+    "biomancy:chiseled_flesh",
+    "biomancy:ornate_flesh",
+    "biomancy:flesh_pillar",
+    "biomancy:tubular_flesh",
+    "biomancy:primal_flesh",
+    "biomancy:smooth_primal_flesh",
+    "biomancy:fibrous_primal_flesh",
+    "biomancy:porous_primal_flesh",
+    "biomancy:malignant_flesh"
+  ]
+}

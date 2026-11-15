@@ -57,6 +57,7 @@ neoForge {
         // The gametest system is also enabled by default for other run configs under the /test command.
         gameTestServer {
             type = "gameTestServer"
+            gameDirectory = layout.buildDirectory.dir('gametest-run').get().asFile
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
 
@@ -110,6 +111,8 @@ dependencies {
     dependencyMods "curse.maven:sable-1312371:${sable_file_id}"
     dependencyMods "curse.maven:create-aeronautics-676721:${aeronautics_file_id}"
     dependencyMods "curse.maven:create-328085:${create_file_id}"
+    dependencyMods "curse.maven:biomancy-reforged-1782601:${biomancy_file_id}"
+    runtimeOnly "curse.maven:geckolib-388172:${geckolib_file_id}"
 }
 
 // CurseMaven has no transitive metadata. Expose bundled libraries to javac;
@@ -194,3 +197,9 @@ sourceSets {
 }
 neoForge.mods."${mod_id}".sourceSet(sourceSets.gameTest)
 tasks.named('check') { dependsOn tasks.named('gameTestClasses') }
+
+// Keep integration fixtures out of the client/server worlds and discard stale physics bodies between runs.
+var resetGameTestWorld = tasks.register('resetGameTestWorld', Delete) {
+    delete layout.buildDirectory.dir('gametest-run/world')
+}
+tasks.named('prepareGameTestServerRun') { dependsOn resetGameTestWorld }

@@ -1,20 +1,21 @@
 {
   "textures": {
     "skin": "create_bioships:block/living_hull",
-    "panel": "create_bioships:block/throttle_18",
+    "rib": "create_bioships:block/living_carapace",
+    "cap": "create_bioships:block/living_carapace",
     "particle": "create_bioships:block/living_hull"
   },
   "elements": [
     {
       "from": [
-        1,
+        3,
         0,
-        1
+        3
       ],
       "to": [
-        15,
-        0.5,
-        15
+        13,
+        2,
+        13
       ],
       "faces": {
         "up": {
@@ -35,71 +36,135 @@
         "west": {
           "texture": "#skin"
         }
-      },
-      "shade": true
+      }
     },
     {
       "from": [
-        1,
-        0.5,
-        1
+        4,
+        2,
+        4
       ],
       "to": [
-        15,
-        1,
-        15
+        12,
+        3,
+        12
       ],
       "faces": {
         "up": {
-          "texture": "#panel",
-          "neoforge_data": {
-            "block_light": 15,
-            "sky_light": 15,
-            "ambient_occlusion": false
-          }
+          "texture": "#skin"
         },
         "down": {
-          "texture": "#panel",
-          "neoforge_data": {
-            "block_light": 15,
-            "sky_light": 15,
-            "ambient_occlusion": false
-          }
+          "texture": "#skin"
         },
         "north": {
-          "texture": "#panel",
-          "neoforge_data": {
-            "block_light": 15,
-            "sky_light": 15,
-            "ambient_occlusion": false
-          }
+          "texture": "#skin"
         },
         "south": {
-          "texture": "#panel",
-          "neoforge_data": {
-            "block_light": 15,
-            "sky_light": 15,
-            "ambient_occlusion": false
-          }
+          "texture": "#skin"
         },
         "east": {
-          "texture": "#panel",
-          "neoforge_data": {
-            "block_light": 15,
-            "sky_light": 15,
-            "ambient_occlusion": false
-          }
+          "texture": "#skin"
         },
         "west": {
-          "texture": "#panel",
-          "neoforge_data": {
-            "block_light": 15,
-            "sky_light": 15,
-            "ambient_occlusion": false
-          }
+          "texture": "#skin"
         }
-      },
-      "shade": false
+      }
+    },
+    {
+      "from": [
+        6,
+        3,
+        6
+      ],
+      "to": [
+        10,
+        12.3,
+        10
+      ],
+      "faces": {
+        "up": {
+          "texture": "#rib"
+        },
+        "down": {
+          "texture": "#rib"
+        },
+        "north": {
+          "texture": "#rib"
+        },
+        "south": {
+          "texture": "#rib"
+        },
+        "east": {
+          "texture": "#rib"
+        },
+        "west": {
+          "texture": "#rib"
+        }
+      }
+    },
+    {
+      "from": [
+        4,
+        11.3,
+        4
+      ],
+      "to": [
+        12,
+        14.3,
+        12
+      ],
+      "faces": {
+        "up": {
+          "texture": "#skin"
+        },
+        "down": {
+          "texture": "#skin"
+        },
+        "north": {
+          "texture": "#skin"
+        },
+        "south": {
+          "texture": "#skin"
+        },
+        "east": {
+          "texture": "#skin"
+        },
+        "west": {
+          "texture": "#skin"
+        }
+      }
+    },
+    {
+      "from": [
+        5,
+        14.3,
+        5
+      ],
+      "to": [
+        11,
+        15.3,
+        11
+      ],
+      "faces": {
+        "up": {
+          "texture": "#cap"
+        },
+        "down": {
+          "texture": "#cap"
+        },
+        "north": {
+          "texture": "#cap"
+        },
+        "south": {
+          "texture": "#cap"
+        },
+        "east": {
+          "texture": "#cap"
+        },
+        "west": {
+          "texture": "#cap"
+        }
+      }
     }
   ]
 }

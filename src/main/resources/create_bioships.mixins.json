@@ -4,9 +4,11 @@
   "package": "org.Azkerash.create_bioships.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "DisassemblyPreventionMixin",
+    "SimAssemblyHelperMixin",
+    "ServerSubLevelMixin"
   ],
-  "client": [
-  ],
+  "client": [],
   "injectors": {
     "defaultRequire": 1
   },
