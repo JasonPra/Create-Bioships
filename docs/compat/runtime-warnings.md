@@ -46,3 +46,7 @@ It reaches a playable integrated-server session; these messages are not a loader
 The recipe exception in this log is an unknown optional item, not the previously
 reported `Expected BEGIN_OBJECT but was STRING` exception. That exact exception
 and its surrounding stack trace are not present in this supplied log.
+
+## Sable plot-holder shutdown compatibility
+
+Sable 2.0.6's `PlotChunkHolder.isReadyForSaving()` always returns false because Sable owns plot serialization. If such a holder enters vanilla `ChunkMap.scheduleUnload`, Minecraft repeatedly schedules the already-completed save callback and can spin indefinitely while stopping a world with a live ship. `SablePlotUnloadMixin` removes only these managed plot holders from the pending vanilla unload map; terrain chunks retain the normal save/unload path. Sable remains responsible for saving and restoring its grids. Bioship view/simulation tickets are also released on `ServerStoppingEvent` before world shutdown begins.

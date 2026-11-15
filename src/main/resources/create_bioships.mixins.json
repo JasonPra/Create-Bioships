@@ -9,7 +9,8 @@
     "ServerSubLevelMixin",
     "BiometricMembraneAccessMixin",
     "ReconfigurationHeatMapMixin",
-    "BiometricSubLevelCollisionMixin"
+    "BiometricSubLevelCollisionMixin",
+    "SablePlotUnloadMixin"
   ],
   "client": [],
   "injectors": {

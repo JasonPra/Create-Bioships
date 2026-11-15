@@ -1,15 +1,24 @@
 package org.Azkerash.create_bioships;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.WeakHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ChunkLevel;
 import net.minecraft.server.level.FullChunkStatus;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.TicketType;
 import net.minecraft.world.level.ChunkPos;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 
 /** Gameplay loading follows the creature, with separate view and simulation ticket ranges. */
-final class BioshipChunks {
+@EventBusSubscriber(modid = Create_bioships.MOD_ID)
+public final class BioshipChunks {
+  private static final Set<BioshipChunks> ACTIVE = Collections.newSetFromMap(new WeakHashMap<>());
   private static final TicketType<UUID> VIEW =
       TicketType.create("bioship_view", UUID::compareTo, 60);
   private static final TicketType<UUID> SIMULATION =
@@ -33,6 +42,7 @@ final class BioshipChunks {
     if (!next.equals(lease)) {
       release();
       lease = next;
+      ACTIVE.add(this);
     }
     long now = level.getGameTime();
     if (refreshed != Long.MIN_VALUE && now - refreshed < 20) return;
@@ -52,6 +62,7 @@ final class BioshipChunks {
     lease = null;
     refreshed = Long.MIN_VALUE;
     if (previous == null) return;
+    ACTIVE.remove(this);
     var source = previous.level().getChunkSource();
     source
         .chunkMap
@@ -63,6 +74,14 @@ final class BioshipChunks {
             previous.owner());
     source.removeRegionTicket(
         SIMULATION, previous.center(), previous.simulation() + 2, previous.owner(), true);
+  }
+
+  @SubscribeEvent
+  public static void stopping(ServerStoppingEvent event) {
+    for (var loader : List.copyOf(ACTIVE)) {
+      var current = loader.lease;
+      if (current != null && current.level().getServer() == event.getServer()) loader.release();
+    }
   }
 
   boolean active() {
