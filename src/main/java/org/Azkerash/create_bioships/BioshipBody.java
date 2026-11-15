@@ -164,8 +164,26 @@ public final class BioshipBody {
       for (Direction d : Direction.values())
         if (!core.getLevel().getBlockState(pos.relative(d)).isAir()) supported = true;
       if (!supported || !e.getValue().canSurvive(core.getLevel(), pos)) continue;
-      if (!stomach.spend("biomancy:flesh_bits", 1)) return;
-      core.getLevel().setBlock(pos, e.getValue(), 3);
+      var restored = e.getValue();
+      if (restored.is(Create_bioships.INTESTINE.get())) {
+        boolean paid;
+        if (stomach.freeTubeStock > 0) {
+          stomach.freeTubeStock--;
+          paid = false;
+        } else if (stomach.paidTubeStock > 0) {
+          stomach.paidTubeStock--;
+          paid = true;
+        } else {
+          if (stomach.material("biomancy:flesh_bits") < 1
+              || stomach.material("biomancy:elastic_fibers") < 1) return;
+          stomach.spend("biomancy:flesh_bits", 1);
+          stomach.spend("biomancy:elastic_fibers", 1);
+          paid = true;
+        }
+        restored = restored.setValue(IntestineBlock.PAID, paid);
+        stomach.setChanged();
+      } else if (!stomach.spend("biomancy:flesh_bits", 1)) return;
+      core.getLevel().setBlock(pos, restored, 3);
       injured.remove(e.getKey());
       health = Math.min(capacity, health + 4);
       core.setChanged();

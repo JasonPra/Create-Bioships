@@ -21,6 +21,35 @@ final class GroundRoute {
     return List.copyOf(path);
   }
 
+  record Grip(Direction direction, double distance) {}
+
+  static Grip grip(LivingCoreBlockEntity core, Vec3 point) {
+    if (!core.hatchling()) return null;
+    var level = (ServerLevel) core.getLevel();
+    Vec3 anchor =
+        point.add(
+            core.ship()
+                .logicalPose()
+                .transformNormal(
+                    Vec3.atLowerCornerOf(core.structuralOrigin().subtract(core.getBlockPos()))));
+    for (var face : Direction.Plane.HORIZONTAL)
+      for (double height : new double[] {0, -.4, .4}) {
+        var pos =
+            BlockPos.containing(anchor.add(face.getStepX() * 1.2, height, face.getStepZ() * 1.2));
+        if (!level.getChunkSource().hasChunk(pos.getX() >> 4, pos.getZ() >> 4)
+            || !level.getFluidState(pos).isEmpty()
+            || !level.getBlockState(pos).isFaceSturdy(level, pos, face.getOpposite())) continue;
+        double boundary =
+            face.getAxis() == Direction.Axis.X
+                ? (face.getStepX() > 0 ? pos.getX() : pos.getX() + 1)
+                : (face.getStepZ() > 0 ? pos.getZ() : pos.getZ() + 1);
+        double distance =
+            (boundary - anchor.get(face.getAxis())) * face.getAxisDirection().getStep();
+        if (distance > .35 && distance <= 1.7) return new Grip(face, distance);
+      }
+    return null;
+  }
+
   private List<Vec3> offsets(LivingCoreBlockEntity core) {
     return BioshipDecay.blocks(core.ship()).stream()
         .map(
@@ -62,7 +91,12 @@ final class GroundRoute {
               z + .5);
       if (fits(core, point, offsets)) return point;
     }
-    return null;
+    var cling =
+        new Vec3(
+            x + .5, floorTop + (core.hatchling() ? .85 : 1.25) + core.coreHeightOffset(), z + .5);
+    return core.hatchling() && grip(core, cling) != null && fits(core, cling, offsets)
+        ? cling
+        : null;
   }
 
   boolean plan(LivingCoreBlockEntity core, Vec3 goal) {
@@ -82,11 +116,26 @@ final class GroundRoute {
     while (!open.isEmpty() && costs.size() < 1600) {
       var node = open.poll();
       if (node.cost() > costs.getOrDefault(node.pos(), Double.MAX_VALUE)) continue;
-      if (Math.hypot(node.pos().getX() + .5 - goal.x, node.pos().getZ() + .5 - goal.z)
-          < (core.crawl().gathering() ? 3.5 : .8)) {
+      Vec3 nodePoint =
+          new Vec3(node.pos().getX() + .5, node.pos().getY() + stance, node.pos().getZ() + .5);
+      if (nodePoint.distanceTo(goal) < (core.crawl().gathering() ? 3.5 : .8)) {
         end = node.pos();
         break;
       }
+      if (core.hatchling() && grip(core, nodePoint) != null)
+        for (int dy : new int[] {1, -1}) {
+          var key = node.pos().offset(0, dy, 0);
+          var point = nodePoint.add(0, dy, 0);
+          if (Math.abs(key.getY() - start.getY()) > 24
+              || grip(core, point) == null
+              || !fits(core, point, parts)) continue;
+          double cost = node.cost() + 1.4;
+          if (cost < costs.getOrDefault(key, Double.MAX_VALUE)) {
+            costs.put(key, cost);
+            previous.put(key, node.pos());
+            open.add(new Visit(key, cost, cost + point.distanceTo(goal)));
+          }
+        }
       for (var dir : Direction.Plane.HORIZONTAL) {
         var next = node.pos().relative(dir);
         if (Math.abs(next.getX() - start.getX()) > 24 || Math.abs(next.getZ() - start.getZ()) > 24)
@@ -136,13 +185,40 @@ final class GroundRoute {
       path = List.of();
       return null;
     }
+    if (core.hatchling() && grip(core, here) == null) {
+      var anchor =
+          here.add(
+              core.ship()
+                  .logicalPose()
+                  .transformNormal(
+                      Vec3.atLowerCornerOf(core.structuralOrigin().subtract(core.getBlockPos()))));
+      boolean supported = false;
+      var below = BlockPos.containing(anchor);
+      for (int i = 1; i <= 3; i++) {
+        var p = below.below(i);
+        if (core.getLevel().getBlockState(p).isFaceSturdy(core.getLevel(), p, Direction.UP))
+          supported = true;
+      }
+      if (!supported) {
+        failed = true;
+        path = List.of();
+        return null;
+      }
+    }
     // Lift before crossing a one-block step; don't drive the body through its vertical face.
     if (next.y > here.y + .12) {
       if (!fits(core, new Vec3(here.x, next.y, here.z), parts)) {
         path = List.of();
         return null;
       }
-      core.crawl().stepHeight(next.y);
+      if (core.hatchling() && grip(core, here) != null) core.crawl().clingHeight(next.y);
+      else core.crawl().stepHeight(next.y);
+      return null;
+    }
+    if (next.subtract(here).horizontalDistanceSqr() < .09
+        && next.y < here.y - .12
+        && grip(core, here) != null) {
+      core.crawl().clingHeight(next.y);
       return null;
     }
     Vec3 probe = here.lerp(next, Math.min(1, .35 / Math.max(.01, here.distanceTo(next))));

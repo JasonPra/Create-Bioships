@@ -34,24 +34,167 @@ public final class BioshipVision {
       }
   }
 
-  public List<Vec3> origins(LivingCoreBlockEntity core) {
+  public record View(Vec3 origin, Vec3 forward, double range) {
+    public boolean contains(Vec3 point) {
+      Vec3 delta = point.subtract(origin);
+      if (delta.lengthSqr() > range * range) return false;
+      return delta.lengthSqr() < .000001 || delta.normalize().dot(forward.normalize()) >= .5 - 1e-9;
+    }
+  }
+
+  public int maximumDistance(LivingCoreBlockEntity core) {
+    var level = (ServerLevel) core.getLevel();
+    int chunks = level.getServer().getPlayerList().getViewDistance();
+    var player =
+        core.creator() == null ? null : level.getServer().getPlayerList().getPlayer(core.creator());
+    if (player == null) {
+      var root = BioshipBlueprint.physical(core, BlockPos.ZERO);
+      player =
+          level.getNearestPlayer(root.x, root.y, root.z, -1, false)
+                  instanceof net.minecraft.server.level.ServerPlayer p
+              ? p
+              : null;
+    }
+    if (player != null && player.requestedViewDistance() > 0)
+      chunks = Math.min(chunks, player.requestedViewDistance());
+    return Math.max(1, chunks) * 16;
+  }
+
+  boolean inView(LivingCoreBlockEntity core, View view, Vec3 point) {
+    if (!view.contains(point)) return false;
+    var pos = BlockPos.containing(point);
+    var level = (ServerLevel) core.getLevel();
+    if (!level.getChunkSource().hasChunk(pos.getX() >> 4, pos.getZ() >> 4)) return false;
+    // Sample the visible surface too: a solid block's interior is dark even in daylight.
+    var surface =
+        BlockPos.containing(point.add(view.origin().subtract(point).normalize().scale(.75)));
+    int light = level.getMaxLocalRawBrightness(pos);
+    if (level.getChunkSource().hasChunk(surface.getX() >> 4, surface.getZ() >> 4))
+      light = Math.max(light, level.getMaxLocalRawBrightness(surface));
+    double range = Math.max(4, view.range() * (.2 + .8 * light / 15.0));
+    return view.origin().distanceToSqr(point) <= range * range;
+  }
+
+  static boolean clearMaterial(
+      net.minecraft.world.level.block.state.BlockState state, Vec3 direction) {
+    if (state.is(net.minecraft.tags.BlockTags.LEAVES)) return false;
+    var block = state.getBlock();
+    if (block instanceof OneWayWindowBlock)
+      return direction.dot(
+              Vec3.atLowerCornerOf(state.getValue(OneWayWindowBlock.FACING).getNormal()))
+          > 0;
+    return exposedTube(state)
+        || block instanceof net.minecraft.world.level.block.TransparentBlock
+        || block == net.minecraft.world.level.block.Blocks.GLASS_PANE
+        || block instanceof net.minecraft.world.level.block.StainedGlassPaneBlock
+        || block instanceof net.minecraft.world.level.block.BushBlock
+        || block instanceof net.minecraft.world.level.block.GrowingPlantBlock
+        || block instanceof net.minecraft.world.level.block.SugarCaneBlock
+        || block instanceof net.minecraft.world.level.block.CactusBlock
+        || block instanceof net.minecraft.world.level.block.BambooStalkBlock
+        || block instanceof net.minecraft.world.level.block.BambooSaplingBlock
+        || block instanceof net.minecraft.world.level.block.VineBlock
+        || block instanceof net.minecraft.world.level.block.WaterlilyBlock;
+  }
+
+  void invalidate() {
+    scanned = Long.MIN_VALUE;
+  }
+
+  private final Map<BlockPos, Long> remembered = new HashMap<>();
+  private int surveyed;
+  private BlockPos corpseTarget;
+  private long lastTurn = Long.MIN_VALUE;
+
+  public List<View> views(LivingCoreBlockEntity core) {
     scan(core);
-    List<Vec3> result = new ArrayList<>();
-    result.add(BioshipBlueprint.physical(core, BlockPos.ZERO));
+    List<View> result = new ArrayList<>();
+    if (!core.getBlockState().getValue(LivingCoreBlock.CONCEALED)) {
+      var face = core.getBlockState().getValue(LivingCoreBlock.FACING);
+      result.add(
+          new View(
+              BioshipBlueprint.physical(core, BlockPos.ZERO),
+              core.ship().logicalPose().transformNormal(Vec3.atLowerCornerOf(face.getNormal())),
+              maximumDistance(core)));
+    }
     for (var eye : eyes) {
-      var facing = core.getLevel().getBlockState(eye).getValue(SurfaceEyeBlock.FACING);
-      // The eye sits against the supporting face rather than floating at the block center.
-      Vec3 point = Vec3.atCenterOf(eye).relative(facing, -.22);
-      if (core.getLevel().getBlockState(eye).getValue(SurfaceEyeBlock.WINDOW_INTERNAL)) {
-        var host = eye.relative(facing.getOpposite());
-        point =
-            Vec3.atCenterOf(host)
-                .relative(
-                    core.getLevel().getBlockState(host).getValue(OneWayWindowBlock.FACING), .6);
+      var state = core.getLevel().getBlockState(eye);
+      var face = state.getValue(SurfaceEyeBlock.FACING);
+      Vec3 point = Vec3.atCenterOf(eye).relative(face, -.22);
+      if (state.getValue(SurfaceEyeBlock.WINDOW_INTERNAL)) {
+        var host = eye.relative(face.getOpposite());
+        face = core.getLevel().getBlockState(host).getValue(OneWayWindowBlock.FACING);
+        point = Vec3.atCenterOf(host).relative(face, .6);
       }
-      result.add(core.ship().logicalPose().transformPosition(point));
+      result.add(
+          new View(
+              core.ship().logicalPose().transformPosition(point),
+              core.ship().logicalPose().transformNormal(Vec3.atLowerCornerOf(face.getNormal())),
+              maximumDistance(core)));
     }
     return result;
+  }
+
+  boolean knows(LivingCoreBlockEntity core, BlockPos source) {
+    if (exposed(core, source)) {
+      remembered.put(source.immutable(), core.getLevel().getGameTime());
+      return true;
+    }
+    return remembered.getOrDefault(source, Long.MIN_VALUE) > core.getLevel().getGameTime() - 200;
+  }
+
+  boolean surveyed(LivingCoreBlockEntity core) {
+    return !core.hatchling() || surveyed == 63;
+  }
+
+  void look(LivingCoreBlockEntity core, Direction face) {
+    if (core.getBlockState().getValue(LivingCoreBlock.FACING) != face)
+      core.getLevel()
+          .setBlock(
+              core.getBlockPos(), core.getBlockState().setValue(LivingCoreBlock.FACING, face), 2);
+    surveyed |= 1 << face.ordinal();
+  }
+
+  private void turn(LivingCoreBlockEntity core) {
+    if (core.getBlockState().getValue(LivingCoreBlock.CONCEALED) || core.coreMotion().active())
+      return;
+    surveyed |= 1 << core.getBlockState().getValue(LivingCoreBlock.FACING).ordinal();
+    if (core.getLevel().getGameTime() - lastTurn < 4 && lastTurn != Long.MIN_VALUE) return;
+    lastTurn = core.getLevel().getGameTime();
+    var objective = BioshipPriorities.bestWorld(core);
+    if (corpseTarget != null
+        && (!BioshipScavenging.needed(core, core.getLevel().getBlockState(corpseTarget))
+            || BioshipIntegration.containing(core.getLevel(), corpseTarget) == null))
+      corpseTarget = null;
+    if (corpseTarget == null) corpseTarget = BioshipScavenging.bestVisible(core);
+    Vec3 focus = null;
+    int priority = Integer.MAX_VALUE;
+    if (objective != null) {
+      focus = Vec3.atCenterOf(objective.pos());
+      priority = objective.rank();
+    }
+    if (corpseTarget != null) {
+      int corpseRank =
+          BioshipPriorities.rank(core, core.getLevel().getBlockState(corpseTarget), corpseTarget);
+      if (corpseRank <= priority) {
+        var body = BioshipIntegration.containing(core.getLevel(), corpseTarget);
+        focus = body.logicalPose().transformPosition(Vec3.atCenterOf(corpseTarget));
+        priority = corpseRank;
+      }
+    }
+    if (focus != null && (priority == 0 || surveyed(core))) {
+      Vec3 delta =
+          core.ship()
+              .logicalPose()
+              .transformPositionInverse(focus)
+              .subtract(Vec3.atCenterOf(core.getBlockPos()));
+      look(core, Direction.getNearest(delta.x, delta.y, delta.z));
+    } else
+      look(
+          core,
+          Direction.values()[
+              (core.getBlockState().getValue(LivingCoreBlock.FACING).ordinal() + 1) % 6]);
+    remembered.entrySet().removeIf(e -> e.getValue() < core.getLevel().getGameTime() - 200);
   }
 
   static boolean exposedTube(net.minecraft.world.level.block.state.BlockState state) {
@@ -67,13 +210,18 @@ public final class BioshipVision {
     var targetCell = BlockPos.containing(to);
     for (int i = 1; i < steps; i++) {
       var worldCell = BlockPos.containing(from.lerp(to, i / (double) steps));
-      if (!worldCell.equals(targetCell)
-          && (!exposedTube(core.getLevel().getBlockState(worldCell))
+      if (core.getLevel() instanceof ServerLevel server
+          && !server.getChunkSource().hasChunk(worldCell.getX() >> 4, worldCell.getZ() >> 4))
+        return false;
+      if ((!worldCell.equals(targetCell)
+              || core.getLevel().getBlockState(worldCell).is(net.minecraft.tags.BlockTags.LEAVES))
+          && (!clearMaterial(core.getLevel().getBlockState(worldCell), to.subtract(from))
                   && !core.getLevel()
                       .getBlockState(worldCell)
                       .getCollisionShape(core.getLevel(), worldCell)
                       .isEmpty()
-              || !core.getLevel().getFluidState(worldCell).isEmpty())) return false;
+              || core.getLevel().getFluidState(worldCell).is(net.minecraft.tags.FluidTags.LAVA)))
+        return false;
       var sample =
           BlockPos.containing(
               core.ship()
@@ -83,15 +231,21 @@ public final class BioshipVision {
       if (sample.equals(origin) || state.is(Create_bioships.SURFACE_EYE.get())) continue;
       if (sample.equals(core.getBlockPos()) && !origin.equals(sample))
         state = core.getLevel().getBlockState(origin);
-      if (!exposedTube(state) && !state.getCollisionShape(core.getLevel(), sample).isEmpty())
-        return false;
+      var localDirection =
+          core.ship()
+              .logicalPose()
+              .transformPositionInverse(to)
+              .subtract(core.ship().logicalPose().transformPositionInverse(from));
+      if (!clearMaterial(state, localDirection)
+          && !state.getCollisionShape(core.getLevel(), sample).isEmpty()) return false;
     }
     return true;
   }
 
   public boolean visible(LivingCoreBlockEntity core, Vec3 point) {
     if (core.ship() == null) return false;
-    for (var from : origins(core)) if (ray(core, from, point)) return true;
+    for (var view : views(core))
+      if (inView(core, view, point) && ray(core, view.origin(), point)) return true;
     return false;
   }
 
@@ -104,8 +258,77 @@ public final class BioshipVision {
     return visible(core, Vec3.atCenterOf(source));
   }
 
+  void observe(LivingCoreBlockEntity core) {
+    turn(core);
+  }
+
   void tick(LivingCoreBlockEntity core) {
-    if (core.getLevel().getGameTime() % 80 == 0) growEyes(core);
+    if (core.getLevel().getGameTime() % 80 == 0 && !reabsorb(core)) growEyes(core);
+  }
+
+  net.minecraft.nbt.CompoundTag save() {
+    var tag = new net.minecraft.nbt.CompoundTag();
+    tag.putInt("Surveyed", surveyed);
+    return tag;
+  }
+
+  void load(net.minecraft.nbt.CompoundTag tag) {
+    surveyed = tag.getInt("Surveyed") & 63;
+    remembered.clear();
+    lastTurn = Long.MIN_VALUE;
+    scanned = Long.MIN_VALUE;
+  }
+
+  boolean reabsorb(LivingCoreBlockEntity core) {
+    var stomach = DigestiveSystem.stomach(core);
+    if (stomach == null
+        || core.body().dead()
+        || core.blueprint().busy()
+        || OrganMotion.busy(core)
+        || core.coreMotion().active()) return false;
+    var all = views(core);
+    int first = core.getBlockState().getValue(LivingCoreBlock.CONCEALED) ? 0 : 1;
+    if (eyes.size() < 2) return false;
+    for (int index = 0; index < eyes.size(); index++) {
+      var pos = eyes.get(index);
+      var state = core.getLevel().getBlockState(pos);
+      if (!state.getValue(SurfaceEyeBlock.AUTOMATIC)) continue;
+      var view = all.get(first + index);
+      var targets = new ArrayList<Vec3>();
+      for (int x = -1; x <= 1; x++)
+        for (int y = -1; y <= 1; y++)
+          for (int z = -1; z <= 1; z++)
+            if (x != 0 || y != 0 || z != 0)
+              targets.add(view.origin().add(new Vec3(x, y, z).normalize().scale(8)));
+      remembered.keySet().forEach(p -> targets.add(Vec3.atCenterOf(p)));
+      boolean needed = false;
+      for (var point : targets)
+        if (inView(core, view, point) && ray(core, view.origin(), point)) {
+          boolean covered = false;
+          for (int other = first; other < all.size(); other++)
+            if (other != first + index
+                && inView(core, all.get(other), point)
+                && ray(core, all.get(other).origin(), point)) {
+              covered = true;
+              break;
+            }
+          if (!covered) {
+            needed = true;
+            break;
+          }
+        }
+      if (needed) continue;
+      core.getLevel().removeBlock(pos, false);
+      stomach.retainFlesh(1);
+      stomach.retain(
+          new net.minecraft.world.item.ItemStack(
+              net.minecraft.core.registries.BuiltInRegistries.ITEM.get(
+                  net.minecraft.resources.ResourceLocation.parse("biomancy:elastic_fibers"))));
+      scanned = Long.MIN_VALUE;
+      core.setChanged();
+      return true;
+    }
+    return false;
   }
 
   void growEyes(LivingCoreBlockEntity core) {
@@ -135,7 +358,8 @@ public final class BioshipVision {
               : core.ship()
                   .logicalPose()
                   .transformPosition(Vec3.atCenterOf(existing).relative(direction, -.22));
-      if (ray(core, root, root.add(forward.scale(8)))) continue;
+      if ((existing != null || visible(core, root.add(forward.scale(8))))
+          && ray(core, root, root.add(forward.scale(8)))) continue;
       if (existing == null
           && (eyes.size() >= 6
               || stomach.material("biomancy:flesh_bits") < 2
@@ -177,7 +401,8 @@ public final class BioshipVision {
               Create_bioships.SURFACE_EYE
                   .get()
                   .defaultBlockState()
-                  .setValue(SurfaceEyeBlock.FACING, direction),
+                  .setValue(SurfaceEyeBlock.FACING, direction)
+                  .setValue(SurfaceEyeBlock.AUTOMATIC, true),
               3);
           stomach.spend("biomancy:flesh_bits", 2);
           stomach.spend("biomancy:elastic_fibers", 1);

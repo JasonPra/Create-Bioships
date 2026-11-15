@@ -1,16 +1,96 @@
 {
   "variants": {
-    "active=false,blink=false,relocating=false,concealed=false": {
+    "active=false,blink=false,relocating=false,concealed=false,facing=north": {
       "model": "create_bioships:block/core_dormant"
     },
-    "active=false,blink=true,relocating=false,concealed=false": {
+    "active=false,blink=false,relocating=false,concealed=false,facing=east": {
+      "model": "create_bioships:block/core_dormant",
+      "y": 90
+    },
+    "active=false,blink=false,relocating=false,concealed=false,facing=south": {
+      "model": "create_bioships:block/core_dormant",
+      "y": 180
+    },
+    "active=false,blink=false,relocating=false,concealed=false,facing=west": {
+      "model": "create_bioships:block/core_dormant",
+      "y": 270
+    },
+    "active=false,blink=false,relocating=false,concealed=false,facing=up": {
+      "model": "create_bioships:block/core_dormant",
+      "x": 270
+    },
+    "active=false,blink=false,relocating=false,concealed=false,facing=down": {
+      "model": "create_bioships:block/core_dormant",
+      "x": 90
+    },
+    "active=false,blink=true,relocating=false,concealed=false,facing=north": {
       "model": "create_bioships:block/core_dormant"
     },
-    "active=true,blink=false,relocating=false,concealed=false": {
+    "active=false,blink=true,relocating=false,concealed=false,facing=east": {
+      "model": "create_bioships:block/core_dormant",
+      "y": 90
+    },
+    "active=false,blink=true,relocating=false,concealed=false,facing=south": {
+      "model": "create_bioships:block/core_dormant",
+      "y": 180
+    },
+    "active=false,blink=true,relocating=false,concealed=false,facing=west": {
+      "model": "create_bioships:block/core_dormant",
+      "y": 270
+    },
+    "active=false,blink=true,relocating=false,concealed=false,facing=up": {
+      "model": "create_bioships:block/core_dormant",
+      "x": 270
+    },
+    "active=false,blink=true,relocating=false,concealed=false,facing=down": {
+      "model": "create_bioships:block/core_dormant",
+      "x": 90
+    },
+    "active=true,blink=false,relocating=false,concealed=false,facing=north": {
       "model": "create_bioships:block/core_awake"
     },
-    "active=true,blink=true,relocating=false,concealed=false": {
+    "active=true,blink=false,relocating=false,concealed=false,facing=east": {
+      "model": "create_bioships:block/core_awake",
+      "y": 90
+    },
+    "active=true,blink=false,relocating=false,concealed=false,facing=south": {
+      "model": "create_bioships:block/core_awake",
+      "y": 180
+    },
+    "active=true,blink=false,relocating=false,concealed=false,facing=west": {
+      "model": "create_bioships:block/core_awake",
+      "y": 270
+    },
+    "active=true,blink=false,relocating=false,concealed=false,facing=up": {
+      "model": "create_bioships:block/core_awake",
+      "x": 270
+    },
+    "active=true,blink=false,relocating=false,concealed=false,facing=down": {
+      "model": "create_bioships:block/core_awake",
+      "x": 90
+    },
+    "active=true,blink=true,relocating=false,concealed=false,facing=north": {
       "model": "create_bioships:block/core_closed"
+    },
+    "active=true,blink=true,relocating=false,concealed=false,facing=east": {
+      "model": "create_bioships:block/core_closed",
+      "y": 90
+    },
+    "active=true,blink=true,relocating=false,concealed=false,facing=south": {
+      "model": "create_bioships:block/core_closed",
+      "y": 180
+    },
+    "active=true,blink=true,relocating=false,concealed=false,facing=west": {
+      "model": "create_bioships:block/core_closed",
+      "y": 270
+    },
+    "active=true,blink=true,relocating=false,concealed=false,facing=up": {
+      "model": "create_bioships:block/core_closed",
+      "x": 270
+    },
+    "active=true,blink=true,relocating=false,concealed=false,facing=down": {
+      "model": "create_bioships:block/core_closed",
+      "x": 90
     },
     "relocating=true": {
       "model": "create_bioships:block/core_relocating"

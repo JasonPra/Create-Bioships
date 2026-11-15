@@ -12,6 +12,13 @@
       "conditions": [
         {
           "condition": "minecraft:survives_explosion"
+        },
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "create_bioships:fleshy_intestine",
+          "properties": {
+            "paid": "true"
+          }
         }
       ]
     }

@@ -85,7 +85,8 @@ public final class CoreMotion {
         if (previous.containsKey(next)
             || next.distManhattan(home(core)) > 6
             || !tissue(level.getBlockState(next))) continue;
-        if (!clearWorld(core, next)) continue;
+        if (!clearWorld(core, next) || !DigestiveSystem.reserveCoreRoute(core, next, false))
+          continue;
         previous.put(next, pos);
         queue.add(next);
         if (returning) {
@@ -148,6 +149,7 @@ public final class CoreMotion {
             < 25) return false;
     var next = choose(core, returning);
     if (next == null) return false;
+    if (!DigestiveSystem.reserveCoreRoute(core, next, true)) return false;
     if (home == null) home = core.getBlockPos();
     target = next;
     started = level.getGameTime();

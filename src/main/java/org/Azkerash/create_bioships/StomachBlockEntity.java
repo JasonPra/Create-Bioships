@@ -26,6 +26,8 @@ public class StomachBlockEntity extends BlockEntity implements MenuProvider {
   final List<BlockPos> gutPath = new ArrayList<>();
   final Map<BlockPos, List<BlockPos>> sacPaths = new LinkedHashMap<>();
   BlockPos connectedMouth;
+  boolean tubeBootstrapped;
+  int freeTubeStock, paidTubeStock;
   private int acid = 200, progress, duration, activeSlot = -1, meals;
   private String activeRecipe = "";
 
@@ -296,6 +298,9 @@ public class StomachBlockEntity extends BlockEntity implements MenuProvider {
   @Override
   protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
     super.saveAdditional(tag, registries);
+    tag.putBoolean("TubeBootstrapped", tubeBootstrapped);
+    tag.putInt("FreeTubeStock", freeTubeStock);
+    tag.putInt("PaidTubeStock", paidTubeStock);
     tag.putInt("NutrientReserve", nutrientReserve);
     net.minecraft.world.ContainerHelper.saveAllItems(tag, input, registries);
     tag.putInt("Acid", acid);
@@ -332,6 +337,12 @@ public class StomachBlockEntity extends BlockEntity implements MenuProvider {
   @Override
   protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
     super.loadAdditional(tag, registries);
+    tubeBootstrapped =
+        tag.contains("TubeBootstrapped")
+            ? tag.getBoolean("TubeBootstrapped")
+            : tag.contains("ConnectedMouth");
+    freeTubeStock = Math.clamp(tag.getInt("FreeTubeStock"), 0, 1000000);
+    paidTubeStock = Math.clamp(tag.getInt("PaidTubeStock"), 0, 1000000);
     nutrientReserve = Math.clamp(tag.getInt("NutrientReserve"), 0, 1000000);
     input.clear();
     net.minecraft.world.ContainerHelper.loadAllItems(tag, input, registries);

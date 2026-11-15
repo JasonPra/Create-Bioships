@@ -131,6 +131,7 @@ public final class OrganMotion {
       for (var player : level.players())
         if (player.containerMenu instanceof net.minecraft.world.inventory.ChestMenu menu
             && menu.getContainer() == entity) return false;
+    if (!external && !DigestiveSystem.reserveOrganRoute(core, source, target)) return false;
     var cargo =
         SubLevelAssemblyHelper.assembleBlocks(
             level, source, List.of(source), new BoundingBox3i(source, source));
@@ -276,6 +277,11 @@ public final class OrganMotion {
       if (move.manual()) moved.getPersistentData().putBoolean("BioshipManualPlacement", true);
       moved.setChanged();
     }
+    if (move.manual() && level.getBlockState(move.target()).is(Create_bioships.SURFACE_EYE.get()))
+      level.setBlock(
+          move.target(),
+          level.getBlockState(move.target()).setValue(SurfaceEyeBlock.AUTOMATIC, false),
+          3);
     if (moved instanceof FeedingMouthBlockEntity mouth) {
       mouth.embeddedInHull(host.is(Create_bioships.FLESH.get()));
       Direction facing = FeedingMouthBlock.outward(core, move.target());
@@ -302,6 +308,7 @@ public final class OrganMotion {
       container.removeForceLoadTicket(
           owner, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
     core.organMove(null);
+    core.vision().invalidate();
     if (scavenged) core.scavenging().finish(core, move.target(), hostFlesh);
     else if (move.external()) BioshipIntegration.finishAssimilation(core, move.target());
     DigestiveSystem.connect(core, owner);

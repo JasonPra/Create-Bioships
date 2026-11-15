@@ -21,7 +21,8 @@ public final class BioshipScavenging {
       fiberRemainder,
       pendingFlesh,
       pendingBone,
-      pendingFiber;
+      pendingFiber,
+      pendingFreeTubes;
 
   private static boolean frameMaterial(BlockState state) {
     return state.is(Create_bioships.CARAPACE.get())
@@ -69,6 +70,10 @@ public final class BioshipScavenging {
 
   static boolean needed(LivingCoreBlockEntity core, BlockState state) {
     if (state.isAir() || state.is(Create_bioships.CORE.get())) return false;
+    if (state.is(Create_bioships.INTESTINE.get()) && !state.getValue(IntestineBlock.PAID)) {
+      var storage = DigestiveSystem.stomach(core);
+      return storage == null ? core.scavenging().pendingFreeTubes < 16 : storage.freeTubeStock < 16;
+    }
     if (keepComponent(core, state, null)) return true;
     var stomach = DigestiveSystem.stomach(core);
 
@@ -118,6 +123,38 @@ public final class BioshipScavenging {
       }
     }
     return nearest;
+  }
+
+  static BlockPos bestVisible(LivingCoreBlockEntity core) {
+    var container = SubLevelContainer.getContainer(core.getLevel());
+    if (container == null) return null;
+    var eye = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    BlockPos best = null;
+    int rank = Integer.MAX_VALUE;
+    double distance = 32 * 32;
+    for (var body : container.getAllSubLevels())
+      if (body instanceof ServerSubLevel wreck && !wreck.isRemoved() && BioshipDecay.dead(wreck)) {
+        if (wreck
+                .logicalPose()
+                .transformPosition(Vec3.atCenterOf(wreck.getPlot().getCenterBlock()))
+                .distanceToSqr(eye)
+            > 40 * 40) continue;
+        for (var source : BioshipDecay.blocks(wreck)) {
+          var state = core.getLevel().getBlockState(source);
+          if (!needed(core, state)) continue;
+          int priority = BioshipPriorities.rank(core, state, source);
+          var point = wreck.logicalPose().transformPosition(Vec3.atCenterOf(source));
+          double next = point.distanceToSqr(eye);
+          if (next > 32 * 32
+              || priority > rank
+              || priority == rank && next >= distance
+              || !visible(core, wreck, source, eye, point)) continue;
+          best = source;
+          rank = priority;
+          distance = next;
+        }
+      }
+    return best;
   }
 
   static boolean collect(LivingCoreBlockEntity core, ServerSubLevel own) {
@@ -177,7 +214,9 @@ public final class BioshipScavenging {
             .getBlockState(physical.above())
             .getCollisionShape(level, physical.above())
             .isEmpty()) return false;
-    for (var from : core.vision().origins(core)) {
+    for (var view : core.vision().views(core)) {
+      if (!core.vision().inView(core, view, point)) continue;
+      var from = view.origin();
       if (!BioshipVision.ray(core, from, point)) continue;
       boolean clear = true;
       int steps = Math.max(1, (int) Math.ceil(from.distanceTo(point) * 5));
@@ -186,7 +225,12 @@ public final class BioshipScavenging {
             BlockPos.containing(
                 wreck.logicalPose().transformPositionInverse(from.lerp(point, i / (double) steps)));
         if (!sample.equals(source)
-            && !BioshipVision.exposedTube(level.getBlockState(sample))
+            && !BioshipVision.clearMaterial(
+                level.getBlockState(sample),
+                wreck
+                    .logicalPose()
+                    .transformPositionInverse(point)
+                    .subtract(wreck.logicalPose().transformPositionInverse(from)))
             && !level.getBlockState(sample).getCollisionShape(level, sample).isEmpty()) {
           clear = false;
           break;
@@ -235,13 +279,21 @@ public final class BioshipScavenging {
     if (!droppedBlock(stack)) return false;
     var stomach = DigestiveSystem.stomach(core);
     if (!core.hasMouth() || stomach == null || !stomach.connected(core)) return false;
-    recycle(((net.minecraft.world.item.BlockItem) stack.getItem()).getBlock().defaultBlockState());
+    var state =
+        ((net.minecraft.world.item.BlockItem) stack.getItem()).getBlock().defaultBlockState();
+    if (state.is(Create_bioships.INTESTINE.get()))
+      state = state.setValue(IntestineBlock.PAID, true);
+    recycle(state);
     deliver(core);
     core.setChanged();
     return true;
   }
 
   private void recycle(BlockState state) {
+    if (state.is(Create_bioships.INTESTINE.get()) && !state.getValue(IntestineBlock.PAID)) {
+      pendingFreeTubes++;
+      return;
+    }
     // Half the bulk flesh and only a quarter of structural/muscle products survive reclamation.
     if (++fleshRemainder >= 2) {
       pendingFlesh++;
@@ -262,6 +314,9 @@ public final class BioshipScavenging {
     pendingFlesh -= growth;
     var stomach = DigestiveSystem.stomach(core);
     if (stomach == null) return;
+    stomach.freeTubeStock += pendingFreeTubes;
+    pendingFreeTubes = 0;
+    stomach.setChanged();
     stomach.retainFlesh(pendingFlesh);
     pendingFlesh = 0;
     if (pendingBone > 0) {
@@ -282,6 +337,7 @@ public final class BioshipScavenging {
 
   CompoundTag save() {
     var t = new CompoundTag();
+    t.putInt("FreeTubes", pendingFreeTubes);
     t.putInt("FleshRemainder", fleshRemainder);
     t.putInt("BoneRemainder", boneRemainder);
     t.putInt("FiberRemainder", fiberRemainder);
@@ -292,6 +348,7 @@ public final class BioshipScavenging {
   }
 
   void load(CompoundTag t) {
+    pendingFreeTubes = Math.max(0, t.getInt("FreeTubes"));
     fleshRemainder = Math.clamp(t.getInt("FleshRemainder"), 0, 1);
     boneRemainder = Math.clamp(t.getInt("BoneRemainder"), 0, 3);
     fiberRemainder = Math.clamp(t.getInt("FiberRemainder"), 0, 3);

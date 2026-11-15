@@ -11,6 +11,8 @@ import net.minecraft.world.level.block.state.properties.*;
 import net.minecraft.world.phys.shapes.*;
 
 public class IntestineBlock extends Block {
+  public static final BooleanProperty MANUAL = BooleanProperty.create("manual");
+  public static final BooleanProperty PAID = BooleanProperty.create("paid");
   public static final BooleanProperty ENCASED = BooleanProperty.create("encased");
   public static final Map<Direction, BooleanProperty> CONNECTIONS =
       Map.of(
@@ -29,7 +31,12 @@ public class IntestineBlock extends Block {
 
   public IntestineBlock(Properties properties) {
     super(properties);
-    var s = stateDefinition.any().setValue(ENCASED, false);
+    var s =
+        stateDefinition
+            .any()
+            .setValue(ENCASED, false)
+            .setValue(MANUAL, false)
+            .setValue(PAID, false);
     for (var p : CONNECTIONS.values()) s = s.setValue(p, false);
     registerDefaultState(s);
   }
@@ -50,7 +57,10 @@ public class IntestineBlock extends Block {
 
   @Override
   public BlockState getStateForPlacement(BlockPlaceContext c) {
-    return connections(defaultBlockState(), c.getLevel(), c.getClickedPos());
+    return connections(
+        defaultBlockState().setValue(MANUAL, true).setValue(PAID, true),
+        c.getLevel(),
+        c.getClickedPos());
   }
 
   @Override
@@ -125,7 +135,7 @@ public class IntestineBlock extends Block {
 
   @Override
   protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) {
-    b.add(ENCASED);
+    b.add(ENCASED, MANUAL, PAID);
     for (var p : CONNECTIONS.values()) b.add(p);
   }
 }

@@ -20,6 +20,8 @@ public class LivingCoreBlock extends BaseEntityBlock {
       net.minecraft.world.level.block.state.properties.BooleanProperty.create("relocating");
   public static final net.minecraft.world.level.block.state.properties.BooleanProperty CONCEALED =
       net.minecraft.world.level.block.state.properties.BooleanProperty.create("concealed");
+  public static final net.minecraft.world.level.block.state.properties.DirectionProperty FACING =
+      net.minecraft.world.level.block.state.properties.BlockStateProperties.FACING;
   public static final MapCodec<LivingCoreBlock> CODEC = simpleCodec(LivingCoreBlock::new);
 
   public LivingCoreBlock(Properties properties) {
@@ -30,7 +32,8 @@ public class LivingCoreBlock extends BaseEntityBlock {
             .setValue(ACTIVE, false)
             .setValue(BLINK, false)
             .setValue(RELOCATING, false)
-            .setValue(CONCEALED, false));
+            .setValue(CONCEALED, false)
+            .setValue(FACING, net.minecraft.core.Direction.NORTH));
   }
 
   @Override
@@ -38,7 +41,7 @@ public class LivingCoreBlock extends BaseEntityBlock {
       net.minecraft.world.level.block.state.StateDefinition.Builder<
               net.minecraft.world.level.block.Block, BlockState>
           builder) {
-    builder.add(ACTIVE, BLINK, RELOCATING, CONCEALED);
+    builder.add(ACTIVE, BLINK, RELOCATING, CONCEALED, FACING);
   }
 
   @Override
@@ -58,7 +61,7 @@ public class LivingCoreBlock extends BaseEntityBlock {
             && container.getPlot(new net.minecraft.world.level.ChunkPos(point)) != null)
           return null;
     }
-    return defaultBlockState();
+    return defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
   }
 
   @Override

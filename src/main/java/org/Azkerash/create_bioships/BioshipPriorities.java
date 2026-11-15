@@ -50,7 +50,8 @@ final class BioshipPriorities {
     BlockPos origin = BlockPos.containing(here), best = null, previous = null;
     int bestRank = Integer.MAX_VALUE, previousRank = Integer.MAX_VALUE;
     double distance = 16 * 16;
-    for (var pos : BlockPos.betweenClosed(origin.offset(-16, -3, -16), origin.offset(16, 3, 16))) {
+    for (var pos :
+        BlockPos.betweenClosed(origin.offset(-16, -16, -16), origin.offset(16, 16, 16))) {
       if (!core.crawl().reachableGoal(pos)
           || !level.getChunkSource().hasChunk(pos.getX() >> 4, pos.getZ() >> 4)
           || BioshipIntegration.containing(level, pos) != null) continue;
@@ -58,8 +59,9 @@ final class BioshipPriorities {
       if (!BuiltInRegistries.BLOCK.getKey(state.getBlock()).getNamespace().equals("biomancy")
           || state.getBlock() instanceof net.minecraft.world.level.block.LiquidBlock) continue;
       double next = Vec3.atCenterOf(pos).distanceToSqr(here);
-      if (next > 16 * 16 || !core.vision().exposed(core, pos)) continue;
+      if (next > 16 * 16 || !core.vision().knows(core, pos)) continue;
       int rank = rank(core, state, pos);
+      if (rank > 0 && !core.vision().surveyed(core)) continue;
       if (pos.equals(core.supplyTarget)) {
         previous = pos.immutable();
         previousRank = rank;

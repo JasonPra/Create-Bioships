@@ -160,6 +160,18 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
               (scuttling ? -.35 : -1.25)
                   + (moving ? Math.max(0, Math.sin(phase)) * (scuttling ? .16 : .45) : 0),
               .5 + front * 1.2 + (moving ? Math.cos(phase) * (scuttling ? .25 : .45) : 0));
+      if (scuttling && core.crawl().wallFacing() != null) {
+        var normal = Vec3.atLowerCornerOf(core.crawl().wallFacing().getNormal());
+        var tangent = new Vec3(-normal.z, 0, normal.x);
+        foot =
+            new Vec3(.5, .4, .5)
+                .add(
+                    normal.scale(
+                        core.crawl().wallDistance()
+                            - (moving ? Math.max(0, Math.sin(phase)) * .12 : 0)))
+                .add(tangent.scale(side * .7))
+                .add(0, front * .65 + (moving ? Math.cos(phase) * .2 : 0), 0);
+      }
       Vec3 previous = root;
       for (int i = 1; i <= 10; i++) {
         double t = i / 10.0;

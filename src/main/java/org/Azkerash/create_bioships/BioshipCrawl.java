@@ -25,6 +25,21 @@ public final class BioshipCrawl {
   }
 
   private boolean gathering;
+  private Direction wallFacing;
+  private double wallDistance;
+
+  public Direction wallFacing() {
+    return wallFacing;
+  }
+
+  public double wallDistance() {
+    return wallDistance;
+  }
+
+  void clingHeight(double height) {
+    supportHeight = height;
+  }
+
   private Vec3 reach;
 
   public Vec3 reach() {
@@ -190,9 +205,23 @@ public final class BioshipCrawl {
     if (core.isMature()
         || core.body().health() <= 0
         || core.blueprint().busy()
-        || core.missingBiomass() > 0 && !walking) return;
+        || core.missingBiomass() > 0 && !walking && wallFacing == null) return;
     var level = (ServerLevel) core.getLevel();
     Vec3 here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var grip = walking || wallFacing != null ? GroundRoute.grip(core, here) : null;
+    wallFacing = null;
+    if (grip != null) {
+      var root =
+          core.ship()
+              .logicalPose()
+              .transformPositionInverse(
+                  here.add(Vec3.atLowerCornerOf(grip.direction().getNormal())))
+              .subtract(core.ship().logicalPose().transformPositionInverse(here));
+      wallFacing = Direction.getNearest(root.x, root.y, root.z);
+      wallDistance = grip.distance();
+      supportHeight = here.y;
+      return;
+    }
     double[] heights = new double[4];
     int count = 0;
     double highest = -Double.MAX_VALUE;
@@ -219,6 +248,8 @@ public final class BioshipCrawl {
 
   CompoundTag save() {
     var t = new CompoundTag();
+    t.putInt("Wall", wallFacing == null ? -1 : wallFacing.ordinal());
+    t.putDouble("WallDistance", wallDistance);
     t.putBoolean("Walking", walking);
     t.putBoolean("Gathering", gathering);
     if (reach != null) {
@@ -240,6 +271,11 @@ public final class BioshipCrawl {
   }
 
   void load(CompoundTag t) {
+    wallFacing =
+        t.contains("Wall") && t.getInt("Wall") >= 0
+            ? Direction.values()[Math.min(5, t.getInt("Wall"))]
+            : null;
+    wallDistance = t.getDouble("WallDistance");
     walking = t.getBoolean("Walking");
     gathering = t.getBoolean("Gathering");
     reach =

@@ -489,9 +489,11 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     }
     if (core.ship() != null && core.coreMotion.tick(core)) {
       if (!core.isRemoved()) core.serverTick();
-      core.flight = new FlightIntent(false, Vec3.ZERO, 0);
+      core.flight =
+          new FlightIntent(false, Vec3.ZERO, 0, core.crawl.supportHeight(), core.crawl.stanceUp());
       return;
     }
+    if (core.ship() != null) core.vision.observe(core);
     if (core.ship() != null && core.isMature() && level.getGameTime() % 10 == 0) {
       core.gatheringGoal();
       level.sendBlockUpdated(pos, state, state, 2);
@@ -885,12 +887,14 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     var threat = BioshipDefense.target(this);
     if (!isMature() && threat != null) {
       Vec3 point = threat.getBoundingBox().getCenter();
-      return point.distanceToSqr(here) > 6.25 ? new Vec3(point.x, here.y, point.z) : null;
+      return point.distanceToSqr(here) > 6.25
+          ? new Vec3(point.x, Math.abs(point.y - here.y) > 4 ? point.y : here.y, point.z)
+          : null;
     }
     var objective = BioshipPriorities.bestWorld(this);
     if (objective != null && (objective.rank() == 0 || objective.rank() <= 2 && !hungry())) {
       Vec3 point = Vec3.atCenterOf(objective.pos());
-      return new Vec3(point.x, here.y, point.z);
+      return new Vec3(point.x, Math.abs(point.y - here.y) > 4 ? point.y : here.y, point.z);
     }
     var stomach = DigestiveSystem.stomach(this);
     if (hasMouth() && stomach != null && stomach.connected(this)) {
@@ -922,7 +926,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
           }
           return null;
         }
-        return new Vec3(point.x, here.y, point.z);
+        return new Vec3(point.x, Math.abs(point.y - here.y) > 4 ? point.y : here.y, point.z);
       }
     }
     if (isMature()) return null;
@@ -930,7 +934,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     if (wreckSupply != null) return new Vec3(wreckSupply.x, here.y, wreckSupply.z);
     if (objective == null) return null;
     Vec3 point = Vec3.atCenterOf(objective.pos());
-    return new Vec3(point.x, here.y, point.z);
+    return new Vec3(point.x, Math.abs(point.y - here.y) > 4 ? point.y : here.y, point.z);
   }
 
   static boolean droppedSupply(ItemStack stack) {
@@ -1085,6 +1089,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     tag.put("Scavenging", scavenging.save());
     tag.put("Crawl", crawl.save());
     tag.put("CoreMotion", coreMotion.save());
+    tag.put("Vision", vision.save());
     tag.put("Access", access.save(captain));
     tag.put("BodyMemory", body.save());
     tag.put("Blueprint", blueprint.save());
@@ -1124,6 +1129,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     scavenging.load(tag.getCompound("Scavenging"));
     crawl.load(tag.getCompound("Crawl"));
     coreMotion.load(tag.getCompound("CoreMotion"));
+    vision.load(tag.getCompound("Vision"));
     access.load(tag.getCompound("Access"));
     body.load(tag.getCompound("BodyMemory"), registries);
     blueprint.load(tag.getCompound("Blueprint"), registries);

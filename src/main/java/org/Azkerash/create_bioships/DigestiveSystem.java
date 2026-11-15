@@ -54,6 +54,16 @@ public final class DigestiveSystem {
 
   private static List<BlockPos> findPath(
       LivingCoreBlockEntity core, ServerSubLevel ship, BlockPos start, BlockPos end) {
+    return findPath(core, ship, start, end, null, null);
+  }
+
+  private static List<BlockPos> findPath(
+      LivingCoreBlockEntity core,
+      ServerSubLevel ship,
+      BlockPos start,
+      BlockPos end,
+      BlockPos blocked,
+      BlockPos freed) {
     var level = ship.getLevel();
     var origin = core.structuralOrigin();
     Map<BlockPos, BlockPos> parent = new HashMap<>();
@@ -82,7 +92,12 @@ public final class DigestiveSystem {
             || Math.abs(offset.getZ()) > 24) continue;
         if (!next.equals(end) && offset.getY() != 1) continue;
         if (!ship.getPlot().contains(new net.minecraft.world.level.ChunkPos(next))) continue;
-        var state = level.getBlockState(next);
+        var state =
+            next.equals(blocked)
+                ? Create_bioships.CORE.get().defaultBlockState()
+                : next.equals(freed)
+                    ? Create_bioships.INTESTINE.get().defaultBlockState()
+                    : level.getBlockState(next);
         if (!next.equals(end)
             && !state.isAir()
             && !state.is(Create_bioships.FLESH.get())
@@ -98,60 +113,236 @@ public final class DigestiveSystem {
     return null;
   }
 
+  private record Plan(Set<BlockPos> wanted, List<BlockPos> retired, int purchases) {}
+
+  private static Map<BlockPos, net.minecraft.world.level.block.state.BlockState> tubes(
+      LivingCoreBlockEntity core) {
+    Map<BlockPos, net.minecraft.world.level.block.state.BlockState> result = new LinkedHashMap<>();
+    for (var p : BioshipDecay.blocks(core.ship())) {
+      var state = core.getLevel().getBlockState(p);
+      if (state.is(Create_bioships.INTESTINE.get())) result.put(p, state);
+    }
+    return result;
+  }
+
+  private static boolean removable(BlockPos point, Set<BlockPos> cells) {
+    var neighbors = new ArrayList<BlockPos>();
+    for (var d : Direction.values())
+      if (cells.contains(point.relative(d))) neighbors.add(point.relative(d));
+    if (neighbors.size() < 2) return true;
+    Set<BlockPos> seen = new HashSet<>();
+    ArrayDeque<BlockPos> queue = new ArrayDeque<>();
+    queue.add(neighbors.getFirst());
+    seen.add(neighbors.getFirst());
+    while (!queue.isEmpty() && seen.size() < 20000) {
+      var p = queue.removeFirst();
+      for (var d : Direction.values()) {
+        var n = p.relative(d);
+        if (!n.equals(point) && cells.contains(n) && seen.add(n)) queue.add(n);
+      }
+    }
+    return seen.containsAll(neighbors);
+  }
+
+  private static boolean coreLink(
+      LivingCoreBlockEntity core, BlockPos removed, Set<BlockPos> cells, Set<BlockPos> wanted) {
+    if (core.getBlockPos().equals(core.structuralOrigin())) return true;
+    Set<BlockPos> seen = new HashSet<>();
+    ArrayDeque<BlockPos> queue = new ArrayDeque<>();
+    queue.add(core.getBlockPos());
+    seen.add(core.getBlockPos());
+    while (!queue.isEmpty() && seen.size() < 1000) {
+      var point = queue.removeFirst();
+      if (point.equals(core.structuralOrigin())) return true;
+      for (var d : Direction.values()) {
+        var next = point.relative(d);
+        if (!next.equals(removed)
+            && cells.contains(next)
+            && (wanted.contains(next) || CoreMotion.tissue(core.getLevel().getBlockState(next)))
+            && seen.add(next)) queue.add(next);
+      }
+    }
+    return false;
+  }
+
+  static boolean reserveOrganRoute(LivingCoreBlockEntity core, BlockPos source, BlockPos target) {
+    var stomach = stomach(core);
+    var mouth = core.mouthBlock();
+    if (stomach == null || mouth == null || !stomach.tubeBootstrapped) return true;
+    boolean movesMouth = source.equals(mouth), movesStomach = source.equals(stomach.getBlockPos());
+    boolean movesStore = stomach.sacPaths.containsKey(source);
+    if (!movesMouth && !movesStomach && !movesStore) return true;
+    var end = movesStomach ? target : stomach.getBlockPos();
+    var start = movesMouth ? target : mouth;
+    var main = findPath(core, core.ship(), start, end);
+    if (main == null) return false;
+    var wanted = new LinkedHashSet<>(main);
+    for (var sac : stomach.sacPaths.keySet()) {
+      var path = findPath(core, core.ship(), end, movesStore && sac.equals(source) ? target : sac);
+      if (path == null) return false;
+      wanted.addAll(path);
+    }
+    var result = plan(core, stomach, wanted, Set.of(), tubes(core));
+    if (!affordable(stomach, result)) return false;
+    if (result.purchases > 0) {
+      stomach.spend("biomancy:flesh_bits", result.purchases);
+      stomach.spend("biomancy:elastic_fibers", result.purchases);
+      stomach.paidTubeStock += result.purchases;
+      stomach.setChanged();
+    }
+    return true;
+  }
+
+  private static Plan plan(
+      LivingCoreBlockEntity core,
+      StomachBlockEntity stomach,
+      Set<BlockPos> wanted,
+      Set<BlockPos> starter,
+      Map<BlockPos, net.minecraft.world.level.block.state.BlockState> existing) {
+    Set<BlockPos> cells = new HashSet<>(BioshipDecay.blocks(core.ship()));
+    cells.addAll(wanted);
+    var retired = new ArrayList<BlockPos>();
+    int reuse = stomach.freeTubeStock + stomach.paidTubeStock;
+    for (var entry : existing.entrySet())
+      if (!entry.getKey().equals(core.structuralOrigin())
+          && !wanted.contains(entry.getKey())
+          && !entry.getValue().getValue(IntestineBlock.MANUAL)) {
+        if (entry.getValue().getValue(IntestineBlock.ENCASED)
+            || removable(entry.getKey(), cells) && coreLink(core, entry.getKey(), cells, wanted)) {
+          retired.add(entry.getKey());
+          reuse++;
+          if (!entry.getValue().getValue(IntestineBlock.ENCASED)) cells.remove(entry.getKey());
+        }
+      }
+    int missing = 0, free = 0;
+    for (var p : wanted)
+      if (!existing.containsKey(p)) {
+        missing++;
+        if (starter.contains(p)) free++;
+      }
+    return new Plan(new LinkedHashSet<>(wanted), retired, Math.max(0, missing - free - reuse));
+  }
+
+  private static boolean affordable(StomachBlockEntity stomach, Plan plan) {
+    return stomach.material("biomancy:flesh_bits") >= plan.purchases
+        && stomach.material("biomancy:elastic_fibers") >= plan.purchases;
+  }
+
+  static boolean reserveCoreRoute(LivingCoreBlockEntity core, BlockPos target, boolean reserve) {
+    var stomach = stomach(core);
+    if (stomach == null) return true;
+    boolean crosses =
+        stomach.gutPath.contains(target)
+            || stomach.sacPaths.values().stream().anyMatch(p -> p.contains(target));
+    if (!crosses) return true;
+    var main =
+        findPath(
+            core,
+            core.ship(),
+            core.mouthBlock(),
+            stomach.getBlockPos(),
+            target,
+            core.getBlockPos());
+    if (main == null) return false;
+    var wanted = new LinkedHashSet<>(main);
+    for (var sac : stomach.sacPaths.keySet()) {
+      var path =
+          findPath(core, core.ship(), stomach.getBlockPos(), sac, target, core.getBlockPos());
+      if (path == null) return false;
+      wanted.addAll(path);
+    }
+    var existing = tubes(core);
+    var skin = existing.remove(target);
+    if (skin != null) existing.put(core.getBlockPos(), skin);
+    var plan = plan(core, stomach, wanted, Set.of(), existing);
+    if (!affordable(stomach, plan)) return false;
+    if (reserve && plan.purchases > 0) {
+      stomach.spend("biomancy:flesh_bits", plan.purchases);
+      stomach.spend("biomancy:elastic_fibers", plan.purchases);
+      stomach.paidTubeStock += plan.purchases;
+      stomach.setChanged();
+    }
+    return true;
+  }
+
   public static void connect(LivingCoreBlockEntity core, ServerSubLevel ship) {
     var stomach = stomach(core);
     var mouth = core.mouthBlock();
     if (stomach == null || mouth == null) return;
     var main = findPath(core, ship, mouth, stomach.getBlockPos());
     if (main == null) return;
+    var existing = tubes(core);
+    Set<BlockPos> starter = stomach.tubeBootstrapped ? Set.of() : new HashSet<>(main);
+    var wanted = new LinkedHashSet<>(main);
+    var selected = plan(core, stomach, wanted, starter, existing);
+    if (!affordable(stomach, selected)) return;
     Map<BlockPos, List<BlockPos>> branches = new LinkedHashMap<>();
-    for (var entity : BioshipIntegration.blockEntities(ship))
-      if (EngineRoom.storage(entity)) {
-        var branch = findPath(core, ship, stomach.getBlockPos(), entity.getBlockPos());
-        if (branch != null) branches.put(entity.getBlockPos(), branch);
+    var stores =
+        BioshipIntegration.blockEntities(ship).stream()
+            .filter(EngineRoom::storage)
+            .sorted(
+                java.util.Comparator.comparing(e -> !stomach.sacPaths.containsKey(e.getBlockPos())))
+            .toList();
+    for (var store : stores) {
+      var path = findPath(core, ship, stomach.getBlockPos(), store.getBlockPos());
+      if (path == null) continue;
+      var trial = new LinkedHashSet<>(wanted);
+      trial.addAll(path);
+      var candidate = plan(core, stomach, trial, starter, existing);
+      if (affordable(stomach, candidate)) {
+        wanted = trial;
+        selected = candidate;
+        branches.put(store.getBlockPos(), path);
       }
-    Set<BlockPos> previous = new HashSet<>(stomach.gutPath);
-    stomach.sacPaths.values().forEach(previous::addAll);
-    Set<BlockPos> wanted = new HashSet<>(main);
-    branches.values().forEach(wanted::addAll);
+    }
     var level = ship.getLevel();
-    for (var old : previous)
-      if (!wanted.contains(old) && level.getBlockState(old).is(Create_bioships.INTESTINE.get()))
-        level.setBlock(
-            old,
-            level.getBlockState(old).getValue(IntestineBlock.ENCASED)
-                ? Create_bioships.FLESH.get().defaultBlockState()
-                : net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(),
-            3);
+    for (var old : selected.retired) {
+      var state = existing.get(old);
+      if (state.getValue(IntestineBlock.PAID)) stomach.paidTubeStock++;
+      else stomach.freeTubeStock++;
+      level.setBlock(
+          old,
+          state.getValue(IntestineBlock.ENCASED)
+              ? Create_bioships.FLESH.get().defaultBlockState()
+              : net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(),
+          3);
+    }
     for (var next : wanted) {
       var old = level.getBlockState(next);
-      if (old.isAir()
-          && core.body()
-              .memory
-              .getOrDefault(
-                  next.subtract(core.getBlockPos()),
-                  net.minecraft.world.level.block.Blocks.AIR.defaultBlockState())
-              .is(Create_bioships.INTESTINE.get())) continue;
-      if (!old.is(Create_bioships.INTESTINE.get()))
-        level.setBlock(
-            next,
-            Create_bioships.INTESTINE
-                .get()
-                .defaultBlockState()
-                .setValue(IntestineBlock.ENCASED, old.is(Create_bioships.FLESH.get())),
-            3);
-    }
-    for (var next : wanted)
-      if (level.getBlockState(next).is(Create_bioships.INTESTINE.get())) {
-        var state = level.getBlockState(next);
-        var connected = Create_bioships.INTESTINE.get().connections(state, level, next);
-        if (!state.equals(connected)) level.setBlock(next, connected, 3);
+      if (old.is(Create_bioships.INTESTINE.get())) continue;
+      boolean paid;
+      if (starter.contains(next)) paid = false;
+      else if (stomach.freeTubeStock > 0) {
+        stomach.freeTubeStock--;
+        paid = false;
+      } else if (stomach.paidTubeStock > 0) {
+        stomach.paidTubeStock--;
+        paid = true;
+      } else {
+        stomach.spend("biomancy:flesh_bits", 1);
+        stomach.spend("biomancy:elastic_fibers", 1);
+        paid = true;
       }
+      level.setBlock(
+          next,
+          Create_bioships.INTESTINE
+              .get()
+              .defaultBlockState()
+              .setValue(IntestineBlock.ENCASED, old.is(Create_bioships.FLESH.get()))
+              .setValue(IntestineBlock.PAID, paid),
+          3);
+    }
+    for (var next : wanted) {
+      var state = level.getBlockState(next);
+      var connected = Create_bioships.INTESTINE.get().connections(state, level, next);
+      if (!state.equals(connected)) level.setBlock(next, connected, 3);
+    }
     stomach.gutPath.clear();
     stomach.gutPath.addAll(main);
     stomach.sacPaths.clear();
     stomach.sacPaths.putAll(branches);
     stomach.connectedMouth = mouth;
+    stomach.tubeBootstrapped = true;
     stomach.setChanged();
   }
 

@@ -17,6 +17,8 @@ public final class SurfaceEyeBlock extends DirectionalBlock {
       WINDOW_INTERNAL =
           net.minecraft.world.level.block.state.properties.BooleanProperty.create(
               "window_internal");
+  public static final net.minecraft.world.level.block.state.properties.BooleanProperty AUTOMATIC =
+      net.minecraft.world.level.block.state.properties.BooleanProperty.create("automatic");
   public static final MapCodec<SurfaceEyeBlock> CODEC = simpleCodec(SurfaceEyeBlock::new);
 
   public SurfaceEyeBlock(Properties properties) {
@@ -26,7 +28,8 @@ public final class SurfaceEyeBlock extends DirectionalBlock {
             .any()
             .setValue(FACING, Direction.NORTH)
             .setValue(WINDOW_MOUNTED, false)
-            .setValue(WINDOW_INTERNAL, false));
+            .setValue(WINDOW_INTERNAL, false)
+            .setValue(AUTOMATIC, false));
   }
 
   @Override
@@ -36,7 +39,7 @@ public final class SurfaceEyeBlock extends DirectionalBlock {
 
   @Override
   protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-    builder.add(FACING, WINDOW_MOUNTED, WINDOW_INTERNAL);
+    builder.add(FACING, WINDOW_MOUNTED, WINDOW_INTERNAL, AUTOMATIC);
   }
 
   @Override
@@ -73,6 +76,8 @@ public final class SurfaceEyeBlock extends DirectionalBlock {
   protected void onPlace(
       BlockState state, Level level, BlockPos pos, BlockState previous, boolean moved) {
     super.onPlace(state, level, pos, previous, moved);
+    var core = BioshipAccess.core(level, pos);
+    if (core != null) core.vision().invalidate();
     var next = mounted(state, level, pos);
     if (!next.equals(state)) level.setBlock(pos, next, 2);
   }
