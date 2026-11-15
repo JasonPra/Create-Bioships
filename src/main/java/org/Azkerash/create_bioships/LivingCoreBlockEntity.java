@@ -405,6 +405,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
         .offset(blueprint.offset(DinghyGrowth.atVersion(offset, bodyLayoutVersion)));
   }
 
+  final BioshipChunks chunkLoading = new BioshipChunks();
   private final BioshipBrain brain = new BioshipBrain();
 
   public BioshipBrain brain() {
@@ -556,8 +557,15 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     return true;
   }
 
+  @Override
+  public void setRemoved() {
+    chunkLoading.release();
+    super.setRemoved();
+  }
+
   public static void tick(Level level, BlockPos pos, BlockState state, LivingCoreBlockEntity core) {
     if (level.isClientSide) return;
+    core.chunkLoading.update(core);
     if (core.ship() != null) {
       BioshipTargetEntity.ensure(core);
       core.scavenging.deliver(core);

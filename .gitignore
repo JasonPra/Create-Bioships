@@ -9,7 +9,10 @@ build
 
 # IntelliJ
 out/
-.idea
+.idea/*
+!.idea/dictionaries/
+.idea/dictionaries/*
+!.idea/dictionaries/create_bioships.xml
 *.iml
 # mpeltonen/sbt-idea plugin
 .idea_modules/

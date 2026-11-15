@@ -119,6 +119,18 @@ final class GroundRoute {
         : null;
   }
 
+  private boolean firstStepClear(LivingCoreBlockEntity core, Vec3 from, Vec3 to, List<Vec3> parts) {
+    // The physics body can stop between grid centers. Check its actual first step instead of
+    // repeatedly planning an edge that is clear only from the assumed tile center.
+    var corner = to.y > from.y ? new Vec3(from.x, to.y, from.z) : new Vec3(to.x, from.y, to.z);
+    for (var segment : List.of(new Vec3[] {from, corner}, new Vec3[] {corner, to})) {
+      int samples = Math.max(1, (int) Math.ceil(segment[0].distanceTo(segment[1]) / .2));
+      for (int i = 1; i <= samples; i++)
+        if (!fits(core, segment[0].lerp(segment[1], (double) i / samples), parts)) return false;
+    }
+    return true;
+  }
+
   static boolean turnClear(LivingCoreBlockEntity core, double angle) {
     var route = new GroundRoute();
     var offsets = route.offsets(core);
@@ -213,7 +225,8 @@ final class GroundRoute {
         if (Math.abs(next.getX() - start.getX()) > 24 || Math.abs(next.getZ() - start.getZ()) > 24)
           continue;
         var point = standing(core, next.getX(), next.getZ(), node.pos().getY(), parts);
-        if (point == null) continue;
+        if (point == null || node.pos().equals(start) && !firstStepClear(core, here, point, parts))
+          continue;
         var key = new BlockPos(next.getX(), (int) Math.round(point.y - stance), next.getZ());
         // Prefer clearance around corners. Exact cell-edge paths are fragile for a full physics
         // body.

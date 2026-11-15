@@ -17,7 +17,8 @@ final class BioshipPriorities {
 
   private static int rank(
       LivingCoreBlockEntity core, BlockState state, BlockPos pos, boolean observed) {
-    if (state.isAir()) return Integer.MAX_VALUE;
+    var level = core.getLevel();
+    if (level == null || core.ship() == null || state.isAir()) return Integer.MAX_VALUE;
     String id = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
     var stomach = DigestiveSystem.stomach(core);
     boolean mouth = core.hasMouth();
@@ -28,16 +29,15 @@ final class BioshipPriorities {
           && BioshipIntegration.blockEntities(core.ship()).stream()
               .noneMatch(e -> e.getBlockState().is(state.getBlock()))) return 0;
     }
-    var entity = observed ? core.getLevel().getBlockEntity(pos) : null;
+    var entity = observed ? level.getBlockEntity(pos) : null;
     boolean container =
         id.equals("biomancy:storage_sac")
             || entity instanceof Container
             || !observed && state.hasBlockEntity();
     var inventory =
         observed
-            ? core.getLevel()
-                .getCapability(
-                    net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK, pos, null)
+            ? level.getCapability(
+                net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK, pos, null)
             : null;
     container |= inventory != null;
     if (container) {
@@ -66,8 +66,7 @@ final class BioshipPriorities {
   }
 
   private static java.util.List<BlockPos> sources(
-      LivingCoreBlockEntity core, Vec3 here, int range) {
-    var level = (ServerLevel) core.getLevel();
+      LivingCoreBlockEntity core, ServerLevel level, Vec3 here, int range) {
     var center = BlockPos.containing(here);
     var saved = SOURCE_CACHE.get(core);
     boolean reuse =
@@ -106,11 +105,11 @@ final class BioshipPriorities {
   }
 
   static java.util.List<Objective> worldObjectives(LivingCoreBlockEntity core) {
-    if (core.ship() == null) return java.util.List.of();
-    var level = (ServerLevel) core.getLevel();
+    if (!(core.getLevel() instanceof ServerLevel level) || core.ship() == null)
+      return java.util.List.of();
     var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
     int range = core.vision().maximumDistance(core);
-    var candidates = new java.util.LinkedHashSet<>(sources(core, here, range));
+    var candidates = new java.util.LinkedHashSet<>(sources(core, level, here, range));
     candidates.addAll(core.vision().rememberedSources());
     var result = new java.util.ArrayList<Objective>();
     for (var pos : candidates) {

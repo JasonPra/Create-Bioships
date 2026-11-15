@@ -21,3 +21,9 @@ The goggles display the selected action and reason. F3+B also includes these in 
 ## Regression checks
 
 `BehaviorPriorityTest` covers strict needs/goals ordering, urgency, escape precedence, wreck-before-hunt, stable ties and satisfied-need removal. The in-engine `needs_tree_prefers_wreck_over_hunting_and_interrupts_for_escape` test supplies competing visible prey, useful wreckage and an optional sac, verifies actual wreck collection, interrupts it for danger, and verifies resumption after safety returns. The full GameTest suite also exercises organ creation and relocation, inventory conservation, hunting, paid growth, flight, storage, core scouting and both glass mazes.
+
+## Normal world loading
+
+`BioshipChunks` gives each living ship expiring, UUID-owned world tickets around its physical body anchor. The view radius reuses the same creator/nearest connected player and server limit as vision. The simulation radius is capped by that view radius and the server simulation distance. Load-only and simulation tickets are separate; vanilla supporting border chunks are retained around the simulation area. Tickets refresh once per second, move with the ship, resize when settings change, and are released on death or block-entity removal. The expiry also clears abandoned tickets if updates cease. No additional test-only arena forcing is required for this behavior.
+
+Ground routes validate the first step from the body’s actual physical position, including the lift/cross/lower sequence. They do not assume physics stopped exactly at a grid center; an obstructed initial edge is rejected during planning rather than selected again on every retry. The priority regression waits for the naturally spawned competing prey to enter Minecraft’s entity index before comparing proposals, without changing terrain, visibility or loading rules.

@@ -2,7 +2,7 @@
 
 The mod includes a **Bioship Navigation Lab** world type. Its data pack resources are packaged in the normal mod JAR; no separate save download is required.
 
-Create a new world, choose **Creative**, enable commands, then select **World → World Type → Bioship Navigation Lab**. On the first login the courses receive creator-owned hatchlings, and the player receives Symbiotic Goggles and a bioship wrench. Ordinary worlds are unaffected. The lab is saved normally and is not rebuilt every time you open it.
+Create a new world, choose **Creative**, enable commands, then select **World → World Type → Bioship Navigation Lab**. On the first login the courses receive creator-owned hatchlings, and the player receives Symbiotic Goggles and a bioship wrench. Ordinary worlds are unaffected. The lab is saved normally and is not rebuilt every time you open it. Courses do not use persistent arena force-loading; the living ships use the same view/simulation loading as in ordinary worlds.
 
 | Course | Hatchling start | Prize | Conditions |
 | --- | --- | --- | --- |

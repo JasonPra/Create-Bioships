@@ -2,7 +2,6 @@ package org.Azkerash.create_bioships;
 
 import dev.ryanhcode.sable.api.SubLevelAssemblyHelper;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
-import dev.ryanhcode.sable.api.sublevel.ticket.SubLevelLoadingTicketType;
 import dev.ryanhcode.sable.companion.math.BoundingBox3i;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason;
@@ -15,7 +14,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.Unit;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.*;
@@ -105,7 +103,6 @@ public final class NavigationLab {
     for (var entry : course.blocks().entrySet()) {
       var p = entry.getKey();
       level.getChunk(p.getX() >> 4, p.getZ() >> 4);
-      level.setChunkForced(p.getX() >> 4, p.getZ() >> 4, true);
       level.setBlock(p, entry.getValue(), 3);
     }
   }
@@ -177,14 +174,13 @@ public final class NavigationLab {
           SubLevelAssemblyHelper.assembleBlocks(
               level, origin, List.of(origin), new BoundingBox3i(origin, origin));
       if (ship == null) throw new IllegalStateException("Cannot create navigation lab hatchling");
-      SubLevelContainer.getContainer(level)
-          .addForceLoadTicket(ship, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
       var data = new CompoundTag();
       data.putBoolean("BioshipNavigationLab", true);
       ship.setUserDataTag(data);
       for (var actor : ship.getPlot().getBlockEntityActors())
         if (actor instanceof LivingCoreBlockEntity core) {
           core.claimCreator(owner);
+          core.chunkLoading.update(core);
           if (origin.equals(ELEVATED)) {
             level.setBlock(
                 core.getBlockPos().north(),

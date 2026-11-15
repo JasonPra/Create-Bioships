@@ -138,7 +138,7 @@ public class BioshipGameTests {
 
   private static void afterIndexed(
       GameTestHelper helper,
-      List<net.minecraft.world.entity.item.ItemEntity> entities,
+      List<? extends net.minecraft.world.entity.Entity> entities,
       Runnable action) {
     if (entities.stream()
         .allMatch(
@@ -146,8 +146,7 @@ public class BioshipGameTests {
                 helper
                     .getLevel()
                     .getEntitiesOfClass(
-                        net.minecraft.world.entity.item.ItemEntity.class,
-                        e.getBoundingBox().inflate(.1))
+                        net.minecraft.world.entity.Entity.class, e.getBoundingBox().inflate(.1))
                     .contains(e))) {
       action.run();
     } else helper.runAfterDelay(1, () -> afterIndexed(helper, entities, action));
@@ -213,6 +212,43 @@ public class BioshipGameTests {
             + core.getLevel().getBlockState(physical);
     }
     return detail;
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 240, batch = "natural_ship_chunk_loading")
+  public static void bioship_loads_view_range_and_ticks_simulation_range(GameTestHelper helper) {
+    var level = helper.getLevel();
+    var players = level.getServer().getPlayerList();
+    int previousView = players.getViewDistance(),
+        previousSimulation = players.getSimulationDistance();
+    players.setViewDistance(3);
+    players.setSimulationDistance(2);
+    var ship = assemble(helper);
+    var core = core(ship);
+    core.chunkLoading.update(core);
+    var root = new ChunkPos(BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO)));
+    var near = new ChunkPos(root.x + 2, root.z);
+    var far = new ChunkPos(root.x + 3, root.z);
+    helper.succeedWhen(
+        () -> {
+          var chunks = level.getChunkSource();
+          helper.assertTrue(
+              chunks.getChunkNow(far.x, far.z) != null,
+              "The normal bioship loader did not load its view-distance edge");
+          helper.assertTrue(
+              chunks.chunkMap.getDistanceManager().inEntityTickingRange(near.toLong()),
+              "The normal bioship loader did not simulate its inner range");
+          helper.assertTrue(
+              !chunks.chunkMap.getDistanceManager().inEntityTickingRange(far.toLong()),
+              "View-only chunks are being simulated beyond the simulation-distance limit");
+          helper.assertTrue(
+              core.chunkLoading.viewDistance() == 3 && core.chunkLoading.simulationDistance() == 2,
+              "Bioship ignored the server distance limits");
+          core.body().die(core);
+          helper.assertTrue(!core.chunkLoading.active(), "Death retained bioship loading tickets");
+          cleanup(helper, ship);
+          players.setViewDistance(previousView);
+          players.setSimulationDistance(previousSimulation);
+        });
   }
 
   @GameTest(template = "test_empty", batch = "core_dormant")
@@ -4059,7 +4095,7 @@ public class BioshipGameTests {
     }
   }
 
-  @GameTest(template = "test_empty", timeoutTicks = 120, batch = "behavior_tree_wreck_priority")
+  @GameTest(template = "test_empty", timeoutTicks = 300, batch = "behavior_tree_wreck_priority")
   public static void needs_tree_prefers_wreck_over_hunting_and_interrupts_for_escape(
       GameTestHelper helper) {
     var ship = assemble(helper);
@@ -4080,63 +4116,83 @@ public class BioshipGameTests {
     level.setBlock(lamp, Blocks.GLOWSTONE.defaultBlockState(), 3);
     helper.runAfterDelay(
         25,
-        () -> {
-          ServerSubLevel wreck = null;
-          var loose =
-              BlockPos.containing(BioshipBlueprint.physical(core(ship), BlockPos.ZERO)).south(4);
-          try {
-            var current = core(ship);
-            var root = BioshipBlueprint.physical(current, BlockPos.ZERO);
-            var source = BlockPos.containing(root).east(6).south(2);
-            level.setBlock(source, Create_bioships.CARAPACE.get().defaultBlockState(), 3);
-            wreck =
-                SubLevelAssemblyHelper.assembleBlocks(
-                    level, source, List.of(source), new BoundingBox3i(source, source));
-            SubLevelContainer.getContainer(level)
-                .addForceLoadTicket(
-                    wreck,
-                    SubLevelLoadingTicketType.COMMAND_FORCED,
-                    net.minecraft.util.Unit.INSTANCE);
-            BioshipDecay.mark(wreck);
-            level.setBlock(loose, block("biomancy:storage_sac").defaultBlockState(), 3);
-            helper.assertTrue(
-                BioshipDefense.prey(current) != null,
-                "Competing live prey was not visible/indexed");
-            var decision = current.brain().choose(current);
-            helper.assertTrue(
-                decision.action() == BioshipBrain.Action.SCAVENGE,
-                "Needful wreck lost to live prey or optional storage: " + decision);
-            var body = current.body().save();
-            body.putDouble("Health", 10);
-            current.body().load(body, level.registryAccess());
-            var danger = new net.minecraft.nbt.CompoundTag();
-            danger.put("Danger", VisionDebug.vector(root.add(3, 0, 0)));
-            danger.putLong("PanicUntil", level.getGameTime() + 100);
-            current.autonomy().load(danger);
-            helper.assertTrue(
-                current.brain().choose(current).action() == BioshipBrain.Action.FLEE,
-                "Escape failed to interrupt reclamation");
-            helper.assertTrue(
-                !BioshipScavenging.collect(current, ship),
-                "Wreck collector ignored the selected escape action");
-            body.putDouble("Health", 100);
-            current.body().load(body, level.registryAccess());
-            current.autonomy().load(new net.minecraft.nbt.CompoundTag());
-            helper.assertTrue(
-                current.brain().choose(current).action() == BioshipBrain.Action.SCAVENGE,
-                "Safe creature did not resume the highest need");
-            helper.assertTrue(
-                BioshipScavenging.collect(current, ship),
-                "Selected wreck was not executed by the collector");
-            helper.succeed();
-          } finally {
-            prey.discard();
-            level.setBlock(lamp, Blocks.STONE.defaultBlockState(), 3);
-            level.removeBlock(loose, false);
-            cleanup(helper, ship);
-            if (wreck != null && !wreck.isRemoved()) cleanup(helper, wreck);
-          }
-        });
+        () ->
+            afterIndexed(
+                helper,
+                List.of(prey),
+                () -> {
+                  ServerSubLevel wreck = null;
+                  var loose =
+                      BlockPos.containing(BioshipBlueprint.physical(core(ship), BlockPos.ZERO))
+                          .south(4);
+                  try {
+                    var current = core(ship);
+                    var root = BioshipBlueprint.physical(current, BlockPos.ZERO);
+                    var source = BlockPos.containing(root).east(6).south(2);
+                    level.setBlock(source, Create_bioships.CARAPACE.get().defaultBlockState(), 3);
+                    wreck =
+                        SubLevelAssemblyHelper.assembleBlocks(
+                            level, source, List.of(source), new BoundingBox3i(source, source));
+                    SubLevelContainer.getContainer(level)
+                        .addForceLoadTicket(
+                            wreck,
+                            SubLevelLoadingTicketType.COMMAND_FORCED,
+                            net.minecraft.util.Unit.INSTANCE);
+                    BioshipDecay.mark(wreck);
+                    level.setBlock(loose, block("biomancy:storage_sac").defaultBlockState(), 3);
+                    helper.assertTrue(
+                        BioshipDefense.prey(current) != null,
+                        "Competing live prey was not visible/indexed: alive="
+                            + prey.isAlive()
+                            + " indexed="
+                            + (level.getEntity(prey.getUUID()) == prey)
+                            + " at="
+                            + prey.position()
+                            + " root="
+                            + root
+                            + " wantsHunt="
+                            + current.wantsToHunt()
+                            + " visible="
+                            + current.vision().visible(current, prey.getBoundingBox().getCenter())
+                            + " stomachConnected="
+                            + DigestiveSystem.stomach(current).connected(current)
+                            + " brain="
+                            + current.brain().choose(current));
+                    var decision = current.brain().choose(current);
+                    helper.assertTrue(
+                        decision.action() == BioshipBrain.Action.SCAVENGE,
+                        "Needful wreck lost to live prey or optional storage: " + decision);
+                    var body = current.body().save();
+                    body.putDouble("Health", 10);
+                    current.body().load(body, level.registryAccess());
+                    var danger = new net.minecraft.nbt.CompoundTag();
+                    danger.put("Danger", VisionDebug.vector(root.add(3, 0, 0)));
+                    danger.putLong("PanicUntil", level.getGameTime() + 100);
+                    current.autonomy().load(danger);
+                    helper.assertTrue(
+                        current.brain().choose(current).action() == BioshipBrain.Action.FLEE,
+                        "Escape failed to interrupt reclamation");
+                    helper.assertTrue(
+                        !BioshipScavenging.collect(current, ship),
+                        "Wreck collector ignored the selected escape action");
+                    body.putDouble("Health", 100);
+                    current.body().load(body, level.registryAccess());
+                    current.autonomy().load(new net.minecraft.nbt.CompoundTag());
+                    helper.assertTrue(
+                        current.brain().choose(current).action() == BioshipBrain.Action.SCAVENGE,
+                        "Safe creature did not resume the highest need");
+                    helper.assertTrue(
+                        BioshipScavenging.collect(current, ship),
+                        "Selected wreck was not executed by the collector");
+                    helper.succeed();
+                  } finally {
+                    prey.discard();
+                    level.setBlock(lamp, Blocks.STONE.defaultBlockState(), 3);
+                    level.removeBlock(loose, false);
+                    cleanup(helper, ship);
+                    if (wreck != null && !wreck.isRemoved()) cleanup(helper, wreck);
+                  }
+                }));
   }
 
   @GameTest(template = "test_empty", timeoutTicks = 100, batch = "underside_occlusion")
@@ -4322,7 +4378,7 @@ public class BioshipGameTests {
                 }));
   }
 
-  @GameTest(template = "test_empty", timeoutTicks = 130, batch = "single_core_creeper_flight")
+  @GameTest(template = "test_empty", timeoutTicks = 300, batch = "single_core_creeper_flight")
   public static void healthy_single_core_flees_creeper_instead_of_fighting(GameTestHelper helper) {
     var ship = assemble(helper);
     var core = core(ship);
@@ -4332,62 +4388,64 @@ public class BioshipGameTests {
     creeper.setNoAi(true);
     creeper.setPersistenceRequired();
     creeper.setPos(here.x + 3, here.y - .5, here.z);
-    level.getChunk(creeper.blockPosition());
-    level.setChunkForced(
-        creeper.blockPosition().getX() >> 4, creeper.blockPosition().getZ() >> 4, true);
     helper.runAfterDelay(
         20,
         () -> {
           helper.assertTrue(level.addFreshEntity(creeper), "Creeper fixture was rejected");
           creeper.setTarget(BioshipTargetEntity.ensure(core));
-        });
-    helper.runAfterDelay(
-        40,
-        () -> {
-          helper.assertTrue(
-              core.autonomy().creeperPanic() && core.autonomy().fleeing(),
-              "Healthy single core chose to fight a creeper: "
-                  + core.autonomy().save()
-                  + " visible="
-                  + core.vision().visible(core, creeper.getBoundingBox().getCenter())
-                  + " nearby="
-                  + level
-                      .getEntitiesOfClass(
-                          net.minecraft.world.entity.monster.Creeper.class,
-                          creeper.getBoundingBox().inflate(12))
-                      .size()
-                  + " alive="
-                  + creeper.isAlive()
-                  + " removed="
-                  + creeper.getRemovalReason()
-                  + " at="
-                  + creeper.position()
-                  + " entity="
-                  + level.getEntity(creeper.getUUID()));
-          helper.assertTrue(
-              !core.coreMotion().canAvoidBlast(core, creeper),
-              "A single core claimed nonexistent escape tissue");
-        });
-    helper.runAfterDelay(
-        90,
-        () -> {
-          try {
-            helper.assertTrue(
-                BioshipBlueprint.physical(core(ship), BlockPos.ZERO)
-                        .distanceToSqr(creeper.position())
-                    > 36,
-                "Single-block creature did not retreat from blast range");
-            helper.assertTrue(
-                creeper.getHealth() == creeper.getMaxHealth(),
-                "Single core attacked the creeper while fleeing");
-            helper.assertTrue(
-                core.body().health() == 100 && !core.canFly(),
-                "Creeper retreat changed health or granted flight");
-            helper.succeed();
-          } finally {
-            creeper.discard();
-            cleanup(helper, ship);
-          }
+          afterIndexed(
+              helper,
+              List.of(creeper),
+              () -> {
+                helper.runAfterDelay(
+                    20,
+                    () -> {
+                      helper.assertTrue(
+                          core.autonomy().creeperPanic() && core.autonomy().fleeing(),
+                          "Healthy single core chose to fight a creeper: "
+                              + core.autonomy().save()
+                              + " visible="
+                              + core.vision().visible(core, creeper.getBoundingBox().getCenter())
+                              + " nearby="
+                              + level
+                                  .getEntitiesOfClass(
+                                      net.minecraft.world.entity.monster.Creeper.class,
+                                      creeper.getBoundingBox().inflate(12))
+                                  .size()
+                              + " alive="
+                              + creeper.isAlive()
+                              + " removed="
+                              + creeper.getRemovalReason()
+                              + " at="
+                              + creeper.position()
+                              + " entity="
+                              + level.getEntity(creeper.getUUID()));
+                      helper.assertTrue(
+                          !core.coreMotion().canAvoidBlast(core, creeper),
+                          "A single core claimed nonexistent escape tissue");
+                    });
+                helper.runAfterDelay(
+                    70,
+                    () -> {
+                      try {
+                        helper.assertTrue(
+                            BioshipBlueprint.physical(core(ship), BlockPos.ZERO)
+                                    .distanceToSqr(creeper.position())
+                                > 36,
+                            "Single-block creature did not retreat from blast range");
+                        helper.assertTrue(
+                            creeper.getHealth() == creeper.getMaxHealth(),
+                            "Single core attacked the creeper while fleeing");
+                        helper.assertTrue(
+                            core.body().health() == 100 && !core.canFly(),
+                            "Creeper retreat changed health or granted flight");
+                        helper.succeed();
+                      } finally {
+                        creeper.discard();
+                        cleanup(helper, ship);
+                      }
+                    });
+              });
         });
   }
 
@@ -4643,6 +4701,14 @@ public class BioshipGameTests {
                 "Wide hatchling stuck in stepped maze: at="
                     + BioshipBlueprint.physical(current, BlockPos.ZERO)
                         .subtract(Vec3.atLowerCornerOf(start))
+                    + " rotation="
+                    + ship.logicalPose().orientation()
+                    + " coreOffset="
+                    + current.coreHeightOffset()
+                    + " cells="
+                    + BioshipDecay.blocks(ship).stream()
+                        .map(p -> p.subtract(current.getBlockPos()))
+                        .toList()
                     + " crawl="
                     + current.crawl().save()
                     + " route="

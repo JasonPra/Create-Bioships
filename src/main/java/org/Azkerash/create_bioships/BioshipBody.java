@@ -41,6 +41,7 @@ public final class BioshipBody {
   void die(LivingCoreBlockEntity core) {
     if (dead) return;
     dead = true;
+    core.chunkLoading.release();
     health = 0;
     if (core.ship() != null) {
       BioshipDecay.mark(core.ship());
