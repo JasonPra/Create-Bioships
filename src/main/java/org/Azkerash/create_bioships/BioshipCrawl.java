@@ -14,11 +14,19 @@ public final class BioshipCrawl {
   private final GroundRoute route = new GroundRoute();
   private final Map<BlockPos, Long> unreachable = new HashMap<>();
 
+  public java.util.List<Vec3> path() {
+    return route.remaining();
+  }
+
   boolean reachableGoal(BlockPos pos) {
     return unreachable.getOrDefault(new BlockPos(pos.getX(), 0, pos.getZ()), 0L) <= currentTime;
   }
 
   private long currentTime;
+
+  void lowerHeight(double height) {
+    if (Double.isFinite(supportHeight)) supportHeight = Math.min(supportHeight, height);
+  }
 
   void stepHeight(double height) {
     supportHeight = Double.isFinite(supportHeight) ? Math.max(supportHeight, height) : height;
@@ -194,7 +202,8 @@ public final class BioshipCrawl {
     for (int i = 1; i <= 3; i++) {
       var p = point.below(i);
       if (level.getBlockState(p).isFaceSturdy(level, p, Direction.UP)
-          && level.getFluidState(p).isEmpty()) return p;
+          && level.getFluidState(p).isEmpty()
+          && level.getBlockState(p.above()).getCollisionShape(level, p.above()).isEmpty()) return p;
     }
     return null;
   }

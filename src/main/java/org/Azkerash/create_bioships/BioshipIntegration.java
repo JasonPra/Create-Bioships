@@ -146,7 +146,8 @@ public final class BioshipIntegration {
       if (objective != null
           && !source.equals(objective.pos())
           && BioshipPriorities.rank(core, state, source) == objective.rank()) continue;
-      if (!core.vision().exposed(core, source)) continue;
+      if (!core.vision().exposed(core, source)
+          || !BioshipReach.clear(core, Vec3.atCenterOf(source), true)) continue;
       if (!BuiltInRegistries.BLOCK.getKey(state.getBlock()).getNamespace().equals("biomancy")
           || state.getBlock() instanceof net.minecraft.world.level.block.LiquidBlock) continue;
       BlockPos target =

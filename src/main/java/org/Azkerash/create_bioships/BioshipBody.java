@@ -19,6 +19,8 @@ public final class BioshipBody {
   private double health = 100;
   private int capacity = 100;
   private volatile boolean dead;
+  private long lastCombatAt = Long.MIN_VALUE;
+  private float lastCombatAmount;
 
   public boolean dead() {
     return dead;
@@ -150,15 +152,16 @@ public final class BioshipBody {
       if (!core.getLevel().getBlockState(BlockPos.containing(physical)).isAir()) continue;
       // Repair never grows a solid block through a passenger or nearby creature.
       if (!core.getLevel()
-          .getEntities(
-              null,
+          .getEntitiesOfClass(
+              net.minecraft.world.entity.Entity.class,
               new net.minecraft.world.phys.AABB(
                   physical.x - .5,
                   physical.y - .5,
                   physical.z - .5,
                   physical.x + .5,
                   physical.y + .5,
-                  physical.z + .5))
+                  physical.z + .5),
+              entity -> !(entity instanceof BioshipTargetEntity))
           .isEmpty()) continue;
       boolean supported = false;
       for (Direction d : Direction.values())
@@ -193,6 +196,26 @@ public final class BioshipBody {
       health = Math.min(capacity, health + 4);
       core.setChanged();
     }
+  }
+
+  boolean combatDamage(
+      LivingCoreBlockEntity core,
+      net.minecraft.world.damagesource.DamageSource source,
+      float amount) {
+    if (dead) return false;
+    long now = core.getLevel().getGameTime();
+    float actual = amount;
+    if (lastCombatAt != Long.MIN_VALUE && now - lastCombatAt < 10) {
+      if (amount <= lastCombatAmount) return false;
+      actual -= lastCombatAmount;
+    } else lastCombatAt = now;
+    lastCombatAmount = amount;
+    hurt(core, actual);
+    if (source.getEntity() instanceof net.minecraft.world.entity.LivingEntity attacker)
+      core.defense().remember(core, attacker);
+    if (source.getEntity() instanceof Player player && player.getUUID().equals(core.creator()))
+      core.mistreat();
+    return true;
   }
 
   void struck(LivingCoreBlockEntity core, Player player) {
@@ -239,6 +262,8 @@ public final class BioshipBody {
     var tag = new CompoundTag();
     tag.putBoolean("Dead", dead);
     tag.putDouble("Health", health);
+    tag.putLong("CombatAt", lastCombatAt);
+    tag.putFloat("CombatAmount", lastCombatAmount);
     tag.putInt("Capacity", capacity);
     tag.put("Cells", saveCells(memory));
     tag.putLongArray("Injured", injured.stream().mapToLong(BlockPos::asLong).toArray());
@@ -246,6 +271,8 @@ public final class BioshipBody {
   }
 
   void load(CompoundTag tag, HolderLookup.Provider registries) {
+    lastCombatAt = tag.contains("CombatAt") ? tag.getLong("CombatAt") : Long.MIN_VALUE;
+    lastCombatAmount = tag.getFloat("CombatAmount");
     memory.clear();
     memory.putAll(loadCells(tag.getList("Cells", Tag.TAG_COMPOUND), registries));
     capacity = Math.max(100, tag.getInt("Capacity"));

@@ -1,0 +1,9 @@
+{
+  "sources": [
+    {
+      "type": "minecraft:single",
+      "resource": "biomancy:item/weapon/ravenous_claws_icon",
+      "sprite": "biomancy:item/ravenous_claws"
+    }
+  ]
+}

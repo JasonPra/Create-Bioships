@@ -3473,4 +3473,336 @@ public class BioshipGameTests {
       level.removeBlock(p, false);
     finish(helper, ship, () -> {});
   }
+
+  @GameTest(template = "test_empty", timeoutTicks = 260, batch = "hostile_all_stages")
+  public static void zombies_attack_each_stage_and_even_content_juveniles_retaliate(
+      GameTestHelper helper) {
+    var ships = new java.util.ArrayList<ServerSubLevel>();
+    var zombies = new java.util.ArrayList<net.minecraft.world.entity.monster.Zombie>();
+    helper.getLevel().setDayTime(18000);
+    for (int stage = 0; stage <= 2; stage++) {
+      var ship = assemble(helper);
+      ships.add(ship);
+      var core = core(ship);
+      var data = core.saveWithFullMetadata(helper.getLevel().registryAccess());
+      data.putInt("Stage", stage);
+      data.putInt("Trust", 80);
+      data.putInt("Satiety", 1200);
+      core.loadAdditional(data, helper.getLevel().registryAccess());
+      BioshipTargetEntity.ensure(core);
+      var root = BioshipBlueprint.physical(core, BlockPos.ZERO);
+      var zombie = net.minecraft.world.entity.EntityType.ZOMBIE.create(helper.getLevel());
+      zombie.setPos(root.x + 2.5, root.y - .5, root.z);
+      zombie.setItemSlot(
+          net.minecraft.world.entity.EquipmentSlot.HEAD, new ItemStack(Items.IRON_HELMET));
+      helper.getLevel().addFreshEntity(zombie);
+      zombies.add(zombie);
+    }
+    helper.runAfterDelay(
+        180,
+        () -> {
+          try {
+            for (int stage = 0; stage < ships.size(); stage++) {
+              var core = core(ships.get(stage));
+              var zombie = zombies.get(stage);
+              helper.assertTrue(
+                  core.body().health() < core.body().capacity(),
+                  "Zombie did not damage stage " + stage);
+              helper.assertTrue(
+                  zombie.getHealth() < zombie.getMaxHealth() || !zombie.isAlive(),
+                  "Content stage " + stage + " did not retaliate");
+              helper.assertTrue(
+                  !core.aggressive(), "Defense required or changed trust into aggression");
+            }
+            helper.succeed();
+          } finally {
+            zombies.forEach(net.minecraft.world.entity.Entity::discard);
+            ships.forEach(ship -> cleanup(helper, ship));
+          }
+        });
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 160, batch = "native_ranged_creeper")
+  public static void skeletons_and_creepers_acquire_real_bioship_attack_targets(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    level.setDayTime(18000);
+    var proxy = BioshipTargetEntity.ensure(core);
+    helper.assertTrue(
+        BioshipTargetEntity.ensure(core) == proxy,
+        "Same-tick attack-surface setup created duplicates");
+    var root = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var skeleton = net.minecraft.world.entity.EntityType.SKELETON.create(level);
+    skeleton.setPos(root.x + 9, root.y - .5, root.z);
+    skeleton.setItemSlot(
+        net.minecraft.world.entity.EquipmentSlot.MAINHAND, new ItemStack(Items.BOW));
+    skeleton.setItemSlot(
+        net.minecraft.world.entity.EquipmentSlot.HEAD, new ItemStack(Items.IRON_HELMET));
+    var creeper = net.minecraft.world.entity.EntityType.CREEPER.create(level);
+    creeper.setPos(root.x - 7, root.y - .5, root.z);
+    level.setChunkForced(
+        skeleton.blockPosition().getX() >> 4, skeleton.blockPosition().getZ() >> 4, true);
+    level.addFreshEntity(skeleton);
+    level.addFreshEntity(creeper);
+    boolean[] acquired = {false, false};
+    for (int tick = 1; tick <= 100; tick++)
+      helper.runAfterDelay(
+          tick,
+          () -> {
+            acquired[0] |=
+                skeleton.getTarget() instanceof BioshipTargetEntity target
+                    && target.belongsTo(core);
+            acquired[1] |=
+                creeper.getTarget() instanceof BioshipTargetEntity target && target.belongsTo(core);
+          });
+    helper.runAfterDelay(
+        105,
+        () -> {
+          try {
+            helper.assertTrue(
+                acquired[0],
+                "Skeleton did not acquire the ship with native target AI: alive="
+                    + skeleton.isAlive()
+                    + " target="
+                    + skeleton.getTarget()
+                    + " at="
+                    + skeleton.position()
+                    + " proxy="
+                    + proxy.position()
+                    + " visible="
+                    + skeleton.getSensing().hasLineOfSight(proxy)
+                    + " canAttack="
+                    + skeleton.canAttack(proxy)
+                    + " surfaces="
+                    + level
+                        .getEntitiesOfClass(
+                            BioshipTargetEntity.class, skeleton.getBoundingBox().inflate(20))
+                        .size()
+                    + " goal="
+                    + new net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal<>(
+                            skeleton, BioshipTargetEntity.class, 0, true, false, e -> true)
+                        .canUse());
+            helper.assertTrue(
+                acquired[1], "Creeper did not acquire the ship with native target AI");
+            helper.assertTrue(
+                !TentacleBlockEntity.attackable(proxy),
+                "Ship considers its own attack surface prey");
+            helper.succeed();
+          } finally {
+            skeleton.discard();
+            creeper.discard();
+            cleanup(helper, ship);
+          }
+        });
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "creeper_core_reflex")
+  public static void creeper_reflex_moves_existing_core_tissue_to_a_safer_cell(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    for (int x = 1; x <= 4; x++)
+      level.setBlock(
+          core.getBlockPos().east(x), Create_bioships.FLESH.get().defaultBlockState(), 3);
+    var proxy = BioshipTargetEntity.ensure(core);
+    helper.assertTrue(
+        BioshipTargetEntity.ensure(core) == proxy,
+        "Same-tick attack-surface setup created duplicates");
+    var root = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var creeper = net.minecraft.world.entity.EntityType.CREEPER.create(level);
+    creeper.setNoAi(true);
+    creeper.setPos(root.x - 3, root.y - .5, root.z);
+    creeper.setTarget(proxy);
+    level.addFreshEntity(creeper);
+    int before = BioshipIntegration.countBlocks(ship);
+    double safety = CoreMotion.blastSafety(core, core.getBlockPos(), creeper);
+    var original = core.getBlockPos();
+    core.coreMotion().evade(core, creeper);
+    helper.assertTrue(
+        core.coreMotion().active() && core.coreMotion().target().getX() > original.getX(),
+        "Core did not retreat from creeper along connected flesh");
+    helper.assertTrue(
+        core.coreMotion().duration() == 4, "Emergency relocation is not faster than scouting");
+    helper.runAfterDelay(
+        15,
+        () -> {
+          try {
+            var moved = core(ship);
+            helper.assertTrue(
+                CoreMotion.blastSafety(moved, moved.getBlockPos(), creeper) > safety,
+                "Core moved into more blast exposure");
+            helper.assertTrue(
+                BioshipIntegration.countBlocks(ship) == before,
+                "Evasion created free tissue or discarded body blocks");
+            moved.body().die(moved);
+            BioshipTargetEntity.ensure(moved);
+            helper.assertTrue(proxy.isRemoved(), "Dead ship retains a living AI attack target");
+            helper.succeed();
+          } finally {
+            creeper.discard();
+            cleanup(helper, ship);
+          }
+        });
+  }
+
+  private static void courseFloor(GameTestHelper helper, BlockPos start) {
+    for (var p : BlockPos.betweenClosed(start.offset(-8, -1, -12), start.offset(48, -1, 12))) {
+      helper.getLevel().getChunk(p.getX() >> 4, p.getZ() >> 4);
+      helper.getLevel().setChunkForced(p.getX() >> 4, p.getZ() >> 4, true);
+      helper.getLevel().setBlock(p, Blocks.STONE.defaultBlockState(), 3);
+    }
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 850, batch = "glass_obstacle_course")
+  public static void visible_needed_organs_beyond_sixteen_blocks_are_reached_around_glass(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    int previous = level.getServer().getPlayerList().getViewDistance();
+    level.getServer().getPlayerList().setViewDistance(4);
+    level.setDayTime(1000);
+    var start = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO));
+    courseFloor(helper, start);
+    var wall = start.east(8);
+    for (var p : BlockPos.betweenClosed(wall.offset(0, 0, -4), wall.offset(0, 3, 4)))
+      level.setBlock(p, Blocks.WHITE_STAINED_GLASS.defaultBlockState(), 3);
+    var machine = start.east(27);
+    helper.runAfterDelay(
+        40,
+        () -> {
+          level.setBlock(machine, block("biomancy:bio_forge").defaultBlockState(), 3);
+          helper.assertTrue(
+              core.vision().exposed(core, machine),
+              "Visible distant organ is excluded by perception");
+          var goal = BioshipPriorities.bestWorld(core);
+          helper.assertTrue(
+              goal != null && goal.pos().equals(machine),
+              "Clear sight beyond 16 blocks did not become a needed goal");
+        });
+    helper.runAfterDelay(
+        750,
+        () -> {
+          try {
+            var current = core(ship);
+            helper.assertTrue(
+                current.hasMouth(),
+                "Ship did not navigate around the glass and assimilate its needed mouth: at="
+                    + BioshipBlueprint.physical(current, BlockPos.ZERO)
+                    + " "
+                    + current.crawl().save()
+                    + " path="
+                    + current.crawl().path().stream().limit(8).toList());
+            helper.assertTrue(
+                BioshipBlueprint.physical(current, BlockPos.ZERO).x > start.getX() + 18,
+                "Component was stolen through glass without approaching");
+            helper.assertTrue(
+                level.getBlockState(wall).is(Blocks.WHITE_STAINED_GLASS),
+                "Navigation destroyed the barrier");
+            helper.succeed();
+          } finally {
+            for (var p : BlockPos.betweenClosed(wall.offset(0, 0, -4), wall.offset(0, 3, 4)))
+              level.removeBlock(p, false);
+            level.removeBlock(machine, false);
+            level.getServer().getPlayerList().setViewDistance(previous);
+            cleanup(helper, ship);
+          }
+        });
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 800, batch = "tall_grass_pickup_course")
+  public static void floor_food_in_tall_grass_is_grabbed_and_digested_after_approach(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var stomach = digestive(helper, core, false);
+    int previous = level.getServer().getPlayerList().getViewDistance();
+    level.getServer().getPlayerList().setViewDistance(4);
+    level.setDayTime(1000);
+    var start = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO));
+    courseFloor(helper, start);
+    var grass = start.east(21);
+    level.setBlock(grass.below(), Blocks.GRASS_BLOCK.defaultBlockState(), 3);
+    level.setBlock(grass, Blocks.TALL_GRASS.defaultBlockState(), 3);
+    level.setBlock(
+        grass.above(),
+        Blocks.TALL_GRASS
+            .defaultBlockState()
+            .setValue(
+                net.minecraft.world.level.block.DoublePlantBlock.HALF,
+                net.minecraft.world.level.block.state.properties.DoubleBlockHalf.UPPER),
+        3);
+    var meal =
+        new net.minecraft.world.entity.item.ItemEntity(
+            level,
+            grass.getX() + .5,
+            grass.getY() + .15,
+            grass.getZ() + .5,
+            new ItemStack(Items.BEEF));
+    helper.assertTrue(
+        level.getBlockState(grass).is(Blocks.TALL_GRASS),
+        "Tall grass was missing from the pickup course");
+    meal.setDeltaMovement(Vec3.ZERO);
+    level.addFreshEntity(meal);
+    helper.runAfterDelay(
+        650,
+        () -> {
+          try {
+            var current = core(ship);
+            helper.assertTrue(
+                !meal.isAlive() || meal.getItem().isEmpty(),
+                "Arm left edible food stranded in tall grass: " + current.crawl().save());
+            helper.assertTrue(
+                BioshipBlueprint.physical(current, BlockPos.ZERO).x > start.getX() + 12,
+                "Food was consumed without approaching");
+            helper.assertTrue(
+                current.saveWithFullMetadata(level.registryAccess()).getInt("Trust") > 60,
+                "Collected floor meat did not count as feeding after digestion");
+            helper.succeed();
+          } finally {
+            meal.discard();
+            level.removeBlock(grass.above(), false);
+            level.removeBlock(grass, false);
+            level.getServer().getPlayerList().setViewDistance(previous);
+            cleanup(helper, ship);
+          }
+        });
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "shared_attack_health")
+  public static void attack_surfaces_share_one_health_pool_and_do_not_multiply_blast_damage(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var surfaces = BioshipTargetEntity.surfaces(core);
+    helper.assertTrue(
+        surfaces.size() == 6 && BioshipTargetEntity.surfaces(core).equals(surfaces),
+        "Attack surfaces duplicated within a tick");
+    var zombie = net.minecraft.world.entity.EntityType.ZOMBIE.create(level);
+    helper.assertTrue(
+        !surfaces.get(0).isPickable() && surfaces.get(0).canBeHitByProjectile(),
+        "Attack surfaces intercept player selection or reject projectiles");
+    var source = level.damageSources().mobAttack(zombie);
+    helper.assertTrue(surfaces.get(0).hurt(source, 3), "First body strike was rejected");
+    helper.assertTrue(
+        !surfaces.get(1).hurt(source, 3), "A second surface bypassed the shared damage cooldown");
+    helper.assertTrue(
+        surfaces.get(2).hurt(source, 6) && core.body().health() == 94,
+        "Multiple surfaces multiplied a single damage window");
+    var saved = core.saveWithFullMetadata(level.registryAccess());
+    core.loadAdditional(saved, level.registryAccess());
+    helper.assertTrue(
+        !surfaces.get(3).hurt(source, 6), "Core save/load reset shared damage protection");
+    core.body().die(core);
+    BioshipTargetEntity.ensure(core);
+    helper.assertTrue(
+        surfaces.stream().allMatch(net.minecraft.world.entity.Entity::isRemoved),
+        "Death left attackable ghost surfaces");
+    finish(helper, ship, () -> {});
+  }
 }

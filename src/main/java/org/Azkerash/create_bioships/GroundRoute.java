@@ -17,6 +17,10 @@ final class GroundRoute {
     return failed;
   }
 
+  List<Vec3> remaining() {
+    return List.copyOf(path.subList(Math.min(cursor, path.size()), path.size()));
+  }
+
   List<Vec3> points() {
     return List.copyOf(path);
   }
@@ -61,13 +65,18 @@ final class GroundRoute {
   }
 
   private boolean fits(LivingCoreBlockEntity core, Vec3 point, List<Vec3> offsets) {
+    return fits(core, point, offsets, .499);
+  }
+
+  private boolean fits(
+      LivingCoreBlockEntity core, Vec3 point, List<Vec3> offsets, double clearance) {
     var level = (ServerLevel) core.getLevel();
     for (var offset : offsets) {
       Vec3 center = point.add(offset);
       for (var cell :
           BlockPos.betweenClosed(
-              BlockPos.containing(center.add(-.45, -.45, -.45)),
-              BlockPos.containing(center.add(.45, .45, .45))))
+              BlockPos.containing(center.add(-clearance, -.499, -clearance)),
+              BlockPos.containing(center.add(clearance, .499, clearance))))
         if (!level.getWorldBorder().isWithinBounds(cell)
             || !level.getChunkSource().hasChunk(cell.getX() >> 4, cell.getZ() >> 4)
             || !BioshipIntegration.growthSpace(level, cell)
@@ -112,13 +121,20 @@ final class GroundRoute {
     Map<BlockPos, BlockPos> previous = new HashMap<>();
     costs.put(start, 0d);
     open.add(new Visit(start, 0, here.distanceTo(goal)));
-    BlockPos end = null;
+    BlockPos end = null, progress = start;
+    double closest = here.distanceTo(goal);
     while (!open.isEmpty() && costs.size() < 1600) {
       var node = open.poll();
       if (node.cost() > costs.getOrDefault(node.pos(), Double.MAX_VALUE)) continue;
       Vec3 nodePoint =
           new Vec3(node.pos().getX() + .5, node.pos().getY() + stance, node.pos().getZ() + .5);
-      if (nodePoint.distanceTo(goal) < (core.crawl().gathering() ? 3.5 : .8)) {
+      double remaining = nodePoint.distanceTo(goal);
+      if (remaining < closest) {
+        closest = remaining;
+        progress = node.pos();
+      }
+      if (remaining < (core.crawl().gathering() ? 3.5 : .8)
+          && (!core.crawl().gathering() || BioshipReach.at(core, nodePoint, goal, true))) {
         end = node.pos();
         break;
       }
@@ -143,7 +159,13 @@ final class GroundRoute {
         var point = standing(core, next.getX(), next.getZ(), node.pos().getY(), parts);
         if (point == null) continue;
         var key = new BlockPos(next.getX(), (int) Math.round(point.y - stance), next.getZ());
-        double cost = node.cost() + 1 + Math.abs(key.getY() - node.pos().getY()) * .5;
+        // Prefer clearance around corners. Exact cell-edge paths are fragile for a full physics
+        // body.
+        double cost =
+            node.cost()
+                + 1
+                + Math.abs(key.getY() - node.pos().getY()) * .5
+                + (fits(core, point, parts, .7) ? 0 : 2);
         if (cost >= costs.getOrDefault(key, Double.MAX_VALUE)) continue;
         previous.put(key, node.pos());
         costs.put(key, cost);
@@ -155,6 +177,7 @@ final class GroundRoute {
     destination = goal;
     cursor = 0;
     retryAfter = core.getLevel().getGameTime() + 20;
+    if (end == null && closest < here.distanceTo(goal) - 3) end = progress;
     failed = end == null;
     if (end == null) {
       path = List.of();
@@ -178,7 +201,11 @@ final class GroundRoute {
     while (cursor < path.size()
         && here.subtract(path.get(cursor)).horizontalDistanceSqr() < .09
         && Math.abs(here.y - path.get(cursor).y) < .3) cursor++;
-    if (cursor >= path.size()) return null;
+    if (cursor >= path.size()) {
+      path = List.of();
+      retryAfter = core.getLevel().getGameTime();
+      return null;
+    }
     var next = path.get(cursor);
     var parts = offsets(core);
     if (!fits(core, next, parts)) {
@@ -215,10 +242,9 @@ final class GroundRoute {
       else core.crawl().stepHeight(next.y);
       return null;
     }
-    if (next.subtract(here).horizontalDistanceSqr() < .09
-        && next.y < here.y - .12
-        && grip(core, here) != null) {
-      core.crawl().clingHeight(next.y);
+    if (next.subtract(here).horizontalDistanceSqr() < .09 && next.y < here.y - .12) {
+      if (grip(core, here) != null) core.crawl().clingHeight(next.y);
+      else core.crawl().lowerHeight(next.y);
       return null;
     }
     Vec3 probe = here.lerp(next, Math.min(1, .35 / Math.max(.01, here.distanceTo(next))));

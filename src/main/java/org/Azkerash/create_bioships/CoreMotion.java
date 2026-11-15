@@ -14,6 +14,11 @@ public final class CoreMotion {
   private static final int FULL_COVERAGE = 48;
   private BlockPos home, target;
   private long started, nextScan;
+  private boolean evasive;
+
+  public int duration() {
+    return evasive ? 4 : 12;
+  }
 
   public BlockPos home(LivingCoreBlockEntity core) {
     return home == null ? core.getBlockPos() : home;
@@ -55,7 +60,8 @@ public final class CoreMotion {
                 point.z - .45,
                 point.x + .45,
                 point.y + .45,
-                point.z + .45))
+                point.z + .45),
+            e -> !(e instanceof BioshipTargetEntity))
         .isEmpty();
   }
 
@@ -116,7 +122,8 @@ public final class CoreMotion {
 
   /** Returning true retires this block tick, since a commit replaces its block entity. */
   boolean tick(LivingCoreBlockEntity core) {
-    if (!core.hatchling()
+    var creeper = BioshipDefense.creeperThreat(core);
+    if ((!core.hatchling() && creeper == null && !(active() && evasive))
         || core.body().dead()
         || core.blueprint().busy()
         || OrganMotion.busy(core)) {
@@ -129,9 +136,10 @@ public final class CoreMotion {
         cancel(core);
         return false;
       }
-      if (level.getGameTime() - started >= 12) commit(core);
+      if (level.getGameTime() - started >= duration()) commit(core);
       return true;
     }
+    if (creeper != null) return evade(core, creeper);
     if (nextScan == 0) {
       nextScan = level.getGameTime() + 200;
       return false;
@@ -155,12 +163,74 @@ public final class CoreMotion {
     if (!DigestiveSystem.reserveCoreRoute(core, next, true)) return false;
     if (home == null) home = core.getBlockPos();
     target = next;
+    evasive = false;
     started = level.getGameTime();
     level.setBlock(
         core.getBlockPos(), core.getBlockState().setValue(LivingCoreBlock.RELOCATING, true), 2);
     core.setChanged();
     level.sendBlockUpdated(core.getBlockPos(), core.getBlockState(), core.getBlockState(), 2);
     return true;
+  }
+
+  boolean evade(LivingCoreBlockEntity core, net.minecraft.world.entity.monster.Creeper creeper) {
+    if (active() || core.body().dead() || core.blueprint().busy()) return false;
+    var safe = safestStep(core, creeper);
+    if (safe == null || !DigestiveSystem.reserveCoreRoute(core, safe, true)) return false;
+    if (home == null) home = core.getBlockPos();
+    target = safe;
+    evasive = true;
+    started = core.getLevel().getGameTime();
+    core.getLevel()
+        .setBlock(
+            core.getBlockPos(), core.getBlockState().setValue(LivingCoreBlock.RELOCATING, true), 2);
+    core.setChanged();
+    return true;
+  }
+
+  static double blastSafety(
+      LivingCoreBlockEntity core,
+      BlockPos point,
+      net.minecraft.world.entity.monster.Creeper creeper) {
+    var world = core.ship().logicalPose().transformPosition(Vec3.atCenterOf(point));
+    double distance = world.distanceTo(creeper.position());
+    double radius = creeper.isPowered() ? 6 : 3;
+    boolean shielded =
+        !BioshipVision.rayAtCore(core, creeper.getBoundingBox().getCenter(), world, point);
+    return Math.min(distance, radius + 3) * 10 + (shielded ? 25 : 0);
+  }
+
+  private BlockPos safestStep(
+      LivingCoreBlockEntity core, net.minecraft.world.entity.monster.Creeper creeper) {
+    var source = core.getBlockPos();
+    var previous = new LinkedHashMap<BlockPos, BlockPos>();
+    var queue = new ArrayDeque<BlockPos>();
+    previous.put(source, source);
+    queue.add(source);
+    BlockPos best = source;
+    double score = blastSafety(core, source, creeper);
+    while (!queue.isEmpty() && previous.size() < 160) {
+      var point = queue.removeFirst();
+      double current = blastSafety(core, point, creeper);
+      for (var direction : Direction.values()) {
+        var next = point.relative(direction);
+        if (previous.containsKey(next)
+            || next.distManhattan(source) > 6
+            || !tissue(core.getLevel().getBlockState(next))
+            || !clearWorld(core, next)
+            || !DigestiveSystem.reserveCoreRoute(core, next, false)) continue;
+        double value = blastSafety(core, next, creeper);
+        if (value + .001 < current) continue;
+        previous.put(next, point);
+        queue.add(next);
+        if (value > score + .001) {
+          score = value;
+          best = next;
+        }
+      }
+    }
+    if (best.equals(source)) return null;
+    while (!previous.get(best).equals(source)) best = previous.get(best);
+    return best;
   }
 
   String scoutingHint(LivingCoreBlockEntity core) {
@@ -236,6 +306,7 @@ public final class CoreMotion {
     var tag = new CompoundTag();
     if (home != null) tag.putLong("Home", home.asLong());
     if (target != null) tag.putLong("Target", target.asLong());
+    tag.putBoolean("Evasive", evasive);
     tag.putLong("Started", started);
     tag.putLong("NextScan", nextScan);
     return tag;
@@ -244,6 +315,7 @@ public final class CoreMotion {
   void load(CompoundTag tag) {
     home = tag.contains("Home") ? BlockPos.of(tag.getLong("Home")) : null;
     target = tag.contains("Target") ? BlockPos.of(tag.getLong("Target")) : null;
+    evasive = tag.getBoolean("Evasive");
     started = tag.getLong("Started");
     nextScan = tag.getLong("NextScan");
   }

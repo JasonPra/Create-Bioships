@@ -47,7 +47,10 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
     if (core.coreMotion().active()) {
       double t =
           Math.clamp(
-              (core.getLevel().getGameTime() + partial - core.coreMotion().started()) / 12.0, 0, 1);
+              (core.getLevel().getGameTime() - core.coreMotion().started() + (double) partial)
+                  / core.coreMotion().duration(),
+              0,
+              1);
       var delta = core.coreMotion().target().subtract(core.getBlockPos());
       pose.pushPose();
       pose.translate(delta.getX() * t, delta.getY() * t, delta.getZ() * t);

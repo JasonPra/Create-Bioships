@@ -570,7 +570,10 @@ public final class BioshipBlueprint {
         level.getEntitiesOfClass(
             LivingEntity.class,
             new AABB(center, center).inflate(48),
-            entity -> !entity.isSpectator() && aboard(core, entity))) {
+            entity ->
+                !(entity instanceof BioshipTargetEntity)
+                    && !entity.isSpectator()
+                    && aboard(core, entity))) {
       var destination = exit(core);
       if (destination == null) {
         status = "Waiting for a safe place to put passengers";

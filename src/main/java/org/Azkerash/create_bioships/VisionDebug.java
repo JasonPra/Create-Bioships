@@ -16,6 +16,12 @@ public final class VisionDebug {
   public static CompoundTag inspect(LivingCoreBlockEntity core, Vec3 target) {
     var result = new CompoundTag();
     result.put("Target", vector(target));
+    var route = new ListTag();
+    route.add(vector(BioshipBlueprint.physical(core, BlockPos.ZERO)));
+    for (var point : core.crawl().path()) route.add(vector(point));
+    result.put("Route", route);
+    result.putBoolean("Walking", core.crawl().walking());
+    result.putInt("SearchRange", core.vision().maximumDistance(core));
     result.putDouble("Distance", BioshipBlueprint.physical(core, BlockPos.ZERO).distanceTo(target));
     result.putString("Core", core.getBlockPos().toShortString());
     result.putBoolean("Scouting", core.coreMotion().active());

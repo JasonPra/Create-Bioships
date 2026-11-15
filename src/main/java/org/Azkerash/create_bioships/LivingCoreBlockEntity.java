@@ -132,6 +132,10 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
   BlockPos supplyTarget;
   private final BioshipDefense defense = new BioshipDefense();
 
+  BioshipDefense defense() {
+    return defense;
+  }
+
   public boolean hatchling() {
     return stage == 0;
   }
@@ -476,6 +480,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
 
   public static void tick(Level level, BlockPos pos, BlockState state, LivingCoreBlockEntity core) {
     if (level.isClientSide) return;
+    if (core.ship() != null) BioshipTargetEntity.ensure(core);
     if (core.body.dead()) {
       if (core.coreMotion.active()) core.coreMotion.cancel(core);
       core.updateEye(false);
@@ -488,6 +493,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
       return;
     }
     if (core.ship() != null && core.coreMotion.tick(core)) {
+      if (!core.isRemoved()) core.defense.tick(core);
       if (!core.isRemoved()) core.serverTick();
       core.flight =
           new FlightIntent(false, Vec3.ZERO, 0, core.crawl.supportHeight(), core.crawl.stanceUp());
@@ -894,23 +900,26 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     var objective = BioshipPriorities.bestWorld(this);
     if (objective != null && (objective.rank() == 0 || objective.rank() <= 2 && !hungry())) {
       Vec3 point = Vec3.atCenterOf(objective.pos());
-      return new Vec3(point.x, Math.abs(point.y - here.y) > 4 ? point.y : here.y, point.z);
+      return point;
     }
     var stomach = DigestiveSystem.stomach(this);
     if (hasMouth() && stomach != null && stomach.connected(this)) {
       var items =
           level.getEntitiesOfClass(
               net.minecraft.world.entity.item.ItemEntity.class,
-              new AABB(here, here).inflate(16),
+              new AABB(here, here).inflate(vision.maximumDistance(this)),
               e -> droppedSupply(e.getItem()));
       items.sort(java.util.Comparator.comparingDouble(e -> e.distanceToSqr(here)));
       for (var item : items) {
         Vec3 point = item.position().add(0, .2, 0);
         if (!vision.visible(this, point)) continue;
-        if (here.distanceToSqr(point) <= 25) {
+        if (BioshipReach.clear(this, point, false)) {
           crawl.reach(item.position());
-          item.setDeltaMovement(here.subtract(item.position()).normalize().scale(.3));
-          if (here.distanceToSqr(point) <= 4) {
+          item.setDeltaMovement(
+              mouthPosition(ship()).subtract(item.position()).normalize().scale(.3));
+          if (here.distanceToSqr(point) <= 4
+              || mouthPosition(ship()).distanceToSqr(point) <= 2.25
+              || BioshipReach.anchor(this, point).distanceToSqr(point) <= 2.25) {
             ItemStack one = item.getItem().copyWithCount(1);
             boolean accepted;
             if (BioshipScavenging.droppedBlock(one)) {
@@ -926,7 +935,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
           }
           return null;
         }
-        return new Vec3(point.x, Math.abs(point.y - here.y) > 4 ? point.y : here.y, point.z);
+        return point;
       }
     }
     if (isMature()) return null;
@@ -934,7 +943,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     if (wreckSupply != null) return new Vec3(wreckSupply.x, here.y, wreckSupply.z);
     if (objective == null) return null;
     Vec3 point = Vec3.atCenterOf(objective.pos());
-    return new Vec3(point.x, Math.abs(point.y - here.y) > 4 ? point.y : here.y, point.z);
+    return point;
   }
 
   static boolean droppedSupply(ItemStack stack) {
@@ -1089,6 +1098,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     tag.put("Scavenging", scavenging.save());
     tag.put("Crawl", crawl.save());
     tag.put("CoreMotion", coreMotion.save());
+    tag.put("Defense", defense.save());
     tag.put("Vision", vision.save());
     tag.put("Access", access.save(captain));
     tag.put("BodyMemory", body.save());
@@ -1129,6 +1139,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     scavenging.load(tag.getCompound("Scavenging"));
     crawl.load(tag.getCompound("Crawl"));
     coreMotion.load(tag.getCompound("CoreMotion"));
+    defense.load(tag.getCompound("Defense"));
     vision.load(tag.getCompound("Vision"));
     access.load(tag.getCompound("Access"));
     body.load(tag.getCompound("BodyMemory"), registries);

@@ -33,6 +33,9 @@ public final class BioshipClient {
 
   @SubscribeEvent
   public static void renderers(EntityRenderersEvent.RegisterRenderers event) {
+    event.registerEntityRenderer(
+        Create_bioships.BIOSHIP_TARGET.get(),
+        net.minecraft.client.renderer.entity.NoopRenderer::new);
     event.registerBlockEntityRenderer(
         Create_bioships.CORE_ENTITY.get(), AssimilationArmRenderer::new);
     event.registerBlockEntityRenderer(

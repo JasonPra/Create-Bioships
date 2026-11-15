@@ -18,6 +18,22 @@ public class Create_bioships {
   public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MOD_ID);
   public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES =
       DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, MOD_ID);
+  public static final DeferredRegister<net.minecraft.world.entity.EntityType<?>> ENTITIES =
+      DeferredRegister.create(Registries.ENTITY_TYPE, MOD_ID);
+  public static final net.neoforged.neoforge.registries.DeferredHolder<
+          net.minecraft.world.entity.EntityType<?>,
+          net.minecraft.world.entity.EntityType<BioshipTargetEntity>>
+      BIOSHIP_TARGET =
+          ENTITIES.register(
+              "bioship_attack_surface",
+              () ->
+                  net.minecraft.world.entity.EntityType.Builder.of(
+                          BioshipTargetEntity::new, net.minecraft.world.entity.MobCategory.MISC)
+                      .sized(.9f, 1f)
+                      .clientTrackingRange(8)
+                      .updateInterval(3)
+                      .noSave()
+                      .build("bioship_attack_surface"));
   public static final DeferredRegister<CreativeModeTab> TABS =
       DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MOD_ID);
   public static final DeferredBlock<LivingCoreBlock> CORE =
@@ -305,6 +321,10 @@ public class Create_bioships {
             player
                 .getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD)
                 .is(BIOSHIP_GOGGLES.get()));
+    ENTITIES.register(bus);
+    bus.addListener(
+        (net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent event) ->
+            event.put(BIOSHIP_TARGET.get(), BioshipTargetEntity.attributes().build()));
     MENUS.register(bus);
     BLOCKS.register(bus);
     ITEMS.register(bus);

@@ -63,7 +63,8 @@ public class TentacleBlockEntity extends BlockEntity implements BlockEntitySubLe
   }
 
   static boolean attackable(LivingEntity entity) {
-    return entity.isAlive()
+    return !(entity instanceof BioshipTargetEntity)
+        && entity.isAlive()
         && !entity.isSpectator()
         && !entity.isInvulnerable()
         && !(entity instanceof Player player && player.isCreative());

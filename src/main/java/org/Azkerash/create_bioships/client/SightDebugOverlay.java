@@ -115,10 +115,22 @@ public final class SightDebugOverlay {
                 + " blocks · target: "
                 + String.format(java.util.Locale.ROOT, "%.1f", data.getDouble("Distance"))
                 + " blocks from core · "
-                + (data.getDouble("Distance") <= 16 ? "inside" : "outside")
-                + " 16-block world-source search",
+                + (data.getDouble("Distance") <= data.getInt("SearchRange") ? "inside" : "outside")
+                + " "
+                + data.getInt("SearchRange")
+                + "-block loaded world-source search",
             y,
             0xffeeeeee);
+    int points = Math.max(0, data.getList("Route", Tag.TAG_COMPOUND).size() - 1);
+    y =
+        drawText(
+            g,
+            "Gold: navigation route · "
+                + (data.getBoolean("Walking")
+                    ? points == 0 ? "planning / retrying" : "following " + points + " waypoints"
+                    : "idle"),
+            y,
+            0xffffd166);
     Map<String, Integer> counts = new LinkedHashMap<>();
     for (var entry : views)
       counts.merge(((CompoundTag) entry).getString("Reason"), 1, Integer::sum);
@@ -155,6 +167,14 @@ public final class SightDebugOverlay {
     var buffers = mc.renderBuffers().bufferSource();
     var buffer = buffers.getBuffer(RenderType.lines());
     var target = VisionDebug.vector(data.getCompound("Target"));
+    var route = data.getList("Route", Tag.TAG_COMPOUND);
+    for (int i = 1; i < route.size(); i++)
+      line(
+          pose.last(),
+          buffer,
+          VisionDebug.vector(route.getCompound(i - 1)),
+          VisionDebug.vector(route.getCompound(i)),
+          0xffffd166);
     for (var entry : views) {
       var view = (CompoundTag) entry;
       var origin = VisionDebug.vector(view.getCompound("Origin"));
