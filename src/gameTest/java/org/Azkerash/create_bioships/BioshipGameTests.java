@@ -3923,6 +3923,115 @@ public class BioshipGameTests {
     }
   }
 
+  @GameTest(template = "test_empty", timeoutTicks = 1800, batch = "glass_maze")
+  public static void hatchling_navigates_visible_component_through_roofed_glass_maze(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    int previous = level.getServer().getPlayerList().getViewDistance();
+    level.getServer().getPlayerList().setViewDistance(4);
+    level.setDayTime(1000);
+    var start = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO));
+    courseFloor(helper, start);
+    var glass = new LinkedHashSet<BlockPos>();
+    // Closed sides and a transparent ceiling prevent going around or climbing over the maze.
+    // Three staggered baffles force alternating north/south detours, away from the visible goal.
+    for (var offset : BlockPos.betweenClosed(new BlockPos(-2, 0, -8), new BlockPos(20, 4, 8))) {
+      int x = offset.getX(), y = offset.getY(), z = offset.getZ();
+      boolean boundary = x == -2 || x == 20 || z == -8 || z == 8 || y == 4;
+      boolean baffle = (x == 4 || x == 14) && z <= 4 || x == 9 && z >= -4;
+      if (boundary || baffle) {
+        var p = start.offset(offset);
+        glass.add(p);
+        level.setBlock(p, Blocks.GLASS.defaultBlockState(), 3);
+      }
+    }
+    var component = start.east(18);
+    boolean[] gates = {false, false, false};
+    int[] completed = {-1};
+    double[] travelled = {0};
+    Vec3[] last = {BioshipBlueprint.physical(core, BlockPos.ZERO)};
+    helper.runAfterDelay(
+        40,
+        () -> {
+          level.setBlock(component, block("biomancy:bio_forge").defaultBlockState(), 3);
+          helper.assertTrue(
+              core.vision().exposed(core, component),
+              "Maze target is not clearly visible through the glass");
+          var objective = BioshipPriorities.bestWorld(core);
+          helper.assertTrue(
+              objective != null && objective.pos().equals(component),
+              "Visible required organ did not become the maze target");
+          helper.assertTrue(
+              !BioshipReach.clear(core, Vec3.atCenterOf(component), true),
+              "Maze allows a straight tentacle shortcut");
+        });
+    for (int tick = 42; tick < 1700; tick += 2) {
+      int observedTick = tick;
+      helper.runAfterDelay(
+          tick,
+          () -> {
+            if (completed[0] >= 0) return;
+            var current = core(ship);
+            var point = BioshipBlueprint.physical(current, BlockPos.ZERO);
+            travelled[0] += point.distanceTo(last[0]);
+            last[0] = point;
+            var local = point.subtract(Vec3.atLowerCornerOf(start));
+            if (local.x > 5 && local.z > 5) gates[0] = true;
+            if (gates[0] && local.x > 10 && local.z < -4) gates[1] = true;
+            if (gates[1] && local.x > 15 && local.z > 5) gates[2] = true;
+            helper.assertTrue(
+                local.x > -1.5 && local.x < 20 && Math.abs(local.z) < 8 && local.y < 3.6,
+                "Hatchling bypassed the maze's closed boundary: " + local);
+            for (var cell :
+                BlockPos.betweenClosed(
+                    BlockPos.containing(point.add(-.4, -.4, -.4)),
+                    BlockPos.containing(point.add(.4, .4, .4))))
+              helper.assertTrue(!glass.contains(cell), "Core crossed solid maze glass at " + local);
+            if (current.hasMouth()) completed[0] = observedTick;
+          });
+    }
+    helper.runAfterDelay(
+        1700,
+        () -> {
+          try {
+            var current = core(ship);
+            helper.assertTrue(
+                completed[0] >= 0 && current.hasMouth(),
+                "Visible organ was not reached through the maze: at="
+                    + BioshipBlueprint.physical(current, BlockPos.ZERO)
+                        .subtract(Vec3.atLowerCornerOf(start))
+                    + " crawl="
+                    + current.crawl().save()
+                    + " path="
+                    + current.crawl().path());
+            helper.assertTrue(
+                gates[0] && gates[1] && gates[2],
+                "Hatchling did not traverse all three alternating maze openings: "
+                    + Arrays.toString(gates));
+            helper.assertTrue(travelled[0] > 35, "Maze was bypassed rather than navigated");
+            helper.assertTrue(
+                glass.stream().allMatch(p -> level.getBlockState(p).is(Blocks.GLASS)),
+                "Navigation broke or assimilated maze walls");
+            helper.assertTrue(
+                level.getBlockState(component).isAir(), "Original component remains outside");
+            com.mojang.logging.LogUtils.getLogger()
+                .info(
+                    "Glass maze passed: organ assimilated at tick {}, travelled {} blocks, all"
+                        + " three gates crossed",
+                    completed[0],
+                    travelled[0]);
+            helper.succeed();
+          } finally {
+            glass.forEach(p -> level.removeBlock(p, false));
+            level.removeBlock(component, false);
+            level.getServer().getPlayerList().setViewDistance(previous);
+            cleanup(helper, ship);
+          }
+        });
+  }
+
   @GameTest(template = "test_empty", timeoutTicks = 850, batch = "glass_obstacle_course")
   public static void visible_needed_organs_beyond_sixteen_blocks_are_reached_around_glass(
       GameTestHelper helper) {
