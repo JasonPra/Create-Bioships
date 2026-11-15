@@ -68,6 +68,15 @@ public class Create_bioships {
                       .sound(SoundType.SLIME_BLOCK)
                       .noOcclusion()
                       .lightLevel(state -> 13)));
+  public static final DeferredBlock<SurfaceEyeBlock> SURFACE_EYE =
+      BLOCKS.register(
+          "surface_eye",
+          () ->
+              new SurfaceEyeBlock(
+                  BlockBehaviour.Properties.of()
+                      .strength(1)
+                      .sound(SoundType.SLIME_BLOCK)
+                      .noOcclusion()));
   public static final DeferredBlock<OneWayWindowBlock> ONE_WAY_WINDOW =
       BLOCKS.register(
           "one_way_window",
@@ -307,7 +316,10 @@ public class Create_bioships {
             event.registerBlockEntity(
                 net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
                 FEEDING_MOUTH_ENTITY.get(),
-                (mouth, side) -> new net.neoforged.neoforge.items.wrapper.InvWrapper(mouth)));
+                (mouth, side) ->
+                    side == null || side == mouth.getBlockState().getValue(FeedingMouthBlock.FACING)
+                        ? new net.neoforged.neoforge.items.wrapper.InvWrapper(mouth)
+                        : null));
     com.simibubi.create.api.contraption.BlockMovementChecks.registerMovementAllowedCheck(
         (state, level, pos) ->
             BioshipIntegration.bound(BioshipIntegration.containing(level, pos))

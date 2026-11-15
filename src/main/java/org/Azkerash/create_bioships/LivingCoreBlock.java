@@ -37,6 +37,21 @@ public class LivingCoreBlock extends BaseEntityBlock {
   }
 
   @Override
+  public BlockState getStateForPlacement(
+      net.minecraft.world.item.context.BlockPlaceContext context) {
+    var container =
+        dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(context.getLevel());
+    if (container != null) {
+      var pos = context.getClickedPos();
+      for (var point : java.util.List.of(pos, pos.relative(context.getClickedFace().getOpposite())))
+        if (container.inBounds(point)
+            && container.getPlot(new net.minecraft.world.level.ChunkPos(point)) != null)
+          return null;
+    }
+    return defaultBlockState();
+  }
+
+  @Override
   public void setPlacedBy(
       Level level,
       BlockPos pos,

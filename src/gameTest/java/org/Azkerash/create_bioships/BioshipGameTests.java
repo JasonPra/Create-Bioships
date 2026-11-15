@@ -934,7 +934,8 @@ public class BioshipGameTests {
           helper.assertTrue(core.isMature(), "Initial body did not mature");
           var stomach = DigestiveSystem.stomach(core);
           stomach.retain(new ItemStack(item("biomancy:bone_fragments"), 2));
-          stomach.retain(new ItemStack(item("biomancy:elastic_fibers"), 4));
+          stomach.retain(new ItemStack(item("biomancy:elastic_fibers"), 10));
+          stomach.retainFlesh(12); // Budget for six sensory eyes as well as the larynx.
           for (int meal = 0; meal < 8; meal++)
             helper.assertTrue(
                 stomach.enqueue(new ItemStack(Items.BEEF), false), "Continued food was rejected");
@@ -956,7 +957,16 @@ public class BioshipGameTests {
                       "Native modular larynx did not develop");
                   helper.assertTrue(
                       stomach.material("biomancy:bone_fragments") == 0
-                          && stomach.material("biomancy:elastic_fibers") == 0,
+                          && stomach.material("biomancy:elastic_fibers")
+                                  + BioshipDecay.blocks(ship).stream()
+                                      .filter(
+                                          p ->
+                                              helper
+                                                  .getLevel()
+                                                  .getBlockState(p)
+                                                  .is(Create_bioships.SURFACE_EYE.get()))
+                                      .count()
+                              == 6,
                       "Larynx did not use structural materials exactly once");
                 }));
   }
@@ -2111,6 +2121,13 @@ public class BioshipGameTests {
               LivingCoreBlockEntity.droppedSupply(new ItemStack(item("biomancy:bone_fragments")))
                   && LivingCoreBlockEntity.droppedSupply(new ItemStack(Items.BEEF)),
               "Food or bone growth stock was excluded");
+          var now = BioshipBlueprint.physical(core, BlockPos.ZERO);
+          drop.setPos(now.x + 4.5, now.y, now.z);
+          drop.setDeltaMovement(Vec3.ZERO);
+          core.gatheringGoal();
+          helper.assertTrue(
+              drop.getDeltaMovement().x < 0 && core.crawl().reach() != null,
+              "Tentacle cannot grab supplies beyond the old three-block reach");
           drop.setPos(here.x + 6, here.y, here.z);
           var meal =
               new net.minecraft.world.entity.item.ItemEntity(
@@ -2316,6 +2333,323 @@ public class BioshipGameTests {
     BioshipDecay.decay(level);
     helper.assertTrue(level.getBlockState(core.getBlockPos()).isAir(), "Core did not rot last");
     cleanup(helper, fragment);
+    finish(helper, ship, () -> {});
+  }
+
+  private static final class VulnerablePlayer extends InteractionPlayer {
+    VulnerablePlayer(net.minecraft.server.level.ServerLevel level, String name) {
+      super(level, name);
+      try {
+        var field =
+            net.minecraft.server.level.ServerPlayer.class.getDeclaredField("spawnInvulnerableTime");
+        field.setAccessible(true);
+        field.setInt(this, 0);
+      } catch (ReflectiveOperationException exception) {
+        throw new IllegalStateException(exception);
+      }
+    }
+
+    @Override
+    public boolean isInvulnerableTo(net.minecraft.world.damagesource.DamageSource source) {
+      return getAbilities().invulnerable || isSpectator();
+    }
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 200, batch = "aggressive_hatchling")
+  public static void
+      aggressive_small_arms_attack_owner_and_creatures_but_respect_sight_and_creative(
+          GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var owner = new VulnerablePlayer(level, "ScuttleCaptain");
+    owner.setGameMode(GameType.SURVIVAL);
+    owner.setHealth(20);
+    owner.setNoGravity(true);
+    var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    owner.setPos(here.x + 2, here.y, here.z);
+    level.addNewPlayer(owner);
+    var creative = new VulnerablePlayer(level, "CreativeWitness");
+    creative.setGameMode(GameType.CREATIVE);
+    creative.setPos(here.x + 1, here.y, here.z);
+    level.addNewPlayer(creative);
+    var cow = EntityType.COW.create(level);
+    cow.setNoAi(true);
+    cow.setNoGravity(true);
+    cow.setPos(here.x + 3, here.y, here.z);
+    level.addFreshEntity(cow);
+    var tag = core.saveWithFullMetadata(level.registryAccess());
+    tag.putInt("Trust", -20);
+    tag.putInt("Satiety", 1200);
+    tag.putUUID("Captain", owner.getUUID());
+    core.loadAdditional(tag, level.registryAccess());
+    helper.runAfterDelay(
+        40,
+        () -> {
+          helper.assertTrue(
+              core.aggressive() && BioshipDefense.target(core) == owner,
+              "Aggressive hatchling did not target its survival owner: aggressive="
+                  + core.aggressive()
+                  + " attackable="
+                  + TentacleBlockEntity.attackable(owner)
+                  + " visible="
+                  + core.vision().visible(core, owner.getBoundingBox().getCenter())
+                  + " target="
+                  + BioshipDefense.target(core)
+                  + " entities="
+                  + level
+                      .getEntitiesOfClass(
+                          net.minecraft.world.entity.LivingEntity.class,
+                          new AABB(here, here).inflate(8))
+                      .size());
+        });
+    helper.assertTrue(
+        !TentacleBlockEntity.attackable(creative), "Creative player was an attack target");
+    helper.runAfterDelay(
+        60,
+        () -> {
+          helper.assertTrue(
+              owner.getHealth() < 20, "Aggressive hatchling never damaged the survival player");
+          level.removePlayerImmediately(owner, Entity.RemovalReason.DISCARDED);
+          var wall = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO)).east();
+          for (int y = 0; y < 4; y++)
+            level.setBlock(wall.above(y), Blocks.OBSIDIAN.defaultBlockState(), 3);
+          helper.runAfterDelay(
+              30,
+              () -> {
+                helper.assertTrue(
+                    cow.getHealth() == cow.getMaxHealth(),
+                    "Small arm attacked through a world wall");
+                for (int y = 0; y < 4; y++) level.removeBlock(wall.above(y), false);
+                helper.runAfterDelay(
+                    40,
+                    () -> {
+                      try {
+                        helper.assertTrue(
+                            cow.getHealth() < cow.getMaxHealth(),
+                            "Aggression did not attack visible creatures");
+                        helper.assertTrue(
+                            creative.getHealth() == 20, "Creative player was damaged");
+                        helper.succeed();
+                      } finally {
+                        cow.discard();
+                        level.removePlayerImmediately(creative, Entity.RemovalReason.DISCARDED);
+                        cleanup(helper, ship);
+                      }
+                    });
+              });
+        });
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "needs_priorities")
+  public static void missing_organs_outrank_near_sacks_then_full_storage_comes_first(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var here = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO));
+    var sack = here.south(2);
+    var forge = here.north(10);
+    var decomposer = here.west(11);
+    var digester = here.east(12);
+    level.setBlock(sack, block("biomancy:storage_sac").defaultBlockState(), 3);
+    var inventory = level.getCapability(Capabilities.ItemHandler.BLOCK, sack, null);
+    inventory.insertItem(0, new ItemStack(Items.BEEF, 32), false);
+    level.setBlock(forge, block("biomancy:bio_forge").defaultBlockState(), 3);
+    level.setBlock(decomposer, block("biomancy:decomposer").defaultBlockState(), 3);
+    level.setBlock(digester, block("biomancy:digester").defaultBlockState(), 3);
+    var best = BioshipPriorities.bestWorld(core);
+    helper.assertTrue(
+        best != null && best.rank() == 0 && best.pos().equals(forge),
+        "Nearby food sack displaced a missing mouth goal");
+    BioshipIntegration.assimilate(core, ship);
+    helper.assertTrue(
+        core.organMove() == null,
+        "Grabbed low-priority sack instead of approaching missing organs");
+    helper.assertTrue(
+        core.gatheringGoal().distanceToSqr(Vec3.atCenterOf(forge)) < 1,
+        "Travel goal ignored missing mouth");
+    level.setBlock(
+        core.getBlockPos().north(), Create_bioships.FEEDING_MOUTH.get().defaultBlockState(), 3);
+    best = BioshipPriorities.bestWorld(core);
+    helper.assertTrue(
+        best != null
+            && best.rank() == 0
+            && (best.pos().equals(decomposer) || best.pos().equals(digester)),
+        "Missing stomach lost priority after mouth formation");
+    level.setBlock(core.getBlockPos().west(), Create_bioships.STOMACH.get().defaultBlockState(), 3);
+    DigestiveSystem.connect(core, ship);
+    best = BioshipPriorities.bestWorld(core);
+    helper.assertTrue(
+        best != null && best.pos().equals(sack),
+        "Completed digestive organs did not switch priority to food storage");
+    var first = best.pos();
+    level.setBlock(here.south(3), block("biomancy:storage_sac").defaultBlockState(), 3);
+    helper.assertTrue(
+        BioshipPriorities.bestWorld(core).pos().equals(first),
+        "Equal priority target selection oscillated");
+    for (var pos : List.of(sack, forge, decomposer, digester, here.south(3)))
+      level.removeBlock(pos, false);
+    finish(helper, ship, () -> {});
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "surface_eyes")
+  public static void sensory_eyes_spend_reserves_extend_sight_and_relocate_through_tissue(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var stomach = digestive(helper, core, false);
+    var tag = core.saveWithFullMetadata(level.registryAccess());
+    tag.putInt("Stage", 2);
+    tag.putInt("Satiety", 1200);
+    core.loadAdditional(tag, level.registryAccess());
+    var host = core.getBlockPos().north(2);
+    level.setBlock(host, Create_bioships.FLESH.get().defaultBlockState(), 3);
+    var target = BioshipBlueprint.physical(core, new BlockPos(0, 0, -8));
+    helper.assertTrue(
+        !core.vision().visible(core, target), "Body tissue did not block the original eye");
+    core.vision().growEyes(core);
+    helper.assertTrue(
+        BioshipDecay.blocks(ship).stream()
+            .noneMatch(p -> level.getBlockState(p).is(Create_bioships.SURFACE_EYE.get())),
+        "Eye grew without construction resources");
+    stomach.retainFlesh(10);
+    stomach.retain(new ItemStack(item("biomancy:elastic_fibers"), 10));
+    var eye = host.north();
+    for (int attempt = 0;
+        attempt < 6 && !level.getBlockState(eye).is(Create_bioships.SURFACE_EYE.get());
+        attempt++) core.vision().growEyes(core);
+    long eyeCount =
+        BioshipDecay.blocks(ship).stream()
+            .filter(p -> level.getBlockState(p).is(Create_bioships.SURFACE_EYE.get()))
+            .count();
+    helper.assertTrue(
+        level.getBlockState(eye).is(Create_bioships.SURFACE_EYE.get())
+            && level.getBlockState(eye).getValue(SurfaceEyeBlock.FACING) == Direction.NORTH,
+        "No outward sensory eye grew on blocked hull side: connected="
+            + stomach.connected(core)
+            + " mouth="
+            + core.hasMouth()
+            + " mature="
+            + core.isMature()
+            + " eyes="
+            + BioshipDecay.blocks(ship).stream()
+                .filter(p -> level.getBlockState(p).is(Create_bioships.SURFACE_EYE.get()))
+                .toList()
+            + " flesh="
+            + stomach.material("biomancy:flesh_bits")
+            + " fiber="
+            + stomach.material("biomancy:elastic_fibers"));
+    helper.assertTrue(
+        stomach.material("biomancy:flesh_bits") == 10 - 2 * eyeCount
+            && stomach.material("biomancy:elastic_fibers") == 10 - eyeCount,
+        "Sensory eye did not spend flesh and fibers");
+    helper.assertTrue(
+        core.vision().visible(core, target), "Auxiliary eye did not extend line of sight");
+    for (int x = 1; x <= 3; x++)
+      level.setBlock(host.east(x), Create_bioships.FLESH.get().defaultBlockState(), 3);
+    var wall = BlockPos.containing(BioshipBlueprint.physical(core, new BlockPos(0, 0, -6)));
+    for (int y = 0; y < 3; y++)
+      level.setBlock(wall.above(y), Blocks.OBSIDIAN.defaultBlockState(), 3);
+    core.vision().growEyes(core);
+    helper.assertTrue(
+        core.organMove() != null
+            && core.organMove().source().equals(eye)
+            && !core.organMove().external(),
+        "Blocked sensory eye was not moved through its own connected tissue");
+    helper.assertTrue(
+        stomach.material("biomancy:flesh_bits") == 10 - 2 * eyeCount,
+        "Relocating an existing eye charged its construction cost again");
+    for (int y = 0; y < 3; y++) level.removeBlock(wall.above(y), false);
+    finish(helper, ship, () -> {});
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "mouth_face_and_grid")
+  public static void mouth_faces_outward_only_accepts_front_clicks_and_cores_cannot_join_grids(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var mouth = core.getBlockPos().east();
+    level.setBlock(mouth, block("biomancy:bio_forge").defaultBlockState(), 3);
+    BioshipIntegration.finishAssimilation(core, mouth);
+    helper.assertTrue(
+        level.getBlockState(mouth).getValue(FeedingMouthBlock.FACING) == Direction.EAST,
+        "New mouth faces the core or ground instead of outward");
+    helper.assertTrue(
+        level.getCapability(Capabilities.ItemHandler.BLOCK, mouth, Direction.NORTH) == null
+            && level.getCapability(Capabilities.ItemHandler.BLOCK, mouth, Direction.EAST) != null,
+        "Automated item feeding can access a side without teeth");
+    var stomachPos = core.getBlockPos().west();
+    level.setBlock(stomachPos, Create_bioships.STOMACH.get().defaultBlockState(), 3);
+    DigestiveSystem.connect(core, ship);
+    var user = new InteractionPlayer(level, "MouthFaceTester");
+    var physical = ship.logicalPose().transformPosition(Vec3.atCenterOf(mouth));
+    user.setPos(physical.x + 1, physical.y, physical.z);
+    user.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, new ItemStack(Items.BEEF, 2));
+    user.gameMode.useItemOn(
+        user,
+        level,
+        user.getMainHandItem(),
+        net.minecraft.world.InteractionHand.MAIN_HAND,
+        new BlockHitResult(Vec3.atCenterOf(mouth), Direction.NORTH, mouth, false));
+    helper.assertTrue(
+        user.getMainHandItem().getCount() == 2
+            && ((StomachBlockEntity) level.getBlockEntity(stomachPos)).queuedFood() == 0,
+        "Side click fed the mouth");
+    user.gameMode.useItemOn(
+        user,
+        level,
+        user.getMainHandItem(),
+        net.minecraft.world.InteractionHand.MAIN_HAND,
+        new BlockHitResult(Vec3.atCenterOf(mouth), Direction.EAST, mouth, false));
+    helper.assertTrue(user.getMainHandItem().getCount() == 1, "Toothed front face refused food");
+    user.closeContainer();
+    user.setItemInHand(
+        net.minecraft.world.InteractionHand.MAIN_HAND,
+        new ItemStack(Create_bioships.CORE_ITEM.get(), 2));
+    var placement =
+        new net.minecraft.world.item.context.BlockPlaceContext(
+            user,
+            net.minecraft.world.InteractionHand.MAIN_HAND,
+            user.getMainHandItem(),
+            new BlockHitResult(
+                Vec3.atCenterOf(core.getBlockPos()), Direction.UP, core.getBlockPos(), false));
+    helper.assertTrue(
+        Create_bioships.CORE.get().getStateForPlacement(placement) == null,
+        "Core can be placed on an existing Sable grid");
+    var result =
+        Create_bioships.CORE_ITEM
+            .get()
+            .useOn(
+                new net.minecraft.world.item.context.UseOnContext(
+                    user,
+                    net.minecraft.world.InteractionHand.MAIN_HAND,
+                    new BlockHitResult(
+                        Vec3.atCenterOf(core.getBlockPos()),
+                        Direction.UP,
+                        core.getBlockPos(),
+                        false)));
+    helper.assertTrue(
+        !result.consumesAction() && user.getMainHandItem().getCount() == 2,
+        "Rejected grid placement consumed a core item");
+    var plain = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO)).east(12);
+    level.setBlock(plain, Blocks.STONE.defaultBlockState(), 3);
+    var grid =
+        SubLevelAssemblyHelper.assembleBlocks(
+            level, plain, List.of(plain), new BoundingBox3i(plain, plain));
+    var blockPos = grid.getPlot().getCenterBlock();
+    var plainContext =
+        new net.minecraft.world.item.context.BlockPlaceContext(
+            user,
+            net.minecraft.world.InteractionHand.MAIN_HAND,
+            user.getMainHandItem(),
+            new BlockHitResult(Vec3.atCenterOf(blockPos), Direction.UP, blockPos, false));
+    helper.assertTrue(
+        Create_bioships.CORE.get().getStateForPlacement(plainContext) == null,
+        "Core placement was allowed on a non-bioship Sable grid");
+    cleanup(helper, grid);
     finish(helper, ship, () -> {});
   }
 }

@@ -60,5 +60,6 @@
   "item.create_bioships.bioship_goggles": "Symbiotic Goggles",
   "block.create_bioships.blueprint_panel": "Blueprint Nerve Panel",
   "message.create_bioships.inspect": "Inspect the eye with Symbiotic Goggles.",
-  "message.create_bioships.dead": "This bioship has died. Its wreck is rotting."
+  "message.create_bioships.dead": "This bioship has died. Its wreck is rotting.",
+  "block.create_bioships.surface_eye": "Sensory Eye"
 }

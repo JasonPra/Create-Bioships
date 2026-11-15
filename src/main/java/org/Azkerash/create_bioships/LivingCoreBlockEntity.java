@@ -86,6 +86,19 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
 
   private int bodyBlocks = 1;
   private int stage, growthIndex, metabolismTicks;
+  private final BioshipVision vision = new BioshipVision();
+
+  public BioshipVision vision() {
+    return vision;
+  }
+
+  BlockPos supplyTarget;
+  private final BioshipDefense defense = new BioshipDefense();
+
+  public boolean hatchling() {
+    return stage == 0;
+  }
+
   private int bodyLayoutVersion = DinghyGrowth.LAYOUT_VERSION;
 
   public int layoutVersion() {
@@ -209,7 +222,9 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
       lines.add(
           Component.literal(
               crawl.gathering()
-                  ? "Walking toward visible supplies."
+                  ? hatchling()
+                      ? "Scuttling toward current needs."
+                      : "Walking toward visible supplies."
                   : "Walking to a clear growth site."));
     else if (crawl.bracing())
       lines.add(Component.literal("Bracing against the ground for growth."));
@@ -439,6 +454,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     if (core.ship() != null)
       core.crawl.tick(
           core, core.stage < 2 && core.needs.readyToGrow() && !core.roomToGrow(core.ship()));
+    if (core.ship() != null) core.defense.tick(core);
     core.body.tick(core);
     if (core.blueprint.busy()) {
       core.serverTick();
@@ -452,9 +468,11 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     var ship = core.ship();
     if (ship != null && core.primary(ship) && level.getGameTime() % 20 == 0)
       BioshipIntegration.assimilate(core, ship);
+    if (ship != null && level.getGameTime() % 20 == 0) BioshipIntegration.orientMouth(core);
     core.updateCabinLights();
     if (ship != null && level.getGameTime() % 20 == 0) DigestiveSystem.connect(core, ship);
     core.growBody();
+    if (core.ship() != null) core.vision.tick(core);
     if (ship != null && core.isMature() && level.getGameTime() % 20 == 0) {
       EngineRoom.arrange(core, ship);
       BioshipIntegration.relocateMouth(core, ship);
@@ -810,6 +828,16 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     crawl.reach(null);
     if (body.dead() || OrganMotion.busy(this) || blueprint.busy()) return null;
     Vec3 here = BioshipBlueprint.physical(this, BlockPos.ZERO);
+    var threat = BioshipDefense.target(this);
+    if (!isMature() && threat != null) {
+      Vec3 point = threat.getBoundingBox().getCenter();
+      return point.distanceToSqr(here) > 6.25 ? new Vec3(point.x, here.y, point.z) : null;
+    }
+    var objective = BioshipPriorities.bestWorld(this);
+    if (objective != null && (objective.rank() == 0 || objective.rank() <= 2 && !hungry())) {
+      Vec3 point = Vec3.atCenterOf(objective.pos());
+      return new Vec3(point.x, here.y, point.z);
+    }
     var stomach = DigestiveSystem.stomach(this);
     if (hasMouth() && stomach != null && stomach.connected(this)) {
       var items =
@@ -820,11 +848,11 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
       items.sort(java.util.Comparator.comparingDouble(e -> e.distanceToSqr(here)));
       for (var item : items) {
         Vec3 point = item.position().add(0, .2, 0);
-        if (!BioshipBlueprint.worldClear((ServerLevel) level, here, point)) continue;
-        if (here.distanceToSqr(point) <= 9) {
+        if (!vision.visible(this, point)) continue;
+        if (here.distanceToSqr(point) <= 25) {
           crawl.reach(item.position());
           item.setDeltaMovement(here.subtract(item.position()).normalize().scale(.3));
-          if (here.distanceToSqr(point) <= 2.25) {
+          if (here.distanceToSqr(point) <= 4) {
             ItemStack one = item.getItem().copyWithCount(1);
             boolean accepted;
             if (BioshipScavenging.droppedBlock(one)) {
@@ -846,24 +874,9 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     if (isMature()) return null;
     Vec3 wreckSupply = BioshipScavenging.approach(this);
     if (wreckSupply != null) return new Vec3(wreckSupply.x, here.y, wreckSupply.z);
-    BlockPos origin = BlockPos.containing(here);
-    Vec3 nearest = null;
-    double distance = 16 * 16;
-    for (BlockPos pos :
-        BlockPos.betweenClosed(origin.offset(-16, -2, -16), origin.offset(16, 3, 16))) {
-      if (BioshipIntegration.containing(level, pos) != null) continue;
-      var state = level.getBlockState(pos);
-      var id = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(state.getBlock());
-      double next = Vec3.atCenterOf(pos).distanceToSqr(here);
-      if (next <= 16
-          || next >= distance
-          || !id.getNamespace().equals("biomancy")
-          || state.getBlock() instanceof net.minecraft.world.level.block.LiquidBlock
-          || !BioshipIntegration.exposedAndVisible((ServerLevel) level, origin, pos)) continue;
-      nearest = Vec3.atCenterOf(pos);
-      distance = next;
-    }
-    return nearest == null ? null : new Vec3(nearest.x, here.y, nearest.z);
+    if (objective == null) return null;
+    Vec3 point = Vec3.atCenterOf(objective.pos());
+    return new Vec3(point.x, here.y, point.z);
   }
 
   static boolean droppedSupply(ItemStack stack) {

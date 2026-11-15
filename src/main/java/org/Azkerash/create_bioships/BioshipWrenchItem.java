@@ -23,7 +23,8 @@ public class BioshipWrenchItem extends Item {
             .getKey(state.getBlock())
             .toString()
             .equals("biomancy:biometric_membrane")) return false;
-    return state.is(Create_bioships.FEEDING_MOUTH.get())
+    return state.is(Create_bioships.SURFACE_EYE.get())
+        || state.is(Create_bioships.FEEDING_MOUTH.get())
         || state.is(Create_bioships.STOMACH.get())
         || net.minecraft.core.registries.BuiltInRegistries.BLOCK
                 .getKey(state.getBlock())
@@ -80,7 +81,8 @@ public class BioshipWrenchItem extends Item {
       }
       var target =
           state.is(Create_bioships.FLESH.get()) ? pos : pos.relative(context.getClickedFace());
-      if (!EngineRoom.inside(core, target)) {
+      if (!level.getBlockState(source).is(Create_bioships.SURFACE_EYE.get())
+          && !EngineRoom.inside(core, target)) {
         player.displayClientMessage(
             Component.literal("Place organs inside the engine room."), true);
         return InteractionResult.FAIL;

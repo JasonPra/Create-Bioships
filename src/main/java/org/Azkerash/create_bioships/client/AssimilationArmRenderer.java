@@ -122,22 +122,31 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
       MultiBufferSource buffers,
       int light) {
     var consumer = buffers.getBuffer(RenderType.entityCutoutNoCull(SKIN));
-    for (int leg = 0; leg < 4; leg++) {
-      double side = leg % 2 == 0 ? -1 : 1, front = leg < 2 ? -1 : 1;
+    boolean scuttling = core.hatchling();
+    int legs = scuttling ? 8 : 4;
+    for (int leg = 0; leg < legs; leg++) {
+      double side = leg % 2 == 0 ? -1 : 1;
+      double front = scuttling ? (leg / 2 - 1.5) * .65 : leg < 2 ? -1 : 1;
       double phase =
-          (core.getLevel().getGameTime() + partial) * .22 + (leg == 0 || leg == 3 ? 0 : Math.PI);
-      Vec3 root = new Vec3(.5 + side * .4, .4, .5 + front * .4),
-          foot =
-              new Vec3(
-                  .5 + side * 1.5,
-                  -1.25 + (core.crawl().walking() ? Math.max(0, Math.sin(phase)) * .45 : 0),
-                  .5 + front * 1.2 + (core.crawl().walking() ? Math.cos(phase) * .45 : 0));
+          (core.getLevel().getGameTime() + partial) * (scuttling ? .65 : .22)
+              + ((leg / 2 + leg % 2) % 2 == 0 ? 0 : Math.PI);
+      boolean moving = core.crawl().walking();
+      Vec3 root = new Vec3(.5 + side * .4, .4, .5 + front * .4);
+      Vec3 foot =
+          new Vec3(
+              .5 + side * (scuttling ? 1.65 : 1.5),
+              (scuttling ? -.35 : -1.25)
+                  + (moving ? Math.max(0, Math.sin(phase)) * (scuttling ? .16 : .45) : 0),
+              .5 + front * 1.2 + (moving ? Math.cos(phase) * (scuttling ? .25 : .45) : 0));
       Vec3 previous = root;
       for (int i = 1; i <= 10; i++) {
         double t = i / 10.0;
         Vec3 point =
             root.lerp(foot, t)
-                .add(side * Math.sin(Math.PI * t) * .3, Math.sin(Math.PI * t) * .6, 0);
+                .add(
+                    side * Math.sin(Math.PI * t) * .3,
+                    Math.sin(Math.PI * t) * (scuttling ? .25 : .6),
+                    0);
         Vec3 delta = point.subtract(previous);
         pose.pushPose();
         pose.translate(previous.x, previous.y, previous.z);

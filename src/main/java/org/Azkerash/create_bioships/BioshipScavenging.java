@@ -93,6 +93,7 @@ public final class BioshipScavenging {
     if (container == null) return null;
     Vec3 eye = BioshipBlueprint.physical(core, BlockPos.ZERO), nearest = null;
     double distance = 32 * 32;
+    int bestRank = Integer.MAX_VALUE;
     for (var body : container.getAllSubLevels()) {
       if (!(body instanceof ServerSubLevel wreck) || wreck.isRemoved() || !BioshipDecay.dead(wreck))
         continue;
@@ -105,9 +106,14 @@ public final class BioshipScavenging {
         if (!needed(core, core.getLevel().getBlockState(source))) continue;
         Vec3 point = wreck.logicalPose().transformPosition(Vec3.atCenterOf(source));
         double next = point.distanceToSqr(eye);
-        if (next > 9 * 9 && next < distance && visible(core, wreck, source, eye, point)) {
+        int rank = BioshipPriorities.rank(core, core.getLevel().getBlockState(source), source);
+        if (next > 11 * 11
+            && next < 32 * 32
+            && (rank < bestRank || rank == bestRank && next < distance)
+            && visible(core, wreck, source, eye, point)) {
           nearest = point;
           distance = next;
+          bestRank = rank;
         }
       }
     }
@@ -119,6 +125,7 @@ public final class BioshipScavenging {
     var level = own.getLevel();
     var container = SubLevelContainer.getContainer(level);
     if (container == null) return false;
+    var worldObjective = BioshipPriorities.bestWorld(core);
     Vec3 eye = BioshipBlueprint.physical(core, BlockPos.ZERO);
     for (var body : List.copyOf(container.getAllSubLevels()))
       if (body instanceof ServerSubLevel wreck
@@ -132,13 +139,21 @@ public final class BioshipScavenging {
         if (center.distanceToSqr(eye) > 32 * 32) continue;
         var cells = BioshipDecay.blocks(wreck);
         cells.sort(
-            Comparator.comparingDouble(
-                p -> wreck.logicalPose().transformPosition(Vec3.atCenterOf(p)).distanceToSqr(eye)));
+            Comparator.<BlockPos>comparingInt(
+                    p -> BioshipPriorities.rank(core, level.getBlockState(p), p))
+                .thenComparingDouble(
+                    p ->
+                        wreck
+                            .logicalPose()
+                            .transformPosition(Vec3.atCenterOf(p))
+                            .distanceToSqr(eye)));
         for (var source : cells) {
           var state = level.getBlockState(source);
-          if (!needed(core, state)) continue;
+          if (!needed(core, state)
+              || worldObjective != null
+                  && BioshipPriorities.rank(core, state, source) > worldObjective.rank()) continue;
           Vec3 point = wreck.logicalPose().transformPosition(Vec3.atCenterOf(source));
-          if (point.distanceToSqr(eye) > 12 * 12 || !visible(core, wreck, source, eye, point))
+          if (point.distanceToSqr(eye) > 14 * 14 || !visible(core, wreck, source, eye, point))
             continue;
           for (var dir :
               List.of(
@@ -161,17 +176,24 @@ public final class BioshipScavenging {
         || !level
             .getBlockState(physical.above())
             .getCollisionShape(level, physical.above())
-            .isEmpty()
-        || !BioshipBlueprint.worldClear(level, eye, point)) return false;
-    int steps = Math.max(1, (int) Math.ceil(eye.distanceTo(point) * 5));
-    for (int i = 1; i < steps; i++) {
-      var sample =
-          BlockPos.containing(
-              wreck.logicalPose().transformPositionInverse(eye.lerp(point, i / (double) steps)));
-      if (!sample.equals(source)
-          && !level.getBlockState(sample).getCollisionShape(level, sample).isEmpty()) return false;
+            .isEmpty()) return false;
+    for (var from : core.vision().origins(core)) {
+      if (!BioshipVision.ray(core, from, point)) continue;
+      boolean clear = true;
+      int steps = Math.max(1, (int) Math.ceil(from.distanceTo(point) * 5));
+      for (int i = 1; i < steps; i++) {
+        var sample =
+            BlockPos.containing(
+                wreck.logicalPose().transformPositionInverse(from.lerp(point, i / (double) steps)));
+        if (!sample.equals(source)
+            && !level.getBlockState(sample).getCollisionShape(level, sample).isEmpty()) {
+          clear = false;
+          break;
+        }
+      }
+      if (clear) return true;
     }
-    return true;
+    return false;
   }
 
   void finish(LivingCoreBlockEntity core, BlockPos target, boolean restoreHost) {

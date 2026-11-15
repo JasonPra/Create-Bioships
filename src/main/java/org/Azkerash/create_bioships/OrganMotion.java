@@ -278,11 +278,7 @@ public final class OrganMotion {
     }
     if (moved instanceof FeedingMouthBlockEntity mouth) {
       mouth.embeddedInHull(host.is(Create_bioships.FLESH.get()));
-      var d = move.target().subtract(core.getBlockPos());
-      Direction facing =
-          EngineRoom.inside(core, move.target())
-              ? (d.getX() > 0 ? Direction.WEST : Direction.EAST)
-              : Direction.DOWN;
+      Direction facing = FeedingMouthBlock.outward(core, move.target());
       level.setBlock(
           move.target(),
           level.getBlockState(move.target()).setValue(FeedingMouthBlock.FACING, facing),

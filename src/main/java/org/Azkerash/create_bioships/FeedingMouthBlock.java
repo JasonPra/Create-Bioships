@@ -1,7 +1,7 @@
 package org.Azkerash.create_bioships;
 
 import com.mojang.serialization.MapCodec;
-import net.minecraft.core.BlockPos;
+import net.minecraft.core.*;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.*;
@@ -52,9 +52,45 @@ public class FeedingMouthBlock extends BaseEntityBlock {
             type, Create_bioships.FEEDING_MOUTH_ENTITY.get(), FeedingMouthBlockEntity::tick);
   }
 
+  static Direction outward(LivingCoreBlockEntity core, BlockPos pos) {
+    var delta = pos.subtract(core.getBlockPos());
+    Direction preferred =
+        EngineRoom.inside(core, pos)
+            ? (delta.getX() > 0 ? Direction.WEST : Direction.EAST)
+            : Math.abs(delta.getX()) > Math.abs(delta.getZ())
+                ? (delta.getX() > 0 ? Direction.EAST : Direction.WEST)
+                : delta.getZ() > 0 ? Direction.SOUTH : Direction.NORTH;
+    var directions =
+        new java.util.ArrayList<>(
+            java.util.List.of(
+                preferred,
+                Direction.UP,
+                Direction.NORTH,
+                Direction.SOUTH,
+                Direction.WEST,
+                Direction.EAST,
+                Direction.DOWN));
+    for (var facing : directions) if (openFace(core, pos, facing)) return facing;
+    return preferred;
+  }
+
+  static boolean openFace(LivingCoreBlockEntity core, BlockPos pos, Direction direction) {
+    var front = pos.relative(direction);
+    var level = core.getLevel();
+    if (!level.getBlockState(front).getCollisionShape(level, front).isEmpty()) return false;
+    var physical =
+        BlockPos.containing(
+            core.ship()
+                .logicalPose()
+                .transformPosition(net.minecraft.world.phys.Vec3.atCenterOf(front)));
+    return level.getBlockState(physical).getCollisionShape(level, physical).isEmpty()
+        && level.getFluidState(physical).isEmpty();
+  }
+
   @Override
   protected InteractionResult useWithoutItem(
       BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
+    if (hit.getDirection() != state.getValue(FACING)) return InteractionResult.PASS;
     if (!level.isClientSide && level.getBlockEntity(pos) instanceof FeedingMouthBlockEntity mouth)
       player.openMenu(mouth);
     return InteractionResult.sidedSuccess(level.isClientSide);

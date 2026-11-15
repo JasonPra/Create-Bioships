@@ -61,7 +61,7 @@ public final class BioshipCrawl {
     if (!blocked) {
       goal = core.gatheringGoal();
       gathering = goal != null;
-      walking = gathering && goal.distanceToSqr(here) > 4;
+      walking = gathering && goal.distanceToSqr(here) > 2.25;
       core.setChanged();
       core.getLevel()
           .sendBlockUpdated(core.getBlockPos(), core.getBlockState(), core.getBlockState(), 2);
@@ -145,7 +145,12 @@ public final class BioshipCrawl {
       walking = false;
       return Vec3.ZERO;
     }
-    return direction.scale(.7);
+    if (!core.hatchling()) return direction.scale(.7);
+    double phase = core.getLevel().getGameTime() * .65;
+    double speed = 1.05 + .3 * Math.max(0, Math.sin(phase));
+    return direction
+        .scale(speed)
+        .add(new Vec3(-direction.z, 0, direction.x).scale(Math.sin(phase * .5) * .08));
   }
 
   private static BlockPos ground(ServerLevel level, BlockPos point) {
@@ -178,7 +183,7 @@ public final class BioshipCrawl {
       count++;
     }
     if (count < 3) return;
-    double wanted = highest + 1.25;
+    double wanted = highest + (core.hatchling() ? .85 : 1.25);
     if (wanted - here.y > 2 || here.y - highest > 2.75) return;
     supportHeight = wanted;
     if (count == 4)

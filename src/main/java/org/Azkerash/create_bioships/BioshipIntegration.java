@@ -118,7 +118,7 @@ public final class BioshipIntegration {
     BlockPos physical =
         BlockPos.containing(
             ship.logicalPose().transformPosition(Vec3.atCenterOf(core.getBlockPos())));
-    BlockPos.betweenClosed(physical.offset(-3, 0, -3), physical.offset(3, 3, 3))
+    BlockPos.betweenClosed(physical.offset(-5, -4, -5), physical.offset(5, 5, 5))
         .forEach(p -> candidates.add(p.immutable()));
     for (var actor : blockEntities(ship)) {
       BlockPos point =
@@ -129,13 +129,24 @@ public final class BioshipIntegration {
       convertFirstBioForge(core, actor.getBlockPos());
     }
     if (BioshipScavenging.collect(core, ship)) return;
+    var objective = BioshipPriorities.bestWorld(core);
+    var ordered = new ArrayList<>(candidates);
+    ordered.sort(
+        Comparator.<BlockPos>comparingInt(
+                p -> BioshipPriorities.rank(core, level.getBlockState(p), p))
+            .thenComparingDouble(p -> p.distSqr(physical)));
     int moved = 0;
-    for (BlockPos source : candidates) {
+    for (BlockPos source : ordered) {
       if (moved >= 16
           || !level.getChunkSource().hasChunk(source.getX() >> 4, source.getZ() >> 4)
           || containing(level, source) != null) continue;
       BlockState state = level.getBlockState(source);
-      if (!exposedAndVisible(level, physical, source)) continue;
+      if (objective != null && BioshipPriorities.rank(core, state, source) > objective.rank())
+        continue;
+      if (objective != null
+          && !source.equals(objective.pos())
+          && BioshipPriorities.rank(core, state, source) == objective.rank()) continue;
+      if (!core.vision().exposed(core, source)) continue;
       if (!BuiltInRegistries.BLOCK.getKey(state.getBlock()).getNamespace().equals("biomancy")
           || state.getBlock() instanceof net.minecraft.world.level.block.LiquidBlock) continue;
       BlockPos target =
@@ -273,9 +284,33 @@ public final class BioshipIntegration {
     int biomass = forge.getStateData().fuelHandler.getFuelAmount();
     forge.setStackInFuelSlot(net.minecraft.world.item.ItemStack.EMPTY);
     forge.getStateData().fuelHandler.setFuelAmount(0);
-    core.getLevel().setBlock(pos, Create_bioships.FEEDING_MOUTH.get().defaultBlockState(), 3);
+    core.getLevel()
+        .setBlock(
+            pos,
+            Create_bioships.FEEDING_MOUTH
+                .get()
+                .defaultBlockState()
+                .setValue(FeedingMouthBlock.FACING, FeedingMouthBlock.outward(core, pos)),
+            3);
     if (core.getLevel().getBlockEntity(pos) instanceof FeedingMouthBlockEntity mouth)
       mouth.inheritBioForge(stock, biomass);
+  }
+
+  static void orientMouth(LivingCoreBlockEntity core) {
+    var pos = core.mouthBlock();
+    if (pos == null || OrganMotion.busy(core)) return;
+    var state = core.getLevel().getBlockState(pos);
+    if (!state.is(Create_bioships.FEEDING_MOUTH.get())) return;
+    var entity = core.getLevel().getBlockEntity(pos);
+    if (entity != null && entity.getPersistentData().getBoolean("BioshipManualPlacement")) return;
+    var facing = state.getValue(FeedingMouthBlock.FACING);
+    if (!FeedingMouthBlock.openFace(core, pos, facing)
+        || !core.isMature() && facing == Direction.DOWN)
+      core.getLevel()
+          .setBlock(
+              pos,
+              state.setValue(FeedingMouthBlock.FACING, FeedingMouthBlock.outward(core, pos)),
+              3);
   }
 
   public static void relocateMouth(LivingCoreBlockEntity core, ServerSubLevel ship) {
@@ -335,6 +370,10 @@ public final class BioshipIntegration {
         || event.getItemStack().is(Create_bioships.BIOSHIP_WRENCH.get())
         || event.getLevel().isClientSide
         || !isMaw(event.getLevel().getBlockState(event.getPos()))) return;
+    var mouthState = event.getLevel().getBlockState(event.getPos());
+    if (mouthState.is(Create_bioships.FEEDING_MOUTH.get())
+        && event.getHitVec().getDirection() != mouthState.getValue(FeedingMouthBlock.FACING))
+      return;
     var ship = containing(event.getLevel(), event.getPos());
     if (ship == null) return;
     for (var actor : ship.getPlot().getBlockEntityActors())

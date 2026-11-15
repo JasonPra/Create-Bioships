@@ -62,12 +62,15 @@ public class TentacleBlockEntity extends BlockEntity implements BlockEntitySubLe
     return null;
   }
 
+  static boolean attackable(LivingEntity entity) {
+    return entity.isAlive()
+        && !entity.isSpectator()
+        && !entity.isInvulnerable()
+        && !(entity instanceof Player player && player.isCreative());
+  }
+
   boolean valid(LivingEntity entity, LivingCoreBlockEntity core) {
-    if (!entity.isAlive()
-        || entity.isSpectator()
-        || entity.isPassenger()
-        || entity.isInvulnerable()
-        || entity instanceof Player player && player.isCreative()) return false;
+    if (!attackable(entity) || entity.isPassenger() && !core.aggressive()) return false;
     if (core.aggressive()) return true;
     if (core.access().allows(core, entity)) return false;
     if (entity instanceof TamableAnimal tame && tame.isTame()) return false;
@@ -132,15 +135,15 @@ public class TentacleBlockEntity extends BlockEntity implements BlockEntitySubLe
             ? null
             : server.getEntity(target) instanceof LivingEntity living ? living : null;
     if (target != null
-        && (prey == null || !valid(prey, core) || prey.position().distanceToSqr(root) > 64)) {
+        && (prey == null || !valid(prey, core) || prey.position().distanceToSqr(root) > 100)) {
       release();
       return;
     }
     if (target == null && cooldown == 0 && level.getGameTime() % 10 == 0) {
-      double closest = 36;
+      double closest = 64;
       for (var entity :
           level.getEntitiesOfClass(
-              LivingEntity.class, new AABB(root, root).inflate(6), e -> valid(e, core))) {
+              LivingEntity.class, new AABB(root, root).inflate(8), e -> valid(e, core))) {
         double distance = entity.position().distanceToSqr(root);
         if (distance < closest
             && !claimed(ship, entity.getUUID())
@@ -173,7 +176,9 @@ public class TentacleBlockEntity extends BlockEntity implements BlockEntitySubLe
     prey.hurtMarked = true;
     prey.fallDistance = 0;
     if (heldTicks % 20 == 0) {
-      boolean bite = core.hasMouth() && distance < 1.8;
+      var stomach = DigestiveSystem.stomach(core);
+      boolean bite =
+          core.hasMouth() && stomach != null && stomach.connected(core) && distance < 1.8;
       boolean edible = edible(prey);
       boolean hurt =
           BioshipFeedingEvents.bite(
