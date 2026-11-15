@@ -66,18 +66,18 @@ public final class SymbioticTooltip {
     }
     if (details.isEmpty()) return;
     int w = mc.getWindow().getGuiScaledWidth(), h = mc.getWindow().getGuiScaledHeight();
-    int maxWidth = Math.min(230, Math.max(80, w / 2 - 34));
+    int maxWidth = Math.min(280, Math.max(40, w - 28));
     List<FormattedCharSequence> lines = new ArrayList<>();
     for (var line : details) lines.addAll(mc.font.split(line, maxWidth));
     int textWidth = lines.stream().mapToInt(mc.font::width).max().orElse(0),
         height = lines.size() * 10;
     // Reserve a margin on all four edges, including at high GUI scales.
-    float scale = Math.min(1f, (h - 20f) / Math.max(1, height + 12));
+    float scale = Math.min(1f, Math.max(1, h - 76f) / Math.max(1, height + 14));
     var g = event.getGuiGraphics();
     g.pose().pushPose();
     g.pose().scale(scale, scale, 1);
-    int x = Math.max(8, Math.min((int) ((w / 2 + 18) / scale), (int) (w / scale) - textWidth - 12));
-    int y = Math.max(8, Math.min((int) ((h / 2 - 25) / scale), (int) (h / scale) - height - 12));
+    int x = Math.max(8, (int) (w / scale - textWidth) / 2);
+    int y = Math.max(8, (int) ((h - 62) / scale) - height - 6);
     g.fill(x - 6, y - 6, x + textWidth + 6, y + height + 5, 0xdd241c25);
     g.renderOutline(x - 7, y - 7, textWidth + 14, height + 13, 0xff9a6a83);
     for (int i = 0; i < lines.size(); i++)

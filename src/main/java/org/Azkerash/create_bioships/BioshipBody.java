@@ -34,6 +34,8 @@ public final class BioshipBody {
     health = Math.max(0, health - amount);
     if (health <= 0) die(core);
     core.setChanged();
+    core.getLevel()
+        .sendBlockUpdated(core.getBlockPos(), core.getBlockState(), core.getBlockState(), 2);
   }
 
   void die(LivingCoreBlockEntity core) {
@@ -104,8 +106,9 @@ public final class BioshipBody {
     health = Math.min(next, health + Math.max(0, next - capacity));
     capacity = next;
     for (var entry : memory.entrySet())
-      if (!current.containsKey(entry.getKey()) && injured.add(entry.getKey()))
-        health = Math.max(0, health - 4);
+      if (!current.containsKey(entry.getKey())
+          && !core.rescue().retracted(core.getBlockPos().offset(entry.getKey()))
+          && injured.add(entry.getKey())) health = Math.max(0, health - 4);
     if (health <= 0) die(core);
     core.setChanged();
   }
@@ -147,7 +150,7 @@ public final class BioshipBody {
     if (stomach == null || OrganMotion.busy(core)) return;
     for (var e : memory.entrySet()) {
       var pos = core.getBlockPos().offset(e.getKey());
-      if (!core.getLevel().getBlockState(pos).isAir()) continue;
+      if (!core.getLevel().getBlockState(pos).isAir() || core.rescue().retracted(pos)) continue;
       Vec3 physical = core.ship().logicalPose().transformPosition(Vec3.atCenterOf(pos));
       if (!core.getLevel().getBlockState(BlockPos.containing(physical)).isAir()) continue;
       // Repair never grows a solid block through a passenger or nearby creature.

@@ -27,6 +27,12 @@ public class TentacleBlockEntity extends BlockEntity implements BlockEntitySubLe
           Registries.ENTITY_TYPE,
           ResourceLocation.fromNamespaceAndPath(Create_bioships.MOD_ID, "edible_entities"));
   private UUID target;
+  private final TentacleStrike strike = new TentacleStrike();
+
+  public TentacleStrike strike() {
+    return strike;
+  }
+
   private int clientTarget = -1, heldTicks, cooldown;
   private long lastTick = Long.MIN_VALUE;
 
@@ -99,6 +105,7 @@ public class TentacleBlockEntity extends BlockEntity implements BlockEntitySubLe
   }
 
   private void release() {
+    strike.clear();
     if (target != null) {
       target = null;
       clientTarget = -1;
@@ -165,6 +172,17 @@ public class TentacleBlockEntity extends BlockEntity implements BlockEntitySubLe
       release();
       return;
     }
+    if (prey instanceof Player
+        || prey instanceof net.minecraft.world.entity.monster.Enemy
+        || BioshipDefense.threatening(core, prey)) {
+      if (!strike.active()) {
+        strike.begin(prey, level.getGameTime());
+        syncTarget();
+      }
+      strike.tick(core, root, prey, 8, 6);
+      if (strike.finished(level.getGameTime())) release();
+      return;
+    }
     heldTicks++;
     Vec3 destination = core.hasMouth() ? core.mouthPosition(ship) : root.add(0, -1, 0);
     Vec3 center = prey.getBoundingBox().getCenter();
@@ -181,6 +199,11 @@ public class TentacleBlockEntity extends BlockEntity implements BlockEntitySubLe
       boolean bite =
           core.hasMouth() && stomach != null && stomach.connected(core) && distance < 1.8;
       boolean edible = edible(prey);
+      // Capturing food must not kill it before it reaches a connected mouth.
+      if (edible && !bite) {
+        if (heldTicks >= 160) release();
+        return;
+      }
       boolean hurt =
           BioshipFeedingEvents.bite(
               prey, server.damageSources().generic(), bite ? 6 : 2, bite && edible);
@@ -217,12 +240,14 @@ public class TentacleBlockEntity extends BlockEntity implements BlockEntitySubLe
   public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
     CompoundTag tag = new CompoundTag();
     tag.putInt("TargetEntity", clientTarget);
+    tag.put("Strike", strike.save());
     return tag;
   }
 
   @Override
   protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
     super.loadAdditional(tag, registries);
+    strike.load(tag.getCompound("Strike"));
     clientTarget = tag.contains("TargetEntity") ? tag.getInt("TargetEntity") : -1;
     target = null;
     heldTicks = 0;

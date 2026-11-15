@@ -16,7 +16,7 @@ public class ReconfigurationHeatMapMixin {
   private void pauseSplitting(CallbackInfo ci) {
     for (var actor : subLevel.getPlot().getBlockEntityActors())
       if (actor instanceof LivingCoreBlockEntity core
-          && core.blueprint().locked()
+          && (core.blueprint().locked() || core.rescue().active())
           && !core.body().dead()) {
         ci.cancel();
         return;

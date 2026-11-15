@@ -172,6 +172,14 @@ public final class BioshipIntegration {
         }
         if (target == null) continue;
       }
+      if (core.hatchling()
+          && state.is(
+              net.minecraft.core.registries.BuiltInRegistries.BLOCK.get(
+                  ResourceLocation.parse("biomancy:bio_forge")))
+          && !core.hasMouth()) {
+        var front = HatchlingFront.port(core, null);
+        if (front != null) target = front;
+      }
       if (OrganMotion.begin(core, source, target, true)) {
         moved++;
         break;
@@ -297,6 +305,10 @@ public final class BioshipIntegration {
   }
 
   static void orientMouth(LivingCoreBlockEntity core) {
+    if (core.hatchling()) {
+      HatchlingFront.arrangeMouth(core);
+      return;
+    }
     var pos = core.mouthBlock();
     if (pos == null || OrganMotion.busy(core)) return;
     var state = core.getLevel().getBlockState(pos);

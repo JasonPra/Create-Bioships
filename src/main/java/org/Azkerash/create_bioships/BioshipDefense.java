@@ -10,14 +10,26 @@ import net.minecraft.world.phys.Vec3;
 final class BioshipDefense {
   private int cooldown;
   private boolean extending;
+  private final TentacleStrike strike = new TentacleStrike();
   private java.util.UUID attacker;
   private long threatenedUntil;
+  private Vec3 lastThreat;
 
   void remember(LivingCoreBlockEntity core, LivingEntity entity) {
     if (!core.aggressive() && core.access().allows(core, entity)) return;
     attacker = entity.getUUID();
+    lastThreat = entity.position();
     threatenedUntil = core.getLevel().getGameTime() + 200;
     core.setChanged();
+  }
+
+  Vec3 dangerPosition(LivingCoreBlockEntity core) {
+    var threat = target(core);
+    if (threat != null && threatening(core, threat)) {
+      lastThreat = threat.position();
+      threatenedUntil = core.getLevel().getGameTime() + 200;
+    }
+    return core.getLevel().getGameTime() < threatenedUntil ? lastThreat : null;
   }
 
   static boolean threatening(LivingCoreBlockEntity core, LivingEntity entity) {
@@ -50,13 +62,18 @@ final class BioshipDefense {
     if (attacker != null) tag.putUUID("Attacker", attacker);
     tag.putLong("ThreatenedUntil", threatenedUntil);
     tag.putInt("Cooldown", cooldown);
+    tag.put("Strike", strike.save());
+    if (lastThreat != null) tag.put("LastThreat", VisionDebug.vector(lastThreat));
     return tag;
   }
 
   void load(net.minecraft.nbt.CompoundTag tag) {
+    lastThreat =
+        tag.contains("LastThreat") ? VisionDebug.vector(tag.getCompound("LastThreat")) : null;
     attacker = tag.hasUUID("Attacker") ? tag.getUUID("Attacker") : null;
     threatenedUntil = tag.getLong("ThreatenedUntil");
-    cooldown = Math.clamp(tag.getInt("Cooldown"), 0, 20);
+    cooldown = Math.clamp(tag.getInt("Cooldown"), 0, 40);
+    strike.load(tag.getCompound("Strike"));
   }
 
   static LivingEntity target(LivingCoreBlockEntity core) {
@@ -92,26 +109,45 @@ final class BioshipDefense {
 
   void tick(LivingCoreBlockEntity core) {
     if (cooldown > 0) cooldown--;
-    var prey = target(core);
-    if (prey == null) {
+    if (core.isMature()
+        && BioshipIntegration.blockEntities(core.ship()).stream()
+            .anyMatch(
+                e -> e instanceof TentacleBlockEntity limb && limb.owner(core.ship()) == core))
+      return;
+    var level = (ServerLevel) core.getLevel();
+    var prey = strike.active() ? strike.victim(level) : target(core);
+    if (strike.active()) {
+      var root =
+          BioshipReach.anchor(
+              core,
+              prey == null
+                  ? BioshipBlueprint.physical(core, BlockPos.ZERO)
+                  : prey.getBoundingBox().getCenter());
+      core.crawl().reach(strike.tip(root, level.getGameTime(), 4));
+      extending = true;
+      strike.tick(core, root, prey, 4, 4);
+      if (strike.finished(level.getGameTime())) {
+        strike.clear();
+        cooldown = 28;
+        core.crawl().reach(null);
+        extending = false;
+      }
+      level.sendBlockUpdated(core.getBlockPos(), core.getBlockState(), core.getBlockState(), 2);
+      return;
+    }
+    if (prey == null || cooldown > 0) {
       if (extending) {
         core.crawl().reach(null);
         extending = false;
       }
       return;
     }
-    Vec3 point = prey.getBoundingBox().getCenter();
+    var point = prey.getBoundingBox().getCenter();
     if (BioshipReach.anchor(core, point).distanceToSqr(point) > 16
         || !BioshipReach.clear(core, point, false)) return;
-    core.crawl().reach(point);
+    strike.begin(prey, level.getGameTime());
     extending = true;
-    if (cooldown == 0) {
-      var level = (ServerLevel) core.getLevel();
-      prey.hurt(level.damageSources().generic(), 2);
-      cooldown = 20;
-    }
-    if (core.getLevel().getGameTime() % 5 == 0)
-      core.getLevel()
-          .sendBlockUpdated(core.getBlockPos(), core.getBlockState(), core.getBlockState(), 2);
+    core.crawl().reach(strike.tip(BioshipReach.anchor(core, point), level.getGameTime(), 4));
+    level.sendBlockUpdated(core.getBlockPos(), core.getBlockState(), core.getBlockState(), 2);
   }
 }

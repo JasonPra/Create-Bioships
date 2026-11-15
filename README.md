@@ -59,7 +59,7 @@ Both items are crafted in **Bio-Forge → Tools**:
 
 ## Injury, repair, and the living blueprint
 
-The ship has a persistent internal health pool and a memory of the blocks attached to it. There is no health bar or health number in the HUD, goggles, or menus. At zero health the organism dies permanently; later biomass cannot revive it. Removing a remembered block by ordinary mining injures it; damage caused by its creator also reduces trust, including attributed explosions. Missing tissue from explosions or other removal is detected as well. The ship regrows missing blocks from its remembered layout, spending one stored Flesh Bit per repaired block and restoring four health. Surviving machine inventories are preserved; a destroyed machine regrows empty. Healing an injury without a missing block also spends biomass. Repairs wait for clear space and do not grow through entities or terrain. No stored flesh means no automatic healing.
+The ship has a persistent internal health pool and a memory of the blocks attached to it. There is no permanent health bar. Symbiotic Goggles show current and maximum health when inspecting the core. At zero health the organism dies permanently; later biomass cannot revive it. Removing a remembered block by ordinary mining injures it; damage caused by its creator also reduces trust, including attributed explosions. Missing tissue from explosions or other removal is detected as well. The ship regrows missing blocks from its remembered layout, spending one stored Flesh Bit per repaired block and restoring four health. Surviving machine inventories are preserved; a destroyed machine regrows empty. Healing an injury without a missing block also spends biomass. Repairs wait for clear space and do not grow through entities or terrain. No stored flesh means no automatic healing.
 
 Wrench relocation updates the block memory without causing injury. The wrench cannot remove hull tissue or biometric doorway membranes. Ordinary mining and damage remain possible.
 
@@ -77,7 +77,7 @@ Biomancy **Biometric Membranes** replace the doorway and separate cockpit from w
 
 The blueprint panel is mounted at eye level on the engine-room partition, with a solid fleshy back and sides. Aligned windows suppress shared edges, render exposed rims, and show translucent membrane skin on the inside while retaining an opaque outer hull face.
 
-Look at the eye, mouth, stomach, nerve panel, or intestines while wearing **Symbiotic Goggles** to see a compact tooltip. Long instructions wrap and remain inside the screen; no internal health is shown.
+Look at the eye, mouth, stomach, nerve panel, or intestines while wearing **Symbiotic Goggles** to see a compact tooltip. Long instructions wrap and remain inside the screen; the core readout includes current and maximum health above the hotbar.
 
 One-way dermal windows have an opaque, flesh-textured outer face and a clear view from inside. Four hanging Biomancy Bio-Lanterns provide **steady** cockpit/workshop light. The exposed hatchling core retains its original detailed texture and blinks independently with an eyelid overlay; grown hulls conceal the internal core as flesh. The core emits no block light. The goggles reminder is omitted when Symbiotic Goggles are already worn. Growth tooltips show construction progress and the location/type of an obstruction. Legacy prototype lamps also remain steady.
 
@@ -128,6 +128,18 @@ Death is permanent and saved. Lift, propulsion, walking, growth, assimilation, f
 Living ships can pull useful parts from **nearby dead bioships** using their assimilation arms, but never consume another bioship core. They do not steal from living ships. Every other attached wreck block can be reclaimed for needed construction reserves; useful unique organs remain functional instead of being broken down. Recovery prioritizes: a missing mouth or stomach, missing precursor machines, a limited number of storage sacs, a missing larynx, or needed construction tissue. Wreck components must still be exposed, above ground, and visible; collection reaches fourteen blocks. Hatchlings can walk toward visible wreck components up to thirty-two blocks away. Recovered functional components keep their inventories. Duplicate organs can be recycled without adding another mouth or stomach. A wreck’s own roof no longer incorrectly hides exposed exterior windows or limbs.
 
 Breaking down wreck tissue loses material: **two hull/tissue blocks yield one flesh biomass**, **four carapace blocks yield one Bone Fragment**, and **four flagella/intestine blocks yield one Elastic Fiber**, alongside their reduced flesh yield. Fractional progress persists across saves. Reclaimed tissue supplies growth and stored construction material without immediate food or trust rewards; those reserves may be burned later during starvation.
+
+## Foraging memory, combat and retreat
+
+Last-seen world supplies remain remembered for two minutes, and the selected source stays remembered while it is being pursued. These snapshots persist across saves and core relocation. A hidden target is pursued from its last observation; looking at its now-empty location invalidates the memory. Darkness and solid-obstacle sight rules remain unchanged.
+
+Idle hatchlings and ships in hunting mode explore reachable nearby space when no higher-priority target is available. Urgent foraging and defense use a faster running gait. A hatchling's mouth moves to its actual front face and the body turns toward its goal when surrounding clearance permits; manual organ placements remain respected.
+
+Combat uses aimed tentacle swipes with a twelve-tick wind-up, a six-tick sweep, and a cooldown. The aim is locked before the sweep, allowing players to dodge, and combat swipes do not pull or immobilize players. Captured edible animals are not damaged until they reach the connected mouth, so small prey cannot die from capture damage without producing a meal.
+
+A ship below 30% health tries to flee a known threat, remaining cautious until it recovers to 50% or the threat memory expires. At 80 trust or higher, an authorized pilot can override low-health retreat. Holding the helm or issuing a physical throttle/trim command establishes control. A recorded pilot aboard the ship retains control; after leaving, the override expires ten seconds after the last command. Dead, disconnected, and spectator pilots cannot suppress retreat.
+
+During a flight-stage retreat, an allied ground player within sixteen blocks can be carried into the cockpit. The ship opens a collision-checked route by temporarily retracting ordinary hull tissue, keeps its structure connected, and restores the same blocks after the player clears the opening. It never overwrites machines or their inventories, and world terrain still blocks the carry. The aperture and passenger route persist across saves; a blocked carry times out safely rather than forcing the player through a solid block.
 
 ## Development
 

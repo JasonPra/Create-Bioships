@@ -108,6 +108,51 @@ final class GroundRoute {
         : null;
   }
 
+  static boolean turnClear(LivingCoreBlockEntity core, double angle) {
+    var route = new GroundRoute();
+    var offsets = route.offsets(core);
+    var center = Vec3.ZERO;
+    for (var offset : offsets) center = center.add(offset);
+    center = center.scale(1d / Math.max(1, offsets.size()));
+    var root = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    for (int step = 1; step <= 3; step++) {
+      var rotated = new ArrayList<Vec3>();
+      for (var offset : offsets)
+        rotated.add(offset.subtract(center).yRot((float) (angle * step / 3)).add(center));
+      if (!route.fits(core, root, rotated, .71)) return false;
+    }
+    return true;
+  }
+
+  static Vec3 groundedDestination(LivingCoreBlockEntity core, Vec3 requested) {
+    var level = core.getLevel();
+    var route = new GroundRoute();
+    var parts = route.offsets(core);
+    double stance = (core.hatchling() ? .85 : 1.25) + core.coreHeightOffset();
+    int floor = (int) Math.round(BioshipBlueprint.physical(core, BlockPos.ZERO).y - stance);
+    for (int delta : new int[] {0, 1, -1, 2, -2, -3}) {
+      var p =
+          new BlockPos(
+              (int) Math.floor(requested.x), floor + delta - 1, (int) Math.floor(requested.z));
+      if (!((ServerLevel) level).getChunkSource().hasChunk(p.getX() >> 4, p.getZ() >> 4)) continue;
+      if (!level.getBlockState(p).isFaceSturdy(level, p, Direction.UP)
+          || !level.getFluidState(p).isEmpty()) continue;
+      var point = new Vec3(p.getX() + .5, p.getY() + 1 + stance, p.getZ() + .5);
+      if (route.fits(core, point, parts)) return point;
+    }
+    return null;
+  }
+
+  static boolean flightClear(LivingCoreBlockEntity core, Vec3 target) {
+    var route = new GroundRoute();
+    var parts = route.offsets(core);
+    var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    for (double distance = 1; distance <= here.distanceTo(target); distance++)
+      if (!route.fits(core, here.lerp(target, distance / here.distanceTo(target)), parts))
+        return false;
+    return route.fits(core, target, parts);
+  }
+
   boolean plan(LivingCoreBlockEntity core, Vec3 goal) {
     var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
     var parts = offsets(core);

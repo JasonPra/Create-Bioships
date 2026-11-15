@@ -23,9 +23,14 @@ final class BioshipReach {
   }
 
   static boolean at(LivingCoreBlockEntity core, Vec3 candidate, Vec3 target, boolean blockTarget) {
+    return at(core, candidate, target, blockTarget, 5);
+  }
+
+  static boolean at(
+      LivingCoreBlockEntity core, Vec3 candidate, Vec3 target, boolean blockTarget, double reach) {
     var shift = candidate.subtract(BioshipBlueprint.physical(core, BlockPos.ZERO));
     var from = anchor(core, target.subtract(shift)).add(shift);
-    if (from.distanceToSqr(target) > 25) return false;
+    if (from.distanceToSqr(target) > reach * reach) return false;
     int steps = Math.max(1, (int) Math.ceil(from.distanceTo(target) * 5));
     var end = BlockPos.containing(target);
     var start =
@@ -46,6 +51,10 @@ final class BioshipReach {
           && !state.getCollisionShape(core.getLevel(), local).isEmpty()) return false;
     }
     return true;
+  }
+
+  static boolean clear(LivingCoreBlockEntity core, Vec3 target, boolean blockTarget, double reach) {
+    return at(core, BioshipBlueprint.physical(core, BlockPos.ZERO), target, blockTarget, reach);
   }
 
   static boolean clear(LivingCoreBlockEntity core, Vec3 target, boolean blockTarget) {

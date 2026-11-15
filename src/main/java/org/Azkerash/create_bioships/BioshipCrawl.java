@@ -10,6 +10,16 @@ import net.minecraft.world.phys.*;
 public final class BioshipCrawl {
   private Vec3 goal;
   private boolean walking;
+  private String mode = "idle";
+
+  public String mode() {
+    return mode;
+  }
+
+  public boolean running() {
+    return mode.equals("flee") || mode.equals("defend") || mode.equals("forage") && goal != null;
+  }
+
   private int cursor;
   private final GroundRoute route = new GroundRoute();
   private final Map<BlockPos, Long> unreachable = new HashMap<>();
@@ -102,15 +112,32 @@ public final class BioshipCrawl {
     }
     if (core.getLevel().getGameTime() % 10 != 0) return;
     Vec3 here = BioshipBlueprint.physical(core, BlockPos.ZERO);
-    if (!blocked) {
-      goal = core.gatheringGoal();
-      gathering = goal != null;
-      walking = gathering && goal.distanceToSqr(here) > 2.25;
+    if (!blocked || core.autonomy().fleeing() || BioshipDefense.target(core) != null) {
+      goal = core.autonomy().groundEscape(core);
+      mode = goal == null ? "idle" : "flee";
+      if (goal == null) {
+        goal = core.gatheringGoal();
+        if (goal != null) {
+          mode = BioshipDefense.target(core) != null ? "defend" : "forage";
+          core.autonomy().activity(core);
+        }
+      }
+      gathering = mode.equals("forage") || mode.equals("defend");
+      if (goal == null) {
+        mode = "wander";
+        goal = core.autonomy().groundWander(core);
+      }
+      if (goal == null) mode = "idle";
+      walking =
+          goal != null
+              && (goal.distanceToSqr(here) > (gathering ? 2.25 : .25)
+                  || gathering && !BioshipReach.clear(core, goal, true));
       core.setChanged();
       core.getLevel()
           .sendBlockUpdated(core.getBlockPos(), core.getBlockState(), core.getBlockState(), 2);
       return;
     }
+    mode = "growth";
     gathering = false;
     if (goal != null && (!clear(core, goal) || goal.distanceToSqr(here) < .2)) goal = null;
     if (goal == null)
@@ -190,9 +217,11 @@ public final class BioshipCrawl {
     Vec3 delta = waypoint.subtract(here).multiply(1, 0, 1);
     if (delta.lengthSqr() < .01) return Vec3.ZERO;
     Vec3 direction = delta.normalize();
-    if (!core.hatchling()) return direction.scale(.7);
+    if (!core.hatchling()) return direction.scale(running() ? 1.4 : .7);
     double phase = core.getLevel().getGameTime() * 1.05;
-    double speed = 2.4 + .6 * Math.max(0, Math.sin(phase));
+    double speed =
+        (2.4 + .6 * Math.max(0, Math.sin(phase)))
+            * (running() ? 1.65 : mode.equals("wander") ? .65 : 1);
     return direction
         .scale(speed)
         .add(new Vec3(-direction.z, 0, direction.x).scale(Math.sin(phase * .5) * .08));
@@ -259,6 +288,7 @@ public final class BioshipCrawl {
     var t = new CompoundTag();
     t.putInt("Wall", wallFacing == null ? -1 : wallFacing.ordinal());
     t.putDouble("WallDistance", wallDistance);
+    t.putString("Mode", mode);
     t.putBoolean("Walking", walking);
     t.putBoolean("Gathering", gathering);
     if (reach != null) {
@@ -285,6 +315,7 @@ public final class BioshipCrawl {
             ? Direction.values()[Math.min(5, t.getInt("Wall"))]
             : null;
     wallDistance = t.getDouble("WallDistance");
+    mode = t.contains("Mode") ? t.getString("Mode") : "idle";
     walking = t.getBoolean("Walking");
     gathering = t.getBoolean("Gathering");
     reach =

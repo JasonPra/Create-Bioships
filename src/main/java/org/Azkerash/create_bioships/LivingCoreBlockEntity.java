@@ -130,6 +130,22 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
   }
 
   BlockPos supplyTarget;
+  private final BioshipRescue rescue = new BioshipRescue();
+
+  public BioshipRescue rescue() {
+    return rescue;
+  }
+
+  private final BioshipAutonomy autonomy = new BioshipAutonomy();
+
+  public BioshipAutonomy autonomy() {
+    return autonomy;
+  }
+
+  int trustLevel() {
+    return needs.trust();
+  }
+
   private final BioshipDefense defense = new BioshipDefense();
 
   BioshipDefense defense() {
@@ -207,6 +223,8 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
         return;
       }
       resting = !resting;
+      if (player instanceof net.minecraft.server.level.ServerPlayer pilot)
+        autonomy.command(this, pilot);
       setChanged();
       message(
           player,
@@ -233,6 +251,10 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
         Component.translatable("stage.create_bioships." + stage)
             .append(" | ")
             .append(Component.translatable("mood.create_bioships." + needs.mood())));
+    lines.add(
+        Component.literal(
+            String.format(
+                java.util.Locale.ROOT, "Health: %.1f / %d", body.health(), body.capacity())));
     lines.add(Component.literal("Growth biomass: " + needs.biomass() + " / 64"));
     lines.add(Component.literal("Stored flesh: " + goggleFlesh));
     lines.add(
@@ -480,7 +502,11 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
 
   public static void tick(Level level, BlockPos pos, BlockState state, LivingCoreBlockEntity core) {
     if (level.isClientSide) return;
-    if (core.ship() != null) BioshipTargetEntity.ensure(core);
+    if (core.ship() != null) {
+      BioshipTargetEntity.ensure(core);
+      core.autonomy.assess(core);
+    }
+    if (core.ship() != null) core.rescue.tick(core);
     if (core.body.dead()) {
       if (core.coreMotion.active()) core.coreMotion.cancel(core);
       core.updateEye(false);
@@ -512,6 +538,11 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     if (core.blueprint.busy()) {
       core.serverTick();
       core.blueprint.tick(core);
+      BioshipAccess.tick(core);
+      return;
+    }
+    if (core.rescue.active()) {
+      core.serverTick();
       BioshipAccess.tick(core);
       return;
     }
@@ -688,9 +719,16 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
       flight = new FlightIntent(canFly(), travel == null ? Vec3.ZERO : travel, 0);
       return;
     }
-    if (crawl.walking() || crawl.bracing()) {
+    if (crawl.walking()
+        || crawl.bracing()
+        || hatchling() && (crawl.goal() != null || crawl.reach() != null)) {
       flight =
-          new FlightIntent(false, crawl.velocity(this), 0, crawl.supportHeight(), crawl.stanceUp());
+          new FlightIntent(
+              false,
+              crawl.velocity(this),
+              HatchlingFront.turn(this, crawl.goal() != null ? crawl.goal() : crawl.reach()),
+              crawl.supportHeight(),
+              crawl.stanceUp());
       return;
     }
     Vec3 desired = Vec3.ZERO;
@@ -718,11 +756,25 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
       desired = ship.logicalPose().transformNormal(local).scale(response);
       turn *= response * (0.25 + 0.75 * Math.abs(throttle));
     }
-    if (desired.lengthSqr() == 0 && turn == 0) {
+    if (desired.lengthSqr() == 0 && turn == 0 && !autonomy.trustedPilot(this)) {
       desired = resting() || !canFly() ? Vec3.ZERO : forage(ship);
       heightCommanded = desired.lengthSqr() > 0;
       if (desired.lengthSqr() == 0 && !resting())
         desired = new Vec3(0, Math.sin(level.getGameTime() / 35.0) * 0.08, 0);
+    }
+    if (canFly() && autonomy.fleeing() && !autonomy.trustedPilot(this)) {
+      desired = autonomy.flight(this, true).scale(rescue.active() ? .25 : 1);
+      heightCommanded = true;
+    } else if (canFly()
+        && desired.horizontalDistanceSqr() < .0001
+        && turn == 0
+        && !resting()
+        && !autonomy.trustedPilot(this)) {
+      var exploration = autonomy.flight(this, false);
+      if (exploration.lengthSqr() > 0) {
+        desired = exploration;
+        heightCommanded = true;
+      }
     }
     incorporateAmalgam();
     if (canFly()) {
@@ -897,6 +949,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
           ? new Vec3(point.x, Math.abs(point.y - here.y) > 4 ? point.y : here.y, point.z)
           : null;
     }
+    if (resting()) return null;
     var objective = BioshipPriorities.bestWorld(this);
     if (objective != null && (objective.rank() == 0 || objective.rank() <= 2 && !hungry())) {
       Vec3 point = Vec3.atCenterOf(objective.pos());
@@ -1099,7 +1152,10 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     tag.put("Crawl", crawl.save());
     tag.put("CoreMotion", coreMotion.save());
     tag.put("Defense", defense.save());
+    tag.put("Autonomy", autonomy.save());
+    tag.put("Rescue", rescue.save());
     tag.put("Vision", vision.save());
+    if (supplyTarget != null) tag.putLong("SupplyTarget", supplyTarget.asLong());
     tag.put("Access", access.save(captain));
     tag.put("BodyMemory", body.save());
     tag.put("Blueprint", blueprint.save());
@@ -1140,7 +1196,10 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     crawl.load(tag.getCompound("Crawl"));
     coreMotion.load(tag.getCompound("CoreMotion"));
     defense.load(tag.getCompound("Defense"));
-    vision.load(tag.getCompound("Vision"));
+    autonomy.load(tag.getCompound("Autonomy"));
+    rescue.load(tag.getCompound("Rescue"), registries);
+    vision.load(tag.getCompound("Vision"), registries);
+    supplyTarget = tag.contains("SupplyTarget") ? BlockPos.of(tag.getLong("SupplyTarget")) : null;
     access.load(tag.getCompound("Access"));
     body.load(tag.getCompound("BodyMemory"), registries);
     blueprint.load(tag.getCompound("Blueprint"), registries);

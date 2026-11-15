@@ -66,9 +66,32 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
               RenderType.solid());
       pose.popPose();
     }
+    if (core.rescue().active()) {
+      double t = core.rescue().withdrawal();
+      if (t < 1)
+        for (var entry : core.rescue().tissue().entrySet()) {
+          pose.pushPose();
+          var offset = entry.getKey().subtract(core.getBlockPos());
+          pose.translate(offset.getX() + t, offset.getY(), offset.getZ());
+          pose.scale((float) (1 - t * .8), 1, 1);
+          net.minecraft.client.Minecraft.getInstance()
+              .getBlockRenderer()
+              .renderSingleBlock(
+                  entry.getValue(),
+                  pose,
+                  buffers,
+                  light,
+                  overlay,
+                  net.neoforged.neoforge.client.model.data.ModelData.EMPTY,
+                  RenderType.solid());
+          pose.popPose();
+        }
+    }
     if (!core.body().dead() && (core.crawl().walking() || core.crawl().bracing()))
       renderLegs(core, partial, pose, buffers, light);
-    boolean gathering = core.crawl().reach() != null && !core.body().dead();
+    boolean gathering =
+        (core.rescue().carriedPosition() != null || core.crawl().reach() != null)
+            && !core.body().dead();
     var move = core.organMove();
     boolean carrying = core.blueprint().carried() != null && core.blueprint().carryStart() != null;
     if (core.getLevel() == null || !gathering && !carrying && (move == null || !move.usesArm()))
@@ -83,7 +106,10 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
             : plot.getSubLevel().logicalPose();
     Vec3 target;
     if (gathering) {
-      target = core.crawl().reach();
+      target =
+          core.rescue().carriedPosition() != null
+              ? core.rescue().carriedPosition()
+              : core.crawl().reach();
     } else if (carrying) {
       double t = Math.clamp((core.blueprint().carryTicks() + partial) / 60.0, 0, 1);
       target =

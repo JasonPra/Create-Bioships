@@ -99,6 +99,8 @@ public final class BioshipNetwork {
     }
     double reach = player.blockInteractionRange() + 1;
     if (player.getEyePosition().distanceToSqr(physical) > reach * reach) return false;
+    var core = BioshipAccess.core(player.serverLevel(), pos);
+    if (core != null) core.autonomy().command(core, player);
     return player
         .serverLevel()
         .setBlock(pos, state.setValue(LivingThrottleBlock.THROTTLE, setting), 3);

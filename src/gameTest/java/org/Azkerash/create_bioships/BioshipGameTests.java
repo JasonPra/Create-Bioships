@@ -901,7 +901,10 @@ public class BioshipGameTests {
                                           && DigestiveSystem.stomach(core)
                                                   .material("biomancy:flesh_bits")
                                               > 0,
-                                      "Prey did not pass through digestion");
+                                      "Prey did not pass through digestion: "
+                                          + DigestiveSystem.stomach(core)
+                                              .saveWithFullMetadata(
+                                                  helper.getLevel().registryAccess()));
                                   var skeleton = EntityType.SKELETON.create(helper.getLevel());
                                   helper.assertTrue(
                                       !TentacleBlockEntity.edible(skeleton),
@@ -1097,12 +1100,12 @@ public class BioshipGameTests {
                       "Shrinking the remembered body left health above its capacity");
                   helper.assertTrue(
                       core.goggleTooltip().stream()
-                          .noneMatch(
+                          .anyMatch(
                               line ->
                                   line.getString()
                                       .toLowerCase(java.util.Locale.ROOT)
                                       .contains("health")),
-                      "Internal health leaked into the goggles tooltip");
+                      "Goggles did not show the requested health readout");
                   level.setBlock(p, Blocks.DIRT.defaultBlockState(), 3);
                   core.body().observe(core);
                   var unchanged = BioshipBody.actual(core);
@@ -1619,6 +1622,241 @@ public class BioshipGameTests {
         });
   }
 
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "trusted_pilot")
+  public static void trusted_pilot_commands_override_injury_but_absence_does_not(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var captain = new InteractionPlayer(level, "TrustedInjuredCaptain");
+    captain.setGameMode(GameType.SURVIVAL);
+    var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    captain.setPos(here.x + 2, here.y, here.z);
+    level.addNewPlayer(captain);
+    core.claimCreator(captain.getUUID());
+    try {
+      var saved = core.saveWithFullMetadata(level.registryAccess());
+      saved.putInt("Trust", 79);
+      core.loadAdditional(saved, level.registryAccess());
+      var injury = core.body().save();
+      injury.putDouble("Health", 10);
+      core.body().load(injury, level.registryAccess());
+      var panic = new net.minecraft.nbt.CompoundTag();
+      panic.put("Danger", VisionDebug.vector(here.add(3, 0, 0)));
+      panic.putLong("PanicUntil", level.getGameTime() + 100);
+      core.autonomy().load(panic);
+      core.autonomy().command(core, captain);
+      core.autonomy().assess(core);
+      helper.assertTrue(core.autonomy().fleeing(), "Low-health threat did not trigger retreat");
+      helper.assertTrue(
+          !core.autonomy().trustedPilot(core), "Insufficient trust suppressed retreat");
+      saved = core.saveWithFullMetadata(level.registryAccess());
+      saved.putInt("Trust", 80);
+      core.loadAdditional(saved, level.registryAccess());
+      helper.assertTrue(
+          core.autonomy().trustedPilot(core), "Low health rejected the trusted pilot");
+      helper.assertTrue(core.body().health() == 10, "Pilot authority healed the injury");
+      helper.assertTrue(
+          core.autonomy().groundEscape(core) == null, "Retreat overrode trusted control");
+      captain.discard();
+      helper.assertTrue(!core.autonomy().trustedPilot(core), "Absent captain suppressed retreat");
+      helper.succeed();
+    } finally {
+      captain.discard();
+      cleanup(helper, ship);
+    }
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "swipe_dodge")
+  public static void player_can_dodge_locked_swipe_without_being_grabbed(GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var target = new VulnerablePlayer(level, "SwipeDodger");
+    target.setGameMode(GameType.SURVIVAL);
+    target.setNoGravity(true);
+    var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var position = here.add(3, -.5, 0);
+    target.setPos(position.x, position.y, position.z);
+    level.addNewPlayer(target);
+    core.claimCreator(target.getUUID());
+    var root = BioshipReach.anchor(core, target.getBoundingBox().getCenter());
+    var strike = new TentacleStrike();
+    strike.begin(target, level.getGameTime());
+    helper.runAfterDelay(
+        6,
+        () -> {
+          helper.assertTrue(
+              !strike.tick(core, root, target, 4, 6) && target.getHealth() == 20,
+              "Swipe damaged a player during its wind-up");
+          target.setPos(position.x, position.y, position.z + 4);
+        });
+    helper.runAfterDelay(
+        15,
+        () -> {
+          helper.assertTrue(
+              !strike.tick(core, root, target, 4, 6) && target.getHealth() == 20,
+              "Swipe followed a player who dodged its locked aim");
+          helper.assertTrue(
+              target.getDeltaMovement().lengthSqr() < .0001, "Combat swipe dragged the player");
+          target.setPos(position.x, position.y, position.z);
+          strike.begin(target, level.getGameTime());
+        });
+    helper.runAfterDelay(
+        30,
+        () -> {
+          try {
+            helper.assertTrue(
+                strike.tick(core, root, target, 4, 6), "Stationary target escaped the swipe");
+            helper.assertTrue(target.getHealth() == 14, "Swipe dealt the wrong damage");
+            helper.assertTrue(!strike.tick(core, root, target, 4, 6), "Same swipe damaged twice");
+            helper.succeed();
+          } finally {
+            target.discard();
+            cleanup(helper, ship);
+          }
+        });
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "rescue_aperture")
+  public static void rescue_opens_conserved_hull_and_restores_it_after_carrying(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var data = core.saveWithFullMetadata(level.registryAccess());
+    data.putInt("Stage", 2);
+    core.loadAdditional(data, level.registryAccess());
+    var origin = core.structuralOrigin();
+    for (var offset : BlockPos.betweenClosed(new BlockPos(-2, 1, -3), new BlockPos(2, 5, 3))) {
+      if (offset.getY() == 1
+          || offset.getY() == 5
+          || Math.abs(offset.getX()) == 2
+          || Math.abs(offset.getZ()) == 3)
+        level.setBlock(origin.offset(offset), Create_bioships.FLESH.get().defaultBlockState(), 3);
+    }
+    core.body().observe(core);
+    var initial = BioshipBody.actual(core);
+    double health = core.body().health();
+    var ally =
+        new InteractionPlayer(level, "RescuedCaptain") {
+          @Override
+          public void teleportTo(double x, double y, double z) {
+            setPos(x, y, z);
+          }
+        };
+    core.claimCreator(ally.getUUID());
+    var start =
+        ship.logicalPose().transformPosition(Vec3.atLowerCornerOf(origin).add(.5, 0, -14.5));
+    ally.setPos(start.x, start.y, start.z);
+    level.addNewPlayer(ally);
+    try {
+      helper.assertTrue(core.rescue().begin(core, ally), "Rescue could not find an aperture route");
+      helper.assertTrue(
+          !core.rescue().tissue().isEmpty(), "Closed hull was traversed without opening it");
+      for (var p : core.rescue().tissue().keySet())
+        helper.assertTrue(level.getBlockState(p).isAir(), "Aperture retained solid hull");
+      core.body().observe(core);
+      helper.assertTrue(
+          core.body().health() == health, "Opening an authorized aperture injured the ship");
+      var saved = core.saveWithFullMetadata(level.registryAccess());
+      core.loadAdditional(saved, level.registryAccess());
+      for (int i = 0; i < 300 && core.rescue().active(); i++) core.rescue().tick(core);
+      helper.assertTrue(
+          !core.rescue().active(),
+          "Rescue failed to finish and seal its aperture: "
+              + core.rescue().save()
+              + " player="
+              + ship.logicalPose().transformPositionInverse(ally.position()));
+      helper.assertTrue(core.blueprint().aboard(core, ally), "Ally was not brought inside");
+      helper.assertTrue(
+          BioshipBody.actual(core).equals(initial), "Rescue lost or duplicated hull tissue");
+      helper.assertTrue(core.body().health() == health, "Rescue injured the ship");
+      helper.succeed();
+    } finally {
+      ally.discard();
+      cleanup(helper, ship);
+    }
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "front_mouth_stability")
+  public static void hatchling_mouth_moves_to_front_once_and_keeps_inventory(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var origin = core.structuralOrigin();
+    var source = origin.east();
+    level.setBlock(source, block("biomancy:bio_forge").defaultBlockState(), 3);
+    BioshipIntegration.finishAssimilation(core, source);
+    ((FeedingMouthBlockEntity) level.getBlockEntity(source))
+        .setItem(0, new ItemStack(Items.BEEF, 5));
+    BioshipIntegration.orientMouth(core);
+    helper.runAfterDelay(
+        70,
+        () ->
+            finish(
+                helper,
+                ship,
+                () -> {
+                  var front = origin.north();
+                  helper.assertTrue(
+                      front.equals(core.mouthBlock()),
+                      "Mouth drifted beyond the actual front face");
+                  helper.assertTrue(
+                      level.getBlockState(front).getValue(FeedingMouthBlock.FACING)
+                          == Direction.NORTH,
+                      "Front mouth teeth point inside the body");
+                  helper.assertTrue(
+                      ((FeedingMouthBlockEntity) level.getBlockEntity(front)).getItem(0).getCount()
+                          == 5,
+                      "Front placement lost mouth inventory");
+                  helper.assertTrue(
+                      !OrganMotion.busy(core), "Front mouth continually repositions itself");
+                }));
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "source_memory")
+  public static void hidden_last_seen_source_survives_reload_until_visually_rechecked(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var here = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO));
+    var source = here.east(3);
+    var state = block("biomancy:bio_forge").defaultBlockState();
+    level.setBlock(source, state, 3);
+    survey(core);
+    try {
+      helper.assertTrue(
+          state.equals(core.vision().sourceState(core, source)),
+          "Visible source was not remembered");
+      var wall = new ArrayList<BlockPos>();
+      for (var p : BlockPos.betweenClosed(here.offset(1, -1, -2), here.offset(1, 3, 2))) {
+        wall.add(p.immutable());
+        level.setBlock(p, Blocks.STONE.defaultBlockState(), 3);
+      }
+      helper.assertTrue(
+          !core.vision().visible(core, Vec3.atCenterOf(source)),
+          "Memory fixture did not block sight");
+      level.removeBlock(source, false);
+      core.supplyTarget = source;
+      var saved = core.saveWithFullMetadata(level.registryAccess());
+      core.loadAdditional(saved, level.registryAccess());
+      helper.assertTrue(
+          state.equals(core.vision().sourceState(core, source)),
+          "Hidden source was forgotten or read omnisciently");
+      for (var p : wall) level.removeBlock(p, false);
+      helper.assertTrue(
+          core.vision().sourceState(core, source) == null,
+          "Visible missing source was never forgotten");
+      helper.succeed();
+    } finally {
+      level.removeBlock(source, false);
+      cleanup(helper, ship);
+    }
+  }
+
   private static class InteractionPlayer extends net.neoforged.neoforge.common.util.FakePlayer {
     final List<net.minecraft.network.chat.Component> messages = new ArrayList<>();
 
@@ -1759,6 +1997,7 @@ public class BioshipGameTests {
           level.setBlock(wallSource, Create_bioships.FEEDING_MOUTH.get().defaultBlockState(), 3);
           var mouth = (FeedingMouthBlockEntity) level.getBlockEntity(wallSource);
           mouth.getPersistentData().putBoolean("BioshipHostFlesh", true);
+          mouth.getPersistentData().putBoolean("BioshipManualPlacement", true);
           mouth.setItem(0, new ItemStack(Items.BEEF, 5));
           helper.assertTrue(
               OrganMotion.begin(core, wallSource, wallTarget, false),
@@ -1842,8 +2081,24 @@ public class BioshipGameTests {
                       detached.getStackInSlot(0).getCount() == 3,
                       "Food in an unconnected world sac was taken");
                   helper.assertTrue(
-                      stomach.queuedFood() == 0 && inventory.getStackInSlot(0).isEmpty(),
-                      "The provisioned meal did not finish digestion");
+                      DigestiveSystem.stomach(core).queuedFood() == 0
+                          && BioshipIntegration.blockEntities(ship).stream()
+                              .filter(EngineRoom::storage)
+                              .allMatch(
+                                  entity -> {
+                                    var store =
+                                        level.getCapability(
+                                            Capabilities.ItemHandler.BLOCK,
+                                            entity.getBlockPos(),
+                                            null);
+                                    if (store == null) return true;
+                                    for (int slot = 0; slot < store.getSlots(); slot++)
+                                      if (!store.getStackInSlot(slot).isEmpty()) return false;
+                                    return true;
+                                  }),
+                      "The provisioned meal did not finish digestion: "
+                          + DigestiveSystem.stomach(core)
+                              .saveWithFullMetadata(level.registryAccess()));
                   level.removeBlock(loose, false);
                 }));
   }
@@ -2153,9 +2408,11 @@ public class BioshipGameTests {
               pendingDrops,
               () -> {
                 core.vision().look(core, Direction.EAST);
-                Vec3 supplies = BioshipBlueprint.physical(core, BlockPos.ZERO);
                 var drop = pendingDrops.get(0);
-                drop.setPos(supplies.x + 1, supplies.y, supplies.z);
+                var near =
+                    ship.logicalPose()
+                        .transformPosition(Vec3.atCenterOf(core.getBlockPos()).add(1, 0, 0));
+                drop.setPos(near.x, near.y, near.z);
                 drop.setItem(new ItemStack(item("biomancy:elastic_fibers"), 3));
                 core.gatheringGoal();
                 helper.assertTrue(
@@ -2174,15 +2431,22 @@ public class BioshipGameTests {
                         && LivingCoreBlockEntity.droppedSupply(new ItemStack(Items.BEEF)),
                     "Food or bone growth stock was excluded");
                 var now = BioshipBlueprint.physical(core, BlockPos.ZERO);
-                drop.setPos(now.x + 4.5, now.y, now.z);
+                var far =
+                    ship.logicalPose()
+                        .transformPosition(Vec3.atCenterOf(core.getBlockPos()).add(4.5, 0, 0));
+                drop.setPos(far.x, far.y, far.z);
                 drop.setDeltaMovement(Vec3.ZERO);
                 core.gatheringGoal();
                 helper.assertTrue(
-                    drop.getDeltaMovement().x < 0 && core.crawl().reach() != null,
+                    drop.getDeltaMovement().dot(far.subtract(now)) < 0
+                        && core.crawl().reach() != null,
                     "Tentacle cannot grab supplies beyond the old three-block reach");
-                drop.setPos(supplies.x + 6, supplies.y, supplies.z);
+                var beyond =
+                    ship.logicalPose()
+                        .transformPosition(Vec3.atCenterOf(core.getBlockPos()).add(6, 0, 0));
+                drop.setPos(beyond.x, beyond.y, beyond.z);
                 var meal = pendingDrops.get(1);
-                meal.setPos(supplies.x + 1, supplies.y, supplies.z);
+                meal.setPos(near.x, near.y, near.z);
                 meal.setItem(new ItemStack(Items.BEEF));
                 core.gatheringGoal();
                 helper.assertTrue(
@@ -2200,7 +2464,7 @@ public class BioshipGameTests {
                     "Dropped block filter rejected supported blocks or allowed a bioship core");
                 int missing = core.missingBiomass();
                 var blocks = pendingDrops.get(2);
-                blocks.setPos(supplies.x + 1, supplies.y, supplies.z);
+                blocks.setPos(near.x, near.y, near.z);
                 blocks.setItem(new ItemStack(Create_bioships.ONE_WAY_WINDOW.get(), 2));
                 core.gatheringGoal();
                 core.gatheringGoal();
@@ -2208,7 +2472,7 @@ public class BioshipGameTests {
                     !blocks.isAlive() && core.missingBiomass() == missing - 1,
                     "Dropped bioship blocks were not reclaimed at reduced yield");
                 var protectedCore = pendingDrops.get(3);
-                protectedCore.setPos(supplies.x + 1, supplies.y, supplies.z);
+                protectedCore.setPos(near.x, near.y, near.z);
                 protectedCore.setItem(new ItemStack(Create_bioships.CORE.get()));
                 core.gatheringGoal();
                 helper.assertTrue(
@@ -3360,6 +3624,9 @@ public class BioshipGameTests {
             && route.points().stream().anyMatch(p -> p.y > root.y + 4),
         "No vertical wall route was found");
     double[] height = {root.y};
+    // Isolate climbing/support from the independent idle-wandering behavior after collection.
+    for (int tick = 1; tick < 300; tick++)
+      helper.runAfterDelay(tick, () -> core(ship).autonomy().activity(core(ship)));
     helper.runAfterDelay(
         300,
         () -> {
@@ -3748,6 +4015,14 @@ public class BioshipGameTests {
         "Tall grass was missing from the pickup course");
     meal.setDeltaMovement(Vec3.ZERO);
     level.addFreshEntity(meal);
+    double[] furthest = {start.getX()};
+    for (int tick = 1; tick < 650; tick += 2)
+      helper.runAfterDelay(
+          tick,
+          () -> {
+            furthest[0] =
+                Math.max(furthest[0], BioshipBlueprint.physical(core(ship), BlockPos.ZERO).x);
+          });
     helper.runAfterDelay(
         650,
         () -> {
@@ -3757,8 +4032,7 @@ public class BioshipGameTests {
                 !meal.isAlive() || meal.getItem().isEmpty(),
                 "Arm left edible food stranded in tall grass: " + current.crawl().save());
             helper.assertTrue(
-                BioshipBlueprint.physical(current, BlockPos.ZERO).x > start.getX() + 12,
-                "Food was consumed without approaching");
+                furthest[0] > start.getX() + 12, "Food was consumed without approaching");
             helper.assertTrue(
                 current.saveWithFullMetadata(level.registryAccess()).getInt("Trust") > 60,
                 "Collected floor meat did not count as feeding after digestion");

@@ -294,6 +294,7 @@ public final class BioshipBlueprint {
   public boolean confirm(LivingCoreBlockEntity core, Draft d, int baseRevision) {
     if (core.body().dead()
         || busy()
+        || core.rescue().active()
         || revision != baseRevision
         || !core.isMature()
         || OrganMotion.busy(core)) {

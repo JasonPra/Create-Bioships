@@ -55,7 +55,7 @@ public class FeedingMouthBlock extends BaseEntityBlock {
   static Direction outward(LivingCoreBlockEntity core, BlockPos pos) {
     var delta = pos.subtract(core.getBlockPos());
     Direction preferred =
-        EngineRoom.inside(core, pos)
+        core.isMature() && EngineRoom.inside(core, pos)
             ? (delta.getX() > 0 ? Direction.WEST : Direction.EAST)
             : Math.abs(delta.getX()) > Math.abs(delta.getZ())
                 ? (delta.getX() > 0 ? Direction.EAST : Direction.WEST)

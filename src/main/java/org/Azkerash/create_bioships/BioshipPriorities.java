@@ -12,6 +12,11 @@ final class BioshipPriorities {
   record Objective(BlockPos pos, int rank) {}
 
   static int rank(LivingCoreBlockEntity core, BlockState state, BlockPos pos) {
+    return rank(core, state, pos, true);
+  }
+
+  private static int rank(
+      LivingCoreBlockEntity core, BlockState state, BlockPos pos, boolean observed) {
     if (state.isAir()) return Integer.MAX_VALUE;
     String id = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
     var stomach = DigestiveSystem.stomach(core);
@@ -23,16 +28,23 @@ final class BioshipPriorities {
           && BioshipIntegration.blockEntities(core.ship()).stream()
               .noneMatch(e -> e.getBlockState().is(state.getBlock()))) return 0;
     }
-    var entity = core.getLevel().getBlockEntity(pos);
-    boolean container = id.equals("biomancy:storage_sac") || entity instanceof Container;
+    var entity = observed ? core.getLevel().getBlockEntity(pos) : null;
+    boolean container =
+        id.equals("biomancy:storage_sac")
+            || entity instanceof Container
+            || !observed && state.hasBlockEntity();
     var inventory =
-        core.getLevel()
-            .getCapability(
-                net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK, pos, null);
+        observed
+            ? core.getLevel()
+                .getCapability(
+                    net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK, pos, null)
+            : null;
     container |= inventory != null;
     if (container) {
       if (!mouth || stomach == null) return 4;
-      boolean full = entity instanceof Container c && !c.isEmpty();
+      boolean full =
+          entity instanceof Container c && !c.isEmpty()
+              || !observed && core.vision().rememberedFull(pos);
       if (inventory != null)
         for (int slot = 0; slot < inventory.getSlots(); slot++)
           full |= !inventory.getStackInSlot(slot).isEmpty();
@@ -101,16 +113,20 @@ final class BioshipPriorities {
     int bestRank = Integer.MAX_VALUE, previousRank = Integer.MAX_VALUE;
     int range = core.vision().maximumDistance(core);
     double distance = (double) range * range;
-    for (var pos : sources(core, here, core.vision().maximumDistance(core))) {
+    var candidates = new java.util.LinkedHashSet<>(sources(core, here, range));
+    candidates.addAll(core.vision().rememberedSources());
+    for (var pos : candidates) {
       if (!core.crawl().reachableGoal(pos)
           || !level.getChunkSource().hasChunk(pos.getX() >> 4, pos.getZ() >> 4)
           || BioshipIntegration.containing(level, pos) != null) continue;
-      var state = level.getBlockState(pos);
+      var state = core.vision().sourceState(core, pos);
+      if (state == null) continue;
       if (!BuiltInRegistries.BLOCK.getKey(state.getBlock()).getNamespace().equals("biomancy")
           || state.getBlock() instanceof net.minecraft.world.level.block.LiquidBlock) continue;
       double next = Vec3.atCenterOf(pos).distanceToSqr(here);
-      if (next > (double) range * range || !core.vision().knows(core, pos)) continue;
-      int rank = rank(core, state, pos);
+      if (next > (double) range * range && !core.vision().rememberedSources().contains(pos))
+        continue;
+      int rank = rank(core, state, pos, core.vision().exposed(core, pos));
       if (rank > 0 && !core.vision().surveyed(core)) continue;
       if (pos.equals(core.supplyTarget)) {
         previous = pos.immutable();

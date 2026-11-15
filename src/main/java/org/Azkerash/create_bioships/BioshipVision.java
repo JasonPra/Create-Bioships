@@ -105,7 +105,53 @@ public final class BioshipVision {
     scanned = Long.MIN_VALUE;
   }
 
-  private final Map<BlockPos, Long> remembered = new HashMap<>();
+  private record Sighting(
+      net.minecraft.world.level.block.state.BlockState state, long seen, boolean full) {}
+
+  private final Map<BlockPos, Sighting> remembered = new HashMap<>();
+  private static final long MEMORY_TICKS = 2400;
+
+  java.util.Set<BlockPos> rememberedSources() {
+    return java.util.Set.copyOf(remembered.keySet());
+  }
+
+  boolean rememberedFull(BlockPos pos) {
+    return remembered.containsKey(pos) && remembered.get(pos).full;
+  }
+
+  net.minecraft.world.level.block.state.BlockState sourceState(
+      LivingCoreBlockEntity core, BlockPos source) {
+    long now = core.getLevel().getGameTime();
+    if (visible(core, Vec3.atCenterOf(source))) {
+      var state = core.getLevel().getBlockState(source);
+      if (!BioshipPriorities.supply(state) || !openToNature(core.getLevel(), source)) {
+        remembered.remove(source);
+        return null;
+      }
+      var inventory =
+          core.getLevel()
+              .getCapability(
+                  net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK, source, null);
+      boolean full =
+          core.getLevel().getBlockEntity(source) instanceof net.minecraft.world.Container c
+              && !c.isEmpty();
+      if (inventory != null)
+        for (int slot = 0; slot < inventory.getSlots(); slot++)
+          full |= !inventory.getStackInSlot(slot).isEmpty();
+      remembered.put(source.immutable(), new Sighting(state, now, full));
+      if (remembered.size() > 128)
+        remembered.entrySet().stream()
+            .filter(e -> !e.getKey().equals(core.supplyTarget))
+            .min(java.util.Comparator.comparingLong(e -> e.getValue().seen))
+            .ifPresent(e -> remembered.remove(e.getKey()));
+      return state;
+    }
+    var seen = remembered.get(source);
+    return seen != null && (now - seen.seen <= MEMORY_TICKS || source.equals(core.supplyTarget))
+        ? seen.state
+        : null;
+  }
+
   private int surveyed;
 
   public List<View> views(LivingCoreBlockEntity core) {
@@ -138,11 +184,7 @@ public final class BioshipVision {
   }
 
   boolean knows(LivingCoreBlockEntity core, BlockPos source) {
-    if (exposed(core, source)) {
-      remembered.put(source.immutable(), core.getLevel().getGameTime());
-      return true;
-    }
-    return remembered.getOrDefault(source, Long.MIN_VALUE) > core.getLevel().getGameTime() - 200;
+    return sourceState(core, source) != null;
   }
 
   boolean surveyed(LivingCoreBlockEntity core) {
@@ -159,7 +201,12 @@ public final class BioshipVision {
 
   private void turn(LivingCoreBlockEntity core) {
     if (!core.getBlockState().getValue(LivingCoreBlock.CONCEALED)) surveyed = 63;
-    remembered.entrySet().removeIf(e -> e.getValue() < core.getLevel().getGameTime() - 200);
+    remembered
+        .entrySet()
+        .removeIf(
+            e ->
+                !e.getKey().equals(core.supplyTarget)
+                    && e.getValue().seen < core.getLevel().getGameTime() - MEMORY_TICKS);
   }
 
   static boolean exposedTube(net.minecraft.world.level.block.state.BlockState state) {
@@ -245,12 +292,36 @@ public final class BioshipVision {
   net.minecraft.nbt.CompoundTag save() {
     var tag = new net.minecraft.nbt.CompoundTag();
     tag.putInt("Surveyed", surveyed);
+    var list = new net.minecraft.nbt.ListTag();
+    remembered.forEach(
+        (pos, memory) -> {
+          var entry = new net.minecraft.nbt.CompoundTag();
+          entry.putLong("Pos", pos.asLong());
+          entry.putLong("Seen", memory.seen);
+          entry.putBoolean("Full", memory.full);
+          entry.put("State", net.minecraft.nbt.NbtUtils.writeBlockState(memory.state));
+          list.add(entry);
+        });
+    tag.put("Sources", list);
     return tag;
   }
 
-  void load(net.minecraft.nbt.CompoundTag tag) {
+  void load(
+      net.minecraft.nbt.CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries) {
     surveyed = tag.getInt("Surveyed") & 63;
     remembered.clear();
+    var entries = tag.getList("Sources", net.minecraft.nbt.Tag.TAG_COMPOUND);
+    for (int i = 0; i < Math.min(128, entries.size()); i++) {
+      var entry = entries.getCompound(i);
+      var state =
+          net.minecraft.nbt.NbtUtils.readBlockState(
+              registries.lookupOrThrow(net.minecraft.core.registries.Registries.BLOCK),
+              entry.getCompound("State"));
+      if (BioshipPriorities.supply(state))
+        remembered.put(
+            BlockPos.of(entry.getLong("Pos")),
+            new Sighting(state, entry.getLong("Seen"), entry.getBoolean("Full")));
+    }
     scanned = Long.MIN_VALUE;
   }
 
