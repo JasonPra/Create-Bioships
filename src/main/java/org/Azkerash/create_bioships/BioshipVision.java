@@ -50,14 +50,18 @@ public final class BioshipVision {
     if (player == null) {
       var root = BioshipBlueprint.physical(core, BlockPos.ZERO);
       player =
-          level.getNearestPlayer(root.x, root.y, root.z, -1, false)
-                  instanceof net.minecraft.server.level.ServerPlayer p
-              ? p
-              : null;
+          level.getServer().getPlayerList().getPlayers().stream()
+              .filter(p -> p.serverLevel() == level)
+              .min(java.util.Comparator.comparingDouble(p -> p.position().distanceToSqr(root)))
+              .orElse(null);
     }
-    if (player != null && player.requestedViewDistance() > 0)
-      chunks = Math.min(chunks, player.requestedViewDistance());
-    return Math.max(1, chunks) * 16;
+    return distanceLimit(chunks, player);
+  }
+
+  static int distanceLimit(int serverChunks, net.minecraft.server.level.ServerPlayer observer) {
+    if (observer != null && observer.requestedViewDistance() > 0)
+      serverChunks = Math.min(serverChunks, observer.requestedViewDistance());
+    return Math.max(1, serverChunks) * 16;
   }
 
   boolean inView(LivingCoreBlockEntity core, View view, Vec3 point) {
@@ -103,19 +107,17 @@ public final class BioshipVision {
 
   private final Map<BlockPos, Long> remembered = new HashMap<>();
   private int surveyed;
-  private BlockPos corpseTarget;
-  private long lastTurn = Long.MIN_VALUE;
 
   public List<View> views(LivingCoreBlockEntity core) {
     scan(core);
     List<View> result = new ArrayList<>();
     if (!core.getBlockState().getValue(LivingCoreBlock.CONCEALED)) {
-      var face = core.getBlockState().getValue(LivingCoreBlock.FACING);
-      result.add(
-          new View(
-              BioshipBlueprint.physical(core, BlockPos.ZERO),
-              core.ship().logicalPose().transformNormal(Vec3.atLowerCornerOf(face.getNormal())),
-              maximumDistance(core)));
+      for (var face : Direction.values())
+        result.add(
+            new View(
+                BioshipBlueprint.physical(core, BlockPos.ZERO),
+                core.ship().logicalPose().transformNormal(Vec3.atLowerCornerOf(face.getNormal())),
+                maximumDistance(core)));
     }
     for (var eye : eyes) {
       var state = core.getLevel().getBlockState(eye);
@@ -156,44 +158,7 @@ public final class BioshipVision {
   }
 
   private void turn(LivingCoreBlockEntity core) {
-    if (core.getBlockState().getValue(LivingCoreBlock.CONCEALED) || core.coreMotion().active())
-      return;
-    surveyed |= 1 << core.getBlockState().getValue(LivingCoreBlock.FACING).ordinal();
-    if (core.getLevel().getGameTime() - lastTurn < 4 && lastTurn != Long.MIN_VALUE) return;
-    lastTurn = core.getLevel().getGameTime();
-    var objective = BioshipPriorities.bestWorld(core);
-    if (corpseTarget != null
-        && (!BioshipScavenging.needed(core, core.getLevel().getBlockState(corpseTarget))
-            || BioshipIntegration.containing(core.getLevel(), corpseTarget) == null))
-      corpseTarget = null;
-    if (corpseTarget == null) corpseTarget = BioshipScavenging.bestVisible(core);
-    Vec3 focus = null;
-    int priority = Integer.MAX_VALUE;
-    if (objective != null) {
-      focus = Vec3.atCenterOf(objective.pos());
-      priority = objective.rank();
-    }
-    if (corpseTarget != null) {
-      int corpseRank =
-          BioshipPriorities.rank(core, core.getLevel().getBlockState(corpseTarget), corpseTarget);
-      if (corpseRank <= priority) {
-        var body = BioshipIntegration.containing(core.getLevel(), corpseTarget);
-        focus = body.logicalPose().transformPosition(Vec3.atCenterOf(corpseTarget));
-        priority = corpseRank;
-      }
-    }
-    if (focus != null && (priority == 0 || surveyed(core))) {
-      Vec3 delta =
-          core.ship()
-              .logicalPose()
-              .transformPositionInverse(focus)
-              .subtract(Vec3.atCenterOf(core.getBlockPos()));
-      look(core, Direction.getNearest(delta.x, delta.y, delta.z));
-    } else
-      look(
-          core,
-          Direction.values()[
-              (core.getBlockState().getValue(LivingCoreBlock.FACING).ordinal() + 1) % 6]);
+    if (!core.getBlockState().getValue(LivingCoreBlock.CONCEALED)) surveyed = 63;
     remembered.entrySet().removeIf(e -> e.getValue() < core.getLevel().getGameTime() - 200);
   }
 
@@ -249,13 +214,24 @@ public final class BioshipVision {
     return false;
   }
 
+  static boolean openToNature(net.minecraft.world.level.Level level, BlockPos source) {
+    int top =
+        level.getHeight(
+            net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE,
+            source.getX(),
+            source.getZ());
+    for (int y = source.getY() + 1; y < top; y++) {
+      var pos = new BlockPos(source.getX(), y, source.getZ());
+      var state = level.getBlockState(pos);
+      if (state.is(net.minecraft.tags.BlockTags.LEAVES) || clearMaterial(state, new Vec3(0, 1, 0)))
+        continue;
+      if (!state.getCollisionShape(level, pos).isEmpty()) return false;
+    }
+    return true;
+  }
+
   boolean exposed(LivingCoreBlockEntity core, BlockPos source) {
-    if (!core.getLevel().canSeeSky(source.above())
-        || !core.getLevel()
-            .getBlockState(source.above())
-            .getCollisionShape(core.getLevel(), source.above())
-            .isEmpty()) return false;
-    return visible(core, Vec3.atCenterOf(source));
+    return openToNature(core.getLevel(), source) && visible(core, Vec3.atCenterOf(source));
   }
 
   void observe(LivingCoreBlockEntity core) {
@@ -275,7 +251,6 @@ public final class BioshipVision {
   void load(net.minecraft.nbt.CompoundTag tag) {
     surveyed = tag.getInt("Surveyed") & 63;
     remembered.clear();
-    lastTurn = Long.MIN_VALUE;
     scanned = Long.MIN_VALUE;
   }
 
@@ -287,7 +262,7 @@ public final class BioshipVision {
         || OrganMotion.busy(core)
         || core.coreMotion().active()) return false;
     var all = views(core);
-    int first = core.getBlockState().getValue(LivingCoreBlock.CONCEALED) ? 0 : 1;
+    int first = core.getBlockState().getValue(LivingCoreBlock.CONCEALED) ? 0 : 6;
     if (eyes.size() < 2) return false;
     for (int index = 0; index < eyes.size(); index++) {
       var pos = eyes.get(index);

@@ -1,12 +1,6 @@
 {
-  "parent": "minecraft:block/cube",
+  "parent": "minecraft:block/cube_all",
   "textures": {
-    "up": "create_bioships:block/living_hull",
-    "down": "create_bioships:block/living_hull",
-    "east": "create_bioships:block/living_hull",
-    "west": "create_bioships:block/living_hull",
-    "south": "create_bioships:block/living_hull",
-    "north": "create_bioships:block/living_core",
-    "particle": "create_bioships:block/living_hull"
+    "all": "create_bioships:block/living_core"
   }
 }

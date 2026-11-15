@@ -209,11 +209,7 @@ public final class BioshipScavenging {
       LivingCoreBlockEntity core, ServerSubLevel wreck, BlockPos source, Vec3 eye, Vec3 point) {
     var physical = BlockPos.containing(point);
     var level = core.getLevel();
-    if (!level.canSeeSky(physical.above())
-        || !level
-            .getBlockState(physical.above())
-            .getCollisionShape(level, physical.above())
-            .isEmpty()) return false;
+    if (!BioshipVision.openToNature(level, physical)) return false;
     for (var view : core.vision().views(core)) {
       if (!core.vision().inView(core, view, point)) continue;
       var from = view.origin();

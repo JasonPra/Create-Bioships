@@ -11,6 +11,7 @@ import net.minecraft.world.phys.Vec3;
 
 /** The eye trades places with existing tissue. No organs, grid, or extra biomass are moved. */
 public final class CoreMotion {
+  private static final int FULL_COVERAGE = 48;
   private BlockPos home, target;
   private long started, nextScan;
 
@@ -61,11 +62,13 @@ public final class CoreMotion {
   int coverage(LivingCoreBlockEntity core, BlockPos vantage) {
     Vec3 origin = core.ship().logicalPose().transformPosition(Vec3.atCenterOf(vantage));
     int count = 0;
-    for (int i = 0; i < 16; i++) {
-      double angle = i * Math.PI / 8;
-      if (BioshipVision.rayAtCore(
-          core, origin, origin.add(Math.cos(angle) * 8, 0, Math.sin(angle) * 8), vantage)) count++;
-    }
+    for (double rise : new double[] {0, 4, 8})
+      for (int i = 0; i < 16; i++) {
+        double angle = i * Math.PI / 8;
+        if (BioshipVision.rayAtCore(
+            core, origin, origin.add(Math.cos(angle) * 16, rise, Math.sin(angle) * 16), vantage))
+          count++;
+      }
     return count;
   }
 
@@ -138,8 +141,8 @@ public final class CoreMotion {
     if (!returning && level.getGameTime() < nextScan) return false;
     nextScan = level.getGameTime() + 40;
     if (!returning
-        && (BioshipDefense.target(core) != null || coverage(core, core.getBlockPos()) == 16))
-      return false;
+        && (BioshipDefense.target(core) != null
+            || coverage(core, core.getBlockPos()) == FULL_COVERAGE)) return false;
     var objective = BioshipPriorities.bestWorld(core);
     if (!returning
         && objective != null
@@ -158,6 +161,30 @@ public final class CoreMotion {
     core.setChanged();
     level.sendBlockUpdated(core.getBlockPos(), core.getBlockState(), core.getBlockState(), 2);
     return true;
+  }
+
+  String scoutingHint(LivingCoreBlockEntity core) {
+    if (active()) return "moving through connected tissue";
+    if (!core.hatchling()) return "core concealed inside grown body";
+    if (coverage(core, core.getBlockPos()) == FULL_COVERAGE) return "nearby survey is clear";
+    boolean above = false;
+    var queue = new ArrayDeque<BlockPos>();
+    var seen = new HashSet<BlockPos>();
+    queue.add(core.getBlockPos());
+    seen.add(core.getBlockPos());
+    while (!queue.isEmpty() && seen.size() < 160) {
+      var point = queue.removeFirst();
+      for (var direction : Direction.values()) {
+        var next = point.relative(direction);
+        if (next.distManhattan(home(core)) <= 6
+            && tissue(core.getLevel().getBlockState(next))
+            && seen.add(next)) {
+          above |= next.getY() > core.getBlockPos().getY();
+          queue.add(next);
+        }
+      }
+    }
+    return above ? "checking connected higher tissue" : "no connected higher tissue to move into";
   }
 
   void scoutNow(LivingCoreBlockEntity core) {

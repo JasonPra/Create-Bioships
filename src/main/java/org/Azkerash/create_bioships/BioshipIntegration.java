@@ -179,16 +179,15 @@ public final class BioshipIntegration {
   }
 
   public static boolean exposedAndVisible(ServerLevel level, BlockPos eye, BlockPos source) {
-    if (!level.canSeeSky(source.above())
-        || !level.getBlockState(source.above()).getCollisionShape(level, source.above()).isEmpty())
-      return false;
+    if (!BioshipVision.openToNature(level, source)) return false;
     Vec3 from = Vec3.atCenterOf(eye), to = Vec3.atCenterOf(source);
     int samples = Math.max(1, (int) Math.ceil(from.distanceTo(to) * 5));
     for (int i = 1; i < samples; i++) {
       BlockPos point = BlockPos.containing(from.lerp(to, (double) i / samples));
       if (point.equals(source)) continue;
       var state = level.getBlockState(point);
-      if (!state.getCollisionShape(level, point).isEmpty()) return false;
+      if (!BioshipVision.clearMaterial(state, to.subtract(from))
+          && !state.getCollisionShape(level, point).isEmpty()) return false;
     }
     return true;
   }

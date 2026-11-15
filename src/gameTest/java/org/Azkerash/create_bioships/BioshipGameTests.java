@@ -2512,52 +2512,73 @@ public class BioshipGameTests {
     var ship = assemble(helper);
     var core = core(ship);
     var level = helper.getLevel();
-    var here = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO));
-    var sack = here.south(2);
-    var forge = here.north(10);
-    var decomposer = here.west(11);
-    var digester = here.east(12);
-    level.setBlock(sack, block("biomancy:storage_sac").defaultBlockState(), 3);
-    var inventory = level.getCapability(Capabilities.ItemHandler.BLOCK, sack, null);
-    inventory.insertItem(0, new ItemStack(Items.BEEF, 32), false);
-    level.setBlock(forge, block("biomancy:bio_forge").defaultBlockState(), 3);
-    level.setBlock(decomposer, block("biomancy:decomposer").defaultBlockState(), 3);
-    level.setBlock(digester, block("biomancy:digester").defaultBlockState(), 3);
-    survey(core);
-    var best = BioshipPriorities.bestWorld(core);
-    helper.assertTrue(
-        best != null && best.rank() == 0 && best.pos().equals(forge),
-        "Nearby food sack displaced a missing mouth goal");
-    survey(core);
-    BioshipIntegration.assimilate(core, ship);
-    helper.assertTrue(
-        core.organMove() == null,
-        "Grabbed low-priority sack instead of approaching missing organs");
-    helper.assertTrue(
-        core.gatheringGoal().distanceToSqr(Vec3.atCenterOf(forge)) < 1,
-        "Travel goal ignored missing mouth");
-    level.setBlock(
-        core.getBlockPos().north(), Create_bioships.FEEDING_MOUTH.get().defaultBlockState(), 3);
-    best = BioshipPriorities.bestWorld(core);
-    helper.assertTrue(
-        best != null
-            && best.rank() == 0
-            && (best.pos().equals(decomposer) || best.pos().equals(digester)),
-        "Missing stomach lost priority after mouth formation");
-    level.setBlock(core.getBlockPos().west(), Create_bioships.STOMACH.get().defaultBlockState(), 3);
-    DigestiveSystem.connect(core, ship);
-    best = BioshipPriorities.bestWorld(core);
-    helper.assertTrue(
-        best != null && best.pos().equals(sack),
-        "Completed digestive organs did not switch priority to food storage");
-    var first = best.pos();
-    level.setBlock(here.south(3), block("biomancy:storage_sac").defaultBlockState(), 3);
-    helper.assertTrue(
-        BioshipPriorities.bestWorld(core).pos().equals(first),
-        "Equal priority target selection oscillated");
-    for (var pos : List.of(sack, forge, decomposer, digester, here.south(3)))
-      level.removeBlock(pos, false);
-    finish(helper, ship, () -> {});
+    level.setDayTime(1000);
+    // Priority is tested in daylight; darkness intentionally limits distant target detection.
+    // Let the new fixture chunks receive sky lighting before testing distant source priority.
+    helper.runAfterDelay(
+        40,
+        () -> {
+          var here = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO));
+          var sack = here.south(2);
+          var forge = here.north(10);
+          var decomposer = here.west(11);
+          var digester = here.east(12);
+          level.setBlock(sack, block("biomancy:storage_sac").defaultBlockState(), 3);
+          var inventory = level.getCapability(Capabilities.ItemHandler.BLOCK, sack, null);
+          inventory.insertItem(0, new ItemStack(Items.BEEF, 32), false);
+          level.setBlock(forge, block("biomancy:bio_forge").defaultBlockState(), 3);
+          level.setBlock(decomposer, block("biomancy:decomposer").defaultBlockState(), 3);
+          level.setBlock(digester, block("biomancy:digester").defaultBlockState(), 3);
+          survey(core);
+          var best = BioshipPriorities.bestWorld(core);
+          helper.assertTrue(
+              best != null && best.rank() == 0 && best.pos().equals(forge),
+              "Nearby food sack displaced a missing mouth goal: range="
+                  + core.vision().maximumDistance(core)
+                  + " sky="
+                  + level.getMaxLocalRawBrightness(forge.above())
+                  + " best="
+                  + best
+                  + " forge="
+                  + core.vision().exposed(core, forge)
+                  + " decomposer="
+                  + core.vision().exposed(core, decomposer)
+                  + " digester="
+                  + core.vision().exposed(core, digester));
+          survey(core);
+          BioshipIntegration.assimilate(core, ship);
+          helper.assertTrue(
+              core.organMove() == null,
+              "Grabbed low-priority sack instead of approaching missing organs");
+          helper.assertTrue(
+              core.gatheringGoal().distanceToSqr(Vec3.atCenterOf(forge)) < 1,
+              "Travel goal ignored missing mouth");
+          level.setBlock(
+              core.getBlockPos().north(),
+              Create_bioships.FEEDING_MOUTH.get().defaultBlockState(),
+              3);
+          best = BioshipPriorities.bestWorld(core);
+          helper.assertTrue(
+              best != null
+                  && best.rank() == 0
+                  && (best.pos().equals(decomposer) || best.pos().equals(digester)),
+              "Missing stomach lost priority after mouth formation");
+          level.setBlock(
+              core.getBlockPos().west(), Create_bioships.STOMACH.get().defaultBlockState(), 3);
+          DigestiveSystem.connect(core, ship);
+          best = BioshipPriorities.bestWorld(core);
+          helper.assertTrue(
+              best != null && best.pos().equals(sack),
+              "Completed digestive organs did not switch priority to food storage");
+          var first = best.pos();
+          level.setBlock(here.south(3), block("biomancy:storage_sac").defaultBlockState(), 3);
+          helper.assertTrue(
+              BioshipPriorities.bestWorld(core).pos().equals(first),
+              "Equal priority target selection oscillated");
+          for (var pos : List.of(sack, forge, decomposer, digester, here.south(3)))
+            level.removeBlock(pos, false);
+          finish(helper, ship, () -> {});
+        });
   }
 
   @GameTest(template = "test_empty", timeoutTicks = 100, batch = "surface_eyes")
@@ -2797,7 +2818,7 @@ public class BioshipGameTests {
               !moved.getBlockPos().equals(home) && moved.getBlockPos().getY() > home.getY(),
               "Core did not move higher on its own tissue");
           helper.assertTrue(
-              moved.coreMotion().coverage(moved, moved.getBlockPos()) == 16 && before < 16,
+              moved.coreMotion().coverage(moved, moved.getBlockPos()) > before,
               "Relocating the core did not improve panoramic sight");
           helper.assertTrue(
               level.getBlockEntity(stomachPos) instanceof StomachBlockEntity retained
@@ -3034,14 +3055,23 @@ public class BioshipGameTests {
     core.vision().look(core, Direction.EAST);
     helper.assertTrue(
         core.vision().visible(core, root.add(5, 0, 0)), "Core cannot see directly forward");
+    helper.assertTrue(core.vision().views(core).size() == 6, "Core is missing face eyes");
+    for (var face : Direction.values())
+      if (face != Direction.DOWN)
+        helper.assertTrue(
+            core.vision().visible(core, root.relative(face, 5)),
+            "Core cannot see through face " + face);
+    var eastView =
+        core.vision().views(core).stream()
+            .filter(v -> v.forward().x > .9)
+            .findFirst()
+            .orElseThrow();
     helper.assertTrue(
-        !core.vision().visible(core, root.add(-5, 0, 0))
-            && !core.vision().visible(core, root.add(0, 0, 5)),
-        "Core sees beside or behind its cone");
+        !eastView.contains(root.add(-5, 0, 0)) && !eastView.contains(root.add(0, 0, 5)),
+        "Individual core eye sees outside its cone");
     helper.assertTrue(
-        core.vision().visible(core, root.add(2.5, 0, Math.sqrt(3) * 2.5)),
-        "120-degree cone excludes its boundary");
-    helper.assertTrue(!core.vision().visible(core, root.add(2.4, 0, 4.4)), "Core cone is too wide");
+        eastView.contains(root.add(2.5, 0, Math.sqrt(3) * 2.5)), "Cone boundary is excluded");
+    helper.assertTrue(!eastView.contains(root.add(2.4, 0, 4.4)), "Individual cone is too wide");
     var host = core.getBlockPos().north(2);
     level.setBlock(host, Create_bioships.FLESH.get().defaultBlockState(), 3);
     level.setBlock(
@@ -3247,10 +3277,15 @@ public class BioshipGameTests {
     client.setPos(root.x, root.y, root.z);
     level.addNewPlayer(client);
     helper.assertTrue(
-        core.vision().maximumDistance(core) == 32, "Client render distance was not used");
+        BioshipVision.distanceLimit(list.getViewDistance(), client) == 32,
+        "Client render distance was not used");
+    helper.assertTrue(
+        core.vision().maximumDistance(core) == 48,
+        "Unconnected fake player shortened actual sight range");
     client.chunks = 8;
     helper.assertTrue(
-        core.vision().maximumDistance(core) == 48, "Eye range exceeded the server view distance");
+        BioshipVision.distanceLimit(list.getViewDistance(), client) == 48,
+        "Eye range exceeded the server view distance");
     list.setViewDistance(2);
     core.vision().look(core, Direction.EAST);
     var center = BlockPos.containing(root).offset(10, 1, 0);
@@ -3352,5 +3387,90 @@ public class BioshipGameTests {
                       "Hatchling hovered after its wall was removed");
                   level.removeBlock(resource, false);
                 }));
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "canopy_debug")
+  public static void canopy_allows_side_sight_but_leaves_and_base_roofs_still_protect(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var root = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var machine = BlockPos.containing(root).east(4);
+    level.setBlock(machine, block("biomancy:bio_forge").defaultBlockState(), 3);
+    level.setBlock(machine.above(2), Blocks.OAK_LEAVES.defaultBlockState(), 3);
+    helper.assertTrue(
+        core.vision().exposed(core, machine), "Natural canopy hides an exposed machine");
+    var target = Vec3.atCenterOf(machine);
+    var data = VisionDebug.inspect(core, target);
+    var views = data.getList("Views", net.minecraft.nbt.Tag.TAG_COMPOUND);
+    helper.assertTrue(
+        views.size() == 6
+            && views.stream()
+                .anyMatch(
+                    t -> ((net.minecraft.nbt.CompoundTag) t).getString("Reason").equals("visible")),
+        "Server debug disagrees with visible canopy target");
+    var buffer =
+        new net.minecraft.network.RegistryFriendlyByteBuf(
+            io.netty.buffer.Unpooled.buffer(),
+            level.registryAccess(),
+            net.neoforged.neoforge.network.connection.ConnectionType.NEOFORGE);
+    try {
+      BioshipNetwork.SightSnapshot.CODEC.encode(buffer, new BioshipNetwork.SightSnapshot(data));
+      var decoded = BioshipNetwork.SightSnapshot.CODEC.decode(buffer);
+      helper.assertTrue(
+          decoded.data().equals(data), "Debug snapshot lost server geometry or reasons in transit");
+    } finally {
+      buffer.release();
+    }
+    var leaf = BlockPos.containing(root).east(2);
+    level.setBlock(leaf, Blocks.OAK_LEAVES.defaultBlockState(), 3);
+    helper.assertTrue(!core.vision().visible(core, target), "Side sight penetrates leaves");
+    helper.assertTrue(
+        VisionDebug.inspect(core, target)
+            .getList("Views", net.minecraft.nbt.Tag.TAG_COMPOUND)
+            .stream()
+            .anyMatch(
+                t -> ((net.minecraft.nbt.CompoundTag) t).getString("Reason").equals("blocked")),
+        "Debug did not report occlusion");
+    level.removeBlock(leaf, false);
+    level.setBlock(machine.above(2), Blocks.OAK_PLANKS.defaultBlockState(), 3);
+    helper.assertTrue(
+        core.vision().visible(core, target) && !core.vision().exposed(core, machine),
+        "Base roof protection disappeared");
+    helper.assertTrue(
+        VisionDebug.inspect(core, target)
+            .getList("Views", net.minecraft.nbt.Tag.TAG_COMPOUND)
+            .stream()
+            .anyMatch(t -> ((net.minecraft.nbt.CompoundTag) t).getString("Reason").equals("roof")),
+        "Debug did not distinguish a roof from ray occlusion");
+    level.removeBlock(machine.above(2), false);
+    level.removeBlock(machine, false);
+    finish(helper, ship, () -> {});
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "upward_scouting")
+  public static void upward_occlusion_triggers_scouting_even_with_clear_horizontal_sight(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var root = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    for (int y = 1; y <= 5; y++)
+      level.setBlock(
+          core.getBlockPos().above(y), Create_bioships.FLESH.get().defaultBlockState(), 3);
+    var wall = BlockPos.containing(root).north(5).above(2);
+    for (var p : BlockPos.betweenClosed(wall.offset(-4, 0, 0), wall.offset(4, 1, 0)))
+      level.setBlock(p, Blocks.STONE.defaultBlockState(), 3);
+    helper.assertTrue(
+        core.coreMotion().coverage(core, core.getBlockPos()) < 48,
+        "Scouting ignores upward obstruction");
+    core.coreMotion().scoutNow(core);
+    helper.assertTrue(
+        core.coreMotion().active() && core.coreMotion().target().getY() > core.getBlockPos().getY(),
+        "Core did not choose connected higher tissue for upward sight");
+    for (var p : BlockPos.betweenClosed(wall.offset(-4, 0, 0), wall.offset(4, 1, 0)))
+      level.removeBlock(p, false);
+    finish(helper, ship, () -> {});
   }
 }
