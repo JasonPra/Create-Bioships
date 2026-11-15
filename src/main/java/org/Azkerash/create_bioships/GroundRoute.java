@@ -13,6 +13,19 @@ final class GroundRoute {
   private long retryAfter;
   private boolean failed;
   private boolean complete;
+  private String debugStatus = "idle";
+  private long plannedAt;
+
+  net.minecraft.nbt.CompoundTag debug(long now) {
+    var tag = new net.minecraft.nbt.CompoundTag();
+    tag.putString("Status", debugStatus);
+    tag.putBoolean("Failed", failed);
+    tag.putBoolean("Complete", complete);
+    tag.putLong("Age", Math.max(0, now - plannedAt));
+    tag.putLong("RetryIn", Math.max(0, retryAfter - now));
+    if (destination != null) tag.put("Destination", VisionDebug.vector(destination));
+    return tag;
+  }
 
   boolean complete() {
     return complete;
@@ -243,12 +256,14 @@ final class GroundRoute {
                 key, cost, cost + Math.hypot(key.getX() + .5 - goal.x, key.getZ() + .5 - goal.z)));
       }
     }
+    plannedAt = core.getLevel().getGameTime();
     destination = goal;
     cursor = 0;
     retryAfter = core.getLevel().getGameTime() + 20;
     complete = end != null;
     if (end == null && closest < here.distanceTo(goal) - 3) end = progress;
     failed = end == null;
+    debugStatus = failed ? "no_route" : complete ? "route_ready" : "partial_route";
     if (end == null) {
       path = List.of();
       return false;
@@ -272,6 +287,7 @@ final class GroundRoute {
         && here.subtract(path.get(cursor)).horizontalDistanceSqr() < .09
         && Math.abs(here.y - path.get(cursor).y) < .3) cursor++;
     if (cursor >= path.size()) {
+      if (!path.isEmpty()) debugStatus = complete ? "route_finished" : "segment_finished";
       path = List.of();
       retryAfter = core.getLevel().getGameTime();
       return null;
@@ -279,6 +295,7 @@ final class GroundRoute {
     var next = path.get(cursor);
     var parts = offsets(core);
     if (!fits(core, next, parts)) {
+      debugStatus = "waypoint_blocked";
       path = List.of();
       return null;
     }
@@ -297,6 +314,7 @@ final class GroundRoute {
           supported = true;
       }
       if (!supported) {
+        debugStatus = "unsupported";
         failed = true;
         path = List.of();
         return null;
@@ -305,14 +323,17 @@ final class GroundRoute {
     // Lift before crossing a one-block step; don't drive the body through its vertical face.
     if (next.y > here.y + .12) {
       if (!fits(core, new Vec3(here.x, next.y, here.z), parts)) {
+        debugStatus = "lift_blocked";
         path = List.of();
         return null;
       }
+      debugStatus = "lifting";
       if (core.hatchling() && grip(core, here) != null) core.crawl().clingHeight(next.y);
       else core.crawl().stepHeight(next.y);
       return null;
     }
     if (next.subtract(here).horizontalDistanceSqr() < .09 && next.y < here.y - .12) {
+      debugStatus = "lowering";
       if (grip(core, here) != null) core.crawl().clingHeight(next.y);
       else core.crawl().lowerHeight(next.y);
       return null;
@@ -320,9 +341,11 @@ final class GroundRoute {
     if (next.y >= here.y - .12) core.crawl().stepHeight(next.y);
     Vec3 probe = here.lerp(next, Math.min(1, .35 / Math.max(.01, here.distanceTo(next))));
     if (!fits(core, probe, parts)) {
+      debugStatus = "first_step_blocked";
       path = List.of();
       return null;
     }
+    debugStatus = "following";
     return next;
   }
 }

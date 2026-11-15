@@ -12,7 +12,9 @@
     "BiometricSubLevelCollisionMixin",
     "SablePlotUnloadMixin"
   ],
-  "client": [],
+  "client": [
+    "PathDebugKeyMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   },

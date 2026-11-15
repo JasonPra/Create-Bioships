@@ -145,6 +145,15 @@ public final class BioshipCrawl {
   private final GroundRoute route = new GroundRoute();
   private final Map<BlockPos, Long> unreachable = new HashMap<>();
 
+  net.minecraft.nbt.CompoundTag navigationDebug(long now) {
+    var tag = route.debug(now);
+    tag.putString("Mode", mode);
+    tag.putBoolean("Walking", walking);
+    tag.putDouble("Speed", gaitSpeed);
+    if (goal != null) tag.put("Goal", VisionDebug.vector(goal));
+    return tag;
+  }
+
   public java.util.List<Vec3> path() {
     return route.remaining();
   }

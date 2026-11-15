@@ -214,6 +214,113 @@ public class BioshipGameTests {
     return detail;
   }
 
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "path_debug_snapshot")
+  public static void path_debug_exposes_actual_route_priorities_and_round_trips_without_replanning(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var root = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var source = BlockPos.containing(root).east(12);
+    level.setBlock(source, block("biomancy:bio_forge").defaultBlockState(), 3);
+    survey(core);
+    core.brain().choose(core);
+    var goal = Vec3.atCenterOf(source);
+    var crawl = core.crawl().save();
+    crawl.putString("Mode", "forage");
+    crawl.putBoolean("Walking", true);
+    crawl.putBoolean("Gathering", true);
+    crawl.putBoolean("Goal", true);
+    crawl.putDouble("X", goal.x);
+    crawl.putDouble("Y", goal.y);
+    crawl.putDouble("Z", goal.z);
+    core.crawl().load(crawl);
+    core.crawl().velocity(core);
+    var before = core.saveWithFullMetadata(level.registryAccess());
+    var route = core.crawl().path();
+    var data = NavigationDebug.inspect(core);
+    helper.assertTrue(
+        data.hasUUID("Ship") && data.getUUID("Ship").equals(ship.getUniqueId()),
+        "Path snapshot selected another body");
+    helper.assertTrue(
+        !route.isEmpty()
+            && data.getList("Route", net.minecraft.nbt.Tag.TAG_COMPOUND).size() == route.size(),
+        "Debug did not expose the actual remaining route");
+    helper.assertTrue(
+        data.getString("Action").equals("ASSIMILATE")
+            && data.contains("Target")
+            && data.contains("Goal"),
+        "Behavior target and movement goal were omitted");
+    helper.assertTrue(
+        !data.getList("Priorities", net.minecraft.nbt.Tag.TAG_COMPOUND).isEmpty(),
+        "Actual priority ranking was omitted");
+    helper.assertTrue(
+        before.equals(core.saveWithFullMetadata(level.registryAccess()))
+            && route.equals(core.crawl().path()),
+        "Observing debug state changed the behavior or navigation");
+    var buffer =
+        new net.minecraft.network.RegistryFriendlyByteBuf(
+            io.netty.buffer.Unpooled.buffer(),
+            level.registryAccess(),
+            net.neoforged.neoforge.network.connection.ConnectionType.NEOFORGE);
+    try {
+      BioshipNetwork.PathSnapshot.CODEC.encode(buffer, new BioshipNetwork.PathSnapshot(data));
+      helper.assertTrue(
+          BioshipNetwork.PathSnapshot.CODEC.decode(buffer).data().equals(data),
+          "Path snapshot lost route or priorities in transit");
+    } finally {
+      buffer.release();
+    }
+    var observer = player(helper, "PathDebugObserver");
+    observer.setPos(root.x, root.y, root.z);
+    observer.getPersistentData().remove("PathRequested");
+    helper.assertTrue(
+        NavigationDebug.request(observer).hasUUID("Ship"),
+        "Developer path debug incorrectly requires goggles");
+    helper.assertTrue(
+        NavigationDebug.request(observer) == null, "Path requests were not rate-limited");
+    level.removeBlock(source, false);
+    finish(helper, ship, () -> {});
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "path_debug_blocked")
+  public static void path_debug_reports_unreachable_target_inside_sealed_glass(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var root = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var origin = BlockPos.containing(root);
+    var walls = new ArrayList<BlockPos>();
+    for (var p : BlockPos.betweenClosed(origin.offset(-2, 0, -2), origin.offset(2, 4, 2)))
+      if (Math.abs(p.getX() - origin.getX()) == 2
+          || Math.abs(p.getZ() - origin.getZ()) == 2
+          || p.getY() == origin.getY() + 4) {
+        walls.add(p.immutable());
+        level.setBlock(p, Blocks.GLASS.defaultBlockState(), 3);
+      }
+    var goal = root.add(12, 0, 0);
+    var crawl = core.crawl().save();
+    crawl.putString("Mode", "forage");
+    crawl.putBoolean("Walking", true);
+    crawl.putBoolean("Gathering", true);
+    crawl.putBoolean("Goal", true);
+    crawl.putDouble("X", goal.x);
+    crawl.putDouble("Y", goal.y);
+    crawl.putDouble("Z", goal.z);
+    core.crawl().load(crawl);
+    core.crawl().velocity(core);
+    var data = NavigationDebug.inspect(core);
+    helper.assertTrue(
+        data.getBoolean("Failed") && data.getString("Status").equals("no_route"),
+        "An unreachable route was presented as idle or following: " + data);
+    helper.assertTrue(
+        data.getList("Route", net.minecraft.nbt.Tag.TAG_COMPOUND).isEmpty(),
+        "Debugger fabricated a path through sealed glass");
+    walls.forEach(p -> level.removeBlock(p, false));
+    finish(helper, ship, () -> {});
+  }
+
   @GameTest(template = "test_empty", timeoutTicks = 240, batch = "natural_ship_chunk_loading")
   public static void bioship_loads_view_range_and_ticks_simulation_range(GameTestHelper helper) {
     var level = helper.getLevel();

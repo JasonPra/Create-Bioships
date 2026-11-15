@@ -55,6 +55,40 @@ public final class BioshipBrain {
   private String previous = "", reason = "Idle";
   private Action action = Action.IDLE;
   private boolean growthBlocked;
+  private Decision lastDecision;
+  private net.minecraft.nbt.ListTag debugPriorities = new net.minecraft.nbt.ListTag();
+  private int debugOfferCount;
+
+  net.minecraft.nbt.ListTag priorities() {
+    return debugPriorities.copy();
+  }
+
+  int offerCount() {
+    return debugOfferCount;
+  }
+
+  private void rankForDebug(List<Decision> offers) {
+    debugOfferCount = offers.size();
+    debugPriorities = new net.minecraft.nbt.ListTag();
+    var order =
+        Comparator.<Decision>comparingInt(d -> d.offer.band().ordinal())
+            .thenComparingDouble(d -> d.offer.weight(previous))
+            .thenComparing(d -> d.offer.key())
+            .reversed();
+    for (var candidate : offers.stream().sorted(order).limit(8).toList()) {
+      var tag = new CompoundTag();
+      tag.putString("Action", candidate.action.name());
+      tag.putString("Band", candidate.offer.band().name());
+      tag.putInt("Urgency", candidate.offer.urgency());
+      tag.putDouble("Weight", candidate.offer.weight(previous));
+      tag.putString("Reason", candidate.reason);
+      debugPriorities.add(tag);
+    }
+  }
+
+  Decision lastDecision() {
+    return lastDecision;
+  }
 
   public Action action() {
     return action;
@@ -118,6 +152,8 @@ public final class BioshipBrain {
   }
 
   private Decision remember(Decision selected) {
+    if (debugPriorities.isEmpty()) rankForDebug(List.of(selected));
+    lastDecision = selected;
     action = selected.action;
     reason = selected.reason;
     previous = selected.offer.key();
@@ -294,6 +330,8 @@ public final class BioshipBrain {
   }
 
   Decision choose(LivingCoreBlockEntity core) {
+    debugPriorities.clear();
+    debugOfferCount = 0;
     if (core.ship() == null) return fixed(Action.IDLE, "Dormant core");
     if (core.body().dead()) return fixed(Action.DEAD, "Dead organism");
     // Reconstruction locks its approved body layout until the transaction completes.
@@ -411,6 +449,7 @@ public final class BioshipBrain {
             0,
             0,
             "No reachable urgent need or funded goal"));
+    rankForDebug(offers);
     var selected = remember(chooseOffers(offers));
     if (selected.action == Action.ASSIMILATE) core.supplyTarget = selected.block;
     return selected;
@@ -518,6 +557,9 @@ public final class BioshipBrain {
   }
 
   void load(CompoundTag tag) {
+    lastDecision = null;
+    debugPriorities.clear();
+    debugOfferCount = 0;
     previous = tag.getString("Previous");
     reason = tag.getString("Reason");
     action = Action.IDLE;

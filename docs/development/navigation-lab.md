@@ -11,7 +11,7 @@ Create a new world, choose **Creative**, enable commands, then select **World â†
 
 The prize is a Bio-Forge. Both courses use `NavigationLab.course`, the same deterministic geometry used by the real-physics GameTests. Glass permits sight but blocks the body and grasping tentacles. The roof and closed sides prevent climbing over or walking around the maze. The elevated prize has a solid illuminated plinth so darkness does not obscure it at the start.
 
-Use `/tp @s 12 84 118` to observe the elevation course. Equip the goggles and press **F3+B** for sight cones, ray results and navigation waypoints. The hatchlings start moving on first login, so reset before observing another run:
+Use `/tp @s 12 84 118` to observe the elevation course. Equip the goggles and press **F3+B** for sight cones and ray results. Press **F3+P** for routes, target markers and the behavior/priority hologram; the path debugger needs no goggles. The hatchlings start moving on first login, so reset before observing another run:
 
 ```text
 /bioship_lab reset

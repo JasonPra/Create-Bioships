@@ -55,8 +55,50 @@ public final class BioshipNetwork {
     }
   }
 
+  public record PathRequest() implements CustomPacketPayload {
+    public static final Type<PathRequest> TYPE =
+        new Type<>(ResourceLocation.fromNamespaceAndPath(Create_bioships.MOD_ID, "path_request"));
+    public static final StreamCodec<RegistryFriendlyByteBuf, PathRequest> CODEC =
+        StreamCodec.unit(new PathRequest());
+
+    @Override
+    public Type<PathRequest> type() {
+      return TYPE;
+    }
+  }
+
+  public record PathSnapshot(net.minecraft.nbt.CompoundTag data) implements CustomPacketPayload {
+    public static final Type<PathSnapshot> TYPE =
+        new Type<>(ResourceLocation.fromNamespaceAndPath(Create_bioships.MOD_ID, "path_snapshot"));
+    public static final StreamCodec<RegistryFriendlyByteBuf, PathSnapshot> CODEC =
+        StreamCodec.of(
+            (buf, p) -> buf.writeNbt(p.data),
+            buf -> new PathSnapshot(java.util.Objects.requireNonNull(buf.readNbt())));
+
+    @Override
+    public Type<PathSnapshot> type() {
+      return TYPE;
+    }
+  }
+
   public static void register(RegisterPayloadHandlersEvent event) {
-    var registrar = event.registrar("4");
+    var registrar = event.registrar("5");
+    registrar.playToServer(
+        PathRequest.TYPE,
+        PathRequest.CODEC,
+        (payload, context) -> {
+          if (context.player() instanceof ServerPlayer player) {
+            var result = NavigationDebug.request(player);
+            if (result != null) context.reply(new PathSnapshot(result));
+          }
+        });
+    registrar.playToClient(
+        PathSnapshot.TYPE,
+        PathSnapshot.CODEC,
+        (payload, context) -> {
+          context.player().getPersistentData().put(NavigationDebug.DATA, payload.data());
+          context.player().getPersistentData().putInt("PathReceived", context.player().tickCount);
+        });
     registrar.playToServer(
         SightRequest.TYPE,
         SightRequest.CODEC,

@@ -6,7 +6,7 @@ Living airships for Minecraft 1.21.1, NeoForge 21.1.266, and Java 21.
 
 Living bioships load surrounding world chunks using the creator’s effective view distance, capped by the server, with a separate server-limited simulation range. This is normal ship behavior in every world; loading follows the body and ends when it dies or is removed.
 
-A central behavior tree selects the ship’s current action from urgent needs before long-term goals. Useful wreckage takes priority over hunting for the same missing resources. Navigation, collection, growth and attacks share that selection. Symbiotic Goggles show the current behavior and reason; F3+B enables the detailed sight/navigation overlay. See [behavior architecture](docs/development/behavior.md) and the packaged [Navigation Lab world type](docs/development/navigation-lab.md).
+A central behavior tree selects the ship’s current action from urgent needs before long-term goals. Useful wreckage takes priority over hunting for the same missing resources. Navigation, collection, growth and attacks share that selection. Symbiotic Goggles show the current behavior and reason; F3+B enables the sight overlay. **F3+P** independently toggles the [path and behavior debugger](docs/development/path-debug.md), including an above-ship hologram with targets and ranked priorities; goggles are not required. See [behavior architecture](docs/development/behavior.md) and the packaged [Navigation Lab world type](docs/development/navigation-lab.md).
 
 ## Make and raise a ship
 
