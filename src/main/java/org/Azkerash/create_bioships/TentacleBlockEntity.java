@@ -192,11 +192,14 @@ public class TentacleBlockEntity extends BlockEntity implements BlockEntitySubLe
     if (heldTicks >= 160) release();
   }
 
-  private boolean visible(
+  boolean visible(
       Vec3 from, Vec3 to, Entity target, LivingCoreBlockEntity core, ServerSubLevel ship) {
     var hit =
         level.clip(
             new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, target));
+    if (hit.getType() != HitResult.Type.MISS
+        && BioshipVision.exposedTube(level.getBlockState(hit.getBlockPos())))
+      return BioshipVision.ray(core, from, to);
     if (hit.getType() == HitResult.Type.MISS) return true;
     // The mouth itself must not make a captured creature disappear from the limb's sight.
     return core.hasMouth()

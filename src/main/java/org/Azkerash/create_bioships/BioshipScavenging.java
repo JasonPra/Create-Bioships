@@ -186,6 +186,7 @@ public final class BioshipScavenging {
             BlockPos.containing(
                 wreck.logicalPose().transformPositionInverse(from.lerp(point, i / (double) steps)));
         if (!sample.equals(source)
+            && !BioshipVision.exposedTube(level.getBlockState(sample))
             && !level.getBlockState(sample).getCollisionShape(level, sample).isEmpty()) {
           clear = false;
           break;

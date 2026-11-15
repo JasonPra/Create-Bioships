@@ -2905,4 +2905,53 @@ public class BioshipGameTests {
         "A saved eye did not refresh its concealed window mount");
     finish(helper, ship, () -> {});
   }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "tube_sight")
+  public static void exposed_intestines_do_not_block_sight_but_encased_tissue_and_walls_do(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var pipe = core.getBlockPos().east();
+    var target = BioshipBlueprint.physical(core, new BlockPos(4, 0, 0));
+    level.setBlock(pipe, Create_bioships.INTESTINE.get().defaultBlockState(), 3);
+    helper.assertTrue(
+        core.vision().visible(core, target), "Exposed intestine on the ship blocks sight");
+    var worldPipe = BlockPos.containing(BioshipBlueprint.physical(core, new BlockPos(2, 0, 0)));
+    level.setBlock(worldPipe, Create_bioships.INTESTINE.get().defaultBlockState(), 3);
+    helper.assertTrue(
+        core.vision().visible(core, target), "Exposed world-space intestine blocks sight");
+    var limb =
+        new TentacleBlockEntity(
+            core.getBlockPos(), Create_bioships.TENTACLE.get().defaultBlockState());
+    limb.setLevel(level);
+    var prey = EntityType.COW.create(level);
+    helper.assertTrue(
+        limb.visible(BioshipBlueprint.physical(core, BlockPos.ZERO), target, prey, core, ship),
+        "Tentacle targeting is blocked by an exposed tube");
+    level.setBlock(
+        worldPipe, level.getBlockState(worldPipe).setValue(IntestineBlock.ENCASED, true), 3);
+    helper.assertTrue(
+        !limb.visible(BioshipBlueprint.physical(core, BlockPos.ZERO), target, prey, core, ship),
+        "Tentacle targeting sees through a flesh-encased tube");
+    level.setBlock(
+        worldPipe, level.getBlockState(worldPipe).setValue(IntestineBlock.ENCASED, false), 3);
+
+    var wallBehind = BlockPos.containing(BioshipBlueprint.physical(core, new BlockPos(3, 0, 0)));
+    level.setBlock(wallBehind, Blocks.STONE.defaultBlockState(), 3);
+    helper.assertTrue(
+        !limb.visible(BioshipBlueprint.physical(core, BlockPos.ZERO), target, prey, core, ship),
+        "Ignoring a tube also ignored a solid wall behind it");
+    level.removeBlock(wallBehind, false);
+    level.setBlock(pipe, level.getBlockState(pipe).setValue(IntestineBlock.ENCASED, true), 3);
+    helper.assertTrue(
+        !core.vision().visible(core, target),
+        "Encased intestine reveals targets through its flesh casing");
+    level.setBlock(pipe, level.getBlockState(pipe).setValue(IntestineBlock.ENCASED, false), 3);
+    level.setBlock(worldPipe, Blocks.STONE.defaultBlockState(), 3);
+    helper.assertTrue(
+        !core.vision().visible(core, target), "Ignoring tubes also ignored solid world obstacles");
+    level.removeBlock(worldPipe, false);
+    finish(helper, ship, () -> {});
+  }
 }

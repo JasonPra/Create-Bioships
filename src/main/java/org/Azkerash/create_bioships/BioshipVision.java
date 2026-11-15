@@ -54,6 +54,10 @@ public final class BioshipVision {
     return result;
   }
 
+  static boolean exposedTube(net.minecraft.world.level.block.state.BlockState state) {
+    return state.is(Create_bioships.INTESTINE.get()) && !state.getValue(IntestineBlock.ENCASED);
+  }
+
   static boolean ray(LivingCoreBlockEntity core, Vec3 from, Vec3 to) {
     return rayAtCore(core, from, to, core.getBlockPos());
   }
@@ -64,10 +68,11 @@ public final class BioshipVision {
     for (int i = 1; i < steps; i++) {
       var worldCell = BlockPos.containing(from.lerp(to, i / (double) steps));
       if (!worldCell.equals(targetCell)
-          && (!core.getLevel()
-                  .getBlockState(worldCell)
-                  .getCollisionShape(core.getLevel(), worldCell)
-                  .isEmpty()
+          && (!exposedTube(core.getLevel().getBlockState(worldCell))
+                  && !core.getLevel()
+                      .getBlockState(worldCell)
+                      .getCollisionShape(core.getLevel(), worldCell)
+                      .isEmpty()
               || !core.getLevel().getFluidState(worldCell).isEmpty())) return false;
       var sample =
           BlockPos.containing(
@@ -78,7 +83,8 @@ public final class BioshipVision {
       if (sample.equals(origin) || state.is(Create_bioships.SURFACE_EYE.get())) continue;
       if (sample.equals(core.getBlockPos()) && !origin.equals(sample))
         state = core.getLevel().getBlockState(origin);
-      if (!state.getCollisionShape(core.getLevel(), sample).isEmpty()) return false;
+      if (!exposedTube(state) && !state.getCollisionShape(core.getLevel(), sample).isEmpty())
+        return false;
     }
     return true;
   }
