@@ -24,7 +24,7 @@ public final class BioshipScavenging {
       pendingFiber,
       pendingFreeTubes;
 
-  private static boolean frameMaterial(BlockState state) {
+  static boolean frameMaterial(BlockState state) {
     return state.is(Create_bioships.CARAPACE.get())
         || state.is(Create_bioships.PERCH.get())
         || state.is(Create_bioships.DOOR.get())
@@ -32,7 +32,7 @@ public final class BioshipScavenging {
         || state.getBlock() instanceof AccessPanelBlock;
   }
 
-  private static boolean fiberMaterial(BlockState state) {
+  static boolean fiberMaterial(BlockState state) {
     return state.is(Create_bioships.TENTACLE.get())
         || state.is(Create_bioships.INTESTINE.get())
         || state.getBlock() instanceof LivingThrottleBlock
@@ -78,7 +78,8 @@ public final class BioshipScavenging {
     var stomach = DigestiveSystem.stomach(core);
 
     boolean flesh =
-        core.missingBiomass() > 0
+        core.hungry()
+            || core.missingBiomass() > 0
             || stomach != null && stomach.material("biomancy:flesh_bits") < 128;
     boolean bone =
         frameMaterial(state)
@@ -93,45 +94,13 @@ public final class BioshipScavenging {
     return flesh || bone || fiber;
   }
 
-  static Vec3 approach(LivingCoreBlockEntity core) {
-    var container = SubLevelContainer.getContainer(core.getLevel());
-    if (container == null) return null;
-    Vec3 eye = BioshipBlueprint.physical(core, BlockPos.ZERO), nearest = null;
-    double distance = 32 * 32;
-    int bestRank = Integer.MAX_VALUE;
-    for (var body : container.getAllSubLevels()) {
-      if (!(body instanceof ServerSubLevel wreck) || wreck.isRemoved() || !BioshipDecay.dead(wreck))
-        continue;
-      if (wreck
-              .logicalPose()
-              .transformPosition(Vec3.atCenterOf(wreck.getPlot().getCenterBlock()))
-              .distanceToSqr(eye)
-          > 40 * 40) continue;
-      for (var source : BioshipDecay.blocks(wreck)) {
-        if (!needed(core, core.getLevel().getBlockState(source))) continue;
-        Vec3 point = wreck.logicalPose().transformPosition(Vec3.atCenterOf(source));
-        double next = point.distanceToSqr(eye);
-        int rank = BioshipPriorities.rank(core, core.getLevel().getBlockState(source), source);
-        if (next > 11 * 11
-            && next < 32 * 32
-            && (rank < bestRank || rank == bestRank && next < distance)
-            && visible(core, wreck, source, eye, point)) {
-          nearest = point;
-          distance = next;
-          bestRank = rank;
-        }
-      }
-    }
-    return nearest;
-  }
+  record Source(BlockPos pos, Vec3 point, BlockState state) {}
 
-  static BlockPos bestVisible(LivingCoreBlockEntity core) {
+  static java.util.List<Source> visibleSources(LivingCoreBlockEntity core) {
     var container = SubLevelContainer.getContainer(core.getLevel());
-    if (container == null) return null;
+    if (container == null) return java.util.List.of();
     var eye = BioshipBlueprint.physical(core, BlockPos.ZERO);
-    BlockPos best = null;
-    int rank = Integer.MAX_VALUE;
-    double distance = 32 * 32;
+    var sources = new ArrayList<Source>();
     for (var body : container.getAllSubLevels())
       if (body instanceof ServerSubLevel wreck && !wreck.isRemoved() && BioshipDecay.dead(wreck)) {
         if (wreck
@@ -139,22 +108,15 @@ public final class BioshipScavenging {
                 .transformPosition(Vec3.atCenterOf(wreck.getPlot().getCenterBlock()))
                 .distanceToSqr(eye)
             > 40 * 40) continue;
-        for (var source : BioshipDecay.blocks(wreck)) {
-          var state = core.getLevel().getBlockState(source);
+        for (var pos : BioshipDecay.blocks(wreck)) {
+          var state = core.getLevel().getBlockState(pos);
           if (!needed(core, state)) continue;
-          int priority = BioshipPriorities.rank(core, state, source);
-          var point = wreck.logicalPose().transformPosition(Vec3.atCenterOf(source));
-          double next = point.distanceToSqr(eye);
-          if (next > 32 * 32
-              || priority > rank
-              || priority == rank && next >= distance
-              || !visible(core, wreck, source, eye, point)) continue;
-          best = source;
-          rank = priority;
-          distance = next;
+          var point = wreck.logicalPose().transformPosition(Vec3.atCenterOf(pos));
+          if (point.distanceToSqr(eye) <= 32 * 32 && visible(core, wreck, pos, eye, point))
+            sources.add(new Source(pos, point, state));
         }
       }
-    return best;
+    return sources;
   }
 
   static boolean collect(LivingCoreBlockEntity core, ServerSubLevel own) {
@@ -162,7 +124,8 @@ public final class BioshipScavenging {
     var level = own.getLevel();
     var container = SubLevelContainer.getContainer(level);
     if (container == null) return false;
-    var worldObjective = BioshipPriorities.bestWorld(core);
+    var decision = core.brain().choose(core);
+    if (decision.action() != BioshipBrain.Action.SCAVENGE) return false;
     Vec3 eye = BioshipBlueprint.physical(core, BlockPos.ZERO);
     for (var body : List.copyOf(container.getAllSubLevels()))
       if (body instanceof ServerSubLevel wreck
@@ -186,9 +149,7 @@ public final class BioshipScavenging {
                             .distanceToSqr(eye)));
         for (var source : cells) {
           var state = level.getBlockState(source);
-          if (!needed(core, state)
-              || worldObjective != null
-                  && BioshipPriorities.rank(core, state, source) > worldObjective.rank()) continue;
+          if (!source.equals(decision.block()) || !needed(core, state)) continue;
           Vec3 point = wreck.logicalPose().transformPosition(Vec3.atCenterOf(source));
           if (point.distanceToSqr(eye) > 14 * 14 || !visible(core, wreck, source, eye, point))
             continue;

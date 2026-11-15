@@ -25,7 +25,7 @@ final class HatchlingFront {
         Comparator.<BlockPos>comparingInt(BlockPos::getZ)
             .thenComparingInt(p -> Math.abs(p.getX() - origin.getX())));
     for (var p : candidates) {
-      if (p.distManhattan(origin) > 6 || !core.getLevel().getBlockState(p.north()).isAir())
+      if (p.distManhattan(origin) > 6 || !FeedingMouthBlock.openFace(core, p, Direction.NORTH))
         continue;
       var world = core.ship().logicalPose().transformPosition(Vec3.atCenterOf(p));
       if (!core.getLevel().getBlockState(BlockPos.containing(world)).canBeReplaced()) continue;
@@ -64,10 +64,29 @@ final class HatchlingFront {
     if (mouth != null && mouth.getPersistentData().getBoolean("BioshipManualPlacement")) return;
     var state = core.getLevel().getBlockState(source);
     if (!state.is(Create_bioships.FEEDING_MOUTH.get())) return;
-    if (state.getValue(FeedingMouthBlock.FACING) != Direction.NORTH)
-      core.getLevel()
-          .setBlock(source, state.setValue(FeedingMouthBlock.FACING, Direction.NORTH), 3);
     var target = port(core, source);
+    // Never point through the body while a destination is blocked or awaiting an affordable move.
+    var facing =
+        source.equals(target) && FeedingMouthBlock.openFace(core, source, Direction.NORTH)
+            ? Direction.NORTH
+            : FeedingMouthBlock.outward(core, source);
+    if (state.getValue(FeedingMouthBlock.FACING) != facing)
+      core.getLevel().setBlock(source, state.setValue(FeedingMouthBlock.FACING, facing), 3);
+    var front = core.structuralOrigin().north();
+    var blocker = core.getLevel().getBlockEntity(front);
+    if (!source.equals(front)
+        && blocker != null
+        && !(blocker instanceof LivingCoreBlockEntity)
+        && !blocker.getPersistentData().getBoolean("BioshipManualPlacement")) {
+      for (var offset :
+          List.of(new BlockPos(0, 0, 1), new BlockPos(-1, 0, 0), new BlockPos(1, 0, 0))) {
+        var bay = core.structuralOrigin().offset(offset);
+        var host = core.getLevel().getBlockState(bay);
+        if (!bay.equals(source)
+            && (host.isAir() || host.is(Create_bioships.FLESH.get()))
+            && OrganMotion.begin(core, front, bay, false)) return;
+      }
+    }
     if (target != null && !target.equals(source)) OrganMotion.begin(core, source, target, false);
   }
 

@@ -9,6 +9,39 @@ import net.minecraft.world.phys.*;
 /** Small arms push against dry ground; this never supplies flight or consumes levitite. */
 public final class BioshipCrawl {
   private Vec3 goal;
+  private Vec3 lastStepPosition;
+  private long gaitAt;
+  private double gaitSpeed, gaitPhase;
+
+  public boolean animating() {
+    return walking && gaitSpeed > .08;
+  }
+
+  public double gaitSpeed() {
+    return gaitSpeed;
+  }
+
+  public double gaitPhase() {
+    return gaitPhase;
+  }
+
+  public long gaitAt() {
+    return gaitAt;
+  }
+
+  private void measureGait(LivingCoreBlockEntity core) {
+    var point =
+        BioshipBlueprint.physical(core, core.structuralOrigin().subtract(core.getBlockPos()));
+    long now = core.getLevel().getGameTime();
+    if (lastStepPosition != null && now > gaitAt) {
+      double distance = Math.sqrt(point.subtract(lastStepPosition).horizontalDistanceSqr());
+      gaitSpeed = distance * 20 / (now - gaitAt);
+      if (walking && distance < 1) gaitPhase += distance * (core.hatchling() ? 7 : 2);
+    } else gaitSpeed = 0;
+    lastStepPosition = point;
+    gaitAt = now;
+  }
+
   private boolean walking;
   private String mode = "idle";
 
@@ -18,6 +51,94 @@ public final class BioshipCrawl {
 
   public boolean running() {
     return mode.equals("flee") || mode.equals("defend") || mode.equals("forage") && goal != null;
+  }
+
+  private int legTier;
+  private double measuredLoad;
+
+  public double measuredLoad() {
+    return measuredLoad;
+  }
+
+  public int legTier() {
+    return legTier;
+  }
+
+  public int extraLift() {
+    return 1 + legTier;
+  }
+
+  public int footingReach() {
+    return 3 + legTier;
+  }
+
+  public double legThickness() {
+    return 1 + legTier * .35;
+  }
+
+  public double loadCapacity() {
+    return capacityFor(legTier);
+  }
+
+  static double capacityFor(int tier) {
+    return 32 + 128d * tier * tier;
+  }
+
+  int hullTier(LivingCoreBlockEntity core) {
+    double unit =
+        dev.ryanhcode.sable.physics.config.block_properties.PhysicsBlockPropertyHelper.getMass(
+            core.getLevel(), core.getBlockPos(), Create_bioships.FLESH.get().defaultBlockState());
+    double mass = 0;
+    for (var part : core.plannedBody())
+      mass +=
+          dev.ryanhcode.sable.physics.config.block_properties.PhysicsBlockPropertyHelper.getMass(
+              core.getLevel(), core.structuralOrigin().offset(part.offset()), part.state());
+    double load = Math.max(carriedLoad(core), mass / Math.max(.001, unit));
+    for (int tier = 0; tier <= 3; tier++) if (load <= capacityFor(tier)) return tier;
+    return 4;
+  }
+
+  public double carriedLoad(LivingCoreBlockEntity core) {
+    double tissue =
+        dev.ryanhcode.sable.physics.config.block_properties.PhysicsBlockPropertyHelper.getMass(
+            core.getLevel(), core.getBlockPos(), Create_bioships.FLESH.get().defaultBlockState());
+    return core.ship() == null
+        ? 0
+        : core.ship().getMassTracker().getMass() / Math.max(.001, tissue);
+  }
+
+  private boolean canEnhance(LivingCoreBlockEntity core) {
+    var stomach = DigestiveSystem.stomach(core);
+    return legTier < 3
+        && stomach != null
+        && stomach.connected(core)
+        && stomach.material("biomancy:flesh_bits") >= 8
+        && stomach.material("biomancy:elastic_fibers") >= 4
+        && stomach.material("biomancy:bone_fragments") >= 2;
+  }
+
+  private void payEnhancement(LivingCoreBlockEntity core) {
+    var stomach = DigestiveSystem.stomach(core);
+    stomach.spend("biomancy:flesh_bits", 8);
+    stomach.spend("biomancy:elastic_fibers", 4);
+    stomach.spend("biomancy:bone_fragments", 2);
+    core.setChanged();
+    core.getLevel()
+        .sendBlockUpdated(core.getBlockPos(), core.getBlockState(), core.getBlockState(), 2);
+  }
+
+  boolean enhance(LivingCoreBlockEntity core) {
+    if (!canEnhance(core)) return false;
+    legTier++;
+    payEnhancement(core);
+    return true;
+  }
+
+  private boolean supportLoad(LivingCoreBlockEntity core) {
+    double load = carriedLoad(core);
+    measuredLoad = load;
+    while (load > loadCapacity() && enhance(core)) {}
+    return load <= loadCapacity();
   }
 
   private int cursor;
@@ -97,37 +218,49 @@ public final class BioshipCrawl {
     gathering = false;
   }
 
+  Vec3 steeringGoal() {
+    var points = route.remaining();
+    return walking && !points.isEmpty() ? points.getFirst() : goal;
+  }
+
   public Vec3 goal() {
     return goal;
   }
 
   void tick(LivingCoreBlockEntity core, boolean blocked) {
     currentTime = core.getLevel().getGameTime();
+    measureGait(core);
     unreachable.entrySet().removeIf(e -> e.getValue() <= currentTime);
+    boolean supported = core.canFly() || supportLoad(core);
     brace(core);
-    if (core.isMature() || core.body().health() <= 0 || core.blueprint().busy()) {
+    if (core.isMature() && core.canFly()
+        || !supported
+        || core.body().health() <= 0
+        || core.blueprint().busy()) {
       goal = null;
       walking = false;
       return;
     }
     if (core.getLevel().getGameTime() % 10 != 0) return;
     Vec3 here = BioshipBlueprint.physical(core, BlockPos.ZERO);
-    if (!blocked || core.autonomy().fleeing() || BioshipDefense.target(core) != null) {
-      goal = core.autonomy().groundEscape(core);
-      mode = goal == null ? "idle" : "flee";
-      if (goal == null) {
-        goal = core.gatheringGoal();
-        if (goal != null) {
-          mode = BioshipDefense.target(core) != null ? "defend" : "forage";
-          core.autonomy().activity(core);
-        }
-      }
-      gathering = mode.equals("forage") || mode.equals("defend");
-      if (goal == null) {
-        mode = "wander";
-        goal = core.autonomy().groundWander(core);
-      }
-      if (goal == null) mode = "idle";
+    core.brain().growthBlocked(blocked);
+    var decision = core.brain().choose(core);
+    if (decision.action() != BioshipBrain.Action.GROW_SITE) {
+      goal = core.gatheringGoal();
+      mode =
+          switch (decision.action()) {
+            case FLEE -> "flee";
+            case DEFEND -> "defend";
+            case WANDER -> "wander";
+            case ASSIMILATE, SCAVENGE, COLLECT_ITEM, HUNT -> "forage";
+            default -> "idle";
+          };
+      gathering =
+          switch (decision.action()) {
+            case ASSIMILATE, SCAVENGE, COLLECT_ITEM, HUNT, DEFEND -> true;
+            default -> false;
+          };
+      if (goal != null && !mode.equals("wander")) core.autonomy().activity(core);
       walking =
           goal != null
               && (goal.distanceToSqr(here) > (gathering ? 2.25 : .25)
@@ -206,6 +339,15 @@ public final class BioshipCrawl {
     var waypoint = route.next(core, goal);
     if (waypoint == null) {
       if (route.failed()) {
+        if (canEnhance(core)) {
+          legTier++;
+          if (route.plan(core, goal) && route.complete()) {
+            payEnhancement(core);
+            return Vec3.ZERO;
+          }
+          legTier--;
+          route.plan(core, goal);
+        }
         unreachable.put(
             new BlockPos((int) Math.floor(goal.x), 0, (int) Math.floor(goal.z)),
             core.getLevel().getGameTime() + 400);
@@ -227,8 +369,8 @@ public final class BioshipCrawl {
         .add(new Vec3(-direction.z, 0, direction.x).scale(Math.sin(phase * .5) * .08));
   }
 
-  private static BlockPos ground(ServerLevel level, BlockPos point) {
-    for (int i = 1; i <= 3; i++) {
+  private BlockPos ground(ServerLevel level, BlockPos point) {
+    for (int i = 1; i <= footingReach(); i++) {
       var p = point.below(i);
       if (level.getBlockState(p).isFaceSturdy(level, p, Direction.UP)
           && level.getFluidState(p).isEmpty()
@@ -240,10 +382,11 @@ public final class BioshipCrawl {
   private void brace(LivingCoreBlockEntity core) {
     supportHeight = Double.NaN;
     stanceUp = new Vec3(0, 1, 0);
-    if (core.isMature()
+    if (core.isMature() && core.canFly()
+        || carriedLoad(core) > loadCapacity()
         || core.body().health() <= 0
         || core.blueprint().busy()
-        || core.missingBiomass() > 0 && !walking && wallFacing == null) return;
+        || core.hatchling() && !walking && wallFacing == null && !core.growthStockReady()) return;
     var level = (ServerLevel) core.getLevel();
     Vec3 here = BioshipBlueprint.physical(core, BlockPos.ZERO);
     var grip = walking || wallFacing != null ? GroundRoute.grip(core, here) : null;
@@ -264,7 +407,11 @@ public final class BioshipCrawl {
     int count = 0;
     double highest = -Double.MAX_VALUE;
     for (int i = 0; i < 4; i++) {
-      Vec3 point = here.add(i % 2 == 0 ? -1.4 : 1.4, -core.coreHeightOffset(), i < 2 ? -1.4 : 1.4);
+      Vec3 point =
+          here.add(
+              (i % 2 == 0 ? -1 : 1) * (core.isMature() ? 3.8 : 1.4),
+              -core.coreHeightOffset(),
+              (i < 2 ? -1 : 1) * (core.isMature() ? 6 : 1.4));
       var floor = ground(level, BlockPos.containing(point));
       if (floor == null) continue;
       heights[i] = floor.getY() + 1;
@@ -273,7 +420,8 @@ public final class BioshipCrawl {
     }
     if (count < 3) return;
     double wanted = highest + (core.hatchling() ? .85 : 1.25) + core.coreHeightOffset();
-    if (wanted - here.y > 2 || here.y - core.coreHeightOffset() - highest > 2.75) return;
+    if (wanted - here.y > 2 + legTier
+        || here.y - core.coreHeightOffset() - highest > 2.75 + legTier) return;
     supportHeight = wanted;
     if (count == 4)
       stanceUp =
@@ -300,6 +448,11 @@ public final class BioshipCrawl {
     t.putDouble("UpX", stanceUp.x);
     t.putDouble("UpZ", stanceUp.z);
     t.putInt("Cursor", cursor);
+    t.putDouble("GaitPhase", gaitPhase);
+    t.putDouble("GaitSpeed", gaitSpeed);
+    t.putLong("GaitAt", gaitAt);
+    t.putInt("LegTier", legTier);
+    t.putDouble("LegLoad", measuredLoad);
     if (goal != null) {
       t.putDouble("X", goal.x);
       t.putDouble("Y", goal.y);
@@ -325,6 +478,12 @@ public final class BioshipCrawl {
     supportHeight = t.contains("SupportHeight") ? t.getDouble("SupportHeight") : Double.NaN;
     stanceUp = new Vec3(t.getDouble("UpX"), 1, t.getDouble("UpZ")).normalize();
     cursor = t.getInt("Cursor");
+    gaitPhase = t.getDouble("GaitPhase");
+    gaitSpeed = Math.max(0, t.getDouble("GaitSpeed"));
+    gaitAt = t.getLong("GaitAt");
+    lastStepPosition = null;
+    legTier = Math.clamp(t.getInt("LegTier"), 0, 3);
+    measuredLoad = Math.max(0, t.getDouble("LegLoad"));
     goal =
         t.getBoolean("Goal")
             ? new Vec3(t.getDouble("X"), t.getDouble("Y"), t.getDouble("Z"))

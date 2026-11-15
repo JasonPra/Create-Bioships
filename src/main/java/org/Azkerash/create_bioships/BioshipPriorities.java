@@ -105,41 +105,30 @@ final class BioshipPriorities {
     return result;
   }
 
-  static Objective bestWorld(LivingCoreBlockEntity core) {
-    if (core.ship() == null) return null;
+  static java.util.List<Objective> worldObjectives(LivingCoreBlockEntity core) {
+    if (core.ship() == null) return java.util.List.of();
     var level = (ServerLevel) core.getLevel();
-    Vec3 here = BioshipBlueprint.physical(core, BlockPos.ZERO);
-    BlockPos origin = BlockPos.containing(here), best = null, previous = null;
-    int bestRank = Integer.MAX_VALUE, previousRank = Integer.MAX_VALUE;
+    var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
     int range = core.vision().maximumDistance(core);
-    double distance = (double) range * range;
     var candidates = new java.util.LinkedHashSet<>(sources(core, here, range));
     candidates.addAll(core.vision().rememberedSources());
+    var result = new java.util.ArrayList<Objective>();
     for (var pos : candidates) {
       if (!core.crawl().reachableGoal(pos)
           || !level.getChunkSource().hasChunk(pos.getX() >> 4, pos.getZ() >> 4)
           || BioshipIntegration.containing(level, pos) != null) continue;
       var state = core.vision().sourceState(core, pos);
-      if (state == null) continue;
-      if (!BuiltInRegistries.BLOCK.getKey(state.getBlock()).getNamespace().equals("biomancy")
-          || state.getBlock() instanceof net.minecraft.world.level.block.LiquidBlock) continue;
-      double next = Vec3.atCenterOf(pos).distanceToSqr(here);
-      if (next > (double) range * range && !core.vision().rememberedSources().contains(pos))
-        continue;
+      if (state == null || !supply(state)) continue;
+      if (Vec3.atCenterOf(pos).distanceToSqr(here) > (double) range * range
+          && !core.vision().rememberedSources().contains(pos)) continue;
       int rank = rank(core, state, pos, core.vision().exposed(core, pos));
       if (rank > 0 && !core.vision().surveyed(core)) continue;
-      if (pos.equals(core.supplyTarget)) {
-        previous = pos.immutable();
-        previousRank = rank;
-      }
-      if (rank < bestRank || rank == bestRank && next < distance) {
-        best = pos.immutable();
-        bestRank = rank;
-        distance = next;
-      }
+      result.add(new Objective(pos.immutable(), rank));
     }
-    if (previous != null && previousRank == bestRank) best = previous;
-    core.supplyTarget = best;
-    return best == null ? null : new Objective(best, bestRank);
+    return result;
+  }
+
+  static Objective bestWorld(LivingCoreBlockEntity core) {
+    return core.brain().bestWorld(core);
   }
 }

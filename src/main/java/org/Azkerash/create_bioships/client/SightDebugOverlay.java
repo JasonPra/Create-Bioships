@@ -102,6 +102,12 @@ public final class SightDebugOverlay {
     y =
         drawText(
             g,
+            "Behavior: " + data.getString("Behavior") + " · " + data.getString("BehaviorReason"),
+            y,
+            0xffefcf7a);
+    y =
+        drawText(
+            g,
             "Core scouting: "
                 + data.getString("ScoutStatus")
                 + " · visibility does not guarantee collection",

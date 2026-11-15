@@ -114,7 +114,7 @@ public final class OrganMotion {
             ? sourceShip.logicalPose().transformPosition(Vec3.atCenterOf(source))
             : Vec3.atCenterOf(source);
     Vec3 destination = ship.logicalPose().transformPosition(Vec3.atCenterOf(target));
-    if (!level.getBlockState(BlockPos.containing(destination)).isAir()) return false;
+    if (!BioshipIntegration.growthSpace(level, BlockPos.containing(destination))) return false;
     String id =
         net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
     boolean mouth =
@@ -131,7 +131,9 @@ public final class OrganMotion {
       for (var player : level.players())
         if (player.containerMenu instanceof net.minecraft.world.inventory.ChestMenu menu
             && menu.getContainer() == entity) return false;
-    if (!external && !DigestiveSystem.reserveOrganRoute(core, source, target)) return false;
+    if ((!external || entity != null && EngineRoom.storage(entity))
+        && !DigestiveSystem.reserveOrganRoute(core, source, target)) return false;
+    BioshipIntegration.clearGrowthPlant(level, BlockPos.containing(destination));
     var cargo =
         SubLevelAssemblyHelper.assembleBlocks(
             level, source, List.of(source), new BoundingBox3i(source, source));

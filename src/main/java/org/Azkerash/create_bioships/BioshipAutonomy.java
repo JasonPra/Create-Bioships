@@ -9,6 +9,13 @@ public final class BioshipAutonomy {
   private Vec3 wander, retreat, danger;
   private long nextWander, panicUntil, evaluated = Long.MIN_VALUE;
   private boolean fleeing;
+  private long creeperUntil;
+
+  public boolean creeperPanic() {
+    return coreTime < creeperUntil;
+  }
+
+  private long coreTime;
   private java.util.UUID pilot;
   private long commandUntil;
 
@@ -63,15 +70,34 @@ public final class BioshipAutonomy {
     long now = core.getLevel().getGameTime();
     if (evaluated == now) return;
     evaluated = now;
+    coreTime = now;
+    var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var creeper =
+        core
+            .getLevel()
+            .getEntitiesOfClass(
+                net.minecraft.world.entity.monster.Creeper.class,
+                new net.minecraft.world.phys.AABB(here, here).inflate(12),
+                e ->
+                    e.isAlive()
+                        && (BioshipDefense.threatening(core, e)
+                            || e.distanceToSqr(here) < 16
+                            || core.vision().visible(core, e.getBoundingBox().getCenter())))
+            .stream()
+            .min(java.util.Comparator.comparingDouble(e -> e.distanceToSqr(here)))
+            .orElse(null);
+    if (creeper != null && !core.coreMotion().canAvoidBlast(core, creeper)) {
+      danger = creeper.position();
+      creeperUntil = now + 100;
+    }
     var known = core.defense().dangerPosition(core);
-    if (known != null) danger = known;
+    if (known != null && !creeperPanic()) danger = known;
     double ratio = core.body().health() / Math.max(1, core.body().capacity());
     if (ratio < .3 && known != null) panicUntil = now + 100;
     fleeing =
         !core.body().dead()
-            && ratio < .5
             && danger != null
-            && (known != null && ratio < .3 || now < panicUntil);
+            && (creeperPanic() || ratio < .5 && (known != null && ratio < .3 || now < panicUntil));
     if (!fleeing) retreat = null;
   }
 
@@ -82,7 +108,7 @@ public final class BioshipAutonomy {
 
   Vec3 groundEscape(LivingCoreBlockEntity core) {
     assess(core);
-    if (!fleeing || trustedPilot(core)) return null;
+    if (!fleeing || trustedPilot(core) && !creeperPanic()) return null;
     var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
     if (retreat != null
         && here.distanceToSqr(retreat) > 1
@@ -168,6 +194,7 @@ public final class BioshipAutonomy {
     if (pilot != null) tag.putUUID("Pilot", pilot);
     tag.putLong("CommandUntil", commandUntil);
     tag.putLong("NextWander", nextWander);
+    tag.putLong("CreeperUntil", creeperUntil);
     tag.putLong("PanicUntil", panicUntil);
     tag.putBoolean("Fleeing", fleeing);
     if (wander != null) tag.put("Wander", VisionDebug.vector(wander));
@@ -180,6 +207,8 @@ public final class BioshipAutonomy {
     pilot = tag.hasUUID("Pilot") ? tag.getUUID("Pilot") : null;
     commandUntil = tag.getLong("CommandUntil");
     nextWander = tag.getLong("NextWander");
+    creeperUntil = tag.getLong("CreeperUntil");
+    coreTime = Long.MAX_VALUE;
     panicUntil = tag.getLong("PanicUntil");
     fleeing = tag.getBoolean("Fleeing");
     evaluated = Long.MIN_VALUE;

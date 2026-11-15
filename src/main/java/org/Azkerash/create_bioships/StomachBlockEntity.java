@@ -142,6 +142,14 @@ public class StomachBlockEntity extends BlockEntity implements MenuProvider {
     retain(stack);
   }
 
+  int queuedNutrition() {
+    int total = 0;
+    for (int slot = 0; slot < input.size(); slot++)
+      if (!inherited[slot] && LivingCoreBlockEntity.isMeat(input.get(slot)))
+        total += input.get(slot).getCount();
+    return total;
+  }
+
   public int queuedFood() {
     int count = 0;
     for (var stack : input) count += stack.getCount();
@@ -246,6 +254,17 @@ public class StomachBlockEntity extends BlockEntity implements MenuProvider {
       if (stomach.progress >= stomach.duration) {
         for (var output : value.getOutputs()) stomach.retain(output.getItemStack(level.random));
         if (!stomach.inherited[slot]) {
+          var flags = stack.get(net.minecraft.core.component.DataComponents.CUSTOM_DATA);
+          if (stack.is(Items.BEEF)
+              && flags != null
+              && flags.copyTag().getBoolean("BioshipHunted")) {
+            stomach.retain(
+                new ItemStack(
+                    BuiltInRegistries.ITEM.get(ResourceLocation.parse("biomancy:bone_fragments"))));
+            stomach.retain(
+                new ItemStack(
+                    BuiltInRegistries.ITEM.get(ResourceLocation.parse("biomancy:elastic_fibers"))));
+          }
           core.digestMeal(stack);
           if (core.isMature()) stomach.meals++;
         }

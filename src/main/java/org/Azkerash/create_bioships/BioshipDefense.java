@@ -107,6 +107,47 @@ final class BioshipDefense {
     return nearest;
   }
 
+  static LivingEntity prey(LivingCoreBlockEntity core) {
+    if (!core.wantsToHunt()) return null;
+    var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    return core
+        .getLevel()
+        .getEntitiesOfClass(
+            LivingEntity.class,
+            new AABB(here, here).inflate(core.vision().maximumDistance(core)),
+            e ->
+                TentacleBlockEntity.attackable(e)
+                    && TentacleBlockEntity.edible(e)
+                    && !(e instanceof net.minecraft.world.entity.monster.Zombie)
+                    && !core.access().allows(core, e)
+                    && !(e instanceof net.minecraft.world.entity.TamableAnimal tame
+                        && tame.isTame())
+                    && !e.isPassenger()
+                    && sensesPrey(core, e))
+        .stream()
+        .min(java.util.Comparator.comparingDouble(e -> e.distanceToSqr(here)))
+        .orElse(null);
+  }
+
+  private static boolean sensesPrey(LivingCoreBlockEntity core, LivingEntity entity) {
+    if (core.vision().visible(core, entity.getBoundingBox().getCenter())) return true;
+    // A creature already touching the feeding face is detectable even with the core concealed.
+    if (!core.hasMouth()
+        || entity.getBoundingBox().getCenter().distanceToSqr(core.mouthPosition(core.ship())) > 9)
+      return false;
+    for (var actor : BioshipIntegration.blockEntities(core.ship()))
+      if (actor instanceof TentacleBlockEntity limb) {
+        var root =
+            core.ship()
+                .logicalPose()
+                .transformPosition(Vec3.atCenterOf(limb.getBlockPos()))
+                .add(0, -.7, 0);
+        if (limb.visible(root, entity.getBoundingBox().getCenter(), entity, core, core.ship()))
+          return true;
+      }
+    return false;
+  }
+
   void tick(LivingCoreBlockEntity core) {
     if (cooldown > 0) cooldown--;
     if (core.isMature()
@@ -115,7 +156,46 @@ final class BioshipDefense {
                 e -> e instanceof TentacleBlockEntity limb && limb.owner(core.ship()) == core))
       return;
     var level = (ServerLevel) core.getLevel();
-    var prey = strike.active() ? strike.victim(level) : target(core);
+    var selected = core.brain().attackTarget(core);
+    if (selected == null) {
+      strike.clear();
+      core.crawl().reach(null);
+      return;
+    }
+    var prey = strike.active() ? strike.victim(level) : selected;
+    if (prey != selected) {
+      strike.clear();
+      prey = selected;
+    }
+    if (!strike.active()
+        && prey != null
+        && !(prey instanceof net.minecraft.world.entity.player.Player)
+        && !(prey instanceof net.minecraft.world.entity.monster.Enemy)
+        && core.wantsToHunt()) {
+      var point = prey.getBoundingBox().getCenter();
+      if (BioshipReach.clear(core, point, false)) {
+        core.crawl().reach(point);
+        var pull = core.mouthPosition(core.ship()).subtract(point);
+        prey.setDeltaMovement(pull.normalize().scale(Math.min(.3, pull.length() * .15)));
+        prey.hurtMarked = true;
+        prey.fallDistance = 0;
+        if (pull.length() < 1.8 && cooldown == 0) {
+          cooldown = 20;
+          boolean hurt = BioshipFeedingEvents.bite(prey, level.damageSources().generic(), 6, true);
+          if (hurt && !prey.isAlive()) {
+            core.eatPrey(prey);
+            core.crawl().reach(null);
+          }
+        }
+      }
+      return;
+    }
+    if (prey instanceof net.minecraft.world.entity.monster.Creeper
+        && core.autonomy().creeperPanic()) {
+      strike.clear();
+      core.crawl().reach(null);
+      return;
+    }
     if (strike.active()) {
       var root =
           BioshipReach.anchor(

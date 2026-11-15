@@ -87,7 +87,7 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
           pose.popPose();
         }
     }
-    if (!core.body().dead() && (core.crawl().walking() || core.crawl().bracing()))
+    if (!core.body().dead() && (core.crawl().animating() || core.crawl().bracing()))
       renderLegs(core, partial, pose, buffers, light);
     boolean gathering =
         (core.rescue().carriedPosition() != null || core.crawl().reach() != null)
@@ -178,17 +178,24 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
     for (int leg = 0; leg < legs; leg++) {
       double side = leg % 2 == 0 ? -1 : 1;
       double front = leg < 2 ? -1 : 1;
+      boolean moving = core.crawl().animating();
       double phase =
-          (core.getLevel().getGameTime() + partial) * (scuttling ? 1.05 : .22)
+          core.crawl().gaitPhase()
+              + Math.clamp(core.getLevel().getGameTime() + partial - core.crawl().gaitAt(), 0, 10)
+                  * core.crawl().gaitSpeed()
+                  / 20
+                  * (scuttling ? 7 : 2)
               + ((leg / 2 + leg % 2) % 2 == 0 ? 0 : Math.PI);
-      boolean moving = core.crawl().walking();
-      Vec3 root = new Vec3(.5 + side * .4, .4, .5 + front * .4);
+      Vec3 root =
+          new Vec3(.5 + side * (scuttling ? .4 : 2.5), .4, .5 + front * (scuttling ? .4 : 4.5));
       Vec3 foot =
           new Vec3(
-              .5 + side * (scuttling ? 1.65 : 1.5),
+              .5 + side * (scuttling ? 1.65 : 4.2),
               (scuttling ? -.35 : -1.25)
                   + (moving ? Math.max(0, Math.sin(phase)) * (scuttling ? .16 : .45) : 0),
-              .5 + front * 1.2 + (moving ? Math.cos(phase) * (scuttling ? .25 : .45) : 0));
+              .5
+                  + front * (scuttling ? 1.2 : 6.5)
+                  + (moving ? Math.cos(phase) * (scuttling ? .25 : .45) : 0));
       if (scuttling && core.crawl().wallFacing() != null) {
         var normal = Vec3.atLowerCornerOf(core.crawl().wallFacing().getNormal());
         var tangent = new Vec3(-normal.z, 0, normal.x);
@@ -200,6 +207,36 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
                             - (moving ? Math.max(0, Math.sin(phase)) * .12 : 0)))
                 .add(tangent.scale(side * .7))
                 .add(0, front * .65 + (moving ? Math.cos(phase) * .2 : 0), 0);
+      }
+      if (core.crawl().wallFacing() == null) {
+        var container = SubLevelContainer.getContainer(core.getLevel());
+        var plot = container == null ? null : container.getPlot(new ChunkPos(core.getBlockPos()));
+        if (plot != null) {
+          var transform =
+              plot.getSubLevel() instanceof ClientSubLevel client
+                  ? client.renderPose(partial)
+                  : plot.getSubLevel().logicalPose();
+          var world =
+              transform.transformPosition(
+                  Vec3.atLowerCornerOf(core.structuralOrigin()).add(foot.x, .5, foot.z));
+          for (int reach = 0; reach <= core.crawl().footingReach(); reach++) {
+            var floor = net.minecraft.core.BlockPos.containing(world).below(reach);
+            if (core.getLevel()
+                .getBlockState(floor)
+                .isFaceSturdy(core.getLevel(), floor, net.minecraft.core.Direction.UP)) {
+              var local =
+                  transform.transformPositionInverse(new Vec3(world.x, floor.getY() + 1, world.z));
+              foot =
+                  new Vec3(
+                      foot.x,
+                      local.y
+                          - core.structuralOrigin().getY()
+                          + (moving ? Math.max(0, Math.sin(phase)) * .16 : 0),
+                      foot.z);
+              break;
+            }
+          }
+        }
       }
       Vec3 previous = root;
       for (int i = 1; i <= 10; i++) {
@@ -218,7 +255,8 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
                 .rotationTo(
                     new Vector3f(0, -1, 0),
                     new Vector3f((float) delta.x, (float) delta.y, (float) delta.z).normalize()));
-        float width = (float) (.5 - t * .25);
+        float width =
+            (float) ((.5 - t * .25) * core.crawl().legThickness() * (scuttling ? 1 : 1.7));
         pose.scale(width, (float) delta.length(), width);
         segment.render(pose, consumer, light, OverlayTexture.NO_OVERLAY);
         pose.popPose();

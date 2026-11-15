@@ -2,6 +2,10 @@
 
 Living airships for Minecraft 1.21.1, NeoForge 21.1.266, and Java 21.
 
+## Behavior and developer tools
+
+A central behavior tree selects the ship’s current action from urgent needs before long-term goals. Useful wreckage takes priority over hunting for the same missing resources. Navigation, collection, growth and attacks share that selection. Symbiotic Goggles show the current behavior and reason; F3+B enables the detailed sight/navigation overlay. See [behavior architecture](docs/development/behavior.md) and the packaged [Navigation Lab world type](docs/development/navigation-lab.md).
+
 ## Make and raise a ship
 
 Craft a **Living Ship Core** in **Biomancy’s Bio-Forge → Machines** tab: **1 Living Flesh, 16 Flesh Bits, 8 Elastic Fibers, 4 Exotic Dust, and 1 Eye of Ender**, plus **4 nutrients**. Place it above ground with approximately **9 blocks of width, 23 of length, and 8 above the core** clear. Placement creates a Sable physics object and records the placing player as its creator. The unassembled eye cannot eat. Manual disassembly is blocked; ordinary mining and damage remain possible.
@@ -21,6 +25,8 @@ The first body requires:
 | Flesh Bits / incorporated flesh | Regular flesh and hull growth | 64 biomass |
 | Bone Fragments | Frame and complex structures | 8 |
 | Elastic Fibers | Moving appendages and bindings | 12 |
+
+These are the hull costs. Before construction starts, the ship also reserves enough material to strengthen its legs for the finished hull’s actual mass. A typical new dinghy needs two leg upgrades: **80 total flesh biomass, 12 Bone Fragments and 20 Elastic Fibers** for hull and legs together. Further intestinal extensions have their own tissue cost.
 
 Fresh food supplies nutrition after digestion; its decomposition products supply building material. Incorporating tissue and stored construction materials supplies **no immediate nutrition or trust reward**. Emergency metabolism can later burn stored reserves when food is exhausted. The ship never harvests its attached body for sustenance. Growth forms a tapered oval hull, a forward cockpit, and a separate aft engine/workshop room. Solid obstructions pause construction rather than being overwritten; replaceable vegetation is cleared as tissue grows. Existing correct hull blocks count as completed construction, allowing stalled older growth to resume. Tentacle arms brace the growing hull above nearby ground and adjust its stance for clearance; this supplies ground support rather than levitite flight.
 
@@ -137,9 +143,13 @@ Idle hatchlings and ships in hunting mode explore reachable nearby space when no
 
 Combat uses aimed tentacle swipes with a twelve-tick wind-up, a six-tick sweep, and a cooldown. The aim is locked before the sweep, allowing players to dodge, and combat swipes do not pull or immobilize players. Captured edible animals are not damaged until they reach the connected mouth, so small prey cannot die from capture damage without producing a meal.
 
-A ship below 30% health tries to flee a known threat, remaining cautious until it recovers to 50% or the threat memory expires. At 80 trust or higher, an authorized pilot can override low-health retreat. Holding the helm or issuing a physical throttle/trim command establishes control. A recorded pilot aboard the ship retains control; after leaving, the override expires ten seconds after the last command. Dead, disconnected, and spectator pilots cannot suppress retreat.
+A ship below 30% health tries to flee a known threat, remaining cautious until it recovers to 50% or the threat memory expires. At 80 trust or higher, an authorized pilot can override low-health retreat. Creeper retreat remains mandatory when the core has no safe connected escape tissue. Holding the helm or issuing a physical throttle/trim command establishes control. A recorded pilot aboard the ship retains control; after leaving, the override expires ten seconds after the last command. Dead, disconnected, and spectator pilots cannot suppress retreat.
 
 During a flight-stage retreat, an allied ground player within sixteen blocks can be carried into the cockpit. The ship opens a collision-checked route by temporarily retracting ordinary hull tissue, keeps its structure connected, and restores the same blocks after the player clears the opening. It never overwrites machines or their inventories, and world terrain still blocks the carry. The aperture and passenger route persist across saves; a blocked carry times out safely rather than forcing the player through a solid block.
+
+## Developer world
+
+The packaged **Bioship Navigation Lab** world type includes the flat and elevation glass mazes used by the physics tests. See [the lab guide](docs/development/navigation-lab.md) for world creation, course coordinates, reset commands, leg upgrade costs and debugging.
 
 ## Development
 

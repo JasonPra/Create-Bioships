@@ -21,6 +21,8 @@ public final class VisionDebug {
     for (var point : core.crawl().path()) route.add(vector(point));
     result.put("Route", route);
     result.putBoolean("Walking", core.crawl().walking());
+    result.putString("Behavior", core.brain().action().name());
+    result.putString("BehaviorReason", core.brain().reason());
     result.putInt("SearchRange", core.vision().maximumDistance(core));
     result.putDouble("Distance", BioshipBlueprint.physical(core, BlockPos.ZERO).distanceTo(target));
     result.putString("Core", core.getBlockPos().toShortString());

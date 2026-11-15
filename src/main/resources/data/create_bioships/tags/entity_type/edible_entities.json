@@ -9,6 +9,8 @@
     "minecraft:zombie",
     "minecraft:husk",
     "minecraft:drowned",
-    "minecraft:villager"
+    "minecraft:villager",
+    "minecraft:wandering_trader",
+    "minecraft:trader_llama"
   ]
 }

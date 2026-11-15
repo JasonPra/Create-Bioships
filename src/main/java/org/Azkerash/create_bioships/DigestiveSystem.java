@@ -82,7 +82,12 @@ public final class DigestiveSystem {
         Collections.reverse(path);
         return path;
       }
-      for (var direction : Direction.values()) {
+      var directions = new ArrayList<Direction>(List.of(Direction.values()));
+      // Route equal-length connections over the core, leaving connected tissue for a higher eye.
+      directions.sort(
+          Comparator.comparingInt(
+              d -> point.relative(d).equals(core.getBlockPos().above()) ? 0 : 1));
+      for (var direction : directions) {
         var next = point.relative(direction);
         var offset = next.subtract(origin);
         if (parent.containsKey(next)
@@ -90,7 +95,10 @@ public final class DigestiveSystem {
             || offset.getY() < 0
             || offset.getY() > 6
             || Math.abs(offset.getZ()) > 24) continue;
-        if (!next.equals(end) && offset.getY() != 1) continue;
+        if (!next.equals(end)
+            && offset.getY() != 1
+            && !next.equals(freed)
+            && !level.getBlockState(next).is(Create_bioships.INTESTINE.get())) continue;
         if (!ship.getPlot().contains(new net.minecraft.world.level.ChunkPos(next))) continue;
         var state =
             next.equals(blocked)
@@ -170,7 +178,10 @@ public final class DigestiveSystem {
     var mouth = core.mouthBlock();
     if (stomach == null || mouth == null || !stomach.tubeBootstrapped) return true;
     boolean movesMouth = source.equals(mouth), movesStomach = source.equals(stomach.getBlockPos());
-    boolean movesStore = stomach.sacPaths.containsKey(source);
+    var sourceEntity = core.getLevel().getBlockEntity(source);
+    boolean movesStore =
+        stomach.sacPaths.containsKey(source)
+            || sourceEntity != null && EngineRoom.storage(sourceEntity);
     if (!movesMouth && !movesStomach && !movesStore) return true;
     var end = movesStomach ? target : stomach.getBlockPos();
     var start = movesMouth ? target : mouth;
@@ -179,6 +190,11 @@ public final class DigestiveSystem {
     var wanted = new LinkedHashSet<>(main);
     for (var sac : stomach.sacPaths.keySet()) {
       var path = findPath(core, core.ship(), end, movesStore && sac.equals(source) ? target : sac);
+      if (path == null) return false;
+      wanted.addAll(path);
+    }
+    if (movesStore && !stomach.sacPaths.containsKey(source)) {
+      var path = findPath(core, core.ship(), end, target);
       if (path == null) return false;
       wanted.addAll(path);
     }
@@ -191,6 +207,64 @@ public final class DigestiveSystem {
       stomach.setChanged();
     }
     return true;
+  }
+
+  /** Prefer a real connection to the digestive network over an arbitrary attachment to the core. */
+  static BlockPos storagePort(LivingCoreBlockEntity core, BlockPos source) {
+    var stomach = stomach(core);
+    var mouth = core.mouthBlock();
+    if (stomach == null || mouth == null) return null;
+    var main = findPath(core, core.ship(), mouth, stomach.getBlockPos());
+    if (main == null) return null;
+    var network = new LinkedHashSet<BlockPos>();
+    network.addAll(main);
+    network.add(stomach.getBlockPos());
+    stomach.sacPaths.values().forEach(network::addAll);
+    var candidates = new LinkedHashSet<BlockPos>();
+    for (var point : network)
+      for (var direction : Direction.values()) candidates.add(point.relative(direction));
+    var ordered = new ArrayList<>(candidates);
+    ordered.sort(Comparator.comparingDouble(p -> p.distSqr(stomach.getBlockPos())));
+    var wanted = new LinkedHashSet<>(main);
+    stomach.sacPaths.forEach(
+        (sac, path) -> {
+          if (!sac.equals(source)) wanted.addAll(path);
+        });
+    var existing = tubes(core);
+    for (var candidate : ordered) {
+      if (candidate.equals(source)
+          || network.contains(candidate)
+          || candidate.equals(mouth)
+          || candidate.equals(core.getBlockPos())
+          || core.isMature() && !EngineRoom.inside(core, candidate)) continue;
+      var state = core.getLevel().getBlockState(candidate);
+      if (!state.isAir() && !state.is(Create_bioships.FLESH.get())) continue;
+      var physical = core.ship().logicalPose().transformPosition(Vec3.atCenterOf(candidate));
+      if (!BioshipIntegration.growthSpace(core.getLevel(), BlockPos.containing(physical))) continue;
+      var path = findPath(core, core.ship(), stomach.getBlockPos(), candidate);
+      if (path == null) continue;
+      var trial = new LinkedHashSet<>(wanted);
+      trial.addAll(path);
+      if (affordable(stomach, plan(core, stomach, trial, Set.of(), existing))) return candidate;
+    }
+    return null;
+  }
+
+  static void arrangeStorage(LivingCoreBlockEntity core) {
+    var stomach = stomach(core);
+    if (stomach == null
+        || !stomach.connected(core)
+        || OrganMotion.busy(core)
+        || core.rescue().active()) return;
+    for (var store : BioshipIntegration.blockEntities(core.ship())) {
+      var pos = store.getBlockPos();
+      if (!EngineRoom.storage(store)
+          || store.getPersistentData().getBoolean("BioshipManualPlacement")) continue;
+      var path = stomach.sacPaths.get(pos);
+      if (path != null && connectedStore(core, stomach, pos, path)) continue;
+      var target = storagePort(core, pos);
+      if (target != null && OrganMotion.begin(core, pos, target, false)) return;
+    }
   }
 
   private static Plan plan(
@@ -353,6 +427,20 @@ public final class DigestiveSystem {
         && entity != null
         && EngineRoom.storage(entity)
         && pathIntact(core, stomach.getBlockPos(), pos, path);
+  }
+
+  static int connectedFoodCount(LivingCoreBlockEntity core, StomachBlockEntity stomach) {
+    int total = stomach.queuedNutrition();
+    for (var entry : stomach.sacPaths.entrySet())
+      if (connectedStore(core, stomach, entry.getKey(), entry.getValue())) {
+        var inventory =
+            core.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, entry.getKey(), null);
+        if (inventory != null)
+          for (int slot = 0; slot < inventory.getSlots(); slot++)
+            if (LivingCoreBlockEntity.isMeat(inventory.getStackInSlot(slot)))
+              total += inventory.getStackInSlot(slot).getCount();
+      }
+    return total;
   }
 
   public static boolean offerFood(LivingCoreBlockEntity core, ItemStack stack, boolean inherited) {

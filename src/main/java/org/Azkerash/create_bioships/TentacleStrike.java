@@ -68,8 +68,12 @@ public final class TentacleStrike {
         && root.distanceToSqr(target.getBoundingBox().getCenter()) <= Math.pow(reach + .6, 2)
         && BioshipReach.clear(core, target.getBoundingBox().getCenter(), false, reach)) {
       hit = true;
-      return BioshipFeedingEvents.bite(
-          target, core.getLevel().damageSources().generic(), damage, false);
+      boolean damaged =
+          BioshipFeedingEvents.bite(
+              target, core.getLevel().damageSources().generic(), damage, false);
+      if (damaged && !target.isAlive() && core.wantsToHunt() && TentacleBlockEntity.edible(target))
+        core.eatPrey(target);
+      return damaged;
     }
     return false;
   }

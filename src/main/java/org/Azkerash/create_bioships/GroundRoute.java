@@ -12,6 +12,11 @@ final class GroundRoute {
   private int cursor;
   private long retryAfter;
   private boolean failed;
+  private boolean complete;
+
+  boolean complete() {
+    return complete;
+  }
 
   boolean failed() {
     return failed;
@@ -99,6 +104,12 @@ final class GroundRoute {
               floor.getY() + 1 + (core.hatchling() ? .85 : 1.25) + core.coreHeightOffset(),
               z + .5);
       if (fits(core, point, offsets)) return point;
+      // A leading/side organ meets a step before the core stands above that step. Legs can
+      // brace from the lower floor and lift the entire body first, without creating flight.
+      for (int lift = 1; lift <= core.crawl().extraLift(); lift++) {
+        var raised = point.add(0, lift, 0);
+        if (!core.canFly() && fits(core, raised, offsets)) return raised;
+      }
     }
     var cling =
         new Vec3(
@@ -222,6 +233,7 @@ final class GroundRoute {
     destination = goal;
     cursor = 0;
     retryAfter = core.getLevel().getGameTime() + 20;
+    complete = end != null;
     if (end == null && closest < here.distanceTo(goal) - 3) end = progress;
     failed = end == null;
     if (end == null) {
@@ -266,7 +278,7 @@ final class GroundRoute {
                       Vec3.atLowerCornerOf(core.structuralOrigin().subtract(core.getBlockPos()))));
       boolean supported = false;
       var below = BlockPos.containing(anchor);
-      for (int i = 1; i <= 3; i++) {
+      for (int i = 1; i <= core.crawl().footingReach(); i++) {
         var p = below.below(i);
         if (core.getLevel().getBlockState(p).isFaceSturdy(core.getLevel(), p, Direction.UP))
           supported = true;
@@ -292,6 +304,7 @@ final class GroundRoute {
       else core.crawl().lowerHeight(next.y);
       return null;
     }
+    if (next.y >= here.y - .12) core.crawl().stepHeight(next.y);
     Vec3 probe = here.lerp(next, Math.min(1, .35 / Math.max(.01, here.distanceTo(next))));
     if (!fits(core, probe, parts)) {
       path = List.of();

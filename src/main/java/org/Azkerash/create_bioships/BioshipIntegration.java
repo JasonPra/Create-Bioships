@@ -110,7 +110,7 @@ public final class BioshipIntegration {
   }
 
   public static void assimilate(LivingCoreBlockEntity core, ServerSubLevel ship) {
-    if (OrganMotion.busy(core)) return;
+    if (OrganMotion.busy(core) || !core.brain().allowsConfiguration(core)) return;
     ServerLevel level = ship.getLevel();
     // Bounded three-block neighborhood of core, then one-block neighborhood of each existing
     // organ/machine.
@@ -129,7 +129,8 @@ public final class BioshipIntegration {
       convertFirstBioForge(core, actor.getBlockPos());
     }
     if (BioshipScavenging.collect(core, ship)) return;
-    var objective = BioshipPriorities.bestWorld(core);
+    var decision = core.brain().choose(core);
+    if (decision.action() != BioshipBrain.Action.ASSIMILATE) return;
     var ordered = new ArrayList<>(candidates);
     ordered.sort(
         Comparator.<BlockPos>comparingInt(
@@ -141,11 +142,7 @@ public final class BioshipIntegration {
           || !level.getChunkSource().hasChunk(source.getX() >> 4, source.getZ() >> 4)
           || containing(level, source) != null) continue;
       BlockState state = level.getBlockState(source);
-      if (objective != null && BioshipPriorities.rank(core, state, source) > objective.rank())
-        continue;
-      if (objective != null
-          && !source.equals(objective.pos())
-          && BioshipPriorities.rank(core, state, source) == objective.rank()) continue;
+      if (!source.equals(decision.block())) continue;
       if (!core.vision().exposed(core, source)
           || !BioshipReach.clear(core, Vec3.atCenterOf(source), true)) continue;
       if (!BuiltInRegistries.BLOCK.getKey(state.getBlock()).getNamespace().equals("biomancy")
@@ -179,6 +176,15 @@ public final class BioshipIntegration {
           && !core.hasMouth()) {
         var front = HatchlingFront.port(core, null);
         if (front != null) target = front;
+      }
+      var store = level.getBlockEntity(source);
+      if (store != null
+          && EngineRoom.storage(store)
+          && DigestiveSystem.stomach(core) != null
+          && core.hasMouth()) {
+        var connectedPort = DigestiveSystem.storagePort(core, source);
+        if (connectedPort == null) continue;
+        target = connectedPort;
       }
       if (OrganMotion.begin(core, source, target, true)) {
         moved++;

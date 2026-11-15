@@ -174,13 +174,16 @@ public class Create_bioships {
       BLOCKS.registerSimpleBlock(
           "living_mouth",
           BlockBehaviour.Properties.of().strength(3).sound(SoundType.SLIME_BLOCK).noOcclusion());
-  public static final DeferredBlock<Block> BUOYANCY_ORGAN =
-      BLOCKS.registerSimpleBlock(
+  public static final DeferredBlock<BuoyancyOrganBlock> BUOYANCY_ORGAN =
+      BLOCKS.register(
           "buoyancy_organ",
-          BlockBehaviour.Properties.of()
-              .strength(2)
-              .sound(SoundType.SLIME_BLOCK)
-              .lightLevel(state -> 9));
+          () ->
+              new BuoyancyOrganBlock(
+                  BlockBehaviour.Properties.of()
+                      .strength(2)
+                      .sound(SoundType.SLIME_BLOCK)
+                      .noOcclusion()
+                      .lightLevel(state -> 9)));
   public static final DeferredBlock<Block> FLESH =
       BLOCKS.registerSimpleBlock(
           "living_hull", BlockBehaviour.Properties.of().strength(2).sound(SoundType.SLIME_BLOCK));

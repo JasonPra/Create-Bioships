@@ -96,22 +96,22 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     return coreMotion.home(this);
   }
 
-  boolean growthStockReady() {
+  private boolean hullBudgetAvailable() {
     var stomach = DigestiveSystem.stomach(this);
+    int tier = crawl.hullTier(this), upgrades = Math.max(0, tier - crawl.legTier());
     return stomach != null
-        && needs.biomass() + stomach.material("biomancy:flesh_bits") >= 64
-        && stomach.material("biomancy:bone_fragments") >= 8
-        && stomach.material("biomancy:elastic_fibers") >= 12;
+        && tier <= 3
+        && needs.biomass() + stomach.material("biomancy:flesh_bits") >= 64 + 8 * upgrades
+        && stomach.material("biomancy:bone_fragments") >= (framePaid ? 0 : 8) + 2 * upgrades
+        && stomach.material("biomancy:elastic_fibers") >= (framePaid ? 0 : 12) + 4 * upgrades;
+  }
+
+  boolean growthStockReady() {
+    return hullBudgetAvailable();
   }
 
   boolean growthSiteReady() {
-    var stomach = DigestiveSystem.stomach(this);
-    return needs.readyToGrow()
-        && (framePaid
-            || stomach != null
-                && stomach.material("biomancy:bone_fragments") >= 8
-                && stomach.material("biomancy:elastic_fibers") >= 12)
-        && roomToGrow(ship());
+    return needs.readyToGrow() && hullBudgetAvailable() && roomToGrow(ship());
   }
 
   public double coreHeightOffset() {
@@ -169,7 +169,6 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
   private String growthObstacle = "";
   private long lastServerTick = Long.MIN_VALUE;
   private double hoverHeight = Double.NaN;
-  private net.minecraft.world.entity.item.ItemEntity foodTarget;
   private volatile FlightIntent flight = new FlightIntent(false, Vec3.ZERO, 0);
 
   private record FlightIntent(
@@ -255,6 +254,16 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
         Component.literal(
             String.format(
                 java.util.Locale.ROOT, "Health: %.1f / %d", body.health(), body.capacity())));
+    lines.add(
+        Component.literal(
+            String.format(
+                java.util.Locale.ROOT,
+                "Leg tier: %d | Load: %.0f / %.0f | Extra lift: %d",
+                crawl.legTier(),
+                crawl.measuredLoad(),
+                crawl.loadCapacity(),
+                crawl.extraLift())));
+    lines.add(Component.literal("Behavior: " + brain.action() + " · " + brain.reason()));
     lines.add(Component.literal("Growth biomass: " + needs.biomass() + " / 64"));
     lines.add(Component.literal("Stored flesh: " + goggleFlesh));
     lines.add(
@@ -265,6 +274,18 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
                 + goggleFiber
                 + " / 12 fibers"
                 + (framePaid ? " (incorporated)" : "")));
+    if (!isMature()) {
+      int upgrades = Math.max(0, crawl.hullTier(this) - crawl.legTier());
+      lines.add(
+          Component.literal(
+              "Leg budget before hull: "
+                  + (8 * upgrades)
+                  + " flesh, "
+                  + (2 * upgrades)
+                  + " bone, "
+                  + (4 * upgrades)
+                  + " fibers (plus frame)."));
+    }
     lines.add(Component.literal("Amalgam: " + needs.levitite() + " / 8"));
     lines.add(Component.literal("Food: " + needs.satiety() + " / 1200 | Trust: " + needs.trust()));
     if (stage == 0)
@@ -384,25 +405,60 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
         .offset(blueprint.offset(DinghyGrowth.atVersion(offset, bodyLayoutVersion)));
   }
 
+  private final BioshipBrain brain = new BioshipBrain();
+
+  public BioshipBrain brain() {
+    return brain;
+  }
+
+  int satiety() {
+    return needs.satiety();
+  }
+
+  boolean frameFunded() {
+    return framePaid;
+  }
+
+  boolean buildingHull() {
+    return stage == 1;
+  }
+
   private boolean framePaid, larynxDeveloped;
 
   public boolean wantsStoredFood() {
     return hungry()
         || needs.biomass() < BioshipNeeds.BIOMASS_REQUIRED
         || !framePaid
+        || !canFly() && crawl.carriedLoad(this) > crawl.loadCapacity()
         || !larynxDeveloped
         || needs.trust() < 100;
   }
 
   private boolean prepareFrame() {
-    if (framePaid) return true;
     var stomach = DigestiveSystem.stomach(this);
+    int tier = crawl.hullTier(this), upgrades = Math.max(0, tier - crawl.legTier());
     if (stomach == null
         || !stomach.connected(this)
-        || stomach.material("biomancy:bone_fragments") < 8
-        || stomach.material("biomancy:elastic_fibers") < 12) return false;
-    stomach.spend("biomancy:bone_fragments", 8);
-    stomach.spend("biomancy:elastic_fibers", 12);
+        || tier > 3
+        || stomach.material("biomancy:flesh_bits") < 8 * upgrades
+        || stomach.material("biomancy:bone_fragments") < 2 * upgrades + (framePaid ? 0 : 8)
+        || stomach.material("biomancy:elastic_fibers") < 4 * upgrades + (framePaid ? 0 : 12)) {
+      growthObstacle =
+          "Waiting for hull and leg materials: "
+              + (8 * upgrades)
+              + " flesh, "
+              + (2 * upgrades + (framePaid ? 0 : 8))
+              + " bone, "
+              + (4 * upgrades + (framePaid ? 0 : 12))
+              + " fibers.";
+      return false;
+    }
+    // All checks precede spending: the legs can carry the completed plan before hull growth starts.
+    for (int i = 0; i < upgrades; i++) if (!crawl.enhance(this)) return false;
+    if (!framePaid) {
+      stomach.spend("biomancy:bone_fragments", 8);
+      stomach.spend("biomancy:elastic_fibers", 12);
+    }
     framePaid = true;
     setChanged();
     return true;
@@ -504,6 +560,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     if (level.isClientSide) return;
     if (core.ship() != null) {
       BioshipTargetEntity.ensure(core);
+      core.scavenging.deliver(core);
       core.autonomy.assess(core);
     }
     if (core.ship() != null) core.rescue.tick(core);
@@ -552,16 +609,22 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     var ship = core.ship();
     if (ship != null && core.primary(ship) && level.getGameTime() % 20 == 0)
       BioshipIntegration.assimilate(core, ship);
-    if (ship != null && level.getGameTime() % 20 == 0) BioshipIntegration.orientMouth(core);
+    if (ship != null && level.getGameTime() % 20 == 0 && core.brain.allowsConfiguration(core))
+      BioshipIntegration.orientMouth(core);
     core.updateCabinLights();
     if (ship != null && level.getGameTime() % 20 == 0) DigestiveSystem.connect(core, ship);
+    if (ship != null && level.getGameTime() % 20 == 0 && core.brain.allowsConfiguration(core))
+      DigestiveSystem.arrangeStorage(core);
     core.growBody();
     if (core.ship() != null) core.vision.tick(core);
-    if (ship != null && core.isMature() && level.getGameTime() % 20 == 0) {
+    if (ship != null
+        && core.isMature()
+        && level.getGameTime() % 20 == 0
+        && core.brain.allowsConfiguration(core)) {
       EngineRoom.arrange(core, ship);
       BioshipIntegration.relocateMouth(core, ship);
       DigestiveSystem.connect(core, ship);
-      core.developLarynx(ship);
+      if (!core.brain.needsMaterials(core)) core.developLarynx(ship);
       BioshipAccess.tick(core);
       var panel = core.layoutPos(DinghyGrowth.BLUEPRINT_PANEL);
       var oldPanel = core.layoutPos(new BlockPos(-3, 2, 2));
@@ -598,7 +661,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
 
   // New actor block entities are created outside Sable's actor iteration.
   private void growBody() {
-    if (body.health() <= 0) return;
+    if (body.health() <= 0 || brain.choose(this).action() != BioshipBrain.Action.GROW) return;
     ServerSubLevel ship = ship();
     if (ship == null || !primary(ship)) return;
     if (stage == 0
@@ -610,7 +673,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
       stage = 1;
       setChanged();
     }
-    if (stage != 1) return;
+    if (stage != 1 || !prepareFrame()) return;
     var parts = plannedBody();
     if (growthIndex < parts.size()) {
       var part = parts.get(growthIndex);
@@ -719,14 +782,17 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
       flight = new FlightIntent(canFly(), travel == null ? Vec3.ZERO : travel, 0);
       return;
     }
-    if (crawl.walking()
-        || crawl.bracing()
-        || hatchling() && (crawl.goal() != null || crawl.reach() != null)) {
+    incorporateAmalgam();
+    if (!canFly()
+        && (crawl.walking()
+            || crawl.bracing()
+            || hatchling() && (crawl.goal() != null || crawl.reach() != null))) {
       flight =
           new FlightIntent(
               false,
               crawl.velocity(this),
-              HatchlingFront.turn(this, crawl.goal() != null ? crawl.goal() : crawl.reach()),
+              HatchlingFront.turn(
+                  this, crawl.steeringGoal() != null ? crawl.steeringGoal() : crawl.reach()),
               crawl.supportHeight(),
               crawl.stanceUp());
       return;
@@ -757,26 +823,17 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
       turn *= response * (0.25 + 0.75 * Math.abs(throttle));
     }
     if (desired.lengthSqr() == 0 && turn == 0 && !autonomy.trustedPilot(this)) {
-      desired = resting() || !canFly() ? Vec3.ZERO : forage(ship);
+      desired = resting() || !canFly() ? Vec3.ZERO : brain.flightVelocity(this);
       heightCommanded = desired.lengthSqr() > 0;
       if (desired.lengthSqr() == 0 && !resting())
         desired = new Vec3(0, Math.sin(level.getGameTime() / 35.0) * 0.08, 0);
     }
-    if (canFly() && autonomy.fleeing() && !autonomy.trustedPilot(this)) {
-      desired = autonomy.flight(this, true).scale(rescue.active() ? .25 : 1);
+
+    if (canFly() && brain.choose(this).action() == BioshipBrain.Action.FLEE) {
+      desired = brain.flightVelocity(this);
+      turn = 0;
       heightCommanded = true;
-    } else if (canFly()
-        && desired.horizontalDistanceSqr() < .0001
-        && turn == 0
-        && !resting()
-        && !autonomy.trustedPilot(this)) {
-      var exploration = autonomy.flight(this, false);
-      if (exploration.lengthSqr() > 0) {
-        desired = exploration;
-        heightCommanded = true;
-      }
     }
-    incorporateAmalgam();
     if (canFly()) {
       double muscles = FlagellumMotion.strength(swimmingFlagella(), level.getGameTime());
       desired = desired.scale(muscles);
@@ -861,6 +918,10 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     setChanged();
   }
 
+  public boolean wantsToHunt() {
+    return brain.shouldHunt(this);
+  }
+
   public boolean hungry() {
     return needs.satiety() < 240;
   }
@@ -937,66 +998,9 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     return count;
   }
 
-  /** Ground foraging is independent of flight and never targets enclosed world machines. */
+  /** Compatibility entry point: all movement and collection choices belong to the behavior tree. */
   Vec3 gatheringGoal() {
-    crawl.reach(null);
-    if (body.dead() || OrganMotion.busy(this) || blueprint.busy()) return null;
-    Vec3 here = BioshipBlueprint.physical(this, BlockPos.ZERO);
-    var threat = BioshipDefense.target(this);
-    if (!isMature() && threat != null) {
-      Vec3 point = threat.getBoundingBox().getCenter();
-      return point.distanceToSqr(here) > 6.25
-          ? new Vec3(point.x, Math.abs(point.y - here.y) > 4 ? point.y : here.y, point.z)
-          : null;
-    }
-    if (resting()) return null;
-    var objective = BioshipPriorities.bestWorld(this);
-    if (objective != null && (objective.rank() == 0 || objective.rank() <= 2 && !hungry())) {
-      Vec3 point = Vec3.atCenterOf(objective.pos());
-      return point;
-    }
-    var stomach = DigestiveSystem.stomach(this);
-    if (hasMouth() && stomach != null && stomach.connected(this)) {
-      var items =
-          level.getEntitiesOfClass(
-              net.minecraft.world.entity.item.ItemEntity.class,
-              new AABB(here, here).inflate(vision.maximumDistance(this)),
-              e -> droppedSupply(e.getItem()));
-      items.sort(java.util.Comparator.comparingDouble(e -> e.distanceToSqr(here)));
-      for (var item : items) {
-        Vec3 point = item.position().add(0, .2, 0);
-        if (!vision.visible(this, point)) continue;
-        if (BioshipReach.clear(this, point, false)) {
-          crawl.reach(item.position());
-          item.setDeltaMovement(
-              mouthPosition(ship()).subtract(item.position()).normalize().scale(.3));
-          if (here.distanceToSqr(point) <= 4
-              || mouthPosition(ship()).distanceToSqr(point) <= 2.25
-              || BioshipReach.anchor(this, point).distanceToSqr(point) <= 2.25) {
-            ItemStack one = item.getItem().copyWithCount(1);
-            boolean accepted;
-            if (BioshipScavenging.droppedBlock(one)) {
-              accepted = scavenging.consumeDroppedBlock(this, one);
-            } else if (one.is(BioshipIntegration.constructionMaterial()) && !one.is(MEAT)) {
-              stomach.retain(one);
-              accepted = true;
-            } else accepted = DigestiveSystem.offerFood(this, one, false);
-            if (accepted) {
-              item.getItem().shrink(1);
-              if (item.getItem().isEmpty()) item.discard();
-            }
-          }
-          return null;
-        }
-        return point;
-      }
-    }
-    if (isMature()) return null;
-    Vec3 wreckSupply = BioshipScavenging.approach(this);
-    if (wreckSupply != null) return new Vec3(wreckSupply.x, here.y, wreckSupply.z);
-    if (objective == null) return null;
-    Vec3 point = Vec3.atCenterOf(objective.pos());
-    return point;
+    return brain.groundGoal(this);
   }
 
   static boolean droppedSupply(ItemStack stack) {
@@ -1004,104 +1008,6 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     return stack.is(MEAT)
         || stack.is(BioshipIntegration.constructionMaterial())
         || BioshipScavenging.droppedBlock(stack);
-  }
-
-  private Vec3 forage(ServerSubLevel ship) {
-    if (!hasMouth()
-        || DigestiveSystem.stomach(this) == null
-        || !hungry()
-        || !huntingAllowed() && !aggressive()) {
-      foodTarget = null;
-      return Vec3.ZERO;
-    }
-    Vec3 mouth =
-        hasMouth()
-            ? mouthPosition(ship)
-            : ship.logicalPose().transformPosition(Vec3.atCenterOf(worldPosition).add(0, 1.5, 0));
-    if (foodTarget != null
-        && (!foodTarget.isAlive()
-            || !foodTarget.getItem().is(MEAT)
-            || foodTarget.position().distanceToSqr(mouth) > 64)) foodTarget = null;
-    if (foodTarget == null && level.getGameTime() % 20 == 0) {
-      double closest = 64;
-      for (var item :
-          level.getEntitiesOfClass(
-              net.minecraft.world.entity.item.ItemEntity.class,
-              new AABB(mouth, mouth).inflate(8),
-              entity -> entity.getItem().is(MEAT))) {
-        double distance = item.position().distanceToSqr(mouth);
-        if (distance < closest) {
-          foodTarget = item;
-          closest = distance;
-        }
-      }
-    }
-    if (foodTarget == null) return huntScent(ship);
-    Vec3 food = foodTarget.position().add(0, 0.2, 0);
-    if (level
-            .clip(
-                new ClipContext(
-                    mouth, food, ClipContext.Block.COLLIDER, ClipContext.Fluid.ANY, foodTarget))
-            .getType()
-        != HitResult.Type.MISS) return Vec3.ZERO;
-    if (food.distanceToSqr(mouth) < 4 && level.getGameTime() % 40 == 0) {
-      ItemStack stack = foodTarget.getItem();
-      ItemStack meal = stack.copyWithCount(1);
-      CompoundTag flags =
-          meal.getOrDefault(
-                  net.minecraft.core.component.DataComponents.CUSTOM_DATA,
-                  net.minecraft.world.item.component.CustomData.EMPTY)
-              .copyTag();
-      flags.putBoolean("BioshipHunted", true);
-      meal.set(
-          net.minecraft.core.component.DataComponents.CUSTOM_DATA,
-          net.minecraft.world.item.component.CustomData.of(flags));
-      if (DigestiveSystem.offerFood(this, meal, false)) {
-        stack.shrink(1);
-        if (stack.isEmpty()) foodTarget.discard();
-        setChanged();
-      }
-    }
-    Vec3 scent = food.subtract(mouth);
-    return scent.lengthSqr() < 0.25 ? Vec3.ZERO : scent.normalize().scale(0.5);
-  }
-
-  private Vec3 huntScent(ServerSubLevel ship) {
-    if (!hasMouth() || !aggressive() && (!hungry() || !huntingAllowed())) return Vec3.ZERO;
-    TentacleBlockEntity limb = null;
-    for (var actor : ship.getPlot().getBlockEntityActors())
-      if (actor instanceof TentacleBlockEntity tentacle) {
-        limb = tentacle;
-        break;
-      }
-    if (limb == null) return Vec3.ZERO;
-    Vec3 mouth = mouthPosition(ship);
-    net.minecraft.world.entity.LivingEntity closest = null;
-    double distance = 144;
-    for (var prey :
-        level.getEntitiesOfClass(
-            net.minecraft.world.entity.LivingEntity.class, new AABB(mouth, mouth).inflate(12))) {
-      double next = prey.position().distanceToSqr(mouth);
-      if (next < distance
-          && (aggressive() || TentacleBlockEntity.edible(prey))
-          && limb.valid(prey, this)
-          && level
-                  .clip(
-                      new ClipContext(
-                          mouth.add(0, -0.6, 0),
-                          prey.getBoundingBox().getCenter(),
-                          ClipContext.Block.COLLIDER,
-                          ClipContext.Fluid.NONE,
-                          prey))
-                  .getType()
-              == HitResult.Type.MISS) {
-        closest = prey;
-        distance = next;
-      }
-    }
-    return closest == null || distance < 4
-        ? Vec3.ZERO
-        : closest.position().subtract(mouth).normalize().scale(0.65);
   }
 
   @Override
@@ -1128,7 +1034,8 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
               .mul(12 * dt);
       if (Double.isFinite(intent.supportHeight())) {
         double height = ship.logicalPose().transformPosition(Vec3.atCenterOf(worldPosition)).y;
-        double target = Math.clamp((intent.supportHeight() - height) * 2, -.45, .65);
+        double target =
+            Math.clamp((intent.supportHeight() - height) * 2, -.45, .65 + .1 * crawl.legTier());
         double gravity = DimensionPhysicsData.getGravity(ship.getLevel()).y;
         grounded.y = ((target - current.y) * 6 - gravity) * dt;
       }
@@ -1150,6 +1057,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     if (organMove != null) tag.put("OrganMove", organMove.save());
     tag.put("Scavenging", scavenging.save());
     tag.put("Crawl", crawl.save());
+    tag.put("Brain", brain.save());
     tag.put("CoreMotion", coreMotion.save());
     tag.put("Defense", defense.save());
     tag.put("Autonomy", autonomy.save());
@@ -1194,6 +1102,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
         tag.contains("OrganMove") ? OrganMotion.Move.load(tag.getCompound("OrganMove")) : null;
     scavenging.load(tag.getCompound("Scavenging"));
     crawl.load(tag.getCompound("Crawl"));
+    brain.load(tag.getCompound("Brain"));
     coreMotion.load(tag.getCompound("CoreMotion"));
     defense.load(tag.getCompound("Defense"));
     autonomy.load(tag.getCompound("Autonomy"));
@@ -1227,7 +1136,6 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
         tag.contains("Satiety") ? tag.getInt("Satiety") : 600,
         tag.contains("Trust") ? tag.getInt("Trust") : 60);
     metabolismTicks = Math.clamp(tag.getInt("MetabolismTicks"), 0, 19);
-    foodTarget = null;
     hoverHeight = Double.NaN;
     flight = new FlightIntent(false, Vec3.ZERO, 0);
   }

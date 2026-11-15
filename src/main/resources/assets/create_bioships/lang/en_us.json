@@ -62,5 +62,7 @@
   "message.create_bioships.inspect": "Inspect the eye with Symbiotic Goggles.",
   "message.create_bioships.dead": "This bioship has died. Its wreck is rotting.",
   "block.create_bioships.surface_eye": "Sensory Eye",
-  "entity.create_bioships.bioship_attack_surface": "Living Bioship"
+  "entity.create_bioships.bioship_attack_surface": "Living Bioship",
+  "generator.create_bioships.navigation_lab": "Bioship Navigation Lab",
+  "biome.create_bioships.navigation_lab": "Bioship Navigation Lab"
 }

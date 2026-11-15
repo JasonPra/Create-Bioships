@@ -78,6 +78,58 @@ public final class CoreMotion {
     return count;
   }
 
+  private Vec3 blockedSupply(LivingCoreBlockEntity core) {
+    if (core.supplyTarget == null) return null;
+    var focus = Vec3.atCenterOf(core.supplyTarget);
+    return focus.distanceToSqr(BioshipBlueprint.physical(core, BlockPos.ZERO)) < 64
+            && !core.vision().visible(core, focus)
+        ? focus
+        : null;
+  }
+
+  private int score(LivingCoreBlockEntity core, BlockPos vantage) {
+    var focus = blockedSupply(core);
+    return coverage(core, vantage)
+        + (focus != null
+                && BioshipVision.rayAtCore(
+                    core,
+                    core.ship().logicalPose().transformPosition(Vec3.atCenterOf(vantage)),
+                    focus,
+                    vantage)
+            ? FULL_COVERAGE
+            : 0);
+  }
+
+  boolean canAvoidBlast(
+      LivingCoreBlockEntity core, net.minecraft.world.entity.monster.Creeper creeper) {
+    var queue = new ArrayDeque<BlockPos>();
+    var seen = new HashSet<BlockPos>();
+    queue.add(core.getBlockPos());
+    seen.add(core.getBlockPos());
+    double safe = (creeper.isPowered() ? 6 : 3) + 1;
+    while (!queue.isEmpty() && seen.size() < 160) {
+      var p = queue.removeFirst();
+      if (!p.equals(core.getBlockPos())
+          && core.ship()
+                  .logicalPose()
+                  .transformPosition(Vec3.atCenterOf(p))
+                  .distanceToSqr(creeper.position())
+              > safe * safe) return true;
+      for (var d : Direction.values()) {
+        var next = p.relative(d);
+        if (next.distManhattan(core.getBlockPos()) <= 6
+            && !seen.contains(next)
+            && tissue(core.getLevel().getBlockState(next))
+            && clearWorld(core, next)
+            && DigestiveSystem.reserveCoreRoute(core, next, false)) {
+          seen.add(next);
+          queue.add(next);
+        }
+      }
+    }
+    return false;
+  }
+
   private BlockPos choose(LivingCoreBlockEntity core, boolean returning) {
     var level = core.getLevel();
     var source = core.getBlockPos();
@@ -86,7 +138,7 @@ public final class CoreMotion {
     previous.put(source, source);
     queue.add(source);
     BlockPos best = source;
-    int score = coverage(core, source);
+    int score = score(core, source);
     while (!queue.isEmpty() && previous.size() < 160) {
       var pos = queue.removeFirst();
       for (var dir : Direction.values()) {
@@ -105,9 +157,9 @@ public final class CoreMotion {
             break;
           }
         } else {
-          int value = coverage(core, next);
+          int value = score(core, next);
           if (value > score
-              || value == score && value > coverage(core, source) && next.getY() > best.getY()) {
+              || value == score && value > score(core, source) && next.getY() > best.getY()) {
             best = next;
             score = value;
           }
@@ -139,6 +191,7 @@ public final class CoreMotion {
       if (level.getGameTime() - started >= duration()) commit(core);
       return true;
     }
+    if (core.autonomy().creeperPanic()) return false;
     if (creeper != null) return evade(core, creeper);
     if (nextScan == 0) {
       nextScan = level.getGameTime() + 200;
@@ -150,14 +203,16 @@ public final class CoreMotion {
     nextScan = level.getGameTime() + 40;
     if (!returning
         && (BioshipDefense.target(core) != null
-            || coverage(core, core.getBlockPos()) == FULL_COVERAGE)) return false;
+            || coverage(core, core.getBlockPos()) == FULL_COVERAGE && blockedSupply(core) == null))
+      return false;
     var objective = BioshipPriorities.bestWorld(core);
     if (!returning
         && objective != null
         && objective.rank() == 0
         && Vec3.atCenterOf(objective.pos())
                 .distanceToSqr(BioshipBlueprint.physical(core, BlockPos.ZERO))
-            < 25) return false;
+            < 25
+        && blockedSupply(core) == null) return false;
     var next = choose(core, returning);
     if (next == null) return false;
     if (!DigestiveSystem.reserveCoreRoute(core, next, true)) return false;

@@ -77,11 +77,14 @@ public class TentacleBlockEntity extends BlockEntity implements BlockEntitySubLe
   }
 
   boolean valid(LivingEntity entity, LivingCoreBlockEntity core) {
+    if (entity instanceof net.minecraft.world.entity.monster.Creeper
+        && core.autonomy().creeperPanic()) return false;
+    if (core.brain().attackTarget(core) != entity) return false;
     if (!attackable(entity) || entity.isPassenger() && !core.aggressive()) return false;
     if (core.aggressive()) return true;
     if (core.access().allows(core, entity)) return false;
     if (entity instanceof TamableAnimal tame && tame.isTame()) return false;
-    return entity instanceof Monster || core.hungry() && core.huntingAllowed() && edible(entity);
+    return entity instanceof Monster || core.wantsToHunt() && edible(entity);
   }
 
   static boolean edible(LivingEntity entity) {
@@ -131,7 +134,7 @@ public class TentacleBlockEntity extends BlockEntity implements BlockEntitySubLe
     lastTick = level.getGameTime();
     ServerSubLevel ship = ship();
     LivingCoreBlockEntity core = ship == null ? null : owner(ship);
-    if (core == null || core.body().dead() || core.resting() || core.blueprint().busy()) {
+    if (core == null || core.body().dead() || core.blueprint().busy()) {
       release();
       return;
     }
@@ -148,18 +151,13 @@ public class TentacleBlockEntity extends BlockEntity implements BlockEntitySubLe
       return;
     }
     if (target == null && cooldown == 0 && level.getGameTime() % 10 == 0) {
-      double closest = 64;
-      for (var entity :
-          level.getEntitiesOfClass(
-              LivingEntity.class, new AABB(root, root).inflate(8), e -> valid(e, core))) {
-        double distance = entity.position().distanceToSqr(root);
-        if (distance < closest
-            && !claimed(ship, entity.getUUID())
-            && visible(root, entity.getBoundingBox().getCenter(), entity, core, ship)) {
-          prey = entity;
-          closest = distance;
-        }
-      }
+      var selected = core.brain().attackTarget(core);
+      if (selected != null
+          && valid(selected, core)
+          && !claimed(ship, selected.getUUID())
+          && selected.position().distanceToSqr(root) < 64
+          && visible(root, selected.getBoundingBox().getCenter(), selected, core, ship))
+        prey = selected;
       if (prey != null) {
         target = prey.getUUID();
         clientTarget = prey.getId();
