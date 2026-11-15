@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "encased=false": {
+      "model": "create_bioships:block/fleshy_intestine"
+    },
+    "encased=true": {
+      "model": "create_bioships:block/fleshy_intestine_encased"
+    }
+  }
+}

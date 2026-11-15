@@ -1,7 +1,7 @@
 {
   "variants": {
     "lit=false": {
-      "model": "create_bioships:block/pulse_light"
+      "model": "create_bioships:block/pulse_light_on"
     },
     "lit=true": {
       "model": "create_bioships:block/pulse_light_on"

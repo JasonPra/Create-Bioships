@@ -6,6 +6,10 @@
     "biomancy:flesh",
     "biomancy:packed_flesh",
     "biomancy:fibrous_flesh",
-    "#create_bioships:biomass"
+    "#create_bioships:biomass",
+    "biomancy:nutrients",
+    "biomancy:nutrient_paste",
+    "biomancy:bone_fragments",
+    "biomancy:elastic_fibers"
   ]
 }

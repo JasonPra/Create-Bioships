@@ -1,94 +1,179 @@
 package org.Azkerash.create_bioships;
 
+import dev.simulated_team.simulated.content.blocks.steering_wheel.SteeringWheelBlock;
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
-import dev.simulated_team.simulated.content.blocks.steering_wheel.SteeringWheelBlock;
 
-/** Tapered living hull with a vaulted ribbed cabin, dermal windows, and a rear valve door. */
+/** An oval shell with a forward cockpit and a separate aft engine/workshop room. */
 public final class DinghyGrowth {
-    public static final int LAYOUT_VERSION = 4;
-    public static final BlockPos HELM = new BlockPos(0, 2, -2);
-    public static final BlockPos THROTTLE = new BlockPos(-1, 2, 0);
-    public static final BlockPos VERTICAL_TRIM = new BlockPos(1, 2, 0);
-    public static final BlockPos DOOR = new BlockPos(0, 2, 3);
-    public static final BlockPos HUNT = new BlockPos(1, 2, -2);
-    public static final BlockPos MOUTH = new BlockPos(0, 0, -6);
-    public static final List<BlockPos> FLAGELLA = List.of(new BlockPos(-4, 0, -2), new BlockPos(-4, 0, 0), new BlockPos(-4, 0, 2),
-            new BlockPos(4, 0, -2), new BlockPos(4, 0, 0), new BlockPos(4, 0, 2));
-    public static final List<BlockPos> BUOYANCY_ORGANS = List.of(new BlockPos(-1, 0, -2), new BlockPos(1, 0, -2),
-            new BlockPos(-1, 0, -1), new BlockPos(1, 0, -1), new BlockPos(-1, 0, 0), new BlockPos(1, 0, 0),
-            new BlockPos(-1, 0, 1), new BlockPos(1, 0, 1));
-    public record Part(BlockPos offset, BlockState state) {}
-    public static BlockState helm() {
-        return BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath("simulated", "steering_wheel")).defaultBlockState()
-                .setValue(SteeringWheelBlock.FACING, Direction.SOUTH).setValue(SteeringWheelBlock.ON_FLOOR, true);
+  public static final int LAYOUT_VERSION = 5;
+  public static final BlockPos HELM = new BlockPos(0, 2, -4),
+      THROTTLE = new BlockPos(-1, 2, -2),
+      VERTICAL_TRIM = new BlockPos(1, 2, -2),
+      HUNT = new BlockPos(2, 2, -4),
+      ACCESS_PANEL = new BlockPos(-2, 2, -4);
+  public static final BlockPos DOOR = new BlockPos(0, 2, 6),
+      MOUTH = new BlockPos(0, 0, -7),
+      LARYNX = new BlockPos(0, 5, 4);
+  public static final List<BlockPos> ACCESS_MEMBRANES =
+      List.of(DOOR, DOOR.above(), new BlockPos(0, 2, 0), new BlockPos(0, 3, 0));
+  public static final List<BlockPos> CABIN_LIGHTS =
+      List.of(
+          new BlockPos(-2, 5, -3),
+          new BlockPos(2, 5, -3),
+          new BlockPos(-2, 5, 3),
+          new BlockPos(2, 5, 3));
+  public static final List<BlockPos> FLAGELLA =
+      List.of(
+          new BlockPos(-4, 0, -3),
+          new BlockPos(-4, 0, 0),
+          new BlockPos(-4, 0, 3),
+          new BlockPos(4, 0, -3),
+          new BlockPos(4, 0, 0),
+          new BlockPos(4, 0, 3));
+  public static final List<BlockPos> BUOYANCY_ORGANS =
+      List.of(
+          new BlockPos(-1, 0, -2),
+          new BlockPos(1, 0, -2),
+          new BlockPos(-1, 0, -1),
+          new BlockPos(1, 0, -1),
+          new BlockPos(-1, 0, 0),
+          new BlockPos(1, 0, 0),
+          new BlockPos(-1, 0, 1),
+          new BlockPos(1, 0, 1));
+
+  public record Part(BlockPos offset, BlockState state) {}
+
+  public static BlockState cabinLantern() {
+    return BuiltInRegistries.BLOCK
+        .get(ResourceLocation.parse("biomancy:bio_lantern_yellow"))
+        .defaultBlockState()
+        .setValue(
+            net.minecraft.world.level.block.state.properties.BlockStateProperties.HANGING, true);
+  }
+
+  public static BlockState helm() {
+    return BuiltInRegistries.BLOCK
+        .get(ResourceLocation.parse("simulated:steering_wheel"))
+        .defaultBlockState()
+        .setValue(SteeringWheelBlock.FACING, Direction.SOUTH)
+        .setValue(SteeringWheelBlock.ON_FLOOR, true);
+  }
+
+  public static int radius(int z) {
+    return switch (Math.abs(z)) {
+      case 9, 8 -> 0;
+      case 7 -> 1;
+      case 6 -> 2;
+      case 5, 4 -> 3;
+      default -> 4;
+    };
+  }
+
+  public static List<Part> body() {
+    return Layout.BODY;
+  }
+
+  private static final class Layout {
+    static final List<Part> BODY = createBody();
+  }
+
+  private static List<Part> createBody() {
+    Map<BlockPos, Part> parts = new LinkedHashMap<>();
+    var flesh = Create_bioships.FLESH.get().defaultBlockState();
+    java.util.function.BiConsumer<BlockPos, BlockState> put =
+        (pos, state) -> {
+          if (!pos.equals(BlockPos.ZERO)) parts.put(pos, new Part(pos, state));
+        };
+    for (int z = -9; z <= 9; z++) {
+      int r = radius(z);
+      for (int x = -r; x <= r; x++)
+        put.accept(
+            new BlockPos(x, 1, z),
+            Math.abs(x) == r && r > 0 ? shell(x < 0 ? Direction.WEST : Direction.EAST) : flesh);
+      if (Math.abs(z) <= 8) put.accept(new BlockPos(0, 0, z), flesh);
     }
-    public static int radius(int z) {
-        return switch (Math.abs(z)) { case 6 -> 0; case 5 -> 1; case 4 -> 2; case 3 -> 3; default -> 4; };
+    for (int z = -6; z <= 6; z++) {
+      int width = Math.abs(z) >= 5 ? 2 : 3;
+      for (int y = 2; y <= 6; y++) {
+        int inner = Math.max(0, width - Math.max(0, y - 4));
+        int previous = y <= 4 ? inner : inner + 1;
+        for (int x = -previous; x <= previous; x++) {
+          boolean cap = Math.abs(z) == 6, boundary = Math.abs(x) >= inner || cap || y == 6;
+          if (!boundary) continue;
+          if (z == 6 && x == 0 && y <= 3) continue;
+          boolean window =
+              y == 3
+                  && (cap
+                      ? z == -6 && Math.abs(x) < width
+                      : Math.abs(x) == width && Math.abs(z) <= 4);
+          BlockState state =
+              window
+                  ? Create_bioships.ONE_WAY_WINDOW
+                      .get()
+                      .defaultBlockState()
+                      .setValue(
+                          OneWayWindowBlock.FACING,
+                          cap ? Direction.NORTH : x < 0 ? Direction.WEST : Direction.EAST)
+                  : y >= 5 && x != 0 ? shell(x < 0 ? Direction.WEST : Direction.EAST) : flesh;
+          put.accept(new BlockPos(x, y, z), state);
+        }
+      }
     }
-    public static List<Part> body() { return Layout.BODY; }
-    private static final class Layout { static final List<Part> BODY = createBody(); }
-    private static List<Part> createBody() {
-        Map<BlockPos, Part> parts = new LinkedHashMap<>();
-        BlockState flesh = Create_bioships.FLESH.get().defaultBlockState();
-        BlockState membrane = Create_bioships.MEMBRANE.get().defaultBlockState();
-        java.util.function.BiConsumer<BlockPos, BlockState> put = (pos, state) -> { BlockPos raised = pos.above(); if (!raised.equals(BlockPos.ZERO)) parts.put(raised, new Part(raised, state)); };
-        for (int z = -6; z <= 6; z++) {
-            int radius = radius(z);
-            for (int x = -radius; x <= radius; x++) {
-                Direction edge = Math.abs(x) == radius && radius > 0 ? x < 0 ? Direction.WEST : Direction.EAST : z < 0 ? Direction.NORTH : Direction.SOUTH;
-                put.accept(new BlockPos(x, 0, z), Math.abs(x) == radius ? shell(edge) : flesh);
-            }
-            if (Math.abs(z) <= 5) put.accept(new BlockPos(0, -1, z), flesh);
+    for (int x = -3; x <= 3; x++)
+      for (int y = 2; y <= 5; y++) if (x != 0 || y > 3) put.accept(new BlockPos(x, y, 0), flesh);
+    for (int z = -4; z <= 4; z++)
+      put.accept(new BlockPos(0, 7, z), shell(z <= 0 ? Direction.NORTH : Direction.SOUTH));
+    for (var root : FLAGELLA) put.accept(root, Create_bioships.TENTACLE.get().defaultBlockState());
+    for (var organ : BUOYANCY_ORGANS) put.accept(organ, flesh);
+    put.accept(new BlockPos(0, 2, -1), Create_bioships.PERCH.get().defaultBlockState());
+    put.accept(HELM, helm());
+    put.accept(THROTTLE, Create_bioships.THROTTLE.get().defaultBlockState());
+    put.accept(VERTICAL_TRIM, Create_bioships.VERTICAL_TRIM.get().defaultBlockState());
+    put.accept(
+        HUNT,
+        Create_bioships.CONTROLS.stream()
+            .filter(c -> c.get().command == NerveControlBlock.Command.HUNT)
+            .findFirst()
+            .orElseThrow()
+            .get()
+            .defaultBlockState());
+    put.accept(ACCESS_PANEL, Create_bioships.ACCESS_PANEL.get().defaultBlockState());
+    var barrier =
+        BuiltInRegistries.BLOCK
+            .get(ResourceLocation.parse("biomancy:biometric_membrane"))
+            .defaultBlockState();
+    for (var pos : ACCESS_MEMBRANES) put.accept(pos, barrier);
+    for (var light : CABIN_LIGHTS) put.accept(light, cabinLantern());
+    put.accept(new BlockPos(0, 0, 8), flesh);
+    put.accept(new BlockPos(0, 0, 9), flesh);
+    put.accept(new BlockPos(0, 0, 10), flesh);
+    List<Part> connected = new ArrayList<>();
+    ArrayDeque<BlockPos> frontier = new ArrayDeque<>();
+    frontier.add(BlockPos.ZERO);
+    while (!frontier.isEmpty()) {
+      var point = frontier.removeFirst();
+      for (var direction : Direction.values()) {
+        var next = parts.remove(point.relative(direction));
+        if (next != null) {
+          connected.add(next);
+          frontier.addLast(next.offset());
         }
-        for (int z = -3; z <= 3; z++) {
-            int lowerWidth = Math.abs(z) == 3 ? 2 : 3;
-            for (int y = 1; y <= 4; y++) {
-                int width = Math.max(0, lowerWidth - Math.max(0, y - 2));
-                boolean cap = Math.abs(z) == 3;
-                int previous = y <= 2 ? width : width + 1;
-                for (int x = -previous; x <= previous; x++) {
-                    boolean boundary = Math.abs(x) >= width || cap || y == 4;
-                    if (!boundary) continue;
-                    if (z == 3 && x == 0 && y <= 2) continue;
-                    boolean window = y == 2 && (cap ? z == -3 && Math.abs(x) < lowerWidth : Math.abs(x) == lowerWidth && Math.abs(z) < 3);
-                    BlockState state = window ? membrane : y >= 3 && x != 0 ? shell(x < 0 ? Direction.WEST : Direction.EAST) : flesh;
-                    put.accept(new BlockPos(x, y, z), state);
-                }
-            }
-        }
-        // Raised dorsal ribs, asymmetric shoulder lobes, and a ventral keel break up the silhouette.
-        for (int z = -2; z <= 2; z++) put.accept(new BlockPos(0, 5, z), shell(z <= 0 ? Direction.NORTH : Direction.SOUTH));
-        for (int z = -1; z <= 1; z++) put.accept(new BlockPos(-4, 1, z), shell(Direction.WEST));
-        for (int z = 0; z <= 1; z++) put.accept(new BlockPos(4, 1, z), shell(Direction.EAST));
-        for (int x : new int[]{-2, 2}) for (int z : new int[]{-2, 2}) put.accept(new BlockPos(x, 3, z), Create_bioships.PULSE_LIGHT.get().defaultBlockState());
-        for (BlockPos root : FLAGELLA) put.accept(root.below(), Create_bioships.TENTACLE.get().defaultBlockState());
-        put.accept(new BlockPos(0, 1, 1), Create_bioships.PERCH.get().defaultBlockState());
-        put.accept(HELM.below(), helm()); put.accept(THROTTLE.below(), Create_bioships.THROTTLE.get().defaultBlockState());
-        put.accept(VERTICAL_TRIM.below(), Create_bioships.VERTICAL_TRIM.get().defaultBlockState());
-        put.accept(HUNT.below(), Create_bioships.CONTROLS.stream().filter(c -> c.get().command == NerveControlBlock.Command.HUNT).findFirst().orElseThrow().get().defaultBlockState());
-        BlockState door = Create_bioships.DOOR.get().defaultBlockState().setValue(DoorBlock.FACING, Direction.SOUTH);
-        put.accept(DOOR.below(), door.setValue(DoorBlock.HALF, DoubleBlockHalf.LOWER));
-        put.accept(DOOR, door.setValue(DoorBlock.HALF, DoubleBlockHalf.UPPER));
-        for (BlockPos organ : BUOYANCY_ORGANS) put.accept(organ.below(), flesh);
-        put.accept(new BlockPos(0, -1, 6), flesh);
-        put.accept(new BlockPos(0, -1, 7), flesh);
-        List<Part> connected = new ArrayList<>();
-        ArrayDeque<BlockPos> frontier = new ArrayDeque<>(); frontier.add(BlockPos.ZERO);
-        while (!frontier.isEmpty()) {
-            BlockPos current = frontier.removeFirst();
-            for (Direction direction : Direction.values()) {
-                Part next = parts.remove(current.relative(direction));
-                if (next != null) { connected.add(next); frontier.addLast(next.offset()); }
-            }
-        }
-        if (!parts.isEmpty()) throw new IllegalStateException("Detached body parts: " + parts.keySet());
-        return List.copyOf(connected);
+      }
     }
-    private static BlockState shell(Direction facing) { return Create_bioships.CARAPACE.get().defaultBlockState().setValue(CarapaceBlock.FACING, facing); }
+    if (!parts.isEmpty()) throw new IllegalStateException("Detached body parts: " + parts.keySet());
+    connected.sort(Comparator.comparing(part -> CABIN_LIGHTS.contains(part.offset())));
+    return List.copyOf(connected);
+  }
+
+  private static BlockState shell(Direction facing) {
+    return Create_bioships.CARAPACE
+        .get()
+        .defaultBlockState()
+        .setValue(CarapaceBlock.FACING, facing);
+  }
 }

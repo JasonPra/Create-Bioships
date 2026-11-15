@@ -6,7 +6,8 @@
   "mixins": [
     "DisassemblyPreventionMixin",
     "SimAssemblyHelperMixin",
-    "ServerSubLevelMixin"
+    "ServerSubLevelMixin",
+    "BiometricMembraneAccessMixin"
   ],
   "client": [],
   "injectors": {

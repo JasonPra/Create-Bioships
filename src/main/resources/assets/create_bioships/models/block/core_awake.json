@@ -1,6 +1,3 @@
 {
-  "parent": "minecraft:block/cube_all",
-  "textures": {
-    "all": "create_bioships:block/core_awake"
-  }
+  "parent": "create_bioships:block/living_core"
 }

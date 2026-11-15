@@ -1,0 +1,343 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "biomancy:acid_cauldron",
+      "required": false
+    },
+    {
+      "id": "biomancy:acid_fluid_block",
+      "required": false
+    },
+    {
+      "id": "biomancy:acid_splatter",
+      "required": false
+    },
+    {
+      "id": "biomancy:active_muscle",
+      "required": false
+    },
+    {
+      "id": "biomancy:adult_permeable_membrane",
+      "required": false
+    },
+    {
+      "id": "biomancy:adult_permeable_membrane_pane",
+      "required": false
+    },
+    {
+      "id": "biomancy:baby_permeable_membrane",
+      "required": false
+    },
+    {
+      "id": "biomancy:baby_permeable_membrane_pane",
+      "required": false
+    },
+    {
+      "id": "biomancy:bio_forge",
+      "required": false
+    },
+    {
+      "id": "biomancy:bio_lab",
+      "required": false
+    },
+    {
+      "id": "biomancy:bio_lantern_blue",
+      "required": false
+    },
+    {
+      "id": "biomancy:bio_lantern_yellow",
+      "required": false
+    },
+    {
+      "id": "biomancy:biometric_membrane",
+      "required": false
+    },
+    {
+      "id": "biomancy:bloomlight",
+      "required": false
+    },
+    {
+      "id": "biomancy:chiseled_flesh",
+      "required": false
+    },
+    {
+      "id": "biomancy:chrysalis",
+      "required": false
+    },
+    {
+      "id": "biomancy:decomposer",
+      "required": false
+    },
+    {
+      "id": "biomancy:digester",
+      "required": false
+    },
+    {
+      "id": "biomancy:fibrous_flesh",
+      "required": false
+    },
+    {
+      "id": "biomancy:fibrous_flesh_slab",
+      "required": false
+    },
+    {
+      "id": "biomancy:fibrous_flesh_stairs",
+      "required": false
+    },
+    {
+      "id": "biomancy:fibrous_flesh_wall",
+      "required": false
+    },
+    {
+      "id": "biomancy:fibrous_primal_flesh",
+      "required": false
+    },
+    {
+      "id": "biomancy:fibrous_primal_flesh_slab",
+      "required": false
+    },
+    {
+      "id": "biomancy:fibrous_primal_flesh_stairs",
+      "required": false
+    },
+    {
+      "id": "biomancy:fibrous_primal_flesh_wall",
+      "required": false
+    },
+    {
+      "id": "biomancy:flesh",
+      "required": false
+    },
+    {
+      "id": "biomancy:flesh_door",
+      "required": false
+    },
+    {
+      "id": "biomancy:flesh_fence",
+      "required": false
+    },
+    {
+      "id": "biomancy:flesh_fence_gate",
+      "required": false
+    },
+    {
+      "id": "biomancy:flesh_iris_door",
+      "required": false
+    },
+    {
+      "id": "biomancy:flesh_ladder",
+      "required": false
+    },
+    {
+      "id": "biomancy:flesh_pillar",
+      "required": false
+    },
+    {
+      "id": "biomancy:flesh_slab",
+      "required": false
+    },
+    {
+      "id": "biomancy:flesh_spike",
+      "required": false
+    },
+    {
+      "id": "biomancy:flesh_stairs",
+      "required": false
+    },
+    {
+      "id": "biomancy:flesh_wall",
+      "required": false
+    },
+    {
+      "id": "biomancy:fleshkin_chest",
+      "required": false
+    },
+    {
+      "id": "biomancy:fleshkin_pressure_plate",
+      "required": false
+    },
+    {
+      "id": "biomancy:full_flesh_door",
+      "required": false
+    },
+    {
+      "id": "biomancy:impermeable_membrane",
+      "required": false
+    },
+    {
+      "id": "biomancy:impermeable_membrane_pane",
+      "required": false
+    },
+    {
+      "id": "biomancy:malignant_flesh",
+      "required": false
+    },
+    {
+      "id": "biomancy:malignant_flesh_slab",
+      "required": false
+    },
+    {
+      "id": "biomancy:malignant_flesh_stairs",
+      "required": false
+    },
+    {
+      "id": "biomancy:malignant_flesh_veins",
+      "required": false
+    },
+    {
+      "id": "biomancy:malignant_flesh_wall",
+      "required": false
+    },
+    {
+      "id": "biomancy:maw_hopper",
+      "required": false
+    },
+    {
+      "id": "biomancy:modular_larynx",
+      "required": false
+    },
+    {
+      "id": "biomancy:oneway_membrane",
+      "required": false
+    },
+    {
+      "id": "biomancy:ornate_flesh",
+      "required": false
+    },
+    {
+      "id": "biomancy:ornate_flesh_slab",
+      "required": false
+    },
+    {
+      "id": "biomancy:packed_flesh",
+      "required": false
+    },
+    {
+      "id": "biomancy:packed_flesh_slab",
+      "required": false
+    },
+    {
+      "id": "biomancy:packed_flesh_stairs",
+      "required": false
+    },
+    {
+      "id": "biomancy:packed_flesh_wall",
+      "required": false
+    },
+    {
+      "id": "biomancy:porous_primal_flesh",
+      "required": false
+    },
+    {
+      "id": "biomancy:porous_primal_flesh_slab",
+      "required": false
+    },
+    {
+      "id": "biomancy:porous_primal_flesh_stairs",
+      "required": false
+    },
+    {
+      "id": "biomancy:porous_primal_flesh_wall",
+      "required": false
+    },
+    {
+      "id": "biomancy:primal_bloom",
+      "required": false
+    },
+    {
+      "id": "biomancy:primal_bone_block",
+      "required": false
+    },
+    {
+      "id": "biomancy:primal_flesh",
+      "required": false
+    },
+    {
+      "id": "biomancy:primal_flesh_slab",
+      "required": false
+    },
+    {
+      "id": "biomancy:primal_flesh_stairs",
+      "required": false
+    },
+    {
+      "id": "biomancy:primal_flesh_wall",
+      "required": false
+    },
+    {
+      "id": "biomancy:primal_orifice",
+      "required": false
+    },
+    {
+      "id": "biomancy:primal_permeable_membrane",
+      "required": false
+    },
+    {
+      "id": "biomancy:primal_permeable_membrane_pane",
+      "required": false
+    },
+    {
+      "id": "biomancy:primordial_bio_lantern",
+      "required": false
+    },
+    {
+      "id": "biomancy:primordial_cradle",
+      "required": false
+    },
+    {
+      "id": "biomancy:smooth_primal_flesh",
+      "required": false
+    },
+    {
+      "id": "biomancy:smooth_primal_flesh_slab",
+      "required": false
+    },
+    {
+      "id": "biomancy:smooth_primal_flesh_stairs",
+      "required": false
+    },
+    {
+      "id": "biomancy:smooth_primal_flesh_wall",
+      "required": false
+    },
+    {
+      "id": "biomancy:storage_sac",
+      "required": false
+    },
+    {
+      "id": "biomancy:tendon_chain",
+      "required": false
+    },
+    {
+      "id": "biomancy:tongue",
+      "required": false
+    },
+    {
+      "id": "biomancy:tubular_flesh",
+      "required": false
+    },
+    {
+      "id": "biomancy:undead_permeable_membrane",
+      "required": false
+    },
+    {
+      "id": "biomancy:undead_permeable_membrane_pane",
+      "required": false
+    },
+    {
+      "id": "biomancy:vial_holder",
+      "required": false
+    },
+    {
+      "id": "biomancy:volatile_splatter",
+      "required": false
+    },
+    {
+      "id": "biomancy:water_gel_block",
+      "required": false
+    },
+    "create_bioships:feeding_mouth",
+    "create_bioships:stomach"
+  ]
+}

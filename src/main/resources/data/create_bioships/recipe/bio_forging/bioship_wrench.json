@@ -1,0 +1,27 @@
+{
+  "type": "biomancy:bio_forging",
+  "bio_forge_tab": "biomancy:tools",
+  "ingredients": [
+    {
+      "item": "biomancy:living_flesh",
+      "count": 1
+    },
+    {
+      "item": "biomancy:bone_fragments",
+      "count": 6
+    },
+    {
+      "item": "biomancy:elastic_fibers",
+      "count": 3
+    },
+    {
+      "item": "biomancy:flesh_bits",
+      "count": 2
+    }
+  ],
+  "nutrientsCost": 1,
+  "result": {
+    "id": "create_bioships:bioship_wrench",
+    "count": 1
+  }
+}

@@ -1,0 +1,25 @@
+package org.Azkerash.create_bioships;
+
+import com.mojang.serialization.MapCodec;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.state.*;
+
+public class OneWayWindowBlock extends HorizontalDirectionalBlock {
+  public static final MapCodec<OneWayWindowBlock> CODEC = simpleCodec(OneWayWindowBlock::new);
+
+  public OneWayWindowBlock(Properties properties) {
+    super(properties);
+    registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
+  }
+
+  @Override
+  protected MapCodec<? extends HorizontalDirectionalBlock> codec() {
+    return CODEC;
+  }
+
+  @Override
+  protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+    builder.add(FACING);
+  }
+}

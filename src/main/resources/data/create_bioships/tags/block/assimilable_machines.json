@@ -10,6 +10,8 @@
     "biomancy:storage_sac",
     "biomancy:chrysalis",
     "biomancy:fleshkin_chest",
-    "biomancy:tongue"
+    "biomancy:tongue",
+    "create_bioships:feeding_mouth",
+    "create_bioships:stomach"
   ]
 }

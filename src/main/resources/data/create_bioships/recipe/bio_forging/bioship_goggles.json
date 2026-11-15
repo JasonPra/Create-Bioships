@@ -1,0 +1,27 @@
+{
+  "type": "biomancy:bio_forging",
+  "bio_forge_tab": "biomancy:tools",
+  "ingredients": [
+    {
+      "item": "biomancy:living_flesh",
+      "count": 1
+    },
+    {
+      "item": "biomancy:gem_fragments",
+      "count": 4
+    },
+    {
+      "item": "biomancy:elastic_fibers",
+      "count": 4
+    },
+    {
+      "item": "biomancy:flesh_bits",
+      "count": 4
+    }
+  ],
+  "nutrientsCost": 2,
+  "result": {
+    "id": "create_bioships:bioship_goggles",
+    "count": 1
+  }
+}

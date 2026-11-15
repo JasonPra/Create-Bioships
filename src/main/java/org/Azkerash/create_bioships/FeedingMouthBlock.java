@@ -1,0 +1,70 @@
+package org.Azkerash.create_bioships;
+
+import com.mojang.serialization.MapCodec;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.*;
+import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.entity.*;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+
+/** The ship's food inventory, distinct from Biomancy's crafting machines. */
+public class FeedingMouthBlock extends BaseEntityBlock {
+  public static final net.minecraft.world.level.block.state.properties.DirectionProperty FACING =
+      net.minecraft.world.level.block.state.properties.BlockStateProperties.FACING;
+  public static final MapCodec<FeedingMouthBlock> CODEC = simpleCodec(FeedingMouthBlock::new);
+
+  public FeedingMouthBlock(Properties properties) {
+    super(properties);
+    registerDefaultState(
+        stateDefinition.any().setValue(FACING, net.minecraft.core.Direction.NORTH));
+  }
+
+  @Override
+  protected void createBlockStateDefinition(
+      net.minecraft.world.level.block.state.StateDefinition.Builder<Block, BlockState> builder) {
+    builder.add(FACING);
+  }
+
+  @Override
+  protected MapCodec<? extends BaseEntityBlock> codec() {
+    return CODEC;
+  }
+
+  @Override
+  protected RenderShape getRenderShape(BlockState state) {
+    return RenderShape.MODEL;
+  }
+
+  @Override
+  public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+    return new FeedingMouthBlockEntity(pos, state);
+  }
+
+  @Override
+  public <T extends BlockEntity> BlockEntityTicker<T> getTicker(
+      Level level, BlockState state, BlockEntityType<T> type) {
+    return level.isClientSide
+        ? null
+        : createTickerHelper(
+            type, Create_bioships.FEEDING_MOUTH_ENTITY.get(), FeedingMouthBlockEntity::tick);
+  }
+
+  @Override
+  protected InteractionResult useWithoutItem(
+      BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
+    if (!level.isClientSide && level.getBlockEntity(pos) instanceof FeedingMouthBlockEntity mouth)
+      player.openMenu(mouth);
+    return InteractionResult.sidedSuccess(level.isClientSide);
+  }
+
+  @Override
+  protected void onRemove(
+      BlockState state, Level level, BlockPos pos, BlockState next, boolean moved) {
+    if (!state.is(next.getBlock()))
+      net.minecraft.world.Containers.dropContentsOnDestroy(state, next, level, pos);
+    super.onRemove(state, level, pos, next, moved);
+  }
+}
