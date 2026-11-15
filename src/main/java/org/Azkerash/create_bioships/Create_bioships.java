@@ -1,5 +1,6 @@
 package org.Azkerash.create_bioships;
 
+import com.mojang.datafixers.DSL;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.*;
@@ -10,15 +11,15 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.registries.*;
 
-@Mod(Create_bioships.MODID)
+@Mod(Create_bioships.MOD_ID)
 public class Create_bioships {
-  public static final String MODID = "create_bioships";
-  public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(MODID);
-  public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MODID);
+  public static final String MOD_ID = "create_bioships";
+  public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(MOD_ID);
+  public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MOD_ID);
   public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES =
-      DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, MODID);
+      DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, MOD_ID);
   public static final DeferredRegister<CreativeModeTab> TABS =
-      DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
+      DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MOD_ID);
   public static final DeferredBlock<LivingCoreBlock> CORE =
       BLOCKS.register(
           "living_core",
@@ -32,16 +33,19 @@ public class Create_bioships {
                               s.getValue(LivingCoreBlock.ACTIVE)
                                   ? s.getValue(LivingCoreBlock.BLINK) ? 3 : 7
                                   : 1)));
+
   // Legacy prototype IDs remain registered; the new body uses Simulated's native helm.
-  public static final DeferredBlock<LivingHelmBlock> HELM =
-      BLOCKS.register(
-          "living_helm",
-          () ->
-              new LivingHelmBlock(
-                  BlockBehaviour.Properties.of()
-                      .strength(2)
-                      .sound(SoundType.SLIME_BLOCK)
-                      .noOcclusion()));
+  static {
+    BLOCKS.register(
+        "living_helm",
+        () ->
+            new LivingHelmBlock(
+                BlockBehaviour.Properties.of()
+                    .strength(2)
+                    .sound(SoundType.SLIME_BLOCK)
+                    .noOcclusion()));
+  }
+
   public static final DeferredBlock<LivingThrottleBlock> THROTTLE =
       BLOCKS.register(
           "living_throttle",
@@ -108,7 +112,7 @@ public class Create_bioships {
                       .sound(SoundType.SLIME_BLOCK)
                       .noOcclusion()));
   public static final DeferredRegister<net.minecraft.world.inventory.MenuType<?>> MENUS =
-      DeferredRegister.create(net.minecraft.core.registries.Registries.MENU, MODID);
+      DeferredRegister.create(net.minecraft.core.registries.Registries.MENU, MOD_ID);
   public static final DeferredHolder<
           net.minecraft.world.inventory.MenuType<?>,
           net.minecraft.world.inventory.MenuType<StomachMenu>>
@@ -233,44 +237,52 @@ public class Create_bioships {
           "living_door",
           () ->
               new net.minecraft.world.item.DoubleHighBlockItem(DOOR.get(), new Item.Properties()));
+  // These custom NBT layouts have no vanilla DFU schema; preserve them as remainder data.
   public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<LivingCoreBlockEntity>>
       CORE_ENTITY =
           BLOCK_ENTITIES.register(
               "living_core",
-              () -> BlockEntityType.Builder.of(LivingCoreBlockEntity::new, CORE.get()).build(null));
+              () ->
+                  BlockEntityType.Builder.of(LivingCoreBlockEntity::new, CORE.get())
+                      .build(DSL.remainderType()));
   public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<StomachBlockEntity>>
       STOMACH_ENTITY =
           BLOCK_ENTITIES.register(
               "stomach",
-              () -> BlockEntityType.Builder.of(StomachBlockEntity::new, STOMACH.get()).build(null));
+              () ->
+                  BlockEntityType.Builder.of(StomachBlockEntity::new, STOMACH.get())
+                      .build(DSL.remainderType()));
   public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<FeedingMouthBlockEntity>>
       FEEDING_MOUTH_ENTITY =
           BLOCK_ENTITIES.register(
               "feeding_mouth",
               () ->
                   BlockEntityType.Builder.of(FeedingMouthBlockEntity::new, FEEDING_MOUTH.get())
-                      .build(null));
+                      .build(DSL.remainderType()));
   public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TentacleBlockEntity>>
       TENTACLE_ENTITY =
           BLOCK_ENTITIES.register(
               "tentacle",
               () ->
-                  BlockEntityType.Builder.of(TentacleBlockEntity::new, TENTACLE.get()).build(null));
-  public static final DeferredHolder<CreativeModeTab, CreativeModeTab> TAB =
-      TABS.register(
-          "bioships",
-          () ->
-              CreativeModeTab.builder()
-                  .title(Component.translatable("itemGroup.create_bioships"))
-                  .icon(() -> CORE_ITEM.get().getDefaultInstance())
-                  .displayItems(
-                      (parameters, output) -> {
-                        output.accept(CORE_ITEM.get());
-                        output.accept(DOOR_ITEM.get());
-                        output.accept(BIOSHIP_WRENCH.get());
-                        output.accept(BIOSHIP_GOGGLES.get());
-                      })
-                  .build());
+                  BlockEntityType.Builder.of(TentacleBlockEntity::new, TENTACLE.get())
+                      .build(DSL.remainderType()));
+
+  static {
+    TABS.register(
+        "bioships",
+        () ->
+            CreativeModeTab.builder()
+                .title(Component.translatable("itemGroup.create_bioships"))
+                .icon(() -> CORE_ITEM.get().getDefaultInstance())
+                .displayItems(
+                    (parameters, output) -> {
+                      output.accept(CORE_ITEM.get());
+                      output.accept(DOOR_ITEM.get());
+                      output.accept(BIOSHIP_WRENCH.get());
+                      output.accept(BIOSHIP_GOGGLES.get());
+                    })
+                .build());
+  }
 
   public Create_bioships(IEventBus bus) {
     com.simibubi.create.content.equipment.goggles.GogglesItem.addIsWearingPredicate(

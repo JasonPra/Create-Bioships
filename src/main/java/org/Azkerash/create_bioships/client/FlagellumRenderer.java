@@ -19,7 +19,7 @@ import org.joml.Vector3f;
 
 /** Continuous travelling waves propel the body; captured targets bend the same limb toward prey. */
 public class FlagellumRenderer implements BlockEntityRenderer<TentacleBlockEntity> {
-    private static final ResourceLocation SKIN = ResourceLocation.fromNamespaceAndPath(Create_bioships.MODID, "textures/block/living_hull.png");
+    private static final ResourceLocation SKIN = ResourceLocation.fromNamespaceAndPath(Create_bioships.MOD_ID, "textures/block/living_hull.png");
     private final ModelPart segment;
     public FlagellumRenderer(BlockEntityRendererProvider.Context context) {
         MeshDefinition mesh = new MeshDefinition();

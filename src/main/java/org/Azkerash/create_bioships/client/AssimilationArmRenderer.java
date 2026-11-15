@@ -19,7 +19,7 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
   private final ModelPart segment;
   private static final ResourceLocation SKIN =
       ResourceLocation.fromNamespaceAndPath(
-          Create_bioships.MODID, "textures/block/living_hull.png");
+          Create_bioships.MOD_ID, "textures/block/living_hull.png");
 
   public AssimilationArmRenderer(BlockEntityRendererProvider.Context context) {
     var mesh = new MeshDefinition();

@@ -24,11 +24,11 @@ import org.joml.Vector3d;
 public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySubLevelActor {
   private static final TagKey<Item> MEAT =
       TagKey.create(
-          Registries.ITEM, ResourceLocation.fromNamespaceAndPath(Create_bioships.MODID, "biomass"));
+          Registries.ITEM, ResourceLocation.fromNamespaceAndPath(Create_bioships.MOD_ID, "biomass"));
   private static final TagKey<Item> LEVITITE =
       TagKey.create(
           Registries.ITEM,
-          ResourceLocation.fromNamespaceAndPath(Create_bioships.MODID, "levitite_amalgam"));
+          ResourceLocation.fromNamespaceAndPath(Create_bioships.MOD_ID, "levitite_amalgam"));
   private BlockPos preferredMouth;
 
   public BlockPos preferredMouth() {

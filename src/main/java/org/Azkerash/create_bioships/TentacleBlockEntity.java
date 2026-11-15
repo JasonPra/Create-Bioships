@@ -25,7 +25,7 @@ public class TentacleBlockEntity extends BlockEntity implements BlockEntitySubLe
   private static final TagKey<EntityType<?>> PREY =
       TagKey.create(
           Registries.ENTITY_TYPE,
-          ResourceLocation.fromNamespaceAndPath(Create_bioships.MODID, "edible_entities"));
+          ResourceLocation.fromNamespaceAndPath(Create_bioships.MOD_ID, "edible_entities"));
   private UUID target;
   private int clientTarget = -1, heldTicks, cooldown;
   private long lastTick = Long.MIN_VALUE;

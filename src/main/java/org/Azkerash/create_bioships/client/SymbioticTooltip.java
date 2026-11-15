@@ -12,7 +12,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderGuiEvent;
 import org.Azkerash.create_bioships.*;
 
-@EventBusSubscriber(modid = Create_bioships.MODID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = Create_bioships.MOD_ID, value = Dist.CLIENT)
 public final class SymbioticTooltip {
   @SubscribeEvent
   public static void render(RenderGuiEvent.Post event) {

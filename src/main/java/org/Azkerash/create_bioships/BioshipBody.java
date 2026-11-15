@@ -12,7 +12,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.level.BlockEvent;
 
 /** Persistent intended tissue, independent of current holes. Never exposes a health HUD. */
-@EventBusSubscriber(modid = Create_bioships.MODID)
+@EventBusSubscriber(modid = Create_bioships.MOD_ID)
 public final class BioshipBody {
   final Map<BlockPos, BlockState> memory = new LinkedHashMap<>();
   private final Set<BlockPos> injured = new HashSet<>();

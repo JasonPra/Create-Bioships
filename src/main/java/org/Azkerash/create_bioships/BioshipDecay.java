@@ -11,7 +11,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 
 /** Decay belongs to the physics body so fragments continue to rot without a core. */
-@EventBusSubscriber(modid = Create_bioships.MODID)
+@EventBusSubscriber(modid = Create_bioships.MOD_ID)
 public final class BioshipDecay {
   public static boolean dead(ServerSubLevel ship) {
     return ship.getUserDataTag() != null && ship.getUserDataTag().getBoolean("BioshipDead");

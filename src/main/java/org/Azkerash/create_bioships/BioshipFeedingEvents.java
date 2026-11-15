@@ -8,7 +8,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
 
-@EventBusSubscriber(modid = Create_bioships.MODID)
+@EventBusSubscriber(modid = Create_bioships.MOD_ID)
 public final class BioshipFeedingEvents {
   private static final ThreadLocal<UUID> SWALLOWED = new ThreadLocal<>();
 

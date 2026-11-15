@@ -11,7 +11,7 @@ import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import org.Azkerash.create_bioships.*;
 
-@EventBusSubscriber(modid = Create_bioships.MODID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = Create_bioships.MOD_ID, value = Dist.CLIENT)
 public final class BioshipClient {
   public static final LivingControlHandler CONTROLS = new LivingControlHandler();
 

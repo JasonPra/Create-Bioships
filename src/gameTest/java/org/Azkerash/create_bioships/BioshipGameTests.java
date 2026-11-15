@@ -25,7 +25,7 @@ import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.gametest.*;
 
-@GameTestHolder(Create_bioships.MODID)
+@GameTestHolder(Create_bioships.MOD_ID)
 @PrefixGameTestTemplate(false)
 public class BioshipGameTests {
   private static int fixture;
@@ -735,7 +735,7 @@ public class BioshipGameTests {
               .getRecipeManager()
               .byKey(
                   ResourceLocation.fromNamespaceAndPath(
-                      Create_bioships.MODID, "bio_forging/" + name));
+                      Create_bioships.MOD_ID, "bio_forging/" + name));
       helper.assertTrue(
           recipe.isPresent()
               && recipe.get().value()
@@ -746,7 +746,7 @@ public class BioshipGameTests {
               .get()
               .value()
               .getResultItem(helper.getLevel().registryAccess())
-              .is(item(Create_bioships.MODID + ":" + name)),
+              .is(item(Create_bioships.MOD_ID + ":" + name)),
           "Wrong Bio-Forge output");
     }
     var captain = player(helper, "Captain");

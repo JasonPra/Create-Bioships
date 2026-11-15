@@ -19,21 +19,21 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 
 /** World mutation happens in ordinary block ticks, outside Sable's actor iteration. */
-@EventBusSubscriber(modid = Create_bioships.MODID)
+@EventBusSubscriber(modid = Create_bioships.MOD_ID)
 public final class BioshipIntegration {
   private static final String BOUND = "BioshipBound";
   private static final TagKey<net.minecraft.world.level.block.Block> MACHINES =
       TagKey.create(
           net.minecraft.core.registries.Registries.BLOCK,
-          ResourceLocation.fromNamespaceAndPath(Create_bioships.MODID, "assimilable_machines"));
+          ResourceLocation.fromNamespaceAndPath(Create_bioships.MOD_ID, "assimilable_machines"));
   private static final TagKey<net.minecraft.world.level.block.Block> FLESH =
       TagKey.create(
           net.minecraft.core.registries.Registries.BLOCK,
-          ResourceLocation.fromNamespaceAndPath(Create_bioships.MODID, "construction_flesh"));
+          ResourceLocation.fromNamespaceAndPath(Create_bioships.MOD_ID, "construction_flesh"));
   private static final TagKey<Item> MATERIAL =
       TagKey.create(
           net.minecraft.core.registries.Registries.ITEM,
-          ResourceLocation.fromNamespaceAndPath(Create_bioships.MODID, "construction_biomass"));
+          ResourceLocation.fromNamespaceAndPath(Create_bioships.MOD_ID, "construction_biomass"));
 
   public static TagKey<Item> constructionMaterial() {
     return MATERIAL;

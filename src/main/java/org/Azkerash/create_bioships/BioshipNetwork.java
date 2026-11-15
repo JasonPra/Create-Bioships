@@ -13,7 +13,7 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 
 public final class BioshipNetwork {
     public record Throttle(BlockPos pos, int setting) implements CustomPacketPayload {
-        public static final Type<Throttle> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(Create_bioships.MODID, "throttle"));
+        public static final Type<Throttle> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(Create_bioships.MOD_ID, "throttle"));
         public static final StreamCodec<RegistryFriendlyByteBuf, Throttle> CODEC = StreamCodec.of((buf, p) -> { buf.writeBlockPos(p.pos); buf.writeVarInt(p.setting); }, buf -> new Throttle(buf.readBlockPos(), buf.readVarInt()));
         @Override public Type<Throttle> type() { return TYPE; }
     }
