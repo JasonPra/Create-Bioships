@@ -86,6 +86,12 @@ public class Create_bioships {
           () ->
               new AccessPanelBlock(
                   BlockBehaviour.Properties.of().strength(2).sound(SoundType.SLIME_BLOCK)));
+  public static final DeferredBlock<BlueprintPanelBlock> BLUEPRINT_PANEL =
+      BLOCKS.register(
+          "blueprint_panel",
+          () ->
+              new BlueprintPanelBlock(
+                  BlockBehaviour.Properties.of().strength(2).sound(SoundType.SLIME_BLOCK)));
   public static final DeferredBlock<StomachBlock> STOMACH =
       BLOCKS.register(
           "stomach",
@@ -121,6 +127,15 @@ public class Create_bioships {
               () ->
                   net.neoforged.neoforge.common.extensions.IMenuTypeExtension.create(
                       AccessMenu::fromNetwork));
+  public static final DeferredHolder<
+          net.minecraft.world.inventory.MenuType<?>,
+          net.minecraft.world.inventory.MenuType<BlueprintMenu>>
+      BLUEPRINT_MENU =
+          MENUS.register(
+              "blueprint_panel",
+              () ->
+                  net.neoforged.neoforge.common.extensions.IMenuTypeExtension.create(
+                      BlueprintMenu::fromNetwork));
   public static final DeferredBlock<FeedingMouthBlock> FEEDING_MOUTH =
       BLOCKS.register(
           "feeding_mouth",

@@ -110,6 +110,6 @@ public class LivingCoreBlock extends BaseEntityBlock {
   @Override
   public void attack(BlockState state, Level level, BlockPos pos, Player player) {
     if (!level.isClientSide && level.getBlockEntity(pos) instanceof LivingCoreBlockEntity core)
-      core.mistreat();
+      core.body().struck(core, player);
   }
 }

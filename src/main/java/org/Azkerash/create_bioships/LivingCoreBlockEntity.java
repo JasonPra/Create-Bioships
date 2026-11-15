@@ -90,7 +90,12 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
   private net.minecraft.world.entity.item.ItemEntity foodTarget;
   private volatile FlightIntent flight = new FlightIntent(false, Vec3.ZERO, 0);
 
-  private record FlightIntent(boolean lift, Vec3 velocity, double turn) {}
+  private record FlightIntent(
+      boolean lift, Vec3 velocity, double turn, double supportHeight, Vec3 stanceUp) {
+    FlightIntent(boolean lift, Vec3 velocity, double turn) {
+      this(lift, velocity, turn, Double.NaN, new Vec3(0, 1, 0));
+    }
+  }
 
   public LivingCoreBlockEntity(BlockPos pos, BlockState state) {
     super(Create_bioships.CORE_ENTITY.get(), pos, state);
@@ -114,6 +119,10 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
 
   public void interact(Player player, ItemStack stack) {
     ServerSubLevel ship = ship();
+    if (body.dead()) {
+      message(player, "message.create_bioships.dead");
+      return;
+    }
     if (ship == null) {
       message(player, "message.create_bioships.dormant");
       return;
@@ -138,24 +147,52 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
           resting ? "message.create_bioships.resting" : "message.create_bioships.controls_enabled");
       return;
     }
-    message(
-        player,
-        "message.create_bioships.status",
-        Component.translatable("stage.create_bioships." + stage),
-        needs.biomass(),
-        BioshipNeeds.BIOMASS_REQUIRED,
-        needs.levitite(),
-        BioshipNeeds.LEVITITE_REQUIRED,
-        needs.satiety(),
-        BioshipNeeds.MAX_SATIETY,
-        Component.translatable("mood.create_bioships." + needs.mood()),
-        needs.trust());
-    if (stage == 0 && needs.readyToGrow() && !roomToGrow(ship))
-      message(player, "message.create_bioships.obstructed");
+    message(player, "message.create_bioships.inspect");
+  }
+
+  private int goggleFlesh, goggleBone, goggleFiber;
+
+  public java.util.List<Component> goggleTooltip() {
+    var lines = new java.util.ArrayList<Component>();
+    lines.add(Component.literal(body.dead() ? "Bioship remains" : "Living Bioship"));
+    if (body.dead()) {
+      lines.add(
+          Component.literal("Dead. The wreck is rotting; useful components can be reclaimed."));
+      return lines;
+    }
+    lines.add(
+        Component.translatable("stage.create_bioships." + stage)
+            .append(" | ")
+            .append(Component.translatable("mood.create_bioships." + needs.mood())));
+    lines.add(Component.literal("Growth biomass: " + needs.biomass() + " / 64"));
+    lines.add(Component.literal("Stored flesh: " + goggleFlesh));
+    lines.add(
+        Component.literal(
+            "Frame: "
+                + goggleBone
+                + " / 8 bone, "
+                + goggleFiber
+                + " / 12 fibers"
+                + (framePaid ? " (grown)" : "")));
+    lines.add(Component.literal("Amalgam: " + needs.levitite() + " / 8"));
+    lines.add(Component.literal("Food: " + needs.satiety() + " / 1200 | Trust: " + needs.trust()));
+    if (stage == 0)
+      lines.add(
+          Component.literal(
+              "Growth needs open space: 9 wide, 21 long and 8 above the core. Feed through the"
+                  + " connected mouth and stomach."));
+    if (stage == 0)
+      lines.add(
+          Component.literal(
+              "Stomach formation needs both a Decomposer and a Digester. Assimilate a Bio-Forge for"
+                  + " the feeding maw."));
+    if (crawl.walking()) lines.add(Component.literal("Walking to a clear growth site."));
+    if (blueprint.busy()) lines.add(Component.literal(blueprint.status()));
+    return lines;
   }
 
   public boolean feedAtMouth(Player player, ItemStack stack) {
-    if (ship() == null || !primary(ship()) || !hasMouth()) return false;
+    if (body.dead() || ship() == null || !primary(ship()) || !hasMouth()) return false;
     var stomach = DigestiveSystem.stomach(this);
     if (stomach == null || !stomach.connected(this)) {
       message(player, "message.create_bioships.need_stomach");
@@ -214,6 +251,33 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     return accepted;
   }
 
+  private final BioshipScavenging scavenging = new BioshipScavenging();
+
+  public BioshipScavenging scavenging() {
+    return scavenging;
+  }
+
+  private final BioshipCrawl crawl = new BioshipCrawl();
+
+  public BioshipCrawl crawl() {
+    return crawl;
+  }
+
+  private final BioshipBody body = new BioshipBody();
+  private final BioshipBlueprint blueprint = new BioshipBlueprint();
+
+  public BioshipBody body() {
+    return body;
+  }
+
+  public BioshipBlueprint blueprint() {
+    return blueprint;
+  }
+
+  public BlockPos layoutPos(BlockPos offset) {
+    return worldPosition.offset(blueprint.offset(offset));
+  }
+
   private boolean framePaid, larynxDeveloped;
 
   public boolean wantsStoredFood() {
@@ -246,7 +310,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
         || stomach.material("biomancy:flesh_bits") < 8
         || stomach.material("biomancy:bone_fragments") < 2
         || stomach.material("biomancy:elastic_fibers") < 4) return;
-    BlockPos target = worldPosition.offset(DinghyGrowth.LARYNX);
+    BlockPos target = layoutPos(DinghyGrowth.LARYNX);
     if (!clearForGrowth(ship, target)) return;
     var larynx =
         net.minecraft.core.registries.BuiltInRegistries.BLOCK.get(
@@ -299,13 +363,33 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
         ship.getPlot().newEmptyChunk(chunk);
     }
     for (var part : DinghyGrowth.body())
-      if (!BioshipIntegration.isIntegratedMachine(level, worldPosition.offset(part.offset()))
+      if (!level.getBlockState(worldPosition.offset(part.offset())).equals(part.state())
+          && !BioshipIntegration.isIntegratedMachine(level, worldPosition.offset(part.offset()))
           && !clearForGrowth(ship, worldPosition.offset(part.offset()))) return false;
     return true;
   }
 
   public static void tick(Level level, BlockPos pos, BlockState state, LivingCoreBlockEntity core) {
-    if (!level.isClientSide) OrganMotion.tick(core);
+    if (level.isClientSide) return;
+    if (core.body.dead()) {
+      core.updateEye(false);
+      core.flight = new FlightIntent(false, Vec3.ZERO, 0);
+      if (core.ship() != null) BioshipDecay.mark(core.ship());
+      BioshipAccess.tick(core);
+      return;
+    }
+    if (core.ship() != null)
+      core.crawl.tick(
+          core, core.stage < 2 && core.needs.readyToGrow() && !core.roomToGrow(core.ship()));
+    core.body.tick(core);
+    if (core.blueprint.busy()) {
+      core.serverTick();
+      core.blueprint.tick(core);
+      BioshipAccess.tick(core);
+      return;
+    }
+    var before = BioshipBody.actual(core);
+    OrganMotion.tick(core);
     core.serverTick();
     var ship = core.ship();
     if (ship != null && core.primary(ship) && level.getGameTime() % 20 == 0)
@@ -313,20 +397,24 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     core.updateCabinLights();
     if (ship != null && level.getGameTime() % 20 == 0) DigestiveSystem.connect(core, ship);
     core.growBody();
-    if (ship != null && core.isMature() && level.getGameTime() % 20 == 0)
-      EngineRoom.arrange(core, ship);
     if (ship != null && core.isMature() && level.getGameTime() % 20 == 0) {
+      EngineRoom.arrange(core, ship);
       BioshipIntegration.relocateMouth(core, ship);
       DigestiveSystem.connect(core, ship);
       core.developLarynx(ship);
       BioshipAccess.tick(core);
+      var panel = core.layoutPos(new BlockPos(-3, 2, 2));
+      if (level.getBlockState(panel).isAir()
+          || level.getBlockState(panel).is(Create_bioships.FLESH.get()))
+        level.setBlock(panel, Create_bioships.BLUEPRINT_PANEL.get().defaultBlockState(), 3);
     }
+    core.body.reconcile(core, before);
   }
 
   private void updateCabinLights() {
     if (stage != 2) return;
     for (BlockPos offset : DinghyGrowth.CABIN_LIGHTS) {
-      BlockPos pos = worldPosition.offset(offset);
+      BlockPos pos = layoutPos(offset);
       if (level.getBlockState(pos).is(Create_bioships.PULSE_LIGHT.get())
           && DinghyGrowth.cabinLantern().canSurvive(level, pos))
         level.setBlock(pos, DinghyGrowth.cabinLantern(), 3);
@@ -335,6 +423,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
 
   // New actor block entities are created outside Sable's actor iteration.
   private void growBody() {
+    if (body.health() <= 0) return;
     ServerSubLevel ship = ship();
     if (ship == null || !primary(ship)) return;
     if (stage == 0
@@ -401,7 +490,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     if (level == null || level.getGameTime() == lastServerTick) return;
     lastServerTick = level.getGameTime();
     ServerSubLevel ship = ship();
-    boolean alive = ship != null && primary(ship);
+    boolean alive = ship != null && primary(ship) && !body.dead();
     updateEye(alive);
     if (!alive) {
       flight = new FlightIntent(false, Vec3.ZERO, 0);
@@ -417,21 +506,47 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
       metabolismTicks = 0;
       bodyBlocks = BioshipIntegration.countBlocks(ship);
       needs.metabolize(bodyBlocks);
+      if (needs.satiety() == 0) {
+        var stomach = DigestiveSystem.stomach(this);
+        int energy = 0, demand = BioshipNeeds.foodDemand(bodyBlocks);
+        while (energy < demand) {
+          int next = stomach == null ? blueprint.burnBufferedReserve() : stomach.burnReserve();
+          if (next == 0) break;
+          energy += next;
+        }
+        if (energy > 0) needs.emergencyEnergy(energy);
+        if (energy < demand) body.starve(this, demand - energy);
+      }
+      if (body.dead()) {
+        flight = new FlightIntent(false, Vec3.ZERO, 0);
+        updateEye(false);
+        return;
+      }
       setChanged();
+    }
+    if (blueprint.busy()) {
+      var travel = blueprint.flight(this);
+      flight = new FlightIntent(canFly(), travel == null ? Vec3.ZERO : travel, 0);
+      return;
+    }
+    if (crawl.walking() || crawl.bracing()) {
+      flight =
+          new FlightIntent(false, crawl.velocity(this), 0, crawl.supportHeight(), crawl.stanceUp());
+      return;
     }
     Vec3 desired = Vec3.ZERO;
     double turn = 0;
     boolean heightCommanded = false;
     if (canFly() && !resting()) {
-      BlockState throttleState = level.getBlockState(worldPosition.offset(DinghyGrowth.THROTTLE));
+      BlockState throttleState = level.getBlockState(layoutPos(DinghyGrowth.THROTTLE));
       double throttle =
           throttleState.is(Create_bioships.THROTTLE.get())
               ? LivingThrottleBlock.signed(throttleState)
               : 0;
-      if (level.getBlockEntity(worldPosition.offset(DinghyGrowth.HELM))
+      if (level.getBlockEntity(layoutPos(DinghyGrowth.HELM))
           instanceof SteeringWheelBlockEntity helm)
         turn = Math.clamp(-helm.getAngle() / 180.0, -1, 1);
-      BlockState trimState = level.getBlockState(worldPosition.offset(DinghyGrowth.VERTICAL_TRIM));
+      BlockState trimState = level.getBlockState(layoutPos(DinghyGrowth.VERTICAL_TRIM));
       double vertical =
           trimState.is(Create_bioships.VERTICAL_TRIM.get())
               ? LivingThrottleBlock.signed(trimState)
@@ -465,24 +580,28 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
         desired = desired.add(0, Math.clamp((hoverHeight - height) * 2.0, -1.5, 1.5), 0);
       }
     }
+    if (blueprint.busy()) {
+      var travel = blueprint.flight(this);
+      flight = new FlightIntent(canFly(), travel == null ? Vec3.ZERO : travel, 0);
+      return;
+    }
     flight = new FlightIntent(canFly(), desired, turn);
   }
 
   private void incorporateAmalgam() {
     if (stage != 2) return;
     for (int i = 0; i < needs.levitite(); i++) {
-      BlockPos pos = worldPosition.offset(DinghyGrowth.BUOYANCY_ORGANS.get(i));
+      BlockPos pos = layoutPos(DinghyGrowth.BUOYANCY_ORGANS.get(i));
       if (level.getBlockState(pos).is(Create_bioships.FLESH.get()))
         level.setBlock(pos, Create_bioships.BUOYANCY_ORGAN.get().defaultBlockState(), 3);
     }
   }
 
   public boolean canFly() {
-    if (stage != 2 || !needs.flightNourished()) return false;
+    if (stage != 2 || body.dead() || body.health() <= 0 || !needs.flightNourished()) return false;
     for (BlockPos offset : DinghyGrowth.BUOYANCY_ORGANS)
-      if (!level
-          .getBlockState(worldPosition.offset(offset))
-          .is(Create_bioships.BUOYANCY_ORGAN.get())) return false;
+      if (!level.getBlockState(layoutPos(offset)).is(Create_bioships.BUOYANCY_ORGAN.get()))
+        return false;
     return true;
   }
 
@@ -516,10 +635,19 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
   }
 
   public boolean huntingAllowed() {
-    var state = level.getBlockState(worldPosition.offset(DinghyGrowth.HUNT));
+    var state = level.getBlockState(layoutPos(DinghyGrowth.HUNT));
     return state.getBlock() instanceof NerveControlBlock nerve
         && nerve.command == NerveControlBlock.Command.HUNT
         && state.getValue(NerveControlBlock.ACTIVE);
+  }
+
+  public boolean starving() {
+    return needs.satiety() == 0;
+  }
+
+  public void adoptLarynx() {
+    larynxDeveloped = true;
+    setChanged();
   }
 
   public boolean hungry() {
@@ -537,7 +665,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
       for (var actor : BioshipIntegration.blockEntities(ship))
         if (BioshipIntegration.isMaw(level.getBlockState(actor.getBlockPos())))
           return actor.getBlockPos();
-    BlockPos oldMouth = worldPosition.offset(DinghyGrowth.MOUTH);
+    BlockPos oldMouth = layoutPos(DinghyGrowth.MOUTH);
     return level.getBlockState(oldMouth).is(Create_bioships.MOUTH.get()) ? oldMouth : null;
   }
 
@@ -593,7 +721,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
   public int swimmingFlagella() {
     int count = 0;
     for (BlockPos offset : DinghyGrowth.FLAGELLA)
-      if (level.getBlockEntity(worldPosition.offset(offset)) instanceof TentacleBlockEntity tentacle
+      if (level.getBlockEntity(layoutPos(offset)) instanceof TentacleBlockEntity tentacle
           && tentacle.swimming()) count++;
     return count;
   }
@@ -695,19 +823,33 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
 
   @Override
   public void sable$physicsTick(ServerSubLevel ship, RigidBodyHandle body, double dt) {
+    if (this.body.dead()) return;
     FlightIntent intent = flight;
     if (!body.isValid()) return;
     double mass = ship.getMassTracker().getMass();
     if (!Double.isFinite(mass) || mass <= 0 || !Double.isFinite(dt) || dt <= 0) return;
     Vector3d up = ship.logicalPose().transformNormal(new Vector3d(0, 1, 0), new Vector3d());
     Vector3d correction =
-        up.cross(new Vector3d(0, 1, 0), new Vector3d()).mul(intent.lift() ? 3 : 30);
+        up.cross(
+                new Vector3d(intent.stanceUp().x, intent.stanceUp().y, intent.stanceUp().z),
+                new Vector3d())
+            .mul(intent.lift() ? 3 : 30);
     correction
         .add(0, intent.turn() * 1.2, 0)
         .sub(body.getAngularVelocity(new Vector3d()).mul(intent.lift() ? 1.8 : 8));
-    // A growing organism braces upright on the ground; it receives no buoyancy or linear thrust.
+    // Grounded muscles push and brace only within reach of a solid footing; no flight buoyancy.
     if (!intent.lift()) {
-      body.addLinearAndAngularVelocity(new Vector3d(), correction.mul(dt));
+      var current = body.getLinearVelocity(new Vector3d());
+      var grounded =
+          new Vector3d(intent.velocity().x - current.x, 0, intent.velocity().z - current.z)
+              .mul(12 * dt);
+      if (Double.isFinite(intent.supportHeight())) {
+        double height = ship.logicalPose().transformPosition(Vec3.atCenterOf(worldPosition)).y;
+        double target = Math.clamp((intent.supportHeight() - height) * 2, -.45, .65);
+        double gravity = DimensionPhysicsData.getGravity(ship.getLevel()).y;
+        grounded.y = ((target - current.y) * 6 - gravity) * dt;
+      }
+      body.addLinearAndAngularVelocity(grounded, correction.mul(dt));
       return;
     }
     Vector3d acceleration =
@@ -723,7 +865,20 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     super.saveAdditional(tag, registries);
     if (preferredMouth != null) tag.putLong("PreferredMouth", preferredMouth.asLong());
     if (organMove != null) tag.put("OrganMove", organMove.save());
+    tag.put("Scavenging", scavenging.save());
+    tag.put("Crawl", crawl.save());
     tag.put("Access", access.save(captain));
+    tag.put("BodyMemory", body.save());
+    tag.put("Blueprint", blueprint.save());
+    if (level != null && !level.isClientSide) {
+      var stomach = DigestiveSystem.stomach(this);
+      goggleFlesh = stomach == null ? 0 : stomach.material("biomancy:flesh_bits");
+      goggleBone = stomach == null ? 0 : stomach.material("biomancy:bone_fragments");
+      goggleFiber = stomach == null ? 0 : stomach.material("biomancy:elastic_fibers");
+    }
+    tag.putInt("GoggleFlesh", goggleFlesh);
+    tag.putInt("GoggleBone", goggleBone);
+    tag.putInt("GoggleFiber", goggleFiber);
     tag.putBoolean("FramePaid", framePaid);
     tag.putBoolean("LarynxDeveloped", larynxDeveloped);
     tag.putInt("BodyLayoutVersion", DinghyGrowth.LAYOUT_VERSION);
@@ -747,7 +902,14 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
         tag.contains("PreferredMouth") ? BlockPos.of(tag.getLong("PreferredMouth")) : null;
     organMove =
         tag.contains("OrganMove") ? OrganMotion.Move.load(tag.getCompound("OrganMove")) : null;
+    scavenging.load(tag.getCompound("Scavenging"));
+    crawl.load(tag.getCompound("Crawl"));
     access.load(tag.getCompound("Access"));
+    body.load(tag.getCompound("BodyMemory"), registries);
+    blueprint.load(tag.getCompound("Blueprint"), registries);
+    goggleFlesh = tag.getInt("GoggleFlesh");
+    goggleBone = tag.getInt("GoggleBone");
+    goggleFiber = tag.getInt("GoggleFiber");
     framePaid = tag.getBoolean("FramePaid") || tag.getInt("Stage") > 0;
     larynxDeveloped = tag.getBoolean("LarynxDeveloped");
     needs.restorePoison(tag.getInt("PoisonSeconds"));

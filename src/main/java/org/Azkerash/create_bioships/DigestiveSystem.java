@@ -18,16 +18,31 @@ public final class DigestiveSystem {
     return null;
   }
 
+  private static boolean linked(LivingCoreBlockEntity core, BlockPos a, BlockPos b) {
+    for (var direction : Direction.values())
+      if (a.relative(direction).equals(b)) {
+        var first = core.getLevel().getBlockState(a);
+        var second = core.getLevel().getBlockState(b);
+        return IntestineBlock.compatible(first)
+            && IntestineBlock.compatible(second)
+            && (!first.is(Create_bioships.INTESTINE.get())
+                || first.getValue(IntestineBlock.CONNECTIONS.get(direction)))
+            && (!second.is(Create_bioships.INTESTINE.get())
+                || second.getValue(IntestineBlock.CONNECTIONS.get(direction.getOpposite())));
+      }
+    return false;
+  }
+
   private static boolean pathIntact(
       LivingCoreBlockEntity core, BlockPos start, BlockPos end, List<BlockPos> path) {
     var previous = start;
     for (var point : path) {
-      if (previous.distManhattan(point) != 1
+      if (!linked(core, previous, point)
           || !core.getLevel().getBlockState(point).is(Create_bioships.INTESTINE.get()))
         return false;
       previous = point;
     }
-    return previous.distManhattan(end) == 1;
+    return linked(core, previous, end);
   }
 
   public static boolean connected(LivingCoreBlockEntity core, StomachBlockEntity stomach) {
@@ -45,7 +60,7 @@ public final class DigestiveSystem {
     ArrayDeque<BlockPos> queue = new ArrayDeque<>();
     queue.add(start);
     parent.put(start, start);
-    while (!queue.isEmpty() && parent.size() < 4096) {
+    while (!queue.isEmpty() && parent.size() < 12000) {
       var point = queue.removeFirst();
       if (point.equals(end)) {
         List<BlockPos> path = new ArrayList<>();
@@ -61,10 +76,10 @@ public final class DigestiveSystem {
         var next = point.relative(direction);
         var offset = next.subtract(origin);
         if (parent.containsKey(next)
-            || Math.abs(offset.getX()) > 5
+            || Math.abs(offset.getX()) > 24
             || offset.getY() < 0
             || offset.getY() > 6
-            || Math.abs(offset.getZ()) > 10) continue;
+            || Math.abs(offset.getZ()) > 24) continue;
         if (!next.equals(end) && offset.getY() != 1) continue;
         if (!ship.getPlot().contains(new net.minecraft.world.level.ChunkPos(next))) continue;
         var state = level.getBlockState(next);
@@ -110,6 +125,13 @@ public final class DigestiveSystem {
             3);
     for (var next : wanted) {
       var old = level.getBlockState(next);
+      if (old.isAir()
+          && core.body()
+              .memory
+              .getOrDefault(
+                  next.subtract(core.getBlockPos()),
+                  net.minecraft.world.level.block.Blocks.AIR.defaultBlockState())
+              .is(Create_bioships.INTESTINE.get())) continue;
       if (!old.is(Create_bioships.INTESTINE.get()))
         level.setBlock(
             next,
@@ -119,6 +141,12 @@ public final class DigestiveSystem {
                 .setValue(IntestineBlock.ENCASED, old.is(Create_bioships.FLESH.get())),
             3);
     }
+    for (var next : wanted)
+      if (level.getBlockState(next).is(Create_bioships.INTESTINE.get())) {
+        var state = level.getBlockState(next);
+        var connected = Create_bioships.INTESTINE.get().connections(state, level, next);
+        if (!state.equals(connected)) level.setBlock(next, connected, 3);
+      }
     stomach.gutPath.clear();
     stomach.gutPath.addAll(main);
     stomach.sacPaths.clear();

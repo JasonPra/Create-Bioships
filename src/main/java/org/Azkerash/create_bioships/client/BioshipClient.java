@@ -27,6 +27,7 @@ public final class BioshipClient {
   @SubscribeEvent
   public static void screens(net.neoforged.neoforge.client.event.RegisterMenuScreensEvent event) {
     event.register(Create_bioships.STOMACH_MENU.get(), StomachScreen::new);
+    event.register(Create_bioships.BLUEPRINT_MENU.get(), BlueprintScreen::new);
     event.register(Create_bioships.ACCESS_MENU.get(), AccessScreen::new);
   }
 

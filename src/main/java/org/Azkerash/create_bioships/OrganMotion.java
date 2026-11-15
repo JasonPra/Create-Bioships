@@ -91,10 +91,14 @@ public final class OrganMotion {
     if (!host.isAir() && !host.is(Create_bioships.FLESH.get())) return false;
     var state = level.getBlockState(source);
     if (state.isAir() || state.is(Create_bioships.CORE.get())) return false;
+    var sourceShip = BioshipIntegration.containing(level, source);
+    boolean scavenged =
+        external && sourceShip != null && sourceShip != ship && BioshipDecay.dead(sourceShip);
+    if (external && sourceShip != null && sourceShip != ship && !scavenged) return false;
     Vec3 sourceWorld =
-        external
-            ? Vec3.atCenterOf(source)
-            : ship.logicalPose().transformPosition(Vec3.atCenterOf(source));
+        sourceShip != null
+            ? sourceShip.logicalPose().transformPosition(Vec3.atCenterOf(source))
+            : Vec3.atCenterOf(source);
     Vec3 destination = ship.logicalPose().transformPosition(Vec3.atCenterOf(target));
     if (!level.getBlockState(BlockPos.containing(destination)).isAir()) return false;
     String id =
@@ -126,6 +130,8 @@ public final class OrganMotion {
     var data = new CompoundTag();
     data.putUUID("BioshipCargoOwner", ship.getUniqueId());
     data.putBoolean("BioshipBound", true);
+    data.putBoolean("BioshipScavenged", scavenged);
+    data.putBoolean("ScavengeHostFlesh", host.is(Create_bioships.FLESH.get()));
     cargo.setUserDataTag(data);
     if (restore && !external)
       level.setBlock(source, Create_bioships.FLESH.get().defaultBlockState(), 3);
@@ -144,6 +150,11 @@ public final class OrganMotion {
             manual,
             SubLevelContainer.getContainer(level)
                 .addForceLoadTicket(ship, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE));
+    if (!external) {
+      var local = source.subtract(core.getBlockPos());
+      core.body().memory.remove(local);
+      if (restore) core.body().memory.put(local, level.getBlockState(source));
+    }
     core.organMove(move);
     return true;
   }
@@ -223,12 +234,17 @@ public final class OrganMotion {
               .setValue(StomachBlock.FACING, d.getX() < 0 ? Direction.EAST : Direction.WEST),
           3);
     }
+    boolean scavenged =
+        cargo.getUserDataTag() != null && cargo.getUserDataTag().getBoolean("BioshipScavenged");
+    boolean hostFlesh =
+        cargo.getUserDataTag() != null && cargo.getUserDataTag().getBoolean("ScavengeHostFlesh");
     container.removeSubLevel(cargo, SubLevelRemovalReason.REMOVED);
     if (move.ownerForced())
       container.removeForceLoadTicket(
           owner, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
     core.organMove(null);
-    if (move.external()) BioshipIntegration.finishAssimilation(core, move.target());
+    if (scavenged) core.scavenging().finish(core, move.target(), hostFlesh);
+    else if (move.external()) BioshipIntegration.finishAssimilation(core, move.target());
     DigestiveSystem.connect(core, owner);
     BioshipAccess.tick(core);
   }

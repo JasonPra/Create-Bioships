@@ -49,6 +49,7 @@ public final class BioshipAccess {
   }
 
   public static boolean permits(CompoundTag tag, Entity entity) {
+    if (tag.getBoolean("Locked")) return false;
     if (entity instanceof Player)
       return tag.hasUUID("Owner") && tag.getUUID("Owner").equals(entity.getUUID())
           || tag.getCompound("Players").contains(entity.getUUID().toString());
@@ -68,7 +69,7 @@ public final class BioshipAccess {
   public static void tick(LivingCoreBlockEntity core) {
     if (!core.isMature()) return;
     var level = core.getLevel();
-    var lower = core.getBlockPos().offset(DinghyGrowth.DOOR);
+    var lower = core.layoutPos(DinghyGrowth.DOOR);
     var membrane =
         BuiltInRegistries.BLOCK
             .get(ResourceLocation.parse("biomancy:biometric_membrane"))
@@ -77,12 +78,14 @@ public final class BioshipAccess {
       level.setBlock(lower, membrane, 18);
       level.setBlock(lower.above(), membrane, 18);
     }
-    var panel = core.getBlockPos().offset(DinghyGrowth.ACCESS_PANEL);
-    if (level.getBlockState(panel).isAir())
+    var panel = core.layoutPos(DinghyGrowth.ACCESS_PANEL);
+    if (!core.blueprint().busy()
+        && !core.body().memory.containsKey(panel.subtract(core.getBlockPos()))
+        && level.getBlockState(panel).isAir())
       level.setBlock(panel, Create_bioships.ACCESS_PANEL.get().defaultBlockState(), 3);
     CompoundTag permissions = core.access().save(core.creator());
-    for (var offset : DinghyGrowth.ACCESS_MEMBRANES)
-      if (level.getBlockEntity(core.getBlockPos().offset(offset))
-          instanceof ShipMembraneAccess barrier) barrier.bioships$access(permissions);
+    permissions.putBoolean("Locked", core.blueprint().locked() && !core.body().dead());
+    for (var entity : BioshipIntegration.blockEntities(core.ship()))
+      if (entity instanceof ShipMembraneAccess barrier) barrier.bioships$access(permissions);
   }
 }

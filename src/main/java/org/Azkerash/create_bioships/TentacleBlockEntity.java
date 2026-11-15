@@ -58,7 +58,7 @@ public class TentacleBlockEntity extends BlockEntity implements BlockEntitySubLe
     for (var actor : ship.getPlot().getBlockEntityActors())
       if (actor instanceof LivingCoreBlockEntity core && core.isMature())
         for (BlockPos offset : DinghyGrowth.FLAGELLA)
-          if (core.getBlockPos().offset(offset).equals(worldPosition)) return core;
+          if (core.layoutPos(offset).equals(worldPosition)) return core;
     return null;
   }
 
@@ -120,7 +120,7 @@ public class TentacleBlockEntity extends BlockEntity implements BlockEntitySubLe
     lastTick = level.getGameTime();
     ServerSubLevel ship = ship();
     LivingCoreBlockEntity core = ship == null ? null : owner(ship);
-    if (core == null || core.resting()) {
+    if (core == null || core.body().dead() || core.resting() || core.blueprint().busy()) {
       release();
       return;
     }

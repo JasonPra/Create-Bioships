@@ -8,7 +8,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 
 public final class EngineRoom {
   public static boolean inside(LivingCoreBlockEntity core, BlockPos pos) {
-    var d = pos.subtract(core.getBlockPos());
+    var d = core.blueprint().engineLocal(pos.subtract(core.getBlockPos()));
     return Math.abs(d.getX()) <= (Math.abs(d.getZ()) >= 5 ? 2 : 3)
         && d.getY() >= 2
         && d.getY() <= 3
@@ -61,7 +61,7 @@ public final class EngineRoom {
                       new BlockPos(-2, 2, 5),
                       new BlockPos(2, 2, 5));
       for (var offset : bays)
-        if (move(core, ship, entity.getBlockPos(), core.getBlockPos().offset(offset))) break;
+        if (move(core, ship, entity.getBlockPos(), core.layoutPos(offset))) break;
     }
   }
 

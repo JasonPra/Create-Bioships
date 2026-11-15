@@ -521,6 +521,21 @@ public class BioshipGameTests {
           .setStackInSlot(1, new ItemStack(item("biomancy:elastic_fibers"), 12));
       BioshipIntegration.finishAssimilation(core, decomposerPos);
       helper.assertTrue(
+          level.getBlockEntity(decomposerPos) instanceof DecomposerBlockEntity,
+          "A decomposer formed a stomach without a digester");
+      var digesterPos = decomposerPos.north();
+      level.setBlock(digesterPos, block("biomancy:digester").defaultBlockState(), 3);
+      var digester =
+          (com.github.elenterius.biomancy.block.digester.DigesterBlockEntity)
+              level.getBlockEntity(digesterPos);
+      digester.getOutputInventory().setStackInSlot(0, new ItemStack(item("biomancy:nutrients"), 3));
+      digester.getInputInventory().setStackInSlot(0, new ItemStack(Items.BEEF, 4));
+      digester.getStateData().fuelHandler.setFuelAmount(9);
+      BioshipIntegration.finishAssimilation(core, digesterPos);
+      helper.assertTrue(
+          level.getBlockState(digesterPos).isAir(),
+          "Digester was not incorporated into the combined stomach");
+      helper.assertTrue(
           level.getBlockEntity(forgePos) instanceof FeedingMouthBlockEntity
               && level.getBlockEntity(decomposerPos) instanceof StomachBlockEntity,
           "First machines did not become unique organs");
@@ -538,6 +553,18 @@ public class BioshipGameTests {
           stomach.material("biomancy:bone_fragments") == 8
               && stomach.material("biomancy:elastic_fibers") == 12,
           "Existing decomposition products were lost");
+      helper.assertTrue(
+          stomach.material("biomancy:nutrients") == 3
+              && stomach.queuedFood() == 4
+              && stomach.nutrients() == 9,
+          "Digester contents were not preserved");
+      var extraDigester = extraDecomposer.east();
+      level.setBlock(extraDigester, block("biomancy:digester").defaultBlockState(), 3);
+      BioshipIntegration.finishAssimilation(core, extraDigester);
+      helper.assertTrue(
+          level.getBlockEntity(extraDigester)
+              instanceof com.github.elenterius.biomancy.block.digester.DigesterBlockEntity,
+          "A second digester was consumed");
       DigestiveSystem.connect(core, ship);
       helper.runAtTickTime(
           40,
@@ -932,5 +959,604 @@ public class BioshipGameTests {
                           && stomach.material("biomancy:elastic_fibers") == 0,
                       "Larynx did not use structural materials exactly once");
                 }));
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100)
+  public static void tubes_only_connect_to_digestive_neighbors(GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var p = core.getBlockPos().above();
+    level.setBlock(p, Create_bioships.INTESTINE.get().defaultBlockState(), 3);
+    level.setBlock(p.east(), Create_bioships.INTESTINE.get().defaultBlockState(), 3);
+    level.setBlock(p.west(), Create_bioships.FEEDING_MOUTH.get().defaultBlockState(), 3);
+    level.setBlock(p.north(), Create_bioships.FLESH.get().defaultBlockState(), 3);
+    var state = level.getBlockState(p);
+    helper.assertTrue(
+        state.getValue(IntestineBlock.CONNECTIONS.get(Direction.EAST)), "Missing tube connection");
+    helper.assertTrue(
+        state.getValue(IntestineBlock.CONNECTIONS.get(Direction.WEST)), "Missing mouth connection");
+    helper.assertTrue(
+        !state.getValue(IntestineBlock.CONNECTIONS.get(Direction.NORTH))
+            && !state.getValue(IntestineBlock.CONNECTIONS.get(Direction.UP)),
+        "Tube branches into air or ordinary flesh");
+    level.setBlock(p, state.setValue(IntestineBlock.ENCASED, true), 3);
+    level.removeBlock(p.west(), false);
+    helper.assertTrue(
+        !level.getBlockState(p).getValue(IntestineBlock.CONNECTIONS.get(Direction.WEST)),
+        "Broken neighbor remained connected");
+    helper.assertTrue(
+        level.getBlockState(p).getValue(IntestineBlock.ENCASED)
+            && level.getBlockState(p).getValue(IntestineBlock.CONNECTIONS.get(Direction.EAST)),
+        "Encasing lost the working connection");
+    finish(helper, ship, () -> {});
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 200)
+  public static void hidden_health_memory_and_biomass_repair(GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var stomach = digestive(helper, core, false);
+    core.incorporateBiomass(64);
+    var owner = player(helper, "TissueOwner");
+    core.claimCreator(owner.getUUID());
+    stomach.retainFlesh(8);
+    var p = core.getBlockPos().east();
+    level.setBlock(p, Create_bioships.FLESH.get().defaultBlockState(), 3);
+    core.body().observe(core);
+    double healthy = core.body().health();
+    int trust = core.saveWithFullMetadata(level.registryAccess()).getInt("Trust");
+    net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(
+        new net.neoforged.neoforge.event.level.BlockEvent.BreakEvent(
+            level, p, level.getBlockState(p), owner));
+    level.removeBlock(p, false);
+    helper.assertTrue(core.body().health() < healthy, "Removing tissue did not injure the ship");
+    helper.assertTrue(
+        core.saveWithFullMetadata(level.registryAccess()).getInt("Trust") < trust,
+        "Creator damage did not lower trust");
+    var saved = core.saveWithFullMetadata(level.registryAccess());
+    core.loadAdditional(saved, level.registryAccess());
+    helper.assertTrue(
+        core.body().memory.containsKey(p.subtract(core.getBlockPos())),
+        "Hole was forgotten on reload");
+    helper.runAfterDelay(
+        60,
+        () ->
+            finish(
+                helper,
+                ship,
+                () -> {
+                  helper.assertTrue(
+                      level.getBlockState(p).is(Create_bioships.FLESH.get()),
+                      "Tissue did not regrow");
+                  helper.assertTrue(
+                      stomach.material("biomancy:flesh_bits") == 7,
+                      "Repair did not spend exactly one flesh bit");
+                  helper.assertTrue(
+                      core.body().health() == healthy, "Repair did not restore health");
+                  var guest = player(helper, "GuestBreaks");
+                  int prior = core.saveWithFullMetadata(level.registryAccess()).getInt("Trust");
+                  core.body().damage(core, p, guest);
+                  helper.assertTrue(
+                      prior == core.saveWithFullMetadata(level.registryAccess()).getInt("Trust"),
+                      "Stranger damage blamed the owner");
+                  var shrinking = core.body().save();
+                  shrinking.putInt("Capacity", 2000);
+                  shrinking.putDouble("Health", 2000);
+                  core.body().load(shrinking, level.registryAccess());
+                  core.body().observe(core);
+                  helper.assertTrue(
+                      core.body().health() <= core.body().capacity(),
+                      "Shrinking the remembered body left health above its capacity");
+                  helper.assertTrue(
+                      core.goggleTooltip().stream()
+                          .noneMatch(
+                              line ->
+                                  line.getString()
+                                      .toLowerCase(java.util.Locale.ROOT)
+                                      .contains("health")),
+                      "Internal health leaked into the goggles tooltip");
+                  level.setBlock(p, Blocks.DIRT.defaultBlockState(), 3);
+                  core.body().observe(core);
+                  var unchanged = BioshipBody.actual(core);
+                  core.body().reconcile(core, unchanged);
+                  helper.assertTrue(
+                      core.body()
+                          .memory
+                          .get(p.subtract(core.getBlockPos()))
+                          .is(Create_bioships.FLESH.get()),
+                      "An outside obstruction replaced the remembered hull schematic");
+                }));
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 2600)
+  public static void blueprint_draft_landing_rebuild_and_inventory(GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    digestive(helper, core, true);
+    var owner = player(helper, "Architect");
+    core.claimCreator(owner.getUUID());
+    helper.runAfterDelay(
+        1000,
+        () -> {
+          helper.assertTrue(core.isMature(), "Ship failed to mature");
+          core.body().observe(core);
+          var stomach = DigestiveSystem.stomach(core);
+          stomach.retainFlesh(1024);
+          for (int n = 0; n < 8; n++)
+            core.acceptAmalgam(new ItemStack(item("aeronautics:levitite_blend_bucket")));
+          var draft = new BioshipBlueprint.Draft(core.blueprint().rooms());
+          // Add a room sharing the engine-room wall, and a membrane connecting their interiors.
+          draft.edit(2 * 2500 + (5 + 24) * 49 + (7 + 24));
+          draft.edit(6 * 2500 + (5 + 24) * 49 + (4 + 24));
+          int quoted = core.blueprint().cost(core, draft);
+          var plan = core.blueprint().proposal(core, draft);
+          helper.assertTrue(
+              core.blueprint().validate(core, draft, plan) == null,
+              "Valid joined room was rejected: " + core.blueprint().validate(core, draft, plan));
+          helper.assertTrue(quoted > 0, "New room has no biomass cost");
+          helper.assertTrue(
+              level.getBlockState(core.getBlockPos().offset(7, 1, 5)).isAir(),
+              "Draft changed the live hull");
+          var disconnected = new BioshipBlueprint.Draft(core.blueprint().rooms());
+          disconnected.edit(2 * 2500 + (20 + 24) * 49 + (20 + 24));
+          helper.assertTrue(
+              core.blueprint()
+                      .validate(core, disconnected, core.blueprint().proposal(core, disconnected))
+                  != null,
+              "Disconnected room was accepted");
+          var discarded = new BioshipBlueprint.Draft(core.blueprint().rooms());
+          helper.assertTrue(
+              core.blueprint().cost(core, discarded) == 0,
+              "Discarding draft did not restore the current plan");
+          helper.runAfterDelay(
+              30,
+              () -> {
+                int stock = stomach.material("biomancy:flesh_bits");
+                helper.assertTrue(
+                    core.blueprint().confirm(core, draft, core.blueprint().revision()),
+                    "Confirmation failed: " + core.blueprint().status());
+                helper.assertTrue(
+                    stomach.material("biomancy:flesh_bits") == stock - quoted,
+                    "Quoted biomass was not charged once");
+                var tag = core.saveWithFullMetadata(level.registryAccess());
+                core.loadAdditional(tag, level.registryAccess());
+                helper.assertTrue(core.blueprint().busy(), "Approved job did not persist");
+              });
+        });
+    helper.runAfterDelay(
+        2500,
+        () ->
+            finish(
+                helper,
+                ship,
+                () -> {
+                  helper.assertTrue(
+                      !core.blueprint().busy(),
+                      "Job stalled: " + core.blueprint().phase() + " " + core.blueprint().status());
+                  helper.assertTrue(
+                      core.blueprint().rooms().size() == 3, "New room was not committed");
+                  helper.assertTrue(
+                      level
+                          .getBlockState(core.getBlockPos().offset(7, 1, 5))
+                          .is(Create_bioships.FLESH.get()),
+                      "Room floor missing");
+                  helper.assertTrue(
+                      level
+                          .getBlockState(core.getBlockPos().offset(4, 2, 5))
+                          .is(block("biomancy:biometric_membrane")),
+                      "Requested door missing");
+                  helper.assertTrue(
+                      DigestiveSystem.stomach(core).material("biomancy:flesh_bits") > 0,
+                      "Stored stomach contents were lost");
+                  helper.assertTrue(
+                      !core.blueprint().locked(), "Membranes stayed locked after construction");
+                }));
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 3500, batch = "room_surgery")
+  public static void moving_engine_room_evacuates_and_preserves_stomach(GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    digestive(helper, core, true);
+    var owner = player(helper, "RoomMover");
+    core.claimCreator(owner.getUUID());
+    var occupant = new net.minecraft.world.entity.animal.Cow(EntityType.COW, level);
+    boolean[] sawArm = {false};
+    double[] health = {0};
+    int[] stock = {0};
+    int[] cost = {0};
+    helper.runAfterDelay(
+        1000,
+        () -> {
+          helper.assertTrue(core.isMature(), "Ship did not grow before relocation");
+          core.body().observe(core);
+          var stomach = DigestiveSystem.stomach(core);
+          stomach.retainFlesh(2048);
+          stomach.retain(new ItemStack(item("biomancy:bone_fragments"), 17));
+          for (int n = 0; n < 8; n++)
+            core.acceptAmalgam(new ItemStack(item("aeronautics:levitite_blend_bucket")));
+        });
+    helper.runAfterDelay(
+        1040,
+        () -> {
+          var d = new BioshipBlueprint.Draft(core.blueprint().rooms());
+          d.selected = 1;
+          d.edit(2500 + (5 + 24) * 49 + (2 + 24));
+          var error = core.blueprint().validate(core, d, core.blueprint().proposal(core, d));
+          helper.assertTrue(error == null, "Room move was rejected: " + error);
+          stock[0] = DigestiveSystem.stomach(core).material("biomancy:flesh_bits");
+          cost[0] = core.blueprint().cost(core, d);
+          health[0] = core.body().health();
+          var point = BioshipBlueprint.physical(core, new BlockPos(0, 2, 2));
+          occupant.moveTo(point.x, point.y - .5, point.z, 0, 0);
+          level.addFreshEntity(occupant);
+          helper.assertTrue(
+              core.blueprint().confirm(core, d, core.blueprint().revision()),
+              "Move confirmation failed: " + core.blueprint().status());
+          var tag = core.saveWithFullMetadata(level.registryAccess());
+          tag.putInt("Satiety", 1200);
+          tag.putInt("Trust", 100);
+          core.loadAdditional(tag, level.registryAccess());
+        });
+    helper.runAfterDelay(
+        1070,
+        () -> {
+          sawArm[0] = core.blueprint().carried() != null && core.blueprint().locked();
+        });
+    helper.runAfterDelay(
+        1090,
+        () -> {
+          sawArm[0] |= core.blueprint().carried() != null && core.blueprint().locked();
+        });
+    helper.runAfterDelay(
+        1150,
+        () -> {
+          if (core.blueprint().busy()) {
+            var tag = core.saveWithFullMetadata(level.registryAccess());
+            core.loadAdditional(tag, level.registryAccess());
+          }
+        });
+    helper.runAfterDelay(
+        3350,
+        () ->
+            finish(
+                helper,
+                ship,
+                () -> {
+                  helper.assertTrue(
+                      sawArm[0], "Passenger was not carried by the evacuation tentacle");
+                  helper.assertTrue(
+                      !core.blueprint().busy(),
+                      "Room relocation stalled: "
+                          + core.blueprint().phase()
+                          + " / "
+                          + core.blueprint().status());
+                  helper.assertTrue(
+                      occupant.isAlive() && !core.blueprint().aboard(core, occupant),
+                      "Passenger was not put safely outside");
+                  helper.assertTrue(
+                      core.blueprint().rooms().get(1).x() == 2,
+                      "Engine room location was not saved");
+                  var stomach = DigestiveSystem.stomach(core);
+                  helper.assertTrue(stomach != null, "Moving the room lost its stomach");
+                  helper.assertTrue(
+                      stomach.material("biomancy:bone_fragments") == 17,
+                      "Moving the room lost or duplicated private products");
+                  helper.assertTrue(
+                      stomach.material("biomancy:flesh_bits") == stock[0] - cost[0],
+                      "Relocation charged twice or lost reserves");
+                  helper.assertTrue(
+                      core.body().health() >= health[0],
+                      "Approved room surgery injured the bioship");
+                  helper.assertTrue(
+                      stomach.getBlockPos().equals(core.layoutPos(new BlockPos(-2, 2, 3))),
+                      "Stomach did not move with its room");
+                  helper.assertTrue(
+                      !BioshipWrenchItem.movable(level, core.layoutPos(new BlockPos(-3, 2, 3))),
+                      "Wrench can remove hull tissue");
+                  occupant.discard();
+                }));
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 2100, batch = "hatchling_walk")
+  public static void blocked_hatchling_walks_to_clear_ground_without_flight(GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    Vec3 start = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var obstacle = BlockPos.containing(start).south();
+    for (int y = 0; y < 4; y++)
+      level.setBlock(obstacle.above(y), Blocks.OBSIDIAN.defaultBlockState(), 3);
+    digestive(helper, core, true);
+    boolean[] walking = {false};
+    helper.runAfterDelay(80, () -> walking[0] = core.crawl().walking());
+    helper.runAfterDelay(
+        2000,
+        () ->
+            finish(
+                helper,
+                ship,
+                () -> {
+                  Vec3 end = BioshipBlueprint.physical(core, BlockPos.ZERO);
+
+                  helper.assertTrue(
+                      end.subtract(start).horizontalDistanceSqr() > 9,
+                      "Walking arms did not move: start="
+                          + start
+                          + " end="
+                          + end
+                          + " crawl="
+                          + core.crawl().save());
+                  helper.assertTrue(
+                      level.getBlockState(obstacle).is(Blocks.OBSIDIAN),
+                      "Walking or growth ate the obstruction");
+                  helper.assertTrue(
+                      core.isMature(),
+                      "Hatchling did not finish growing after finding space: " + diagnose(core));
+                  helper.assertTrue(
+                      !core.canFly() && end.y < start.y + 1.5,
+                      "Walking supplied levitite-free flight");
+                }));
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 200, batch = "combined_stomach")
+  public static void stomach_combines_separated_decomposer_and_digester(GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var d = core.getBlockPos().west();
+    var g = core.getBlockPos().east();
+    level.setBlock(d, block("biomancy:decomposer").defaultBlockState(), 3);
+    BioshipIntegration.finishAssimilation(core, d);
+    helper.assertTrue(DigestiveSystem.stomach(core) == null, "Decomposer alone formed a stomach");
+    level.setBlock(g, block("biomancy:digester").defaultBlockState(), 3);
+    var digester =
+        (com.github.elenterius.biomancy.block.digester.DigesterBlockEntity) level.getBlockEntity(g);
+    digester.getOutputInventory().setStackInSlot(0, new ItemStack(item("biomancy:nutrients"), 7));
+    BioshipIntegration.finishAssimilation(core, g);
+    helper.assertTrue(
+        OrganMotion.busy(core), "Separated organs did not move together through tissue");
+    helper.runAfterDelay(
+        100,
+        () ->
+            finish(
+                helper,
+                ship,
+                () -> {
+                  var stomach = DigestiveSystem.stomach(core);
+                  helper.assertTrue(
+                      stomach != null && stomach.material("biomancy:nutrients") == 7,
+                      "Fusion lost the digester output");
+                  helper.assertTrue(
+                      BioshipIntegration.blockEntities(ship).stream()
+                          .noneMatch(
+                              e ->
+                                  e
+                                      instanceof
+                                      com.github.elenterius.biomancy.block.digester
+                                          .DigesterBlockEntity),
+                      "Digester remained after fusion");
+                  helper.assertTrue(
+                      core.body().health() == core.body().capacity(),
+                      "Organ fusion injured the ship");
+                }));
+  }
+
+  private static void emptySatiety(LivingCoreBlockEntity core) {
+    var t = core.saveWithFullMetadata(core.getLevel().registryAccess());
+    t.putInt("Satiety", 0);
+    t.putInt("MetabolismTicks", 0);
+    core.loadAdditional(t, core.getLevel().registryAccess());
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 200, batch = "starvation_reserves")
+  public static void emergency_reserves_delay_permanent_starvation_death(GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var stomach = digestive(helper, core, false);
+    core.incorporateBiomass(64);
+    stomach.addNutrients(1);
+    stomach.retain(new ItemStack(item("biomancy:elastic_fibers"), 2));
+    emptySatiety(core);
+    int initialTrust = core.saveWithFullMetadata(level.registryAccess()).getInt("Trust");
+    helper.runAfterDelay(
+        25,
+        () -> {
+          helper.assertTrue(
+              stomach.nutrients() == 0 && stomach.material("biomancy:elastic_fibers") == 2,
+              "Nutrients were not consumed before fibers");
+          helper.assertTrue(
+              core.body().health() == 100, "Reserve-backed starvation damaged health");
+          emptySatiety(core);
+        });
+    helper.runAfterDelay(
+        50,
+        () -> {
+          helper.assertTrue(
+              stomach.material("biomancy:elastic_fibers") == 1,
+              "Starving ship did not burn a stored fiber");
+          helper.assertTrue(
+              core.saveWithFullMetadata(level.registryAccess()).getInt("Trust") <= initialTrust,
+              "Burning reserves granted trust");
+          stomach.spend("biomancy:elastic_fibers", 1);
+          emptySatiety(core);
+        });
+    helper.runAfterDelay(
+        75,
+        () -> {
+          helper.assertTrue(
+              core.body().health() < 100 && !core.body().dead(),
+              "Empty reserves did not cause gradual starvation damage");
+          var t = core.body().save();
+          t.putDouble("Health", 1);
+          core.body().load(t, level.registryAccess());
+          emptySatiety(core);
+        });
+    helper.runAfterDelay(
+        105,
+        () ->
+            finish(
+                helper,
+                ship,
+                () -> {
+                  helper.assertTrue(
+                      core.body().dead() && !core.canFly() && BioshipDecay.dead(ship),
+                      "Exhausted ship did not die");
+                  var saved = core.saveWithFullMetadata(level.registryAccess());
+                  core.loadAdditional(saved, level.registryAccess());
+                  stomach.retainFlesh(100);
+                  helper.assertTrue(
+                      core.body().dead() && core.body().health() == 0,
+                      "Death was undone by reload or biomass");
+                  helper.assertTrue(
+                      !core.feedAtMouth(player(helper, "CorpseFeeder"), new ItemStack(Items.BEEF)),
+                      "A dead ship accepted feeding");
+                }));
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 1650, batch = "wreck_fall_rot")
+  public static void dead_flying_ship_falls_and_fragments_decay(GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    digestive(helper, core, true);
+    double[] altitude = {0};
+    int[] before = {0};
+    ServerSubLevel[] fragment = {null};
+    helper.runAfterDelay(1000, () -> enableFlight(helper, core));
+    helper.runAfterDelay(
+        1150,
+        () -> {
+          altitude[0] = BioshipBlueprint.physical(core, BlockPos.ZERO).y;
+          helper.assertTrue(altitude[0] > 84, "Flight fixture did not rise");
+          before[0] = BioshipDecay.blocks(ship).size();
+          core.body().die(core);
+          var source = core.layoutPos(new BlockPos(0, 1, 8));
+          if (!level.getBlockState(source).isAir()) {
+            fragment[0] =
+                SubLevelAssemblyHelper.assembleBlocks(
+                    level, source, List.of(source), new BoundingBox3i(source, source));
+            fragment[0].setSplitFrom(ship, ship.logicalPose());
+            SubLevelContainer.getContainer(level)
+                .addForceLoadTicket(
+                    fragment[0],
+                    SubLevelLoadingTicketType.COMMAND_FORCED,
+                    net.minecraft.util.Unit.INSTANCE);
+            helper.assertTrue(BioshipDecay.dead(fragment[0]), "Split wreck did not inherit death");
+          }
+        });
+    helper.runAfterDelay(
+        1550,
+        () ->
+            finish(
+                helper,
+                ship,
+                () -> {
+                  helper.assertTrue(
+                      BioshipBlueprint.physical(core, BlockPos.ZERO).y < altitude[0] - 2,
+                      "Dead ship retained levitation");
+                  helper.assertTrue(
+                      BioshipDecay.blocks(ship).size() < before[0] - 1,
+                      "Wreck did not rot over time");
+                  if (fragment[0] != null) {
+                    helper.assertTrue(
+                        fragment[0].isRemoved() || BioshipDecay.blocks(fragment[0]).isEmpty(),
+                        "Coreless fragment did not rot");
+                    if (!fragment[0].isRemoved())
+                      SubLevelContainer.getContainer(level)
+                          .removeSubLevel(fragment[0], SubLevelRemovalReason.REMOVED);
+                  }
+                }));
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 260, batch = "wreck_scavenge")
+  public static void scavenging_recovers_needed_organs_and_tissue_at_a_loss(GameTestHelper helper) {
+    var live = assemble(helper);
+    var core = core(live);
+    var level = helper.getLevel();
+    var point = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO)).east(5);
+    level.setBlock(point, Create_bioships.CORE.get().defaultBlockState(), 3);
+    var wreck =
+        SubLevelAssemblyHelper.assembleBlocks(
+            level, point, List.of(point), new BoundingBox3i(point, point));
+    SubLevelContainer.getContainer(level)
+        .addForceLoadTicket(
+            wreck, SubLevelLoadingTicketType.COMMAND_FORCED, net.minecraft.util.Unit.INSTANCE);
+    var dead = core(wreck);
+    var mouth = dead.getBlockPos().west();
+    level.setBlock(mouth, Create_bioships.FEEDING_MOUTH.get().defaultBlockState(), 3);
+    ((FeedingMouthBlockEntity) level.getBlockEntity(mouth))
+        .setItem(0, new ItemStack(Items.BARRIER, 11));
+    helper.assertTrue(
+        ((FeedingMouthBlockEntity) level.getBlockEntity(mouth)).getItem(0).getCount() == 11,
+        "Maw inventory setup failed");
+    var stomachPos = dead.getBlockPos().above();
+    level.setBlock(stomachPos, Create_bioships.STOMACH.get().defaultBlockState(), 3);
+    helper.assertTrue(
+        !OrganMotion.begin(core, mouth, core.getBlockPos().north(), true),
+        "Living neighbor was eligible for scavenging");
+    dead.body().die(dead);
+    ItemStack[] recoveredStock = {ItemStack.EMPTY};
+    helper.runAfterDelay(
+        80,
+        () -> {
+          var recovered = (FeedingMouthBlockEntity) level.getBlockEntity(core.mouthBlock());
+          helper.assertTrue(
+              recovered.getItem(0).is(Items.BARRIER) && recovered.getItem(0).getCount() == 11,
+              "Mouth inventory was not preserved across corpse recovery");
+          recoveredStock[0] = recovered.removeItem(0, 11);
+        });
+    helper.runAfterDelay(
+        170,
+        () -> {
+          try {
+            helper.assertTrue(
+                core.hasMouth() && DigestiveSystem.stomach(core) != null,
+                "Nearby wreck organs were not pulled aboard");
+            helper.assertTrue(
+                recoveredStock[0].is(Items.BARRIER) && recoveredStock[0].getCount() == 11,
+                "Recovered inventory could not be salvaged before digestion");
+            helper.assertTrue(
+                !BioshipScavenging.needed(
+                    core, Create_bioships.FEEDING_MOUTH.get().defaultBlockState()),
+                "Ship wanted an extra mouth");
+            var port = core.getBlockPos().above();
+            int satiety = core.saveWithFullMetadata(level.registryAccess()).getInt("Satiety");
+            for (int n = 0; n < 4; n++) {
+              level.setBlock(port, Create_bioships.TENTACLE.get().defaultBlockState(), 3);
+              core.scavenging().finish(core, port, false);
+            }
+            for (int n = 0; n < 4; n++) {
+              level.setBlock(port, Create_bioships.CARAPACE.get().defaultBlockState(), 3);
+              core.scavenging().finish(core, port, false);
+            }
+            var stomach = DigestiveSystem.stomach(core);
+            helper.assertTrue(
+                core.missingBiomass() == 60
+                    && stomach.material("biomancy:elastic_fibers") == 1
+                    && stomach.material("biomancy:bone_fragments") == 1,
+                "Reclaimed tissue did not use the specified lossy yield");
+            helper.assertTrue(
+                core.saveWithFullMetadata(level.registryAccess()).getInt("Satiety") == satiety,
+                "Wreck tissue counted as food");
+            level.setBlock(port, Create_bioships.FLESH.get().defaultBlockState(), 3);
+            core.scavenging().finish(core, port, false);
+            var save = core.saveWithFullMetadata(level.registryAccess());
+            core.loadAdditional(save, level.registryAccess());
+            level.setBlock(port, Create_bioships.FLESH.get().defaultBlockState(), 3);
+            core.scavenging().finish(core, port, false);
+            helper.assertTrue(
+                core.missingBiomass() == 59, "Fractional salvage yield did not survive reload");
+            helper.succeed();
+          } finally {
+            cleanup(helper, wreck);
+            cleanup(helper, live);
+          }
+        });
   }
 }

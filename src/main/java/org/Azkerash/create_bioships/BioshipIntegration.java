@@ -127,6 +127,7 @@ public final class BioshipIntegration {
       convertFirstStomach(core, actor.getBlockPos());
       convertFirstBioForge(core, actor.getBlockPos());
     }
+    if (BioshipScavenging.collect(core, ship)) return;
     int moved = 0;
     for (BlockPos source : candidates) {
       if (moved >= 16
@@ -181,6 +182,10 @@ public final class BioshipIntegration {
   }
 
   public static void finishAssimilation(LivingCoreBlockEntity core, BlockPos target) {
+    if (BuiltInRegistries.BLOCK
+        .getKey(core.getLevel().getBlockState(target).getBlock())
+        .toString()
+        .equals("biomancy:modular_larynx")) core.adoptLarynx();
     if (core.getLevel().getBlockState(target).is(FLESH) && core.missingBiomass() > 0) {
       core.getLevel().removeBlock(target, false);
       core.incorporateBiomass(1);
@@ -191,23 +196,60 @@ public final class BioshipIntegration {
   }
 
   private static void convertFirstStomach(LivingCoreBlockEntity core, BlockPos pos) {
-    if (DigestiveSystem.stomach(core) != null
-        || !(core.getLevel().getBlockEntity(pos)
-            instanceof
-            com.github.elenterius.biomancy.block.decomposer.DecomposerBlockEntity original)) return;
-    var queued = original.getInputInventory().getStackInSlot(0).copy();
-    java.util.List<net.minecraft.world.item.ItemStack> stores = new ArrayList<>();
-    for (int i = 0; i < original.getOutputInventory().getSlots(); i++) {
-      stores.add(original.getOutputInventory().getStackInSlot(i).copy());
-      original.getOutputInventory().setStackInSlot(i, net.minecraft.world.item.ItemStack.EMPTY);
+    if (DigestiveSystem.stomach(core) != null || OrganMotion.busy(core)) return;
+    com.github.elenterius.biomancy.block.decomposer.DecomposerBlockEntity decomposer = null;
+    com.github.elenterius.biomancy.block.digester.DigesterBlockEntity digester = null;
+    for (var entity : blockEntities(core.ship())) {
+      if (decomposer == null
+          && entity
+              instanceof com.github.elenterius.biomancy.block.decomposer.DecomposerBlockEntity d)
+        decomposer = d;
+      if (digester == null
+          && entity instanceof com.github.elenterius.biomancy.block.digester.DigesterBlockEntity d)
+        digester = d;
     }
-    stores.add(original.getStackInFuelSlot().copy());
-    original.setStackInFuelSlot(net.minecraft.world.item.ItemStack.EMPTY);
-    original.getInputInventory().setStackInSlot(0, net.minecraft.world.item.ItemStack.EMPTY);
-    core.getLevel().setBlock(pos, Create_bioships.STOMACH.get().defaultBlockState(), 3);
-    if (core.getLevel().getBlockEntity(pos) instanceof StomachBlockEntity stomach) {
+    if (decomposer == null || digester == null) return;
+    var destination = decomposer.getBlockPos();
+    var source = digester.getBlockPos();
+    if (destination.distManhattan(source) != 1) {
+      for (var direction : Direction.values()) {
+        var adjacent = destination.relative(direction);
+        var state = core.getLevel().getBlockState(adjacent);
+        if ((state.isAir() || state.is(Create_bioships.FLESH.get()))
+            && OrganMotion.begin(core, source, adjacent, false)) return;
+      }
+      return;
+    }
+    var queued = new ArrayList<net.minecraft.world.item.ItemStack>();
+    var stores = new ArrayList<net.minecraft.world.item.ItemStack>();
+    for (int i = 0; i < decomposer.getInputInventory().getSlots(); i++)
+      queued.add(decomposer.getInputInventory().getStackInSlot(i).copy());
+    for (int i = 0; i < digester.getInputInventory().getSlots(); i++)
+      queued.add(digester.getInputInventory().getStackInSlot(i).copy());
+    for (int i = 0; i < decomposer.getOutputInventory().getSlots(); i++)
+      stores.add(decomposer.getOutputInventory().getStackInSlot(i).copy());
+    for (int i = 0; i < digester.getOutputInventory().getSlots(); i++)
+      stores.add(digester.getOutputInventory().getStackInSlot(i).copy());
+    stores.add(decomposer.getStackInFuelSlot().copy());
+    stores.add(digester.getStackInFuelSlot().copy());
+    int nutrients =
+        decomposer.getStateData().fuelHandler.getFuelAmount()
+            + digester.getStateData().fuelHandler.getFuelAmount();
+    boolean flesh = digester.getPersistentData().getBoolean("BioshipHostFlesh");
+    core.getLevel().removeBlockEntity(source);
+    core.getLevel()
+        .setBlock(
+            source,
+            flesh
+                ? Create_bioships.FLESH.get().defaultBlockState()
+                : net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(),
+            18);
+    core.getLevel().removeBlockEntity(destination);
+    core.getLevel().setBlock(destination, Create_bioships.STOMACH.get().defaultBlockState(), 3);
+    if (core.getLevel().getBlockEntity(destination) instanceof StomachBlockEntity stomach) {
       for (var stack : stores) stomach.retain(stack);
-      stomach.inheritInput(queued);
+      for (var stack : queued) stomach.inheritInput(stack);
+      stomach.addNutrients(nutrients);
     }
   }
 
@@ -250,7 +292,7 @@ public final class BioshipIntegration {
     }
     ServerLevel level = ship.getLevel();
     for (BlockPos offset : destinations) {
-      BlockPos target = core.getBlockPos().offset(offset);
+      BlockPos target = core.layoutPos(offset);
       if (target.equals(source)) return;
       if (!ship.getPlot().contains(new net.minecraft.world.level.ChunkPos(target))
           || !level.isInWorldBounds(target)) continue;

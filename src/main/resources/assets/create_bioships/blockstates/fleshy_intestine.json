@@ -1,10 +1,74 @@
 {
-  "variants": {
-    "encased=false": {
-      "model": "create_bioships:block/fleshy_intestine"
+  "multipart": [
+    {
+      "when": {
+        "encased": "true"
+      },
+      "apply": {
+        "model": "create_bioships:block/fleshy_intestine_encased"
+      }
     },
-    "encased=true": {
-      "model": "create_bioships:block/fleshy_intestine_encased"
+    {
+      "when": {
+        "encased": "false"
+      },
+      "apply": {
+        "model": "create_bioships:block/fleshy_intestine"
+      }
+    },
+    {
+      "when": {
+        "encased": "false",
+        "north": "true"
+      },
+      "apply": {
+        "model": "create_bioships:block/fleshy_intestine_north"
+      }
+    },
+    {
+      "when": {
+        "encased": "false",
+        "south": "true"
+      },
+      "apply": {
+        "model": "create_bioships:block/fleshy_intestine_south"
+      }
+    },
+    {
+      "when": {
+        "encased": "false",
+        "west": "true"
+      },
+      "apply": {
+        "model": "create_bioships:block/fleshy_intestine_west"
+      }
+    },
+    {
+      "when": {
+        "encased": "false",
+        "east": "true"
+      },
+      "apply": {
+        "model": "create_bioships:block/fleshy_intestine_east"
+      }
+    },
+    {
+      "when": {
+        "encased": "false",
+        "up": "true"
+      },
+      "apply": {
+        "model": "create_bioships:block/fleshy_intestine_up"
+      }
+    },
+    {
+      "when": {
+        "encased": "false",
+        "down": "true"
+      },
+      "apply": {
+        "model": "create_bioships:block/fleshy_intestine_down"
+      }
     }
-  }
+  ]
 }

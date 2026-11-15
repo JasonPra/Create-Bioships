@@ -10,7 +10,7 @@ public class StomachScreen extends AbstractContainerScreen<StomachMenu> {
   public StomachScreen(StomachMenu menu, Inventory inventory, Component title) {
     super(menu, inventory, title);
     imageWidth = 220;
-    imageHeight = 172;
+    imageHeight = 187;
   }
 
   @Override
@@ -45,7 +45,8 @@ public class StomachScreen extends AbstractContainerScreen<StomachMenu> {
         y + 133,
         0xffcbb9b2,
         false);
-    g.drawString(font, "Reserves cannot be extracted", x + 12, y + 153, 0xffa79a91, false);
+    g.drawString(font, "Nutrients " + menu.value(8), x + 12, y + 150, 0xffcbb9b2, false);
+    g.drawString(font, "Reserves cannot be extracted", x + 12, y + 168, 0xffa79a91, false);
   }
 
   @Override

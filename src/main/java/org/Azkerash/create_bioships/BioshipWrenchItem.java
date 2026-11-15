@@ -18,6 +18,11 @@ public class BioshipWrenchItem extends Item {
 
   public static boolean movable(net.minecraft.world.level.Level level, BlockPos pos) {
     var state = level.getBlockState(pos);
+    if (state.is(Create_bioships.FLESH.get())
+        || net.minecraft.core.registries.BuiltInRegistries.BLOCK
+            .getKey(state.getBlock())
+            .toString()
+            .equals("biomancy:biometric_membrane")) return false;
     return state.is(Create_bioships.FEEDING_MOUTH.get())
         || state.is(Create_bioships.STOMACH.get())
         || net.minecraft.core.registries.BuiltInRegistries.BLOCK
@@ -40,6 +45,7 @@ public class BioshipWrenchItem extends Item {
           Component.literal("Only the bioship's creator can move its organs."), true);
       return InteractionResult.FAIL;
     }
+    if (core.body().dead() || core.blueprint().busy()) return InteractionResult.FAIL;
     var stack = context.getItemInHand();
     var state = level.getBlockState(pos);
     if (player.isShiftKeyDown() && movable(level, pos)) {
@@ -94,9 +100,7 @@ public class BioshipWrenchItem extends Item {
     selection.putUUID("Bioship", core.ship().getUniqueId());
     stack.set(DataComponents.CUSTOM_DATA, CustomData.of(selection));
     player.displayClientMessage(
-        Component.literal(
-            "Organ selected. Use on its destination; sneak-use an organ to rotate it."),
-        true);
+        Component.literal("Selected. Click a destination; sneak-click rotates."), true);
     return InteractionResult.SUCCESS;
   }
 

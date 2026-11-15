@@ -1,0 +1,192 @@
+package org.Azkerash.create_bioships;
+
+import java.util.*;
+import net.minecraft.core.*;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.phys.*;
+
+/** Small arms push against dry ground; this never supplies flight or consumes levitite. */
+public final class BioshipCrawl {
+  private Vec3 goal;
+  private boolean walking;
+  private int cursor;
+  private double supportHeight = Double.NaN;
+  private Vec3 stanceUp = new Vec3(0, 1, 0);
+
+  public boolean bracing() {
+    return Double.isFinite(supportHeight);
+  }
+
+  public double supportHeight() {
+    return supportHeight;
+  }
+
+  public Vec3 stanceUp() {
+    return stanceUp;
+  }
+
+  public boolean walking() {
+    return walking;
+  }
+
+  public Vec3 goal() {
+    return goal;
+  }
+
+  void tick(LivingCoreBlockEntity core, boolean blocked) {
+    brace(core);
+    if (core.isMature() || core.body().health() <= 0 || core.blueprint().busy() || !blocked) {
+      goal = null;
+      walking = false;
+      return;
+    }
+    if (core.getLevel().getGameTime() % 10 != 0) return;
+    Vec3 here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    if (goal != null && (!clear(core, goal) || goal.distanceToSqr(here) < .2)) goal = null;
+    if (goal == null)
+      for (int attempt = 0; attempt < 4; attempt++) {
+        int n = cursor++ % 48;
+        double angle = (n % 8) * Math.PI / 4;
+        double radius = 6 + (n / 8) * 3;
+        Vec3 p =
+            new Vec3(
+                Math.floor(here.x + Math.cos(angle) * radius) + .5,
+                here.y,
+                Math.floor(here.z + Math.sin(angle) * radius) + .5);
+        if (clear(core, p)) {
+          goal = p;
+          break;
+        }
+      }
+    walking = goal != null;
+    core.setChanged();
+    core.getLevel()
+        .sendBlockUpdated(core.getBlockPos(), core.getBlockState(), core.getBlockState(), 2);
+  }
+
+  boolean clear(LivingCoreBlockEntity core, Vec3 candidate) {
+    var level = (ServerLevel) core.getLevel();
+    for (var part : DinghyGrowth.body()) {
+      Vec3 d =
+          core.ship()
+              .logicalPose()
+              .transformNormal(
+                  new Vec3(part.offset().getX(), part.offset().getY(), part.offset().getZ()));
+      var p = BlockPos.containing(candidate.add(d));
+      if (!level.getChunkSource().hasChunk(p.getX() >> 4, p.getZ() >> 4)
+          || !level.getWorldBorder().isWithinBounds(p)
+          || !level.getBlockState(p).isAir()
+          || !level.getFluidState(p).isEmpty()) return false;
+    }
+    // Future floor must stay accessible and supported. Avoid cliffs, water and buried foundations.
+
+    for (int z = -9; z <= 9; z++)
+      for (int x = -DinghyGrowth.radius(z); x <= DinghyGrowth.radius(z); x++) {
+        Vec3 d = core.ship().logicalPose().transformNormal(new Vec3(x, 0, z));
+        var p = ground(level, BlockPos.containing(candidate.add(d.x, 0, d.z)));
+        if (p == null) return false;
+        if (!level.getBlockState(p).isFaceSturdy(level, p, Direction.UP)
+            || !level.getFluidState(p).isEmpty()) return false;
+      }
+    return true;
+  }
+
+  Vec3 velocity(LivingCoreBlockEntity core) {
+    if (!walking || goal == null) return Vec3.ZERO;
+    var level = (ServerLevel) core.getLevel();
+    Vec3 here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    Vec3 delta = goal.subtract(here).multiply(1, 0, 1);
+    if (delta.lengthSqr() < .1) return Vec3.ZERO;
+    Vec3 direction = delta.normalize();
+    var next = BlockPos.containing(here.add(direction.scale(1.2)));
+    var below = ground(level, next);
+    if (below == null) {
+      walking = false;
+      goal = null;
+      return Vec3.ZERO;
+    }
+    if (!level.getBlockState(below).isFaceSturdy(level, below, Direction.UP)
+        || !level.getFluidState(below).isEmpty()
+        || !level.getBlockState(next).isAir()) {
+      goal = null;
+      walking = false;
+      return Vec3.ZERO;
+    }
+    if (!BioshipBlueprint.worldClear(level, here, here.add(direction.scale(1.2)))) {
+      goal = null;
+      walking = false;
+      return Vec3.ZERO;
+    }
+    return direction.scale(.7);
+  }
+
+  private static BlockPos ground(ServerLevel level, BlockPos point) {
+    for (int i = 1; i <= 3; i++) {
+      var p = point.below(i);
+      if (level.getBlockState(p).isFaceSturdy(level, p, Direction.UP)
+          && level.getFluidState(p).isEmpty()) return p;
+    }
+    return null;
+  }
+
+  private void brace(LivingCoreBlockEntity core) {
+    supportHeight = Double.NaN;
+    stanceUp = new Vec3(0, 1, 0);
+    if (core.isMature()
+        || core.body().health() <= 0
+        || core.blueprint().busy()
+        || core.missingBiomass() > 0) return;
+    var level = (ServerLevel) core.getLevel();
+    Vec3 here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    double[] heights = new double[4];
+    int count = 0;
+    double highest = -Double.MAX_VALUE;
+    for (int i = 0; i < 4; i++) {
+      Vec3 point = here.add(i % 2 == 0 ? -1.4 : 1.4, 0, i < 2 ? -1.4 : 1.4);
+      var floor = ground(level, BlockPos.containing(point));
+      if (floor == null) continue;
+      heights[i] = floor.getY() + 1;
+      highest = Math.max(highest, heights[i]);
+      count++;
+    }
+    if (count < 3) return;
+    double wanted = highest + 1.25;
+    if (wanted - here.y > 2 || here.y - highest > 2.75) return;
+    supportHeight = wanted;
+    if (count == 4)
+      stanceUp =
+          new Vec3(
+                  Math.clamp((heights[0] + heights[2] - heights[1] - heights[3]) * .025, -.08, .08),
+                  1,
+                  Math.clamp((heights[0] + heights[1] - heights[2] - heights[3]) * .025, -.08, .08))
+              .normalize();
+  }
+
+  CompoundTag save() {
+    var t = new CompoundTag();
+    t.putBoolean("Walking", walking);
+    t.putDouble("SupportHeight", supportHeight);
+    t.putDouble("UpX", stanceUp.x);
+    t.putDouble("UpZ", stanceUp.z);
+    t.putInt("Cursor", cursor);
+    if (goal != null) {
+      t.putDouble("X", goal.x);
+      t.putDouble("Y", goal.y);
+      t.putDouble("Z", goal.z);
+      t.putBoolean("Goal", true);
+    }
+    return t;
+  }
+
+  void load(CompoundTag t) {
+    walking = t.getBoolean("Walking");
+    supportHeight = t.contains("SupportHeight") ? t.getDouble("SupportHeight") : Double.NaN;
+    stanceUp = new Vec3(t.getDouble("UpX"), 1, t.getDouble("UpZ")).normalize();
+    cursor = t.getInt("Cursor");
+    goal =
+        t.getBoolean("Goal")
+            ? new Vec3(t.getDouble("X"), t.getDouble("Y"), t.getDouble("Z"))
+            : null;
+  }
+}

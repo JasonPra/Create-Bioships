@@ -33,6 +33,56 @@ public class StomachBlockEntity extends BlockEntity implements MenuProvider {
     super(Create_bioships.STOMACH_ENTITY.get(), pos, state);
   }
 
+  private int nutrientReserve;
+
+  public int nutrients() {
+    return nutrientReserve;
+  }
+
+  public void addNutrients(int amount) {
+    nutrientReserve = Math.clamp(nutrientReserve + Math.max(0, amount), 0, 1000000);
+    setChanged();
+  }
+
+  public int burnReserve() {
+    if (nutrientReserve > 0) {
+      nutrientReserve--;
+      setChanged();
+      return 20;
+    }
+    var data = new CompoundTag();
+    reserves.forEach((id, count) -> data.putInt(id.toString(), count));
+    int nutrition = burnStored(data);
+    if (nutrition > 0) {
+      reserves.clear();
+      for (var key : data.getAllKeys()) reserves.put(ResourceLocation.parse(key), data.getInt(key));
+      setChanged();
+    }
+    return nutrition;
+  }
+
+  static int burnStored(CompoundTag stores) {
+    String[] priorities = {
+      "biomancy:nutrients",
+      "biomancy:nutrient_paste",
+      "biomancy:nutrient_bar",
+      "biomancy:flesh_bits",
+      "biomancy:elastic_fibers",
+      "biomancy:bone_fragments"
+    };
+    for (int i = 0; i < priorities.length; i++)
+      if (stores.getInt(priorities[i]) > 0) {
+        stores.putInt(priorities[i], stores.getInt(priorities[i]) - 1);
+        return i < 3 ? 20 : i == 3 ? 10 : i == 4 ? 8 : 2;
+      }
+    for (var key : new java.util.TreeSet<>(stores.getAllKeys()))
+      if (stores.getInt(key) > 0) {
+        stores.putInt(key, stores.getInt(key) - 1);
+        return 1;
+      }
+    return 0;
+  }
+
   public int material(String id) {
     return reserves.getOrDefault(ResourceLocation.parse(id), 0);
   }
@@ -151,7 +201,8 @@ public class StomachBlockEntity extends BlockEntity implements MenuProvider {
         core = living;
         break;
       }
-    if (core == null || !stomach.connected(core)) return;
+    if (core == null || core.body().dead() || core.blueprint().busy() || !stomach.connected(core))
+      return;
     stomach.continueGrowth(core);
     if (level.getGameTime() % 20 == 0) DigestiveSystem.pullStoredFood(core, stomach);
     java.util.List<Integer> order = new java.util.ArrayList<>();
@@ -229,6 +280,7 @@ public class StomachBlockEntity extends BlockEntity implements MenuProvider {
           case 5 -> material("biomancy:elastic_fibers");
           case 6 -> queuedFood();
           case 7 -> sacPaths.size();
+          case 8 -> nutrientReserve;
           default -> 0;
         };
       }
@@ -236,7 +288,7 @@ public class StomachBlockEntity extends BlockEntity implements MenuProvider {
       public void set(int index, int value) {}
 
       public int getCount() {
-        return 8;
+        return 9;
       }
     };
   }
@@ -244,6 +296,7 @@ public class StomachBlockEntity extends BlockEntity implements MenuProvider {
   @Override
   protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
     super.saveAdditional(tag, registries);
+    tag.putInt("NutrientReserve", nutrientReserve);
     net.minecraft.world.ContainerHelper.saveAllItems(tag, input, registries);
     tag.putInt("Acid", acid);
     tag.putInt("Progress", progress);
@@ -279,6 +332,7 @@ public class StomachBlockEntity extends BlockEntity implements MenuProvider {
   @Override
   protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
     super.loadAdditional(tag, registries);
+    nutrientReserve = Math.clamp(tag.getInt("NutrientReserve"), 0, 1000000);
     input.clear();
     net.minecraft.world.ContainerHelper.loadAllItems(tag, input, registries);
     acid = Math.clamp(tag.getInt("Acid"), 0, MAX_ACID);

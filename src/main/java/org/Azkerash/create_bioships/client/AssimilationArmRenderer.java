@@ -44,18 +44,32 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
       MultiBufferSource buffers,
       int light,
       int overlay) {
+    if (!core.body().dead() && (core.crawl().walking() || core.crawl().bracing()))
+      renderLegs(core, partial, pose, buffers, light);
     var move = core.organMove();
-    if (move == null || !move.external() || core.getLevel() == null) return;
+    boolean carrying = core.blueprint().carried() != null && core.blueprint().carryStart() != null;
+    if (core.getLevel() == null || !carrying && (move == null || !move.external())) return;
     var container = SubLevelContainer.getContainer(core.getLevel());
     if (container == null) return;
     var plot = container.getPlot(new ChunkPos(core.getBlockPos()));
-    var cargo = container.getSubLevel(move.cargo());
-    if (plot == null || cargo == null) return;
+    if (plot == null) return;
     var transform =
         plot.getSubLevel() instanceof ClientSubLevel client
             ? client.renderPose(partial)
             : plot.getSubLevel().logicalPose();
-    var target = cargo.logicalPose().transformPosition(Vec3.atCenterOf(move.cargoBlock()));
+    Vec3 target;
+    if (carrying) {
+      double t = Math.clamp((core.blueprint().carryTicks() + partial) / 60.0, 0, 1);
+      target =
+          core.blueprint()
+              .carryStart()
+              .lerp(core.blueprint().carryEnd(), t)
+              .add(0, Math.sin(Math.PI * t) * 3 + .8, 0);
+    } else {
+      var cargo = container.getSubLevel(move.cargo());
+      if (cargo == null) return;
+      target = cargo.logicalPose().transformPosition(Vec3.atCenterOf(move.cargoBlock()));
+    }
     Vec3 reach =
         transform
             .transformPositionInverse(target)
@@ -70,7 +84,9 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
               Math.copySign(Math.min(7, Math.abs(d.z)), d.z));
     }
     double extension =
-        Math.clamp((core.getLevel().getGameTime() + partial - move.started()) / 6.0, 0, 1);
+        carrying
+            ? 1
+            : Math.clamp((core.getLevel().getGameTime() + partial - move.started()) / 6.0, 0, 1);
     reach = root.lerp(reach, extension);
     Vec3 previous = root;
     var consumer = buffers.getBuffer(RenderType.entityCutoutNoCull(SKIN));
@@ -92,6 +108,46 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
       segment.render(pose, consumer, light, OverlayTexture.NO_OVERLAY);
       pose.popPose();
       previous = point;
+    }
+  }
+
+  private void renderLegs(
+      LivingCoreBlockEntity core,
+      float partial,
+      PoseStack pose,
+      MultiBufferSource buffers,
+      int light) {
+    var consumer = buffers.getBuffer(RenderType.entityCutoutNoCull(SKIN));
+    for (int leg = 0; leg < 4; leg++) {
+      double side = leg % 2 == 0 ? -1 : 1, front = leg < 2 ? -1 : 1;
+      double phase =
+          (core.getLevel().getGameTime() + partial) * .22 + (leg == 0 || leg == 3 ? 0 : Math.PI);
+      Vec3 root = new Vec3(.5 + side * .4, .4, .5 + front * .4),
+          foot =
+              new Vec3(
+                  .5 + side * 1.5,
+                  -1.25 + (core.crawl().walking() ? Math.max(0, Math.sin(phase)) * .45 : 0),
+                  .5 + front * 1.2 + (core.crawl().walking() ? Math.cos(phase) * .45 : 0));
+      Vec3 previous = root;
+      for (int i = 1; i <= 10; i++) {
+        double t = i / 10.0;
+        Vec3 point =
+            root.lerp(foot, t)
+                .add(side * Math.sin(Math.PI * t) * .3, Math.sin(Math.PI * t) * .6, 0);
+        Vec3 delta = point.subtract(previous);
+        pose.pushPose();
+        pose.translate(previous.x, previous.y, previous.z);
+        pose.mulPose(
+            new Quaternionf()
+                .rotationTo(
+                    new Vector3f(0, -1, 0),
+                    new Vector3f((float) delta.x, (float) delta.y, (float) delta.z).normalize()));
+        float width = (float) (.5 - t * .25);
+        pose.scale(width, (float) delta.length(), width);
+        segment.render(pose, consumer, light, OverlayTexture.NO_OVERLAY);
+        pose.popPose();
+        previous = point;
+      }
     }
   }
 }

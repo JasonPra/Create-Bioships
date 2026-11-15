@@ -70,7 +70,8 @@ public final class LivingControlHandler extends BlockHoldInteraction {
         || mc.player == null
         || !mc.player.getItemBySlot(EquipmentSlot.HEAD).is(Create_bioships.BIOSHIP_GOGGLES.get()))
       return;
-    int x = width / 2 + 24, y = height / 2 - 34;
+    int x = Math.max(8, Math.min(width / 2 + 24, width - 165)),
+        y = Math.max(8, Math.min(height / 2 - 34, height - 76));
     graphics.fill(x, y, x + 8, y + 68, 0xbd241c20);
     graphics.fill(x + 1, y + 33, x + 7, y + 35, 0xffe8d7a2);
     int marker = y + 65 - (int) Math.round(value * 62);
