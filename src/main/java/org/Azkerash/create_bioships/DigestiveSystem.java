@@ -55,7 +55,7 @@ public final class DigestiveSystem {
   private static List<BlockPos> findPath(
       LivingCoreBlockEntity core, ServerSubLevel ship, BlockPos start, BlockPos end) {
     var level = ship.getLevel();
-    var origin = core.getBlockPos();
+    var origin = core.structuralOrigin();
     Map<BlockPos, BlockPos> parent = new HashMap<>();
     ArrayDeque<BlockPos> queue = new ArrayDeque<>();
     queue.add(start);

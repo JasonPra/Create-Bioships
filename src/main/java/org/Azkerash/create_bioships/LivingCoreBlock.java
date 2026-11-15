@@ -16,11 +16,21 @@ public class LivingCoreBlock extends BaseEntityBlock {
       net.minecraft.world.level.block.state.properties.BooleanProperty.create("active");
   public static final net.minecraft.world.level.block.state.properties.BooleanProperty BLINK =
       net.minecraft.world.level.block.state.properties.BooleanProperty.create("blink");
+  public static final net.minecraft.world.level.block.state.properties.BooleanProperty RELOCATING =
+      net.minecraft.world.level.block.state.properties.BooleanProperty.create("relocating");
+  public static final net.minecraft.world.level.block.state.properties.BooleanProperty CONCEALED =
+      net.minecraft.world.level.block.state.properties.BooleanProperty.create("concealed");
   public static final MapCodec<LivingCoreBlock> CODEC = simpleCodec(LivingCoreBlock::new);
 
   public LivingCoreBlock(Properties properties) {
     super(properties);
-    registerDefaultState(stateDefinition.any().setValue(ACTIVE, false).setValue(BLINK, false));
+    registerDefaultState(
+        stateDefinition
+            .any()
+            .setValue(ACTIVE, false)
+            .setValue(BLINK, false)
+            .setValue(RELOCATING, false)
+            .setValue(CONCEALED, false));
   }
 
   @Override
@@ -28,7 +38,7 @@ public class LivingCoreBlock extends BaseEntityBlock {
       net.minecraft.world.level.block.state.StateDefinition.Builder<
               net.minecraft.world.level.block.Block, BlockState>
           builder) {
-    builder.add(ACTIVE, BLINK);
+    builder.add(ACTIVE, BLINK, RELOCATING, CONCEALED);
   }
 
   @Override

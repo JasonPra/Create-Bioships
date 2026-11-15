@@ -44,6 +44,25 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
       MultiBufferSource buffers,
       int light,
       int overlay) {
+    if (core.coreMotion().active()) {
+      double t =
+          Math.clamp(
+              (core.getLevel().getGameTime() + partial - core.coreMotion().started()) / 12.0, 0, 1);
+      var delta = core.coreMotion().target().subtract(core.getBlockPos());
+      pose.pushPose();
+      pose.translate(delta.getX() * t, delta.getY() * t, delta.getZ() * t);
+      net.minecraft.client.Minecraft.getInstance()
+          .getBlockRenderer()
+          .renderSingleBlock(
+              core.getBlockState().setValue(LivingCoreBlock.RELOCATING, false),
+              pose,
+              buffers,
+              light,
+              overlay,
+              net.neoforged.neoforge.client.model.data.ModelData.EMPTY,
+              RenderType.solid());
+      pose.popPose();
+    }
     if (!core.body().dead() && (core.crawl().walking() || core.crawl().bracing()))
       renderLegs(core, partial, pose, buffers, light);
     boolean gathering = core.crawl().reach() != null && !core.body().dead();
@@ -121,14 +140,17 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
       PoseStack pose,
       MultiBufferSource buffers,
       int light) {
+    pose.pushPose();
+    var anchor = core.structuralOrigin().subtract(core.getBlockPos());
+    pose.translate(anchor.getX(), anchor.getY(), anchor.getZ());
     var consumer = buffers.getBuffer(RenderType.entityCutoutNoCull(SKIN));
     boolean scuttling = core.hatchling();
-    int legs = scuttling ? 8 : 4;
+    int legs = 4;
     for (int leg = 0; leg < legs; leg++) {
       double side = leg % 2 == 0 ? -1 : 1;
-      double front = scuttling ? (leg / 2 - 1.5) * .65 : leg < 2 ? -1 : 1;
+      double front = leg < 2 ? -1 : 1;
       double phase =
-          (core.getLevel().getGameTime() + partial) * (scuttling ? .65 : .22)
+          (core.getLevel().getGameTime() + partial) * (scuttling ? 1.05 : .22)
               + ((leg / 2 + leg % 2) % 2 == 0 ? 0 : Math.PI);
       boolean moving = core.crawl().walking();
       Vec3 root = new Vec3(.5 + side * .4, .4, .5 + front * .4);
@@ -162,5 +184,6 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
         previous = point;
       }
     }
+    pose.popPose();
   }
 }

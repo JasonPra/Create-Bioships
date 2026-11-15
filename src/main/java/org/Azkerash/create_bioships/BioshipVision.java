@@ -25,6 +25,13 @@ public final class BioshipVision {
                       .isAir();
                 })
             .toList();
+    // Existing saved eyes predate the window-mount flags; refresh them when the ship sees them.
+    if (!core.getLevel().isClientSide)
+      for (var eye : eyes) {
+        var state = core.getLevel().getBlockState(eye);
+        var mounted = SurfaceEyeBlock.mounted(state, core.getLevel(), eye);
+        if (!state.equals(mounted)) core.getLevel().setBlock(eye, mounted, 2);
+      }
   }
 
   public List<Vec3> origins(LivingCoreBlockEntity core) {
@@ -35,12 +42,23 @@ public final class BioshipVision {
       var facing = core.getLevel().getBlockState(eye).getValue(SurfaceEyeBlock.FACING);
       // The eye sits against the supporting face rather than floating at the block center.
       Vec3 point = Vec3.atCenterOf(eye).relative(facing, -.22);
+      if (core.getLevel().getBlockState(eye).getValue(SurfaceEyeBlock.WINDOW_INTERNAL)) {
+        var host = eye.relative(facing.getOpposite());
+        point =
+            Vec3.atCenterOf(host)
+                .relative(
+                    core.getLevel().getBlockState(host).getValue(OneWayWindowBlock.FACING), .6);
+      }
       result.add(core.ship().logicalPose().transformPosition(point));
     }
     return result;
   }
 
   static boolean ray(LivingCoreBlockEntity core, Vec3 from, Vec3 to) {
+    return rayAtCore(core, from, to, core.getBlockPos());
+  }
+
+  static boolean rayAtCore(LivingCoreBlockEntity core, Vec3 from, Vec3 to, BlockPos origin) {
     int steps = Math.max(1, (int) Math.ceil(from.distanceTo(to) * 5));
     var targetCell = BlockPos.containing(to);
     for (int i = 1; i < steps; i++) {
@@ -57,8 +75,9 @@ public final class BioshipVision {
                   .logicalPose()
                   .transformPositionInverse(from.lerp(to, i / (double) steps)));
       var state = core.getLevel().getBlockState(sample);
-      if (sample.equals(core.getBlockPos()) || state.is(Create_bioships.SURFACE_EYE.get()))
-        continue;
+      if (sample.equals(origin) || state.is(Create_bioships.SURFACE_EYE.get())) continue;
+      if (sample.equals(core.getBlockPos()) && !origin.equals(sample))
+        state = core.getLevel().getBlockState(origin);
       if (!state.getCollisionShape(core.getLevel(), sample).isEmpty()) return false;
     }
     return true;
@@ -128,7 +147,10 @@ public final class BioshipVision {
         var tissue = level.getBlockState(host);
         if (!tissue.is(Create_bioships.FLESH.get())
             && !tissue.is(Create_bioships.CARAPACE.get())
-            && !tissue.is(Create_bioships.CORE.get())) continue;
+            && !tissue.is(Create_bioships.CORE.get())
+            && !tissue.is(Create_bioships.ONE_WAY_WINDOW.get())) continue;
+        if (tissue.is(Create_bioships.ONE_WAY_WINDOW.get())
+            && tissue.getValue(OneWayWindowBlock.FACING) != direction) continue;
         var target = host.relative(direction);
         if (!level.getBlockState(target).isAir()
             || !core.ship().getPlot().contains(new net.minecraft.world.level.ChunkPos(target)))

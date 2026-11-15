@@ -1,27 +1,53 @@
 {
   "variants": {
-    "facing=north": {
+    "facing=north,window_mounted=false,window_internal=false": {
       "model": "create_bioships:block/surface_eye"
     },
-    "facing=east": {
+    "facing=north,window_mounted=true,window_internal=false": {
+      "model": "create_bioships:block/surface_eye_window"
+    },
+    "facing=east,window_mounted=false,window_internal=false": {
       "model": "create_bioships:block/surface_eye",
       "y": 90
     },
-    "facing=south": {
+    "facing=east,window_mounted=true,window_internal=false": {
+      "model": "create_bioships:block/surface_eye_window",
+      "y": 90
+    },
+    "facing=south,window_mounted=false,window_internal=false": {
       "model": "create_bioships:block/surface_eye",
       "y": 180
     },
-    "facing=west": {
+    "facing=south,window_mounted=true,window_internal=false": {
+      "model": "create_bioships:block/surface_eye_window",
+      "y": 180
+    },
+    "facing=west,window_mounted=false,window_internal=false": {
       "model": "create_bioships:block/surface_eye",
       "y": 270
     },
-    "facing=up": {
+    "facing=west,window_mounted=true,window_internal=false": {
+      "model": "create_bioships:block/surface_eye_window",
+      "y": 270
+    },
+    "facing=up,window_mounted=false,window_internal=false": {
       "model": "create_bioships:block/surface_eye",
       "x": 270
     },
-    "facing=down": {
+    "facing=up,window_mounted=true,window_internal=false": {
+      "model": "create_bioships:block/surface_eye_window",
+      "x": 270
+    },
+    "facing=down,window_mounted=false,window_internal=false": {
       "model": "create_bioships:block/surface_eye",
       "x": 90
+    },
+    "facing=down,window_mounted=true,window_internal=false": {
+      "model": "create_bioships:block/surface_eye_window",
+      "x": 90
+    },
+    "window_internal=true": {
+      "model": "create_bioships:block/core_relocating"
     }
   }
 }

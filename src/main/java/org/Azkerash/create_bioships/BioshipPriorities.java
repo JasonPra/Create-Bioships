@@ -51,7 +51,8 @@ final class BioshipPriorities {
     int bestRank = Integer.MAX_VALUE, previousRank = Integer.MAX_VALUE;
     double distance = 16 * 16;
     for (var pos : BlockPos.betweenClosed(origin.offset(-16, -3, -16), origin.offset(16, 3, 16))) {
-      if (!level.getChunkSource().hasChunk(pos.getX() >> 4, pos.getZ() >> 4)
+      if (!core.crawl().reachableGoal(pos)
+          || !level.getChunkSource().hasChunk(pos.getX() >> 4, pos.getZ() >> 4)
           || BioshipIntegration.containing(level, pos) != null) continue;
       var state = level.getBlockState(pos);
       if (!BuiltInRegistries.BLOCK.getKey(state.getBlock()).getNamespace().equals("biomancy")

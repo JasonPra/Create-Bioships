@@ -2355,7 +2355,7 @@ public class BioshipGameTests {
     }
   }
 
-  @GameTest(template = "test_empty", timeoutTicks = 200, batch = "aggressive_hatchling")
+  @GameTest(template = "test_empty", timeoutTicks = 400, batch = "aggressive_hatchling")
   public static void
       aggressive_small_arms_attack_owner_and_creatures_but_respect_sight_and_creative(
           GameTestHelper helper) {
@@ -2383,62 +2383,77 @@ public class BioshipGameTests {
     tag.putInt("Satiety", 1200);
     tag.putUUID("Captain", owner.getUUID());
     core.loadAdditional(tag, level.registryAccess());
-    helper.runAfterDelay(
-        40,
-        () -> {
-          helper.assertTrue(
-              core.aggressive() && BioshipDefense.target(core) == owner,
-              "Aggressive hatchling did not target its survival owner: aggressive="
-                  + core.aggressive()
-                  + " attackable="
-                  + TentacleBlockEntity.attackable(owner)
-                  + " visible="
-                  + core.vision().visible(core, owner.getBoundingBox().getCenter())
-                  + " target="
-                  + BioshipDefense.target(core)
-                  + " entities="
-                  + level
-                      .getEntitiesOfClass(
-                          net.minecraft.world.entity.LivingEntity.class,
-                          new AABB(here, here).inflate(8))
-                      .size());
-        });
-    helper.assertTrue(
-        !TentacleBlockEntity.attackable(creative), "Creative player was an attack target");
-    helper.runAfterDelay(
-        60,
-        () -> {
-          helper.assertTrue(
-              owner.getHealth() < 20, "Aggressive hatchling never damaged the survival player");
-          level.removePlayerImmediately(owner, Entity.RemovalReason.DISCARDED);
-          var wall = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO)).east();
-          for (int y = 0; y < 4; y++)
-            level.setBlock(wall.above(y), Blocks.OBSIDIAN.defaultBlockState(), 3);
-          helper.runAfterDelay(
-              30,
-              () -> {
-                helper.assertTrue(
-                    cow.getHealth() == cow.getMaxHealth(),
-                    "Small arm attacked through a world wall");
-                for (int y = 0; y < 4; y++) level.removeBlock(wall.above(y), false);
-                helper.runAfterDelay(
-                    40,
-                    () -> {
-                      try {
-                        helper.assertTrue(
-                            cow.getHealth() < cow.getMaxHealth(),
-                            "Aggression did not attack visible creatures");
-                        helper.assertTrue(
-                            creative.getHealth() == 20, "Creative player was damaged");
-                        helper.succeed();
-                      } finally {
-                        cow.discard();
-                        level.removePlayerImmediately(creative, Entity.RemovalReason.DISCARDED);
-                        cleanup(helper, ship);
-                      }
-                    });
-              });
-        });
+    helper
+        .startSequence()
+        .thenWaitUntil(
+            () -> {
+              var entities =
+                  level.getEntitiesOfClass(
+                      net.minecraft.world.entity.LivingEntity.class,
+                      new AABB(here, here).inflate(8));
+              helper.assertTrue(
+                  entities.contains(owner) && entities.contains(cow),
+                  "Waiting for player and creature fixture chunks to finish loading");
+            })
+        .thenExecute(
+            () -> {
+              helper.assertTrue(
+                  core.aggressive() && BioshipDefense.target(core) == owner,
+                  "Aggressive hatchling did not target its survival owner: aggressive="
+                      + core.aggressive()
+                      + " attackable="
+                      + TentacleBlockEntity.attackable(owner)
+                      + " visible="
+                      + core.vision().visible(core, owner.getBoundingBox().getCenter())
+                      + " target="
+                      + BioshipDefense.target(core)
+                      + " entities="
+                      + level
+                          .getEntitiesOfClass(
+                              net.minecraft.world.entity.LivingEntity.class,
+                              new AABB(here, here).inflate(8))
+                          .size());
+              helper.assertTrue(
+                  !TentacleBlockEntity.attackable(creative),
+                  "Creative player was an attack target");
+              helper.runAfterDelay(
+                  60,
+                  () -> {
+                    helper.assertTrue(
+                        owner.getHealth() < 20,
+                        "Aggressive hatchling never damaged the survival player");
+                    level.removePlayerImmediately(owner, Entity.RemovalReason.DISCARDED);
+                    var wall =
+                        BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO)).east();
+                    for (int y = 0; y < 4; y++)
+                      level.setBlock(wall.above(y), Blocks.OBSIDIAN.defaultBlockState(), 3);
+                    helper.runAfterDelay(
+                        30,
+                        () -> {
+                          helper.assertTrue(
+                              cow.getHealth() == cow.getMaxHealth(),
+                              "Small arm attacked through a world wall");
+                          for (int y = 0; y < 4; y++) level.removeBlock(wall.above(y), false);
+                          helper.runAfterDelay(
+                              40,
+                              () -> {
+                                try {
+                                  helper.assertTrue(
+                                      cow.getHealth() < cow.getMaxHealth(),
+                                      "Aggression did not attack visible creatures");
+                                  helper.assertTrue(
+                                      creative.getHealth() == 20, "Creative player was damaged");
+                                  helper.succeed();
+                                } finally {
+                                  cow.discard();
+                                  level.removePlayerImmediately(
+                                      creative, Entity.RemovalReason.DISCARDED);
+                                  cleanup(helper, ship);
+                                }
+                              });
+                        });
+                  });
+            });
   }
 
   @GameTest(template = "test_empty", timeoutTicks = 100, batch = "needs_priorities")
@@ -2650,6 +2665,244 @@ public class BioshipGameTests {
         Create_bioships.CORE.get().getStateForPlacement(plainContext) == null,
         "Core placement was allowed on a non-bioship Sable grid");
     cleanup(helper, grid);
+    finish(helper, ship, () -> {});
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 1400, batch = "core_scouting")
+  public static void core_slides_on_own_body_preserves_organs_and_returns_inside_for_growth(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var original = core(ship);
+    var level = helper.getLevel();
+    var stomach = digestive(helper, original, false);
+    stomach.retain(new ItemStack(Items.BARRIER, 5));
+    var home = original.getBlockPos();
+    var mouth = original.mouthBlock();
+    var stomachPos = stomach.getBlockPos();
+    var sentinel =
+        BuiltInRegistries.ITEM.stream()
+            .filter(
+                item ->
+                    item != Items.AIR
+                        && BuiltInRegistries.ITEM.getKey(item).getNamespace().equals("minecraft"))
+            .map(item -> new ItemStack(item, 7))
+            .filter(
+                stack ->
+                    !stomach.canEnqueue(stack, false)
+                        && !stack.is(BioshipIntegration.constructionMaterial())
+                        && !stack.is(
+                            net.minecraft.tags.TagKey.create(
+                                net.minecraft.core.registries.Registries.ITEM,
+                                ResourceLocation.parse("create_bioships:levitite_amalgam"))))
+            .findFirst()
+            .orElseThrow();
+    ((FeedingMouthBlockEntity) level.getBlockEntity(mouth)).setItem(0, sentinel.copy());
+    level.setBlock(home.above(), Create_bioships.INTESTINE.get().defaultBlockState(), 3);
+    level.setBlock(home.above(2), Create_bioships.INTESTINE.get().defaultBlockState(), 3);
+    var wall = BlockPos.containing(BioshipBlueprint.physical(original, BlockPos.ZERO)).north(3);
+    for (int x = -2; x <= 2; x++)
+      for (int y = 0; y < 2; y++)
+        level.setBlock(wall.offset(x, y, 0), Blocks.OBSIDIAN.defaultBlockState(), 3);
+    var tag = original.saveWithFullMetadata(level.registryAccess());
+    UUID captain =
+        UUID.nameUUIDFromBytes(
+            "scouting-captain".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    tag.putUUID("Captain", captain);
+    tag.putInt("Trust", 75);
+    original.loadAdditional(tag, level.registryAccess());
+    int before = original.coreMotion().coverage(original, home);
+    double health = original.body().health();
+    original.coreMotion().scoutNow(original);
+    helper.assertTrue(
+        original.coreMotion().active(), "Blocked hatchling did not begin relocating its core");
+    helper.assertTrue(
+        original.getBlockState().getValue(LivingCoreBlock.RELOCATING),
+        "Core relocation has no travel render state");
+    var saved = original.saveWithFullMetadata(level.registryAccess());
+    original.loadAdditional(saved, level.registryAccess());
+    helper.assertTrue(original.coreMotion().active(), "Core travel did not survive save/load");
+    helper.runAfterDelay(
+        100,
+        () -> {
+          var moved = core(ship);
+          helper.assertTrue(
+              !moved.getBlockPos().equals(home) && moved.getBlockPos().getY() > home.getY(),
+              "Core did not move higher on its own tissue");
+          helper.assertTrue(
+              moved.coreMotion().coverage(moved, moved.getBlockPos()) == 16 && before < 16,
+              "Relocating the core did not improve panoramic sight");
+          helper.assertTrue(
+              level.getBlockEntity(stomachPos) instanceof StomachBlockEntity retained
+                  && retained.material("minecraft:barrier") == 5
+                  && level.getBlockEntity(mouth) instanceof FeedingMouthBlockEntity
+                  && ((FeedingMouthBlockEntity) level.getBlockEntity(mouth)).getItem(0).getCount()
+                      == 7
+                  && ((FeedingMouthBlockEntity) level.getBlockEntity(mouth))
+                      .getItem(0)
+                      .is(sentinel.getItem()),
+              "Core scouting moved or lost digestive organs/inventories: stomach="
+                  + level.getBlockEntity(stomachPos)
+                  + " stomachState="
+                  + level.getBlockState(stomachPos)
+                  + " mouth="
+                  + level.getBlockEntity(mouth)
+                  + " mouthState="
+                  + level.getBlockState(mouth)
+                  + " items="
+                  + (level.getBlockEntity(mouth) instanceof FeedingMouthBlockEntity m
+                      ? m.getItem(0)
+                      : "missing"));
+          helper.assertTrue(
+              moved.body().health() == health
+                  && captain.equals(moved.creator())
+                  && moved.saveWithFullMetadata(level.registryAccess()).getInt("Trust") == 75,
+              "Authorized core motion injured the organism or cost trust");
+          for (int x = -2; x <= 2; x++)
+            for (int y = 0; y < 2; y++) level.removeBlock(wall.offset(x, y, 0), false);
+          var currentStomach = DigestiveSystem.stomach(moved);
+          currentStomach.retainFlesh(64);
+          currentStomach.retain(new ItemStack(item("biomancy:bone_fragments"), 8));
+          currentStomach.retain(new ItemStack(item("biomancy:elastic_fibers"), 12));
+        });
+    helper.runAfterDelay(
+        1250,
+        () ->
+            finish(
+                helper,
+                ship,
+                () -> {
+                  var grown = core(ship);
+                  helper.assertTrue(
+                      grown.isMature(),
+                      "Scout did not return and grow after the site became suitable: "
+                          + diagnose(grown));
+                  helper.assertTrue(
+                      grown.getBlockPos().equals(home),
+                      "Growth displaced the original body anchor");
+                  helper.assertTrue(
+                      grown.getBlockState().getValue(LivingCoreBlock.CONCEALED),
+                      "Growing hull did not conceal its internal core");
+                  helper.assertTrue(
+                      !grown.getBlockState().getValue(LivingCoreBlock.RELOCATING),
+                      "Core remained in a traveling render state");
+                }));
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "ground_route")
+  public static void scuttle_routes_around_terrain_and_checks_attached_body_clearance(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    level.setBlock(core.getBlockPos().north(), Create_bioships.FLESH.get().defaultBlockState(), 3);
+    var wall = BlockPos.containing(here).east(3);
+    for (int z = -3; z <= 3; z++)
+      for (int y = 0; y < 5; y++)
+        level.setBlock(wall.offset(0, y, z), Blocks.OBSIDIAN.defaultBlockState(), 3);
+    var route = new GroundRoute();
+    helper.assertTrue(
+        route.plan(core, here.add(8, 0, 0)),
+        "No route was found around a reachable terrain obstruction");
+    helper.assertTrue(
+        route.points().stream().anyMatch(p -> Math.abs(p.z - here.z) >= 4),
+        "Route runs directly through terrain rather than around it");
+    for (var point : route.points()) {
+      helper.assertTrue(
+          level.getBlockState(BlockPos.containing(point)).isAir(),
+          "Route puts the core inside a solid block");
+      var attached = BlockPos.containing(point.add(0, 0, -1));
+      helper.assertTrue(
+          level.getBlockState(attached).isAir(), "Route clips an attached body block into terrain");
+    }
+    for (int z = -3; z <= 3; z++)
+      for (int y = 0; y < 5; y++) level.removeBlock(wall.offset(0, y, z), false);
+    for (var pos :
+        BlockPos.betweenClosed(
+            BlockPos.containing(here).offset(4, 0, -4), BlockPos.containing(here).offset(10, 0, 4)))
+      level.setBlock(pos, Blocks.STONE.defaultBlockState(), 3);
+    helper.assertTrue(
+        route.plan(core, here.add(8, 1, 0))
+            && route.points().stream().anyMatch(p -> p.y > here.y + .5),
+        "Route cannot climb a safe one-block terrace");
+    for (var pos :
+        BlockPos.betweenClosed(
+            BlockPos.containing(here).offset(4, 0, -4), BlockPos.containing(here).offset(10, 0, 4)))
+      level.removeBlock(pos, false);
+    finish(helper, ship, () -> {});
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "window_eye_visibility")
+  public static void window_eyes_are_hidden_from_inside_and_keep_outward_vision(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var window = core.getBlockPos().east(2);
+    level.setBlock(
+        window,
+        Create_bioships.ONE_WAY_WINDOW
+            .get()
+            .defaultBlockState()
+            .setValue(OneWayWindowBlock.FACING, Direction.EAST),
+        3);
+    var outside = window.east();
+    var inside = window.west();
+    level.setBlock(
+        outside,
+        Create_bioships.SURFACE_EYE
+            .get()
+            .defaultBlockState()
+            .setValue(SurfaceEyeBlock.FACING, Direction.EAST),
+        3);
+    helper.assertTrue(
+        level.getBlockState(outside).getValue(SurfaceEyeBlock.WINDOW_MOUNTED)
+            && !level.getBlockState(outside).getValue(SurfaceEyeBlock.WINDOW_INTERNAL),
+        "Exterior window eye does not use its one-sided model");
+    level.setBlock(
+        inside,
+        Create_bioships.SURFACE_EYE
+            .get()
+            .defaultBlockState()
+            .setValue(SurfaceEyeBlock.FACING, Direction.WEST),
+        3);
+    helper.assertTrue(
+        level.getBlockState(inside).getValue(SurfaceEyeBlock.WINDOW_INTERNAL),
+        "An eye attached to the inner window face remains visible inside");
+    helper.assertTrue(
+        level.getBlockState(inside).getShape(level, inside).isEmpty(),
+        "Concealed window eye still has a visible selection outline");
+    try (var stream =
+        BioshipGameTests.class
+            .getClassLoader()
+            .getResourceAsStream("assets/create_bioships/models/block/surface_eye_window.json")) {
+      var model =
+          com.google.gson.JsonParser.parseReader(
+                  new java.io.InputStreamReader(
+                      Objects.requireNonNull(stream), java.nio.charset.StandardCharsets.UTF_8))
+              .getAsJsonObject();
+      var faces =
+          model.getAsJsonArray("elements").get(0).getAsJsonObject().getAsJsonObject("faces");
+      helper.assertTrue(
+          faces.size() == 1 && faces.has("north"),
+          "Window eye model has back or edge faces visible from the cabin");
+    } catch (java.io.IOException exception) {
+      throw new IllegalStateException(exception);
+    }
+    level.removeBlock(outside, false);
+    level.setBlock(
+        inside,
+        level
+            .getBlockState(inside)
+            .setValue(SurfaceEyeBlock.WINDOW_MOUNTED, false)
+            .setValue(SurfaceEyeBlock.WINDOW_INTERNAL, false),
+        2);
+    helper.assertTrue(
+        core.vision().visible(core, BioshipBlueprint.physical(core, new BlockPos(8, 0, 0))),
+        "Concealed inner window eye no longer sees outward");
+    helper.assertTrue(
+        level.getBlockState(inside).getValue(SurfaceEyeBlock.WINDOW_INTERNAL),
+        "A saved eye did not refresh its concealed window mount");
     finish(helper, ship, () -> {});
   }
 }

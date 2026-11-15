@@ -108,6 +108,15 @@ public final class BioshipBody {
     core.setChanged();
   }
 
+  void rebase(BlockPos delta) {
+    var cells = new LinkedHashMap<>(memory);
+    memory.clear();
+    cells.forEach((p, s) -> memory.put(p.offset(delta), s));
+    var damage = new HashSet<>(injured);
+    injured.clear();
+    damage.forEach(p -> injured.add(p.offset(delta)));
+  }
+
   /** Only changes made by the ship itself retire old schematic cells. */
   void reconcile(LivingCoreBlockEntity core, Map<BlockPos, BlockState> before) {
     var after = actual(core);

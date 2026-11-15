@@ -11,6 +11,19 @@ public final class BioshipCrawl {
   private Vec3 goal;
   private boolean walking;
   private int cursor;
+  private final GroundRoute route = new GroundRoute();
+  private final Map<BlockPos, Long> unreachable = new HashMap<>();
+
+  boolean reachableGoal(BlockPos pos) {
+    return unreachable.getOrDefault(new BlockPos(pos.getX(), 0, pos.getZ()), 0L) <= currentTime;
+  }
+
+  private long currentTime;
+
+  void stepHeight(double height) {
+    supportHeight = Double.isFinite(supportHeight) ? Math.max(supportHeight, height) : height;
+  }
+
   private boolean gathering;
   private Vec3 reach;
 
@@ -45,11 +58,19 @@ public final class BioshipCrawl {
     return gathering;
   }
 
+  void stop() {
+    goal = null;
+    walking = false;
+    gathering = false;
+  }
+
   public Vec3 goal() {
     return goal;
   }
 
   void tick(LivingCoreBlockEntity core, boolean blocked) {
+    currentTime = core.getLevel().getGameTime();
+    unreachable.entrySet().removeIf(e -> e.getValue() <= currentTime);
     brace(core);
     if (core.isMature() || core.body().health() <= 0 || core.blueprint().busy()) {
       goal = null;
@@ -91,13 +112,15 @@ public final class BioshipCrawl {
   }
 
   boolean clear(LivingCoreBlockEntity core, Vec3 candidate) {
+    if (!reachableGoal(BlockPos.containing(candidate))) return false;
     var level = (ServerLevel) core.getLevel();
     for (var part : core.plannedBody()) {
       Vec3 d =
           core.ship()
               .logicalPose()
               .transformNormal(
-                  new Vec3(part.offset().getX(), part.offset().getY(), part.offset().getZ()));
+                  Vec3.atLowerCornerOf(
+                      part.offset().offset(core.structuralOrigin().subtract(core.getBlockPos()))));
       var p = BlockPos.containing(candidate.add(d));
       if (!level.getChunkSource().hasChunk(p.getX() >> 4, p.getZ() >> 4)
           || !level.getWorldBorder().isWithinBounds(p)
@@ -110,7 +133,14 @@ public final class BioshipCrawl {
       for (int x = -DinghyGrowth.radius(z, core.layoutVersion());
           x <= DinghyGrowth.radius(z, core.layoutVersion());
           x++) {
-        Vec3 d = core.ship().logicalPose().transformNormal(new Vec3(x, 0, z));
+        Vec3 d =
+            core.ship()
+                .logicalPose()
+                .transformNormal(
+                    new Vec3(x, 0, z)
+                        .add(
+                            Vec3.atLowerCornerOf(
+                                core.structuralOrigin().subtract(core.getBlockPos()))));
         var p = ground(level, BlockPos.containing(candidate.add(d.x, 0, d.z)));
         if (p == null) return false;
         if (!level.getBlockState(p).isFaceSturdy(level, p, Direction.UP)
@@ -123,31 +153,23 @@ public final class BioshipCrawl {
     if (!walking || goal == null) return Vec3.ZERO;
     var level = (ServerLevel) core.getLevel();
     Vec3 here = BioshipBlueprint.physical(core, BlockPos.ZERO);
-    Vec3 delta = goal.subtract(here).multiply(1, 0, 1);
-    if (delta.lengthSqr() < .1) return Vec3.ZERO;
+    var waypoint = route.next(core, goal);
+    if (waypoint == null) {
+      if (route.failed()) {
+        unreachable.put(
+            new BlockPos((int) Math.floor(goal.x), 0, (int) Math.floor(goal.z)),
+            core.getLevel().getGameTime() + 400);
+        goal = null;
+        walking = false;
+      }
+      return Vec3.ZERO;
+    }
+    Vec3 delta = waypoint.subtract(here).multiply(1, 0, 1);
+    if (delta.lengthSqr() < .01) return Vec3.ZERO;
     Vec3 direction = delta.normalize();
-    var next = BlockPos.containing(here.add(direction.scale(1.2)));
-    var below = ground(level, next);
-    if (below == null) {
-      walking = false;
-      goal = null;
-      return Vec3.ZERO;
-    }
-    if (!level.getBlockState(below).isFaceSturdy(level, below, Direction.UP)
-        || !level.getFluidState(below).isEmpty()
-        || !BioshipIntegration.growthSpace(level, next)) {
-      goal = null;
-      walking = false;
-      return Vec3.ZERO;
-    }
-    if (!BioshipBlueprint.worldClear(level, here, here.add(direction.scale(1.2)))) {
-      goal = null;
-      walking = false;
-      return Vec3.ZERO;
-    }
     if (!core.hatchling()) return direction.scale(.7);
-    double phase = core.getLevel().getGameTime() * .65;
-    double speed = 1.05 + .3 * Math.max(0, Math.sin(phase));
+    double phase = core.getLevel().getGameTime() * 1.05;
+    double speed = 2.4 + .6 * Math.max(0, Math.sin(phase));
     return direction
         .scale(speed)
         .add(new Vec3(-direction.z, 0, direction.x).scale(Math.sin(phase * .5) * .08));
@@ -175,7 +197,7 @@ public final class BioshipCrawl {
     int count = 0;
     double highest = -Double.MAX_VALUE;
     for (int i = 0; i < 4; i++) {
-      Vec3 point = here.add(i % 2 == 0 ? -1.4 : 1.4, 0, i < 2 ? -1.4 : 1.4);
+      Vec3 point = here.add(i % 2 == 0 ? -1.4 : 1.4, -core.coreHeightOffset(), i < 2 ? -1.4 : 1.4);
       var floor = ground(level, BlockPos.containing(point));
       if (floor == null) continue;
       heights[i] = floor.getY() + 1;
@@ -183,8 +205,8 @@ public final class BioshipCrawl {
       count++;
     }
     if (count < 3) return;
-    double wanted = highest + (core.hatchling() ? .85 : 1.25);
-    if (wanted - here.y > 2 || here.y - highest > 2.75) return;
+    double wanted = highest + (core.hatchling() ? .85 : 1.25) + core.coreHeightOffset();
+    if (wanted - here.y > 2 || here.y - core.coreHeightOffset() - highest > 2.75) return;
     supportHeight = wanted;
     if (count == 4)
       stanceUp =

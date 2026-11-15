@@ -86,6 +86,43 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
 
   private int bodyBlocks = 1;
   private int stage, growthIndex, metabolismTicks;
+  private final CoreMotion coreMotion = new CoreMotion();
+
+  public CoreMotion coreMotion() {
+    return coreMotion;
+  }
+
+  public BlockPos structuralOrigin() {
+    return coreMotion.home(this);
+  }
+
+  boolean growthStockReady() {
+    var stomach = DigestiveSystem.stomach(this);
+    return stomach != null
+        && needs.biomass() + stomach.material("biomancy:flesh_bits") >= 64
+        && stomach.material("biomancy:bone_fragments") >= 8
+        && stomach.material("biomancy:elastic_fibers") >= 12;
+  }
+
+  boolean growthSiteReady() {
+    var stomach = DigestiveSystem.stomach(this);
+    return needs.readyToGrow()
+        && (framePaid
+            || stomach != null
+                && stomach.material("biomancy:bone_fragments") >= 8
+                && stomach.material("biomancy:elastic_fibers") >= 12)
+        && roomToGrow(ship());
+  }
+
+  public double coreHeightOffset() {
+    return ship() == null
+        ? 0
+        : ship()
+            .logicalPose()
+            .transformNormal(Vec3.atLowerCornerOf(worldPosition.subtract(structuralOrigin())))
+            .y;
+  }
+
   private final BioshipVision vision = new BioshipVision();
 
   public BioshipVision vision() {
@@ -317,8 +354,8 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
   }
 
   public BlockPos layoutPos(BlockPos offset) {
-    return worldPosition.offset(
-        blueprint.offset(DinghyGrowth.atVersion(offset, bodyLayoutVersion)));
+    return structuralOrigin()
+        .offset(blueprint.offset(DinghyGrowth.atVersion(offset, bodyLayoutVersion)));
   }
 
   private boolean framePaid, larynxDeveloped;
@@ -399,7 +436,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
   }
 
   private void recordGrowthObstacle(ServerSubLevel ship, BlockPos offset) {
-    var pos = worldPosition.offset(offset);
+    var pos = structuralOrigin().offset(offset);
     var state = level.getBlockState(pos);
     if (state.isAir())
       pos = BlockPos.containing(ship.logicalPose().transformPosition(Vec3.atCenterOf(pos)));
@@ -420,15 +457,17 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     growthObstacle = "";
     // The oval hull spans neighboring plot chunks. Allocate only its own empty plot cells.
     for (var part : plannedBody()) {
-      var chunk = new ChunkPos(worldPosition.offset(part.offset()));
+      var chunk = new ChunkPos(structuralOrigin().offset(part.offset()));
       if (ship.getPlot().contains(chunk)
           && ship.getPlot().getChunkHolder(ship.getPlot().toLocal(chunk)) == null)
         ship.getPlot().newEmptyChunk(chunk);
     }
     for (var part : plannedBody())
-      if (!level.getBlockState(worldPosition.offset(part.offset())).equals(part.state())
-          && !BioshipIntegration.isIntegratedMachine(level, worldPosition.offset(part.offset()))
-          && !clearForGrowth(ship, worldPosition.offset(part.offset()))) {
+      if (!structuralOrigin().offset(part.offset()).equals(worldPosition)
+          && !level.getBlockState(structuralOrigin().offset(part.offset())).equals(part.state())
+          && !BioshipIntegration.isIntegratedMachine(
+              level, structuralOrigin().offset(part.offset()))
+          && !clearForGrowth(ship, structuralOrigin().offset(part.offset()))) {
         recordGrowthObstacle(ship, part.offset());
         return false;
       }
@@ -438,6 +477,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
   public static void tick(Level level, BlockPos pos, BlockState state, LivingCoreBlockEntity core) {
     if (level.isClientSide) return;
     if (core.body.dead()) {
+      if (core.coreMotion.active()) core.coreMotion.cancel(core);
       core.updateEye(false);
       core.flight = new FlightIntent(false, Vec3.ZERO, 0);
       if (core.ship() != null
@@ -445,6 +485,11 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
               && core.ship().getUserDataTag().getBoolean("BioshipScavenged")))
         BioshipDecay.mark(core.ship());
       BioshipAccess.tick(core);
+      return;
+    }
+    if (core.ship() != null && core.coreMotion.tick(core)) {
+      if (!core.isRemoved()) core.serverTick();
+      core.flight = new FlightIntent(false, Vec3.ZERO, 0);
       return;
     }
     if (core.ship() != null && core.isMature() && level.getGameTime() % 10 == 0) {
@@ -489,6 +534,14 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
           || level.getBlockState(panel).is(Create_bioships.FLESH.get()))
         level.setBlock(panel, Create_bioships.BLUEPRINT_PANEL.get().defaultBlockState(), 3);
     }
+    if (core.stage > 0
+        && (core.isMature()
+            || java.util.Arrays.stream(Direction.values())
+                    .filter(
+                        d -> level.getBlockState(pos.relative(d)).is(Create_bioships.FLESH.get()))
+                    .count()
+                >= 3))
+      level.setBlock(pos, core.getBlockState().setValue(LivingCoreBlock.CONCEALED, true), 2);
     core.body.reconcile(core, before);
     if (level.getGameTime() % 20 == 0 && core.stage < 2)
       level.sendBlockUpdated(pos, core.getBlockState(), core.getBlockState(), 2);
@@ -510,6 +563,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     ServerSubLevel ship = ship();
     if (ship == null || !primary(ship)) return;
     if (stage == 0
+        && worldPosition.equals(structuralOrigin())
         && needs.readyToGrow()
         && level.getGameTime() % 20 == 0
         && roomToGrow(ship)
@@ -521,7 +575,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     var parts = plannedBody();
     if (growthIndex < parts.size()) {
       var part = parts.get(growthIndex);
-      BlockPos target = worldPosition.offset(part.offset());
+      BlockPos target = structuralOrigin().offset(part.offset());
       boolean placed =
           level.getBlockState(target).is(part.state().getBlock())
               || BioshipIntegration.isIntegratedMachine(level, target);
@@ -1030,6 +1084,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     if (organMove != null) tag.put("OrganMove", organMove.save());
     tag.put("Scavenging", scavenging.save());
     tag.put("Crawl", crawl.save());
+    tag.put("CoreMotion", coreMotion.save());
     tag.put("Access", access.save(captain));
     tag.put("BodyMemory", body.save());
     tag.put("Blueprint", blueprint.save());
@@ -1068,6 +1123,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
         tag.contains("OrganMove") ? OrganMotion.Move.load(tag.getCompound("OrganMove")) : null;
     scavenging.load(tag.getCompound("Scavenging"));
     crawl.load(tag.getCompound("Crawl"));
+    coreMotion.load(tag.getCompound("CoreMotion"));
     access.load(tag.getCompound("Access"));
     body.load(tag.getCompound("BodyMemory"), registries);
     blueprint.load(tag.getCompound("Blueprint"), registries);

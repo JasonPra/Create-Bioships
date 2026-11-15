@@ -1,16 +1,22 @@
 {
   "variants": {
-    "active=false,blink=false": {
+    "active=false,blink=false,relocating=false,concealed=false": {
       "model": "create_bioships:block/core_dormant"
     },
-    "active=false,blink=true": {
+    "active=false,blink=true,relocating=false,concealed=false": {
       "model": "create_bioships:block/core_dormant"
     },
-    "active=true,blink=false": {
+    "active=true,blink=false,relocating=false,concealed=false": {
       "model": "create_bioships:block/core_awake"
     },
-    "active=true,blink=true": {
+    "active=true,blink=true,relocating=false,concealed=false": {
       "model": "create_bioships:block/core_closed"
+    },
+    "relocating=true": {
+      "model": "create_bioships:block/core_relocating"
+    },
+    "relocating=false,concealed=true": {
+      "model": "create_bioships:block/living_hull"
     }
   }
 }
