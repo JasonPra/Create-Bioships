@@ -88,7 +88,7 @@ public final class BioshipBlueprint {
 
   private List<Room> rooms =
       new ArrayList<>(
-          List.of(new Room(0, "Cockpit", 0, -5, 9, 9), new Room(1, "Engine room", 0, 5, 9, 11)));
+          List.of(new Room(0, "Cockpit", 0, -6, 9, 11), new Room(1, "Engine room", 0, 5, 9, 11)));
   private List<Room> pendingRooms = new ArrayList<>();
   private final Map<BlockPos, BlockState> target = new LinkedHashMap<>();
   private final Map<BlockPos, CompoundTag> cargo = new LinkedHashMap<>();
@@ -98,6 +98,7 @@ public final class BioshipBlueprint {
   private Vec3 landing, searchGoal, carryStart, carryEnd;
   private UUID carried;
   private int paid;
+  private int baseCockpitZ = -6;
   private boolean demolitionDone;
 
   public List<Room> rooms() {
@@ -144,7 +145,9 @@ public final class BioshipBlueprint {
     if (original.equals(BlockPos.ZERO)) return original;
     int id = original.getZ() < 0 ? 0 : 1;
     var room = rooms.stream().filter(r -> r.id == id).findFirst().orElse(null);
-    return room == null ? original : original.offset(room.x, 0, room.z - (id == 0 ? -5 : 5));
+    return room == null
+        ? original
+        : original.offset(room.x, 0, room.z - (id == 0 ? baseCockpitZ : 5));
   }
 
   public BlockPos engineLocal(BlockPos local) {
@@ -423,8 +426,8 @@ public final class BioshipBlueprint {
       if (y == Integer.MIN_VALUE) y = height;
       else if (height != y) return null;
       for (int h = 0; h < 9; h++)
-        if (!level.getBlockState(new BlockPos(ground.getX(), height + h, ground.getZ())).isAir())
-          return null;
+        if (!BioshipIntegration.growthSpace(
+            level, new BlockPos(ground.getX(), height + h, ground.getZ()))) return null;
     }
     if (y <= level.getMinBuildHeight() || y + 10 >= level.getMaxBuildHeight()) return null;
     return new Vec3(candidate.x, y + .5, candidate.z);
@@ -657,7 +660,7 @@ public final class BioshipBlueprint {
         return;
       }
       Vec3 physical = physical(core, e.getKey());
-      if (!level.getBlockState(BlockPos.containing(physical)).isAir()) {
+      if (!BioshipIntegration.growthSpace(level, BlockPos.containing(physical))) {
         status = "Terrain obstructs reconstruction";
         return;
       }
@@ -669,6 +672,7 @@ public final class BioshipBlueprint {
       }
       if (plot.getChunkHolder(plot.toLocal(chunk)) == null) plot.newEmptyChunk(chunk);
       if (!e.getValue().canSurvive(level, p)) continue;
+      BioshipIntegration.clearGrowthPlant(level, BlockPos.containing(physical));
       level.setBlock(p, e.getValue(), 3);
       var saved = cargo.remove(e.getKey());
       if (saved != null && level.getBlockEntity(p) instanceof BlockEntity be) {
@@ -728,6 +732,7 @@ public final class BioshipBlueprint {
     var pr = new ListTag();
     pendingRooms.forEach(a -> pr.add(a.save()));
     t.put("PendingRooms", pr);
+    t.putInt("BaseCockpitZ", baseCockpitZ);
     t.putString("Phase", phase);
     t.putString("Status", status);
     t.putInt("Revision", revision);
@@ -765,6 +770,8 @@ public final class BioshipBlueprint {
   }
 
   void load(CompoundTag t, HolderLookup.Provider registries) {
+    baseCockpitZ =
+        t.contains("BaseCockpitZ") ? t.getInt("BaseCockpitZ") : t.contains("Rooms") ? -5 : -6;
     if (t.contains("Rooms")) {
       rooms.clear();
       var r = t.getList("Rooms", Tag.TAG_COMPOUND);

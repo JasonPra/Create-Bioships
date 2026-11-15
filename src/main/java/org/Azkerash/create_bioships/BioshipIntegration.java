@@ -42,8 +42,9 @@ public final class BioshipIntegration {
   public static void bind(ServerSubLevel ship) {
     var tag = ship.getUserDataTag();
     if (tag == null) tag = new net.minecraft.nbt.CompoundTag();
-    if (!tag.getBoolean(BOUND)) {
+    if (!tag.getBoolean(BOUND) || !tag.hasUUID("BioshipLineage")) {
       tag.putBoolean(BOUND, true);
+      if (!tag.hasUUID("BioshipLineage")) tag.putUUID("BioshipLineage", ship.getUniqueId());
       ship.setUserDataTag(tag);
     }
   }
@@ -179,6 +180,16 @@ public final class BioshipIntegration {
       if (!state.getCollisionShape(level, point).isEmpty()) return false;
     }
     return true;
+  }
+
+  static boolean growthSpace(Level level, BlockPos pos) {
+    var state = level.getBlockState(pos);
+    return state.isAir() || state.canBeReplaced() && level.getFluidState(pos).isEmpty();
+  }
+
+  static void clearGrowthPlant(Level level, BlockPos pos) {
+    if (!level.getBlockState(pos).isAir() && growthSpace(level, pos))
+      level.destroyBlock(pos, false);
   }
 
   public static void finishAssimilation(LivingCoreBlockEntity core, BlockPos target) {
@@ -320,8 +331,10 @@ public final class BioshipIntegration {
 
   @SubscribeEvent
   public static void feedMaw(PlayerInteractEvent.RightClickBlock event) {
-    if (event.getLevel().isClientSide || !isMaw(event.getLevel().getBlockState(event.getPos())))
-      return;
+    if (event.getItemStack().isEmpty()
+        || event.getItemStack().is(Create_bioships.BIOSHIP_WRENCH.get())
+        || event.getLevel().isClientSide
+        || !isMaw(event.getLevel().getBlockState(event.getPos()))) return;
     var ship = containing(event.getLevel(), event.getPos());
     if (ship == null) return;
     for (var actor : ship.getPlot().getBlockEntityActors())

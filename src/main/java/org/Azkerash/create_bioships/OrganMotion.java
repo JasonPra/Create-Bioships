@@ -30,7 +30,16 @@ public final class OrganMotion {
       boolean mouth,
       boolean stomach,
       boolean manual,
-      boolean ownerForced) {
+      boolean ownerForced,
+      List<BlockPos> tissuePath) {
+    public Move {
+      tissuePath = List.copyOf(tissuePath);
+    }
+
+    public boolean usesArm() {
+      return external || tissuePath.isEmpty();
+    }
+
     public CompoundTag save() {
       var tag = new CompoundTag();
       tag.putUUID("Cargo", cargo);
@@ -47,6 +56,7 @@ public final class OrganMotion {
       tag.putBoolean("Stomach", stomach);
       tag.putBoolean("Manual", manual);
       tag.putBoolean("OwnerForced", ownerForced);
+      tag.putLongArray("TissuePath", tissuePath.stream().mapToLong(BlockPos::asLong).toArray());
       return tag;
     }
 
@@ -64,7 +74,11 @@ public final class OrganMotion {
               tag.getBoolean("Mouth"),
               tag.getBoolean("Stomach"),
               tag.getBoolean("Manual"),
-              tag.getBoolean("OwnerForced"))
+              tag.getBoolean("OwnerForced"),
+              java.util.Arrays.stream(tag.getLongArray("TissuePath"))
+                  .limit(12000)
+                  .mapToObj(BlockPos::of)
+                  .toList())
           : null;
     }
   }
@@ -90,10 +104,11 @@ public final class OrganMotion {
     var host = level.getBlockState(target);
     if (!host.isAir() && !host.is(Create_bioships.FLESH.get())) return false;
     var state = level.getBlockState(source);
-    if (state.isAir() || state.is(Create_bioships.CORE.get())) return false;
+    if (state.isAir()) return false;
     var sourceShip = BioshipIntegration.containing(level, source);
     boolean scavenged =
         external && sourceShip != null && sourceShip != ship && BioshipDecay.dead(sourceShip);
+    if (state.is(Create_bioships.CORE.get()) && !scavenged) return false;
     if (external && sourceShip != null && sourceShip != ship && !scavenged) return false;
     Vec3 sourceWorld =
         sourceShip != null
@@ -112,14 +127,11 @@ public final class OrganMotion {
     boolean restore = false;
     var entity = level.getBlockEntity(source);
     if (entity != null) restore = entity.getPersistentData().getBoolean("BioshipHostFlesh");
-    if (!external)
-      for (var part : DinghyGrowth.body())
-        if (part.offset().equals(source.subtract(core.getBlockPos()))
-            && part.state().is(Create_bioships.FLESH.get())) restore = true;
+    List<BlockPos> tissuePath = external ? List.of() : findTissuePath(core, source, target);
     if (!external)
       for (var player : level.players())
         if (player.containerMenu instanceof net.minecraft.world.inventory.ChestMenu menu
-            && menu.getContainer() == entity) player.closeContainer();
+            && menu.getContainer() == entity) return false;
     var cargo =
         SubLevelAssemblyHelper.assembleBlocks(
             level, source, List.of(source), new BoundingBox3i(source, source));
@@ -149,7 +161,8 @@ public final class OrganMotion {
             stomach,
             manual,
             SubLevelContainer.getContainer(level)
-                .addForceLoadTicket(ship, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE));
+                .addForceLoadTicket(ship, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE),
+            tissuePath);
     if (!external) {
       var local = source.subtract(core.getBlockPos());
       core.body().memory.remove(local);
@@ -157,6 +170,56 @@ public final class OrganMotion {
     }
     core.organMove(move);
     return true;
+  }
+
+  private static boolean tissue(net.minecraft.world.level.block.state.BlockState state) {
+    return state.is(Create_bioships.FLESH.get())
+        || state.is(Create_bioships.CARAPACE.get())
+        || state.is(Create_bioships.INTESTINE.get())
+        || state.is(Create_bioships.ONE_WAY_WINDOW.get());
+  }
+
+  static List<BlockPos> findTissuePath(
+      LivingCoreBlockEntity core, BlockPos source, BlockPos target) {
+    var level = core.getLevel();
+    var ship = core.ship();
+    Map<BlockPos, BlockPos> parents = new HashMap<>();
+    var queue = new ArrayDeque<BlockPos>();
+    queue.add(source);
+    parents.put(source, source);
+    while (!queue.isEmpty() && parents.size() < 12000) {
+      var current = queue.remove();
+      if (current.equals(target)) {
+        var path = new ArrayList<BlockPos>();
+        var p = current;
+        while (!p.equals(source)) {
+          path.add(p);
+          p = parents.get(p);
+        }
+        path.add(source);
+        Collections.reverse(path);
+        // Adjacent free-standing organs have no flesh to sink through.
+        return path.stream().anyMatch(cell -> tissue(level.getBlockState(cell)))
+            ? List.copyOf(path)
+            : List.of();
+      }
+      for (var d : Direction.values()) {
+        var next = current.relative(d);
+        if (parents.containsKey(next) || BioshipIntegration.containing(level, next) != ship)
+          continue;
+        if (!next.equals(target) && !tissue(level.getBlockState(next))) continue;
+        parents.put(next, current);
+        queue.add(next);
+      }
+    }
+    return List.of();
+  }
+
+  private static Vec3 alongTissue(List<BlockPos> path, double progress) {
+    double index = progress * (path.size() - 1);
+    int start = Math.min(path.size() - 2, (int) index);
+    return Vec3.atCenterOf(path.get(start))
+        .lerp(Vec3.atCenterOf(path.get(start + 1)), index - start);
   }
 
   public static void tick(LivingCoreBlockEntity core) {
@@ -177,12 +240,13 @@ public final class OrganMotion {
     Vec3 location;
     if (move.external()) location = move.start().lerp(destination, t);
     else {
-      Vec3 from = Vec3.atCenterOf(move.source()), to = Vec3.atCenterOf(move.target());
-      double floor = core.getBlockPos().getY() + 1.5;
       Vec3 local;
-      if (t < .25) local = from.lerp(new Vec3(from.x, floor, from.z), t * 4);
-      else if (t > .75) local = new Vec3(to.x, floor, to.z).lerp(to, (t - .75) * 4);
-      else local = new Vec3(from.x, floor, from.z).lerp(new Vec3(to.x, floor, to.z), (t - .25) * 2);
+      if (move.tissuePath().isEmpty()) {
+        local =
+            Vec3.atCenterOf(move.source())
+                .lerp(Vec3.atCenterOf(move.target()), t)
+                .add(0, Math.sin(Math.PI * t) * .35, 0);
+      } else local = alongTissue(move.tissuePath(), t);
       location = owner.logicalPose().transformPosition(local);
     }
     var orientation = new Quaterniond(owner.logicalPose().orientation());

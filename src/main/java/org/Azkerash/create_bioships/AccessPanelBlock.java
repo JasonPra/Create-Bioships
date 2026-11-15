@@ -16,6 +16,15 @@ public class AccessPanelBlock extends Block {
   }
 
   @Override
+  protected net.minecraft.world.phys.shapes.VoxelShape getShape(
+      BlockState state,
+      net.minecraft.world.level.BlockGetter level,
+      BlockPos pos,
+      net.minecraft.world.phys.shapes.CollisionContext context) {
+    return Block.box(2, 0, 2, 14, 5, 14);
+  }
+
+  @Override
   protected InteractionResult useWithoutItem(
       BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
     if (player instanceof ServerPlayer server) {

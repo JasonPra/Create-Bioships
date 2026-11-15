@@ -48,6 +48,12 @@ public final class BioshipNeeds {
     return true;
   }
 
+  /** Actual provisioned meals reward care even when their nutrition tops off a full stomach. */
+  public void digestFedMeal(int nutrition) {
+    satiety = Math.min(MAX_SATIETY, satiety + Math.max(0, nutrition));
+    trust = Math.min(100, trust + 1);
+  }
+
   public void consumeHuntedPrey(boolean toxic) {
     // Hunting provides less nutrition, and does not reward the captain with trust.
     if (toxic) poison();

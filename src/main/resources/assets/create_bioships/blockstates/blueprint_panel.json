@@ -1,7 +1,23 @@
 {
   "variants": {
-    "": {
-      "model": "create_bioships:block/blueprint_panel"
+    "facing=north": {
+      "model": "create_bioships:block/blueprint_panel",
+      "uvlock": true
+    },
+    "facing=east": {
+      "model": "create_bioships:block/blueprint_panel",
+      "uvlock": true,
+      "y": 90
+    },
+    "facing=south": {
+      "model": "create_bioships:block/blueprint_panel",
+      "uvlock": true,
+      "y": 180
+    },
+    "facing=west": {
+      "model": "create_bioships:block/blueprint_panel",
+      "uvlock": true,
+      "y": 270
     }
   }
 }

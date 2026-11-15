@@ -11,6 +11,17 @@ public final class BioshipCrawl {
   private Vec3 goal;
   private boolean walking;
   private int cursor;
+  private boolean gathering;
+  private Vec3 reach;
+
+  public Vec3 reach() {
+    return reach;
+  }
+
+  void reach(Vec3 point) {
+    reach = point;
+  }
+
   private double supportHeight = Double.NaN;
   private Vec3 stanceUp = new Vec3(0, 1, 0);
 
@@ -30,19 +41,33 @@ public final class BioshipCrawl {
     return walking;
   }
 
+  public boolean gathering() {
+    return gathering;
+  }
+
   public Vec3 goal() {
     return goal;
   }
 
   void tick(LivingCoreBlockEntity core, boolean blocked) {
     brace(core);
-    if (core.isMature() || core.body().health() <= 0 || core.blueprint().busy() || !blocked) {
+    if (core.isMature() || core.body().health() <= 0 || core.blueprint().busy()) {
       goal = null;
       walking = false;
       return;
     }
     if (core.getLevel().getGameTime() % 10 != 0) return;
     Vec3 here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    if (!blocked) {
+      goal = core.gatheringGoal();
+      gathering = goal != null;
+      walking = gathering && goal.distanceToSqr(here) > 4;
+      core.setChanged();
+      core.getLevel()
+          .sendBlockUpdated(core.getBlockPos(), core.getBlockState(), core.getBlockState(), 2);
+      return;
+    }
+    gathering = false;
     if (goal != null && (!clear(core, goal) || goal.distanceToSqr(here) < .2)) goal = null;
     if (goal == null)
       for (int attempt = 0; attempt < 4; attempt++) {
@@ -67,7 +92,7 @@ public final class BioshipCrawl {
 
   boolean clear(LivingCoreBlockEntity core, Vec3 candidate) {
     var level = (ServerLevel) core.getLevel();
-    for (var part : DinghyGrowth.body()) {
+    for (var part : core.plannedBody()) {
       Vec3 d =
           core.ship()
               .logicalPose()
@@ -76,13 +101,15 @@ public final class BioshipCrawl {
       var p = BlockPos.containing(candidate.add(d));
       if (!level.getChunkSource().hasChunk(p.getX() >> 4, p.getZ() >> 4)
           || !level.getWorldBorder().isWithinBounds(p)
-          || !level.getBlockState(p).isAir()
+          || !BioshipIntegration.growthSpace(level, p)
           || !level.getFluidState(p).isEmpty()) return false;
     }
     // Future floor must stay accessible and supported. Avoid cliffs, water and buried foundations.
 
-    for (int z = -9; z <= 9; z++)
-      for (int x = -DinghyGrowth.radius(z); x <= DinghyGrowth.radius(z); x++) {
+    for (int z = core.layoutVersion() >= 6 ? -11 : -9; z <= 9; z++)
+      for (int x = -DinghyGrowth.radius(z, core.layoutVersion());
+          x <= DinghyGrowth.radius(z, core.layoutVersion());
+          x++) {
         Vec3 d = core.ship().logicalPose().transformNormal(new Vec3(x, 0, z));
         var p = ground(level, BlockPos.containing(candidate.add(d.x, 0, d.z)));
         if (p == null) return false;
@@ -108,7 +135,7 @@ public final class BioshipCrawl {
     }
     if (!level.getBlockState(below).isFaceSturdy(level, below, Direction.UP)
         || !level.getFluidState(below).isEmpty()
-        || !level.getBlockState(next).isAir()) {
+        || !BioshipIntegration.growthSpace(level, next)) {
       goal = null;
       walking = false;
       return Vec3.ZERO;
@@ -136,7 +163,7 @@ public final class BioshipCrawl {
     if (core.isMature()
         || core.body().health() <= 0
         || core.blueprint().busy()
-        || core.missingBiomass() > 0) return;
+        || core.missingBiomass() > 0 && !walking) return;
     var level = (ServerLevel) core.getLevel();
     Vec3 here = BioshipBlueprint.physical(core, BlockPos.ZERO);
     double[] heights = new double[4];
@@ -166,6 +193,12 @@ public final class BioshipCrawl {
   CompoundTag save() {
     var t = new CompoundTag();
     t.putBoolean("Walking", walking);
+    t.putBoolean("Gathering", gathering);
+    if (reach != null) {
+      t.putDouble("ReachX", reach.x);
+      t.putDouble("ReachY", reach.y);
+      t.putDouble("ReachZ", reach.z);
+    }
     t.putDouble("SupportHeight", supportHeight);
     t.putDouble("UpX", stanceUp.x);
     t.putDouble("UpZ", stanceUp.z);
@@ -181,6 +214,11 @@ public final class BioshipCrawl {
 
   void load(CompoundTag t) {
     walking = t.getBoolean("Walking");
+    gathering = t.getBoolean("Gathering");
+    reach =
+        t.contains("ReachX")
+            ? new Vec3(t.getDouble("ReachX"), t.getDouble("ReachY"), t.getDouble("ReachZ"))
+            : null;
     supportHeight = t.contains("SupportHeight") ? t.getDouble("SupportHeight") : Double.NaN;
     stanceUp = new Vec3(t.getDouble("UpX"), 1, t.getDouble("UpZ")).normalize();
     cursor = t.getInt("Cursor");

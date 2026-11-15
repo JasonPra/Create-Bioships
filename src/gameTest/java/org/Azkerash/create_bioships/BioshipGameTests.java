@@ -1522,9 +1522,9 @@ public class BioshipGameTests {
                 recoveredStock[0].is(Items.BARRIER) && recoveredStock[0].getCount() == 11,
                 "Recovered inventory could not be salvaged before digestion");
             helper.assertTrue(
-                !BioshipScavenging.needed(
+                BioshipScavenging.needed(
                     core, Create_bioships.FEEDING_MOUTH.get().defaultBlockState()),
-                "Ship wanted an extra mouth");
+                "Duplicate dead organs cannot be reclaimed as construction stock");
             var port = core.getBlockPos().above();
             int satiety = core.saveWithFullMetadata(level.registryAccess()).getInt("Satiety");
             for (int n = 0; n < 4; n++) {
@@ -1552,10 +1552,648 @@ public class BioshipGameTests {
             core.scavenging().finish(core, port, false);
             helper.assertTrue(
                 core.missingBiomass() == 59, "Fractional salvage yield did not survive reload");
+            var originalMouth = core.mouthBlock();
+            level.setBlock(port, Create_bioships.FEEDING_MOUTH.get().defaultBlockState(), 3);
+            core.scavenging().finish(core, port, false);
+            helper.assertTrue(
+                level.getBlockState(port).isAir() && core.mouthBlock().equals(originalMouth),
+                "Reclaimed duplicate organ was kept as a second mouth");
             helper.succeed();
           } finally {
             cleanup(helper, wreck);
             cleanup(helper, live);
+          }
+        });
+  }
+
+  private static class InteractionPlayer extends net.neoforged.neoforge.common.util.FakePlayer {
+    final List<net.minecraft.network.chat.Component> messages = new ArrayList<>();
+
+    InteractionPlayer(net.minecraft.server.level.ServerLevel level, String name) {
+      super(
+          level,
+          new com.mojang.authlib.GameProfile(
+              UUID.nameUUIDFromBytes(name.getBytes(java.nio.charset.StandardCharsets.UTF_8)),
+              name));
+    }
+
+    @Override
+    public java.util.OptionalInt openMenu(net.minecraft.world.MenuProvider provider) {
+      return openMenu(provider, b -> {});
+    }
+
+    @Override
+    public java.util.OptionalInt openMenu(
+        net.minecraft.world.MenuProvider provider,
+        java.util.function.Consumer<net.minecraft.network.RegistryFriendlyByteBuf> writer) {
+      containerMenu = Objects.requireNonNull(provider.createMenu(1, getInventory(), this));
+      return java.util.OptionalInt.of(1);
+    }
+
+    @Override
+    public void displayClientMessage(
+        net.minecraft.network.chat.Component message, boolean overlay) {
+      messages.add(message);
+    }
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 80, batch = "empty_mouth_click")
+  public static void empty_hand_opens_mouth_without_eating_or_overflow(GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var stomach = digestive(helper, core, false);
+    var sac = core.getBlockPos().east();
+    level.setBlock(sac, block("biomancy:storage_sac").defaultBlockState(), 3);
+    DigestiveSystem.connect(core, ship);
+    var user = new InteractionPlayer(level, "MouthUser");
+    var mouth = core.mouthBlock();
+    Vec3 point = BioshipBlueprint.physical(core, mouth.subtract(core.getBlockPos()));
+    user.setPos(point.x, point.y, point.z - 2);
+    int[] sounds = {0};
+    java.util.function.Consumer<net.neoforged.neoforge.event.PlayLevelSoundEvent.AtPosition> sound =
+        event -> {
+          if (event.getSound() != null
+              && event.getSound().value() == net.minecraft.sounds.SoundEvents.GENERIC_EAT)
+            sounds[0]++;
+        };
+    net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(
+        net.neoforged.bus.api.EventPriority.NORMAL,
+        false,
+        net.neoforged.neoforge.event.PlayLevelSoundEvent.AtPosition.class,
+        sound);
+    try {
+      helper.assertTrue(
+          !core.feedAtMouth(user, ItemStack.EMPTY), "Empty hand counted as direct feeding");
+      helper.assertTrue(
+          !DigestiveSystem.offerFood(core, ItemStack.EMPTY, false),
+          "Empty item counted as sac overflow");
+      var result =
+          user.gameMode.useItemOn(
+              user,
+              level,
+              ItemStack.EMPTY,
+              net.minecraft.world.InteractionHand.MAIN_HAND,
+              new BlockHitResult(Vec3.atCenterOf(mouth), Direction.NORTH, mouth, false));
+      helper.assertTrue(
+          result.consumesAction()
+              && user.containerMenu instanceof net.minecraft.world.inventory.ChestMenu,
+          "Empty-hand click did not reach the mouth inventory");
+      helper.assertTrue(
+          ((net.minecraft.world.inventory.ChestMenu) user.containerMenu).getContainer()
+              == level.getBlockEntity(mouth),
+          "Wrong mouth inventory opened");
+      helper.assertTrue(
+          user.containerMenu.stillValid(user),
+          "Mouth inventory immediately failed physical reach validation");
+      helper.assertTrue(
+          sounds[0] == 0 && stomach.queuedFood() == 0,
+          "Empty-hand inspection made the ship chew or enqueue food");
+      for (boolean active : List.of(false, true))
+        for (boolean blink : List.of(false, true))
+          helper.assertTrue(
+              Create_bioships.CORE
+                      .get()
+                      .defaultBlockState()
+                      .setValue(LivingCoreBlock.ACTIVE, active)
+                      .setValue(LivingCoreBlock.BLINK, blink)
+                      .getLightEmission(level, core.getBlockPos())
+                  == 0,
+              "The eye emits block light");
+      user.messages.clear();
+      core.interact(user, ItemStack.EMPTY);
+      helper.assertTrue(user.messages.size() == 1, "Missing goggles reminder was not given");
+      user.setItemSlot(
+          EquipmentSlot.HEAD, Create_bioships.BIOSHIP_GOGGLES.get().getDefaultInstance());
+      core.interact(user, ItemStack.EMPTY);
+      helper.assertTrue(user.messages.size() == 1, "Wearing goggles still produced the reminder");
+      helper.succeed();
+    } finally {
+      net.neoforged.neoforge.common.NeoForge.EVENT_BUS.unregister(sound);
+      user.closeContainer();
+      cleanup(helper, ship);
+    }
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 200, batch = "sideways_tissue")
+  public static void organs_use_existing_walls_and_never_grow_early_filler(GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    // This position belongs to the future hull but is only an exposed machine in the eye stage.
+    var source = core.getBlockPos().east();
+    var target = core.getBlockPos().north();
+    level.setBlock(source, block("biomancy:digester").defaultBlockState(), 3);
+    helper.assertTrue(
+        OrganMotion.begin(core, source, target, false), "Bare component did not start moving");
+    helper.assertTrue(
+        level.getBlockState(source).isAir() && core.organMove().usesArm(),
+        "Future hull geometry created early flesh or an imaginary tissue route");
+    helper.runAfterDelay(
+        45,
+        () -> {
+          helper.assertTrue(
+              level.getBlockState(source).isAir(), "The eye-stage move left a hull filler behind");
+          // Move an organ through a vertical wall, well above the floor, with six-direction
+          // connectivity.
+          var wallSource = core.getBlockPos().offset(1, 2, 0);
+          var wallTarget = core.getBlockPos().offset(1, 5, 0);
+          for (int y = 0; y <= 5; y++)
+            level.setBlock(
+                core.getBlockPos().offset(1, y, 0),
+                Create_bioships.FLESH.get().defaultBlockState(),
+                3);
+          level.setBlock(wallSource, Create_bioships.FEEDING_MOUTH.get().defaultBlockState(), 3);
+          var mouth = (FeedingMouthBlockEntity) level.getBlockEntity(wallSource);
+          mouth.getPersistentData().putBoolean("BioshipHostFlesh", true);
+          mouth.setItem(0, new ItemStack(Items.BEEF, 5));
+          helper.assertTrue(
+              OrganMotion.begin(core, wallSource, wallTarget, false),
+              "Wall-embedded organ did not move");
+          var move = core.organMove();
+          helper.assertTrue(
+              !move.usesArm()
+                  && move.tissuePath().stream()
+                      .allMatch(
+                          p ->
+                              p.getX() == wallSource.getX()
+                                  && p.getZ() == wallSource.getZ()
+                                  && p.getY() >= wallSource.getY()),
+              "Move ignored the existing side wall or sank into the floor");
+          var saved = core.saveWithFullMetadata(level.registryAccess());
+          core.loadAdditional(saved, level.registryAccess());
+          helper.assertTrue(
+              core.organMove().tissuePath().equals(move.tissuePath()),
+              "Wall route did not survive reload");
+        });
+    helper.runAfterDelay(
+        100,
+        () ->
+            finish(
+                helper,
+                ship,
+                () -> {
+                  var old = core.getBlockPos().offset(1, 2, 0);
+                  var next = core.getBlockPos().offset(1, 5, 0);
+                  helper.assertTrue(
+                      level.getBlockState(old).is(Create_bioships.FLESH.get()),
+                      "Moving an embedded organ did not restore its real host tissue");
+                  helper.assertTrue(
+                      level.getBlockEntity(next) instanceof FeedingMouthBlockEntity
+                          && ((FeedingMouthBlockEntity) level.getBlockEntity(next))
+                                  .getItem(0)
+                                  .getCount()
+                              == 5,
+                      "Wall travel lost the mouth or its inventory");
+                }));
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 450, batch = "sac_trust")
+  public static void connected_sac_meals_reward_trust_after_digestion(GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var stomach = digestive(helper, core, false);
+    core.incorporateBiomass(64);
+    var tag = core.saveWithFullMetadata(level.registryAccess());
+    tag.putInt("Trust", 20);
+    tag.putInt("Satiety", 1200);
+    core.loadAdditional(tag, level.registryAccess());
+    var connected = core.getBlockPos().east();
+    level.setBlock(connected, block("biomancy:storage_sac").defaultBlockState(), 3);
+    DigestiveSystem.connect(core, ship);
+    var inventory = level.getCapability(Capabilities.ItemHandler.BLOCK, connected, null);
+    Objects.requireNonNull(inventory).insertItem(0, new ItemStack(Items.BEEF), false);
+    // A storage sac in ordinary world space is not part of this ship and must remain untouched.
+    var loose = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO)).south(16);
+    level.setBlock(loose, block("biomancy:storage_sac").defaultBlockState(), 3);
+    var detached = level.getCapability(Capabilities.ItemHandler.BLOCK, loose, null);
+    Objects.requireNonNull(detached).insertItem(0, new ItemStack(Items.BEEF, 3), false);
+    int before = core.saveWithFullMetadata(level.registryAccess()).getInt("Trust");
+    DigestiveSystem.pullStoredFood(core, stomach);
+    helper.assertTrue(
+        core.saveWithFullMetadata(level.registryAccess()).getInt("Trust") == before,
+        "Inventory transfer granted trust before eating");
+    helper.runAfterDelay(
+        350,
+        () ->
+            finish(
+                helper,
+                ship,
+                () -> {
+                  helper.assertTrue(
+                      core.saveWithFullMetadata(level.registryAccess()).getInt("Trust")
+                          == before + 1,
+                      "Digested provisioned food did not reward exactly one trust point");
+                  helper.assertTrue(
+                      detached.getStackInSlot(0).getCount() == 3,
+                      "Food in an unconnected world sac was taken");
+                  helper.assertTrue(
+                      stomach.queuedFood() == 0 && inventory.getStackInSlot(0).isEmpty(),
+                      "The provisioned meal did not finish digestion");
+                  level.removeBlock(loose, false);
+                }));
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 1500, batch = "resumed_growth")
+  public static void existing_hull_parts_and_replaceable_grass_do_not_stall_growth(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    digestive(helper, core, true);
+    var parts = DinghyGrowth.body();
+    int index = -1;
+    for (int n = 0; n < parts.size(); n++)
+      if (parts.get(n).state().is(Create_bioships.FLESH.get())
+          && level.getBlockState(core.getBlockPos().offset(parts.get(n).offset())).isAir()) {
+        index = n;
+        break;
+      }
+    helper.assertTrue(index >= 0, "No flesh cell available for regression fixture");
+    var cell = parts.get(index);
+    level.setBlock(core.getBlockPos().offset(cell.offset()), cell.state(), 3);
+    var saved = core.saveWithFullMetadata(level.registryAccess());
+    saved.putInt("Stage", 1);
+    saved.putBoolean("FramePaid", true);
+    saved.putInt("GrowthIndex", index);
+    core.loadAdditional(saved, level.registryAccess());
+    var physical = BlockPos.containing(BioshipBlueprint.physical(core, new BlockPos(2, 0, -2)));
+    level.setBlock(physical, Blocks.SHORT_GRASS.defaultBlockState(), 3);
+    helper.assertTrue(
+        BioshipIntegration.growthSpace(level, physical), "Replaceable grass blocks construction");
+    var water = physical.east();
+    level.setBlock(water, Blocks.WATER.defaultBlockState(), 3);
+    helper.assertTrue(
+        !BioshipIntegration.growthSpace(level, water),
+        "Growth clearance treats water as replaceable air");
+    level.removeBlock(water, false);
+    final int start = index;
+    helper.runAfterDelay(
+        30,
+        () ->
+            helper.assertTrue(
+                core.saveWithFullMetadata(level.registryAccess()).getInt("GrowthIndex") > start,
+                "A correctly placed hull cell stalled the growth cursor"));
+    helper.runAfterDelay(
+        1300,
+        () ->
+            finish(
+                helper,
+                ship,
+                () ->
+                    helper.assertTrue(
+                        core.isMature(),
+                        "Resumed body failed to complete after encountering existing hull blocks: "
+                            + diagnose(core))));
+  }
+
+  private static net.minecraft.world.phys.shapes.VoxelShape sableMembraneShape(
+      ServerSubLevel ship, BlockPos pos, net.minecraft.world.entity.Entity entity) {
+    try {
+      var method =
+          dev.ryanhcode.sable.sublevel.entity_collision.SubLevelEntityCollision.class
+              .getDeclaredMethod(
+                  "getSubLevelEntityCollisionShape",
+                  net.minecraft.world.entity.Entity.class,
+                  org.joml.Vector3dc.class,
+                  dev.ryanhcode.sable.companion.math.Pose3dc.class,
+                  net.minecraft.world.level.block.state.BlockState.class,
+                  dev.ryanhcode.sable.util.LevelAccelerator.class,
+                  BlockPos.class,
+                  dev.ryanhcode.sable.api.math.LevelReusedVectors.class);
+      method.setAccessible(true);
+      return (net.minecraft.world.phys.shapes.VoxelShape)
+          method.invoke(
+              null,
+              entity,
+              new org.joml.Vector3d(),
+              ship.logicalPose(),
+              ship.getLevel().getBlockState(pos),
+              new dev.ryanhcode.sable.util.LevelAccelerator(ship.getLevel()),
+              pos,
+              null);
+    } catch (ReflectiveOperationException e) {
+      throw new IllegalStateException("Cannot query the native Sable entity collision path", e);
+    }
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 1300, batch = "interior_collision")
+  public static void cockpit_clearance_eye_level_panel_and_real_membrane_collision(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    digestive(helper, core, true);
+    var owner = new InteractionPlayer(level, "InteriorOwner");
+    var guest = new InteractionPlayer(level, "UninvitedGuest");
+    core.claimCreator(owner.getUUID());
+    helper.runAfterDelay(
+        1100,
+        () ->
+            finish(
+                helper,
+                ship,
+                () -> {
+                  helper.assertTrue(core.isMature(), "Expanded cockpit did not finish growing");
+                  helper.assertTrue(
+                      level
+                          .getBlockState(core.getBlockPos().offset(DinghyGrowth.PERCH))
+                          .is(Create_bioships.PERCH.get()),
+                      "Captain seat did not move forward");
+                  for (int z = -1; z >= -2; z--)
+                    for (int y = 2; y <= 3; y++)
+                      helper.assertTrue(
+                          level.getBlockState(core.getBlockPos().offset(0, y, z)).isAir(),
+                          "Entrance aisle is blocked by the captain seat or a console");
+                  var panel = core.layoutPos(DinghyGrowth.BLUEPRINT_PANEL);
+                  var state = level.getBlockState(panel);
+                  helper.assertTrue(
+                      state.is(Create_bioships.BLUEPRINT_PANEL.get())
+                          && state.getValue(BlueprintPanelBlock.FACING) == Direction.SOUTH,
+                      "Blueprint panel is not mounted at eye level toward the engine room");
+                  var hit =
+                      new BlockHitResult(Vec3.atCenterOf(panel), Direction.SOUTH, panel, false);
+                  state.useWithoutItem(level, owner, hit);
+                  helper.assertTrue(
+                      owner.containerMenu instanceof BlueprintMenu,
+                      "Interior panel face did not open its editor");
+                  owner.closeContainer();
+                  state.useWithoutItem(
+                      level,
+                      owner,
+                      new BlockHitResult(Vec3.atCenterOf(panel), Direction.NORTH, panel, false));
+                  helper.assertTrue(
+                      !(owner.containerMenu instanceof BlueprintMenu),
+                      "Panel opened from its fleshy backing");
+                  helper.assertTrue(
+                      state.getCollisionShape(level, panel).bounds().getYsize() == 1,
+                      "Wall panel has no solid backing");
+                  BioshipAccess.tick(core);
+                  var door = core.layoutPos(DinghyGrowth.DOOR);
+                  helper.assertTrue(
+                      sableMembraneShape(ship, door, owner).isEmpty(),
+                      "Sable still collides with the owner despite membrane permissions");
+                  helper.assertTrue(
+                      !sableMembraneShape(ship, door, guest).isEmpty(),
+                      "Uninvited player bypassed Sable membrane collision");
+                  var point =
+                      ship.logicalPose()
+                          .transformPosition(Vec3.atLowerCornerOf(door).add(.5, 0, .5));
+                  var outward = ship.logicalPose().transformNormal(new Vec3(0, 0, 1));
+                  Vec3 start = point.add(outward.scale(1.5));
+                  // Sable deliberately delegates ServerPlayer movement to the client. Exercise the
+                  // same
+                  // native collider with living entities here, and check player filtering above.
+                  var allowed = new net.minecraft.world.entity.animal.Cow(EntityType.COW, level);
+                  var denied = new net.minecraft.world.entity.animal.Cow(EntityType.COW, level);
+                  allowed.setCustomName(net.minecraft.network.chat.Component.literal("CrewCow"));
+                  core.access().animals.put(allowed.getUUID(), "CrewCow");
+                  BioshipAccess.tick(core);
+                  allowed.setPos(start.x, start.y + .02, start.z);
+                  denied.setPos(start.x, start.y + .02, start.z);
+                  allowed.move(MoverType.SELF, outward.scale(-3));
+                  denied.move(MoverType.SELF, outward.scale(-3));
+                  helper.assertTrue(
+                      allowed.position().subtract(start).dot(outward) < -2.5,
+                      "Authorized creature could not actually cross the membrane");
+                  helper.assertTrue(
+                      denied.position().subtract(start).dot(outward) > -1.5,
+                      "The uninvited creature crossed the membrane");
+                  var gate = (ShipMembraneAccess) level.getBlockEntity(door);
+                  var access = core.access().save(core.creator());
+                  access.putBoolean("Locked", true);
+                  gate.bioships$access(access);
+                  helper.assertTrue(
+                      !sableMembraneShape(ship, door, owner).isEmpty(),
+                      "Construction lock did not stop the owner");
+                }));
+  }
+
+  @GameTest(template = "test_empty", batch = "window_legacy_layout")
+  public static void window_edges_join_and_old_layout_controls_keep_their_positions(
+      GameTestHelper helper) {
+    var window = Create_bioships.ONE_WAY_WINDOW.get();
+    var north = window.defaultBlockState();
+    helper.assertTrue(
+        window.skipRendering(north, north, Direction.UP)
+            && window.skipRendering(north, north, Direction.EAST),
+        "Aligned membrane windows do not join at shared edges");
+    helper.assertTrue(
+        !window.skipRendering(north, north, Direction.NORTH)
+            && !window.skipRendering(
+                north, north.setValue(OneWayWindowBlock.FACING, Direction.EAST), Direction.UP),
+        "Windows hide an exposed or differently oriented face");
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var tag = core.saveWithFullMetadata(level.registryAccess());
+    tag.putInt("BodyLayoutVersion", 5);
+    tag.putInt("Stage", 1);
+    tag.putInt("GrowthIndex", 20);
+    core.loadAdditional(tag, level.registryAccess());
+    helper.assertTrue(
+        core.layoutPos(DinghyGrowth.HELM).equals(core.getBlockPos().offset(0, 2, -4))
+            && core.layoutPos(DinghyGrowth.THROTTLE).equals(core.getBlockPos().offset(-1, 2, -2)),
+        "Old ships' helm or throttle positions changed");
+    helper.assertTrue(
+        core.saveWithFullMetadata(level.registryAccess()).getInt("Stage") == 1
+            && core.saveWithFullMetadata(level.registryAccess()).getInt("GrowthIndex") == 20,
+        "An older in-progress ship lost construction progress");
+    helper.assertTrue(
+        DinghyGrowth.body(6).size() > DinghyGrowth.body(5).size(),
+        "The new cockpit was not lengthened");
+    finish(helper, ship, () -> {});
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 400, batch = "exterior_wreck_recovery")
+  public static void visible_wreck_windows_and_under_hull_tentacles_can_be_reclaimed(
+      GameTestHelper helper) {
+    var live = assemble(helper);
+    var core = core(live);
+    var level = helper.getLevel();
+    var origin = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO)).east(6);
+    level.setBlock(origin, Create_bioships.CORE.get().defaultBlockState(), 3);
+    var wreck =
+        SubLevelAssemblyHelper.assembleBlocks(
+            level, origin, List.of(origin), new BoundingBox3i(origin, origin));
+    SubLevelContainer.getContainer(level)
+        .addForceLoadTicket(
+            wreck, SubLevelLoadingTicketType.COMMAND_FORCED, net.minecraft.util.Unit.INSTANCE);
+    var dead = core(wreck);
+    var window = dead.getBlockPos().west();
+    var limb = dead.getBlockPos().north();
+    level.setBlock(window, Create_bioships.ONE_WAY_WINDOW.get().defaultBlockState(), 3);
+    level.setBlock(window.above(), Create_bioships.FLESH.get().defaultBlockState(), 3);
+    level.setBlock(limb, Create_bioships.TENTACLE.get().defaultBlockState(), 3);
+    level.setBlock(limb.above(), Create_bioships.FLESH.get().defaultBlockState(), 3);
+    helper.assertTrue(
+        BioshipScavenging.needed(core, level.getBlockState(window))
+            && BioshipScavenging.needed(core, level.getBlockState(limb)),
+        "Window or tentacle was excluded from salvage materials");
+    helper.assertTrue(
+        BioshipScavenging.needed(core, Create_bioships.BLUEPRINT_PANEL.get().defaultBlockState())
+            && BioshipScavenging.needed(core, Create_bioships.THROTTLE.get().defaultBlockState()),
+        "Bioship controls cannot be broken down for needed reserves");
+    dead.body().die(dead);
+    var corpseTag = wreck.getUserDataTag().copy();
+    corpseTag.putLong("BioshipDecayAfter", level.getGameTime() + 500);
+    wreck.setUserDataTag(corpseTag);
+    helper.runAfterDelay(
+        350,
+        () -> {
+          try {
+            helper.assertTrue(
+                core.scavenging().save().getInt("FiberRemainder") == 1,
+                "Visible under-hull tentacle was never reclaimed");
+            helper.assertTrue(
+                core.missingBiomass() <= 62,
+                "Exposed window and hull tissue were not reclaimed before decay");
+            helper.assertTrue(
+                level.getBlockState(window).isAir() && level.getBlockState(limb).isAir(),
+                "Reachable exterior wreck components remain stuck below their roof");
+            helper.succeed();
+          } finally {
+            cleanup(helper, wreck);
+            cleanup(helper, live);
+          }
+        });
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 80, batch = "early_supply_walking")
+  public static void eye_walks_to_visible_components_and_requires_organs_for_drops(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    Vec3 here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var component = BlockPos.containing(here).east(10);
+    level.setBlock(component, block("biomancy:bio_forge").defaultBlockState(), 3);
+    var goal = core.gatheringGoal();
+    helper.assertTrue(
+        goal != null && goal.distanceToSqr(Vec3.atCenterOf(component)) < 1,
+        "Eye cannot approach a visible distant component before growth");
+    helper.runAfterDelay(
+        20,
+        () -> {
+          core.crawl().tick(core, false);
+          helper.assertTrue(
+              core.crawl().walking() && core.crawl().gathering(),
+              "Early supply gathering did not sprout walking legs");
+          level.removeBlock(component, false);
+          var drop =
+              new net.minecraft.world.entity.item.ItemEntity(
+                  level,
+                  here.x + 1,
+                  here.y,
+                  here.z,
+                  new ItemStack(item("biomancy:elastic_fibers"), 3));
+          level.addFreshEntity(drop);
+          core.gatheringGoal();
+          helper.assertTrue(
+              drop.getItem().getCount() == 3 && core.crawl().reach() == null,
+              "Eye collected material without digestive organs");
+          var stomach = digestive(helper, core, false);
+          core.gatheringGoal();
+          helper.assertTrue(
+              drop.getItem().getCount() == 2
+                  && stomach.material("biomancy:elastic_fibers") == 1
+                  && core.crawl().reach() != null,
+              "Connected mouth and stomach did not collect fibers with an arm");
+          helper.assertTrue(
+              LivingCoreBlockEntity.droppedSupply(new ItemStack(item("biomancy:bone_fragments")))
+                  && LivingCoreBlockEntity.droppedSupply(new ItemStack(Items.BEEF)),
+              "Food or bone growth stock was excluded");
+          drop.setPos(here.x + 6, here.y, here.z);
+          var meal =
+              new net.minecraft.world.entity.item.ItemEntity(
+                  level, here.x + 1, here.y, here.z, new ItemStack(Items.BEEF));
+          level.addFreshEntity(meal);
+          core.gatheringGoal();
+          helper.assertTrue(
+              !meal.isAlive()
+                  && stomach.queuedFood() == 1
+                  && stomach.material("minecraft:beef") == 0,
+              "Dropped meat was stored as construction material instead of entering digestion");
+          var savedMouth = core.mouthBlock();
+          level.removeBlock(stomach.getBlockPos(), false);
+          core.gatheringGoal();
+          helper.assertTrue(drop.getItem().getCount() == 2, "Mouth alone collected loose supplies");
+          level.setBlock(
+              stomach.getBlockPos(), Create_bioships.STOMACH.get().defaultBlockState(), 3);
+          DigestiveSystem.connect(core, ship);
+          level.removeBlock(savedMouth, false);
+          core.gatheringGoal();
+          helper.assertTrue(
+              drop.getItem().getCount() == 2, "Stomach alone collected loose supplies");
+          helper.assertTrue(
+              !LivingCoreBlockEntity.droppedSupply(new ItemStack(Items.DIAMOND)),
+              "Unrelated dropped items qualify as food");
+          drop.discard();
+          finish(helper, ship, () -> {});
+        });
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 450, batch = "all_attachment_decay")
+  public static void fragments_detached_while_alive_inherit_death_and_all_materials_rot(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    BioshipIntegration.bind(ship);
+    var p = core.getBlockPos().east();
+    level.setBlock(p, Create_bioships.ONE_WAY_WINDOW.get().defaultBlockState(), 3);
+    var fragment =
+        SubLevelAssemblyHelper.assembleBlocks(level, p, List.of(p), new BoundingBox3i(p, p));
+    fragment.setSplitFrom(ship, ship.logicalPose());
+    SubLevelContainer.getContainer(level)
+        .addForceLoadTicket(
+            fragment, SubLevelLoadingTicketType.COMMAND_FORCED, net.minecraft.util.Unit.INSTANCE);
+    helper.assertTrue(!BioshipDecay.dead(fragment), "Live split fragment was killed prematurely");
+    level.setBlock(core.getBlockPos().north(), Blocks.STONE.defaultBlockState(), 3);
+    helper.assertTrue(
+        BioshipScavenging.needed(core, Blocks.STONE.defaultBlockState()),
+        "Non-mod attached wreck blocks cannot be reclaimed");
+    level.setBlock(
+        core.getBlockPos().south(), Create_bioships.TENTACLE.get().defaultBlockState(), 3);
+    level.setBlock(
+        core.getBlockPos().west(), Create_bioships.BLUEPRINT_PANEL.get().defaultBlockState(), 3);
+    core.body().die(core);
+    helper.assertTrue(BioshipDecay.dead(fragment), "Fragment detached before death escaped decay");
+    var resumed = fragment.getUserDataTag().copy();
+    resumed.remove("BioshipDead");
+    resumed.remove("BioshipDecayAfter");
+    resumed.remove("BioshipCorpseRoot");
+    fragment.setUserDataTag(resumed);
+    var savedDeaths =
+        BioshipDecay.Deaths.get(level)
+            .save(new net.minecraft.nbt.CompoundTag(), level.registryAccess());
+    var restored = BioshipDecay.Deaths.load(savedDeaths, level.registryAccess());
+    helper.assertTrue(
+        restored
+                .save(new net.minecraft.nbt.CompoundTag(), level.registryAccess())
+                .getLong(BioshipDecay.lineage(ship).toString())
+            > 0,
+        "Death lineage did not survive saved-data reload");
+    helper.runAfterDelay(
+        80,
+        () ->
+            helper.assertTrue(
+                BioshipDecay.dead(fragment), "A resumed fragment escaped its saved lineage death"));
+    helper.runAfterDelay(
+        400,
+        () -> {
+          try {
+            helper.assertTrue(
+                fragment.isRemoved() || BioshipDecay.blocks(fragment).isEmpty(),
+                "Detached window did not rot");
+            helper.assertTrue(
+                ship.isRemoved() || BioshipDecay.blocks(ship).isEmpty(),
+                "Attached foreign block did not rot");
+            helper.succeed();
+          } finally {
+            cleanup(helper, fragment);
+            cleanup(helper, ship);
           }
         });
   }

@@ -46,9 +46,11 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
       int overlay) {
     if (!core.body().dead() && (core.crawl().walking() || core.crawl().bracing()))
       renderLegs(core, partial, pose, buffers, light);
+    boolean gathering = core.crawl().reach() != null && !core.body().dead();
     var move = core.organMove();
     boolean carrying = core.blueprint().carried() != null && core.blueprint().carryStart() != null;
-    if (core.getLevel() == null || !carrying && (move == null || !move.external())) return;
+    if (core.getLevel() == null || !gathering && !carrying && (move == null || !move.usesArm()))
+      return;
     var container = SubLevelContainer.getContainer(core.getLevel());
     if (container == null) return;
     var plot = container.getPlot(new ChunkPos(core.getBlockPos()));
@@ -58,7 +60,9 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
             ? client.renderPose(partial)
             : plot.getSubLevel().logicalPose();
     Vec3 target;
-    if (carrying) {
+    if (gathering) {
+      target = core.crawl().reach();
+    } else if (carrying) {
       double t = Math.clamp((core.blueprint().carryTicks() + partial) / 60.0, 0, 1);
       target =
           core.blueprint()
@@ -84,7 +88,7 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
               Math.copySign(Math.min(7, Math.abs(d.z)), d.z));
     }
     double extension =
-        carrying
+        carrying || gathering
             ? 1
             : Math.clamp((core.getLevel().getGameTime() + partial - move.started()) / 6.0, 0, 1);
     reach = root.lerp(reach, extension);

@@ -11,8 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class ServerSubLevelMixin {
   @Inject(method = "setSplitFrom", at = @At("TAIL"), remap = false)
   private void inherit(ServerSubLevel original, Pose3d pose, CallbackInfo callback) {
-    if (org.Azkerash.create_bioships.BioshipDecay.dead(original))
-      org.Azkerash.create_bioships.BioshipDecay.inherit((ServerSubLevel) (Object) this, original);
+    org.Azkerash.create_bioships.BioshipDecay.link((ServerSubLevel) (Object) this, original);
     if (BioshipIntegration.bound(original)) BioshipIntegration.bind((ServerSubLevel) (Object) this);
   }
 }

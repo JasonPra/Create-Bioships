@@ -92,4 +92,11 @@ class BioshipNeedsTest {
         needs.restorePoison(999); assertEquals(120, needs.poisonSeconds());
         needs.restorePoison(-10); assertEquals(0, needs.poisonSeconds());
     }
+    @Test void digestedProvisionedFoodBuildsTrustAtFullSatiety() {
+        var needs = new BioshipNeeds();
+        needs.restore(64, 8, BioshipNeeds.MAX_SATIETY, 20);
+        needs.digestFedMeal(70);
+        assertEquals(BioshipNeeds.MAX_SATIETY, needs.satiety());
+        assertEquals(21, needs.trust());
+    }
 }

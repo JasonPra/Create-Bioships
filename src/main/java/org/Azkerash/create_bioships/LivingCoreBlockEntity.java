@@ -24,7 +24,8 @@ import org.joml.Vector3d;
 public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySubLevelActor {
   private static final TagKey<Item> MEAT =
       TagKey.create(
-          Registries.ITEM, ResourceLocation.fromNamespaceAndPath(Create_bioships.MOD_ID, "biomass"));
+          Registries.ITEM,
+          ResourceLocation.fromNamespaceAndPath(Create_bioships.MOD_ID, "biomass"));
   private static final TagKey<Item> LEVITITE =
       TagKey.create(
           Registries.ITEM,
@@ -85,6 +86,17 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
 
   private int bodyBlocks = 1;
   private int stage, growthIndex, metabolismTicks;
+  private int bodyLayoutVersion = DinghyGrowth.LAYOUT_VERSION;
+
+  public int layoutVersion() {
+    return bodyLayoutVersion;
+  }
+
+  public java.util.List<DinghyGrowth.Part> plannedBody() {
+    return DinghyGrowth.body(bodyLayoutVersion);
+  }
+
+  private String growthObstacle = "";
   private long lastServerTick = Long.MIN_VALUE;
   private double hoverHeight = Double.NaN;
   private net.minecraft.world.entity.item.ItemEntity foodTarget;
@@ -147,7 +159,10 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
           resting ? "message.create_bioships.resting" : "message.create_bioships.controls_enabled");
       return;
     }
-    message(player, "message.create_bioships.inspect");
+    if (!player
+        .getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD)
+        .is(Create_bioships.BIOSHIP_GOGGLES.get()))
+      message(player, "message.create_bioships.inspect");
   }
 
   private int goggleFlesh, goggleBone, goggleFiber;
@@ -173,26 +188,38 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
                 + " / 8 bone, "
                 + goggleFiber
                 + " / 12 fibers"
-                + (framePaid ? " (grown)" : "")));
+                + (framePaid ? " (incorporated)" : "")));
     lines.add(Component.literal("Amalgam: " + needs.levitite() + " / 8"));
     lines.add(Component.literal("Food: " + needs.satiety() + " / 1200 | Trust: " + needs.trust()));
     if (stage == 0)
       lines.add(
           Component.literal(
-              "Growth needs open space: 9 wide, 21 long and 8 above the core. Feed through the"
+              "Growth needs open space: 9 wide, 23 long and 8 above the core. Feed through the"
                   + " connected mouth and stomach."));
     if (stage == 0)
       lines.add(
           Component.literal(
               "Stomach formation needs both a Decomposer and a Digester. Assimilate a Bio-Forge for"
                   + " the feeding maw."));
-    if (crawl.walking()) lines.add(Component.literal("Walking to a clear growth site."));
+    if (stage == 1)
+      lines.add(
+          Component.literal("Hull construction: " + growthIndex + " / " + plannedBody().size()));
+    if (!growthObstacle.isEmpty()) lines.add(Component.literal(growthObstacle));
+    if (crawl.walking())
+      lines.add(
+          Component.literal(
+              crawl.gathering()
+                  ? "Walking toward visible supplies."
+                  : "Walking to a clear growth site."));
+    else if (crawl.bracing())
+      lines.add(Component.literal("Bracing against the ground for growth."));
     if (blueprint.busy()) lines.add(Component.literal(blueprint.status()));
     return lines;
   }
 
   public boolean feedAtMouth(Player player, ItemStack stack) {
-    if (body.dead() || ship() == null || !primary(ship()) || !hasMouth()) return false;
+    if (stack.isEmpty() || body.dead() || ship() == null || !primary(ship()) || !hasMouth())
+      return false;
     var stomach = DigestiveSystem.stomach(this);
     if (stomach == null || !stomach.connected(this)) {
       message(player, "message.create_bioships.need_stomach");
@@ -237,7 +264,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
               .getBoolean("BioshipHunted");
       if (hunted) needs.consumeHuntedPrey(stack.is(Items.ROTTEN_FLESH));
       else {
-        needs.feedMeat(stack.is(Items.ROTTEN_FLESH) ? 0 : 70, true);
+        needs.digestFedMeal(stack.is(Items.ROTTEN_FLESH) ? 0 : 70);
         if (stack.is(Items.ROTTEN_FLESH)) needs.poison();
       }
       setChanged();
@@ -275,7 +302,8 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
   }
 
   public BlockPos layoutPos(BlockPos offset) {
-    return worldPosition.offset(blueprint.offset(offset));
+    return worldPosition.offset(
+        blueprint.offset(DinghyGrowth.atVersion(offset, bodyLayoutVersion)));
   }
 
   private boolean framePaid, larynxDeveloped;
@@ -284,7 +312,8 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     return hungry()
         || needs.biomass() < BioshipNeeds.BIOMASS_REQUIRED
         || !framePaid
-        || !larynxDeveloped;
+        || !larynxDeveloped
+        || needs.trust() < 100;
   }
 
   private boolean prepareFrame() {
@@ -351,21 +380,43 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
         || !level.getChunkSource().hasChunk(pos.getX() >> 4, pos.getZ() >> 4)
         || !level.getBlockState(pos).isAir()) return false;
     Vec3 physical = ship.logicalPose().transformPosition(Vec3.atCenterOf(pos));
-    return level.getBlockState(BlockPos.containing(physical)).isAir();
+    return BioshipIntegration.growthSpace(level, BlockPos.containing(physical));
+  }
+
+  private void recordGrowthObstacle(ServerSubLevel ship, BlockPos offset) {
+    var pos = worldPosition.offset(offset);
+    var state = level.getBlockState(pos);
+    if (state.isAir())
+      pos = BlockPos.containing(ship.logicalPose().transformPosition(Vec3.atCenterOf(pos)));
+    state = level.getBlockState(pos);
+    growthObstacle =
+        "Growth blocked by "
+            + state.getBlock().getName().getString()
+            + " at "
+            + offset.getX()
+            + ", "
+            + offset.getY()
+            + ", "
+            + offset.getZ()
+            + " from the core.";
   }
 
   private boolean roomToGrow(ServerSubLevel ship) {
+    growthObstacle = "";
     // The oval hull spans neighboring plot chunks. Allocate only its own empty plot cells.
-    for (var part : DinghyGrowth.body()) {
+    for (var part : plannedBody()) {
       var chunk = new ChunkPos(worldPosition.offset(part.offset()));
       if (ship.getPlot().contains(chunk)
           && ship.getPlot().getChunkHolder(ship.getPlot().toLocal(chunk)) == null)
         ship.getPlot().newEmptyChunk(chunk);
     }
-    for (var part : DinghyGrowth.body())
+    for (var part : plannedBody())
       if (!level.getBlockState(worldPosition.offset(part.offset())).equals(part.state())
           && !BioshipIntegration.isIntegratedMachine(level, worldPosition.offset(part.offset()))
-          && !clearForGrowth(ship, worldPosition.offset(part.offset()))) return false;
+          && !clearForGrowth(ship, worldPosition.offset(part.offset()))) {
+        recordGrowthObstacle(ship, part.offset());
+        return false;
+      }
     return true;
   }
 
@@ -374,9 +425,16 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     if (core.body.dead()) {
       core.updateEye(false);
       core.flight = new FlightIntent(false, Vec3.ZERO, 0);
-      if (core.ship() != null) BioshipDecay.mark(core.ship());
+      if (core.ship() != null
+          && !(core.ship().getUserDataTag() != null
+              && core.ship().getUserDataTag().getBoolean("BioshipScavenged")))
+        BioshipDecay.mark(core.ship());
       BioshipAccess.tick(core);
       return;
+    }
+    if (core.ship() != null && core.isMature() && level.getGameTime() % 10 == 0) {
+      core.gatheringGoal();
+      level.sendBlockUpdated(pos, state, state, 2);
     }
     if (core.ship() != null)
       core.crawl.tick(
@@ -403,12 +461,19 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
       DigestiveSystem.connect(core, ship);
       core.developLarynx(ship);
       BioshipAccess.tick(core);
-      var panel = core.layoutPos(new BlockPos(-3, 2, 2));
+      var panel = core.layoutPos(DinghyGrowth.BLUEPRINT_PANEL);
+      var oldPanel = core.layoutPos(new BlockPos(-3, 2, 2));
+      if (level.getBlockState(oldPanel).is(Create_bioships.BLUEPRINT_PANEL.get())
+          && (level.getBlockState(panel).isAir()
+              || level.getBlockState(panel).is(Create_bioships.FLESH.get())))
+        level.setBlock(oldPanel, Create_bioships.FLESH.get().defaultBlockState(), 3);
       if (level.getBlockState(panel).isAir()
           || level.getBlockState(panel).is(Create_bioships.FLESH.get()))
         level.setBlock(panel, Create_bioships.BLUEPRINT_PANEL.get().defaultBlockState(), 3);
     }
     core.body.reconcile(core, before);
+    if (level.getGameTime() % 20 == 0 && core.stage < 2)
+      level.sendBlockUpdated(pos, core.getBlockState(), core.getBlockState(), 2);
   }
 
   private void updateCabinLights() {
@@ -435,11 +500,14 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
       setChanged();
     }
     if (stage != 1) return;
-    var parts = DinghyGrowth.body();
+    var parts = plannedBody();
     if (growthIndex < parts.size()) {
       var part = parts.get(growthIndex);
       BlockPos target = worldPosition.offset(part.offset());
-      boolean placed = BioshipIntegration.isIntegratedMachine(level, target);
+      boolean placed =
+          level.getBlockState(target).is(part.state().getBlock())
+              || BioshipIntegration.isIntegratedMachine(level, target);
+      growthObstacle = "";
       if (placed) {
         if (level.getBlockState(target).is(Create_bioships.INTESTINE.get())
             && part.state().is(Create_bioships.FLESH.get()))
@@ -465,8 +533,19 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
           level.updateNeighborsAt(target.above(), Create_bioships.DOOR.get());
           placed = true;
         }
-      } else if (clearForGrowth(ship, target)) placed = level.setBlock(target, part.state(), 3);
+      } else if (clearForGrowth(ship, target)) {
+        var physical =
+            BlockPos.containing(ship.logicalPose().transformPosition(Vec3.atCenterOf(target)));
+        BioshipIntegration.clearGrowthPlant(level, physical);
+        placed = level.setBlock(target, part.state(), 3);
+      }
+      if (!placed) recordGrowthObstacle(ship, part.offset());
       if (placed) {
+        var embedded = level.getBlockEntity(target);
+        if (part.state().is(Create_bioships.FLESH.get()) && embedded != null) {
+          embedded.getPersistentData().putBoolean("BioshipHostFlesh", true);
+          embedded.setChanged();
+        }
         if (level.getBlockEntity(target) instanceof SteeringWheelBlockEntity helm) {
           helm.material = net.minecraft.world.level.block.Blocks.CRIMSON_PLANKS.defaultBlockState();
           helm.notifyUpdate();
@@ -726,8 +805,74 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     return count;
   }
 
+  /** Ground foraging is independent of flight and never targets enclosed world machines. */
+  Vec3 gatheringGoal() {
+    crawl.reach(null);
+    if (body.dead() || OrganMotion.busy(this) || blueprint.busy()) return null;
+    Vec3 here = BioshipBlueprint.physical(this, BlockPos.ZERO);
+    var stomach = DigestiveSystem.stomach(this);
+    if (hasMouth() && stomach != null && stomach.connected(this)) {
+      var items =
+          level.getEntitiesOfClass(
+              net.minecraft.world.entity.item.ItemEntity.class,
+              new AABB(here, here).inflate(16),
+              e -> droppedSupply(e.getItem()));
+      items.sort(java.util.Comparator.comparingDouble(e -> e.distanceToSqr(here)));
+      for (var item : items) {
+        Vec3 point = item.position().add(0, .2, 0);
+        if (!BioshipBlueprint.worldClear((ServerLevel) level, here, point)) continue;
+        if (here.distanceToSqr(point) <= 9) {
+          crawl.reach(item.position());
+          item.setDeltaMovement(here.subtract(item.position()).normalize().scale(.3));
+          if (here.distanceToSqr(point) <= 2.25) {
+            ItemStack one = item.getItem().copyWithCount(1);
+            boolean accepted;
+            if (one.is(BioshipIntegration.constructionMaterial()) && !one.is(MEAT)) {
+              stomach.retain(one);
+              accepted = true;
+            } else accepted = DigestiveSystem.offerFood(this, one, false);
+            if (accepted) {
+              item.getItem().shrink(1);
+              if (item.getItem().isEmpty()) item.discard();
+            }
+          }
+          return null;
+        }
+        return new Vec3(point.x, here.y, point.z);
+      }
+    }
+    if (isMature()) return null;
+    Vec3 wreckSupply = BioshipScavenging.approach(this);
+    if (wreckSupply != null) return new Vec3(wreckSupply.x, here.y, wreckSupply.z);
+    BlockPos origin = BlockPos.containing(here);
+    Vec3 nearest = null;
+    double distance = 16 * 16;
+    for (BlockPos pos :
+        BlockPos.betweenClosed(origin.offset(-16, -2, -16), origin.offset(16, 3, 16))) {
+      if (BioshipIntegration.containing(level, pos) != null) continue;
+      var state = level.getBlockState(pos);
+      var id = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(state.getBlock());
+      double next = Vec3.atCenterOf(pos).distanceToSqr(here);
+      if (next <= 16
+          || next >= distance
+          || !id.getNamespace().equals("biomancy")
+          || state.getBlock() instanceof net.minecraft.world.level.block.LiquidBlock
+          || !BioshipIntegration.exposedAndVisible((ServerLevel) level, origin, pos)) continue;
+      nearest = Vec3.atCenterOf(pos);
+      distance = next;
+    }
+    return nearest == null ? null : new Vec3(nearest.x, here.y, nearest.z);
+  }
+
+  static boolean droppedSupply(ItemStack stack) {
+    return stack.is(MEAT) || stack.is(BioshipIntegration.constructionMaterial());
+  }
+
   private Vec3 forage(ServerSubLevel ship) {
-    if (!hasMouth() || !hungry() || !huntingAllowed() && !aggressive()) {
+    if (!hasMouth()
+        || DigestiveSystem.stomach(this) == null
+        || !hungry()
+        || !huntingAllowed() && !aggressive()) {
       foodTarget = null;
       return Vec3.ZERO;
     }
@@ -881,13 +1026,14 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     tag.putInt("GoggleFiber", goggleFiber);
     tag.putBoolean("FramePaid", framePaid);
     tag.putBoolean("LarynxDeveloped", larynxDeveloped);
-    tag.putInt("BodyLayoutVersion", DinghyGrowth.LAYOUT_VERSION);
+    tag.putInt("BodyLayoutVersion", bodyLayoutVersion);
     tag.putInt("PoisonSeconds", needs.poisonSeconds());
     if (captain != null) tag.putUUID("Captain", captain);
     tag.putBoolean("Resting", resting);
     tag.putBoolean("Awakened", awakened);
     tag.putInt("Stage", stage);
     tag.putInt("GrowthIndex", growthIndex);
+    tag.putString("GrowthObstacle", growthObstacle);
     tag.putInt("Biomass", needs.biomass());
     tag.putInt("Levitite", needs.levitite());
     tag.putInt("Satiety", needs.satiety());
@@ -917,8 +1063,11 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     resting = tag.getBoolean("Resting");
     awakened = tag.getBoolean("Awakened");
     stage = Math.clamp(tag.getInt("Stage"), 0, 2);
-    growthIndex = Math.clamp(tag.getInt("GrowthIndex"), 0, DinghyGrowth.body().size());
-    if (stage == 1 && tag.getInt("BodyLayoutVersion") < DinghyGrowth.LAYOUT_VERSION) {
+    bodyLayoutVersion = tag.contains("BodyLayoutVersion") ? tag.getInt("BodyLayoutVersion") : 5;
+    growthIndex = Math.clamp(tag.getInt("GrowthIndex"), 0, plannedBody().size());
+    growthObstacle = tag.getString("GrowthObstacle");
+    if (stage == 1 && bodyLayoutVersion < 5) {
+      bodyLayoutVersion = DinghyGrowth.LAYOUT_VERSION;
       stage = 0;
       growthIndex = 0;
     }

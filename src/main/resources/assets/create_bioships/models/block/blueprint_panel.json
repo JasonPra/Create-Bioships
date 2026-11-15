@@ -1,3 +1,176 @@
 {
-  "parent": "create_bioships:block/access_panel"
+  "textures": {
+    "skin": "create_bioships:block/living_hull",
+    "lining": "create_bioships:block/living_carapace",
+    "nerve": "create_bioships:block/buoyancy_organ",
+    "particle": "create_bioships:block/living_hull"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#skin",
+          "cullface": "north"
+        },
+        "south": {
+          "texture": "#skin",
+          "cullface": "south"
+        },
+        "east": {
+          "texture": "#skin",
+          "cullface": "east"
+        },
+        "west": {
+          "texture": "#skin",
+          "cullface": "west"
+        },
+        "up": {
+          "texture": "#skin",
+          "cullface": "up"
+        },
+        "down": {
+          "texture": "#skin",
+          "cullface": "down"
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        3,
+        -0.125
+      ],
+      "to": [
+        13,
+        13,
+        0
+      ],
+      "faces": {
+        "north": {
+          "texture": "#lining"
+        },
+        "south": {
+          "texture": "#lining"
+        },
+        "east": {
+          "texture": "#lining"
+        },
+        "west": {
+          "texture": "#lining"
+        },
+        "up": {
+          "texture": "#lining"
+        },
+        "down": {
+          "texture": "#lining"
+        }
+      }
+    },
+    {
+      "from": [
+        5,
+        6,
+        -0.375
+      ],
+      "to": [
+        7,
+        10,
+        -0.125
+      ],
+      "faces": {
+        "north": {
+          "texture": "#skin"
+        },
+        "south": {
+          "texture": "#skin"
+        },
+        "east": {
+          "texture": "#skin"
+        },
+        "west": {
+          "texture": "#skin"
+        },
+        "up": {
+          "texture": "#skin"
+        },
+        "down": {
+          "texture": "#skin"
+        }
+      }
+    },
+    {
+      "from": [
+        9,
+        6,
+        -0.375
+      ],
+      "to": [
+        11,
+        10,
+        -0.125
+      ],
+      "faces": {
+        "north": {
+          "texture": "#skin"
+        },
+        "south": {
+          "texture": "#skin"
+        },
+        "east": {
+          "texture": "#skin"
+        },
+        "west": {
+          "texture": "#skin"
+        },
+        "up": {
+          "texture": "#skin"
+        },
+        "down": {
+          "texture": "#skin"
+        }
+      }
+    },
+    {
+      "from": [
+        7,
+        7,
+        -0.375
+      ],
+      "to": [
+        9,
+        9,
+        -0.125
+      ],
+      "faces": {
+        "north": {
+          "texture": "#nerve"
+        },
+        "south": {
+          "texture": "#nerve"
+        },
+        "east": {
+          "texture": "#nerve"
+        },
+        "west": {
+          "texture": "#nerve"
+        },
+        "up": {
+          "texture": "#nerve"
+        },
+        "down": {
+          "texture": "#nerve"
+        }
+      }
+    }
+  ]
 }

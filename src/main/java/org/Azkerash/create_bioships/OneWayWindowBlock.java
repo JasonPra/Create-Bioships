@@ -14,6 +14,14 @@ public class OneWayWindowBlock extends HorizontalDirectionalBlock {
   }
 
   @Override
+  protected boolean skipRendering(BlockState state, BlockState adjacent, Direction side) {
+    if (adjacent.is(this)
+        && adjacent.getValue(FACING) == state.getValue(FACING)
+        && side.getAxis() != state.getValue(FACING).getAxis()) return true;
+    return super.skipRendering(state, adjacent, side);
+  }
+
+  @Override
   protected MapCodec<? extends HorizontalDirectionalBlock> codec() {
     return CODEC;
   }

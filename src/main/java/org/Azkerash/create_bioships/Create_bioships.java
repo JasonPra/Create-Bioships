@@ -25,14 +25,7 @@ public class Create_bioships {
           "living_core",
           () ->
               new LivingCoreBlock(
-                  BlockBehaviour.Properties.of()
-                      .strength(3)
-                      .sound(SoundType.SLIME_BLOCK)
-                      .lightLevel(
-                          s ->
-                              s.getValue(LivingCoreBlock.ACTIVE)
-                                  ? s.getValue(LivingCoreBlock.BLINK) ? 3 : 7
-                                  : 1)));
+                  BlockBehaviour.Properties.of().strength(3).sound(SoundType.SLIME_BLOCK)));
 
   // Legacy prototype IDs remain registered; the new body uses Simulated's native helm.
   static {
@@ -89,7 +82,10 @@ public class Create_bioships {
           "access_panel",
           () ->
               new AccessPanelBlock(
-                  BlockBehaviour.Properties.of().strength(2).sound(SoundType.SLIME_BLOCK)));
+                  BlockBehaviour.Properties.of()
+                      .strength(2)
+                      .sound(SoundType.SLIME_BLOCK)
+                      .noOcclusion()));
   public static final DeferredBlock<BlueprintPanelBlock> BLUEPRINT_PANEL =
       BLOCKS.register(
           "blueprint_panel",

@@ -8,7 +8,8 @@
     "SimAssemblyHelperMixin",
     "ServerSubLevelMixin",
     "BiometricMembraneAccessMixin",
-    "ReconfigurationHeatMapMixin"
+    "ReconfigurationHeatMapMixin",
+    "BiometricSubLevelCollisionMixin"
   ],
   "client": [],
   "injectors": {

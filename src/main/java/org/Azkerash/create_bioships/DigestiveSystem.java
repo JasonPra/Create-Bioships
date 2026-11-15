@@ -155,13 +155,23 @@ public final class DigestiveSystem {
     stomach.setChanged();
   }
 
+  private static boolean connectedStore(
+      LivingCoreBlockEntity core, StomachBlockEntity stomach, BlockPos pos, List<BlockPos> path) {
+    var entity = core.getLevel().getBlockEntity(pos);
+    return BioshipIntegration.containing(core.getLevel(), pos) == core.ship()
+        && entity != null
+        && EngineRoom.storage(entity)
+        && pathIntact(core, stomach.getBlockPos(), pos, path);
+  }
+
   public static boolean offerFood(LivingCoreBlockEntity core, ItemStack stack, boolean inherited) {
+    if (stack.isEmpty()) return false;
     var stomach = stomach(core);
     if (stomach == null || !stomach.connected(core)) return false;
     if (stomach.enqueue(stack, inherited)) return true;
     if (inherited) return false;
     for (var entry : stomach.sacPaths.entrySet())
-      if (pathIntact(core, stomach.getBlockPos(), entry.getKey(), entry.getValue())) {
+      if (connectedStore(core, stomach, entry.getKey(), entry.getValue())) {
         var inventory =
             core.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, entry.getKey(), null);
         if (inventory == null) continue;
@@ -175,7 +185,7 @@ public final class DigestiveSystem {
   public static void pullStoredFood(LivingCoreBlockEntity core, StomachBlockEntity stomach) {
     if (!stomach.connected(core) || !core.wantsStoredFood()) return;
     for (var entry : stomach.sacPaths.entrySet())
-      if (pathIntact(core, stomach.getBlockPos(), entry.getKey(), entry.getValue())) {
+      if (connectedStore(core, stomach, entry.getKey(), entry.getValue())) {
         var inventory =
             core.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, entry.getKey(), null);
         if (inventory == null) continue;
