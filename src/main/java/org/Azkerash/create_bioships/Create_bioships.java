@@ -233,6 +233,16 @@ public class Create_bioships {
           "living_door",
           () ->
               new net.minecraft.world.item.DoubleHighBlockItem(DOOR.get(), new Item.Properties()));
+
+  static {
+    // Recoverable body parts need item forms so mining a wreck can leave useful supplies.
+    for (var block : BLOCKS.getEntries()) {
+      String name = block.getId().getPath();
+      if (!name.equals("living_core") && !name.equals("living_door"))
+        ITEMS.register(name, () -> new BlockItem(block.get(), new Item.Properties()));
+    }
+  }
+
   // These custom NBT layouts have no vanilla DFU schema; preserve them as remainder data.
   public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<LivingCoreBlockEntity>>
       CORE_ENTITY =

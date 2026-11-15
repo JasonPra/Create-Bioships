@@ -104,11 +104,10 @@ public final class OrganMotion {
     var host = level.getBlockState(target);
     if (!host.isAir() && !host.is(Create_bioships.FLESH.get())) return false;
     var state = level.getBlockState(source);
-    if (state.isAir()) return false;
+    if (state.isAir() || state.is(Create_bioships.CORE.get())) return false;
     var sourceShip = BioshipIntegration.containing(level, source);
     boolean scavenged =
         external && sourceShip != null && sourceShip != ship && BioshipDecay.dead(sourceShip);
-    if (state.is(Create_bioships.CORE.get()) && !scavenged) return false;
     if (external && sourceShip != null && sourceShip != ship && !scavenged) return false;
     Vec3 sourceWorld =
         sourceShip != null

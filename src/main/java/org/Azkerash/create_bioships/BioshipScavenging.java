@@ -68,7 +68,7 @@ public final class BioshipScavenging {
   }
 
   static boolean needed(LivingCoreBlockEntity core, BlockState state) {
-    if (state.isAir()) return false;
+    if (state.isAir() || state.is(Create_bioships.CORE.get())) return false;
     if (keepComponent(core, state, null)) return true;
     var stomach = DigestiveSystem.stomach(core);
 
@@ -180,19 +180,7 @@ public final class BioshipScavenging {
       BioshipIntegration.finishAssimilation(core, target);
       return;
     }
-    // Half the bulk flesh and only a quarter of structural/muscle products survive reclamation.
-    if (++fleshRemainder >= 2) {
-      pendingFlesh++;
-      fleshRemainder = 0;
-    }
-    if (frameMaterial(state) && ++boneRemainder >= 4) {
-      pendingBone++;
-      boneRemainder = 0;
-    }
-    if (fiberMaterial(state) && ++fiberRemainder >= 4) {
-      pendingFiber++;
-      fiberRemainder = 0;
-    }
+    recycle(state);
     var storage = DigestiveSystem.stomach(core);
     if (storage != null
         && core.getLevel().getBlockEntity(target)
@@ -211,6 +199,39 @@ public final class BioshipScavenging {
             3);
     deliver(core);
     core.setChanged();
+  }
+
+  static boolean droppedBlock(ItemStack stack) {
+    if (!(stack.getItem() instanceof net.minecraft.world.item.BlockItem item)
+        || item.getBlock() == Create_bioships.CORE.get()) return false;
+    String namespace = BuiltInRegistries.BLOCK.getKey(item.getBlock()).getNamespace();
+    return namespace.equals("biomancy") || namespace.equals(Create_bioships.MOD_ID);
+  }
+
+  boolean consumeDroppedBlock(LivingCoreBlockEntity core, ItemStack stack) {
+    if (!droppedBlock(stack)) return false;
+    var stomach = DigestiveSystem.stomach(core);
+    if (!core.hasMouth() || stomach == null || !stomach.connected(core)) return false;
+    recycle(((net.minecraft.world.item.BlockItem) stack.getItem()).getBlock().defaultBlockState());
+    deliver(core);
+    core.setChanged();
+    return true;
+  }
+
+  private void recycle(BlockState state) {
+    // Half the bulk flesh and only a quarter of structural/muscle products survive reclamation.
+    if (++fleshRemainder >= 2) {
+      pendingFlesh++;
+      fleshRemainder = 0;
+    }
+    if (frameMaterial(state) && ++boneRemainder >= 4) {
+      pendingBone++;
+      boneRemainder = 0;
+    }
+    if (fiberMaterial(state) && ++fiberRemainder >= 4) {
+      pendingFiber++;
+      fiberRemainder = 0;
+    }
   }
 
   void deliver(LivingCoreBlockEntity core) {

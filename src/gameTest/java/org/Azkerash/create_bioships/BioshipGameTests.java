@@ -1436,6 +1436,9 @@ public class BioshipGameTests {
           helper.assertTrue(altitude[0] > 84, "Flight fixture did not rise");
           before[0] = BioshipDecay.blocks(ship).size();
           core.body().die(core);
+          var decayTag = ship.getUserDataTag().copy();
+          decayTag.putLong("BioshipDecayAfter", level.getGameTime());
+          ship.setUserDataTag(decayTag);
           var source = core.layoutPos(new BlockPos(0, 1, 8));
           if (!level.getBlockState(source).isAir()) {
             fragment[0] =
@@ -1465,8 +1468,8 @@ public class BioshipGameTests {
                       "Wreck did not rot over time");
                   if (fragment[0] != null) {
                     helper.assertTrue(
-                        fragment[0].isRemoved() || BioshipDecay.blocks(fragment[0]).isEmpty(),
-                        "Coreless fragment did not rot");
+                        fragment[0].isRemoved() || BioshipDecay.dead(fragment[0]),
+                        "Coreless fragment lost its shared decay state");
                     if (!fragment[0].isRemoved())
                       SubLevelContainer.getContainer(level)
                           .removeSubLevel(fragment[0], SubLevelRemovalReason.REMOVED);
@@ -1501,6 +1504,10 @@ public class BioshipGameTests {
         !OrganMotion.begin(core, mouth, core.getBlockPos().north(), true),
         "Living neighbor was eligible for scavenging");
     dead.body().die(dead);
+    helper.assertTrue(
+        !BioshipScavenging.needed(core, dead.getBlockState())
+            && !OrganMotion.begin(core, dead.getBlockPos(), core.getBlockPos().north(), true),
+        "A dead bioship core was eligible for consumption");
     ItemStack[] recoveredStock = {ItemStack.EMPTY};
     helper.runAfterDelay(
         80,
@@ -2115,6 +2122,36 @@ public class BioshipGameTests {
                   && stomach.queuedFood() == 1
                   && stomach.material("minecraft:beef") == 0,
               "Dropped meat was stored as construction material instead of entering digestion");
+          helper.assertTrue(
+              !LivingCoreBlockEntity.droppedSupply(new ItemStack(Create_bioships.CORE.get()))
+                  && LivingCoreBlockEntity.droppedSupply(
+                      new ItemStack(Create_bioships.ONE_WAY_WINDOW.get()))
+                  && LivingCoreBlockEntity.droppedSupply(
+                      new ItemStack(block("biomancy:bio_forge"))),
+              "Dropped block filter rejected supported blocks or allowed a bioship core");
+          int missing = core.missingBiomass();
+          var blocks =
+              new net.minecraft.world.entity.item.ItemEntity(
+                  level,
+                  here.x + 1,
+                  here.y,
+                  here.z,
+                  new ItemStack(Create_bioships.ONE_WAY_WINDOW.get(), 2));
+          level.addFreshEntity(blocks);
+          core.gatheringGoal();
+          core.gatheringGoal();
+          helper.assertTrue(
+              !blocks.isAlive() && core.missingBiomass() == missing - 1,
+              "Dropped bioship blocks were not reclaimed at reduced yield");
+          var protectedCore =
+              new net.minecraft.world.entity.item.ItemEntity(
+                  level, here.x + 1, here.y, here.z, new ItemStack(Create_bioships.CORE.get()));
+          level.addFreshEntity(protectedCore);
+          core.gatheringGoal();
+          helper.assertTrue(
+              protectedCore.isAlive() && protectedCore.getItem().getCount() == 1,
+              "Dropped core was consumed");
+          protectedCore.discard();
           var savedMouth = core.mouthBlock();
           level.removeBlock(stomach.getBlockPos(), false);
           core.gatheringGoal();
@@ -2184,6 +2221,13 @@ public class BioshipGameTests {
         400,
         () -> {
           try {
+            for (var wreck : List.of(ship, fragment)) {
+              if (wreck.isRemoved()) continue;
+              var tag = wreck.getUserDataTag().copy();
+              tag.putLong("BioshipDecayAfter", 0);
+              wreck.setUserDataTag(tag);
+            }
+            for (int pulse = 0; pulse < 10; pulse++) BioshipDecay.decay(level);
             helper.assertTrue(
                 fragment.isRemoved() || BioshipDecay.blocks(fragment).isEmpty(),
                 "Detached window did not rot");
@@ -2196,5 +2240,82 @@ public class BioshipGameTests {
             cleanup(helper, ship);
           }
         });
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "slow_decay_order")
+  public static void decay_waits_then_preserves_organs_and_special_blocks_across_fragments(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    for (var entry : Create_bioships.BLOCKS.getEntries()) {
+      var block = entry.get();
+      if (block == Create_bioships.CORE.get() || block == Create_bioships.DOOR.get()) continue;
+      helper.assertTrue(
+          block.asItem() != Items.AIR, "Missing recoverable block item: " + entry.getId());
+      var drops =
+          block
+              .defaultBlockState()
+              .getDrops(
+                  new net.minecraft.world.level.storage.loot.LootParams.Builder(level)
+                      .withParameter(
+                          net.minecraft.world.level.storage.loot.parameters.LootContextParams
+                              .ORIGIN,
+                          BioshipBlueprint.physical(core, BlockPos.ZERO))
+                      .withParameter(
+                          net.minecraft.world.level.storage.loot.parameters.LootContextParams.TOOL,
+                          ItemStack.EMPTY));
+      helper.assertTrue(
+          drops.size() == 1
+              && drops.getFirst().is(block.asItem())
+              && drops.getFirst().getCount() == 1,
+          "Incorrect recoverable block drop: " + entry.getId());
+    }
+    var hull = core.getBlockPos().north();
+    var organ = core.getBlockPos().west();
+    var window = core.getBlockPos().east();
+    level.setBlock(hull, Create_bioships.FLESH.get().defaultBlockState(), 3);
+    level.setBlock(organ, Create_bioships.STOMACH.get().defaultBlockState(), 3);
+    level.setBlock(window, Create_bioships.ONE_WAY_WINDOW.get().defaultBlockState(), 3);
+    BioshipIntegration.bind(ship);
+    var fragment =
+        SubLevelAssemblyHelper.assembleBlocks(
+            level, window, List.of(window), new BoundingBox3i(window, window));
+    fragment.setSplitFrom(ship, ship.logicalPose());
+    SubLevelContainer.getContainer(level)
+        .addForceLoadTicket(
+            fragment, SubLevelLoadingTicketType.COMMAND_FORCED, net.minecraft.util.Unit.INSTANCE);
+    var detachedWindow = fragment.getPlot().getCenterBlock();
+    core.body().die(core);
+    helper.assertTrue(
+        ship.getUserDataTag().getLong("BioshipDecayAfter") == level.getGameTime() + 1200,
+        "New wreck grace period is not one minute");
+    BioshipDecay.decay(level);
+    helper.assertTrue(
+        level.getBlockState(hull).is(Create_bioships.FLESH.get()),
+        "Hull decayed during grace period");
+    for (var wreck : List.of(ship, fragment)) {
+      var tag = wreck.getUserDataTag().copy();
+      tag.putLong("BioshipDecayAfter", 0);
+      wreck.setUserDataTag(tag);
+    }
+    BioshipDecay.decay(level);
+    helper.assertTrue(level.getBlockState(hull).isAir(), "Ordinary hull did not rot first");
+    helper.assertTrue(
+        level.getBlockState(organ).is(Create_bioships.STOMACH.get())
+            && level.getBlockState(detachedWindow).is(Create_bioships.ONE_WAY_WINDOW.get()),
+        "An organ or detached special block rotted before the hull");
+    BioshipDecay.decay(level);
+    BioshipDecay.decay(level);
+    helper.assertTrue(
+        level.getBlockState(organ).isAir() && level.getBlockState(detachedWindow).isAir(),
+        "Special components never decayed");
+    helper.assertTrue(
+        level.getBlockState(core.getBlockPos()).is(Create_bioships.CORE.get()),
+        "Core did not survive the organ phase");
+    BioshipDecay.decay(level);
+    helper.assertTrue(level.getBlockState(core.getBlockPos()).isAir(), "Core did not rot last");
+    cleanup(helper, fragment);
+    finish(helper, ship, () -> {});
   }
 }

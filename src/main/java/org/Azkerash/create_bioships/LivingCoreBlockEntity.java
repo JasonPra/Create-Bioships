@@ -827,7 +827,9 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
           if (here.distanceToSqr(point) <= 2.25) {
             ItemStack one = item.getItem().copyWithCount(1);
             boolean accepted;
-            if (one.is(BioshipIntegration.constructionMaterial()) && !one.is(MEAT)) {
+            if (BioshipScavenging.droppedBlock(one)) {
+              accepted = scavenging.consumeDroppedBlock(this, one);
+            } else if (one.is(BioshipIntegration.constructionMaterial()) && !one.is(MEAT)) {
               stomach.retain(one);
               accepted = true;
             } else accepted = DigestiveSystem.offerFood(this, one, false);
@@ -865,7 +867,10 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
   }
 
   static boolean droppedSupply(ItemStack stack) {
-    return stack.is(MEAT) || stack.is(BioshipIntegration.constructionMaterial());
+    if (stack.is(Create_bioships.CORE.get().asItem())) return false;
+    return stack.is(MEAT)
+        || stack.is(BioshipIntegration.constructionMaterial())
+        || BioshipScavenging.droppedBlock(stack);
   }
 
   private Vec3 forage(ServerSubLevel ship) {
