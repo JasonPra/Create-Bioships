@@ -10,12 +10,7 @@ import org.Azkerash.create_bioships.BioshipAdaptation.Proposal;
 
 /** Read-only proposal generation; payment and body mutation belong to the adaptation actuator. */
 final class BioshipAdaptationPlanner {
-  record State(
-      Map<String, Integer> reserve,
-      Set<BlockPos> armor,
-      long nextWork,
-      boolean learnedMouth,
-      boolean learnedStomach) {
+  record State(Map<String, Integer> reserve, Set<BlockPos> armor, long nextWork) {
     State {
       reserve = Map.copyOf(reserve);
       armor = Set.copyOf(armor);
@@ -55,7 +50,8 @@ final class BioshipAdaptationPlanner {
         || OrganMotion.busy(core)
         || core.coreMotion().active()) return result;
     var stomach = DigestiveSystem.stomach(core);
-    if (memory.learnedMouth()
+    var options = BioshipRecovery.options(core);
+    if (!options.mouth()
         && !core.hasMouth()
         && memory.reserve().getOrDefault(FLESH, 0) >= 8
         && memory.reserve().getOrDefault(FIBER, 0) >= 4
@@ -73,7 +69,7 @@ final class BioshipAdaptationPlanner {
                 1150,
                 "Regrow the mouth from core emergency reserves"));
     }
-    if (memory.learnedStomach()
+    if (!options.stomach()
         && stomach == null
         && memory.reserve().getOrDefault(FLESH, 0) >= 16
         && memory.reserve().getOrDefault(FIBER, 0) >= 8
@@ -91,7 +87,51 @@ final class BioshipAdaptationPlanner {
                 1130,
                 "Regrow the stomach from core emergency reserves"));
     }
+    if (result.isEmpty()) {
+      var sacrifice = BioshipRecovery.sacrifice(core, memory.reserve(), options);
+      if (sacrifice != null)
+        result.add(
+            new Proposal(
+                BioshipBrain.Action.RECLAIM_COMPONENT,
+                sacrifice,
+                core.getLevel().getBlockState(sacrifice),
+                0,
+                0,
+                0,
+                1120,
+                "Reclaim nonessential tissue into resources for digestive recovery"));
+    }
     if (stomach == null || !core.hasMouth() || !stomach.connected(core)) return result;
+    var room = core.engineRoom().quote(core);
+    if (room != null
+        && !BioshipNutrition.critical(core)
+        && EmergencyReserve.after(core, room.completeCost(core)))
+      result.add(
+          new Proposal(
+              room.legUpgrades() > 0
+                  ? BioshipBrain.Action.STRENGTHEN_LEGS
+                  : BioshipBrain.Action.GROW_ENGINE_ROOM,
+              core.getBlockPos(),
+              Create_bioships.FLESH.get().defaultBlockState(),
+              room.cost().flesh(),
+              room.cost().fiber(),
+              room.cost().bone(),
+              940,
+              "Expand the engine room with a fully funded digestive and leg budget"));
+    var digestive = BioshipDigestiveGrowth.plan(core);
+    if (digestive != null)
+      result.add(
+          new Proposal(
+              digestive.legUpgrades() > 0
+                  ? BioshipBrain.Action.STRENGTHEN_LEGS
+                  : BioshipBrain.Action.GROW_DIGESTION,
+              digestive.mouth(),
+              Create_bioships.FEEDING_MOUTH.get().defaultBlockState(),
+              digestive.cost().flesh(),
+              digestive.cost().fiber(),
+              digestive.cost().bone(),
+              900,
+              "Expand digestion to match body energy demand"));
     boolean overloaded =
         !core.canFly() && core.crawl().carriedLoad(core) > core.crawl().loadCapacity();
     if (overloaded && !core.crawl().canEnhance(core)) {
@@ -110,9 +150,8 @@ final class BioshipAdaptationPlanner {
     }
     if (BioshipNutrition.critical(core) || core.getLevel().getGameTime() < memory.nextWork())
       return result;
-    int count = BioshipStores.connected(stomach).size();
+    int count = BioshipStorage.sacks(core).size();
     if (BioshipStores.total(stomach) > BioshipStores.capacity(stomach)
-        && count < 8
         && funded(stomach, 8, 4, 1)) {
       var pos = DigestiveSystem.storagePort(core, core.getBlockPos());
       if (pos != null) {
@@ -169,11 +208,13 @@ final class BioshipAdaptationPlanner {
         || core.buildingHull()
         || memory.armor().size() >= (core.hatchling() ? 8 : 16)) return result;
     int fleshReserve =
-        core.isMature()
+        !AirshipPrototype.available() || core.isMature()
             ? 0
             : core.missingBiomass()
                 + 8 * Math.max(0, core.crawl().hullTier(core) - core.crawl().legTier());
-    if (stomach.material(FLESH) < fleshReserve + 1) return result;
+    if (stomach.material(FLESH) < fleshReserve + 1
+        || !EmergencyReserve.after(core, new MaterialCost(1, 0, core.hatchling() ? 0 : 1)))
+      return result;
     var cells = BioshipDecay.blocks(core.ship());
     int low = cells.stream().mapToInt(BlockPos::getY).min().orElse(core.getBlockPos().getY());
     var center =

@@ -46,17 +46,33 @@ public class StomachBlockEntity extends BlockEntity implements MenuProvider, Mat
     setChanged();
   }
 
-  public int burnReserve() {
+  int burnPaste() {
+    if (localMaterial("biomancy:nutrient_paste") == 0) return 0;
+    spendLocal("biomancy:nutrient_paste", 1);
+    return 20;
+  }
+
+  int burnNutrients() {
     if (nutrientReserve > 0) {
       nutrientReserve--;
       setChanged();
       return 20;
     }
+    for (var id : List.of("biomancy:nutrient_paste", "biomancy:nutrients", "biomancy:nutrient_bar"))
+      if (localMaterial(id) > 0) {
+        spendLocal(id, 1);
+        return 20;
+      }
+    return 0;
+  }
+
+  public int burnReserve() {
+    int local = burnNutrients();
+    if (local > 0) return local;
     var data = new CompoundTag();
-    for (var key : reserves.keySet()) data.putInt(key.toString(), material(key.toString()));
-    for (var sac : BioshipStores.connected(this))
-      for (var key : sac.getPersistentData().getCompound(BioshipStores.MATERIALS).getAllKeys())
-        data.putInt(key, material(key));
+    var core = BioshipStores.core(this);
+    if (core == null) reserves.forEach((id, count) -> data.putInt(id.toString(), count));
+    else BioshipStorage.metabolicStock(core).forEach(data::putInt);
     var before = data.copy();
     int nutrition = burnStored(data);
     if (nutrition > 0)
@@ -91,30 +107,34 @@ public class StomachBlockEntity extends BlockEntity implements MenuProvider, Mat
   }
 
   public int material(String id) {
-    return localMaterial(id) + BioshipStores.material(this, id);
+    var core = BioshipStores.core(this);
+    return core == null ? localMaterial(id) : BioshipStorage.amount(core, id);
   }
 
   public void retain(ItemStack stack) {
-    if (!stack.isEmpty())
-      reserves.merge(
-          BuiltInRegistries.ITEM.getKey(stack.getItem()),
-          stack.getCount(),
-          (a, b) -> Math.min(1000000, a + b));
-    setChanged();
+    if (stack.isEmpty()) return;
+    String id = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
+    int count = stack.getCount();
+    var core = BioshipStores.core(this);
+    if (core != null && !BioshipStorage.fuel(id)) count = BioshipStorage.deposit(core, id, count);
+    creditLocal(id, count);
   }
 
-  @Override
   public void credit(String id, int count) {
     if (count < 0) throw new IllegalArgumentException("Negative material credit");
+    var core = BioshipStores.core(this);
+    if (core != null && !BioshipStorage.fuel(id)) count = BioshipStorage.deposit(core, id, count);
+    creditLocal(id, count);
+  }
+
+  void creditLocal(String id, int count) {
     if (count > 0)
-      retain(new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.parse(id)), count));
+      reserves.merge(ResourceLocation.parse(id), count, (a, b) -> Math.min(1000000, a + b));
+    setChanged();
   }
 
   public void retainFlesh(int count) {
-    if (count > 0)
-      reserves.merge(
-          ResourceLocation.parse("biomancy:flesh_bits"), count, (a, b) -> Math.min(1000000, a + b));
-    setChanged();
+    credit(MaterialCost.FLESH, count);
   }
 
   int localMaterial(String id) {
@@ -139,10 +159,8 @@ public class StomachBlockEntity extends BlockEntity implements MenuProvider, Mat
   }
 
   public boolean spend(String item, int count) {
-    if (count < 0 || material(item) < count) return false;
-    int local = Math.min(count, localMaterial(item));
-    if (count > local && !BioshipStores.spend(this, item, count - local)) return false;
-    return spendLocal(item, local);
+    var core = BioshipStores.core(this);
+    return core == null ? spendLocal(item, count) : BioshipStorage.spend(core, item, count);
   }
 
   public int acid() {
@@ -154,8 +172,11 @@ public class StomachBlockEntity extends BlockEntity implements MenuProvider, Mat
   }
 
   public void continueGrowth(LivingCoreBlockEntity core) {
-    if (BioshipNutrition.critical(core)) return;
-    int amount = Math.min(core.missingBiomass(), material("biomancy:flesh_bits"));
+    if (!AirshipPrototype.available() || BioshipNutrition.critical(core)) return;
+    int amount =
+        Math.min(
+            core.missingBiomass(),
+            Math.max(0, material("biomancy:flesh_bits") - EmergencyReserve.TARGET.flesh()));
     if (amount > 0) {
       spend("biomancy:flesh_bits", amount);
       core.incorporateBiomass(amount);
@@ -306,6 +327,7 @@ public class StomachBlockEntity extends BlockEntity implements MenuProvider, Mat
       stomach.progress++;
       if (stomach.progress >= stomach.duration) {
         for (var output : value.getOutputs()) stomach.retain(output.getItemStack(level.random));
+        if (LivingCoreBlockEntity.isMeat(stack)) stomach.creditLocal("biomancy:nutrient_paste", 1);
         if (!stomach.inherited[slot]) {
           var flags = stack.get(net.minecraft.core.component.DataComponents.CUSTOM_DATA);
           if (stack.is(Items.BEEF)

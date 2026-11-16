@@ -27,6 +27,12 @@ public final class NavigationDebug {
     data.putInt("QueuedGoals", core.brain().queuedGoals().size());
     data.putInt("StoredComponents", core.assimilation().stored());
     data.putInt("CollectingArms", core.assimilation().arms().size());
+    var missing = core.brain().materialNeeds(core);
+    data.putInt("NeedFlesh", missing.flesh());
+    data.putInt("NeedFiber", missing.fiber());
+    data.putInt("NeedBone", missing.bone());
+    data.putInt("DigestiveDemand", DigestiveSystem.requiredPairs(core));
+    if (AirshipPrototype.available()) data.putInt("EngineCapacity", core.engineRoom().capacity());
     var origin = BioshipBlueprint.physical(core, BlockPos.ZERO);
     data.put(
         "Hologram",

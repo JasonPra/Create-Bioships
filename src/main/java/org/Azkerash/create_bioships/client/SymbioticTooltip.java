@@ -26,7 +26,10 @@ public final class SymbioticTooltip {
     var pos = hit.getBlockPos();
     var state = mc.level.getBlockState(pos);
     List<Component> details = new ArrayList<>();
-    if (mc.level.getBlockEntity(pos) instanceof LivingCoreBlockEntity core)
+    if (!AirshipPrototype.available() && AirshipPrototype.component(state.getBlock())) {
+      details.add(Component.literal("Airship prototype"));
+      details.add(Component.literal("Not implemented; preserved for the redesign."));
+    } else if (mc.level.getBlockEntity(pos) instanceof LivingCoreBlockEntity core)
       details.addAll(core.goggleTooltip());
     else if (state.is(Create_bioships.INTESTINE.get())) {
       details.add(Component.literal("Fleshy intestine"));
@@ -55,8 +58,8 @@ public final class SymbioticTooltip {
       details.add(Component.literal("Feeding maw"));
       details.add(
           Component.literal(
-              "Feed meat or amalgam here. An intact intestine must connect this mouth to the"
-                  + " stomach."));
+              "Feed food or building materials here. An intact intestine must connect this mouth to"
+                  + " the stomach."));
     } else if (state.is(Create_bioships.STOMACH.get())) {
       details.add(Component.literal("Bioship stomach"));
       details.add(

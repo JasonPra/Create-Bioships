@@ -22,8 +22,9 @@ final class BioshipPriorities {
     String id = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
     var stomach = DigestiveSystem.stomach(core);
     boolean mouth = core.hasMouth();
-    if (!mouth && (BioshipIntegration.isMaw(state) || id.equals("biomancy:bio_forge"))) return 0;
-    if (stomach == null) {
+    if (DigestiveSystem.mouths(core).size() < BioshipDigestiveGrowth.target(core)
+        && (BioshipIntegration.isMaw(state) || id.equals("biomancy:bio_forge"))) return 0;
+    if (DigestiveSystem.stomachs(core).size() < BioshipDigestiveGrowth.target(core)) {
       if (state.is(Create_bioships.STOMACH.get())) return 0;
       if ((id.equals("biomancy:decomposer") || id.equals("biomancy:digester"))
           && BioshipIntegration.blockEntities(core.ship()).stream()
@@ -51,7 +52,7 @@ final class BioshipPriorities {
       return full ? 1 : 2;
     }
     if (state.is(Create_bioships.FLESH.get()) || id.contains("flesh"))
-      return core.missingBiomass() > 0 ? 3 : 5;
+      return AirshipPrototype.available() && core.missingBiomass() > 0 ? 3 : 5;
     return 5;
   }
 

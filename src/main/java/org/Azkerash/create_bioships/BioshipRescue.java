@@ -213,7 +213,7 @@ public final class BioshipRescue {
       for (var player : allies) if (begin(core, player)) break;
       return;
     }
-    if (core.body().dead() && !phase.equals("closing")) {
+    if ((!AirshipPrototype.available() || core.body().dead()) && !phase.equals("closing")) {
       phase = "closing";
       animation = 0;
       passenger = null;

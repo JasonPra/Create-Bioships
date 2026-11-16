@@ -26,44 +26,35 @@ final class BioshipAdaptation {
   private final MaterialLedger reserve = new MaterialLedger();
   private final Set<BlockPos> armor = new HashSet<>();
   private long nextWork;
-  private boolean learnedMouth, learnedStomach;
+
+  MaterialLedger ledger() {
+    return reserve;
+  }
 
   int material(String id) {
     return reserve.material(id);
   }
 
-  private boolean pay(int flesh, int fiber, int bone) {
-    return new MaterialCost(flesh, fiber, bone).pay(reserve);
+  void creditRecovery(String id, int count) {
+    reserve.credit(id, count);
+  }
+
+  private boolean pay(LivingCoreBlockEntity core, int flesh, int fiber, int bone) {
+    return new MaterialCost(flesh, fiber, bone).pay(BioshipStorage.account(core));
   }
 
   void maintain(LivingCoreBlockEntity core) {
-    learnedMouth |= core.hasMouth();
     var stomach = DigestiveSystem.stomach(core);
-    learnedStomach |= stomach != null;
     armor.removeIf(
         p ->
             !core.getLevel().getBlockState(p).is(Create_bioships.FLESH.get())
                 && !core.getLevel().getBlockState(p).is(Create_bioships.CARAPACE.get()));
-    if (stomach == null || !stomach.connected(core)) return;
-    BioshipStores.balance(stomach);
-    if (BioshipNutrition.critical(core)) return;
-    String[] ids = {FLESH, FIBER, BONE};
-    int[] targets = {32, 16, 8}, floors = {core.isMature() ? 32 : 128, 32, 32};
-    for (int i = 0; i < ids.length; i++) {
-      int take =
-          Math.min(
-              targets[i] - material(ids[i]), Math.max(0, stomach.material(ids[i]) - floors[i]));
-      if (take > 0 && MaterialCost.transfer(stomach, reserve, ids[i], take)) {
-        core.setChanged();
-      }
-    }
+    if (stomach != null) BioshipStorage.flush(core);
   }
 
   List<Proposal> proposals(LivingCoreBlockEntity core) {
     return BioshipAdaptationPlanner.plan(
-        core,
-        new BioshipAdaptationPlanner.State(
-            reserve.snapshot(), armor, nextWork, learnedMouth, learnedStomach));
+        core, new BioshipAdaptationPlanner.State(BioshipStorage.snapshot(core), armor, nextWork));
   }
 
   void tick(LivingCoreBlockEntity core) {
@@ -74,9 +65,9 @@ final class BioshipAdaptation {
       if (p.action == chosen.action() && Objects.equals(p.pos, chosen.block())) {
         if (p.action == BioshipBrain.Action.REGROW_MOUTH
             || p.action == BioshipBrain.Action.REGROW_STOMACH) {
-          if (!pay(p.flesh, p.fiber, p.bone)) return;
+          if (!pay(core, p.flesh, p.fiber, p.bone)) return;
           if (!core.getLevel().setBlock(p.pos, p.state, 3)) {
-            new MaterialCost(p.flesh, p.fiber, p.bone).refund(reserve);
+            new MaterialCost(p.flesh, p.fiber, p.bone).refund(BioshipStorage.account(core));
             return;
           }
           if (p.action == BioshipBrain.Action.REGROW_MOUTH)
@@ -96,9 +87,55 @@ final class BioshipAdaptation {
                     4));
           }
           DigestiveSystem.connect(core, core.ship());
+        } else if (p.action == BioshipBrain.Action.GROW_ENGINE_ROOM) {
+          if (!core.engineRoom().expand(core)) return;
+        } else if (p.action == BioshipBrain.Action.GROW_DIGESTION) {
+          var plan = BioshipDigestiveGrowth.plan(core);
+          if (plan == null || plan.legUpgrades() > 0 || !plan.mouth().equals(p.pos)) return;
+          var account = DigestiveSystem.stomach(core);
+          if (!plan.cost().pay(account)) return;
+          var originals = new LinkedHashMap<BlockPos, BlockState>();
+          for (var pos : List.of(plan.mouth(), plan.stomach(), plan.tube()))
+            originals.put(pos, core.getLevel().getBlockState(pos));
+          boolean mouth =
+              !plan.addMouth()
+                  || core.getLevel()
+                      .setBlock(
+                          plan.mouth(),
+                          Create_bioships.FEEDING_MOUTH
+                              .get()
+                              .defaultBlockState()
+                              .setValue(FeedingMouthBlock.FACING, plan.facing()),
+                          3);
+          boolean stomach =
+              !plan.addStomach()
+                  || core.getLevel()
+                      .setBlock(
+                          plan.stomach(), Create_bioships.STOMACH.get().defaultBlockState(), 3);
+          if (!mouth || !stomach) {
+            originals.forEach((pos, state) -> core.getLevel().setBlock(pos, state, 3));
+            plan.cost().refund(account);
+            return;
+          }
+          var organ = (StomachBlockEntity) core.getLevel().getBlockEntity(plan.stomach());
+          if (plan.addStomach()) {
+            organ.tubeBootstrapped = true;
+            organ.retainFlesh(4);
+            organ.credit(FIBER, 4);
+          }
+          organ.paidTubeStock += plan.tubeCredits();
+          organ.connectedMouth = plan.mouth();
+          DigestiveSystem.connect(core, core.ship());
         } else if (p.action == BioshipBrain.Action.STRENGTHEN_LEGS) {
           core.crawl().enhance(core);
         } else if (p.action == BioshipBrain.Action.RECLAIM_COMPONENT) {
+          if (!core.hasMouth() || DigestiveSystem.stomach(core) == null) {
+            if (OrganMotion.reclaimToCore(core, p.pos)) {
+              armor.remove(p.pos);
+              core.setChanged();
+            }
+            return;
+          }
           var mouth = core.mouthBlock();
           for (var face : Direction.values()) {
             var target = mouth.relative(face);
@@ -133,9 +170,13 @@ final class BioshipAdaptation {
       }
   }
 
-  int burnEmergency() {
+  int burnEmergency(LivingCoreBlockEntity core) {
     for (var id : List.of(FLESH, FIBER, BONE))
-      if (material(id) > 0) {
+      if (material(id)
+          > ((!core.hasMouth() ? (id.equals(FLESH) ? 8 : id.equals(FIBER) ? 4 : 2) : 0)
+              + (DigestiveSystem.stomach(core) == null
+                  ? (id.equals(FLESH) ? 16 : id.equals(FIBER) ? 8 : 4)
+                  : 0))) {
         reserve.spend(id, 1);
         return id.equals(FLESH) ? 10 : id.equals(FIBER) ? 8 : 2;
       }
@@ -148,8 +189,6 @@ final class BioshipAdaptation {
     reserve.snapshot().forEach(stock::putInt);
     t.put("Reserve", stock);
     t.putLongArray("Armor", armor.stream().mapToLong(BlockPos::asLong).toArray());
-    t.putBoolean("Mouth", learnedMouth);
-    t.putBoolean("Stomach", learnedStomach);
     t.putLong("Next", nextWork);
     return t;
   }
@@ -161,8 +200,6 @@ final class BioshipAdaptation {
     reserve.restore(saved);
     armor.clear();
     for (long pos : t.getLongArray("Armor")) armor.add(BlockPos.of(pos));
-    learnedMouth = t.getBoolean("Mouth");
-    learnedStomach = t.getBoolean("Stomach");
     nextWork = t.getLong("Next");
   }
 }

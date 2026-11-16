@@ -457,6 +457,12 @@ public final class BioshipCrawl {
     }
     var anchor =
         core.ship().logicalPose().transformPosition(Vec3.atCenterOf(core.structuralOrigin()));
+    var righting = BioshipRighting.support(core);
+    if (righting != null) {
+      supportHeight = righting.height();
+      stanceUp = new Vec3(0, 1, 0);
+      return;
+    }
     var layout = BioshipSupport.layout(core);
     if (!layout.stable()) return;
     Vec3[] contacts = new Vec3[4];

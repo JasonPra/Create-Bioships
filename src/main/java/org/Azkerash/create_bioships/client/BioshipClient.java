@@ -17,11 +17,12 @@ public final class BioshipClient {
 
   @SubscribeEvent
   public static void setup(FMLClientSetupEvent event) {
-    event.enqueueWork(() -> SimClickInteractions.register(CONTROLS));
+    if (AirshipPrototype.available())
+      event.enqueueWork(() -> SimClickInteractions.register(CONTROLS));
   }
 
   public static void startControl(Level level, Player player, BlockPos pos) {
-    CONTROLS.startHold(level, player, pos);
+    if (AirshipPrototype.available()) CONTROLS.startHold(level, player, pos);
   }
 
   @SubscribeEvent

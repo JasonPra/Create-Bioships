@@ -38,6 +38,7 @@ public class BlueprintPanelBlock extends HorizontalDirectionalBlock {
   @Override
   protected InteractionResult useWithoutItem(
       BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
+    if (!AirshipPrototype.available()) return InteractionResult.PASS;
     if (hit.getDirection() != state.getValue(FACING)) return InteractionResult.PASS;
     if (player instanceof ServerPlayer server) {
       var core = BioshipAccess.core(level, pos);

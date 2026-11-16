@@ -52,13 +52,15 @@ public final class BioshipScavenging {
     if (state.is(Create_bioships.FEEDING_MOUTH.get())
         || id.equals("biomancy:bio_forge")
         || id.equals("biomancy:maw_hopper"))
-      return others.stream().noneMatch(e -> BioshipIntegration.isMaw(e.getBlockState()));
+      return others.stream().filter(e -> BioshipIntegration.isMaw(e.getBlockState())).count()
+          < DigestiveSystem.requiredPairs(core);
     if (state.is(Create_bioships.STOMACH.get()))
-      return others.stream().noneMatch(e -> e instanceof StomachBlockEntity);
+      return others.stream().filter(e -> e instanceof StomachBlockEntity).count()
+          < DigestiveSystem.requiredPairs(core);
     if (id.equals("biomancy:decomposer") || id.equals("biomancy:digester"))
-      return others.stream()
-          .noneMatch(
-              e -> e instanceof StomachBlockEntity || e.getBlockState().is(state.getBlock()));
+      return others.stream().filter(e -> e instanceof StomachBlockEntity).count()
+              < BioshipDigestiveGrowth.target(core)
+          && others.stream().noneMatch(e -> e.getBlockState().is(state.getBlock()));
     if (id.equals("biomancy:storage_sac"))
       return others.stream().filter(EngineRoom::storage).count() < 8;
     if (id.equals("biomancy:modular_larynx"))
@@ -96,8 +98,10 @@ public final class BioshipScavenging {
 
     boolean flesh =
         core.hungry()
-            || core.missingBiomass() > 0
-            || stomach != null && stomach.material("biomancy:flesh_bits") < 128;
+            || AirshipPrototype.available() && core.missingBiomass() > 0
+            || (stomach == null
+                ? core.adaptation().material(MaterialCost.FLESH) < 128
+                : stomach.material(MaterialCost.FLESH) < 128);
     boolean bone =
         frameMaterial(state)
             && (stomach == null
@@ -285,6 +289,18 @@ public final class BioshipScavenging {
     return true;
   }
 
+  void recycleToCore(LivingCoreBlockEntity core, BlockState state) {
+    int flesh = pendingFlesh, bone = pendingBone, fiber = pendingFiber;
+    recycle(state);
+    core.adaptation().creditRecovery(MaterialCost.FLESH, pendingFlesh - flesh);
+    core.adaptation().creditRecovery(MaterialCost.BONE, pendingBone - bone);
+    core.adaptation().creditRecovery(MaterialCost.FIBER, pendingFiber - fiber);
+    pendingFlesh = flesh;
+    pendingBone = bone;
+    pendingFiber = fiber;
+    core.setChanged();
+  }
+
   void recycle(BlockState state) {
     if (state.is(Create_bioships.INTESTINE.get()) && !state.getValue(IntestineBlock.PAID)) {
       pendingFreeTubes++;
@@ -306,10 +322,18 @@ public final class BioshipScavenging {
   }
 
   void deliver(LivingCoreBlockEntity core) {
-    int growth = BioshipNutrition.critical(core) ? 0 : core.incorporateBiomass(pendingFlesh);
+    int growth =
+        !AirshipPrototype.available() || BioshipNutrition.critical(core)
+            ? 0
+            : core.incorporateBiomass(pendingFlesh);
     pendingFlesh -= growth;
     var stomach = DigestiveSystem.stomach(core);
-    if (stomach == null) return;
+    if (stomach == null) {
+      pendingFlesh = BioshipStorage.deposit(core, MaterialCost.FLESH, pendingFlesh);
+      pendingBone = BioshipStorage.deposit(core, MaterialCost.BONE, pendingBone);
+      pendingFiber = BioshipStorage.deposit(core, MaterialCost.FIBER, pendingFiber);
+      return;
+    }
     stomach.freeTubeStock += pendingFreeTubes;
     pendingFreeTubes = 0;
     stomach.setChanged();

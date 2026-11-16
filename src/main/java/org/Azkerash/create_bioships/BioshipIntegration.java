@@ -154,7 +154,9 @@ public final class BioshipIntegration {
         .getKey(core.getLevel().getBlockState(target).getBlock())
         .toString()
         .equals("biomancy:modular_larynx")) core.adoptLarynx();
-    if (core.getLevel().getBlockState(target).is(FLESH) && core.missingBiomass() > 0) {
+    if (AirshipPrototype.available()
+        && core.getLevel().getBlockState(target).is(FLESH)
+        && core.missingBiomass() > 0) {
       core.getLevel().removeBlock(target, false);
       core.incorporateBiomass(1);
       return;
@@ -164,7 +166,8 @@ public final class BioshipIntegration {
   }
 
   private static void convertFirstStomach(LivingCoreBlockEntity core, BlockPos pos) {
-    if (DigestiveSystem.stomach(core) != null || OrganMotion.busy(core)) return;
+    if (DigestiveSystem.stomachs(core).size() >= BioshipDigestiveGrowth.target(core)
+        || OrganMotion.busy(core)) return;
     com.github.elenterius.biomancy.block.decomposer.DecomposerBlockEntity decomposer = null;
     com.github.elenterius.biomancy.block.digester.DigesterBlockEntity digester = null;
     for (var entity : blockEntities(core.ship())) {
@@ -222,7 +225,7 @@ public final class BioshipIntegration {
   }
 
   private static void convertFirstBioForge(LivingCoreBlockEntity core, BlockPos pos) {
-    if (core.hasMouth()
+    if (DigestiveSystem.mouths(core).size() >= BioshipDigestiveGrowth.target(core)
         || !(core.getLevel().getBlockEntity(pos)
             instanceof com.github.elenterius.biomancy.block.bioforge.BioForgeBlockEntity forge))
       return;
@@ -264,45 +267,50 @@ public final class BioshipIntegration {
   }
 
   public static void relocateMouth(LivingCoreBlockEntity core, ServerSubLevel ship) {
-    BlockPos source = core.mouthBlock();
-    if (source == null
-        || !(ship.getLevel().getBlockEntity(source) instanceof FeedingMouthBlockEntity mouth))
-      return;
+    if (OrganMotion.busy(core)) return;
     boolean hunting = core.huntingAllowed();
-    List<BlockPos> destinations =
-        hunting
-            ? List.of(
-                DinghyGrowth.MOUTH,
-                new BlockPos(0, 0, 7),
-                new BlockPos(1, 0, -5),
-                new BlockPos(-1, 0, 5),
-                new BlockPos(0, 2, -7))
-            : List.of(
-                new BlockPos(3, 2, 3),
-                new BlockPos(-3, 2, 3),
-                new BlockPos(3, 2, 2),
-                new BlockPos(-3, 2, 2));
-    if (!hunting && core.preferredMouth() != null) {
-      destinations = new ArrayList<>(destinations);
-      destinations.add(0, core.preferredMouth());
+    var destinations = new ArrayList<BlockPos>();
+    if (hunting)
+      destinations.addAll(
+          List.of(
+              DinghyGrowth.MOUTH,
+              new BlockPos(0, 0, 7),
+              new BlockPos(1, 0, -5),
+              new BlockPos(-1, 0, 5),
+              new BlockPos(0, 2, -7)));
+    int side = 3 + core.engineRoom().widening();
+    for (int z : new int[] {3, 2, 4}) {
+      destinations.add(new BlockPos(side, 2, z));
+      destinations.add(new BlockPos(-side, 2, z));
     }
-    ServerLevel level = ship.getLevel();
-    for (BlockPos offset : destinations) {
-      BlockPos target = core.layoutPos(offset);
-      if (target.equals(source)) return;
-      if (!ship.getPlot().contains(new net.minecraft.world.level.ChunkPos(target))
-          || !level.isInWorldBounds(target)) continue;
-      var host = level.getBlockState(target);
-      if (!host.isAir() && !host.is(Create_bioships.FLESH.get())) continue;
-      Vec3 physical = ship.logicalPose().transformPosition(Vec3.atCenterOf(target));
-      if (!level.getBlockState(BlockPos.containing(physical)).isAir()) continue;
-      if (!hunting) {
-        BlockPos inside = target.relative(offset.getX() > 0 ? Direction.WEST : Direction.EAST);
-        if (!level.getBlockState(inside).isAir() || !level.getBlockState(inside.above()).isAir())
-          continue;
+    if (!hunting && core.preferredMouth() != null) destinations.add(0, core.preferredMouth());
+    var level = ship.getLevel();
+    boolean hasHuntingMouth =
+        hunting
+            && destinations.subList(0, 5).stream()
+                .anyMatch(offset -> isMaw(level.getBlockState(core.layoutPos(offset))));
+    for (var source : DigestiveSystem.mouths(core)) {
+      if (!(level.getBlockEntity(source) instanceof FeedingMouthBlockEntity mouth)
+          || mouth.getPersistentData().getBoolean("BioshipManualPlacement")
+          || (!(hunting && !hasHuntingMouth && source.equals(core.mouthBlock()))
+              && destinations.stream().anyMatch(offset -> core.layoutPos(offset).equals(source))))
+        continue;
+      for (var offset : destinations) {
+        var target = core.layoutPos(offset);
+        if (!ship.getPlot().contains(new net.minecraft.world.level.ChunkPos(target))
+            || !level.isInWorldBounds(target)) continue;
+        var host = level.getBlockState(target);
+        if (!host.isAir() && !host.is(Create_bioships.FLESH.get())) continue;
+        var physical = ship.logicalPose().transformPosition(Vec3.atCenterOf(target));
+        if (!BioshipIntegration.growthSpace(level, BlockPos.containing(physical))) continue;
+        if (Math.abs(offset.getX()) == side) {
+          var inside = target.relative(offset.getX() > 0 ? Direction.WEST : Direction.EAST);
+          var tissue = level.getBlockState(inside);
+          if ((!tissue.isAir() && !tissue.is(Create_bioships.INTESTINE.get()))
+              || !level.getBlockState(inside.above()).isAir()) continue;
+        }
+        if (OrganMotion.begin(core, source, target, false)) return;
       }
-      OrganMotion.begin(core, source, target, false);
-      return;
     }
   }
 
@@ -328,7 +336,7 @@ public final class BioshipIntegration {
     if (ship == null) return;
     for (var actor : ship.getPlot().getBlockEntityActors())
       if (actor instanceof LivingCoreBlockEntity core && core.primary(ship)) {
-        if (core.feedAtMouth(event.getEntity(), event.getItemStack())) {
+        if (core.feedAtMouth(event.getPos(), event.getEntity(), event.getItemStack())) {
           event.setCanceled(true);
           event.setCancellationResult(net.minecraft.world.InteractionResult.SUCCESS);
         }

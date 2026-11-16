@@ -105,6 +105,10 @@ public final class OrganMotion {
     return begin(core, source, target, false, false, true);
   }
 
+  static boolean reclaimToCore(LivingCoreBlockEntity core, BlockPos source) {
+    return begin(core, source, core.getBlockPos(), false, false, true, true);
+  }
+
   static boolean swallow(LivingCoreBlockEntity core, BlockPos source) {
     return begin(core, source, core.getBlockPos(), true, false, false, true);
   }
@@ -185,6 +189,7 @@ public final class OrganMotion {
     data.putUUID("BioshipCargoOwner", ship.getUniqueId());
     data.putBoolean("BioshipBound", true);
     data.putBoolean("BioshipStash", stash);
+    data.putBoolean("BioshipCoreReclamation", stash && consuming);
     data.putBoolean("BioshipScavenged", scavenged);
     data.putBoolean("ScavengeHostFlesh", host.is(Create_bioships.FLESH.get()));
     var selected = core.brain().lastDecision();
@@ -310,7 +315,9 @@ public final class OrganMotion {
     pipeline.resetVelocity(cargo);
     if (age < 36) return;
     if (cargo.getUserDataTag() != null && cargo.getUserDataTag().getBoolean("BioshipStash")) {
-      core.assimilation().receive(core, cargo, move.cargoBlock());
+      if (cargo.getUserDataTag().getBoolean("BioshipCoreReclamation"))
+        core.scavenging().recycleToCore(core, level.getBlockState(move.cargoBlock()));
+      else core.assimilation().receive(core, cargo, move.cargoBlock());
       container.removeForceLoadTicket(
           cargo, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
       container.removeSubLevel(cargo, SubLevelRemovalReason.REMOVED);

@@ -101,6 +101,12 @@ public final class BioshipBlueprint {
   private int baseCockpitZ = -6;
   private boolean demolitionDone;
 
+  void engineWidth(int width) {
+    rooms.replaceAll(
+        r -> r.id == 1 ? new Room(r.id, r.name, r.x, r.z, Math.max(r.width, width), r.length) : r);
+    revision++;
+  }
+
   public List<Room> rooms() {
     return List.copyOf(rooms);
   }
@@ -118,11 +124,11 @@ public final class BioshipBlueprint {
   }
 
   public boolean busy() {
-    return !phase.equals("idle");
+    return AirshipPrototype.available() && !phase.equals("idle");
   }
 
   public boolean locked() {
-    return phase.equals("building") || phase.equals("evacuating");
+    return AirshipPrototype.available() && (phase.equals("building") || phase.equals("evacuating"));
   }
 
   public UUID carried() {
@@ -171,16 +177,20 @@ public final class BioshipBlueprint {
   public Map<BlockPos, BlockState> proposal(LivingCoreBlockEntity core, Draft draft) {
     var plan = new LinkedHashMap<BlockPos, BlockState>();
     sources.clear();
+    var owners =
+        BioshipRoomOwnership.assign(
+            core.body().memory.keySet(),
+            rooms,
+            core.getBlockPos().subtract(core.structuralOrigin()));
     for (var e : core.body().memory.entrySet()) {
       var p = e.getKey();
       var q = p;
       if (!p.equals(BlockPos.ZERO) && !p.equals(coreLocal(core, BlockPos.ZERO)))
-        for (var old : rooms)
-          if (old.contains(structureLocal(core, p))) {
-            var next = draft.rooms.stream().filter(r -> r.id == old.id).findFirst().orElse(old);
-            q = p.offset(next.x - old.x, 0, next.z - old.z);
-            break;
-          }
+        if (owners.containsKey(p)) {
+          var old = owners.get(p);
+          var next = draft.rooms.stream().filter(r -> r.id == old.id).findFirst().orElse(old);
+          q = p.offset(next.x - old.x, 0, next.z - old.z);
+        }
       plan.put(q, e.getValue());
       sources.put(q, p);
     }
@@ -258,7 +268,14 @@ public final class BioshipBlueprint {
     Set<BlockPos> floors = new HashSet<>();
     plan.forEach(
         (p, s) -> {
-          if (structureLocal(core, p).getY() == 1) floors.add(p);
+          var local = structureLocal(core, p);
+          // Exterior storage and its tubes can share floor height without being room floors.
+          boolean floor =
+              s.is(Create_bioships.FLESH.get())
+                  || s.is(Create_bioships.CARAPACE.get())
+                  || s.is(Create_bioships.INTESTINE.get()) && s.getValue(IntestineBlock.ENCASED);
+          if (local.getY() == 1 && floor && d.rooms.stream().anyMatch(r -> r.contains(local)))
+            floors.add(p);
         });
     if (floors.isEmpty()) return "A ship needs floors";
     Set<BlockPos> seen = new HashSet<>();
@@ -308,7 +325,8 @@ public final class BioshipBlueprint {
   }
 
   public boolean confirm(LivingCoreBlockEntity core, Draft d, int baseRevision) {
-    if (core.body().dead()
+    if (!AirshipPrototype.available()
+        || core.body().dead()
         || busy()
         || core.rescue().active()
         || revision != baseRevision

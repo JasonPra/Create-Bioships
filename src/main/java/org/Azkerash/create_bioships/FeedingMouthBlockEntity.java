@@ -85,7 +85,7 @@ public class FeedingMouthBlockEntity extends BaseContainerBlockEntity {
     for (var actor : ship.getPlot().getBlockEntityActors())
       if (actor instanceof LivingCoreBlockEntity core && core.primary(ship)) {
         if (core.body().dead() || core.blueprint().busy()) return;
-        var stomach = DigestiveSystem.stomach(core);
+        var stomach = DigestiveSystem.forMouth(core, pos);
         if (stomach == null || !stomach.connected(core)) return;
         if (mouth.inheritedBiomass > 0) {
           stomach.retainFlesh(mouth.inheritedBiomass);
@@ -106,7 +106,7 @@ public class FeedingMouthBlockEntity extends BaseContainerBlockEntity {
             mouth.setChanged();
             continue;
           }
-          if (DigestiveSystem.offerFood(core, stack, oldStock)) {
+          if (DigestiveSystem.offerFood(core, pos, stack, oldStock)) {
             stack.shrink(1);
             mouth.setChanged();
             break;

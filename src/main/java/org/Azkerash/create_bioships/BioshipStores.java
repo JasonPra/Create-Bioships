@@ -9,6 +9,7 @@ final class BioshipStores {
   static final int STOMACH_CAPACITY = 128, SAC_CAPACITY = 256;
 
   static LivingCoreBlockEntity core(StomachBlockEntity stomach) {
+    if (stomach.getLevel() == null) return null;
     var ship = BioshipIntegration.containing(stomach.getLevel(), stomach.getBlockPos());
     if (ship == null) return null;
     for (var be : BioshipIntegration.blockEntities(ship))
@@ -40,12 +41,6 @@ final class BioshipStores {
     return total;
   }
 
-  static int material(StomachBlockEntity stomach, String id) {
-    int amount = 0;
-    for (var sac : connected(stomach)) amount += stored(sac, id);
-    return amount;
-  }
-
   static void change(BlockEntity sac, String id, int delta) {
     var tag = sac.getPersistentData().getCompound(MATERIALS).copy();
     int value = tag.getInt(id) + delta;
@@ -55,46 +50,18 @@ final class BioshipStores {
     sac.setChanged();
   }
 
-  static boolean spend(StomachBlockEntity stomach, String id, int count) {
-    var sacs = connected(stomach);
-    int available = 0;
-    for (var sac : sacs) available += stored(sac, id);
-    if (available < count) return false;
-    for (var sac : sacs) {
-      int take = Math.min(count, stored(sac, id));
-      change(sac, id, -take);
-      count -= take;
-      if (count == 0) break;
-    }
-    return true;
-  }
-
   static int total(StomachBlockEntity stomach) {
-    int total = stomach.localMaterialTotal();
-    for (var sac : connected(stomach)) total += total(sac);
-    return total;
+    var core = core(stomach);
+    return core == null ? stomach.localMaterialTotal() : BioshipStorage.products(core);
   }
 
   static int capacity(StomachBlockEntity stomach) {
-    return STOMACH_CAPACITY + SAC_CAPACITY * connected(stomach).size();
+    var core = core(stomach);
+    return core == null ? STOMACH_CAPACITY : BioshipStorage.capacity(core);
   }
 
   static void balance(StomachBlockEntity stomach) {
-    int excess = stomach.localMaterialTotal() - STOMACH_CAPACITY;
-    if (excess <= 0) return;
-    for (var sac : connected(stomach)) {
-      int room = SAC_CAPACITY - total(sac);
-      if (room <= 0) continue;
-      for (var id : stomach.localMaterialIds()) {
-        int take = Math.min(excess, Math.min(room, stomach.localMaterial(id)));
-        if (take > 0 && stomach.spendLocal(id, take)) {
-          change(sac, id, take);
-          room -= take;
-          excess -= take;
-        }
-        if (excess == 0 || room == 0) break;
-      }
-      if (excess == 0) break;
-    }
+    var core = core(stomach);
+    if (core != null) BioshipStorage.flush(core);
   }
 }

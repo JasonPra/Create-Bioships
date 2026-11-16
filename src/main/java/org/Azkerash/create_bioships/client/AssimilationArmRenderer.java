@@ -87,7 +87,8 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
           pose.popPose();
         }
     }
-    if (!core.body().dead() && (core.crawl().animating() || core.crawl().bracing()))
+    if (!core.body().dead()
+        && (core.crawl().animating() || core.crawl().bracing() || core.aquatic().swimming()))
       renderLegs(core, partial, pose, buffers, light);
     boolean gathering =
         (core.rescue().carriedPosition() != null || core.crawl().reach() != null)
@@ -229,7 +230,7 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
     for (int leg = 0; leg < legs; leg++) {
       double side = leg % 2 == 0 ? -1 : 1;
       double front = leg < 2 ? -1 : 1;
-      boolean moving = core.crawl().animating();
+      boolean moving = core.crawl().animating() || core.aquatic().swimming();
       double phase =
           core.crawl().gaitPhase()
               + Math.clamp(core.getLevel().getGameTime() + partial - core.crawl().gaitAt(), 0, 10)
@@ -237,6 +238,8 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
                   / 20
                   * (scuttling ? 7 : 2)
               + ((leg / 2 + leg % 2) % 2 == 0 ? 0 : Math.PI);
+      if (core.aquatic().swimming())
+        phase = (core.getLevel().getGameTime() + partial) * .45 + leg * Math.PI / 2;
       Vec3 root = support.legs().get(leg).root();
       Vec3 base = support.legs().get(leg).foot();
       Vec3 foot =
@@ -256,7 +259,7 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
                 .add(tangent.scale(side * .7))
                 .add(0, front * .65 + (moving ? Math.cos(phase) * .2 : 0), 0);
       }
-      if (core.crawl().wallFacing() == null) {
+      if (core.crawl().wallFacing() == null && !core.aquatic().swimming()) {
         var container = SubLevelContainer.getContainer(core.getLevel());
         var plot = container == null ? null : container.getPlot(new ChunkPos(core.getBlockPos()));
         if (plot != null) {

@@ -30,6 +30,10 @@ public final class BioshipBody {
     hurt(core, Math.max(1, demand));
   }
 
+  void drown(LivingCoreBlockEntity core) {
+    hurt(core, 2);
+  }
+
   private void hurt(LivingCoreBlockEntity core, double amount) {
     health = Math.max(0, health - amount);
     if (health <= 0) die(core);

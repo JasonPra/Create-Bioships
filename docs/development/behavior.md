@@ -1,5 +1,7 @@
 # Bioship behavior controller
 
+The airship stage is currently dormant for redesign. Active gameplay stops at the hatchling; flight, hull staging, cockpit commands and blueprint reconstruction below describe preserved prototype code. See [prototype status](airship-prototype.md).
+
 `BioshipBrain` owns the current action and target. `BehaviorPriority` ranks proposals; `BioshipPriorities`, vision, defense and scavenging supply candidates. Crawling, flight, assimilation, wreck collection, growth and tentacle attacks execute the selected action rather than choosing competing targets independently.
 
 The selector handles these branches:

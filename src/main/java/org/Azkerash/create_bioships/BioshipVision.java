@@ -509,6 +509,7 @@ public final class BioshipVision {
       if (stomach == null
           || !stomach.connected(core)
           || core.hungry()
+          || !EmergencyReserve.after(core, new MaterialCost(2, 1, 0))
           || eyes.size() >= 8
           || stomach.material("biomancy:flesh_bits") < 2
           || stomach.material("biomancy:elastic_fibers") < 1) continue;
@@ -558,7 +559,8 @@ public final class BioshipVision {
       if ((existing != null || visible(core, root.add(forward.scale(8))))
           && ray(core, root, root.add(forward.scale(8)))) continue;
       if (existing == null
-          && (eyes.size() >= 6
+          && (!EmergencyReserve.after(core, new MaterialCost(2, 1, 0))
+              || eyes.size() >= 6
               || stomach.material("biomancy:flesh_bits") < 2
               || stomach.material("biomancy:elastic_fibers") < (core.isMature() ? 1 : 13)))
         continue;
@@ -582,7 +584,8 @@ public final class BioshipVision {
         if (!level.getBlockState(target).isAir()
             || !core.ship().getPlot().contains(new net.minecraft.world.level.ChunkPos(target)))
           continue;
-        if (!core.isMature()
+        if (AirshipPrototype.available()
+            && !core.isMature()
             && core.plannedBody().stream()
                 .anyMatch(p -> p.offset().equals(target.subtract(core.getBlockPos())))) continue;
         Vec3 point =

@@ -93,9 +93,13 @@ public final class BioshipNeeds {
   }
 
   public void metabolize(int bodyBlocks) {
-    satiety = Math.max(0, satiety - foodDemand(bodyBlocks) - (poison > 0 ? 2 : 0));
+    metabolizeDemand(foodDemand(bodyBlocks));
+  }
+
+  public void metabolizeDemand(int demand) {
+    satiety = Math.max(0, satiety - Math.max(0, demand) - (poison > 0 ? 2 : 0));
     if (poison > 0) poison--;
-    if (satiety == 0) trust = Math.max(-100, trust - 1);
+    if (satiety == 0 && demand > 0) trust = Math.max(-100, trust - 1);
   }
 
   /** Emergency stored tissue supplies energy, never a trust reward. */

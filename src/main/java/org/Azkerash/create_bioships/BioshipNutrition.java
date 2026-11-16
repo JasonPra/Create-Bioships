@@ -8,7 +8,7 @@ final class BioshipNutrition {
   static final int PRESSING_FOOD = 50;
 
   static boolean critical(LivingCoreBlockEntity core) {
-    return core.foodLevel() < PRESSING_FOOD;
+    return BioshipEnergy.demand(core) > 0 && core.foodLevel() < PRESSING_FOOD;
   }
 
   static int fuelValue(ItemStack stack) {

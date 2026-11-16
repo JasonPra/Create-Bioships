@@ -1,163 +1,26 @@
 # Create Bioships
 
-Living airships for Minecraft 1.21.1, NeoForge 21.1.266, and Java 21.
+Living hatchling creatures for Minecraft 1.21.1, NeoForge 21.1.266, and Java 21.
 
-## Behavior and developer tools
+**The airship stage is dormant pending a redesign.** Automatic hull construction, cockpit and engine-room expansion, flight progression, piloting, and blueprint rebuilding are unavailable. Their source, models, textures and registry IDs are preserved for future reuse and existing saves. They are not enabled by loading an older core or supplying more materials. See [prototype status](docs/development/airship-prototype.md).
 
-Living bioships load surrounding world chunks using the creator’s effective view distance, capped by the server, with a separate server-limited simulation range. This is normal ship behavior in every world; loading follows the body and ends when it dies or is removed.
+## Raise a hatchling
 
-A central behavior tree selects the ship’s current action from urgent needs before long-term goals. Useful wreckage takes priority over hunting for the same missing resources. Navigation, collection, growth and attacks share that selection. Symbiotic Goggles show the current behavior and reason; F3+B enables the sight overlay. **F3+P** independently toggles the [path and behavior debugger](docs/development/path-debug.md), including an above-ship hologram with targets and ranked priorities; goggles are not required. See [module boundaries](docs/development/modules.md), [behavior architecture](docs/development/behavior.md) and the packaged [Navigation Lab world type](docs/development/navigation-lab.md).
+Craft a Living Ship Core in **Biomancy’s Bio-Forge → Machines** tab using 1 Living Flesh, 16 Flesh Bits, 8 Elastic Fibers, 4 Exotic Dust, an Eye of Ender and 4 nutrients. Placement creates a Sable physics body and records its creator. The core cannot be placed on an existing physics grid.
 
-## Make and raise a ship
+Place a Bio-Forge, Decomposer and Digester where the creature can see and reach them. It assimilates real components and their inventories. A Bio-Forge becomes a feeding mouth; a Decomposer and Digester combine into a stomach. Physical intestines connect mouths, stomachs and storage sacs. Feed through the toothed face, or right-click an empty-handed mouth to open its inventory silently. The stomach runs native Biomancy decomposition recipes, retains Nutrient Paste for energy and deposits construction products into shared storage.
 
-Craft a **Living Ship Core** in **Biomancy’s Bio-Forge → Machines** tab: **1 Living Flesh, 16 Flesh Bits, 8 Elastic Fibers, 4 Exotic Dust, and 1 Eye of Ender**, plus **4 nutrients**. Place it above ground with approximately **9 blocks of width, 23 of length, and 8 above the core** clear. Placement creates a Sable physics object and records the placing player as its creator. The unassembled eye cannot eat. Manual disassembly is blocked; ordinary mining and damage remain possible.
+The core keeps emergency material stock. Connected stomachs and Storage Sacs share usable construction resources. New storage, intestinal extensions, leg enhancements, repairs and permitted body adaptations have material costs. Existing suitable components take precedence over fabricating replacements. Scavenging a dead creature provides useful parts and materials at a loss; living cores are never edible supplies. Removing a core marks its body dead, and its attached components gradually rot.
 
-Put an exposed **Bio-Forge**, **Decomposer**, and **Digester** near the eye. A small tentacle grabs each eligible block and pulls its actual Sable body aboard, preserving block state, block-entity data, and contents. All tangible Biomancy block types can be assimilated within range. External targets must have an unobstructed view and open sky: walls, roofs, and underground cover prevent collection. The initial scan reaches three blocks around the core and immediate neighbors of attached organs.
+Hatchlings can scuttle, navigate obstacles, climb within their leg capability, forage, hunt for food and needed resources, retaliate against hostile mobs, and flee threats. Legs can be strengthened with paid resources. Supported overturned creatures can right themselves; tentacles allow swimming but do not permit breathing underwater. One exposed mouth supplies air; all mouths submerged eventually causes drowning.
 
-The **first Bio-Forge** becomes a **Bioship Feeding Maw**. One **Decomposer and Digester must both be attached** before they combine into a **Bioship Stomach**: separated machines first move together through the ship’s tissue. Neither machine alone can form it. Both machines’ inputs, products, fuel items, and stored nutrient fuel are retained. Additional Bio-Forges, Decomposers, and Digesters keep their normal crafting/processing roles. Existing completed stomachs remain valid. Existing Bio-Forge biomass is transferred as construction reserves, without restoring hunger or trust. Stored materials and existing decomposition products are retained.
+A bare core has no energy upkeep. Finished mouths, stomachs and intestines add none; ordinary attached blocks, including unconverted Decomposers and Digesters, contribute to demand. Resources are retained for the active creature instead of being consumed by the dormant airship progression.
 
-The mouth and stomach grow a physical **fleshy intestine** connection. Tube arms appear only toward neighboring tubes, feeding mouths, stomachs, and storage sacs. Visual connections update when neighbors change and are also checked by food transport. Exposed tubes do not block the ship’s sight or tentacle targeting; flesh-encased tubes remain opaque. Tubes can be encased in living flesh manually; growing floors automatically hide tubes in their tissue while preserving the network. Empty-hand right-click the mouth to open its inventory silently and load stacks, or offer individual items by hand. Food remains buffered if the stomach or its connection is missing. The eye provides status rather than eating.
+## Developer tools
 
-The stomach runs Biomancy’s native decomposition recipes and their output rolls. It regenerates **stomach acid** instead of using nutrient fuel. Right-click it to inspect its acid bar, digestion progress, food capacity, and tissue reserves. Products stay inside the stomach: neither its display nor item capabilities expose extractable outputs.
+Symbiotic Goggles show behavior, health, food, trust and resources. **F3+B** toggles sight cones and ray results. **F3+P** toggles path visualization and a native floating behavior/priority display; goggles are not required. Debug snapshots do not execute behavior.
 
-The first body requires:
-
-| Material | Role | Initial requirement |
-| --- | --- | --- |
-| Flesh Bits / incorporated flesh | Regular flesh and hull growth | 64 biomass |
-| Bone Fragments | Frame and complex structures | 8 |
-| Elastic Fibers | Moving appendages and bindings | 12 |
-
-These are the hull costs. Before construction starts, the ship also reserves enough material to strengthen its legs for the finished hull’s actual mass. A typical new dinghy needs two leg upgrades: **80 total flesh biomass, 12 Bone Fragments and 20 Elastic Fibers** for hull and legs together. Further intestinal extensions have their own tissue cost.
-
-Fresh food supplies nutrition after digestion; its decomposition products supply building material. Incorporating tissue and stored construction materials supplies **no immediate nutrition or trust reward**. Emergency metabolism can later burn stored reserves when food is exhausted. The ship never harvests its attached body for sustenance. Growth forms a tapered oval hull, a forward cockpit, and a separate aft engine/workshop room. Solid obstructions pause construction rather than being overwritten; replaceable vegetation is cleared as tissue grows. Existing correct hull blocks count as completed construction, allowing stalled older growth to resume. Tentacle arms brace the growing hull above nearby ground and adjust its stance for clearance; this supplies ground support rather than levitite flight.
-
-Feed **8 Levitite Blend Buckets** through the connected mouth to incorporate fluid amalgam; empty buckets are returned. Visible, veined buoyancy organs develop under the finished hull. Flight requires the mature body and all eight organs. Solid levitite blocks are not flight food. Aeronautics 1.3.2 calls its amalgam fluid “Levitite Blend.” Use positive vertical trim to lift off.
-
-## Organs, workshop, and food storage
-
-The stomach, crafting machines, lab equipment, and Storage Sacs settle into engine-room bays. Normal Biomancy machines keep their own inventories and behavior. A full room leaves additional components attached until there is space; it does not overwrite occupied bays.
-
-The feeding mouth normally sits inside the workshop. Hunting moves it to an accessible exterior position near the tentacles, turning its opening toward prey. Switching hunting off brings it back inside. Alternate destinations are checked if its usual location is obstructed. Inventory and reserves travel with relocated components.
-
-External collection always uses a tentacle pull. Internal components follow existing connected tissue through floors, side walls, and ceilings. A small tentacle carries a component if no tissue route exists. Eye-stage moves never create future hull filler; only genuinely replaced host flesh is restored. The mouth waits while its inventory is in use. Components do not phase through world terrain. Moving organs are real temporary Sable objects, retaining their complete data.
-
-Storage Sacs serve as food stores beside the stomach and elsewhere in the workshop. Floor intestines connect each sac to the digestive network. The stomach accepts up to **nine stacks** of raw input. When its intake fills, additional food from the mouth goes into a connected sac; when needed later, the stomach draws food back through the tubes. If every store is full, food stays in the mouth or the player’s hand. Stored fresh food counts as feeding when digested. Sacs retain their normal player-accessible storage inventory; private construction products can overflow into connected sacs. The ship can fund extra sacs and reclaim empty automatically grown ones. Its core also reserves a small, deducted emergency stock for regrowing lost digestive organs.
-
-After the first body stage, **eight further digested meals**, with **8 Flesh Bits, 2 Bone Fragments, and 4 Elastic Fibers** in reserve, develop Biomancy’s **Modular Larynx** in the workshop ceiling. Its future growling/agitation behavior is not wired up yet.
-
-## Physical controls and equipment
-
-- **Thrust tendon:** hold right-click and drag vertically. Positive is ahead, negative is reverse. Shift centers it. No screen opens.
-- **Buoyancy tendon:** the same interaction combines ascent, descent, and neutral altitude hold.
-- **Helm:** Simulated’s actual steering wheel bundled with Aeronautics, using its native hold interaction and overlay, with crimson fungal wood.
-- **Hunting nerve:** a physical latching pad enables hunting; redstone also activates it.
-- **Rest:** empty-hand clicking the core rests or wakes a cooperative ship. Sneak-click inspects needs. An aggressive ship can refuse to rest.
-
-Wear **Symbiotic Goggles** for the small signed bioship-control readout. Inventory slots use a flat 32-pixel sprite; the worn headpiece uses its own fitted bone-and-chitin frame, recessed ocular lenses and sinew strap. These bone-and-chitin goggles also support the native Create/Aeronautics helm checks. Bioship tendon readouts now require this equipment.
-
-The **Bioship Wrench** is a separate tool with its own bone-pincer mesh, sinew-wrapped handle and flat inventory icon. Use an organ once to select it, then use a destination inside the workshop to relocate it. Sneak-use cycles orientation; mouth and stomach support all six directions. Sneak-use in air clears the selection. Relocation and orientation are restricted to the creator. Supported Biomancy machines retain their native facing options. Manual placements are remembered.
-
-Both items are crafted in **Bio-Forge → Tools**:
-
-| Item | Ingredients | Nutrients |
-| --- | --- | --- |
-| Bioship Wrench | 1 Living Flesh, 6 Bone Fragments, 3 Elastic Fibers, 2 Flesh Bits | 1 |
-| Symbiotic Goggles | 1 Living Flesh, 4 Gem Fragments, 4 Elastic Fibers, 4 Flesh Bits | 2 |
-
-## Injury, repair, and the living blueprint
-
-The ship has a persistent internal health pool and a memory of the blocks attached to it. There is no permanent health bar. Symbiotic Goggles show current and maximum health when inspecting the core. At zero health the organism dies permanently; later biomass cannot revive it. Removing a remembered block by ordinary mining injures it; damage caused by its creator also reduces trust, including attributed explosions. Missing tissue from explosions or other removal is detected as well. The ship regrows missing blocks from its remembered layout, spending one stored Flesh Bit per repaired block and restoring four health. Surviving machine inventories are preserved; a destroyed machine regrows empty. Healing an injury without a missing block also spends biomass. Repairs wait for clear space and do not grow through entities or terrain. No stored flesh means no automatic healing.
-
-Wrench relocation updates the block memory without causing injury. The wrench cannot remove hull tissue or biometric doorway membranes. Ordinary mining and damage remain possible.
-
-A **Blueprint Nerve Panel** grows on the engine-room wall. Only the creator can open its editor from its inward-facing control surface. Its outer face and sides have solid flesh backing. The map shows the existing cockpit and engine room. Select a room and click the map to move it, or choose **Add room**, **Add corridor**, **Clear opening**, **Add wall**, or **Add door**. The **R** button rotates a newly added room or corridor. The floor plan supports up to twelve rooms within a 49-by-49 area; every room must remain joined to the core through connected floors and tissue. Existing machines cannot be overwritten by a wall edit. Add membrane doors at shared walls to connect room interiors.
-
-The panel displays available stored flesh biomass and the required cost. Each new or changed block costs one Flesh Bit; removing tissue through the approved plan gives no item drops or biomass refund. The green **checkmark** validates and approves the new plan. The red **X**, closing the menu, or walking away discards the draft and leaves the live ship unchanged. The current flight organs and sufficient stored biomass are required before approval.
-
-After approval the ship searches for dry, level ground with clearance for both the existing and proposed body. It travels to a suitable site, lands, uses a tentacle to carry passengers and animals to safe ground, locks its membranes against entry, and reconfigures one block at a time. The membrane lock also excludes the creator until construction completes. Tissue opens temporarily along an evacuation path and seals during rebuilding. Unexpected obstructions pause the job. The blueprint, reserved cost, construction phase, and moving machine contents persist across saves. Machine inventories move with their rooms; approved reconstruction does not damage health or trust. Temporary construction gaps are excluded from Sable fragmentation until the final connected structure is restored.
-
-Growing ships can also brace and walk on small tentacle arms. Arms push against nearby dry ground to raise the hull for construction and adjust its stance over uneven support. If the future body is still blocked, it looks for a nearby clear growth site and walks there. Leg support has a limited reach and does not replace levitite flight. Cliffs, water, and impassable paths pause ground movement rather than receiving levitation or terrain removal.
-
-## Entrance and visibility
-
-Biomancy **Biometric Membranes** replace the doorway and separate cockpit from workshop. The creator can pass by default. The cockpit’s **Biometric Access Panel** allows the creator to authorize online players and nearby named animals, and revoke existing permissions. Animals are authorized by UUID, so another animal with the same name does not gain access. Permissions persist and synchronize to client collision checks.
-
-The blueprint panel is mounted at eye level on the engine-room partition, with a solid fleshy back and sides. Aligned windows suppress shared edges, render exposed rims, and show translucent membrane skin on the inside while retaining an opaque outer hull face.
-
-Look at the eye, mouth, stomach, nerve panel, or intestines while wearing **Symbiotic Goggles** to see a compact tooltip. Long instructions wrap and remain inside the screen; the core readout includes current and maximum health above the hotbar.
-
-One-way dermal windows have an opaque, flesh-textured outer face and a clear view from inside. Four hanging Biomancy Bio-Lanterns provide **steady** cockpit/workshop light. The exposed hatchling core retains its original detailed texture and blinks independently with an eyelid overlay; grown hulls conceal the internal core as flesh. The core emits no block light. The goggles reminder is omitted when Symbiotic Goggles are already worn. Growth tooltips show construction progress and the location/type of an obstruction. Legacy prototype lamps also remain steady.
-
-## Appetite, trust, and hunting
-
-Actual structure size determines appetite: each loaded second consumes `1 + floor((body blocks - 1) / 64)` satiety units. Fresh meat restores 70 after digestion, up to 1200. Starvation lowers trust from +100 through zero to −100. Below zero, the ship becomes aggressive and refuses captain commands. Fresh meals supplied through a storage sac on the same ship, with an intact tube connection, rebuild trust when digested just like direct feeding. Transfers or disconnected sacs grant no trust. Actual provisioned meals can earn trust even when nutrition is full. Feeding through the digestive system rebuilds trust; striking the eye lowers it.
-
-Permitted hunting follows visible food locally. Six functional flagella grab and attack nearby prey; a limb holding prey is unavailable for swimming, and missing limbs reduce propulsion. Swallowed prey enters digestion rather than granting instant nutrition. Hunting supplies less nutrition than two hand-fed meat items and gives no trust reward. Farm animals, villagers, and other players may become prey. Cooperative ships exclude authorized identities and tame pets. Passengers, creative/spectator players, and invulnerable entities are excluded. Aggression also threatens former allies.
-
-Skeletons are never food. Zombies and rotten flesh poison the creature, draining satiety, lowering trust, and weakening its response until toxins wear off. Poison and identity persist. Position feedback maintains developed buoyancy while a resting ship pauses propulsion. There are no mechanical propellers.
-
-Hatchlings scuttle low to the ground on four quick, alternating tentacle legs, with faster leg cycles, a 2.4–3 block/second target speed, short steps and brief bursts of sideways motion. They can sprout these legs before construction is ready, approaching exposed Biomancy components within effective sight range in loaded terrain without requiring levitite. Ordinary-world component grabs reach five blocks, dropped supplies can be pulled from five blocks away, and developed flagella reach eight blocks. They only collect dropped food or supported construction materials (including Flesh Bits, Elastic Fibers and Bone Fragments) after they have both a mouth and a connected stomach. A small arm pulls nearby supplies inward; dropped Biomancy and bioship blocks can also be recycled at reduced yields, but dropped bioship cores are never consumed. Recoverable body parts have matching block items, item models and mining drops. Unrelated dropped items are ignored. Ground travel checks dry footing and obstacles and does not grant flight.
-
-When its view is obstructed, a hatchling can slide its **core block across existing connected flesh, carapace or intestinal tissue** to a position with better panoramic sight. It can also perch in clear space above its mouth or another connected component. A tissue swap reuses that block; a move into empty space leaves the old core position empty. Nearby machines can rearrange to keep the body connected, preserving their inventories. No free stalk or filler tissue is created; any additional digestive routing still follows its material costs. The travel animation, body anchor, health, ownership, inventories and schematic survive the move and saves. It returns to the original body anchor once a suitable growth site and frame materials are available. As the hull grows around it, the core becomes concealed as flesh inside the ship.
-
-Ground travel uses bounded routes that check the entire current body against terrain, avoid cutting through walls, and allow safe one-block steps. Unreachable destinations are temporarily set aside so it can choose another route or growth site. It does not mine a path or cross water to get through an obstacle.
-
-World-component and dropped-item discovery now follows effective sight range in already-loaded terrain, rather than stopping at sixteen blocks. Source discovery does not force-load chunks. Longer trips use successive bounded route segments, and physical grabbing obeys solid glass and other barriers even when sight passes through them. Navigation prefers clearance around corners, verifies exposed footing rather than internal wall faces, and can lower back to a valid waypoint. Floor items are pulled toward the mouth and accepted within reach of body appendages, so grass or a raised core does not leave a visible meal permanently stranded.
-
-The same needs-based priorities govern walking and grabbing: missing mouth and stomach components first; urgent food when digestion is available; filled storage containers, then empty containers; current growth biomass; and optional machines or long-term expansion last. Equal-priority objectives stay selected until completed or superseded by a more urgent need.
-
-Zombies, skeletons, creepers and other hostile mobs can acquire a living bioship as a native AI target at every stage. Invisible, nonphysical attack surfaces follow its outer body; they do not intercept player block selection, mining or controls. Melee and projectile hits damage one shared hidden health pool. Shared damage timing prevents multiple surfaces from multiplying one blast. They vanish when the organism dies or its grid disappears and supply no separate loot. Content hatchlings and juveniles retaliate against attackers with their small arms; developed flagella also defend the body. Known ranged attackers can be approached within 32 blocks, and imminent creepers outrank ordinary targets. Authorized passengers are not treated as hostile for an accidental strike while the ship remains cooperative.
-
-When a nearby creeper threatens a blast, the core searches connected existing tissue for increased distance or shielding, including inside a grown ship. Emergency swaps take four ticks per cell and reject steps that increase blast exposure. Digestive rerouting must remain affordable; occupied or obstructed positions are excluded. A one-block organism with no connected escape tissue cannot invent a refuge or become immune to the blast. Its appendages continue fighting during relocation.
-
-Aggressive ships can lash out with small tissue arms even before full flagella develop. They can attack survival players, including their creator and seated riders, independently of the hunting switch. Hatchlings approach visible targets within eight blocks and lash within four. World walls block targeting; creative, spectator and invulnerable entities are ignored. Eating still requires a connected mouth and stomach.
-
-Small **Sensory Eyes** grow on exposed, connected tissue when a direction is obstructed, up to one per direction. Each costs **2 Flesh Bits and 1 Elastic Fiber** from stomach reserves. Urgent needs and organ/storage collection take priority, and immature ships retain their twelve frame fibers. Eyes extend the actual line-of-sight checks; buried or roof-hidden world machines remain protected. Blocked eyes can move to another suitable face through the ship's own tissue without paying the growth cost again. They can also be repositioned and rotated with the Bioship Wrench. Window-mounted eyes have no back or edge surfaces visible from the cabin; an eye embedded on the inner window face is visually concealed while retaining an outward view.
-
-New mouths orient toward an open face, outward on hatchlings or into the engine room when installed inside. Food and empty-hand inventory interaction only work on the toothed face. Automatic placement repairs blocked or downward-facing hatchling mouths. A Living Ship Core can only be placed in ordinary world space, never on an existing Sable grid.
-
-Each of the core’s six face eyes and each surface eye uses a **120-degree forward cone** with obstruction checks. The exposed core sees through all six face cones simultaneously and remembers recently seen supplies. Sight range follows the creator’s requested render distance, capped by the server’s view distance and already-loaded terrain. Target light level reduces effective range from the full distance in bright light to one fifth in complete darkness, with a four-block minimum. Grass, flowers, other small plants, glass, stained glass and panes allow sight through; leaves and solid terrain block it. Exposed intestines remain transparent to sight, while their flesh casing blocks it.
-
-Hatchling legs can grip solid walls to reach elevated visible supplies. Routes check clearance for the whole body and require continuing wall contact; losing the wall releases the grip rather than granting flight. This remains a bounded local route search.
-
-The first stomach receives its initial mouth connection without a material charge. **Additional intestinal tissue costs one Flesh Bit and one Elastic Fiber per block.** Rerouting first reuses existing tubes and saved tube stock; it only buys the net additional tissue. Obsolete automatic branches retract into private tube stock, including stranded branches from older routes, while preserving manual tubes and structural connections. Free starter tubes cannot drop items or yield flesh, fibers or food through recycling. Paid material remains accounted for across rerouting, repairs, reclamation and saves. Digestive-component and core moves are checked before movement so an unaffordable reroute does not disconnect feeding. Redundant automatically grown eyes can also be reabsorbed for one Flesh Bit and one Elastic Fiber; the final useful eye and manually positioned eyes remain.
-
-With **Symbiotic Goggles** equipped, press **F3+B** to toggle Minecraft’s hitbox debug rendering and the bioship sight overlay together. Aim at a block within 64 blocks of the nearest living ship. Cyan wireframes show each eye’s maximum cone; colored lines show server-side tests to that target: green means visible, red means occluded, amber means too dark, magenta means roof protection, and gray means outside the cone, beyond range or unloaded terrain. Gold lines show remaining navigation waypoints. The wrapped debug panel explains sight results, current route state, source-search range and core-scouting state. The overlay refreshes once per second and is absent when hitbox debugging is off or the goggles are removed. These lines are diagnostic sight tests to the aimed block, not a replay of every historical AI query. Maximum cones show the render-distance cap; light and occlusion can shorten actual detection. Visibility alone does not imply that a component is needed or within the ship’s bounded collection/navigation search.
-
-Natural canopy above a machine no longer rejects a clear side view. Leaves still block rays that actually pass through them, and solid roofs retain base protection. Core scouting scores horizontal and upward rays rather than stopping at a clear horizontal ring; it can select higher connected tissue when that improves upward sight. A flat hatchling cannot create a free stalk: it reuses connected tissue and supported organ perches, rearranging existing components when possible. World obstacles and body connectivity still restrict the highest usable vantage.
-
-## Starvation, death, and reclamation
-
-When normal satiety runs out, the ship consumes its stomach’s nutrient reserve, then stored nutrients/paste/bars, Flesh Bits, Elastic Fibers, Bone Fragments, and finally other stored materials. Emergency energy gives no trust reward; the reserve cost scales with the ship’s appetite. If the available energy does not cover that demand, starvation damages the hidden health pool. Attached hulls are never eaten for sustenance. Digestion and construction reserves are separate: newly incorporated materials do not immediately reward feeding trust.
-
-Death is permanent and saved. Lift, propulsion, walking, growth, assimilation, feeding, and self-repair stop; the wreck falls under Sable gravity. Biometric membranes release their reconstruction lock so the creator can leave a failed job. After a one-minute grace period, the loaded wreck loses blocks every ten seconds, at a reduced rate of one block plus one per 256 remaining blocks in the current decay phase. Ordinary hull and flesh rot first, then organs and special components (including windows, tentacles, controls and machines), and finally the core. This order is shared across loaded fragments of the same organism. Every attached block type decays, including windows, tentacles, controls, and blocks supplied by other mods. Split pieces share the organism’s lineage: pieces detached while it was alive inherit its later death, and pieces detached after death inherit the decay schedule, even without a core. A saved death record also covers fragments loaded after the main wreck has disappeared. Remaining machine contents may be salvaged before their blocks decay.
-
-Living ships can pull useful parts from **nearby dead bioships** using their assimilation arms, but never consume another bioship core. They do not steal from living ships. Every other attached wreck block can be reclaimed for needed construction reserves; useful unique organs remain functional instead of being broken down. Recovery prioritizes: a missing mouth or stomach, missing precursor machines, a limited number of storage sacs, a missing larynx, or needed construction tissue. Wreck components must still be exposed, above ground, and visible; collection reaches fourteen blocks. Hatchlings can walk toward visible wreck components up to thirty-two blocks away. Recovered functional components keep their inventories. Up to four appendages collect nearby parts into persistent internal stock before fitting them. A committed wreck job continues until its non-core grid is exhausted or the remaining route is unreachable; cargo capacity can require processing a load before continuing. Duplicate organs can be recycled without adding another mouth or stomach. A wreck’s own roof no longer incorrectly hides exposed exterior windows or limbs.
-
-Breaking down wreck tissue loses material: **two hull/tissue blocks yield one flesh biomass**, **four carapace blocks yield one Bone Fragment**, and **four flagella/intestine blocks yield one Elastic Fiber**, alongside their reduced flesh yield. Fractional progress persists across saves. Reclaimed tissue supplies growth and stored construction material without immediate food or trust rewards; those reserves may be burned later during starvation.
-
-Core removal marks the surviving Sable body dead immediately, including direct replacement and entity-first removal. Legacy coreless bioship hulls with recognizable hull and organ structure recover their missing death marker without claiming ordinary constructs.
-
-Grounded posture follows the four foot contacts in the ship’s own orientation. Higher front footing raises and pitches the front of the body; side slopes produce roll. Body support follows the contact plane instead of shortening the leading legs to keep the body level. Reach and paid leg-strength limits still apply, and taller walls retain the climbing behavior.
-
-## Foraging memory, combat and retreat
-
-Last-seen components and tracked creatures remain eligible for three real seconds without renewed sight. The remaining memory survives saves and core relocation. During that window, the ship can approach and grasp a remembered component if its appendages can physically reach it. Expiry clears that target and its route; the weighted behavior controller chooses the next eligible need or goal. Darkness and solid-obstacle sight rules remain unchanged.
-
-Hatchlings turn their core toward their target and reassess connected tissue for a better vantage after assimilating organs. Grown ships keep their core protected inside the hull, relocating only within sheltered tissue. Their surface eyes can move to suitable exterior or interior mounts to watch a target; additional eyes still consume flesh and fibers.
-
-Idle hatchlings and ships in hunting mode explore reachable nearby space when no higher-priority target is available. Urgent foraging and defense use a faster running gait. A hatchling's mouth moves to its actual front face and the body turns toward its goal when surrounding clearance permits; manual organ placements remain respected.
-
-Combat uses aimed tentacle swipes with a twelve-tick wind-up, a six-tick sweep, and a cooldown. The aim is locked before the sweep, allowing players to dodge, and combat swipes do not pull or immobilize players. Captured edible animals are not damaged until they reach the connected mouth, so small prey cannot die from capture damage without producing a meal.
-
-A ship below 30% health tries to flee a known threat, remaining cautious until it recovers to 50% or the threat memory expires. At 80 trust or higher, an authorized pilot can override low-health retreat. Creeper retreat remains mandatory when the core has no safe connected escape tissue. Holding the helm or issuing a physical throttle/trim command establishes control. A recorded pilot aboard the ship retains control; after leaving, the override expires ten seconds after the last command. Dead, disconnected, and spectator pilots cannot suppress retreat.
-
-During a flight-stage retreat, an allied ground player within sixteen blocks can be carried into the cockpit. The ship opens a collision-checked route by temporarily retracting ordinary hull tissue, keeps its structure connected, and restores the same blocks after the player clears the opening. It never overwrites machines or their inventories, and world terrain still blocks the carry. The aperture and passenger route persist across saves; a blocked carry times out safely rather than forcing the player through a solid block.
-
-## Developer world
-
-The packaged **Bioship Navigation Lab** world type includes the flat and elevation glass mazes used by the physics tests. See [the lab guide](docs/development/navigation-lab.md) for world creation, course coordinates, reset commands, leg upgrade costs and debugging.
+The packaged **Bioship Navigation Lab** world type contains the flat and elevation glass mazes used by the physics tests. It preserves normal terrain interactions, daylight, mobs and chunk loading. See the [lab guide](docs/development/navigation-lab.md), [path debugger](docs/development/path-debug.md), [module boundaries](docs/development/modules.md) and [architecture review](docs/development/architecture-review.md).
 
 ## Development
 
@@ -167,24 +30,8 @@ The packaged **Bioship Navigation Lab** world type includes the flat and elevati
 ./gradlew runClient
 ```
 
-Unit tests cover needs, material thresholds, hunger scaling, negative trust, hunting efficiency, poison, and flagellum strokes. Development-only GameTests cover native recipes, automatic placement, protected assembly, real moving cargo and inventory conservation, visibility restrictions, digestion/acid, private products, storage overflow, an oval two-room body, flight and steering, membranes/permissions, equipment, steady lighting, core blinking, prey digestion, later larynx growth, damage/repair persistence, tube connections, room editing, relocation with inventory conservation, evacuation, grounded hatchling movement, paired-machine fusion, emergency metabolism, permanent death, falling wrecks, fragment decay, and lossy scavenging.
+Java 21 is required. Active GameTests cover hatchling navigation, perception, native mob targeting, digestion, shared resources, paid adaptations, salvage, decay, swimming, righting and disabled-prototype boundaries. Preserved airship-only scenarios use `@DeferredAirshipTest` and are not registered while the stage is unavailable. Development fixtures are excluded from the runtime JAR.
 
-A roofed glass-maze GameTest places a clearly visible required Bio-Forge beyond three alternating openings. It checks actual travel through every opening, intact glass, collision clearance, and completed assimilation; a transparent ceiling prevents a wall-climbing shortcut.
+Equipment assets can be regenerated with `python tools/generate_equipment_assets.py` (Pillow). Runtime/dependency warning findings are recorded in [runtime-warnings.md](docs/compat/runtime-warnings.md).
 
-New native-AI tests cover attacks and retaliation at all three stages, skeleton/creeper target acquisition, shared attack-surface health, lifecycle cleanup and creeper core evasion. Real physics obstacle-course tests place a required Bio-Forge beyond the old sixteen-block limit behind a stained-glass barrier, and dropped meat in surviving tall grass. They verify actual approach, a route around the glass, assimilation and digestion, rather than only checking a visibility predicate. Existing elevated-wall tests also remain enabled.
-
-Equipment assets can be regenerated with `python tools/generate_equipment_assets.py` (Pillow). `tools/verify_veil_compute_shader.py` provides an optional headless EGL syntax check with ModernGL. Runtime warning findings and compatibility resources are documented in [runtime-warnings.md](docs/compat/runtime-warnings.md); dependency messages are not hidden by logging filters.
-
-GameTests use a fresh world under `build/gametest-run`, separate from normal client/server worlds. Ships are tested at separate locations near the origin because native physics loses precision at the runner’s randomized multi-million-block coordinates. Fixtures are excluded from the shipped JAR.
-
-| Dependency | Version | CurseForge file |
-| --- | --- | --- |
-| Sable | 2.0.6 | 9043865 |
-| Create Aeronautics | 1.3.2 | 8763471 |
-| Create | 6.0.10 | 7963363 |
-| Biomancy Reforged | 2.9.11.0 | 9429985 |
-| GeckoLib | 4.9.3 | 8893490 |
-
-Use a **fresh core** for layout version 6 and its longer cockpit, with a clear two-block entrance aisle behind the captain’s seat. Version 5 ships retain their original control positions and in-progress construction; stalled growth can resume without replacing their core. Existing ships receive the eye-level panel and updated window rendering, but their cockpit geometry is not rebuilt automatically. Further body stages and full obstacle navigation remain future work; ground-site selection and landing use bounded local searches.
-
-The [checkpoint change log](docs/changes/2026-11-15-bioship-checkpoint.md) lists the bundled gameplay changes and specific in-game checks separately from the refactor.
+The [earlier checkpoint log](docs/changes/2026-11-15-bioship-checkpoint.md) is historical. The [digestion and recovery log](docs/changes/bioship-digestion-and-recovery.md) and [prototype status](docs/development/airship-prototype.md) describe the current work and its pending features.

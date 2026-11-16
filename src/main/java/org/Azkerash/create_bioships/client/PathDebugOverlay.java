@@ -183,6 +183,17 @@ public final class PathDebugOverlay {
             + " stored parts · "
             + data.getInt("QueuedGoals")
             + " queued goals");
+    words.add(
+        "Needed: "
+            + data.getInt("NeedFlesh")
+            + " flesh / "
+            + data.getInt("NeedFiber")
+            + " fibers / "
+            + data.getInt("NeedBone")
+            + " bone");
+    words.add("Digestive pairs needed: " + data.getInt("DigestiveDemand"));
+    if (data.contains("EngineCapacity"))
+      words.add("Prototype engine bays: " + data.getInt("EngineCapacity"));
     words.add("Priorities (needs before goals):");
     var priorities = data.getList("Priorities", Tag.TAG_COMPOUND);
     for (int i = 0; i < Math.min(5, priorities.size()); i++)

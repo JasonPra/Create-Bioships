@@ -311,7 +311,7 @@ public class Create_bioships {
                 .displayItems(
                     (parameters, output) -> {
                       output.accept(CORE_ITEM.get());
-                      output.accept(DOOR_ITEM.get());
+                      if (AirshipPrototype.available()) output.accept(DOOR_ITEM.get());
                       output.accept(BIOSHIP_WRENCH.get());
                       output.accept(BIOSHIP_GOGGLES.get());
                     })

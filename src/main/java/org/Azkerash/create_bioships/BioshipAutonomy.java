@@ -27,6 +27,7 @@ public final class BioshipAutonomy {
   }
 
   boolean trustedPilot(LivingCoreBlockEntity core) {
+    if (!AirshipPrototype.available()) return false;
     if (core.trustLevel() < PilotAuthority.TRUST_THRESHOLD) return false;
     if (pilot != null) {
       var player = core.getLevel().getPlayerByUUID(pilot);

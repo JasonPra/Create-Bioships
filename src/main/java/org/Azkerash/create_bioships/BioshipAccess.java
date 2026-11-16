@@ -67,6 +67,13 @@ public final class BioshipAccess {
   }
 
   public static void tick(LivingCoreBlockEntity core) {
+    if (!AirshipPrototype.available()) {
+      if (core.ship() != null)
+        for (var entity : BioshipIntegration.blockEntities(core.ship()))
+          if (entity instanceof ShipMembraneAccess barrier)
+            barrier.bioships$access(core.access().save(core.creator()));
+      return;
+    }
     if (!core.isMature()) return;
     var level = core.getLevel();
     var lower = core.layoutPos(DinghyGrowth.DOOR);

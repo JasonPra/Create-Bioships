@@ -9,7 +9,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 public final class EngineRoom {
   public static boolean inside(LivingCoreBlockEntity core, BlockPos pos) {
     var d = core.blueprint().engineLocal(pos.subtract(core.structuralOrigin()));
-    return Math.abs(d.getX()) <= (Math.abs(d.getZ()) >= 5 ? 2 : 3)
+    return Math.abs(d.getX()) <= (Math.abs(d.getZ()) >= 5 ? 2 : 3) + core.engineRoom().widening()
         && d.getY() >= 2
         && d.getY() <= 3
         && d.getZ() >= 1
@@ -21,6 +21,15 @@ public final class EngineRoom {
         .getKey(entity.getBlockState().getBlock())
         .toString()
         .equals("biomancy:storage_sac");
+  }
+
+  static List<BlockPos> stomachBays(LivingCoreBlockEntity core) {
+    var bays = new ArrayList<BlockPos>();
+    for (int column = 0; column < core.engineRoom().columns(); column++) {
+      bays.add(new BlockPos(-2 - 2 * column, 2, 3));
+      bays.add(new BlockPos(2 + 2 * column, 2, 3));
+    }
+    return List.copyOf(bays);
   }
 
   public static void arrange(LivingCoreBlockEntity core, ServerSubLevel ship) {
@@ -38,12 +47,17 @@ public final class EngineRoom {
                   && !id.contains("membrane")
                   && !id.contains("lantern")
                   && !id.contains("larynx");
-      if (!machine
-          || inside(core, entity.getBlockPos())
-          || entity.getPersistentData().getBoolean("BioshipManualPlacement")) continue;
+      boolean housed =
+          entity instanceof StomachBlockEntity && core.engineRoom().columns() > 1
+              ? stomachBays(core).stream()
+                  .map(core::layoutPos)
+                  .anyMatch(p -> p.equals(entity.getBlockPos()))
+              : inside(core, entity.getBlockPos());
+      if (!machine || housed || entity.getPersistentData().getBoolean("BioshipManualPlacement"))
+        continue;
       List<BlockPos> bays =
-          entity instanceof StomachBlockEntity
-              ? List.of(new BlockPos(-2, 2, 3), new BlockPos(2, 2, 3))
+          entity instanceof StomachBlockEntity && core.engineRoom().columns() > 1
+              ? stomachBays(core)
               : storage(entity)
                   ? List.of(
                       new BlockPos(-2, 2, 2),

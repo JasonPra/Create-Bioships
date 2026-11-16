@@ -18,6 +18,7 @@ import net.neoforged.neoforge.capabilities.Capabilities;
 public final class BioshipBrain {
   public enum Action {
     DEAD,
+    SURFACE,
     FLEE,
     DEFEND,
     RECONFIGURE,
@@ -29,6 +30,8 @@ public final class BioshipBrain {
     REGROW_MOUTH,
     REGROW_STOMACH,
     GROW_STORAGE,
+    GROW_DIGESTION,
+    GROW_ENGINE_ROOM,
     RECLAIM_COMPONENT,
     STRENGTHEN_LEGS,
     FORTIFY,
@@ -144,12 +147,40 @@ public final class BioshipBrain {
   private Needs needs(LivingCoreBlockEntity core) {
     var stomach = DigestiveSystem.stomach(core);
     boolean digestive = core.hasMouth() && stomach != null && stomach.connected(core);
-    int food = digestive ? DigestiveSystem.connectedFoodCount(core, stomach) : 0;
-    int upgrades = Math.max(0, core.crawl().hullTier(core) - core.crawl().legTier());
+    int food = DigestiveSystem.foodCount(core);
+    int upgrades =
+        AirshipPrototype.available()
+            ? Math.max(0, core.crawl().hullTier(core) - core.crawl().legTier())
+            : 0;
+    var room = core.engineRoom().quote(core);
+    if (room != null) upgrades = Math.max(upgrades, room.legUpgrades());
+    int capacityGoal =
+        Math.max(BioshipDigestiveGrowth.target(core), room == null ? 0 : room.pairs());
+    int extraMouths = Math.max(0, capacityGoal - DigestiveSystem.mouths(core).size());
+    int extraStomachs = Math.max(0, capacityGoal - DigestiveSystem.stomachs(core).size());
     int repair = (int) Math.ceil(Math.max(0, core.body().capacity() - core.body().health()) / 4);
-    int flesh = core.missingBiomass() + 8 * upgrades + repair;
-    int bone = (core.frameFunded() ? 0 : 8) + 2 * upgrades;
-    int fiber = (core.frameFunded() ? 0 : 12) + 4 * upgrades;
+    int flesh =
+        (AirshipPrototype.available() ? core.missingBiomass() : 0)
+            + 8 * upgrades
+            + repair
+            + (room == null ? 0 : room.cost().flesh())
+            + EmergencyReserve.TARGET.flesh()
+            + 8 * extraMouths
+            + 16 * extraStomachs;
+    int bone =
+        (core.frameFunded() ? 0 : 8)
+            + 2 * upgrades
+            + (room == null ? 0 : room.cost().bone())
+            + EmergencyReserve.TARGET.bone()
+            + 2 * extraMouths
+            + 4 * extraStomachs;
+    int fiber =
+        (core.frameFunded() ? 0 : 12)
+            + 4 * upgrades
+            + (room == null ? 0 : room.cost().fiber())
+            + EmergencyReserve.TARGET.fiber()
+            + 4 * extraMouths
+            + 8 * extraStomachs;
     if (stomach != null) {
       flesh -= stomach.material("biomancy:flesh_bits");
       bone -= stomach.material("biomancy:bone_fragments");
@@ -176,7 +207,10 @@ public final class BioshipBrain {
         && n.food == 0
         && (n.hungry && (core.huntingAllowed() || n.growth)
             || n.growth && n.materials()
-            || core.huntingAllowed() && n.materials());
+            || (core.huntingAllowed()
+                    || EmergencyReserve.missing(core)
+                    || DigestiveSystem.stomachs(core).size() < DigestiveSystem.requiredPairs(core))
+                && n.materials());
   }
 
   private Decision fixed(Action next, String why) {
@@ -367,8 +401,10 @@ public final class BioshipBrain {
       digester |= id.equals("biomancy:digester");
     }
     boolean urgent =
-        !core.hasMouth() && forge
-            || DigestiveSystem.stomach(core) == null && decomposer && digester;
+        DigestiveSystem.mouths(core).size() < BioshipDigestiveGrowth.target(core) && forge
+            || DigestiveSystem.stomachs(core).size() < BioshipDigestiveGrowth.target(core)
+                && decomposer
+                && digester;
     boolean optional = false;
     var mouth = core.mouthBlock();
     if (mouth != null
@@ -415,6 +451,7 @@ public final class BioshipBrain {
     if (core.body().dead()) return fixed(Action.DEAD, "Dead organism");
     // Reconstruction locks its approved body layout until the transaction completes.
     if (core.blueprint().busy()) return fixed(Action.RECONFIGURE, "Finish approved reconstruction");
+    if (core.aquatic().needsAir()) return fixed(Action.SURFACE, "Surface for breathable air");
     core.autonomy().assess(core);
     if (core.autonomy().fleeing()
         && (core.autonomy().creeperPanic() || !core.autonomy().trustedPilot(core)))
@@ -515,8 +552,9 @@ public final class BioshipBrain {
               -30,
               effort(core, prey.position()),
               "Hunt only after easier resources for the same need"));
-    if (core.buildingHull()
-        || !core.isMature() && core.missingBiomass() == 0 && core.growthStockReady())
+    if (AirshipPrototype.available()
+        && (core.buildingHull()
+            || !core.isMature() && core.missingBiomass() == 0 && core.growthStockReady()))
       offers.add(
           offer(
               growthBlocked ? Action.GROW_SITE : Action.GROW,
@@ -556,7 +594,8 @@ public final class BioshipBrain {
 
   boolean allowsConfiguration(LivingCoreBlockEntity core) {
     return switch (choose(core).action) {
-      case FLEE,
+      case SURFACE,
+          FLEE,
           DEFEND,
           HUNT,
           COLLECT_ITEM,
@@ -566,12 +605,19 @@ public final class BioshipBrain {
           REGROW_MOUTH,
           REGROW_STOMACH,
           GROW_STORAGE,
+          GROW_DIGESTION,
+          GROW_ENGINE_ROOM,
           RECLAIM_COMPONENT,
           STRENGTHEN_LEGS,
           FORTIFY ->
           false;
       default -> true;
     };
+  }
+
+  MaterialCost materialNeeds(LivingCoreBlockEntity core) {
+    var missing = needs(core);
+    return new MaterialCost(missing.flesh(), missing.fiber(), missing.bone());
   }
 
   boolean needsMaterials(LivingCoreBlockEntity core) {
@@ -589,6 +635,8 @@ public final class BioshipBrain {
     core.crawl().reach(null);
     var d = choose(core);
     switch (d.action) {
+      case SURFACE:
+        return null;
       case FLEE:
         return core.autonomy().groundEscape(core);
       case WANDER:

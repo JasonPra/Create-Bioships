@@ -125,7 +125,8 @@ public final class BioshipNetwork {
   }
 
   public static boolean setThrottle(ServerPlayer player, BlockPos pos, int setting) {
-    if (setting < 0
+    if (!AirshipPrototype.available()
+        || setting < 0
         || setting > 20
         || player.isSpectator()
         || !player.serverLevel().getChunkSource().hasChunk(pos.getX() >> 4, pos.getZ() >> 4))
