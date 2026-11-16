@@ -219,3 +219,9 @@ Further queued requirements: prohibit leg mounts on lungs as well as the core an
 
 - Validation after the owning-plot correction: build, all 51 unit tests and all 155 required GameTests passed. Eight repeated mouth transfers retained inventory and custom metadata; a separate in-transit reduction retained three items rather than restoring the original seven. Packed mouth variants, empty upgraded creative drops, native sacs, stomach reserves/progress/bootstrap accounting, core reserves, partial-water contact and clear underwater mouth orientation all passed.
 - The trace identifies the missing initial cargo hydration; the owning-plot correction targets that observed failure. One passing stress run is not extended endurance sign-off. The fresh ecosystem replay follows. Seven broader groups remain: structural convergence; attachment/intake transitions; paid remodeling/stashing; habitat-aware shapes; extended survival/tick-rate tests; graphical animation/collision QA; final regression/packaging/docs.
+
+### Waterline checkpoint ecosystem result
+
+- Runtime `4eea7f2` passed the fresh 3,600-tick ecosystem replay: 3/3 survived, digested, received repeated feeds and produced resources; 1,971 pork offered; zero failures/death logs. Report: `docs/development/qa/2026-11-16-portable-waterline-ecosystem.json`.
+- The aquatic creature reached 961/1000 exposure, retained full health/air and connected digestion, and naturally evolved two of four paid legs into paddles while surfacing to breathe. The shoreline creature also developed two paddles. No gills grew during this run. Early insufficient fiber correctly deferred paid upgrades; no materials or decisions were forced.
+- This validates the observed waterline plateau and first aquatic-leg progression in this scenario. It does not complete broader habitat-aware shapes, endurance or graphical QA. A longer save/reload replay is next. Seven broader groups remain unchanged.
