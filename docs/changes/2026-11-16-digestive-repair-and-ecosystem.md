@@ -225,3 +225,8 @@ Further queued requirements: prohibit leg mounts on lungs as well as the core an
 - Runtime `4eea7f2` passed the fresh 3,600-tick ecosystem replay: 3/3 survived, digested, received repeated feeds and produced resources; 1,971 pork offered; zero failures/death logs. Report: `docs/development/qa/2026-11-16-portable-waterline-ecosystem.json`.
 - The aquatic creature reached 961/1000 exposure, retained full health/air and connected digestion, and naturally evolved two of four paid legs into paddles while surfacing to breathe. The shoreline creature also developed two paddles. No gills grew during this run. Early insufficient fiber correctly deferred paid upgrades; no materials or decisions were forced.
 - This validates the observed waterline plateau and first aquatic-leg progression in this scenario. It does not complete broader habitat-aware shapes, endurance or graphical QA. A longer save/reload replay is next. Seven broader groups remain unchanged.
+
+### Save/reload continuation result
+
+- The saved `4eea7f2` world passed another 6,000 normal-rate ticks without fixture reset: 3/3 survived and produced resources, 535 additional pork offered through real mouth feeding, zero failures/death logs. Both water-exposed creatures naturally evolved all four legs into paddles. No gills developed. Report: `docs/development/qa/2026-11-16-waterline-save-reload.json`.
+- The user's 100% observation revealed a separate numeric issue: integer-truncated exposure stalls at 961/1000 under continuous water use. Correcting precision and slowing dry-hop decay, together with five-minute automatic lab refill, form the next batch. Seven broader groups remain.
