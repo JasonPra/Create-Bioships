@@ -73,7 +73,10 @@ public final class BioshipAquatic {
     breathing = canBreathe(core);
     if (!breathing) {
       air = Math.max(0, air - 1);
-      if (air == 0 && level.getGameTime() % 20 == 0) core.body().drown(core);
+      if (air == 0 && level.getGameTime() % 20 == 0) {
+        if (airAccess) core.body().asphyxiate(core);
+        else core.body().drown(core);
+      }
     } else air = Math.min(300, air + 4);
     if (!airAccess && !breathing && air < 200) seekingAir = true;
     if (air == 300) seekingAir = false;

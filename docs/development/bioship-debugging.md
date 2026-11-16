@@ -43,3 +43,15 @@ first decay mark with game time, ship/lineage, live-core count and caller stack.
 The opt-in ecosystem observer additionally logs layout changes, nearby blasts,
 observed deaths and missing creatures. These logs do not modify world rules or AI.
 No new in-game command is required.
+
+Deaths now emit one `BIOSHIP_DEATH` server-log line with the fatal cause, game tick,
+ship/core identity, food, air, and gill/lung status. Inspecting a retained dead core
+also shows `DeathCause` and `DeathAt`. The core's `BodyMemory` stores these fields;
+the wreck grid stores `BioshipDeathCause` and `BioshipDeathAt`, and the saved lineage
+registry retains the metadata when the core disappears.
+
+Causes: `STARVATION`, `DROWNING`, `ASPHYXIATION` (air available but inadequate
+breathing organs), `CORE_REMOVED`, `COMBAT`, `EXPLOSION`, `INJURY`, and `UNKNOWN`.
+Living bodies use `NONE`; old deaths without evidence remain `UNKNOWN` with time
+`-1`. The first fatal event is retained rather than overwritten by later cleanup.
+No new command is required for death logging.

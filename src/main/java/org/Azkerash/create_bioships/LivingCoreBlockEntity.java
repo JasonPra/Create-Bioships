@@ -650,7 +650,11 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     transferTarget = pos.immutable();
   }
 
-  private boolean transferred() {
+  boolean hasTransferReceipt() {
+    return transferLevel != null && transferTarget != null;
+  }
+
+  boolean transferred() {
     return transferLevel != null
         && transferTarget != null
         && transferLevel.getBlockEntity(transferTarget) instanceof LivingCoreBlockEntity replacement
@@ -661,30 +665,16 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
   void coreRemoved() {
     if (!(level instanceof net.minecraft.server.level.ServerLevel) || body.dead() || transferred())
       return;
-    if (ship() != null) body.die(this);
+    if (hasTransferReceipt()) {
+      BioshipCoreLifecycle.removed(this);
+      return;
+    }
+    if (ship() != null) body.die(this, BioshipDeathCause.CORE_REMOVED);
   }
 
   @Override
   public void setRemoved() {
-    if (level instanceof net.minecraft.server.level.ServerLevel server) {
-      var owner = ship();
-      if (owner != null)
-        server
-            .getServer()
-            .tell(
-                new net.minecraft.server.TickTask(
-                    server.getServer().getTickCount(),
-                    () -> {
-                      if (!transferred()
-                          && owner
-                                  .getPlot()
-                                  .getChunkHolder(
-                                      owner.getPlot().toLocal(new ChunkPos(worldPosition)))
-                              != null
-                          && !server.getBlockState(worldPosition).is(Create_bioships.CORE.get()))
-                        BioshipDecay.mark(owner);
-                    }));
-    }
+    BioshipCoreLifecycle.removed(this);
     if (level instanceof net.minecraft.server.level.ServerLevel
         && ship() != null
         && ship().getPlot().getChunkHolder(ship().getPlot().toLocal(new ChunkPos(worldPosition)))

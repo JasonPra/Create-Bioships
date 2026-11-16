@@ -19,6 +19,17 @@ public final class BioshipBody {
   private double health = 100;
   private int capacity = 100;
   private volatile boolean dead;
+  private BioshipDeathCause deathCause = BioshipDeathCause.NONE;
+  private long deathAt = -1;
+
+  public BioshipDeathCause deathCause() {
+    return deathCause;
+  }
+
+  public long deathAt() {
+    return deathAt;
+  }
+
   private long lastCombatAt = Long.MIN_VALUE;
   private float lastCombatAmount;
   private long flashUntil;
@@ -32,18 +43,22 @@ public final class BioshipBody {
   }
 
   void starve(LivingCoreBlockEntity core, int demand) {
-    hurt(core, Math.max(1, demand));
+    hurt(core, Math.max(1, demand), BioshipDeathCause.STARVATION);
   }
 
   void drown(LivingCoreBlockEntity core) {
-    hurt(core, 2);
+    hurt(core, 2, BioshipDeathCause.DROWNING);
   }
 
-  private void hurt(LivingCoreBlockEntity core, double amount) {
+  void asphyxiate(LivingCoreBlockEntity core) {
+    hurt(core, 2, BioshipDeathCause.ASPHYXIATION);
+  }
+
+  private void hurt(LivingCoreBlockEntity core, double amount, BioshipDeathCause cause) {
     if (dead || amount <= 0) return;
     damageFeedback(core);
     health = Math.max(0, health - amount);
-    if (health <= 0) die(core);
+    if (health <= 0) die(core, cause);
     core.setChanged();
     core.getLevel()
         .sendBlockUpdated(core.getBlockPos(), core.getBlockState(), core.getBlockState(), 2);
@@ -57,12 +72,18 @@ public final class BioshipBody {
   }
 
   void die(LivingCoreBlockEntity core) {
+    die(core, BioshipDeathCause.UNKNOWN);
+  }
+
+  void die(LivingCoreBlockEntity core, BioshipDeathCause cause) {
     if (dead) return;
+    deathCause = cause == BioshipDeathCause.NONE ? BioshipDeathCause.UNKNOWN : cause;
+    deathAt = core.getLevel().getGameTime();
     dead = true;
     core.chunkLoading.release();
     health = 0;
     if (core.ship() != null) {
-      BioshipDecay.mark(core.ship());
+      BioshipDecay.mark(core.ship(), deathCause);
       core.assimilation().abandon(core);
       var move = core.organMove();
       if (move != null) {
@@ -70,10 +91,11 @@ public final class BioshipBody {
             dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(core.getLevel())
                 .getSubLevel(move.cargo());
         if (cargo instanceof dev.ryanhcode.sable.sublevel.ServerSubLevel child)
-          BioshipDecay.mark(child);
+          BioshipDecay.mark(child, deathCause);
         OrganMotion.abandon(core);
       }
     }
+    BioshipDiagnostics.death(core, deathCause, deathAt);
     core.setChanged();
   }
 
@@ -117,7 +139,7 @@ public final class BioshipBody {
       core.getLevel()
           .sendBlockUpdated(core.getBlockPos(), core.getBlockState(), core.getBlockState(), 2);
     }
-    if (health <= 0) die(core);
+    if (health <= 0) die(core, BioshipDeathCause.INJURY);
     core.setChanged();
   }
 
@@ -223,7 +245,12 @@ public final class BioshipBody {
       actual -= lastCombatAmount;
     } else lastCombatAt = now;
     lastCombatAmount = amount;
-    hurt(core, actual);
+    hurt(
+        core,
+        actual,
+        source.is(net.minecraft.tags.DamageTypeTags.IS_EXPLOSION)
+            ? BioshipDeathCause.EXPLOSION
+            : BioshipDeathCause.COMBAT);
     if (source.getEntity() instanceof net.minecraft.world.entity.LivingEntity attacker)
       core.defense().remember(core, attacker);
     if (source.getEntity() instanceof Player player && player.getUUID().equals(core.creator()))
@@ -232,15 +259,20 @@ public final class BioshipBody {
   }
 
   void struck(LivingCoreBlockEntity core, Player player) {
-    hurt(core, 1);
+    hurt(core, 1, BioshipDeathCause.COMBAT);
     if (player.getUUID().equals(core.creator())) core.mistreat();
     core.setChanged();
   }
 
   void damage(LivingCoreBlockEntity core, BlockPos pos, Player player) {
+    damage(core, pos, player, BioshipDeathCause.INJURY);
+  }
+
+  private void damage(
+      LivingCoreBlockEntity core, BlockPos pos, Player player, BioshipDeathCause cause) {
     var local = pos.subtract(core.getBlockPos());
     memory.putIfAbsent(local, core.getLevel().getBlockState(pos));
-    if (injured.add(local)) hurt(core, 4);
+    if (injured.add(local)) hurt(core, 4, cause);
     if (player != null && player.getUUID().equals(core.creator())) core.mistreat();
     core.setChanged();
   }
@@ -251,8 +283,14 @@ public final class BioshipBody {
       return;
     var core = BioshipAccess.core(level, event.getPos());
     if (core != null) {
-      core.body().damage(core, event.getPos(), event.getPlayer());
-      if (event.getPos().equals(core.getBlockPos())) core.body().die(core);
+      boolean coreHit = event.getPos().equals(core.getBlockPos());
+      core.body()
+          .damage(
+              core,
+              event.getPos(),
+              event.getPlayer(),
+              coreHit ? BioshipDeathCause.CORE_REMOVED : BioshipDeathCause.INJURY);
+      if (coreHit) core.body().die(core, BioshipDeathCause.CORE_REMOVED);
     }
   }
 
@@ -263,8 +301,8 @@ public final class BioshipBody {
     for (var pos : event.getAffectedBlocks()) {
       var core = BioshipAccess.core(event.getLevel(), pos);
       if (core == null) continue;
-      core.body().damage(core, pos, null);
-      if (pos.equals(core.getBlockPos())) core.body().die(core);
+      core.body().damage(core, pos, null, BioshipDeathCause.EXPLOSION);
+      if (pos.equals(core.getBlockPos())) core.body().die(core, BioshipDeathCause.EXPLOSION);
       if (source instanceof Player player
           && player.getUUID().equals(core.creator())
           && blamed.add(core)) core.mistreat();
@@ -274,6 +312,8 @@ public final class BioshipBody {
   CompoundTag save() {
     var tag = new CompoundTag();
     tag.putBoolean("Dead", dead);
+    tag.putString("DeathCause", deathCause.name());
+    tag.putLong("DeathAt", deathAt);
     tag.putDouble("Health", health);
     tag.putLong("CombatAt", lastCombatAt);
     tag.putFloat("CombatAmount", lastCombatAmount);
@@ -293,6 +333,9 @@ public final class BioshipBody {
     capacity = Math.max(100, tag.getInt("Capacity"));
     health = tag.contains("Health") ? Math.clamp(tag.getDouble("Health"), 0, capacity) : 100;
     dead = tag.getBoolean("Dead") || health <= 0;
+    deathCause =
+        dead ? BioshipDeathCause.read(tag.getString("DeathCause")) : BioshipDeathCause.NONE;
+    deathAt = dead && tag.contains("DeathAt") ? tag.getLong("DeathAt") : -1;
     injured.clear();
     for (long p : tag.getLongArray("Injured")) injured.add(BlockPos.of(p));
   }

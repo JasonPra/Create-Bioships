@@ -34,6 +34,8 @@ public final class BioshipDecay {
   /** Tombstones survive unloading and the disappearance of the last loaded wreck block. */
   static final class Deaths extends net.minecraft.world.level.saveddata.SavedData {
     private final Map<UUID, Long> deadlines = new HashMap<>();
+    private final Map<UUID, BioshipDeathCause> causes = new HashMap<>();
+    private final Map<UUID, Long> times = new HashMap<>();
 
     static Deaths get(ServerLevel level) {
       return level
@@ -50,12 +52,29 @@ public final class BioshipDecay {
           /* Ignore an unrecognized saved key. */
         }
       }
+      for (String key : tag.getCompound("Causes").getAllKeys()) {
+        try {
+          var id = UUID.fromString(key);
+          data.causes.put(id, BioshipDeathCause.read(tag.getCompound("Causes").getString(key)));
+          if (tag.getCompound("Times").contains(key))
+            data.times.put(id, tag.getCompound("Times").getLong(key));
+        } catch (IllegalArgumentException ignored) {
+          // Unrecognized legacy metadata does not invalidate the death registry.
+        }
+      }
       return data;
     }
 
-    void remember(UUID lineage, long after) {
+    void remember(UUID lineage, long after, BioshipDeathCause cause, long at) {
       if (!deadlines.containsKey(lineage) || after < deadlines.get(lineage)) {
         deadlines.put(lineage, after);
+        setDirty();
+      }
+      if (!causes.containsKey(lineage)
+          || causes.get(lineage) == BioshipDeathCause.UNKNOWN
+              && cause != BioshipDeathCause.UNKNOWN) {
+        causes.put(lineage, cause);
+        times.put(lineage, at);
         setDirty();
       }
     }
@@ -63,6 +82,12 @@ public final class BioshipDecay {
     @Override
     public CompoundTag save(CompoundTag tag, net.minecraft.core.HolderLookup.Provider lookup) {
       deadlines.forEach((id, after) -> tag.putLong(id.toString(), after));
+      var reasons = new CompoundTag();
+      var dates = new CompoundTag();
+      causes.forEach((id, cause) -> reasons.putString(id.toString(), cause.name()));
+      times.forEach((id, at) -> dates.putLong(id.toString(), at));
+      tag.put("Causes", reasons);
+      tag.put("Times", dates);
       return tag;
     }
   }
@@ -87,15 +112,28 @@ public final class BioshipDecay {
   }
 
   public static void mark(ServerSubLevel ship) {
+    mark(ship, BioshipDeathCause.UNKNOWN);
+  }
+
+  public static void mark(ServerSubLevel ship, BioshipDeathCause cause) {
     if (dead(ship)) return;
     BioshipDiagnostics.decayMarked(ship);
     var tag = ship.getUserDataTag() == null ? new CompoundTag() : ship.getUserDataTag().copy();
     tag.putBoolean("BioshipDead", true);
+    tag.putString("BioshipDeathCause", cause.name());
+    tag.putLong("BioshipDeathAt", ship.getLevel().getGameTime());
     tag.putUUID("BioshipCorpseRoot", ship.getUniqueId());
     tag.putLong("BioshipDecayAfter", ship.getLevel().getGameTime() + GRACE_TICKS);
     ship.setUserDataTag(tag);
-    Deaths.get(ship.getLevel()).remember(lineage(ship), tag.getLong("BioshipDecayAfter"));
-    Deaths.get(ship.getLevel()).remember(ship.getUniqueId(), tag.getLong("BioshipDecayAfter"));
+    Deaths.get(ship.getLevel())
+        .remember(
+            lineage(ship), tag.getLong("BioshipDecayAfter"), cause, tag.getLong("BioshipDeathAt"));
+    Deaths.get(ship.getLevel())
+        .remember(
+            ship.getUniqueId(),
+            tag.getLong("BioshipDecayAfter"),
+            cause,
+            tag.getLong("BioshipDeathAt"));
     var container = SubLevelContainer.getContainer(ship.getLevel());
     if (container != null)
       for (var body : List.copyOf(container.getAllSubLevels()))
@@ -107,9 +145,13 @@ public final class BioshipDecay {
 
   public static void inherit(ServerSubLevel child, ServerSubLevel original) {
     if (!dead(original)) return;
-    mark(child);
-    var tag = child.getUserDataTag().copy();
     var old = original.getUserDataTag();
+    mark(child, BioshipDeathCause.read(old.getString("BioshipDeathCause")));
+    var tag = child.getUserDataTag().copy();
+    tag.putString(
+        "BioshipDeathCause", BioshipDeathCause.read(old.getString("BioshipDeathCause")).name());
+    tag.putLong(
+        "BioshipDeathAt", old.contains("BioshipDeathAt") ? old.getLong("BioshipDeathAt") : -1);
     if (old.hasUUID("BioshipCorpseRoot"))
       tag.putUUID("BioshipCorpseRoot", old.getUUID("BioshipCorpseRoot"));
     tag.putLong("BioshipDecayAfter", old.getLong("BioshipDecayAfter"));
@@ -161,7 +203,13 @@ public final class BioshipDecay {
       if (body instanceof ServerSubLevel part) recoverLegacyHull(part);
     for (var body : List.copyOf(container.getAllSubLevels()))
       if (body instanceof ServerSubLevel corpse && dead(corpse))
-        deaths.remember(lineage(corpse), corpse.getUserDataTag().getLong("BioshipDecayAfter"));
+        deaths.remember(
+            lineage(corpse),
+            corpse.getUserDataTag().getLong("BioshipDecayAfter"),
+            BioshipDeathCause.read(corpse.getUserDataTag().getString("BioshipDeathCause")),
+            corpse.getUserDataTag().contains("BioshipDeathAt")
+                ? corpse.getUserDataTag().getLong("BioshipDeathAt")
+                : -1);
     // Upgrade older saved fragments and movement cargo before applying the shared decay schedule.
     for (var body : List.copyOf(container.getAllSubLevels())) {
       if (!(body instanceof ServerSubLevel part) || part.isRemoved()) continue;
@@ -181,6 +229,10 @@ public final class BioshipDecay {
         inherited.putUUID("BioshipLineage", parentId);
         inherited.putUUID("BioshipCorpseRoot", parentId);
         inherited.putLong("BioshipDecayAfter", deaths.deadlines.get(parentId));
+        inherited.putString(
+            "BioshipDeathCause",
+            deaths.causes.getOrDefault(parentId, BioshipDeathCause.UNKNOWN).name());
+        inherited.putLong("BioshipDeathAt", deaths.times.getOrDefault(parentId, -1L));
         part.setUserDataTag(inherited);
       } else if (BioshipIntegration.blockEntities(part).stream()
           .anyMatch(e -> e instanceof LivingCoreBlockEntity)) BioshipIntegration.bind(part);
@@ -194,6 +246,10 @@ public final class BioshipDecay {
       data.putBoolean("BioshipDead", true);
       data.putUUID("BioshipCorpseRoot", lineage(part));
       data.putLong("BioshipDecayAfter", deaths.deadlines.get(lineage(part)));
+      data.putString(
+          "BioshipDeathCause",
+          deaths.causes.getOrDefault(lineage(part), BioshipDeathCause.UNKNOWN).name());
+      data.putLong("BioshipDeathAt", deaths.times.getOrDefault(lineage(part), -1L));
       part.setUserDataTag(data);
     }
     if (level.getGameTime() % DECAY_INTERVAL == 0) decay(level);

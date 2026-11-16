@@ -47,6 +47,30 @@ public final class BioshipDiagnostics {
             + callsite);
   }
 
+  static void death(LivingCoreBlockEntity core, BioshipDeathCause cause, long at) {
+    var ship = core.ship();
+    var food = core.foodLevel();
+    System.out.println(
+        "BIOSHIP_DEATH cause="
+            + cause
+            + " tick="
+            + at
+            + " ship="
+            + (ship == null ? "removed" : ship.getUniqueId())
+            + " core="
+            + core.getBlockPos().toShortString()
+            + " food="
+            + food
+            + " air="
+            + core.aquatic().air()
+            + " gills="
+            + (ship == null ? "unknown" : BioshipRespiration.has(core, true))
+            + " activeGills="
+            + (ship != null && BioshipRespiration.activeGills(core))
+            + " lungs="
+            + (ship == null ? "unknown" : BioshipRespiration.has(core, false)));
+  }
+
   static CompoundTag snapshot(LivingCoreBlockEntity core) {
     var data = new CompoundTag();
     var cells = BioshipStructure.cells(core.ship());
@@ -64,6 +88,8 @@ public final class BioshipDiagnostics {
     data.putString("Reason", core.brain().reason());
     data.putDouble("Health", core.body().health());
     data.putBoolean("BodyDead", core.body().dead());
+    data.putString("DeathCause", core.body().deathCause().name());
+    data.putLong("DeathAt", core.body().deathAt());
     data.putBoolean("ShipDead", BioshipDecay.dead(core.ship()));
     data.putString("Lineage", BioshipDecay.lineage(core.ship()).toString());
     data.putInt(

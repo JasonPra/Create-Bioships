@@ -314,7 +314,7 @@ Owns subsystem instances and saved state; schedules game ticks and publishes phy
 
 #### LivingCoreBlockEntity
 
-Source: `src/main/java/org/Azkerash/create_bioships/LivingCoreBlockEntity.java` (1289 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/LivingCoreBlockEntity.java` (1279 lines).
 
 ```java
 public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySubLevelActor
@@ -521,65 +521,67 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
 
   void recordTransfer(net.minecraft.server.level.ServerLevel destination, BlockPos pos); // line 646
 
-  private boolean transferred(); // line 651
+  boolean hasTransferReceipt(); // line 651
 
-  void coreRemoved(); // line 659
+  boolean transferred(); // line 655
 
-  public void setRemoved(); // line 665
+  void coreRemoved(); // line 663
 
-  public static void tick(Level level, BlockPos pos, BlockState state, LivingCoreBlockEntity core); // line 695
+  public void setRemoved(); // line 673
 
-  private void updateCabinLights(); // line 802
+  public static void tick(Level level, BlockPos pos, BlockState state, LivingCoreBlockEntity core); // line 685
 
-  private void growBody(); // line 813
+  private void updateCabinLights(); // line 792
 
-  public void sable$tick(ServerSubLevel ship); // line 889
+  private void growBody(); // line 803
 
-  private void serverTick(); // line 894
+  public void sable$tick(ServerSubLevel ship); // line 879
 
-  private void incorporateAmalgam(); // line 1001
+  private void serverTick(); // line 884
 
-  public boolean canFly(); // line 1010
+  private void incorporateAmalgam(); // line 991
 
-  private void updateEye(boolean active); // line 1019
+  public boolean canFly(); // line 1000
 
-  public boolean isMature(); // line 1032
+  private void updateEye(boolean active); // line 1009
 
-  public boolean resting(); // line 1036
+  public boolean isMature(); // line 1022
 
-  public boolean aggressive(); // line 1040
+  public boolean resting(); // line 1026
 
-  public boolean isCaptain(net.minecraft.world.entity.Entity entity); // line 1044
+  public boolean aggressive(); // line 1030
 
-  public boolean huntingAllowed(); // line 1048
+  public boolean isCaptain(net.minecraft.world.entity.Entity entity); // line 1034
 
-  public int foodLevel(); // line 1056
+  public boolean huntingAllowed(); // line 1038
 
-  public boolean starving(); // line 1060
+  public int foodLevel(); // line 1046
 
-  public void adoptLarynx(); // line 1064
+  public boolean starving(); // line 1050
 
-  public boolean wantsToHunt(); // line 1069
+  public void adoptLarynx(); // line 1054
 
-  public boolean hungry(); // line 1073
+  public boolean wantsToHunt(); // line 1059
 
-  public boolean hasMouth(); // line 1077
+  public boolean hungry(); // line 1063
 
-  public BlockPos mouthBlock(); // line 1081
+  public boolean hasMouth(); // line 1067
 
-  public Vec3 mouthPosition(ServerSubLevel ship); // line 1103
+  public BlockPos mouthBlock(); // line 1071
 
-  public int swimmingFlagella(); // line 1115
+  public Vec3 mouthPosition(ServerSubLevel ship); // line 1093
 
-  Vec3 gatheringGoal(); // line 1123
+  public int swimmingFlagella(); // line 1105
 
-  static boolean droppedSupply(ItemStack stack); // line 1128
+  Vec3 gatheringGoal(); // line 1113
 
-  public void sable$physicsTick(ServerSubLevel ship, RigidBodyHandle body, double dt); // line 1136
+  static boolean droppedSupply(ItemStack stack); // line 1118
 
-  protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries); // line 1186
+  public void sable$physicsTick(ServerSubLevel ship, RigidBodyHandle body, double dt); // line 1126
 
-  protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries); // line 1235
+  protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries); // line 1176
+
+  protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries); // line 1225
 
 ```
 
@@ -640,6 +642,7 @@ Read loaded Sable cells, integrate native machines, distinguish visibility from 
   BioshipIntegration
   BioshipReach
   BodyTopology
+  BioshipCoreLifecycle
 ```
 
 
@@ -761,6 +764,28 @@ final class BodyTopology
   static boolean canMove( Set<BlockPos> cells, BlockPos source, BlockPos target, boolean retainSource); // line 45
 
   static boolean canCommit( Set<BlockPos> cells, BlockPos source, BlockPos target, boolean retainSource); // line 53
+
+```
+
+
+#### BioshipCoreLifecycle
+
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipCoreLifecycle.java` (56 lines).
+
+```java
+final class BioshipCoreLifecycle
+
+  private record Removal( LivingCoreBlockEntity source, ServerSubLevel owner, ServerLevel level, BlockPos pos); // line 14
+
+  private static final Map<LivingCoreBlockEntity, Removal> pending; // line 16
+
+  static void removed(LivingCoreBlockEntity core); // line 20
+
+  public static void tick(ServerTickEvent.Post event); // line 27
+
+  public static void stop(ServerStoppedEvent event); // line 48
+
+  private BioshipCoreLifecycle(); // line 53
 
 ```
 
@@ -1927,7 +1952,7 @@ Saved air supply, all-mouth fluid checks, surfacing need and non-flight propulsi
 
 #### BioshipAquatic
 
-Source: `src/main/java/org/Azkerash/create_bioships/BioshipAquatic.java` (185 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipAquatic.java` (188 lines).
 
 ```java
 public final class BioshipAquatic
@@ -1966,19 +1991,19 @@ public final class BioshipAquatic
 
   void tick(LivingCoreBlockEntity core); // line 55
 
-  static boolean canBreathe(LivingCoreBlockEntity core); // line 114
+  static boolean canBreathe(LivingCoreBlockEntity core); // line 117
 
-  static boolean aboveFluid(LivingCoreBlockEntity core, Vec3 point); // line 118
+  static boolean aboveFluid(LivingCoreBlockEntity core, Vec3 point); // line 121
 
-  private static boolean waterWithinReach(LivingCoreBlockEntity core, Vec3 here); // line 124
+  private static boolean waterWithinReach(LivingCoreBlockEntity core, Vec3 here); // line 127
 
-  private boolean clear(LivingCoreBlockEntity core, Vec3 offset); // line 132
+  private boolean clear(LivingCoreBlockEntity core, Vec3 offset); // line 135
 
-  void propel(ServerSubLevel ship, RigidBodyHandle body, double dt); // line 144
+  void propel(ServerSubLevel ship, RigidBodyHandle body, double dt); // line 147
 
-  CompoundTag save(); // line 156
+  CompoundTag save(); // line 159
 
-  void load(CompoundTag t); // line 172
+  void load(CompoundTag t); // line 175
 
 ```
 
@@ -3167,12 +3192,13 @@ Health, capacity, intended-cell memory, injury, paid repair and permanent death.
 ```text
 [health]
   BioshipBody
+  BioshipDeathCause
 ```
 
 
 #### BioshipBody
 
-Source: `src/main/java/org/Azkerash/create_bioships/BioshipBody.java` (322 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipBody.java` (365 lines).
 
 ```java
 public final class BioshipBody
@@ -3187,57 +3213,85 @@ public final class BioshipBody
 
   private volatile boolean dead; // line 20
 
-  private long lastCombatAt; // line 21
+  private BioshipDeathCause deathCause; // line 21
 
-  private float lastCombatAmount; // line 22
+  private long deathAt; // line 22
 
-  private long flashUntil; // line 23
+  public BioshipDeathCause deathCause(); // line 23
 
-  public boolean flashing(LivingCoreBlockEntity core); // line 24
+  public long deathAt(); // line 27
 
-  public boolean dead(); // line 28
+  private long lastCombatAt; // line 31
 
-  void starve(LivingCoreBlockEntity core, int demand); // line 32
+  private float lastCombatAmount; // line 33
 
-  void drown(LivingCoreBlockEntity core); // line 36
+  private long flashUntil; // line 34
 
-  private void hurt(LivingCoreBlockEntity core, double amount); // line 40
+  public boolean flashing(LivingCoreBlockEntity core); // line 35
 
-  private void damageFeedback(LivingCoreBlockEntity core); // line 50
+  public boolean dead(); // line 39
 
-  void die(LivingCoreBlockEntity core); // line 57
+  void starve(LivingCoreBlockEntity core, int demand); // line 43
 
-  public double health(); // line 78
+  void drown(LivingCoreBlockEntity core); // line 47
 
-  public int capacity(); // line 82
+  void asphyxiate(LivingCoreBlockEntity core); // line 51
 
-  static Map<BlockPos, BlockState> actual(LivingCoreBlockEntity core); // line 86
+  private void hurt(LivingCoreBlockEntity core, double amount, BioshipDeathCause cause); // line 55
 
-  void observe(LivingCoreBlockEntity core); // line 94
+  private void damageFeedback(LivingCoreBlockEntity core); // line 65
 
-  void rebase(BlockPos delta); // line 122
+  void die(LivingCoreBlockEntity core); // line 72
 
-  void reconcile(LivingCoreBlockEntity core, Map<BlockPos, BlockState> before); // line 131
+  void die(LivingCoreBlockEntity core, BioshipDeathCause cause); // line 76
 
-  void tick(LivingCoreBlockEntity core); // line 150
+  public double health(); // line 100
 
-  boolean combatDamage( LivingCoreBlockEntity core, net.minecraft.world.damagesource.DamageSource source, float amount); // line 212
+  public int capacity(); // line 104
 
-  void struck(LivingCoreBlockEntity core, Player player); // line 232
+  static Map<BlockPos, BlockState> actual(LivingCoreBlockEntity core); // line 108
 
-  void damage(LivingCoreBlockEntity core, BlockPos pos, Player player); // line 238
+  void observe(LivingCoreBlockEntity core); // line 116
 
-  public static void broken(BlockEvent.BreakEvent event); // line 246
+  void rebase(BlockPos delta); // line 144
 
-  public static void blast(net.neoforged.neoforge.event.level.ExplosionEvent.Detonate event); // line 257
+  void reconcile(LivingCoreBlockEntity core, Map<BlockPos, BlockState> before); // line 153
 
-  CompoundTag save(); // line 272
+  void tick(LivingCoreBlockEntity core); // line 172
 
-  void load(CompoundTag tag, HolderLookup.Provider registries); // line 285
+  boolean combatDamage( LivingCoreBlockEntity core, net.minecraft.world.damagesource.DamageSource source, float amount); // line 234
 
-  static ListTag saveCells(Map<BlockPos, BlockState> cells); // line 298
+  void struck(LivingCoreBlockEntity core, Player player); // line 259
 
-  static Map<BlockPos, BlockState> loadCells(ListTag list, HolderLookup.Provider registries); // line 310
+  void damage(LivingCoreBlockEntity core, BlockPos pos, Player player); // line 265
+
+  private void damage( LivingCoreBlockEntity core, BlockPos pos, Player player, BioshipDeathCause cause); // line 269
+
+  public static void broken(BlockEvent.BreakEvent event); // line 278
+
+  public static void blast(net.neoforged.neoforge.event.level.ExplosionEvent.Detonate event); // line 295
+
+  CompoundTag save(); // line 310
+
+  void load(CompoundTag tag, HolderLookup.Provider registries); // line 325
+
+  static ListTag saveCells(Map<BlockPos, BlockState> cells); // line 341
+
+  static Map<BlockPos, BlockState> loadCells(ListTag list, HolderLookup.Provider registries); // line 353
+
+```
+
+
+#### BioshipDeathCause
+
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipDeathCause.java` (23 lines).
+
+```java
+public enum BioshipDeathCause
+
+  NONE, UNKNOWN, STARVATION, DROWNING, ASPHYXIATION, CORE_REMOVED, COMBAT, EXPLOSION, INJURY; // line 4
+
+  static BioshipDeathCause read(String value); // line 13
 
 ```
 
@@ -3544,7 +3598,7 @@ Mark core removal/death, retain saved fragment lineage and rot hull before organ
 
 #### BioshipDecay
 
-Source: `src/main/java/org/Azkerash/create_bioships/BioshipDecay.java` (224 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipDecay.java` (281 lines).
 
 ```java
 public final class BioshipDecay
@@ -3557,23 +3611,25 @@ public final class BioshipDecay
 
   static final class Deaths extends net.minecraft.world.level.saveddata.SavedData; // line 32
 
-  public static boolean dead(ServerSubLevel ship); // line 68
+  public static boolean dead(ServerSubLevel ship); // line 93
 
-  public static UUID lineage(ServerSubLevel ship); // line 72
+  public static UUID lineage(ServerSubLevel ship); // line 97
 
-  public static void link(ServerSubLevel child, ServerSubLevel original); // line 79
+  public static void link(ServerSubLevel child, ServerSubLevel original); // line 104
 
-  public static void mark(ServerSubLevel ship); // line 87
+  public static void mark(ServerSubLevel ship); // line 112
 
-  public static void inherit(ServerSubLevel child, ServerSubLevel original); // line 105
+  public static void mark(ServerSubLevel ship, BioshipDeathCause cause); // line 116
 
-  static List<BlockPos> blocks(ServerSubLevel ship); // line 116
+  public static void inherit(ServerSubLevel child, ServerSubLevel original); // line 144
 
-  static boolean recoverLegacyHull(ServerSubLevel part); // line 120
+  static List<BlockPos> blocks(ServerSubLevel ship); // line 159
 
-  public static void tick(LevelTickEvent.Post event); // line 151
+  static boolean recoverLegacyHull(ServerSubLevel part); // line 163
 
-  static void decay(ServerLevel level); // line 199
+  public static void tick(LevelTickEvent.Post event); // line 194
+
+  static void decay(ServerLevel level); // line 256
 
 ```
 
@@ -3748,16 +3804,20 @@ F3+B sight; F3+P native floating route/priority display; goggles status above ho
 
 #### BioshipDiagnostics
 
-Source: `src/main/java/org/Azkerash/create_bioships/BioshipDiagnostics.java` (145 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipDiagnostics.java` (195 lines).
 
 ```java
 public final class BioshipDiagnostics
 
   static List<LivingCoreBlockEntity> cores(ServerLevel level); // line 18
 
-  static CompoundTag snapshot(LivingCoreBlockEntity core); // line 27
+  static void decayMarked(ServerSubLevel ship); // line 27
 
-  public static void commands(RegisterCommandsEvent event); // line 86
+  static void death(LivingCoreBlockEntity core, BioshipDeathCause cause, long at); // line 48
+
+  static CompoundTag snapshot(LivingCoreBlockEntity core); // line 72
+
+  public static void commands(RegisterCommandsEvent event); // line 136
 
 ```
 

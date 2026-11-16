@@ -8702,4 +8702,249 @@ public class BioshipGameTests {
       cleanup(helper, ship);
     }
   }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "core_transfer_death_receipt")
+  public static void sable_core_transfer_never_tombstones_a_living_replacement(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var original = core(ship);
+    var level = helper.getLevel();
+    var from = original.getBlockPos();
+    var to = from.above();
+    level.setBlock(from.east(), BioshipTissue.body().defaultBlockState(), 3);
+    level.setBlock(to.east(), BioshipTissue.body().defaultBlockState(), 3);
+    BioshipIntegration.bind(ship);
+    SubLevelAssemblyHelper.moveBlocks(
+        level,
+        new SubLevelAssemblyHelper.AssemblyTransform(
+            from, to, 0, net.minecraft.world.level.block.Rotation.NONE, level),
+        List.of(from));
+    helper.runAfterDelay(
+        2,
+        () ->
+            finish(
+                helper,
+                ship,
+                () -> {
+                  helper.assertTrue(
+                      level.getBlockEntity(to) instanceof LivingCoreBlockEntity,
+                      "Sable did not create the replacement core");
+                  var replacement = (LivingCoreBlockEntity) level.getBlockEntity(to);
+                  helper.assertTrue(
+                      !replacement.body().dead() && !BioshipDecay.dead(ship),
+                      "Successful core transfer marked the living organism for decay");
+                  var deaths =
+                      BioshipDecay.Deaths.get(level)
+                          .save(new net.minecraft.nbt.CompoundTag(), level.registryAccess());
+                  helper.assertTrue(
+                      !deaths.contains(BioshipDecay.lineage(ship).toString())
+                          && !deaths.contains(ship.getUniqueId().toString()),
+                      "Successful transfer wrote an irreversible death tombstone");
+                }));
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "failed_core_transfer_death")
+  public static void incomplete_core_transfer_still_marks_the_construct_dead(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var original = core(ship);
+    var level = helper.getLevel();
+    var from = original.getBlockPos();
+    level.setBlock(from.east(), BioshipTissue.body().defaultBlockState(), 3);
+    BioshipIntegration.bind(ship);
+    original.recordTransfer(level, from.above());
+    level.removeBlock(from, false);
+    helper.runAfterDelay(
+        2,
+        () ->
+            finish(
+                helper,
+                ship,
+                () -> {
+                  helper.assertTrue(
+                      BioshipDecay.dead(ship),
+                      "Incomplete transfer suppressed real core-removal death");
+                }));
+  }
+
+  @GameTest(
+      template = "test_empty",
+      timeoutTicks = 100,
+      batch = "core_transfer_chunk_task_boundary")
+  public static void polled_server_tasks_cannot_tombstone_an_in_progress_core_handoff(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var original = core(ship);
+    var level = helper.getLevel();
+    var from = original.getBlockPos();
+    var to = from.above();
+    level.setBlock(from.east(), BioshipTissue.body().defaultBlockState(), 3);
+    level.setBlock(to.east(), BioshipTissue.body().defaultBlockState(), 3);
+    BioshipIntegration.bind(ship);
+    var saved = original.saveWithFullMetadata(level.registryAccess());
+    original.recordTransfer(level, to);
+    level.removeBlock(from, false);
+    // Chunk loading may poll server tasks before the destination BE has been installed.
+    for (int n = 0; n < 16; n++) if (!level.getServer().pollTask()) break;
+    helper.assertTrue(
+        !BioshipDecay.dead(ship), "An in-progress handoff was treated as permanent core removal");
+    level.setBlock(to, Create_bioships.CORE.get().defaultBlockState(), 3);
+    var replacement = (LivingCoreBlockEntity) level.getBlockEntity(to);
+    replacement.loadAdditional(saved, level.registryAccess());
+    helper.runAfterDelay(
+        2,
+        () ->
+            finish(
+                helper,
+                ship,
+                () -> {
+                  helper.assertTrue(
+                      !replacement.body().dead() && !BioshipDecay.dead(ship),
+                      "Completed handoff did not survive end-of-tick validation");
+                  var deaths =
+                      BioshipDecay.Deaths.get(level)
+                          .save(new net.minecraft.nbt.CompoundTag(), level.registryAccess());
+                  helper.assertTrue(
+                      !deaths.contains(BioshipDecay.lineage(ship).toString()),
+                      "Nested task polling left a persistent false death record");
+                }));
+  }
+
+  private static void deathFixture(
+      GameTestHelper helper, LivingCoreBlockEntity core, boolean hungry) {
+    var data = core.saveWithFullMetadata(helper.getLevel().registryAccess());
+    data.putInt("Satiety", hungry ? 0 : 600);
+    core.loadAdditional(data, helper.getLevel().registryAccess());
+    var injury = core.body().save();
+    injury.putDouble("Health", 1);
+    core.body().load(injury, helper.getLevel().registryAccess());
+    var air = core.aquatic().save();
+    air.putInt("Air", 0);
+    core.aquatic().load(air);
+  }
+
+  private static void verifyDeath(
+      GameTestHelper helper, LivingCoreBlockEntity core, BioshipDeathCause expected) {
+    helper.assertTrue(
+        core.body().dead() && core.body().deathCause() == expected,
+        "Wrong fatal cause: expected " + expected + ", got " + core.body().deathCause());
+    helper.assertTrue(
+        core.ship().getUserDataTag().getString("BioshipDeathCause").equals(expected.name()),
+        "Wreck grid did not retain the cause of death");
+    var saved = core.body().save();
+    var loaded = new BioshipBody();
+    loaded.load(saved, helper.getLevel().registryAccess());
+    helper.assertTrue(
+        loaded.deathCause() == expected && loaded.deathAt() == core.body().deathAt(),
+        "Cause or timestamp did not survive body reload");
+    core.body().die(core, BioshipDeathCause.UNKNOWN);
+    helper.assertTrue(
+        core.body().deathCause() == expected,
+        "A later death notification overwrote the actual fatal event");
+    var ledger =
+        BioshipDecay.Deaths.get(helper.getLevel())
+            .save(new net.minecraft.nbt.CompoundTag(), helper.getLevel().registryAccess());
+    var restored =
+        BioshipDecay.Deaths.load(ledger, helper.getLevel().registryAccess())
+            .save(new net.minecraft.nbt.CompoundTag(), helper.getLevel().registryAccess());
+    helper.assertTrue(
+        restored
+            .getCompound("Causes")
+            .getString(BioshipDecay.lineage(core.ship()).toString())
+            .equals(expected.name()),
+        "Death registry reload lost the fatal cause");
+    var legacy = saved.copy();
+    legacy.remove("DeathCause");
+    legacy.remove("DeathAt");
+    loaded.load(legacy, helper.getLevel().registryAccess());
+    helper.assertTrue(
+        loaded.deathCause() == BioshipDeathCause.UNKNOWN && loaded.deathAt() == -1,
+        "Legacy deaths invented a cause or timestamp");
+  }
+
+  private static void deepWater(GameTestHelper helper, LivingCoreBlockEntity core) {
+    var world = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO));
+    for (var pos : BlockPos.betweenClosed(world.offset(-8, 0, -8), world.offset(8, 12, 8)))
+      helper.getLevel().setBlock(pos, Blocks.WATER.defaultBlockState(), 3);
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "fatal_starvation_cause")
+  public static void metabolic_starvation_records_a_persistent_fatal_cause(GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    helper
+        .getLevel()
+        .setBlock(core.getBlockPos().east(), BioshipTissue.body().defaultBlockState(), 3);
+    deathFixture(helper, core, true);
+    helper.runAfterDelay(
+        25,
+        () ->
+            finish(
+                helper, ship, () -> verifyDeath(helper, core(ship), BioshipDeathCause.STARVATION)));
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "fatal_asphyxiation_cause")
+  public static void missing_lungs_on_land_records_asphyxiation_not_drowning(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    for (var face : Direction.Plane.HORIZONTAL)
+      helper
+          .getLevel()
+          .setBlock(core.getBlockPos().relative(face), BioshipTissue.body().defaultBlockState(), 3);
+    deathFixture(helper, core, false);
+    helper.assertTrue(
+        BioshipRespiration.airAccess(core) && !BioshipRespiration.canBreathe(core),
+        "Fixture is not an air-exposed body requiring lungs");
+    helper.runAfterDelay(
+        25,
+        () ->
+            finish(
+                helper,
+                ship,
+                () -> verifyDeath(helper, core(ship), BioshipDeathCause.ASPHYXIATION)));
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "fatal_drowning_cause")
+  public static void exhausted_air_underwater_records_drowning_not_starvation(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    deepWater(helper, core);
+    deathFixture(helper, core, false);
+    helper.assertTrue(
+        !BioshipRespiration.airAccess(core) && !BioshipRespiration.activeGills(core),
+        "Drowning fixture can breathe");
+    helper.runAfterDelay(
+        25,
+        () ->
+            finish(
+                helper, ship, () -> verifyDeath(helper, core(ship), BioshipDeathCause.DROWNING)));
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "gilled_starvation_cause")
+  public static void active_gills_do_not_mislabel_underwater_starvation_as_drowning(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    helper
+        .getLevel()
+        .setBlock(
+            core.getBlockPos().east(),
+            Create_bioships.GILLS
+                .get()
+                .defaultBlockState()
+                .setValue(RespiratoryOrganBlock.FACING, Direction.NORTH),
+            3);
+    deepWater(helper, core);
+    deathFixture(helper, core, true);
+    helper.assertTrue(
+        BioshipRespiration.activeGills(core) && BioshipRespiration.canBreathe(core),
+        "Gilled fixture cannot breathe underwater");
+    helper.runAfterDelay(
+        25,
+        () ->
+            finish(
+                helper, ship, () -> verifyDeath(helper, core(ship), BioshipDeathCause.STARVATION)));
+  }
 }
