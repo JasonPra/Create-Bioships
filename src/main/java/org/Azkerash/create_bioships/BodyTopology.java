@@ -49,6 +49,13 @@ final class BodyTopology {
     var after = new HashSet<>(cells);
     if (!retainSource) after.remove(source);
     if (components(after) > components(cells)) return false; // In-transit anatomy matters too.
+    return canCommit(cells, source, target, retainSource);
+  }
+
+  static boolean canCommit(
+      Set<BlockPos> cells, BlockPos source, BlockPos target, boolean retainSource) {
+    var after = new HashSet<>(cells);
+    if (!retainSource) after.remove(source);
     after.add(target);
     return components(after) <= components(cells);
   }

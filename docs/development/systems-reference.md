@@ -742,7 +742,7 @@ final class BioshipReach
 
 #### BodyTopology
 
-Source: `src/main/java/org/Azkerash/create_bioships/BodyTopology.java` (55 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/BodyTopology.java` (62 lines).
 
 ```java
 final class BodyTopology
@@ -754,6 +754,8 @@ final class BodyTopology
   static boolean canRemove(Set<BlockPos> cells, BlockPos source); // line 38
 
   static boolean canMove( Set<BlockPos> cells, BlockPos source, BlockPos target, boolean retainSource); // line 45
+
+  static boolean canCommit( Set<BlockPos> cells, BlockPos source, BlockPos target, boolean retainSource); // line 53
 
 ```
 
@@ -1677,7 +1679,7 @@ Mass-weighted COM, leg attachments, support polygon, reachable contacts and inve
 
 #### BioshipSupport
 
-Source: `src/main/java/org/Azkerash/create_bioships/BioshipSupport.java` (287 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipSupport.java` (300 lines).
 
 ```java
 public final class BioshipSupport
@@ -1706,9 +1708,9 @@ public final class BioshipSupport
 
   static Layout movedLayout( LivingCoreBlockEntity core, BlockPos source, BlockPos target, boolean restoreFlesh); // line 236
 
-  private static long invalidMounts(Map<BlockPos, BlockState> cells); // line 259
+  private static long invalidMounts(Map<BlockPos, BlockState> cells); // line 272
 
-  static boolean containsProjection(Vec3 point, Vec3[] contacts); // line 268
+  static boolean containsProjection(Vec3 point, Vec3[] contacts); // line 281
 
 ```
 
@@ -1840,7 +1842,7 @@ final class BioshipAnatomy
 
   private static Audit audit(LivingCoreBlockEntity core); // line 53
 
-  private static boolean mouthOpening(LivingCoreBlockEntity core, BlockPos pos); // line 67
+  static boolean mouthOpening(LivingCoreBlockEntity core, BlockPos pos); // line 67
 
   private static boolean free(LivingCoreBlockEntity core, BlockPos target); // line 77
 
@@ -2066,7 +2068,7 @@ Reposition through connected anatomy for sight or defense; preserve state and in
 
 #### CoreMotion
 
-Source: `src/main/java/org/Azkerash/create_bioships/CoreMotion.java` (609 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/CoreMotion.java` (655 lines).
 
 ```java
 public final class CoreMotion
@@ -2123,37 +2125,39 @@ public final class CoreMotion
 
   private boolean supportedPerch(LivingCoreBlockEntity core, BlockPos pos); // line 278
 
-  private boolean stableSupport(LivingCoreBlockEntity core, BlockPos pos); // line 293
+  private boolean stableSupport(LivingCoreBlockEntity core, BlockPos pos); // line 296
 
-  private BlockPos perch(LivingCoreBlockEntity core, boolean returning); // line 302
+  private BlockPos perch(LivingCoreBlockEntity core, boolean returning); // line 305
 
-  private boolean preparePerch(LivingCoreBlockEntity core); // line 322
+  private BlockPos reconnect(LivingCoreBlockEntity core); // line 327
 
-  boolean tick(LivingCoreBlockEntity core); // line 353
+  private boolean preparePerch(LivingCoreBlockEntity core); // line 362
 
-  private boolean begin(LivingCoreBlockEntity core, BlockPos next, boolean emergency); // line 428
+  boolean tick(LivingCoreBlockEntity core); // line 394
 
-  boolean evade(LivingCoreBlockEntity core, net.minecraft.world.entity.monster.Creeper creeper); // line 445
+  private boolean begin(LivingCoreBlockEntity core, BlockPos next, boolean emergency); // line 474
 
-  static double blastSafety( LivingCoreBlockEntity core, BlockPos point, net.minecraft.world.entity.monster.Creeper creeper); // line 461
+  boolean evade(LivingCoreBlockEntity core, net.minecraft.world.entity.monster.Creeper creeper); // line 491
 
-  private BlockPos safestStep( LivingCoreBlockEntity core, net.minecraft.world.entity.monster.Creeper creeper); // line 473
+  static double blastSafety( LivingCoreBlockEntity core, BlockPos point, net.minecraft.world.entity.monster.Creeper creeper); // line 507
 
-  String scoutingHint(LivingCoreBlockEntity core); // line 508
+  private BlockPos safestStep( LivingCoreBlockEntity core, net.minecraft.world.entity.monster.Creeper creeper); // line 519
 
-  void scoutNow(LivingCoreBlockEntity core); // line 534
+  String scoutingHint(LivingCoreBlockEntity core); // line 554
 
-  private boolean feeding; // line 539
+  void scoutNow(LivingCoreBlockEntity core); // line 580
 
-  boolean feeding(); // line 541
+  private boolean feeding; // line 585
 
-  void cancel(LivingCoreBlockEntity core); // line 545
+  boolean feeding(); // line 587
 
-  private void commit(LivingCoreBlockEntity core); // line 555
+  void cancel(LivingCoreBlockEntity core); // line 591
 
-  CompoundTag save(); // line 586
+  private void commit(LivingCoreBlockEntity core); // line 601
 
-  void load(CompoundTag tag); // line 598
+  CompoundTag save(); // line 632
+
+  void load(CompoundTag tag); // line 644
 
 ```
 

@@ -66,7 +66,7 @@ final class BioshipAnatomy {
     return value;
   }
 
-  private static boolean mouthOpening(LivingCoreBlockEntity core, BlockPos pos) {
+  static boolean mouthOpening(LivingCoreBlockEntity core, BlockPos pos) {
     return DigestiveSystem.mouths(core).stream()
         .anyMatch(
             mouth -> {
@@ -176,10 +176,10 @@ final class BioshipAnatomy {
       if (!state.is(Create_bioships.STOMACH.get())
           && !state.is(Create_bioships.FEEDING_MOUTH.get())
           && !state.is(Create_bioships.LUNGS.get())) continue;
-      int distance = entry.getKey().distManhattan(core.getBlockPos());
+      int distance = entry.getKey().distManhattan(core.structuralOrigin());
       if (distance <= 2) continue;
       for (var target : targets) {
-        if (target.distManhattan(core.getBlockPos()) > distance - 2
+        if (target.distManhattan(core.structuralOrigin()) > distance - 2
             || !canMove(core, entry.getKey(), target)) continue;
         return new Move(
             entry.getKey(), target, "Compact vital organs before adding protective flesh", 920);
@@ -188,7 +188,7 @@ final class BioshipAnatomy {
       for (var cover : cells.entrySet()) {
         if (!BioshipTissue.isTissue(cover.getValue())
             || !DigestiveSystem.permitsPlacement(core, cover.getKey())
-            || cover.getKey().distManhattan(core.getBlockPos()) > distance - 2) continue;
+            || cover.getKey().distManhattan(core.structuralOrigin()) > distance - 2) continue;
         for (var target : targets)
           if (canMove(core, cover.getKey(), target))
             return new Move(

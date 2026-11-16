@@ -2432,7 +2432,7 @@
         },
         {
           "kind": "method",
-          "signature": "private static boolean mouthOpening(LivingCoreBlockEntity core, BlockPos pos)",
+          "signature": "static boolean mouthOpening(LivingCoreBlockEntity core, BlockPos pos)",
           "line": 67
         },
         {
@@ -6329,85 +6329,90 @@
         {
           "kind": "method",
           "signature": "private boolean stableSupport(LivingCoreBlockEntity core, BlockPos pos)",
-          "line": 293
+          "line": 296
         },
         {
           "kind": "method",
           "signature": "private BlockPos perch(LivingCoreBlockEntity core, boolean returning)",
-          "line": 302
+          "line": 305
+        },
+        {
+          "kind": "method",
+          "signature": "private BlockPos reconnect(LivingCoreBlockEntity core)",
+          "line": 327
         },
         {
           "kind": "method",
           "signature": "private boolean preparePerch(LivingCoreBlockEntity core)",
-          "line": 322
+          "line": 362
         },
         {
           "kind": "method",
           "signature": "boolean tick(LivingCoreBlockEntity core)",
-          "line": 353
+          "line": 394
         },
         {
           "kind": "method",
           "signature": "private boolean begin(LivingCoreBlockEntity core, BlockPos next, boolean emergency)",
-          "line": 428
+          "line": 474
         },
         {
           "kind": "method",
           "signature": "boolean evade(LivingCoreBlockEntity core, net.minecraft.world.entity.monster.Creeper creeper)",
-          "line": 445
+          "line": 491
         },
         {
           "kind": "method",
           "signature": "static double blastSafety( LivingCoreBlockEntity core, BlockPos point, net.minecraft.world.entity.monster.Creeper creeper)",
-          "line": 461
+          "line": 507
         },
         {
           "kind": "method",
           "signature": "private BlockPos safestStep( LivingCoreBlockEntity core, net.minecraft.world.entity.monster.Creeper creeper)",
-          "line": 473
+          "line": 519
         },
         {
           "kind": "method",
           "signature": "String scoutingHint(LivingCoreBlockEntity core)",
-          "line": 508
+          "line": 554
         },
         {
           "kind": "method",
           "signature": "void scoutNow(LivingCoreBlockEntity core)",
-          "line": 534
+          "line": 580
         },
         {
           "kind": "field",
           "signature": "private boolean feeding",
-          "line": 539
+          "line": 585
         },
         {
           "kind": "method",
           "signature": "boolean feeding()",
-          "line": 541
+          "line": 587
         },
         {
           "kind": "method",
           "signature": "void cancel(LivingCoreBlockEntity core)",
-          "line": 545
+          "line": 591
         },
         {
           "kind": "method",
           "signature": "private void commit(LivingCoreBlockEntity core)",
-          "line": 555
+          "line": 601
         },
         {
           "kind": "method",
           "signature": "CompoundTag save()",
-          "line": 586
+          "line": 632
         },
         {
           "kind": "method",
           "signature": "void load(CompoundTag tag)",
-          "line": 598
+          "line": 644
         }
       ],
-      "lines": 609
+      "lines": 655
     },
     "BioshipRespiration": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipRespiration.java",
@@ -6655,9 +6660,14 @@
           "kind": "method",
           "signature": "static boolean canMove( Set<BlockPos> cells, BlockPos source, BlockPos target, boolean retainSource)",
           "line": 45
+        },
+        {
+          "kind": "method",
+          "signature": "static boolean canCommit( Set<BlockPos> cells, BlockPos source, BlockPos target, boolean retainSource)",
+          "line": 53
         }
       ],
-      "lines": 55
+      "lines": 62
     },
     "AmoebaLegBlock": {
       "path": "src/main/java/org/Azkerash/create_bioships/AmoebaLegBlock.java",
@@ -7236,15 +7246,15 @@
         {
           "kind": "method",
           "signature": "private static long invalidMounts(Map<BlockPos, BlockState> cells)",
-          "line": 259
+          "line": 272
         },
         {
           "kind": "method",
           "signature": "static boolean containsProjection(Vec3 point, Vec3[] contacts)",
-          "line": 268
+          "line": 281
         }
       ],
-      "lines": 287
+      "lines": 300
     },
     "BioshipRescue": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipRescue.java",

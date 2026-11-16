@@ -238,6 +238,7 @@ public final class BioshipSupport {
   static Layout movedLayout(
       LivingCoreBlockEntity core, BlockPos source, BlockPos target, boolean restoreFlesh) {
     var cells = cells(core);
+    var beforeStructural = BodyTopology.structuralCells(cells);
     var moved = cells.remove(source);
     if (moved == null) return new Layout(Vec3.ZERO, List.of(), -1);
     var host = cells.remove(target);
@@ -247,6 +248,18 @@ public final class BioshipSupport {
     if (BioshipLegEvolution.leg(moved))
       moved = moved.setValue(AmoebaLegBlock.FACING, AmoebaLegBlock.outward(cells, target));
     cells.put(target, moved);
+    boolean retainsSource =
+        restoreFlesh
+            || moved.is(Create_bioships.CORE.get()) && host != null && CoreMotion.tissue(host);
+    if (beforeStructural.contains(source)) {
+      // A core stays in its source cell until its atomic commit; carried organs leave it
+      // immediately and must also preserve support throughout transport.
+      boolean connected =
+          moved.is(Create_bioships.CORE.get())
+              ? BodyTopology.canCommit(beforeStructural, source, target, retainsSource)
+              : BodyTopology.canMove(beforeStructural, source, target, retainsSource);
+      if (!connected) return new Layout(Vec3.ZERO, List.of(), -1);
+    }
     if (BioshipLegEvolution.leg(moved) && !AmoebaLegBlock.mounted(cells, target, moved))
       return new Layout(Vec3.ZERO, List.of(), -1);
     long invalidBefore = invalidMounts(cells(core));

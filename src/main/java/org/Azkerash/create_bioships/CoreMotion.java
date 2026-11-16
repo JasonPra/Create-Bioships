@@ -237,7 +237,7 @@ public final class CoreMotion {
           }
         } else {
           int value = score(core, next);
-          if (value > score || value == score && next.getY() > best.getY()) {
+          if (value > score) {
             best = next;
             score = value;
           }
@@ -282,12 +282,15 @@ public final class CoreMotion {
         || !core.getLevel().getBlockState(pos).isAir()
         || !core.ship().getPlot().contains(new net.minecraft.world.level.ChunkPos(pos)))
       return false;
-    var body = new HashSet<>(BioshipDecay.blocks(core.ship()));
-    boolean supported =
-        pos.equals(home(core))
-            || body.contains(pos.below()) && !pos.below().equals(core.getBlockPos());
+    var body = BodyTopology.structuralCells(BioshipStructure.cells(core.ship()));
+    boolean supported = pos.equals(home(core));
+    for (var face : Direction.values())
+      supported |=
+          body.contains(pos.relative(face)) && !pos.relative(face).equals(core.getBlockPos());
     return supported
-        && connectedAfter(body, core.getBlockPos(), pos)
+        && !BioshipAnatomy.mouthOpening(core, pos)
+        && !BioshipRespiration.blocksOpening(core, pos)
+        && BodyTopology.canCommit(body, core.getBlockPos(), pos, false)
         && clearPerchTravel(core, pos)
         && DigestiveSystem.reserveCoreRoute(core, pos, false);
   }
@@ -313,10 +316,47 @@ public final class CoreMotion {
           || pos.distManhattan(home(core)) > 6
           || !supportedPerch(core, pos)) continue;
       int value = score(core, pos);
-      if (value < current) continue;
+      if (value <= current) continue;
       if (best == null
-          || pos.getY() > best.getY()
-          || pos.getY() == best.getY() && value > score(core, best)) best = pos;
+          || value > score(core, best)
+          || value == score(core, best)
+              && pos.distSqr(core.structuralOrigin()) < best.distSqr(core.structuralOrigin()))
+        best = pos;
+    }
+    return best;
+  }
+
+  private BlockPos reconnect(LivingCoreBlockEntity core) {
+    var cells = BioshipStructure.cells(core.ship());
+    var structural = BodyTopology.structuralCells(cells);
+    int before = BodyTopology.components(structural);
+    if (before <= 1) return null;
+    BlockPos best = null;
+    int bestSections = before;
+    for (var host : structural) {
+      if (host.equals(core.getBlockPos())) continue;
+      for (var face : Direction.values()) {
+        var pos = host.relative(face);
+        if (cells.containsKey(pos)
+            || !core.hatchling() && !protectedInside(core, pos)
+            || !DigestiveSystem.permitsPlacement(core, pos)
+            || BioshipAnatomy.mouthOpening(core, pos)
+            || !clearWorld(core, pos)
+            || !clearPerchTravel(core, pos)
+            || !DigestiveSystem.reserveCoreRoute(core, pos, false)
+            || !BioshipSupport.safeMove(core, core.getBlockPos(), pos, false)) continue;
+        var after = new HashSet<>(structural);
+        after.remove(core.getBlockPos());
+        after.add(pos);
+        int sections = BodyTopology.components(after);
+        if (sections < bestSections
+            || sections == bestSections
+                && best != null
+                && pos.distSqr(core.structuralOrigin()) < best.distSqr(core.structuralOrigin())) {
+          best = pos;
+          bestSections = sections;
+        }
+      }
     }
     return best;
   }
@@ -331,6 +371,7 @@ public final class CoreMotion {
         || !core.getBlockPos().equals(home(core))) return false;
     var body = new HashSet<>(BioshipDecay.blocks(core.ship()));
     var destination = mouth.above();
+    if (score(core, destination) <= score(core, core.getBlockPos())) return false;
     if (!level.getBlockState(destination).isAir() || destination.equals(support)) return false;
     for (var source : body) {
       var entity = level.getBlockEntity(source);
@@ -374,6 +415,8 @@ public final class CoreMotion {
       return true;
     }
     if (core.autonomy().creeperPanic()) return false;
+    var rejoin = creeper == null ? reconnect(core) : null;
+    if (rejoin != null) return begin(core, rejoin, false);
     if (!core.hatchling()) {
       if (creeper != null) return evade(core, creeper);
       var threat = BioshipDefense.target(core);
@@ -403,6 +446,9 @@ public final class CoreMotion {
     nextScan = level.getGameTime() + 40;
     boolean changed = layoutDirty;
     layoutDirty = false;
+    if (!returning
+        && coverage(core, core.getBlockPos()) == FULL_COVERAGE
+        && blockedSupply(core) == null) return false;
     var elevated = perch(core, returning);
     if (elevated != null) return begin(core, elevated, false);
     if (!returning

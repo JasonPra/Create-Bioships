@@ -5618,6 +5618,12 @@ public class BioshipGameTests {
     level.setBlock(home.west(), block("biomancy:decomposer").defaultBlockState(), 3);
     var organ = level.getBlockEntity(home.west());
     organ.getPersistentData().putString("PerchSentinel", "preserved");
+    // A low real obstruction makes elevation useful; height alone is not a benefit.
+    var physical = BlockPos.containing(BioshipBlueprint.physical(original, BlockPos.ZERO));
+    for (int x = -4; x <= 4; x++)
+      for (int z = -4; z <= 4; z++)
+        if (Math.abs(x) == 4 || Math.abs(z) == 4)
+          level.setBlock(physical.offset(x, 0, z), Blocks.STONE.defaultBlockState(), 3);
     int before = original.coreMotion().coverage(original, home);
     original.coreMotion().scoutNow(original);
     helper.runAfterDelay(
@@ -5632,7 +5638,7 @@ public class BioshipGameTests {
                       current.getBlockPos().getY() > home.getY(),
                       "Core did not perch above its organs: " + current.coreMotion().save());
                   helper.assertTrue(
-                      current.coreMotion().coverage(current, current.getBlockPos()) >= before,
+                      current.coreMotion().coverage(current, current.getBlockPos()) > before,
                       "Higher perch made surrounding sight worse");
                   var cells = BioshipDecay.blocks(ship);
                   helper.assertTrue(
@@ -8449,5 +8455,97 @@ public class BioshipGameTests {
         BodyTopology.canMove(broken, new BlockPos(1, 1, 0), new BlockPos(1, 0, 0), false),
         "Repair could not reconnect an existing disconnected component");
     helper.succeed();
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "structural_bridge_transport")
+  public static void moving_an_organ_cannot_temporarily_remove_a_body_bridge(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    try {
+      var core = core(ship);
+      var source = core.getBlockPos().east();
+      var target = core.getBlockPos().south();
+      helper.getLevel().setBlock(source, Create_bioships.STOMACH.get().defaultBlockState(), 3);
+      helper.getLevel().setBlock(source.east(), BioshipTissue.body().defaultBlockState(), 3);
+      helper.assertTrue(
+          !BioshipSupport.safeMove(core, source, target, false)
+              && !OrganMotion.begin(core, source, target, false),
+          "A supporting stomach could leave body sections disconnected during transport");
+      helper.assertTrue(
+          helper.getLevel().getBlockState(source).is(Create_bioships.STOMACH.get())
+              && core.organMove() == null,
+          "Rejected bridge move changed the body");
+      helper.assertTrue(
+          BioshipSupport.safeMove(core, source, target, true),
+          "A move retaining real source tissue was rejected");
+      helper.succeed();
+    } finally {
+      cleanup(helper, ship);
+    }
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "rejoin_legacy_split")
+  public static void a_disconnected_core_rejoins_existing_anatomy_without_climbing_higher(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var destination = core.getBlockPos().east();
+    helper.getLevel().setBlock(destination.above(), BioshipTissue.body().defaultBlockState(), 3);
+    helper.assertTrue(
+        core.coreMotion().tick(core) && destination.equals(core.coreMotion().target()),
+        "Disconnected core did not select a nearby reconnection");
+    helper.runAfterDelay(
+        20,
+        () ->
+            finish(
+                helper,
+                ship,
+                () -> {
+                  var current = core(ship);
+                  helper.assertTrue(
+                      BodyTopology.components(
+                                  BodyTopology.structuralCells(BioshipStructure.cells(ship)))
+                              == 1
+                          && current.getBlockPos().equals(destination),
+                      "Core failed to reconnect: actual="
+                          + current.getBlockPos()
+                          + " expected="
+                          + destination
+                          + " sections="
+                          + BodyTopology.components(
+                              BodyTopology.structuralCells(BioshipStructure.cells(ship))));
+                }));
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "no_gratuitous_perch")
+  public static void an_equally_occluded_higher_perch_does_not_trigger_reconfiguration(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var root = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO));
+    level.setBlock(core.getBlockPos().east(), Create_bioships.STOMACH.get().defaultBlockState(), 3);
+    for (var pos : BlockPos.betweenClosed(root.offset(-4, 0, -4), root.offset(4, 8, 4)))
+      if (Math.abs(pos.getX() - root.getX()) == 4
+          || Math.abs(pos.getZ() - root.getZ()) == 4
+          || pos.getY() == root.getY() + 8)
+        level.setBlock(pos, Blocks.STONE.defaultBlockState(), 3);
+    helper.runAfterDelay(
+        2,
+        () ->
+            finish(
+                helper,
+                ship,
+                () -> {
+                  var current = core(ship);
+                  helper.assertTrue(
+                      current.coreMotion().coverage(current, current.getBlockPos()) == 0,
+                      "Occluded fixture unexpectedly sees through its walls");
+                  current.coreMotion().layoutChanged(current);
+                  current.coreMotion().tick(current);
+                  helper.assertTrue(
+                      !current.coreMotion().active() && current.organMove() == null,
+                      "An equally occluded higher perch caused pointless body rearrangement");
+                }));
   }
 }

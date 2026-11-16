@@ -1,0 +1,68 @@
+{
+  "purpose": "Post-patch structural replay; not full morphology or survival sign-off",
+  "cases": [
+    {
+      "requested_tps": 20,
+      "intervals": [
+        {
+          "ticks": 200,
+          "actual_ticks": 200.0,
+          "seconds": 10.128377018001629,
+          "observed_tps": 19.746500317329303
+        },
+        {
+          "ticks": 600,
+          "actual_ticks": 600.0,
+          "seconds": 29.987355496996315,
+          "observed_tps": 20.008433223132965
+        },
+        {
+          "ticks": 600,
+          "actual_ticks": 600.0,
+          "seconds": 31.539240471989615,
+          "observed_tps": 19.023920393164424
+        }
+      ],
+      "peak_structural_sections": 1.0,
+      "peak_total_height": 3.0,
+      "final_stomachs": 1.0,
+      "final_connected_stomachs": 1.0,
+      "final_health": 100.0,
+      "final_snapshot": "{Behavior:\"WANDER\",Blocks:8,Cells:\"[BlockPos{x=0, y=-1, z=-1}=Block{biomancy:storage_sac}[facing=up,waterlogged=false], BlockPos{x=0, y=-1, z=0}=Block{create_bioships:amoeba_leg}[facing=down], BlockPos{x=0, y=0, z=-2}=Block{create_bioships:amoeba_leg}[facing=north], BlockPos{x=0, y=0, z=-1}=Block{create_bioships:stomach}[facing=north], BlockPos{x=1, y=0, z=-1}=Block{create_bioships:amoeba_leg}[facing=east], BlockPos{x=0, y=0, z=0}=Block{create_bioships:feeding_mouth}[facing=south], BlockPos{x=1, y=0, z=0}=Block{create_bioships:amoeba_leg}[facing=east], BlockPos{x=0, y=1, z=-1}=Block{create_bioships:living_core}[active=true,blink=false,concealed=false,facing=north,relocating=false]]\",ChunkLease:1b,ConnectedStomachs:1,CoreCoverage:33,CoreElevation:1,CoreMove:{Evasive:0b,Feeding:0b,Home:5629783292128559232L,LayoutDirty:0b,NextScan:8277L,Started:6917L},FaceConnectedComponents:1,Food:1072,GameTime:8265L,Health:100.0d,Height:3,InvalidLegMounts:0,LogicalCore:\"20481032, 129, 20487175\",LogicalMouths:\"[BlockPos{x=20481032, y=128, z=20487176}]\",MassCenter:{X:0.75d,Y:0.375d,Z:-0.25d},OrganMove:\"null\",Position:{X:2.5365611448936667d,Y:67.70301818090691d,Z:105.32870449860798d},Reason:\"No reachable urgent need or funded goal\",RequestedTickRate:20.0f,Ship:[I;-192973612,-674608464,-1256740283,-267161529],SimulationChunks:10,StableSupport:1b,Stomachs:1,StructuralComponents:1,ViewChunks:12,Water:{Air:300,AirAccess:1b,Breathing:1b,GillSamples:70,GillUse:0,LegEvolutionAfter:0L,SeekingAir:0b,Swimming:0b,UseSamples:70,WaterUse:0,Wet:0b}}\n"
+    },
+    {
+      "requested_tps": 10000,
+      "intervals": [
+        {
+          "ticks": 200,
+          "actual_ticks": 200.0,
+          "seconds": 6.737478709983407,
+          "observed_tps": 29.684694914678634
+        },
+        {
+          "ticks": 600,
+          "actual_ticks": 600.0,
+          "seconds": 15.279949518007925,
+          "observed_tps": 39.267145437416545
+        },
+        {
+          "ticks": 600,
+          "actual_ticks": 600.0,
+          "seconds": 12.586294124019332,
+          "observed_tps": 47.670902498216435
+        }
+      ],
+      "peak_structural_sections": 1.0,
+      "peak_total_height": 2.0,
+      "final_stomachs": 0.0,
+      "final_connected_stomachs": 0.0,
+      "final_health": 28.0,
+      "final_snapshot": "{Behavior:\"FLEE\",Blocks:3,Cells:\"[BlockPos{x=0, y=0, z=-1}=Block{biomancy:decomposer}[crafting=false,facing=north,powered=false], BlockPos{x=0, y=0, z=0}=Block{create_bioships:feeding_mouth}[facing=south], BlockPos{x=0, y=1, z=-1}=Block{create_bioships:living_core}[active=true,blink=false,concealed=false,facing=north,relocating=false]]\",ChunkLease:1b,ConnectedStomachs:0,CoreCoverage:22,CoreElevation:1,CoreMove:{Evasive:0b,Feeding:0b,Home:5629783292128559232L,LayoutDirty:0b,NextScan:6577L,Started:5237L},FaceConnectedComponents:1,Food:533,GameTime:6576L,Health:28.0d,Height:2,InvalidLegMounts:0,LogicalCore:\"20481032, 129, 20487175\",LogicalMouths:\"[BlockPos{x=20481032, y=128, z=20487176}]\",MassCenter:{X:0.5d,Y:0.8333333333333333d,Z:-0.16666666666666666d},OrganMove:\"null\",Position:{X:79.35583387266445d,Y:65.50050782212162d,Z:55.48309000154615d},Reason:\"Escape an unsafe creeper or a critical injury\",RequestedTickRate:10000.0f,Ship:[I;-1930741936,635193376,-1168586698,198611733],SimulationChunks:10,StableSupport:1b,Stomachs:0,StructuralComponents:1,ViewChunks:12,Water:{Air:300,AirAccess:1b,Breathing:1b,GillSamples:69,GillUse:0,LegEvolutionAfter:0L,SeekingAir:0b,Swimming:0b,UseSamples:69,WaterUse:0,Wet:0b}}\n"
+    }
+  ],
+  "limitations": [
+    "Normal run completed with working digestion.",
+    "Accelerated target run ended fleeing with no formed stomach and health 28; it does not validate the full growth sequence. Combat/body scheduling remains an open dependency.",
+    "The full tower has not been reproduced; longer convergence and graphical checks remain pending."
+  ]
+}
