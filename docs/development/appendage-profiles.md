@@ -43,3 +43,9 @@ The locomotion legs are the intended lineage for future flight appendages. Airsh
 `BioshipLegAnchors` owns up to 32 world-space feet. Terrain shape intersections produce tip contact boxes and surface normals. Planted feet remain fixed until a new step is needed; five-tick step arcs transfer alternating groups. Missing contacts retract the endpoint. `BioshipCrawl` consumes settled contacts for support, and the renderer converts world feet through the current Sable render transform. A cubic curve starts along the attachment face and ends against the sensed surface normal. Swimming retains a separate paddling stroke. No animation library or prerecorded walking clip is required.
 
 F3+B displays green 0.24-block foot/contact volumes. Attacking graspers display red 0.4-block tip volumes only during a lash's damaging sweep; swept collision between consecutive tip positions prevents tunneling. The shaft itself does not deal damage. F3+P remains the independent route/behavior display.
+
+## Solid mounting invariant
+
+A leg socket requires a directly adjacent host with a full supporting face opposite its outward `facing`. Edge/corner contacts, thin exposed intestines, other leg sockets and unsupported air do not qualify. Growth, player placement, hypothetical body moves and organ transport share this check. Transport revalidates the host at commit; if it disappeared, the real leg cargo is released rather than attached to empty space or converted into free materials.
+
+Transitional procedural legs also choose exposed full body faces; they cannot use a thin pipe as a root. Invalid sockets are excluded from the mounted-leg support set. The anatomy audit can propose conserved relocation of legacy invalid sockets even before digestion exists and with fewer than four sockets. Moving a supporting body block may not introduce additional invalid mounts. These rules do not replace the pending reconfiguration-stability work or graphical animation QA.

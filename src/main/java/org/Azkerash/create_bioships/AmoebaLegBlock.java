@@ -4,6 +4,8 @@ import com.mojang.serialization.MapCodec;
 import net.minecraft.core.*;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.EmptyBlockGetter;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.*;
 import net.minecraft.world.phys.shapes.*;
@@ -21,14 +23,24 @@ public final class AmoebaLegBlock extends DirectionalBlock {
     return outward(BioshipStructure.cells(core.ship()), target);
   }
 
+  static boolean supportsFace(BlockState host, BlockPos hostPos, Direction face) {
+    return host != null
+        && !BioshipLegEvolution.leg(host)
+        && host.isFaceSturdy(EmptyBlockGetter.INSTANCE, hostPos, face);
+  }
+
+  static boolean mounted(java.util.Map<BlockPos, BlockState> cells, BlockPos pos, BlockState leg) {
+    var face = leg.getValue(FACING);
+    var hostPos = pos.relative(face.getOpposite());
+    return supportsFace(cells.get(hostPos), hostPos, face);
+  }
+
   static Direction outward(java.util.Map<BlockPos, BlockState> cells, BlockPos target) {
     for (var face : Direction.values()) {
-      var host = cells.get(target.relative(face.getOpposite()));
-      if (host != null
-          && !BioshipLegEvolution.leg(host)
-          && !host.is(Create_bioships.SURFACE_EYE.get())) return face;
+      var hostPos = target.relative(face.getOpposite());
+      if (supportsFace(cells.get(hostPos), hostPos, face)) return face;
     }
-    return Direction.DOWN;
+    return Direction.DOWN; // Callers must still validate mounted(); never fabricates support.
   }
 
   @Override
@@ -43,7 +55,15 @@ public final class AmoebaLegBlock extends DirectionalBlock {
 
   @Override
   public BlockState getStateForPlacement(BlockPlaceContext context) {
-    return defaultBlockState().setValue(FACING, context.getClickedFace());
+    var state = defaultBlockState().setValue(FACING, context.getClickedFace());
+    return state.canSurvive(context.getLevel(), context.getClickedPos()) ? state : null;
+  }
+
+  @Override
+  protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+    var face = state.getValue(FACING);
+    var hostPos = pos.relative(face.getOpposite());
+    return supportsFace(level.getBlockState(hostPos), hostPos, face);
   }
 
   @Override

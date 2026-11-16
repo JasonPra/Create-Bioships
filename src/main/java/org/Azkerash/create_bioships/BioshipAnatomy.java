@@ -58,10 +58,9 @@ final class BioshipAnatomy {
     if (cached != null && now - cached.at() < 20) return cached;
     var cells = BioshipStructure.cells(core.ship());
     Move move = opening(core, cells);
-    if (move == null && DigestiveSystem.functional(core)) {
-      move = legs(core, cells);
-      if (move == null && BioshipLegGrowth.missing(core) == 0) move = compact(core, cells);
-    }
+    if (move == null) move = legs(core, cells);
+    if (move == null && DigestiveSystem.functional(core) && BioshipLegGrowth.missing(core) == 0)
+      move = compact(core, cells);
     var value = new Audit(now, move);
     CACHE.put(core, value);
     return value;
@@ -135,7 +134,7 @@ final class BioshipAnatomy {
             .filter(e -> BioshipLegEvolution.leg(e.getValue()))
             .sorted(Map.Entry.comparingByKey())
             .toList();
-    if (sockets.size() < 4) return null;
+    if (sockets.isEmpty()) return null;
     var layout = BioshipSupport.layout(core);
     for (int i = 0; i < sockets.size() && i < 32; i++) {
       var socket = sockets.get(i);
@@ -143,7 +142,8 @@ final class BioshipAnatomy {
       boolean buried = cells.containsKey(socket.getKey().relative(face));
       var foot = core.crawl().legAnchors().foot(i, core.getLevel().getGameTime());
       boolean unsupported = foot != null && core.crawl().legAnchors().normal(i).lengthSqr() < .5;
-      if (!buried && !unsupported && layout.stable()) continue;
+      boolean mounted = AmoebaLegBlock.mounted(cells, socket.getKey(), socket.getValue());
+      if (mounted && !buried && !unsupported && layout.stable()) continue;
       for (var target : ports(core, cells)) {
         if (target.getY() > core.structuralOrigin().getY() + layout.center().y + .5) continue;
         if (!canMove(core, socket.getKey(), target)) continue;

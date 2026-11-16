@@ -83,3 +83,16 @@ Verification: full build passed with 51 unit tests and all 121 required GameTest
 ### Batch 6 — ordinary-server fallback and restart verification
 
 Restarted the saved ordinary dedicated-server world with command blocks disabled, no players and no optional observer. All three living starters loaded. Fish reached the cap of 16; after removing all 16, the shared server fallback produced two replacements within the observation interval. Three living cores remained, and forced save/clean shutdown succeeded. This verifies the fallback and persisted fixture/chunk-loading behavior, not the unresolved biological soak or animation appearance. No gameplay code or commands changed in this verification batch.
+
+## Additional regressions reported during incremental testing
+
+- Leg sockets/root geometry can appear to attach by corners or thin intestine surfaces. A full-face mounting invariant is under implementation for growth, player placement, relocation, support scoring and legacy repair.
+- Successive screenshots show increasing organ height even on dry land, eventually with apparent separation of upper parts. Queue a dedicated reconfiguration-stability investigation: visibility/elevation gain must be balanced against actual support, compactness, connection length and ongoing digestive connectivity; reject repeated marginal-benefit moves and test complete sequences over time. The screenshots alone do not establish a deliberate snorkel-building behavior.
+
+- User stress-test condition: high `/tick rate`, described as maximum speed, rather than `/tick sprint`. Reconfiguration/physics sequencing must be checked at both ordinary 20 TPS and accelerated tick rates, without treating acceleration as proof of the cause.
+
+### Batch 7 — full-face leg attachments
+
+Shared mounting checks now require a directly adjacent full supporting face. Socket growth, manual placement, relocation, hypothetical support layouts and transport commits reject diagonal/corner contacts and thin pipe supports. Transitional procedural roots now select real exposed full faces, and invalid sockets do not contribute mounted support. Body relocation may not orphan additional sockets. The anatomy audit repairs legacy invalid sockets even before digestion and before four legs exist. If a host disappears during transport, the actual cargo remains detached rather than being lost or attached to air.
+
+Verification: complete build passed with 51 unit tests and all 125 required GameTests. Added coverage for all six supporting directions, diagonal/thin-pipe rejection, orphaning body moves, transitional root geometry, conserved relocation of an existing diagonal socket, and host removal during transport without cargo loss. Earlier normal-speed navigation cases still pass. Graphical appearance and accelerated-tick reconfiguration remain pending. No new commands or toggles were added in this batch.

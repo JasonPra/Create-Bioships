@@ -145,6 +145,12 @@ public final class OrganMotion {
     if (!stash && !host.isAir() && !BioshipTissue.isTissue(host)) return false;
     var state = level.getBlockState(source);
     if (state.isAir() || state.is(Create_bioships.CORE.get())) return false;
+    if (!stash && !consuming && BioshipLegEvolution.leg(state)) {
+      var mounts = new java.util.LinkedHashMap<>(BioshipStructure.cells(ship));
+      if (!external) mounts.remove(source);
+      var oriented = state.setValue(AmoebaLegBlock.FACING, AmoebaLegBlock.outward(mounts, target));
+      if (!AmoebaLegBlock.mounted(mounts, target, oriented)) return false;
+    }
     var sourceShip = BioshipIntegration.containing(level, source);
     boolean scavenged =
         external && sourceShip != null && sourceShip != ship && BioshipDecay.dead(sourceShip);
@@ -339,6 +345,17 @@ public final class OrganMotion {
       return;
     }
     var original = level.getBlockState(move.cargoBlock());
+    if (BioshipLegEvolution.leg(original)) {
+      var mounts = BioshipStructure.cells(owner);
+      var oriented =
+          original.setValue(AmoebaLegBlock.FACING, AmoebaLegBlock.outward(mounts, move.target()));
+      if (!AmoebaLegBlock.mounted(mounts, move.target(), oriented)) {
+        // The host may have been mined or moved during transport. Keep the actual cargo
+        // instead of attaching the socket to empty space or inventing replacement material.
+        release(core, cargo);
+        return;
+      }
+    }
     if (!host.isAir()) level.removeBlock(move.target(), false);
     SubLevelAssemblyHelper.moveBlocks(
         level,

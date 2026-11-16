@@ -36,6 +36,7 @@ final class BioshipLegGrowth {
       if (BioshipLegEvolution.leg(e.getValue())
           || e.getValue().is(Create_bioships.SURFACE_EYE.get())) continue;
       for (var face : Direction.Plane.HORIZONTAL) {
+        if (!AmoebaLegBlock.supportsFace(e.getValue(), e.getKey(), face)) continue;
         var pos = e.getKey().relative(face);
         if (cells.containsKey(pos)
             || !core.getLevel().getBlockState(pos).isAir()
@@ -104,7 +105,10 @@ final class BioshipLegGrowth {
     var origin = Vec3.atLowerCornerOf(core.structuralOrigin());
     var result = new ArrayList<BioshipSupport.Leg>();
     cells.entrySet().stream()
-        .filter(e -> BioshipLegEvolution.leg(e.getValue()))
+        .filter(
+            e ->
+                BioshipLegEvolution.leg(e.getValue())
+                    && AmoebaLegBlock.mounted(cells, e.getKey(), e.getValue()))
         .sorted(Map.Entry.comparingByKey())
         .limit(32)
         .forEach(

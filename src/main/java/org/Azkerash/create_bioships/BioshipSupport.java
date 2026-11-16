@@ -164,20 +164,43 @@ public final class BioshipSupport {
       int side = i % 2 == 0 ? -1 : 1, front = i < 2 ? -1 : 1;
       var desired = center.add(side * attachmentX, 0, front * attachmentZ);
       BlockPos best = null;
+      Direction mountFace = null;
       double score = Double.MAX_VALUE;
+      var faces =
+          bootstrap
+              ? List.of(Direction.DOWN)
+              : List.of(
+                  side < 0 ? Direction.WEST : Direction.EAST,
+                  front < 0 ? Direction.NORTH : Direction.SOUTH,
+                  Direction.DOWN);
       for (var cell : roots) {
-        var p = Vec3.atCenterOf(cell).subtract(origin);
-        double value =
-            Math.pow(p.x - desired.x, 2)
-                + Math.pow(p.z - desired.z, 2)
-                + Math.max(0, p.y - lowest - .5) * 4;
-        if (value < score) {
-          best = cell;
-          score = value;
+        for (var face : faces) {
+          if (cells.containsKey(cell.relative(face))
+              || !AmoebaLegBlock.supportsFace(cells.get(cell), cell, face)) continue;
+          var p = Vec3.atCenterOf(cell).subtract(origin);
+          double value =
+              Math.pow(p.x - desired.x, 2)
+                  + Math.pow(p.z - desired.z, 2)
+                  + Math.max(0, p.y - lowest - .5) * 4
+                  + faces.indexOf(face) * .1;
+          if (value < score) {
+            best = cell;
+            mountFace = face;
+            score = value;
+          }
         }
       }
+      if (best == null) return new Layout(center, List.copyOf(legs), -1);
       var root =
-          Vec3.atLowerCornerOf(best).subtract(origin).add(.5 + side * .35, -.01, .5 + front * .35);
+          Vec3.atCenterOf(best)
+              .subtract(origin)
+              .add(Vec3.atLowerCornerOf(mountFace.getNormal()).scale(.49));
+      root =
+          switch (mountFace.getAxis()) {
+            case X -> root.add(0, -.15, front * .35);
+            case Z -> root.add(side * .35, -.15, 0);
+            case Y -> root.add(side * .35, 0, front * .35);
+          };
       var foot =
           new Vec3(
               center.x + side * width,
@@ -194,13 +217,7 @@ public final class BioshipSupport {
         var clamped = root.add(delta.scale(reachable / horizontal));
         foot = new Vec3(clamped.x, foot.y, clamped.z);
       }
-      var face = bootstrap ? Direction.DOWN : side < 0 ? Direction.WEST : Direction.EAST;
-      if (!bootstrap)
-        root =
-            Vec3.atLowerCornerOf(best)
-                .subtract(origin)
-                .add(side < 0 ? .01 : .99, .35, .5 + front * .35);
-      legs.add(new Leg(root, foot, face, bootstrap));
+      legs.add(new Leg(root, foot, mountFace, bootstrap));
     }
     var feet = legs.stream().map(Leg::foot).toArray(Vec3[]::new);
     if (!containsProjection(center, feet)) margin = -1;
@@ -230,11 +247,24 @@ public final class BioshipSupport {
     if (BioshipLegEvolution.leg(moved))
       moved = moved.setValue(AmoebaLegBlock.FACING, AmoebaLegBlock.outward(cells, target));
     cells.put(target, moved);
+    if (BioshipLegEvolution.leg(moved) && !AmoebaLegBlock.mounted(cells, target, moved))
+      return new Layout(Vec3.ZERO, List.of(), -1);
+    long invalidBefore = invalidMounts(cells(core));
+    if (invalidMounts(cells) > invalidBefore) return new Layout(Vec3.ZERO, List.of(), -1);
     boolean attached = false;
     for (var face : net.minecraft.core.Direction.values())
       attached |= cells.containsKey(target.relative(face));
     if (!attached && cells.size() > 1) return new Layout(Vec3.ZERO, List.of(), -1);
     return layout(core, cells);
+  }
+
+  private static long invalidMounts(Map<BlockPos, BlockState> cells) {
+    return cells.entrySet().stream()
+        .filter(
+            e ->
+                BioshipLegEvolution.leg(e.getValue())
+                    && !AmoebaLegBlock.mounted(cells, e.getKey(), e.getValue()))
+        .count();
   }
 
   static boolean containsProjection(Vec3 point, Vec3[] contacts) {

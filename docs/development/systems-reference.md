@@ -1658,7 +1658,7 @@ Mass-weighted COM, leg attachments, support polygon, reachable contacts and inve
 
 #### BioshipSupport
 
-Source: `src/main/java/org/Azkerash/create_bioships/BioshipSupport.java` (257 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipSupport.java` (287 lines).
 
 ```java
 public final class BioshipSupport
@@ -1681,13 +1681,15 @@ public final class BioshipSupport
 
   private static Layout layout(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells); // line 89
 
-  static boolean safeAddition(LivingCoreBlockEntity core, BlockPos pos, BlockState state); // line 208
+  static boolean safeAddition(LivingCoreBlockEntity core, BlockPos pos, BlockState state); // line 225
 
-  static boolean safeMove( LivingCoreBlockEntity core, BlockPos source, BlockPos target, boolean restoreFlesh); // line 214
+  static boolean safeMove( LivingCoreBlockEntity core, BlockPos source, BlockPos target, boolean restoreFlesh); // line 231
 
-  static Layout movedLayout( LivingCoreBlockEntity core, BlockPos source, BlockPos target, boolean restoreFlesh); // line 219
+  static Layout movedLayout( LivingCoreBlockEntity core, BlockPos source, BlockPos target, boolean restoreFlesh); // line 236
 
-  static boolean containsProjection(Vec3 point, Vec3[] contacts); // line 238
+  private static long invalidMounts(Map<BlockPos, BlockState> cells); // line 259
+
+  static boolean containsProjection(Vec3 point, Vec3[] contacts); // line 268
 
 ```
 
@@ -1744,7 +1746,7 @@ public final class BioshipLegAnchors
 
 #### BioshipLegGrowth
 
-Source: `src/main/java/org/Azkerash/create_bioships/BioshipLegGrowth.java` (122 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipLegGrowth.java` (126 lines).
 
 ```java
 final class BioshipLegGrowth
@@ -1755,35 +1757,41 @@ final class BioshipLegGrowth
 
   static BioshipAdaptation.Proposal proposal(LivingCoreBlockEntity core); // line 20
 
-  static boolean develop(LivingCoreBlockEntity core, BlockPos pos, BlockState state); // line 86
+  static boolean develop(LivingCoreBlockEntity core, BlockPos pos, BlockState state); // line 87
 
-  static List<BioshipSupport.Leg> attachments( LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells); // line 100
+  static List<BioshipSupport.Leg> attachments( LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells); // line 101
 
 ```
 
 
 #### AmoebaLegBlock
 
-Source: `src/main/java/org/Azkerash/create_bioships/AmoebaLegBlock.java` (61 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/AmoebaLegBlock.java` (81 lines).
 
 ```java
 public final class AmoebaLegBlock extends DirectionalBlock
 
-  public static final MapCodec<AmoebaLegBlock> CODEC; // line 12
+  public static final MapCodec<AmoebaLegBlock> CODEC; // line 14
 
-  public AmoebaLegBlock(Properties properties); // line 13
+  public AmoebaLegBlock(Properties properties); // line 15
 
-  static Direction outward(LivingCoreBlockEntity core, BlockPos target); // line 18
+  static Direction outward(LivingCoreBlockEntity core, BlockPos target); // line 20
 
-  static Direction outward(java.util.Map<BlockPos, BlockState> cells, BlockPos target); // line 22
+  static boolean supportsFace(BlockState host, BlockPos hostPos, Direction face); // line 24
 
-  protected MapCodec<? extends DirectionalBlock> codec(); // line 32
+  static boolean mounted(java.util.Map<BlockPos, BlockState> cells, BlockPos pos, BlockState leg); // line 30
 
-  protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder); // line 37
+  static Direction outward(java.util.Map<BlockPos, BlockState> cells, BlockPos target); // line 36
 
-  public BlockState getStateForPlacement(BlockPlaceContext context); // line 42
+  protected MapCodec<? extends DirectionalBlock> codec(); // line 44
 
-  protected VoxelShape getShape( BlockState state, BlockGetter level, BlockPos pos, CollisionContext context); // line 47
+  protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder); // line 49
+
+  public BlockState getStateForPlacement(BlockPlaceContext context); // line 54
+
+  protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos); // line 60
+
+  protected VoxelShape getShape( BlockState state, BlockGetter level, BlockPos pos, CollisionContext context); // line 67
 
 ```
 
@@ -1813,17 +1821,17 @@ final class BioshipAnatomy
 
   private static Audit audit(LivingCoreBlockEntity core); // line 53
 
-  private static boolean mouthOpening(LivingCoreBlockEntity core, BlockPos pos); // line 68
+  private static boolean mouthOpening(LivingCoreBlockEntity core, BlockPos pos); // line 67
 
-  private static boolean free(LivingCoreBlockEntity core, BlockPos target); // line 78
+  private static boolean free(LivingCoreBlockEntity core, BlockPos target); // line 77
 
-  private static boolean canMove(LivingCoreBlockEntity core, BlockPos source, BlockPos target); // line 87
+  private static boolean canMove(LivingCoreBlockEntity core, BlockPos source, BlockPos target); // line 86
 
-  private static List<BlockPos> ports(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells); // line 97
+  private static List<BlockPos> ports(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells); // line 96
 
-  private static Move opening(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells); // line 109
+  private static Move opening(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells); // line 108
 
-  private static Move legs(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells); // line 130
+  private static Move legs(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells); // line 129
 
   private static Move compact(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells); // line 170
 
@@ -2236,7 +2244,7 @@ Move one actual component/Sable cargo with its complete state; route tube costs 
 
 #### OrganMotion
 
-Source: `src/main/java/org/Azkerash/create_bioships/OrganMotion.java` (422 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/OrganMotion.java` (439 lines).
 
 ```java
 public final class OrganMotion
@@ -2261,17 +2269,17 @@ public final class OrganMotion
 
   private static boolean begin( LivingCoreBlockEntity core, BlockPos source, BlockPos target, boolean external, boolean manual, boolean consuming, boolean stash); // line 128
 
-  private static boolean tissue(net.minecraft.world.level.block.state.BlockState state); // line 235
+  private static boolean tissue(net.minecraft.world.level.block.state.BlockState state); // line 241
 
-  static List<BlockPos> findTissuePath( LivingCoreBlockEntity core, BlockPos source, BlockPos target); // line 242
+  static List<BlockPos> findTissuePath( LivingCoreBlockEntity core, BlockPos source, BlockPos target); // line 248
 
-  private static Vec3 alongTissue(List<BlockPos> path, double progress); // line 278
+  private static Vec3 alongTissue(List<BlockPos> path, double progress); // line 284
 
-  public static void tick(LivingCoreBlockEntity core); // line 285
+  public static void tick(LivingCoreBlockEntity core); // line 291
 
-  private static void release(LivingCoreBlockEntity core, ServerSubLevel cargo); // line 401
+  private static void release(LivingCoreBlockEntity core, ServerSubLevel cargo); // line 418
 
-  public static void abandon(LivingCoreBlockEntity core); // line 413
+  public static void abandon(LivingCoreBlockEntity core); // line 430
 
 ```
 

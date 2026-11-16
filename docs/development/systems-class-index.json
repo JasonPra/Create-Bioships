@@ -2431,32 +2431,32 @@
         {
           "kind": "method",
           "signature": "private static boolean mouthOpening(LivingCoreBlockEntity core, BlockPos pos)",
-          "line": 68
+          "line": 67
         },
         {
           "kind": "method",
           "signature": "private static boolean free(LivingCoreBlockEntity core, BlockPos target)",
-          "line": 78
+          "line": 77
         },
         {
           "kind": "method",
           "signature": "private static boolean canMove(LivingCoreBlockEntity core, BlockPos source, BlockPos target)",
-          "line": 87
+          "line": 86
         },
         {
           "kind": "method",
           "signature": "private static List<BlockPos> ports(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells)",
-          "line": 97
+          "line": 96
         },
         {
           "kind": "method",
           "signature": "private static Move opening(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells)",
-          "line": 109
+          "line": 108
         },
         {
           "kind": "method",
           "signature": "private static Move legs(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells)",
-          "line": 130
+          "line": 129
         },
         {
           "kind": "method",
@@ -3150,35 +3150,35 @@
         {
           "kind": "method",
           "signature": "private static boolean tissue(net.minecraft.world.level.block.state.BlockState state)",
-          "line": 235
+          "line": 241
         },
         {
           "kind": "method",
           "signature": "static List<BlockPos> findTissuePath( LivingCoreBlockEntity core, BlockPos source, BlockPos target)",
-          "line": 242
+          "line": 248
         },
         {
           "kind": "method",
           "signature": "private static Vec3 alongTissue(List<BlockPos> path, double progress)",
-          "line": 278
+          "line": 284
         },
         {
           "kind": "method",
           "signature": "public static void tick(LivingCoreBlockEntity core)",
-          "line": 285
+          "line": 291
         },
         {
           "kind": "method",
           "signature": "private static void release(LivingCoreBlockEntity core, ServerSubLevel cargo)",
-          "line": 401
+          "line": 418
         },
         {
           "kind": "method",
           "signature": "public static void abandon(LivingCoreBlockEntity core)",
-          "line": 413
+          "line": 430
         }
       ],
-      "lines": 422
+      "lines": 439
     },
     "BioshipEnergy": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipEnergy.java",
@@ -6637,45 +6637,60 @@
         {
           "kind": "field",
           "signature": "public static final MapCodec<AmoebaLegBlock> CODEC",
-          "line": 12
+          "line": 14
         },
         {
           "kind": "method",
           "signature": "public AmoebaLegBlock(Properties properties)",
-          "line": 13
+          "line": 15
         },
         {
           "kind": "method",
           "signature": "static Direction outward(LivingCoreBlockEntity core, BlockPos target)",
-          "line": 18
+          "line": 20
+        },
+        {
+          "kind": "method",
+          "signature": "static boolean supportsFace(BlockState host, BlockPos hostPos, Direction face)",
+          "line": 24
+        },
+        {
+          "kind": "method",
+          "signature": "static boolean mounted(java.util.Map<BlockPos, BlockState> cells, BlockPos pos, BlockState leg)",
+          "line": 30
         },
         {
           "kind": "method",
           "signature": "static Direction outward(java.util.Map<BlockPos, BlockState> cells, BlockPos target)",
-          "line": 22
+          "line": 36
         },
         {
           "kind": "method",
           "signature": "protected MapCodec<? extends DirectionalBlock> codec()",
-          "line": 32
+          "line": 44
         },
         {
           "kind": "method",
           "signature": "protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder)",
-          "line": 37
+          "line": 49
         },
         {
           "kind": "method",
           "signature": "public BlockState getStateForPlacement(BlockPlaceContext context)",
-          "line": 42
+          "line": 54
+        },
+        {
+          "kind": "method",
+          "signature": "protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos)",
+          "line": 60
         },
         {
           "kind": "method",
           "signature": "protected VoxelShape getShape( BlockState state, BlockGetter level, BlockPos pos, CollisionContext context)",
-          "line": 47
+          "line": 67
         }
       ],
-      "lines": 61
+      "lines": 81
     },
     "EngineRoomLayout": {
       "path": "src/main/java/org/Azkerash/create_bioships/EngineRoomLayout.java",
@@ -7177,25 +7192,30 @@
         {
           "kind": "method",
           "signature": "static boolean safeAddition(LivingCoreBlockEntity core, BlockPos pos, BlockState state)",
-          "line": 208
+          "line": 225
         },
         {
           "kind": "method",
           "signature": "static boolean safeMove( LivingCoreBlockEntity core, BlockPos source, BlockPos target, boolean restoreFlesh)",
-          "line": 214
+          "line": 231
         },
         {
           "kind": "method",
           "signature": "static Layout movedLayout( LivingCoreBlockEntity core, BlockPos source, BlockPos target, boolean restoreFlesh)",
-          "line": 219
+          "line": 236
+        },
+        {
+          "kind": "method",
+          "signature": "private static long invalidMounts(Map<BlockPos, BlockState> cells)",
+          "line": 259
         },
         {
           "kind": "method",
           "signature": "static boolean containsProjection(Vec3 point, Vec3[] contacts)",
-          "line": 238
+          "line": 268
         }
       ],
-      "lines": 257
+      "lines": 287
     },
     "BioshipRescue": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipRescue.java",
@@ -8573,15 +8593,15 @@
         {
           "kind": "method",
           "signature": "static boolean develop(LivingCoreBlockEntity core, BlockPos pos, BlockState state)",
-          "line": 86
+          "line": 87
         },
         {
           "kind": "method",
           "signature": "static List<BioshipSupport.Leg> attachments( LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells)",
-          "line": 100
+          "line": 101
         }
       ],
-      "lines": 122
+      "lines": 126
     },
     "EmergencyReserve": {
       "path": "src/main/java/org/Azkerash/create_bioships/EmergencyReserve.java",

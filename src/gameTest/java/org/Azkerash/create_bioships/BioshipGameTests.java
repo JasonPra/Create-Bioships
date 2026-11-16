@@ -8255,4 +8255,164 @@ public class BioshipGameTests {
               });
         });
   }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "solid_leg_mounts")
+  public static void legs_require_full_face_support_and_reject_edges_pipes_and_orphaning_moves(
+      GameTestHelper helper) {
+    var body = Map.of(BlockPos.ZERO, Create_bioships.CORE.get().defaultBlockState());
+    for (var face : Direction.values()) {
+      var leg =
+          Create_bioships.AMOEBA_LEG
+              .get()
+              .defaultBlockState()
+              .setValue(AmoebaLegBlock.FACING, face);
+      var pos = BlockPos.ZERO.relative(face);
+      helper.assertTrue(AmoebaLegBlock.mounted(body, pos, leg), "Full face rejected: " + face);
+      var diagonal =
+          pos.relative(face.getAxis() == Direction.Axis.Y ? Direction.EAST : Direction.UP);
+      helper.assertTrue(
+          !AmoebaLegBlock.mounted(body, diagonal, leg), "Diagonal mount accepted: " + face);
+      helper.assertTrue(
+          !AmoebaLegBlock.mounted(
+              Map.of(BlockPos.ZERO, Create_bioships.INTESTINE.get().defaultBlockState()), pos, leg),
+          "Thin intestine accepted as full support");
+    }
+    var ship = assemble(helper);
+    try {
+      var core = core(ship);
+      var pos = core.getBlockPos().east();
+      var leg =
+          Create_bioships.AMOEBA_LEG
+              .get()
+              .defaultBlockState()
+              .setValue(AmoebaLegBlock.FACING, Direction.EAST);
+      helper.getLevel().setBlock(pos, leg, 3);
+      helper.assertTrue(
+          !OrganMotion.begin(core, pos, pos.north(), false),
+          "Relocation accepted a corner-only leg mount");
+      helper.assertTrue(
+          !BioshipSupport.safeMove(core, core.getBlockPos(), core.getBlockPos().above(), false),
+          "Body relocation orphaned an existing leg mount");
+      helper.succeed();
+    } finally {
+      cleanup(helper, ship);
+    }
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "transitional_leg_faces")
+  public static void transitional_legs_use_solid_exposed_faces_instead_of_thin_pipe_roots(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    helper
+        .getLevel()
+        .setBlock(
+            core.getBlockPos().east(), Create_bioships.INTESTINE.get().defaultBlockState(), 3);
+    helper.runAfterDelay(
+        1,
+        () ->
+            finish(
+                helper,
+                ship,
+                () -> {
+                  var current = core(ship);
+                  var cells = BioshipStructure.cells(ship);
+                  var origin = Vec3.atLowerCornerOf(current.structuralOrigin());
+                  for (var leg : BioshipSupport.layout(current).legs()) {
+                    var inward = Vec3.atLowerCornerOf(leg.face().getNormal()).scale(-.04);
+                    var host = BlockPos.containing(leg.root().add(origin).add(inward));
+                    helper.assertTrue(
+                        AmoebaLegBlock.supportsFace(cells.get(host), host, leg.face()),
+                        "Transitional tentacle root does not lie on a full exposed body face: "
+                            + host);
+                    helper.assertTrue(
+                        !cells.containsKey(host.relative(leg.face())),
+                        "Tentacle root is buried inside another component");
+                  }
+                }));
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "repair_legacy_leg_mount")
+  public static void anatomy_repositions_a_corner_only_leg_before_digestion_exists(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var bad = core.getBlockPos().east().north();
+    helper
+        .getLevel()
+        .setBlock(
+            bad,
+            Create_bioships.AMOEBA_LEG
+                .get()
+                .defaultBlockState()
+                .setValue(AmoebaLegBlock.FACING, Direction.EAST),
+            3);
+    BioshipAnatomy.invalidate(core);
+    var proposal = BioshipAnatomy.proposal(core);
+    helper.assertTrue(
+        proposal != null && proposal.pos().equals(bad),
+        "Legacy diagonal leg was not queued for a full-face relocation");
+    helper.assertTrue(BioshipAnatomy.execute(core, bad), "Full-face repair could not begin");
+    helper.runAfterDelay(
+        45,
+        () ->
+            finish(
+                helper,
+                ship,
+                () -> {
+                  var cells = BioshipStructure.cells(ship);
+                  var legs =
+                      cells.entrySet().stream()
+                          .filter(e -> BioshipLegEvolution.leg(e.getValue()))
+                          .toList();
+                  helper.assertTrue(
+                      legs.size() == 1
+                          && legs.stream()
+                              .allMatch(
+                                  e -> AmoebaLegBlock.mounted(cells, e.getKey(), e.getValue())),
+                      "Repair duplicated, lost or left a leg on a non-solid mounting face");
+                }));
+  }
+
+  @GameTest(
+      template = "test_empty",
+      timeoutTicks = 100,
+      batch = "leg_mount_changed_during_transport")
+  public static void moving_leg_keeps_its_cargo_if_the_supporting_face_disappears(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var host = core.getBlockPos().west();
+    var source = core.getBlockPos().east();
+    var target = host.north();
+    level.setBlock(host, BioshipTissue.body().defaultBlockState(), 3);
+    level.setBlock(
+        source,
+        Create_bioships.AMOEBA_LEG
+            .get()
+            .defaultBlockState()
+            .setValue(AmoebaLegBlock.FACING, Direction.EAST),
+        3);
+    helper.assertTrue(
+        OrganMotion.begin(core, source, target, false), "Valid supported leg move did not begin");
+    var move = core.organMove();
+    level.removeBlock(host, false);
+    helper.runAfterDelay(
+        45,
+        () ->
+            finish(
+                helper,
+                ship,
+                () -> {
+                  helper.assertTrue(
+                      level.getBlockState(target).isAir(),
+                      "Transport committed a leg after its host was removed");
+                  var cargo = SubLevelContainer.getContainer(level).getSubLevel(move.cargo());
+                  helper.assertTrue(
+                      cargo instanceof ServerSubLevel
+                          && BioshipLegEvolution.leg(level.getBlockState(move.cargoBlock())),
+                      "Canceled mounting lost the real leg cargo");
+                }));
+  }
 }
