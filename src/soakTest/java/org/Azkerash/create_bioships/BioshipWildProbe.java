@@ -20,7 +20,9 @@ public final class BioshipWildProbe {
   private static final class State {
     int unchanged, feeds, lastSeen;
     String signature = "";
-    boolean digestive, produced;
+    boolean digestive, produced, reportedDead, missing;
+    int layoutSignature = Integer.MIN_VALUE;
+    net.minecraft.world.phys.Vec3 position = net.minecraft.world.phys.Vec3.ZERO;
   }
 
   @SubscribeEvent
@@ -39,8 +41,27 @@ public final class BioshipWildProbe {
     for (var ship : SubLevelContainer.getContainer(level).getAllSubLevels()) {
       for (var entity :
           BioshipIntegration.blockEntities((dev.ryanhcode.sable.sublevel.ServerSubLevel) ship)) {
-        if (!(entity instanceof LivingCoreBlockEntity core) || core.body().dead()) continue;
-        var state = states.computeIfAbsent(ship.getUniqueId(), id -> new State());
+        if (!(entity instanceof LivingCoreBlockEntity core)) continue;
+        var state = states.get(ship.getUniqueId());
+        if (core.body().dead()) {
+          if (state != null && !state.reportedDead) {
+            state.reportedDead = true;
+            System.out.println(
+                "WILDPROBE DEATH tick="
+                    + tick
+                    + " ship="
+                    + ship.getUniqueId()
+                    + " data="
+                    + BioshipDiagnostics.snapshot(core));
+          }
+          continue;
+        }
+        if (state == null) {
+          state = new State();
+          states.put(ship.getUniqueId(), state);
+        }
+        state.missing = false;
+        state.position = BioshipBlueprint.physical(core, BlockPos.ZERO);
         state.lastSeen = tick;
         var stomachs = DigestiveSystem.stomachs(core);
         state.digestive |= !stomachs.isEmpty() && core.hasMouth();
@@ -66,6 +87,21 @@ public final class BioshipWildProbe {
         var action = core.brain().action();
         var bodyWork = core.adaptation().behavior().debug();
         var cells = BioshipStructure.cells(core.ship());
+        int layoutSignature =
+            Objects.hash(
+                cells,
+                BioshipDecay.dead(core.ship()),
+                stomachs.stream().filter(gut -> gut.connected(core)).count());
+        if (layoutSignature != state.layoutSignature) {
+          state.layoutSignature = layoutSignature;
+          System.out.println(
+              "WILDPROBE LAYOUT tick="
+                  + tick
+                  + " ship="
+                  + ship.getUniqueId()
+                  + " data="
+                  + BioshipDiagnostics.snapshot(core));
+        }
         String signature =
             action
                 + ":"
@@ -148,6 +184,23 @@ public final class BioshipWildProbe {
                   + state.feeds);
       }
     }
+    for (var entry : states.entrySet()) {
+      var state = entry.getValue();
+      if (!state.missing && tick - state.lastSeen >= 40) {
+        state.missing = true;
+        System.out.println(
+            "WILDPROBE MISSING tick="
+                + tick
+                + " ship="
+                + entry.getKey()
+                + " lastSeen="
+                + state.lastSeen
+                + " lastPosition="
+                + state.position
+                + " reportedDead="
+                + state.reportedDead);
+      }
+    }
     if (tick >= Integer.getInteger("bioships.wildTicks", 3600)) {
       long fed = states.values().stream().filter(s -> s.feeds >= 2).count();
       long digestive = states.values().stream().filter(s -> s.digestive).count();
@@ -178,5 +231,30 @@ public final class BioshipWildProbe {
               + failures);
       server.halt(false);
     }
+  }
+
+  @SubscribeEvent
+  public static void blast(net.neoforged.neoforge.event.level.ExplosionEvent.Detonate event) {
+    if (!Boolean.getBoolean("bioships.wildProbe")) return;
+    var explosion = event.getExplosion();
+    var nearby =
+        states.entrySet().stream()
+            .filter(e -> e.getValue().position.distanceToSqr(explosion.center()) < 256)
+            .map(Map.Entry::getKey)
+            .toList();
+    if (nearby.isEmpty()) return;
+    System.out.println(
+        "WILDPROBE BLAST tick="
+            + tick
+            + " center="
+            + explosion.center()
+            + " radius="
+            + explosion.radius()
+            + " nearby="
+            + nearby
+            + " source="
+            + (explosion.getDirectSourceEntity() == null
+                ? "none"
+                : explosion.getDirectSourceEntity().getType().getDescriptionId()));
   }
 }

@@ -26,6 +26,27 @@ public final class BioshipDiagnostics {
     return result;
   }
 
+  /** Opt-in call-site evidence; never changes death, ownership or simulation decisions. */
+  static void decayMarked(ServerSubLevel ship) {
+    if (!Boolean.getBoolean("bioships.traceLifecycle")) return;
+    var callsite =
+        StackWalker.getInstance()
+            .walk(frames -> frames.skip(1).limit(10).map(Object::toString).toList());
+    System.out.println(
+        "BIOSHIP_LIFECYCLE event=mark_dead tick="
+            + ship.getLevel().getGameTime()
+            + " ship="
+            + ship.getUniqueId()
+            + " lineage="
+            + BioshipDecay.lineage(ship)
+            + " liveCores="
+            + BioshipIntegration.blockEntities(ship).stream()
+                .filter(e -> e instanceof LivingCoreBlockEntity core && !core.body().dead())
+                .count()
+            + " callsite="
+            + callsite);
+  }
+
   static CompoundTag snapshot(LivingCoreBlockEntity core) {
     var data = new CompoundTag();
     var cells = BioshipStructure.cells(core.ship());
@@ -42,6 +63,9 @@ public final class BioshipDiagnostics {
     data.put("BodyWork", core.adaptation().behavior().debug());
     data.putString("Reason", core.brain().reason());
     data.putDouble("Health", core.body().health());
+    data.putBoolean("BodyDead", core.body().dead());
+    data.putBoolean("ShipDead", BioshipDecay.dead(core.ship()));
+    data.putString("Lineage", BioshipDecay.lineage(core.ship()).toString());
     data.putInt(
         "Food", core.saveWithFullMetadata(core.getLevel().registryAccess()).getInt("Satiety"));
     data.put("Water", core.aquatic().save());

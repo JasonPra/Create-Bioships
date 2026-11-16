@@ -88,6 +88,7 @@ public final class BioshipDecay {
 
   public static void mark(ServerSubLevel ship) {
     if (dead(ship)) return;
+    BioshipDiagnostics.decayMarked(ship);
     var tag = ship.getUserDataTag() == null ? new CompoundTag() : ship.getUserDataTag().copy();
     tag.putBoolean("BioshipDead", true);
     tag.putUUID("BioshipCorpseRoot", ship.getUniqueId());

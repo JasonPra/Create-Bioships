@@ -33,3 +33,13 @@ The F3+P hologram also displays the independent body-work selection and queue co
 `/bioship_debug inspect <id>` includes a `BodyWork` compound with `Action`, `Reason`,
 `Target` (when selected), and ranked `Priorities`. A transaction wait means another
 conserved operation owns the layout; combat alone does not block body adaptation.
+
+For lifecycle investigations, `/bioship_debug inspect <id>` reports `BodyDead`,
+`ShipDead`, and `Lineage`. A healthy core on a grid marked dead is an inconsistency
+worth capturing; inspection does not clear death records.
+
+Optional dev-launch JVM option: `-Dbioships.traceLifecycle=true`. It logs each
+first decay mark with game time, ship/lineage, live-core count and caller stack.
+The opt-in ecosystem observer additionally logs layout changes, nearby blasts,
+observed deaths and missing creatures. These logs do not modify world rules or AI.
+No new in-game command is required.
