@@ -744,6 +744,7 @@ public final class BioshipBlueprint {
     cargo.clear();
     phase = "idle";
     status = "Blueprint complete";
+    BioshipHealthChanges.changed(core);
     paid = 0;
     revision++;
     core.setChanged();

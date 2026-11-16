@@ -55,6 +55,17 @@ public final class BioshipAssimilation {
     return stock.stream().mapToInt(t -> Math.max(1, t.getInt("Count"))).sum();
   }
 
+  int health(LivingCoreBlockEntity core) {
+    long total = 0;
+    for (var tag : stock)
+      total +=
+          (long)
+                  BioshipHealthPool.part(
+                      state(core, tag), tag.getCompound("Entity"), !tag.getBoolean("HostReleased"))
+              * Math.max(1, tag.getInt("Count"));
+    return (int) Math.min(Integer.MAX_VALUE, total);
+  }
+
   double load(LivingCoreBlockEntity core) {
     double mass = 0;
     for (var tag : stock)
@@ -85,6 +96,7 @@ public final class BioshipAssimilation {
     var entity = stack.get(net.minecraft.core.component.DataComponents.BLOCK_ENTITY_DATA);
     if (entity != null) tag.put("Entity", entity.copyTag());
     stock.add(tag);
+    BioshipHealthChanges.changed(core);
     core.setChanged();
     return true;
   }
@@ -94,6 +106,12 @@ public final class BioshipAssimilation {
     var tag = new CompoundTag();
     tag.put("State", NbtUtils.writeBlockState(state));
     tag.putInt("Count", 1);
+    tag.putBoolean(
+        "HostReleased",
+        core.organMove() != null
+            && !core.organMove().external()
+            && core.organMove().restoreFlesh());
+    BioshipHealthChanges.changed(core);
     if (cargo.getUserDataTag() != null) {
       tag.putBoolean("Wreck", cargo.getUserDataTag().getBoolean("BioshipScavenged"));
       tag.putBoolean("Recycle", cargo.getUserDataTag().getBoolean("BioshipEmergencyRecycle"));
@@ -112,6 +130,7 @@ public final class BioshipAssimilation {
           return;
         }
     stock.add(tag);
+    BioshipHealthChanges.changed(core);
     core.setChanged();
   }
 
@@ -271,7 +290,7 @@ public final class BioshipAssimilation {
     for (var tag : List.copyOf(stock)) {
       var state = state(core, tag);
       if (BioshipLarynx.isLarynx(state) && BioshipLarynx.absorb(core, tag.getCompound("Entity"))) {
-        take(tag);
+        take(core, tag);
         core.setChanged();
         continue;
       }
@@ -285,7 +304,7 @@ public final class BioshipAssimilation {
       // Never discard a missing digestive organ, or contents that cannot yet be transferred.
       if (!keep && !tag.contains("Entity")) {
         core.scavenging().recycle(state);
-        take(tag);
+        take(core, tag);
         core.scavenging().deliver(core);
         core.setChanged();
         continue;
@@ -340,7 +359,7 @@ public final class BioshipAssimilation {
         BioshipTissue.remember(entity, host);
         entity.setChanged();
       }
-      take(tag);
+      take(core, tag);
       if (tag.getBoolean("Wreck") || tag.getBoolean("Recycle"))
         core.scavenging()
             .finish(
@@ -357,7 +376,8 @@ public final class BioshipAssimilation {
     deploymentBlocked = !stock.isEmpty();
   }
 
-  private void take(CompoundTag tag) {
+  private void take(LivingCoreBlockEntity core, CompoundTag tag) {
+    BioshipHealthChanges.changed(core);
     int count = Math.max(1, tag.getInt("Count"));
     if (count == 1) stock.remove(tag);
     else tag.putInt("Count", count - 1);

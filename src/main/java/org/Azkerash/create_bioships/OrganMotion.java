@@ -301,6 +301,7 @@ public final class OrganMotion {
     if (!(container.getSubLevel(move.cargo()) instanceof ServerSubLevel cargo)
         || cargo.isRemoved()) {
       core.organMove(null);
+      BioshipHealthChanges.changed(core);
       return;
     }
     long age = level.getGameTime() - move.started();
@@ -338,6 +339,7 @@ public final class OrganMotion {
         container.removeForceLoadTicket(
             owner, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
       core.organMove(null);
+      BioshipHealthChanges.changed(core);
       core.vision().invalidate();
       return;
     }
@@ -416,6 +418,7 @@ public final class OrganMotion {
       container.removeForceLoadTicket(
           owner, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
     core.organMove(null);
+    BioshipHealthChanges.changed(core);
     core.vision().invalidate();
     if (scavenged || recycle) core.scavenging().finish(core, move.target(), hostFlesh, recycle);
     else if (move.external()) BioshipIntegration.finishAssimilation(core, move.target());
@@ -434,6 +437,7 @@ public final class OrganMotion {
         .removeForceLoadTicket(cargo, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
     cargo.setName("Detached bioship component");
     core.organMove(null);
+    BioshipHealthChanges.changed(core);
   }
 
   public static void abandon(LivingCoreBlockEntity core) {

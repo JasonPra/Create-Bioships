@@ -66,6 +66,7 @@ final class BioshipLarynx {
     var mouth = mouths(core).stream().filter(m -> !m.voiced()).findFirst().orElse(null);
     if (mouth == null) return false;
     mouth.absorbLarynx(capsule);
+    BioshipHealthChanges.changed(core);
     return true;
   }
 
@@ -84,6 +85,7 @@ final class BioshipLarynx {
             .getKey(com.github.elenterius.biomancy.init.ModSoundEvents.FLESH_BLOB_GROWL.get())
             .toString());
     mouth.absorbLarynx(capsule);
+    BioshipHealthChanges.changed(core);
     core.setChanged();
     return true;
   }

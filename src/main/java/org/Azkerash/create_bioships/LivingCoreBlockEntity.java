@@ -463,6 +463,12 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     return crawl;
   }
 
+  private final BioshipSurvivalAdaptations survival = new BioshipSurvivalAdaptations();
+
+  public BioshipSurvivalAdaptations survival() {
+    return survival;
+  }
+
   private final BioshipAdaptation adaptation = new BioshipAdaptation();
 
   BioshipAdaptation adaptation() {
@@ -682,6 +688,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
   public static void tick(Level level, BlockPos pos, BlockState state, LivingCoreBlockEntity core) {
     if (level.isClientSide) return;
     core.chunkLoading.update(core);
+    core.body.initializeHealth(core);
     if (core.ship() != null && !core.body().dead() && level.getGameTime() % 20 == 0)
       BioshipAnatomy.observe(core);
     if (core.ship() != null) {
@@ -1149,15 +1156,19 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     if (!intent.lift()) {
       if (!supported) return;
       var current = body.getLinearVelocity(new Vector3d());
+      boolean clinging = crawl.wallFacing() != null;
       var grounded =
           new Vector3d(intent.velocity().x - current.x, 0, intent.velocity().z - current.z)
               .mul(12 * dt);
       if (Double.isFinite(intent.supportHeight())) {
         double height = ship.logicalPose().transformPosition(Vec3.atCenterOf(worldPosition)).y;
         double target =
-            Math.clamp((intent.supportHeight() - height) * 2, -.45, .65 + .1 * crawl.legTier());
+            Math.clamp(
+                (intent.supportHeight() - height) * 2,
+                -.45,
+                clinging ? 1.8 : .65 + .1 * crawl.legTier());
         double gravity = DimensionPhysicsData.getGravity(ship.getLevel()).y;
-        grounded.y = ((target - current.y) * 6 - gravity) * dt;
+        grounded.y = ((target - current.y) * (clinging ? 12 : 6) - gravity) * dt;
       }
       body.addLinearAndAngularVelocity(grounded, correction.mul(dt));
       return;
@@ -1184,6 +1195,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     tag.put("Loot", loot.save());
     tag.put("CoreMotion", coreMotion.save());
     tag.put("Adaptation", adaptation.save());
+    tag.put("SurvivalAdaptations", survival.save());
     tag.put("Defense", defense.save());
     tag.put("Autonomy", autonomy.save());
     tag.put("Rescue", rescue.save());
@@ -1235,6 +1247,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     loot.load(tag.getCompound("Loot"));
     coreMotion.load(tag.getCompound("CoreMotion"));
     adaptation.load(tag.getCompound("Adaptation"));
+    survival.load(tag.getCompound("SurvivalAdaptations"));
     defense.load(tag.getCompound("Defense"));
     autonomy.load(tag.getCompound("Autonomy"));
     rescue.load(tag.getCompound("Rescue"), registries);

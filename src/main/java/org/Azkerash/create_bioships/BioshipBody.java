@@ -18,6 +18,18 @@ public final class BioshipBody {
   private final Set<BlockPos> injured = new HashSet<>();
   private double health = 100;
   private int capacity = 100;
+  private boolean healthInitialized;
+  private long healthAudits, lastDamageTick = Long.MIN_VALUE;
+  private BioshipDeathCause lastDamageCause = BioshipDeathCause.INJURY;
+
+  long healthAudits() {
+    return healthAudits;
+  }
+
+  void initializeHealth(LivingCoreBlockEntity core) {
+    if (!healthInitialized && core.ship() != null) observe(core);
+  }
+
   private volatile boolean dead;
   private BioshipDeathCause deathCause = BioshipDeathCause.NONE;
   private long deathAt = -1;
@@ -56,6 +68,12 @@ public final class BioshipBody {
 
   private void hurt(LivingCoreBlockEntity core, double amount, BioshipDeathCause cause) {
     if (dead || amount <= 0) return;
+    if (cause == BioshipDeathCause.EXPLOSION) {
+      amount = core.survival().damage((float) amount);
+      BioshipSurvivalAdaptations.damaged(core);
+    }
+    lastDamageTick = core.getLevel().getGameTime();
+    lastDamageCause = cause;
     damageFeedback(core);
     health = Math.max(0, health - amount);
     if (health <= 0) die(core, cause);
@@ -116,7 +134,8 @@ public final class BioshipBody {
   }
 
   void observe(LivingCoreBlockEntity core) {
-    if (dead) return;
+    if (dead || core.blueprint().busy()) return;
+    healthAudits++;
     double before = health;
     var current = actual(core);
     current.forEach(
@@ -127,9 +146,11 @@ public final class BioshipBody {
             injured.remove(p);
           } else if (injured.add(p)) health = Math.max(0, health - 4);
         });
-    int next = Math.max(100, memory.size() * 4);
-    health = Math.min(next, health + Math.max(0, next - capacity));
+    int next = BioshipHealthPool.total(core, current);
+    // Retain the same wounds when tissue is added/lost; cycling parts cannot heal them.
+    health = Math.clamp(health + (long) next - capacity, 0, next);
     capacity = next;
+    healthInitialized = true;
     for (var entry : memory.entrySet())
       if (!current.containsKey(entry.getKey())
           && !core.rescue().retracted(core.getBlockPos().offset(entry.getKey()))
@@ -139,7 +160,12 @@ public final class BioshipBody {
       core.getLevel()
           .sendBlockUpdated(core.getBlockPos(), core.getBlockState(), core.getBlockState(), 2);
     }
-    if (health <= 0) die(core, BioshipDeathCause.INJURY);
+    if (health <= 0)
+      die(
+          core,
+          lastDamageTick == core.getLevel().getGameTime()
+              ? lastDamageCause
+              : BioshipDeathCause.INJURY);
     core.setChanged();
   }
 
@@ -175,7 +201,6 @@ public final class BioshipBody {
     if (dead || core.starving()) return;
     if (core.getLevel().getGameTime() % 20 != 0 || core.ship() == null || core.blueprint().busy())
       return;
-    observe(core);
     var stomach = DigestiveSystem.stomach(core);
     if (stomach == null || OrganMotion.busy(core)) return;
     for (var e : memory.entrySet()) {
@@ -319,6 +344,7 @@ public final class BioshipBody {
     tag.putFloat("CombatAmount", lastCombatAmount);
     tag.putLong("FlashUntil", flashUntil);
     tag.putInt("Capacity", capacity);
+    tag.putBoolean("ComponentHealth", healthInitialized);
     tag.put("Cells", saveCells(memory));
     tag.putLongArray("Injured", injured.stream().mapToLong(BlockPos::asLong).toArray());
     return tag;
@@ -331,6 +357,7 @@ public final class BioshipBody {
     memory.clear();
     memory.putAll(loadCells(tag.getList("Cells", Tag.TAG_COMPOUND), registries));
     capacity = Math.max(100, tag.getInt("Capacity"));
+    healthInitialized = tag.getBoolean("ComponentHealth");
     health = tag.contains("Health") ? Math.clamp(tag.getDouble("Health"), 0, capacity) : 100;
     dead = tag.getBoolean("Dead") || health <= 0;
     deathCause =

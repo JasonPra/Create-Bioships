@@ -76,7 +76,7 @@ final class BioshipContainerState {
           if (entity instanceof LivingCoreBlockEntity) {
             // Carry resources, not old ship ownership, goals, corpse state or plot coordinates.
             var resources = new CompoundTag();
-            for (var key : List.of("id", "Biomass", "Levitite", "Satiety"))
+            for (var key : List.of("id", "Biomass", "Levitite", "Satiety", "SurvivalAdaptations"))
               if (data.contains(key)) resources.put(key, data.get(key).copy());
             var adaptation = data.getCompound("Adaptation").copy();
             adaptation.remove("Armor");

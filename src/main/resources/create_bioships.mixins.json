@@ -11,7 +11,10 @@
     "ReconfigurationHeatMapMixin",
     "BiometricSubLevelCollisionMixin",
     "SablePlotUnloadMixin",
-    "CreeperBlastAccess"
+    "CreeperBlastAccess",
+    "ComponentHealthChangeMixin",
+    "SurvivalExplosionMixin",
+    "SurvivalBlastResistanceMixin"
   ],
   "client": [
     "PathDebugKeyMixin"

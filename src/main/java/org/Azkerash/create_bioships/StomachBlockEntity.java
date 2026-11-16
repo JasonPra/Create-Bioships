@@ -332,6 +332,10 @@ public class StomachBlockEntity extends BlockEntity implements MenuProvider, Mat
           core.digestMeal(stack);
           if (core.isMature()) stomach.meals++;
         }
+        if (stack.is(Create_bioships.MOB_MEATS.get("creeper").get())) {
+          core.survival().ateCreeperMeat(value.getIngredientQuantity().count());
+          core.setChanged();
+        }
         stack.shrink(value.getIngredientQuantity().count());
         stomach.progress = 0;
         stomach.activeSlot = -1;

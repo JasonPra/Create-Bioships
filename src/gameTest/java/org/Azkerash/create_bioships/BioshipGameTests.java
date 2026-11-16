@@ -1818,7 +1818,8 @@ public class BioshipGameTests {
               stomach.nutrients() == 0 && stomach.material("biomancy:elastic_fibers") == 2,
               "Nutrients were not consumed before fibers");
           helper.assertTrue(
-              core.body().health() == 100, "Reserve-backed starvation damaged health");
+              core.body().health() == core.body().capacity(),
+              "Reserve-backed starvation damaged health");
           emptySatiety(core);
         });
     helper.runAfterDelay(
@@ -1837,7 +1838,7 @@ public class BioshipGameTests {
         75,
         () -> {
           helper.assertTrue(
-              core.body().health() < 100 && !core.body().dead(),
+              core.body().health() < core.body().capacity() && !core.body().dead(),
               "Empty reserves did not cause gradual starvation damage");
           var t = core.body().save();
           t.putDouble("Health", 1);
@@ -7362,6 +7363,7 @@ public class BioshipGameTests {
             EntityType.ENDERMAN,
             EntityType.VILLAGER,
             EntityType.WITCH,
+            EntityType.CREEPER,
             EntityType.SPIDER,
             EntityType.IRON_GOLEM,
             EntityType.ZOMBIE,
@@ -8840,6 +8842,7 @@ public class BioshipGameTests {
 
   private static void deathFixture(
       GameTestHelper helper, LivingCoreBlockEntity core, boolean hungry) {
+    core.body().observe(core);
     var data = core.saveWithFullMetadata(helper.getLevel().registryAccess());
     data.putInt("Satiety", hungry ? 0 : 600);
     core.loadAdditional(data, helper.getLevel().registryAccess());
@@ -9659,5 +9662,229 @@ public class BioshipGameTests {
             && restored.gillUsage().score() == saved.getInt("GillUse"),
         "Legacy exposure score was not migrated");
     helper.succeed();
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "health_components")
+  public static void component_health_is_additive_armored_and_event_cached(GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var root = core.getBlockPos();
+    level.setBlock(root.north(), BioshipTissue.body().defaultBlockState(), 3);
+    level.setBlock(root.south(), Blocks.STONE.defaultBlockState(), 3);
+    level.setBlock(root.east(), Create_bioships.FLESH.get().defaultBlockState(), 3);
+    level.setBlock(root.west(), Create_bioships.ARMOR_II.get().defaultBlockState(), 3);
+    level.setBlock(root.above(), Create_bioships.CARAPACE.get().defaultBlockState(), 3);
+    core.body().observe(core);
+    helper.assertTrue(
+        core.body().capacity() == 152, "Health table did not count all five components plus core");
+    level.removeBlock(root.west(), false);
+    helper.runAfterDelay(
+        2,
+        () -> {
+          helper.assertTrue(
+              core.body().capacity() == 132, "Permanent armor loss did not reduce max health");
+          cleanup(helper, ship);
+          var quiet = assemble(helper);
+          helper.runAfterDelay(
+              2,
+              () -> {
+                long audits = core(quiet).body().healthAudits();
+                helper.runAfterDelay(
+                    25,
+                    () ->
+                        finish(
+                            helper,
+                            quiet,
+                            () ->
+                                helper.assertTrue(
+                                    core(quiet).body().healthAudits() == audits,
+                                    "Quiet body kept rechecking its health topology")));
+              });
+        });
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 140, batch = "health_stash")
+  public static void stashing_redeploying_and_reload_preserve_health_and_wounds(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var mouth = core.getBlockPos().south();
+    level.setBlock(mouth, Create_bioships.FEEDING_MOUTH.get().defaultBlockState(), 3);
+    core.body().observe(core);
+    core.body().combatDamage(core, level.damageSources().generic(), 20);
+    int max = core.body().capacity();
+    double health = core.body().health();
+    helper.assertTrue(
+        OrganMotion.storeComponent(core, mouth), "Mouth did not enter temporary storage");
+    for (int at = 1; at <= 80; at++) {
+      int age = at;
+      helper.runAfterDelay(
+          at,
+          () -> {
+            var live = core(ship);
+            helper.assertTrue(
+                live.body().capacity() == max && live.body().health() == health,
+                "Temporary component handling changed health at "
+                    + age
+                    + ": "
+                    + live.body().health()
+                    + "/"
+                    + live.body().capacity());
+            if (age == 15)
+              live.loadAdditional(
+                  live.saveWithFullMetadata(level.registryAccess()), level.registryAccess());
+          });
+    }
+    helper.runAfterDelay(82, () -> finish(helper, ship, () -> {}));
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 400, batch = "creeper_meat_mutation")
+  public static void creeper_meat_awards_only_after_actual_digestion_and_persists(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var stomach = digestive(helper, core, false);
+    var meat = new ItemStack(Create_bioships.MOB_MEATS.get("creeper").get(), 2);
+    helper.assertTrue(
+        stomach.enqueue(meat, false) && stomach.enqueue(meat, false),
+        "Creeper meat was not digestible");
+    helper.assertTrue(core.survival().blastPoints() == 0, "Merely storing meat awarded mutations");
+    helper.runAfterDelay(
+        360,
+        () ->
+            finish(
+                helper,
+                ship,
+                () -> {
+                  var live = core(ship);
+                  helper.assertTrue(
+                      live.survival().blastPoints() == 2,
+                      "Mutation credit did not match two consumed pieces: "
+                          + live.survival().blastPoints());
+                  live.loadAdditional(
+                      live.saveWithFullMetadata(level.registryAccess()), level.registryAccess());
+                  helper.assertTrue(
+                      live.survival().blastPoints() == 2, "Mutation points were lost on reload");
+                }));
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "explosion_mutation")
+  public static void surviving_real_blast_awards_once_and_reinforces_core_and_flesh(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var proxy = BioshipTargetEntity.ensure(core);
+    afterIndexed(
+        helper,
+        List.of(proxy),
+        () -> {
+          var at = proxy.position().add(0, .4, 0);
+          var calculator =
+              new net.minecraft.world.level.ExplosionDamageCalculator() {
+                @Override
+                public boolean shouldBlockExplode(
+                    net.minecraft.world.level.Explosion blast,
+                    BlockGetter reader,
+                    BlockPos pos,
+                    net.minecraft.world.level.block.state.BlockState state,
+                    float power) {
+                  return false;
+                }
+              };
+          level.explode(
+              null, null, calculator, at.x, at.y, at.z, 1, false, Level.ExplosionInteraction.TNT);
+          helper.runAfterDelay(
+              2,
+              () -> {
+                helper.assertTrue(
+                    !core.body().dead() && core.survival().blastPoints() == 3,
+                    "A damaging explosion was not credited once after survival: "
+                        + core.survival().blastPoints());
+                var query = new net.minecraft.world.level.ExplosionDamageCalculator();
+                var root = core.getBlockPos();
+                var coreState = core.getBlockState();
+                float reinforced =
+                    query
+                        .getBlockExplosionResistance(
+                            null, level, root, coreState, level.getFluidState(root))
+                        .orElseThrow();
+                helper.assertTrue(
+                    reinforced > coreState.getBlock().getExplosionResistance(),
+                    "Core did not gain physical blast resistance");
+                level.setBlock(root.north(), BioshipTissue.body().defaultBlockState(), 3);
+                var flesh = level.getBlockState(root.north());
+                helper.assertTrue(
+                    query
+                            .getBlockExplosionResistance(
+                                null, level, root.north(), flesh, level.getFluidState(root.north()))
+                            .orElseThrow()
+                        > flesh.getBlock().getExplosionResistance(),
+                    "Body tissue did not share resistance");
+                var far = at.add(80, 0, 0);
+                level.explode(
+                    null,
+                    null,
+                    calculator,
+                    far.x,
+                    far.y,
+                    far.z,
+                    1,
+                    false,
+                    Level.ExplosionInteraction.TNT);
+                helper.runAfterDelay(
+                    2,
+                    () -> {
+                      helper.assertTrue(
+                          core.survival().blastPoints() == 3,
+                          "A harmless distant explosion awarded points");
+                      var lethal =
+                          new net.minecraft.world.level.ExplosionDamageCalculator() {
+                            @Override
+                            public boolean shouldBlockExplode(
+                                net.minecraft.world.level.Explosion blast,
+                                BlockGetter reader,
+                                BlockPos pos,
+                                net.minecraft.world.level.block.state.BlockState state,
+                                float power) {
+                              return false;
+                            }
+
+                            @Override
+                            public float getEntityDamageAmount(
+                                net.minecraft.world.level.Explosion blast, Entity entity) {
+                              return 10000;
+                            }
+                          };
+                      level.explode(
+                          null,
+                          null,
+                          lethal,
+                          at.x,
+                          at.y,
+                          at.z,
+                          2,
+                          false,
+                          Level.ExplosionInteraction.TNT);
+                      helper.runAfterDelay(
+                          2,
+                          () ->
+                              finish(
+                                  helper,
+                                  ship,
+                                  () -> {
+                                    helper.assertTrue(
+                                        core.body().dead() && core.survival().blastPoints() == 3,
+                                        "Fatal blast granted survival progress");
+                                    helper.assertTrue(
+                                        core.body().deathCause() == BioshipDeathCause.EXPLOSION,
+                                        "Fatal explosion lost its cause");
+                                  }));
+                    });
+              });
+        });
   }
 }
