@@ -44,6 +44,7 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
       MultiBufferSource buffers,
       int light,
       int overlay) {
+    BioshipHurtFlash.render(core, pose, buffers, light);
     if (core.coreMotion().active()) {
       double t =
           Math.clamp(
@@ -128,7 +129,21 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
         transform
             .transformPositionInverse(target)
             .subtract(Vec3.atLowerCornerOf(core.getBlockPos()));
-    Vec3 root = new Vec3(.5, .5, .5);
+    var slots = BioshipGraspers.slots(core);
+    var targetLocal = reach;
+    var nearest =
+        slots.stream()
+            .min(
+                java.util.Comparator.comparingDouble(
+                    s ->
+                        s.root()
+                            .subtract(Vec3.atLowerCornerOf(core.getBlockPos()))
+                            .distanceToSqr(targetLocal)))
+            .orElse(null);
+    Vec3 root =
+        nearest == null
+            ? new Vec3(.5, .5, .5)
+            : nearest.root().subtract(Vec3.atLowerCornerOf(core.getBlockPos()));
     if (core.isMature()) {
       Vec3 d = reach.subtract(root);
       root =
@@ -159,7 +174,10 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
                   new Vector3f((float) delta.x, (float) delta.y, (float) delta.z).normalize()));
       float width = (float) (.55 - t * .25);
       pose.scale(width, (float) delta.length(), width);
-      segment.render(pose, consumer, light, OverlayTexture.NO_OVERLAY);
+      segment.render(
+          pose, consumer, light, BioshipHurtFlash.overlay(core, OverlayTexture.NO_OVERLAY));
+      TentacleSuckers.render(
+          pose, buffers, light, BioshipHurtFlash.overlay(core, OverlayTexture.NO_OVERLAY), i);
       pose.popPose();
       previous = point;
     }
@@ -180,12 +198,10 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
         plot.getSubLevel() instanceof ClientSubLevel client
             ? client.renderPose(partial)
             : plot.getSubLevel().logicalPose();
-    int arm = 0;
     for (var move : core.assimilation().arms()) {
       var cargo = container.getSubLevel(move.cargo());
       if (cargo == null) continue;
-      var root = new Vec3(arm % 2 == 0 ? .15 : .85, .5, arm < 2 ? .15 : .85);
-      arm++;
+      var root = BioshipGraspers.root(core, core.assimilation().grasper(move.cargo()));
       var target =
           transform
               .transformPositionInverse(
@@ -207,7 +223,10 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
                     new Vector3f((float) delta.x, (float) delta.y, (float) delta.z).normalize()));
         float width = (float) (.5 - t * .25);
         pose.scale(width, (float) delta.length(), width);
-        segment.render(pose, consumer, light, OverlayTexture.NO_OVERLAY);
+        segment.render(
+            pose, consumer, light, BioshipHurtFlash.overlay(core, OverlayTexture.NO_OVERLAY));
+        TentacleSuckers.render(
+            pose, buffers, light, BioshipHurtFlash.overlay(core, OverlayTexture.NO_OVERLAY), i);
         pose.popPose();
         previous = point;
       }
@@ -249,7 +268,9 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
               moving ? Math.cos(phase) * (scuttling ? .25 : .45) : 0);
       if (scuttling && core.crawl().wallFacing() != null) {
         var normal = Vec3.atLowerCornerOf(core.crawl().wallFacing().getNormal());
-        var tangent = new Vec3(-normal.z, 0, normal.x);
+        var tangent =
+            Math.abs(normal.y) > .5 ? new Vec3(1, 0, 0) : new Vec3(-normal.z, 0, normal.x);
+        var second = normal.cross(tangent);
         foot =
             new Vec3(.5, .4, .5)
                 .add(
@@ -257,7 +278,7 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
                         core.crawl().wallDistance()
                             - (moving ? Math.max(0, Math.sin(phase)) * .12 : 0)))
                 .add(tangent.scale(side * .7))
-                .add(0, front * .65 + (moving ? Math.cos(phase) * .2 : 0), 0);
+                .add(second.scale(front * .65 + (moving ? Math.cos(phase) * .2 : 0)));
       }
       if (core.crawl().wallFacing() == null && !core.aquatic().swimming()) {
         var container = SubLevelContainer.getContainer(core.getLevel());
@@ -310,7 +331,10 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
         float width =
             (float) ((.5 - t * .25) * core.crawl().legThickness() * (scuttling ? 1 : 1.7));
         pose.scale(width, (float) delta.length(), width);
-        segment.render(pose, consumer, light, OverlayTexture.NO_OVERLAY);
+        segment.render(
+            pose, consumer, light, BioshipHurtFlash.overlay(core, OverlayTexture.NO_OVERLAY));
+        TentacleSuckers.render(
+            pose, buffers, light, BioshipHurtFlash.overlay(core, OverlayTexture.NO_OVERLAY), i);
         pose.popPose();
         previous = point;
       }

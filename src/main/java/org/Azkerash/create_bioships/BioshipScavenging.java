@@ -26,6 +26,7 @@ public final class BioshipScavenging {
 
   static boolean frameMaterial(BlockState state) {
     return state.is(Create_bioships.CARAPACE.get())
+        || state.is(Create_bioships.ARMOR_II.get())
         || state.is(Create_bioships.PERCH.get())
         || state.is(Create_bioships.DOOR.get())
         || state.getBlock() instanceof BlueprintPanelBlock
@@ -64,8 +65,8 @@ public final class BioshipScavenging {
     if (id.equals("biomancy:storage_sac"))
       return others.stream().filter(EngineRoom::storage).count() < 8;
     if (id.equals("biomancy:modular_larynx"))
-      return core.isMature()
-          && others.stream().noneMatch(e -> e.getBlockState().is(state.getBlock()));
+      return others.stream().filter(e -> e.getBlockState().is(state.getBlock())).count()
+          < BioshipLarynx.missingCount(core);
     return false;
   }
 
@@ -216,6 +217,7 @@ public final class BioshipScavenging {
       BioshipIntegration.finishAssimilation(core, target);
       return;
     }
+    var hostState = BioshipTissue.host(core.getLevel().getBlockEntity(target));
     recycle(state);
     var storage =
         BioshipIntegration.blockEntities(core.ship()).stream()
@@ -259,7 +261,7 @@ public final class BioshipScavenging {
         .setBlock(
             target,
             restoreHost
-                ? Create_bioships.FLESH.get().defaultBlockState()
+                ? (hostState.isAir() ? BioshipTissue.body().defaultBlockState() : hostState)
                 : Blocks.AIR.defaultBlockState(),
             3);
     deliver(core);

@@ -6,11 +6,17 @@
     "minecraft:pig",
     "minecraft:sheep",
     "minecraft:rabbit",
-    "minecraft:zombie",
-    "minecraft:husk",
-    "minecraft:drowned",
     "minecraft:villager",
     "minecraft:wandering_trader",
-    "minecraft:trader_llama"
+    "minecraft:trader_llama",
+    "minecraft:enderman",
+    "minecraft:witch",
+    "minecraft:creeper",
+    "minecraft:spider",
+    "minecraft:cave_spider",
+    "minecraft:pillager",
+    "minecraft:vindicator",
+    "minecraft:evoker",
+    "minecraft:ravager"
   ]
 }

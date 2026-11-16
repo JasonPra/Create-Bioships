@@ -6,6 +6,7 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import org.Azkerash.create_bioships.*;
+import org.Azkerash.create_bioships.BioshipTissue;
 
 public class BlueprintScreen extends AbstractContainerScreen<BlueprintMenu> {
   private int mode = 1, roomPage;
@@ -129,7 +130,7 @@ public class BlueprintScreen extends AbstractContainerScreen<BlueprintMenu> {
               if (x < leftPos + 190 || z < topPos + 30 || x >= leftPos + 337 || z >= topPos + 177)
                 return;
               int color =
-                  s.is(Create_bioships.FLESH.get()) || s.is(Create_bioships.CARAPACE.get())
+                  BioshipTissue.isTissue(s) || s.is(Create_bioships.CARAPACE.get())
                       ? 0xffb77b91
                       : net.minecraft.core.registries.BuiltInRegistries.BLOCK
                               .getKey(s.getBlock())

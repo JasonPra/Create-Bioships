@@ -11,6 +11,18 @@
     "minecraft:mutton",
     "minecraft:cooked_mutton",
     "minecraft:rabbit",
-    "minecraft:cooked_rabbit"
+    "minecraft:cooked_rabbit",
+    "create_bioships:enderman_meat",
+    "create_bioships:villager_meat",
+    "create_bioships:witch_meat",
+    "create_bioships:creeper_meat",
+    "create_bioships:spider_meat",
+    "create_bioships:illager_meat",
+    "create_bioships:aquatic_meat",
+    "create_bioships:creature_meat",
+    "minecraft:cod",
+    "minecraft:cooked_cod",
+    "minecraft:salmon",
+    "minecraft:cooked_salmon"
   ]
 }

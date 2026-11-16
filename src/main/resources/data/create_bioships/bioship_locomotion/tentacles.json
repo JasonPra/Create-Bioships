@@ -1,0 +1,9 @@
+{
+  "walls": true,
+  "ceilings": true,
+  "grip_reach": 1.7,
+  "comfortable_clearance": 0.7,
+  "direct_distance": 24,
+  "quick_nodes": 220,
+  "search_nodes": 1600
+}

@@ -121,9 +121,10 @@ final class BioshipDefense {
   private static boolean eligiblePrey(LivingCoreBlockEntity core, LivingEntity entity) {
     return TentacleBlockEntity.attackable(entity)
         && TentacleBlockEntity.edible(entity)
-        && !(entity instanceof net.minecraft.world.entity.monster.Zombie)
         && !core.access().allows(core, entity)
         && !(entity instanceof net.minecraft.world.entity.TamableAnimal tame && tame.isTame())
+        && !(entity instanceof net.minecraft.world.entity.animal.horse.AbstractHorse horse
+            && horse.isTamed())
         && !entity.isPassenger();
   }
 
@@ -185,29 +186,6 @@ final class BioshipDefense {
     if (prey != selected) {
       strike.clear();
       prey = selected;
-    }
-    if (!strike.active()
-        && prey != null
-        && !(prey instanceof net.minecraft.world.entity.player.Player)
-        && !(prey instanceof net.minecraft.world.entity.monster.Enemy)
-        && core.wantsToHunt()) {
-      var point = prey.getBoundingBox().getCenter();
-      if (BioshipReach.clear(core, point, false)) {
-        core.crawl().reach(point);
-        var pull = core.mouthPosition(core.ship()).subtract(point);
-        prey.setDeltaMovement(pull.normalize().scale(Math.min(.3, pull.length() * .15)));
-        prey.hurtMarked = true;
-        prey.fallDistance = 0;
-        if (pull.length() < 1.8 && cooldown == 0) {
-          cooldown = 20;
-          boolean hurt = BioshipFeedingEvents.bite(prey, level.damageSources().generic(), 6, true);
-          if (hurt && !prey.isAlive()) {
-            core.eatPrey(prey);
-            core.crawl().reach(null);
-          }
-        }
-      }
-      return;
     }
     if (prey instanceof net.minecraft.world.entity.monster.Creeper
         && core.autonomy().creeperPanic()) {

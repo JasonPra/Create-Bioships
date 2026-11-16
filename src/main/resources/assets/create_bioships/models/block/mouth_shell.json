@@ -1,0 +1,76 @@
+{
+  "textures": {
+    "skin": "create_bioships:block/living_hull",
+    "dark": "minecraft:block/black_concrete",
+    "teeth": "minecraft:block/bone_block_side",
+    "particle": "create_bioships:block/living_hull"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "up": {
+          "texture": "#skin"
+        },
+        "down": {
+          "texture": "#skin"
+        },
+        "north": {
+          "texture": "#skin"
+        },
+        "south": {
+          "texture": "#skin"
+        },
+        "east": {
+          "texture": "#skin"
+        },
+        "west": {
+          "texture": "#skin"
+        }
+      },
+      "shade": true
+    },
+    {
+      "from": [
+        2,
+        2,
+        -0.1
+      ],
+      "to": [
+        14,
+        14,
+        0
+      ],
+      "faces": {
+        "up": {
+          "texture": "#dark"
+        },
+        "down": {
+          "texture": "#dark"
+        },
+        "north": {
+          "texture": "#dark"
+        },
+        "south": {
+          "texture": "#dark"
+        },
+        "east": {
+          "texture": "#dark"
+        },
+        "west": {
+          "texture": "#dark"
+        }
+      },
+      "shade": true
+    }
+  ]
+}

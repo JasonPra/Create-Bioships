@@ -18,7 +18,7 @@ public class BioshipWrenchItem extends Item {
 
   public static boolean movable(net.minecraft.world.level.Level level, BlockPos pos) {
     var state = level.getBlockState(pos);
-    if (state.is(Create_bioships.FLESH.get())
+    if (BioshipTissue.isTissue(state)
         || net.minecraft.core.registries.BuiltInRegistries.BLOCK
             .getKey(state.getBlock())
             .toString()
@@ -79,8 +79,7 @@ public class BioshipWrenchItem extends Item {
         stack.remove(DataComponents.CUSTOM_DATA);
         return InteractionResult.FAIL;
       }
-      var target =
-          state.is(Create_bioships.FLESH.get()) ? pos : pos.relative(context.getClickedFace());
+      var target = BioshipTissue.isTissue(state) ? pos : pos.relative(context.getClickedFace());
       if (!level.getBlockState(source).is(Create_bioships.SURFACE_EYE.get())
           && !EngineRoom.inside(core, target)) {
         player.displayClientMessage(

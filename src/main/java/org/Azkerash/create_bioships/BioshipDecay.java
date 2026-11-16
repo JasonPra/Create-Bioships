@@ -19,7 +19,7 @@ public final class BioshipDecay {
   static int priority(ServerLevel level, BlockPos pos) {
     var state = level.getBlockState(pos);
     if (state.is(Create_bioships.CORE.get())) return 2;
-    if (state.is(Create_bioships.FLESH.get()) || state.is(Create_bioships.CARAPACE.get())) return 0;
+    if (BioshipTissue.isTissue(state) || state.is(Create_bioships.CARAPACE.get())) return 0;
     var id = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(state.getBlock());
     if (state.hasBlockEntity() || id.getNamespace().equals(Create_bioships.MOD_ID)) return 1;
     if (id.getNamespace().equals("biomancy")
@@ -131,7 +131,7 @@ public final class BioshipDecay {
     for (var p : blocks(part)) {
       var state = part.getLevel().getBlockState(p);
       if (state.is(Create_bioships.CORE.get())) return false;
-      if (state.is(Create_bioships.FLESH.get())
+      if (BioshipTissue.isTissue(state)
           || state.is(Create_bioships.CARAPACE.get())
           || state.is(Create_bioships.ONE_WAY_WINDOW.get())) {
         hull++;

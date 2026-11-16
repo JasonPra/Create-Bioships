@@ -116,7 +116,7 @@ public class IntestineBlock extends Block {
       net.minecraft.world.phys.BlockHitResult hit) {
     if (!state.getValue(ENCASED)
         && stack.getItem() instanceof net.minecraft.world.item.BlockItem item
-        && (item.getBlock() == Create_bioships.FLESH.get()
+        && (item.getBlock() == BioshipTissue.body()
             || item.getBlock()
                 .defaultBlockState()
                 .is(

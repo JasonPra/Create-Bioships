@@ -2,26 +2,27 @@
 
 The controller selects work, planners propose it, and actuators execute it. Reading a sensor or debug snapshot must not execute a new behavior.
 
-```mermaid
-flowchart TD
-  V[Vision and target memory] --> B[Brain: select an action]
-  N[Nutrition policy] --> B
-  A[Adaptation planner: immutable proposals] --> B
-  Q[Generic goal queue] <--> B
-  B --> R[Ground route and crawling]
-  B --> T[Batch assimilation]
-  B --> E[Adaptation actuator]
-  T --> O[OrganMotion: physical cargo]
-  E --> M[Material costs and accounts]
-  S[Sable geometry reader] --> A
-  S --> P[Support layout]
-  P --> R
-  P --> E
-  S --> H[Repair and decay]
-  B --> D[Read-only debug snapshots]
-  R --> D
-  T --> D
+```text
+[Vision / memory / needs / material stock]
+                   |
+[Read-only adaptation proposals + available targets]
+                   |
+[Brain + weighted goal queue -> selected work]
+       |                |               |
+ [Crawl route]    [Assimilation]    [Adaptation]
+       |                |               |
+ [Support]         [OrganMotion]    [MaterialCost]
+       |                |               |
+ [Sable physics]   [Shared storage / digestion]
+
+[Health / trust / poison] -> [Cosmetic feedback]
+[Paid/native larynx] -> [Per-mouth voice capsule]
+                    -> [Mouth animation + modulated sound]
 ```
+
+For the complete class structure beneath each subsystem, see the
+[text reference](systems-reference.md) or [paginated PDF](systems-reference.pdf).
+
 
 | Module | Owns | Does not own |
 | --- | --- | --- |
@@ -77,3 +78,11 @@ These modules extend the same proposal/account boundaries. A consumer must use t
 The core remains the lifecycle coordinator. Energy prices belong in the table, resource ownership belongs in storage, and anatomical feasibility belongs in the read-only planners. New callers should reuse these services instead of duplicating scans or maintaining parallel stock counters.
 
 The [architecture checkpoint review](architecture-review.md) records remaining orchestration coupling and the recommended next refactor. Complete affordability checks currently precede expansion; this is not yet a multi-step project escrow.
+
+## Tissue, voice and feedback
+
+`BioshipTissue` owns native body material and exact embedded-host restoration. Armor registry entries remain independent.
+
+`BioshipLarynx` owns voice eligibility and conserved per-mouth combination; `BioshipVoicePalette` is pure A-Z articulation policy; `BioshipVoice` dispatches mouth-position utterances. The client sound player owns envelopes, and `MouthRenderer` owns articulated jaw/lip rendering. `BioshipVoiceCommands` is an operator audition adapter, not a resource source.
+
+`BioshipParticleSurface` supplies exposed world-space points. Trust feedback owns its shared cooldown; `TrustParticleBudget` bounds render frames and spawn count; poison feedback follows poison status. Damage feedback belongs to accepted body injury and its synchronized flash state. Cosmetic consumers do not choose tasks or debit materials.

@@ -467,7 +467,7 @@ public final class BioshipVision {
     var candidates = new ArrayList<Mount>();
     for (var host : BioshipDecay.blocks(core.ship())) {
       var tissue = level.getBlockState(host);
-      if (!tissue.is(Create_bioships.FLESH.get())
+      if (!BioshipTissue.isTissue(tissue)
           && !tissue.is(Create_bioships.CARAPACE.get())
           && !tissue.is(Create_bioships.ONE_WAY_WINDOW.get())) continue;
       for (var direction : Direction.values()) {
@@ -574,7 +574,7 @@ public final class BioshipVision {
               .thenComparingDouble(p -> p.distSqr(core.getBlockPos())));
       for (var host : candidates) {
         var tissue = level.getBlockState(host);
-        if (!tissue.is(Create_bioships.FLESH.get())
+        if (!BioshipTissue.isTissue(tissue)
             && !tissue.is(Create_bioships.CARAPACE.get())
             && !tissue.is(Create_bioships.CORE.get())
             && !tissue.is(Create_bioships.ONE_WAY_WINDOW.get())) continue;

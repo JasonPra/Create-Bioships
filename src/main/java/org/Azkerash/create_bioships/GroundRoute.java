@@ -57,30 +57,7 @@ final class GroundRoute {
   record Grip(Direction direction, double distance) {}
 
   static Grip grip(LivingCoreBlockEntity core, Vec3 point) {
-    if (!core.hatchling()) return null;
-    var level = (ServerLevel) core.getLevel();
-    Vec3 anchor =
-        point.add(
-            core.ship()
-                .logicalPose()
-                .transformNormal(
-                    Vec3.atLowerCornerOf(core.structuralOrigin().subtract(core.getBlockPos()))));
-    for (var face : Direction.Plane.HORIZONTAL)
-      for (double height : new double[] {0, -.4, .4}) {
-        var pos =
-            BlockPos.containing(anchor.add(face.getStepX() * 1.2, height, face.getStepZ() * 1.2));
-        if (!level.getChunkSource().hasChunk(pos.getX() >> 4, pos.getZ() >> 4)
-            || !level.getFluidState(pos).isEmpty()
-            || !level.getBlockState(pos).isFaceSturdy(level, pos, face.getOpposite())) continue;
-        double boundary =
-            face.getAxis() == Direction.Axis.X
-                ? (face.getStepX() > 0 ? pos.getX() : pos.getX() + 1)
-                : (face.getStepZ() > 0 ? pos.getZ() : pos.getZ() + 1);
-        double distance =
-            (boundary - anchor.get(face.getAxis())) * face.getAxisDirection().getStep();
-        if (distance > .35 && distance <= 1.7) return new Grip(face, distance);
-      }
-    return null;
+    return BioshipSurfaceContacts.grip(core, point);
   }
 
   private List<Vec3> offsets(LivingCoreBlockEntity core) {
@@ -200,10 +177,90 @@ final class GroundRoute {
     return route.fits(core, target, parts);
   }
 
+  private boolean supportedAt(LivingCoreBlockEntity core, Vec3 point) {
+    var anchor =
+        point.add(
+            core.ship()
+                .logicalPose()
+                .transformNormal(
+                    Vec3.atLowerCornerOf(core.structuralOrigin().subtract(core.getBlockPos()))));
+    var level = core.getLevel();
+    for (int depth = 1; depth <= core.crawl().footingReach(); depth++) {
+      var cell = BlockPos.containing(anchor).below(depth);
+      if (level.getBlockState(cell).isFaceSturdy(level, cell, Direction.UP)) return true;
+    }
+    return grip(core, point) != null;
+  }
+
+  private boolean lineClear(
+      LivingCoreBlockEntity core, Vec3 from, Vec3 to, List<Vec3> parts, double clearance) {
+    if (Math.abs(from.y - to.y) > .25) return false;
+    int samples = Math.max(1, (int) Math.ceil(from.distanceTo(to) / .35));
+    for (int i = 1; i <= samples; i++) {
+      var point = from.lerp(to, (double) i / samples);
+      if (!fits(core, point, parts, clearance) || !supportedAt(core, point)) return false;
+    }
+    return true;
+  }
+
+  private List<Vec3> simplify(
+      LivingCoreBlockEntity core, Vec3 from, List<Vec3> original, List<Vec3> parts) {
+    var result = new ArrayList<Vec3>();
+    int index = 0;
+    while (index < original.size()) {
+      int chosen = index;
+      for (int end = original.size() - 1; end > index; end--) {
+        if (lineClear(
+            core,
+            from,
+            original.get(end),
+            parts,
+            LocomotionProfiles.forCreature(core).comfortableClearance())) {
+          chosen = end;
+          break;
+        }
+      }
+      if (chosen == index)
+        for (int end = original.size() - 1; end > index; end--)
+          if (lineClear(core, from, original.get(end), parts, .499)) {
+            chosen = end;
+            break;
+          }
+      from = original.get(chosen);
+      result.add(from);
+      index = chosen + 1;
+    }
+    return List.copyOf(result);
+  }
+
   boolean plan(LivingCoreBlockEntity core, Vec3 goal) {
     var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
     var parts = offsets(core);
     double stance = (core.hatchling() ? .85 : 1.25) + core.coreHeightOffset();
+    var profile = LocomotionProfiles.forCreature(core);
+    var delta = goal.subtract(here).multiply(1, 0, 1);
+    double travel =
+        Math.min(
+            profile.directDistance(),
+            Math.max(0, delta.length() - (core.crawl().gathering() ? 2.8 : 0)));
+    if (travel > .5) {
+      var requested = here.add(delta.normalize().scale(travel));
+      var ground = groundedDestination(core, requested);
+      if (ground != null) {
+        var direct = new Vec3(requested.x, ground.y, requested.z);
+        if (lineClear(core, here, direct, parts, .499)) {
+          path = List.of(direct);
+          destination = goal;
+          cursor = 0;
+          failed = false;
+          complete = travel >= delta.length() - (core.crawl().gathering() ? 3.5 : .8);
+          debugStatus = complete ? "direct_route" : "direct_segment";
+          plannedAt = core.getLevel().getGameTime();
+          retryAfter = plannedAt + 20;
+          return true;
+        }
+      }
+    }
     var start =
         new BlockPos(
             (int) Math.floor(here.x), (int) Math.round(here.y - stance), (int) Math.floor(here.z));
@@ -215,7 +272,21 @@ final class GroundRoute {
     open.add(new Visit(start, 0, here.distanceTo(goal)));
     BlockPos end = null, progress = start;
     double closest = here.distanceTo(goal);
-    while (!open.isEmpty() && costs.size() < 1600) {
+    boolean surfaces = false;
+    boolean retried = false;
+    while ((!open.isEmpty() || !retried) && costs.size() < profile.searchNodes()) {
+      if (!retried && (open.isEmpty() || costs.size() >= profile.quickNodes())) {
+        open.clear();
+        costs.clear();
+        previous.clear();
+        costs.put(start, 0d);
+        open.add(new Visit(start, 0, here.distanceTo(goal)));
+        surfaces = true;
+        retried = true;
+        closest = here.distanceTo(goal);
+        progress = start;
+      }
+      if (open.isEmpty()) break;
       var node = open.poll();
       if (node.cost() > costs.getOrDefault(node.pos(), Double.MAX_VALUE)) continue;
       Vec3 nodePoint =
@@ -235,13 +306,14 @@ final class GroundRoute {
         end = node.pos();
         break;
       }
-      if (core.hatchling() && grip(core, nodePoint) != null)
+      if (surfaces && core.hatchling() && grip(core, nodePoint) != null)
         for (int dy : new int[] {1, -1}) {
           var key = node.pos().offset(0, dy, 0);
           var point = nodePoint.add(0, dy, 0);
           if (Math.abs(key.getY() - start.getY()) > 24
               || grip(core, point) == null
-              || !fits(core, point, parts)) continue;
+              || !fits(core, point, parts)
+              || !firstStepClear(core, nodePoint, point, parts)) continue;
           double cost = node.cost() + 1.4;
           if (cost < costs.getOrDefault(key, Double.MAX_VALUE)) {
             costs.put(key, cost);
@@ -249,28 +321,33 @@ final class GroundRoute {
             open.add(new Visit(key, cost, cost + point.distanceTo(goal)));
           }
         }
-      for (var dir : Direction.Plane.HORIZONTAL) {
-        var next = node.pos().relative(dir);
-        if (Math.abs(next.getX() - start.getX()) > 24 || Math.abs(next.getZ() - start.getZ()) > 24)
-          continue;
-        var point = standing(core, next.getX(), next.getZ(), node.pos().getY(), parts);
-        if (point == null || node.pos().equals(start) && !firstStepClear(core, here, point, parts))
-          continue;
-        var key = new BlockPos(next.getX(), (int) Math.round(point.y - stance), next.getZ());
-        // Prefer clearance around corners. Exact cell-edge paths are fragile for a full physics
-        // body.
-        double cost =
-            node.cost()
-                + 1
-                + Math.abs(key.getY() - node.pos().getY()) * .5
-                + (fits(core, point, parts, .7) ? 0 : 2);
-        if (cost >= costs.getOrDefault(key, Double.MAX_VALUE)) continue;
-        previous.put(key, node.pos());
-        costs.put(key, cost);
-        open.add(
-            new Visit(
-                key, cost, cost + Math.hypot(key.getX() + .5 - goal.x, key.getZ() + .5 - goal.z)));
-      }
+      for (int dx = -1; dx <= 1; dx++)
+        for (int dz = -1; dz <= 1; dz++) {
+          if (dx == 0 && dz == 0) continue;
+          var next = node.pos().offset(dx, 0, dz);
+          if (Math.abs(next.getX() - start.getX()) > 24
+              || Math.abs(next.getZ() - start.getZ()) > 24) continue;
+          var point = standing(core, next.getX(), next.getZ(), node.pos().getY(), parts);
+          if (point == null
+              || !firstStepClear(core, node.pos().equals(start) ? here : nodePoint, point, parts))
+            continue;
+          var key = new BlockPos(next.getX(), (int) Math.round(point.y - stance), next.getZ());
+          // Prefer clearance around corners. Exact cell-edge paths are fragile for a full physics
+          // body.
+          double cost =
+              node.cost()
+                  + Math.hypot(dx, dz)
+                  + Math.abs(key.getY() - node.pos().getY()) * .5
+                  + (fits(core, point, parts, profile.comfortableClearance()) ? 0 : 2);
+          if (cost >= costs.getOrDefault(key, Double.MAX_VALUE)) continue;
+          previous.put(key, node.pos());
+          costs.put(key, cost);
+          open.add(
+              new Visit(
+                  key,
+                  cost,
+                  cost + Math.hypot(key.getX() + .5 - goal.x, key.getZ() + .5 - goal.z)));
+        }
     }
     plannedAt = core.getLevel().getGameTime();
     destination = goal;
@@ -297,7 +374,7 @@ final class GroundRoute {
       end = previous.get(end);
     }
     Collections.reverse(result);
-    path = result;
+    path = simplify(core, here, result, parts);
     return true;
   }
 

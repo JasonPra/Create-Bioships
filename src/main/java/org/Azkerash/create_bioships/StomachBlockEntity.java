@@ -329,17 +329,6 @@ public class StomachBlockEntity extends BlockEntity implements MenuProvider, Mat
         for (var output : value.getOutputs()) stomach.retain(output.getItemStack(level.random));
         if (LivingCoreBlockEntity.isMeat(stack)) stomach.creditLocal("biomancy:nutrient_paste", 1);
         if (!stomach.inherited[slot]) {
-          var flags = stack.get(net.minecraft.core.component.DataComponents.CUSTOM_DATA);
-          if (stack.is(Items.BEEF)
-              && flags != null
-              && flags.copyTag().getBoolean("BioshipHunted")) {
-            stomach.retain(
-                new ItemStack(
-                    BuiltInRegistries.ITEM.get(ResourceLocation.parse("biomancy:bone_fragments"))));
-            stomach.retain(
-                new ItemStack(
-                    BuiltInRegistries.ITEM.get(ResourceLocation.parse("biomancy:elastic_fibers"))));
-          }
           core.digestMeal(stack);
           if (core.isMature()) stomach.meals++;
         }

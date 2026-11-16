@@ -47,7 +47,7 @@ final class BioshipAdaptation {
     var stomach = DigestiveSystem.stomach(core);
     armor.removeIf(
         p ->
-            !core.getLevel().getBlockState(p).is(Create_bioships.FLESH.get())
+            !BioshipTissue.isTissue(core.getLevel().getBlockState(p))
                 && !core.getLevel().getBlockState(p).is(Create_bioships.CARAPACE.get()));
     if (stomach != null) BioshipStorage.flush(core);
   }
@@ -87,6 +87,8 @@ final class BioshipAdaptation {
                     4));
           }
           DigestiveSystem.connect(core, core.ship());
+        } else if (p.action == BioshipBrain.Action.GROW_LARYNX) {
+          if (!BioshipLarynx.develop(core, p.pos)) return;
         } else if (p.action == BioshipBrain.Action.GROW_ENGINE_ROOM) {
           if (!core.engineRoom().expand(core)) return;
         } else if (p.action == BioshipBrain.Action.GROW_DIGESTION) {
@@ -141,7 +143,7 @@ final class BioshipAdaptation {
             var target = mouth.relative(face);
             var host = core.getLevel().getBlockState(target);
             if (!target.equals(p.pos)
-                && (host.isAir() || host.is(Create_bioships.FLESH.get()))
+                && (host.isAir() || BioshipTissue.isTissue(host))
                 && OrganMotion.reabsorb(core, p.pos, target)) {
               armor.remove(p.pos);
               return;

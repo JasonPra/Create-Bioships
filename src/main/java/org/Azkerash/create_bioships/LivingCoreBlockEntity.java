@@ -74,6 +74,12 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
   }
 
   private final BioshipNeeds needs = new BioshipNeeds();
+  private final BioshipLootMemory loot = new BioshipLootMemory();
+
+  BioshipLootMemory loot() {
+    return loot;
+  }
+
   private boolean awakened, resting;
   private java.util.UUID captain;
   private final BioshipAccess access = new BioshipAccess();
@@ -400,6 +406,12 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     return stack.is(MEAT);
   }
 
+  final BioshipTrustFeedback trustFeedback = new BioshipTrustFeedback();
+
+  int poisonSeconds() {
+    return needs.poisonSeconds();
+  }
+
   public void digestMeal(ItemStack stack) {
     if (stack.is(MEAT)) {
       boolean hunted =
@@ -413,6 +425,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
       else {
         needs.digestFedMeal(stack.is(Items.ROTTEN_FLESH) ? 0 : 70);
         if (stack.is(Items.ROTTEN_FLESH)) needs.poison();
+        trustFeedback.emit(this, !stack.is(Items.ROTTEN_FLESH));
       }
       setChanged();
     }
@@ -564,6 +577,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
   public void mistreat() {
     if (ship() != null) {
       needs.mistreat();
+      trustFeedback.emit(this, false);
       setChanged();
     }
   }
@@ -759,18 +773,16 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
       var oldPanel = core.layoutPos(new BlockPos(-3, 2, 2));
       if (level.getBlockState(oldPanel).is(Create_bioships.BLUEPRINT_PANEL.get())
           && (level.getBlockState(panel).isAir()
-              || level.getBlockState(panel).is(Create_bioships.FLESH.get())))
-        level.setBlock(oldPanel, Create_bioships.FLESH.get().defaultBlockState(), 3);
-      if (level.getBlockState(panel).isAir()
-          || level.getBlockState(panel).is(Create_bioships.FLESH.get()))
+              || BioshipTissue.isTissue(level.getBlockState(panel))))
+        level.setBlock(oldPanel, BioshipTissue.body().defaultBlockState(), 3);
+      if (level.getBlockState(panel).isAir() || BioshipTissue.isTissue(level.getBlockState(panel)))
         level.setBlock(panel, Create_bioships.BLUEPRINT_PANEL.get().defaultBlockState(), 3);
     }
     if (AirshipPrototype.available()
         && core.stage > 0
         && (core.isMature()
             || java.util.Arrays.stream(Direction.values())
-                    .filter(
-                        d -> level.getBlockState(pos.relative(d)).is(Create_bioships.FLESH.get()))
+                    .filter(d -> BioshipTissue.isTissue(level.getBlockState(pos.relative(d))))
                     .count()
                 >= 3))
       level.setBlock(pos, core.getBlockState().setValue(LivingCoreBlock.CONCEALED, true), 2);
@@ -816,7 +828,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
       growthObstacle = "";
       if (placed) {
         if (level.getBlockState(target).is(Create_bioships.INTESTINE.get())
-            && part.state().is(Create_bioships.FLESH.get()))
+            && BioshipTissue.isTissue(part.state()))
           level.setBlock(
               target, level.getBlockState(target).setValue(IntestineBlock.ENCASED, true), 3);
       } else if (part.state().getBlock() instanceof LivingDoorBlock) {
@@ -848,8 +860,8 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
       if (!placed) recordGrowthObstacle(ship, part.offset());
       if (placed) {
         var embedded = level.getBlockEntity(target);
-        if (part.state().is(Create_bioships.FLESH.get()) && embedded != null) {
-          embedded.getPersistentData().putBoolean("BioshipHostFlesh", true);
+        if (BioshipTissue.isTissue(part.state()) && embedded != null) {
+          BioshipTissue.remember(embedded, BioshipTissue.body().defaultBlockState());
           embedded.setChanged();
         }
         if (level.getBlockEntity(target) instanceof SteeringWheelBlockEntity helm) {
@@ -881,6 +893,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
       flight = new FlightIntent(false, Vec3.ZERO, 0);
       return;
     }
+    BioshipPoisonFeedback.tick(this);
     BioshipIntegration.bind(ship);
     if (!awakened) {
       awakened = true;
@@ -981,7 +994,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     if (!AirshipPrototype.available() || stage != 2) return;
     for (int i = 0; i < needs.levitite(); i++) {
       BlockPos pos = layoutPos(DinghyGrowth.BUOYANCY_ORGANS.get(i));
-      if (level.getBlockState(pos).is(Create_bioships.FLESH.get()))
+      if (BioshipTissue.isTissue(level.getBlockState(pos)))
         level.setBlock(pos, Create_bioships.BUOYANCY_ORGAN.get().defaultBlockState(), 3);
     }
   }
@@ -1091,43 +1104,6 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
         .add(0, -0.5, 0);
   }
 
-  public void eatPrey() {
-    eatPrey(false);
-  }
-
-  public void eatPrey(net.minecraft.world.entity.LivingEntity prey) {
-    Item food =
-        prey instanceof net.minecraft.world.entity.monster.Zombie
-            ? Items.ROTTEN_FLESH
-            : prey instanceof net.minecraft.world.entity.animal.Chicken
-                ? Items.CHICKEN
-                : prey instanceof net.minecraft.world.entity.animal.Sheep
-                    ? Items.MUTTON
-                    : prey instanceof net.minecraft.world.entity.animal.Pig
-                        ? Items.PORKCHOP
-                        : prey instanceof net.minecraft.world.entity.animal.Rabbit
-                            ? Items.RABBIT
-                            : Items.BEEF;
-    ItemStack meal = new ItemStack(food);
-    CompoundTag flags = new CompoundTag();
-    flags.putBoolean("BioshipHunted", true);
-    meal.set(
-        net.minecraft.core.component.DataComponents.CUSTOM_DATA,
-        net.minecraft.world.item.component.CustomData.of(flags));
-    DigestiveSystem.offerFood(this, meal, false);
-  }
-
-  public void eatPrey(boolean toxic) {
-    if (!hasMouth()) return;
-    ItemStack meal = new ItemStack(toxic ? Items.ROTTEN_FLESH : Items.BEEF);
-    CompoundTag flags = new CompoundTag();
-    flags.putBoolean("BioshipHunted", true);
-    meal.set(
-        net.minecraft.core.component.DataComponents.CUSTOM_DATA,
-        net.minecraft.world.item.component.CustomData.of(flags));
-    DigestiveSystem.offerFood(this, meal, false);
-  }
-
   public int swimmingFlagella() {
     int count = 0;
     for (BlockPos offset : DinghyGrowth.FLAGELLA)
@@ -1210,6 +1186,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     tag.put("Assimilation", assimilation.save());
     tag.put("Crawl", crawl.save());
     tag.put("Brain", brain.save());
+    tag.put("Loot", loot.save());
     tag.put("CoreMotion", coreMotion.save());
     tag.put("Adaptation", adaptation.save());
     tag.put("Defense", defense.save());
@@ -1231,6 +1208,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     tag.putInt("GoggleFiber", goggleFiber);
     tag.putBoolean("FramePaid", framePaid);
     tag.putBoolean("LarynxDeveloped", larynxDeveloped);
+    tag.putLong("TrustFeedbackNext", trustFeedback.nextTick());
     tag.putInt("BodyLayoutVersion", bodyLayoutVersion);
     tag.putInt("PoisonSeconds", needs.poisonSeconds());
     if (captain != null) tag.putUUID("Captain", captain);
@@ -1259,6 +1237,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     assimilation.load(tag.getCompound("Assimilation"));
     crawl.load(tag.getCompound("Crawl"));
     brain.load(tag.getCompound("Brain"));
+    loot.load(tag.getCompound("Loot"));
     coreMotion.load(tag.getCompound("CoreMotion"));
     adaptation.load(tag.getCompound("Adaptation"));
     defense.load(tag.getCompound("Defense"));
@@ -1274,6 +1253,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     goggleFiber = tag.getInt("GoggleFiber");
     framePaid = tag.getBoolean("FramePaid") || tag.getInt("Stage") > 0;
     larynxDeveloped = tag.getBoolean("LarynxDeveloped");
+    trustFeedback.restore(tag.getLong("TrustFeedbackNext"));
     needs.restorePoison(tag.getInt("PoisonSeconds"));
     captain = tag.hasUUID("Captain") ? tag.getUUID("Captain") : null;
     resting = tag.getBoolean("Resting");

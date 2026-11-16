@@ -38,6 +38,8 @@ public final class BioshipClient {
         Create_bioships.BIOSHIP_TARGET.get(),
         net.minecraft.client.renderer.entity.NoopRenderer::new);
     event.registerBlockEntityRenderer(
+        Create_bioships.FEEDING_MOUTH_ENTITY.get(), MouthRenderer::new);
+    event.registerBlockEntityRenderer(
         Create_bioships.CORE_ENTITY.get(), AssimilationArmRenderer::new);
     event.registerBlockEntityRenderer(
         Create_bioships.TENTACLE_ENTITY.get(), FlagellumRenderer::new);

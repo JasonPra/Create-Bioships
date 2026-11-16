@@ -102,6 +102,8 @@ final class BioshipAdaptationPlanner {
                 "Reclaim nonessential tissue into resources for digestive recovery"));
     }
     if (stomach == null || !core.hasMouth() || !stomach.connected(core)) return result;
+    var voice = BioshipLarynx.proposal(core);
+    if (voice != null) result.add(voice);
     var room = core.engineRoom().quote(core);
     if (room != null
         && !BioshipNutrition.critical(core)
@@ -112,7 +114,7 @@ final class BioshipAdaptationPlanner {
                   ? BioshipBrain.Action.STRENGTHEN_LEGS
                   : BioshipBrain.Action.GROW_ENGINE_ROOM,
               core.getBlockPos(),
-              Create_bioships.FLESH.get().defaultBlockState(),
+              BioshipTissue.body().defaultBlockState(),
               room.cost().flesh(),
               room.cost().fiber(),
               room.cost().bone(),
@@ -237,7 +239,7 @@ final class BioshipAdaptationPlanner {
         continue;
       if (!clear(core, pos)) continue;
       var state =
-          (core.hatchling() ? Create_bioships.FLESH.get() : Create_bioships.CARAPACE.get())
+          (core.hatchling() ? BioshipTissue.body() : Create_bioships.CARAPACE.get())
               .defaultBlockState();
       int bone = core.hatchling() ? 0 : 1;
       if (!funded(stomach, 1, 0, bone) || !BioshipSupport.safeAddition(core, pos, state)) continue;
@@ -300,7 +302,7 @@ final class BioshipAdaptationPlanner {
           && be != null
           && be.getPersistentData().getBoolean("BioshipHostFlesh")
           && core.crawl().blockLoad(core, pos, state)
-              <= core.crawl().blockLoad(core, pos, Create_bioships.FLESH.get().defaultBlockState()))
+              <= core.crawl().blockLoad(core, pos, BioshipTissue.body().defaultBlockState()))
         continue;
       if (pos.equals(core.getBlockPos()) || stomach.gutPath.contains(pos)) continue;
       if (!connectedWithout(body, pos, core.getBlockPos())) continue;

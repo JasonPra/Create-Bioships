@@ -1,0 +1,34 @@
+{
+  "type": "biomancy:decomposing",
+  "ingredient": {
+    "item": "create_bioships:enderman_meat"
+  },
+  "nutrientsCost": 1,
+  "processingTime": 160,
+  "results": [
+    {
+      "item": "biomancy:flesh_bits",
+      "countRange": {
+        "type": "uniform",
+        "min": 2,
+        "max": 4
+      }
+    },
+    {
+      "item": "biomancy:bone_fragments",
+      "countRange": {
+        "type": "uniform",
+        "min": 1,
+        "max": 2
+      }
+    },
+    {
+      "item": "biomancy:elastic_fibers",
+      "countRange": {
+        "type": "uniform",
+        "min": 1,
+        "max": 2
+      }
+    }
+  ]
+}

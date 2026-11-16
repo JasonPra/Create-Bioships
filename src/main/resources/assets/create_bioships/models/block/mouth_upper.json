@@ -1,0 +1,174 @@
+{
+  "textures": {
+    "skin": "create_bioships:block/living_hull",
+    "dark": "minecraft:block/black_concrete",
+    "teeth": "minecraft:block/bone_block_side",
+    "particle": "create_bioships:block/living_hull"
+  },
+  "elements": [
+    {
+      "from": [
+        2.5,
+        10,
+        -1
+      ],
+      "to": [
+        4.5,
+        14,
+        1
+      ],
+      "faces": {
+        "up": {
+          "texture": "#teeth"
+        },
+        "down": {
+          "texture": "#teeth"
+        },
+        "north": {
+          "texture": "#teeth"
+        },
+        "south": {
+          "texture": "#teeth"
+        },
+        "east": {
+          "texture": "#teeth"
+        },
+        "west": {
+          "texture": "#teeth"
+        }
+      },
+      "shade": true
+    },
+    {
+      "from": [
+        5.5,
+        10,
+        -1
+      ],
+      "to": [
+        7.5,
+        14,
+        1
+      ],
+      "faces": {
+        "up": {
+          "texture": "#teeth"
+        },
+        "down": {
+          "texture": "#teeth"
+        },
+        "north": {
+          "texture": "#teeth"
+        },
+        "south": {
+          "texture": "#teeth"
+        },
+        "east": {
+          "texture": "#teeth"
+        },
+        "west": {
+          "texture": "#teeth"
+        }
+      },
+      "shade": true
+    },
+    {
+      "from": [
+        8.5,
+        10,
+        -1
+      ],
+      "to": [
+        10.5,
+        14,
+        1
+      ],
+      "faces": {
+        "up": {
+          "texture": "#teeth"
+        },
+        "down": {
+          "texture": "#teeth"
+        },
+        "north": {
+          "texture": "#teeth"
+        },
+        "south": {
+          "texture": "#teeth"
+        },
+        "east": {
+          "texture": "#teeth"
+        },
+        "west": {
+          "texture": "#teeth"
+        }
+      },
+      "shade": true
+    },
+    {
+      "from": [
+        11.5,
+        10,
+        -1
+      ],
+      "to": [
+        13.5,
+        14,
+        1
+      ],
+      "faces": {
+        "up": {
+          "texture": "#teeth"
+        },
+        "down": {
+          "texture": "#teeth"
+        },
+        "north": {
+          "texture": "#teeth"
+        },
+        "south": {
+          "texture": "#teeth"
+        },
+        "east": {
+          "texture": "#teeth"
+        },
+        "west": {
+          "texture": "#teeth"
+        }
+      },
+      "shade": true
+    },
+    {
+      "from": [
+        1.5,
+        13.5,
+        -0.6
+      ],
+      "to": [
+        14.5,
+        16,
+        0.5
+      ],
+      "faces": {
+        "up": {
+          "texture": "#skin"
+        },
+        "down": {
+          "texture": "#skin"
+        },
+        "north": {
+          "texture": "#skin"
+        },
+        "south": {
+          "texture": "#skin"
+        },
+        "east": {
+          "texture": "#skin"
+        },
+        "west": {
+          "texture": "#skin"
+        }
+      }
+    }
+  ]
+}

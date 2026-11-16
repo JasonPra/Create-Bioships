@@ -107,7 +107,7 @@ public final class DinghyGrowth {
   private static List<Part> createBody(int version) {
     boolean extended = version >= 6;
     Map<BlockPos, Part> parts = new LinkedHashMap<>();
-    var flesh = Create_bioships.FLESH.get().defaultBlockState();
+    var flesh = BioshipTissue.body().defaultBlockState();
     java.util.function.BiConsumer<BlockPos, BlockState> put =
         (pos, state) -> {
           if (!pos.equals(BlockPos.ZERO)) parts.put(pos, new Part(pos, state));

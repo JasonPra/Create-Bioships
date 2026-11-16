@@ -5,12 +5,9 @@ import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import java.util.UUID;
 import net.minecraft.core.*;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
@@ -20,12 +17,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.*;
 
-/** One flagellum: swimming muscles, bounded grabbing, and mouth-gated feeding. */
+/** Preserved flagellum: swimming muscles and the same bounded swipe used by active hatchlings. */
 public class TentacleBlockEntity extends BlockEntity implements BlockEntitySubLevelActor {
-  private static final TagKey<EntityType<?>> PREY =
-      TagKey.create(
-          Registries.ENTITY_TYPE,
-          ResourceLocation.fromNamespaceAndPath(Create_bioships.MOD_ID, "edible_entities"));
   private UUID target;
   private final TentacleStrike strike = new TentacleStrike();
 
@@ -33,7 +26,7 @@ public class TentacleBlockEntity extends BlockEntity implements BlockEntitySubLe
     return strike;
   }
 
-  private int clientTarget = -1, heldTicks, cooldown;
+  private int clientTarget = -1, cooldown;
   private long lastTick = Long.MIN_VALUE;
 
   public TentacleBlockEntity(BlockPos pos, BlockState state) {
@@ -88,10 +81,7 @@ public class TentacleBlockEntity extends BlockEntity implements BlockEntitySubLe
   }
 
   static boolean edible(LivingEntity entity) {
-    if (entity instanceof net.minecraft.world.entity.monster.AbstractSkeleton) return false;
-    return entity instanceof Player
-        || entity instanceof net.minecraft.world.entity.npc.Villager
-        || entity.getType().is(PREY);
+    return BioshipPrey.eligible(entity);
   }
 
   private boolean claimed(ServerSubLevel ship, UUID entity) {
@@ -112,7 +102,6 @@ public class TentacleBlockEntity extends BlockEntity implements BlockEntitySubLe
     if (target != null) {
       target = null;
       clientTarget = -1;
-      heldTicks = 0;
       cooldown = 40;
       syncTarget();
     }
@@ -161,7 +150,6 @@ public class TentacleBlockEntity extends BlockEntity implements BlockEntitySubLe
       if (prey != null) {
         target = prey.getUUID();
         clientTarget = prey.getId();
-        heldTicks = 0;
         syncTarget();
       }
     }
@@ -170,48 +158,12 @@ public class TentacleBlockEntity extends BlockEntity implements BlockEntitySubLe
       release();
       return;
     }
-    if (prey instanceof Player
-        || prey instanceof net.minecraft.world.entity.monster.Enemy
-        || BioshipDefense.threatening(core, prey)) {
-      if (!strike.active()) {
-        strike.begin(prey, level.getGameTime());
-        syncTarget();
-      }
-      strike.tick(core, root, prey, 8, 6);
-      if (strike.finished(level.getGameTime())) release();
-      return;
+    if (!strike.active()) {
+      strike.begin(prey, level.getGameTime());
+      syncTarget();
     }
-    heldTicks++;
-    Vec3 destination = core.hasMouth() ? core.mouthPosition(ship) : root.add(0, -1, 0);
-    Vec3 center = prey.getBoundingBox().getCenter();
-    Vec3 pull = destination.subtract(center);
-    double distance = pull.length();
-    Vec3 velocity =
-        distance > 0.01 ? pull.scale(Math.min(0.35, distance * 0.15) / distance) : Vec3.ZERO;
-    prey.setDeltaMovement(
-        prey.getDeltaMovement().scale(0.3).add(velocity).add(0, prey.isNoGravity() ? 0 : 0.08, 0));
-    prey.hurtMarked = true;
-    prey.fallDistance = 0;
-    if (heldTicks % 20 == 0) {
-      var stomach = DigestiveSystem.stomach(core);
-      boolean bite =
-          core.hasMouth() && stomach != null && stomach.connected(core) && distance < 1.8;
-      boolean edible = edible(prey);
-      // Capturing food must not kill it before it reaches a connected mouth.
-      if (edible && !bite) {
-        if (heldTicks >= 160) release();
-        return;
-      }
-      boolean hurt =
-          BioshipFeedingEvents.bite(
-              prey, server.damageSources().generic(), bite ? 6 : 2, bite && edible);
-      if (hurt && !prey.isAlive() && bite && edible) core.eatPrey(prey);
-      if (!prey.isAlive()) {
-        release();
-        return;
-      }
-    }
-    if (heldTicks >= 160) release();
+    strike.tick(core, root, prey, 8, 6);
+    if (strike.finished(level.getGameTime())) release();
   }
 
   boolean visible(
@@ -248,7 +200,6 @@ public class TentacleBlockEntity extends BlockEntity implements BlockEntitySubLe
     strike.load(tag.getCompound("Strike"));
     clientTarget = tag.contains("TargetEntity") ? tag.getInt("TargetEntity") : -1;
     target = null;
-    heldTicks = 0;
     cooldown = 0;
   }
 }

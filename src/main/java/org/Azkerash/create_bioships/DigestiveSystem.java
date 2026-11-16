@@ -150,7 +150,7 @@ public final class DigestiveSystem {
                     : level.getBlockState(next);
         if (!next.equals(end)
             && !state.isAir()
-            && !state.is(Create_bioships.FLESH.get())
+            && !BioshipTissue.isTissue(state)
             && !state.is(Create_bioships.INTESTINE.get())) continue;
         if (!next.equals(end)) {
           Vec3 physical = ship.logicalPose().transformPosition(Vec3.atCenterOf(next));
@@ -310,7 +310,7 @@ public final class DigestiveSystem {
           || candidate.equals(core.getBlockPos())
           || core.isMature() && !EngineRoom.inside(core, candidate)) continue;
       var state = core.getLevel().getBlockState(candidate);
-      if (!state.isAir() && !state.is(Create_bioships.FLESH.get())) continue;
+      if (!state.isAir() && !BioshipTissue.isTissue(state)) continue;
       var physical = core.ship().logicalPose().transformPosition(Vec3.atCenterOf(candidate));
       if (!BlockPos.containing(physical).equals(source)
           && !BioshipIntegration.growthSpace(core.getLevel(), BlockPos.containing(physical)))
@@ -494,7 +494,7 @@ public final class DigestiveSystem {
       level.setBlock(
           old,
           state.getValue(IntestineBlock.ENCASED)
-              ? Create_bioships.FLESH.get().defaultBlockState()
+              ? BioshipTissue.body().defaultBlockState()
               : net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(),
           3);
     }
@@ -519,7 +519,7 @@ public final class DigestiveSystem {
           Create_bioships.INTESTINE
               .get()
               .defaultBlockState()
-              .setValue(IntestineBlock.ENCASED, old.is(Create_bioships.FLESH.get()))
+              .setValue(IntestineBlock.ENCASED, BioshipTissue.isTissue(old))
               .setValue(IntestineBlock.PAID, paid),
           3);
     }
@@ -586,7 +586,12 @@ public final class DigestiveSystem {
   private static boolean offerFood(
       LivingCoreBlockEntity core, StomachBlockEntity stomach, ItemStack stack, boolean inherited) {
     if (stack.isEmpty() || stomach == null || !stomach.connected(core)) return false;
-    if (stomach.enqueue(stack, inherited)) return true;
+    if (stomach.enqueue(stack, inherited)) {
+      if (stomach.connectedMouth != null
+          && core.getLevel().getBlockEntity(stomach.connectedMouth)
+              instanceof FeedingMouthBlockEntity mouth) mouth.animate(10, false);
+      return true;
+    }
     if (inherited) return false;
     for (var entry : stomach.sacPaths.entrySet())
       if (connectedStore(core, stomach, entry.getKey(), entry.getValue())) {

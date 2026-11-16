@@ -21,6 +21,11 @@ public final class BioshipBody {
   private volatile boolean dead;
   private long lastCombatAt = Long.MIN_VALUE;
   private float lastCombatAmount;
+  private long flashUntil;
+
+  public boolean flashing(LivingCoreBlockEntity core) {
+    return core.getLevel() != null && core.getLevel().getGameTime() < flashUntil;
+  }
 
   public boolean dead() {
     return dead;
@@ -35,11 +40,20 @@ public final class BioshipBody {
   }
 
   private void hurt(LivingCoreBlockEntity core, double amount) {
+    if (dead || amount <= 0) return;
+    damageFeedback(core);
     health = Math.max(0, health - amount);
     if (health <= 0) die(core);
     core.setChanged();
     core.getLevel()
         .sendBlockUpdated(core.getBlockPos(), core.getBlockState(), core.getBlockState(), 2);
+  }
+
+  private void damageFeedback(LivingCoreBlockEntity core) {
+    long until = core.getLevel().getGameTime() + 8;
+    // One explosion may damage many body cells in one tick. Keep its voice at one hurt grunt.
+    if (flashUntil != until) BioshipLarynx.hurt(core);
+    flashUntil = until;
   }
 
   void die(LivingCoreBlockEntity core) {
@@ -81,6 +95,7 @@ public final class BioshipBody {
 
   void observe(LivingCoreBlockEntity core) {
     if (dead) return;
+    double before = health;
     var current = actual(core);
     current.forEach(
         (p, s) -> {
@@ -97,6 +112,11 @@ public final class BioshipBody {
       if (!current.containsKey(entry.getKey())
           && !core.rescue().retracted(core.getBlockPos().offset(entry.getKey()))
           && injured.add(entry.getKey())) health = Math.max(0, health - 4);
+    if (health < before) {
+      damageFeedback(core);
+      core.getLevel()
+          .sendBlockUpdated(core.getBlockPos(), core.getBlockState(), core.getBlockState(), 2);
+    }
     if (health <= 0) die(core);
     core.setChanged();
   }
@@ -255,6 +275,7 @@ public final class BioshipBody {
     tag.putDouble("Health", health);
     tag.putLong("CombatAt", lastCombatAt);
     tag.putFloat("CombatAmount", lastCombatAmount);
+    tag.putLong("FlashUntil", flashUntil);
     tag.putInt("Capacity", capacity);
     tag.put("Cells", saveCells(memory));
     tag.putLongArray("Injured", injured.stream().mapToLong(BlockPos::asLong).toArray());
@@ -264,6 +285,7 @@ public final class BioshipBody {
   void load(CompoundTag tag, HolderLookup.Provider registries) {
     lastCombatAt = tag.contains("CombatAt") ? tag.getLong("CombatAt") : Long.MIN_VALUE;
     lastCombatAmount = tag.getFloat("CombatAmount");
+    flashUntil = tag.getLong("FlashUntil");
     memory.clear();
     memory.putAll(loadCells(tag.getList("Cells", Tag.TAG_COMPOUND), registries));
     capacity = Math.max(100, tag.getInt("Capacity"));

@@ -186,7 +186,7 @@ public final class BioshipIntegration {
       for (var direction : Direction.values()) {
         var adjacent = destination.relative(direction);
         var state = core.getLevel().getBlockState(adjacent);
-        if ((state.isAir() || state.is(Create_bioships.FLESH.get()))
+        if ((state.isAir() || BioshipTissue.isTissue(state))
             && OrganMotion.begin(core, source, adjacent, false)) return;
       }
       return;
@@ -206,18 +206,14 @@ public final class BioshipIntegration {
     int nutrients =
         decomposer.getStateData().fuelHandler.getFuelAmount()
             + digester.getStateData().fuelHandler.getFuelAmount();
-    boolean flesh = digester.getPersistentData().getBoolean("BioshipHostFlesh");
+    var host = BioshipTissue.host(digester);
+    var stomachHost = BioshipTissue.host(decomposer);
     core.getLevel().removeBlockEntity(source);
-    core.getLevel()
-        .setBlock(
-            source,
-            flesh
-                ? Create_bioships.FLESH.get().defaultBlockState()
-                : net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(),
-            18);
+    core.getLevel().setBlock(source, host, 18);
     core.getLevel().removeBlockEntity(destination);
     core.getLevel().setBlock(destination, Create_bioships.STOMACH.get().defaultBlockState(), 3);
     if (core.getLevel().getBlockEntity(destination) instanceof StomachBlockEntity stomach) {
+      BioshipTissue.remember(stomach, stomachHost);
       for (var stack : stores) stomach.retain(stack);
       for (var stack : queued) stomach.inheritInput(stack);
       stomach.addNutrients(nutrients);
@@ -229,6 +225,7 @@ public final class BioshipIntegration {
         || !(core.getLevel().getBlockEntity(pos)
             instanceof com.github.elenterius.biomancy.block.bioforge.BioForgeBlockEntity forge))
       return;
+    var host = BioshipTissue.host(forge);
     var stock = forge.getStackInFuelSlot().copy();
     int biomass = forge.getStateData().fuelHandler.getFuelAmount();
     forge.setStackInFuelSlot(net.minecraft.world.item.ItemStack.EMPTY);
@@ -241,8 +238,11 @@ public final class BioshipIntegration {
                 .defaultBlockState()
                 .setValue(FeedingMouthBlock.FACING, FeedingMouthBlock.outward(core, pos)),
             3);
-    if (core.getLevel().getBlockEntity(pos) instanceof FeedingMouthBlockEntity mouth)
+    if (core.getLevel().getBlockEntity(pos) instanceof FeedingMouthBlockEntity mouth) {
+      BioshipTissue.remember(mouth, host);
+      mouth.embeddedInHull(!host.isAir());
       mouth.inheritBioForge(stock, biomass);
+    }
   }
 
   static void orientMouth(LivingCoreBlockEntity core) {
@@ -300,7 +300,7 @@ public final class BioshipIntegration {
         if (!ship.getPlot().contains(new net.minecraft.world.level.ChunkPos(target))
             || !level.isInWorldBounds(target)) continue;
         var host = level.getBlockState(target);
-        if (!host.isAir() && !host.is(Create_bioships.FLESH.get())) continue;
+        if (!host.isAir() && !BioshipTissue.isTissue(host)) continue;
         var physical = ship.logicalPose().transformPosition(Vec3.atCenterOf(target));
         if (!BioshipIntegration.growthSpace(level, BlockPos.containing(physical))) continue;
         if (Math.abs(offset.getX()) == side) {

@@ -29,6 +29,7 @@ public final class BioshipBrain {
     CONFIGURE,
     REGROW_MOUTH,
     REGROW_STOMACH,
+    GROW_LARYNX,
     GROW_STORAGE,
     GROW_DIGESTION,
     GROW_ENGINE_ROOM,
@@ -158,6 +159,16 @@ public final class BioshipBrain {
         Math.max(BioshipDigestiveGrowth.target(core), room == null ? 0 : room.pairs());
     int extraMouths = Math.max(0, capacityGoal - DigestiveSystem.mouths(core).size());
     int extraStomachs = Math.max(0, capacityGoal - DigestiveSystem.stomachs(core).size());
+    int voice =
+        digestive
+            ? Math.max(
+                0,
+                (int) BioshipLarynx.missingCount(core)
+                    - (int)
+                        BioshipIntegration.blockEntities(core.ship()).stream()
+                            .filter(e -> BioshipLarynx.isLarynx(e.getBlockState()))
+                            .count())
+            : 0;
     int repair = (int) Math.ceil(Math.max(0, core.body().capacity() - core.body().health()) / 4);
     int flesh =
         (AirshipPrototype.available() ? core.missingBiomass() : 0)
@@ -166,21 +177,24 @@ public final class BioshipBrain {
             + (room == null ? 0 : room.cost().flesh())
             + EmergencyReserve.TARGET.flesh()
             + 8 * extraMouths
-            + 16 * extraStomachs;
+            + 16 * extraStomachs
+            + 8 * voice;
     int bone =
         (core.frameFunded() ? 0 : 8)
             + 2 * upgrades
             + (room == null ? 0 : room.cost().bone())
             + EmergencyReserve.TARGET.bone()
             + 2 * extraMouths
-            + 4 * extraStomachs;
+            + 4 * extraStomachs
+            + 2 * voice;
     int fiber =
         (core.frameFunded() ? 0 : 12)
             + 4 * upgrades
             + (room == null ? 0 : room.cost().fiber())
             + EmergencyReserve.TARGET.fiber()
             + 4 * extraMouths
-            + 8 * extraStomachs;
+            + 8 * extraStomachs
+            + 4 * voice;
     if (stomach != null) {
       flesh -= stomach.material("biomancy:flesh_bits");
       bone -= stomach.material("biomancy:bone_fragments");
@@ -288,7 +302,7 @@ public final class BioshipBrain {
     if (wreck && n.materials()) return 820;
     String id =
         net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
-    return n.flesh > 0 && (state.is(Create_bioships.FLESH.get()) || id.contains("flesh")) ? 760 : 0;
+    return n.flesh > 0 && (BioshipTissue.isTissue(state) || id.contains("flesh")) ? 760 : 0;
   }
 
   private int itemUrgency(Needs n, ItemStack stack) {
@@ -324,9 +338,11 @@ public final class BioshipBrain {
     int urgency =
         rank == 0
             ? 1000
-            : component && !n.criticalFood
-                ? 950
-                : emergency ? 600 : materialUrgency(n, state, wreck);
+            : rank == -1
+                ? 970
+                : component && !n.criticalFood
+                    ? 950
+                    : emergency ? 600 : materialUrgency(n, state, wreck);
     boolean observed = wreck || core.vision().exposed(core, pos);
     var inventory =
         observed ? core.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, pos, null) : null;
@@ -512,6 +528,23 @@ public final class BioshipBrain {
               BioshipPriorities.rank(core, s.state(), s.pos()),
               true));
     if (n.digestive)
+      for (var loot : core.loot().targets(core)) {
+        var point = loot.position().add(0, .2, 0);
+        if (!core.crawl().reachableGoal(BlockPos.containing(point))) continue;
+        offers.add(
+            offer(
+                Action.COLLECT_ITEM,
+                point,
+                loot.item() == null ? BlockPos.containing(point) : null,
+                null,
+                loot.item(),
+                BehaviorPriority.Band.NEED,
+                n.criticalFood ? 1120 : 990,
+                100,
+                effort(core, point),
+                "Recover known kill drops before hunting"));
+      }
+    if (n.digestive)
       for (var item :
           core.getLevel()
               .getEntitiesOfClass(
@@ -525,6 +558,9 @@ public final class BioshipBrain {
         if (!core.vision().visible(core, point)) continue;
         if (item.getItem().is(Items.ROTTEN_FLESH) && !core.starving()) continue;
         int urgency = itemUrgency(n, item.getItem());
+        if (LivingCoreBlockEntity.isMeat(item.getItem()) && !item.getItem().is(Items.ROTTEN_FLESH))
+          urgency = Math.max(urgency, n.criticalFood ? 1100 : 985);
+        if (!core.crawl().reachableGoal(BlockPos.containing(point))) continue;
         offers.add(
             offer(
                 Action.COLLECT_ITEM,
@@ -604,6 +640,7 @@ public final class BioshipBrain {
           MOVE_COMPONENT,
           REGROW_MOUTH,
           REGROW_STOMACH,
+          GROW_LARYNX,
           GROW_STORAGE,
           GROW_DIGESTION,
           GROW_ENGINE_ROOM,
@@ -670,7 +707,9 @@ public final class BioshipBrain {
   private Vec3 collectItem(LivingCoreBlockEntity core, Decision d) {
     var item = d.item;
     var stomach = DigestiveSystem.stomach(core);
-    if (stomach == null || !item.isAlive()) return null;
+    if (stomach == null) return null;
+    if (item == null) return d.point;
+    if (!item.isAlive()) return null;
     if (!BioshipReach.clear(core, d.point, false)) return d.point;
     core.crawl().reach(item.position());
     item.setDeltaMovement(
@@ -680,6 +719,17 @@ public final class BioshipBrain {
         || core.mouthPosition(core.ship()).distanceToSqr(d.point) <= 2.25
         || BioshipReach.anchor(core, d.point).distanceToSqr(d.point) <= 2.25) {
       var one = item.getItem().copyWithCount(1);
+      if (LivingCoreBlockEntity.isMeat(one)) {
+        var flags =
+            one.getOrDefault(
+                    net.minecraft.core.component.DataComponents.CUSTOM_DATA,
+                    net.minecraft.world.item.component.CustomData.EMPTY)
+                .copyTag();
+        flags.putBoolean("BioshipHunted", true);
+        one.set(
+            net.minecraft.core.component.DataComponents.CUSTOM_DATA,
+            net.minecraft.world.item.component.CustomData.of(flags));
+      }
       boolean accepted;
       if (BioshipScavenging.droppedBlock(one))
         accepted = core.scavenging().consumeDroppedBlock(core, one);
@@ -690,6 +740,7 @@ public final class BioshipBrain {
         accepted = true;
       } else accepted = DigestiveSystem.offerFood(core, one, false);
       if (accepted) {
+        BioshipLarynx.bite(core);
         item.getItem().shrink(1);
         if (item.getItem().isEmpty()) item.discard();
       }

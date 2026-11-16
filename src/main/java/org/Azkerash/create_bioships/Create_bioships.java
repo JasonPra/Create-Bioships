@@ -16,6 +16,26 @@ public class Create_bioships {
   public static final String MOD_ID = "create_bioships";
   public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(MOD_ID);
   public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MOD_ID);
+  public static final java.util.Map<String, DeferredItem<Item>> MOB_MEATS = registerMeats();
+
+  private static java.util.Map<String, DeferredItem<Item>> registerMeats() {
+    var meats = new java.util.LinkedHashMap<String, DeferredItem<Item>>();
+    for (var name :
+        java.util.List.of(
+            "enderman", "villager", "witch", "creeper", "spider", "illager", "aquatic", "creature"))
+      meats.put(
+          name,
+          ITEMS.registerSimpleItem(
+              name + "_meat",
+              new Item.Properties()
+                  .food(
+                      new net.minecraft.world.food.FoodProperties.Builder()
+                          .nutrition(3)
+                          .saturationModifier(.3f)
+                          .build())));
+    return java.util.Collections.unmodifiableMap(meats);
+  }
+
   public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES =
       DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, MOD_ID);
   public static final DeferredRegister<net.minecraft.world.entity.EntityType<?>> ENTITIES =
@@ -187,6 +207,13 @@ public class Create_bioships {
   public static final DeferredBlock<Block> FLESH =
       BLOCKS.registerSimpleBlock(
           "living_hull", BlockBehaviour.Properties.of().strength(2).sound(SoundType.SLIME_BLOCK));
+
+  /** Preserved armor material; automatic armor stages remain dormant. */
+  public static final DeferredBlock<Block> ARMOR_II =
+      BLOCKS.registerSimpleBlock(
+          "living_hull_tier_2",
+          BlockBehaviour.Properties.of().strength(4, 12).sound(SoundType.SLIME_BLOCK));
+
   public static final DeferredBlock<CaptainSeatBlock> PERCH =
       BLOCKS.register(
           "living_perch",
@@ -314,6 +341,7 @@ public class Create_bioships {
                       if (AirshipPrototype.available()) output.accept(DOOR_ITEM.get());
                       output.accept(BIOSHIP_WRENCH.get());
                       output.accept(BIOSHIP_GOGGLES.get());
+                      MOB_MEATS.values().forEach(item -> output.accept(item.get()));
                     })
                 .build());
   }

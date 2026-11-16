@@ -81,8 +81,61 @@ public final class BioshipNetwork {
     }
   }
 
+  public record TrustBurst(net.minecraft.nbt.CompoundTag data) implements CustomPacketPayload {
+    public static final Type<TrustBurst> TYPE =
+        new Type<>(ResourceLocation.fromNamespaceAndPath(Create_bioships.MOD_ID, "trust_burst"));
+    public static final StreamCodec<RegistryFriendlyByteBuf, TrustBurst> CODEC =
+        StreamCodec.of(
+            (buf, p) -> buf.writeNbt(p.data),
+            buf -> new TrustBurst(java.util.Objects.requireNonNull(buf.readNbt())));
+
+    @Override
+    public Type<TrustBurst> type() {
+      return TYPE;
+    }
+  }
+
+  public record Voice(net.minecraft.nbt.CompoundTag data) implements CustomPacketPayload {
+    public static final Type<Voice> TYPE =
+        new Type<>(ResourceLocation.fromNamespaceAndPath(Create_bioships.MOD_ID, "voice"));
+    public static final StreamCodec<RegistryFriendlyByteBuf, Voice> CODEC =
+        StreamCodec.of(
+            (buf, p) -> buf.writeNbt(p.data),
+            buf -> new Voice(java.util.Objects.requireNonNull(buf.readNbt())));
+
+    @Override
+    public Type<Voice> type() {
+      return TYPE;
+    }
+  }
+
   public static void register(RegisterPayloadHandlersEvent event) {
-    var registrar = event.registrar("5");
+    var registrar = event.registrar("6");
+    registrar.playToClient(
+        Voice.TYPE,
+        Voice.CODEC,
+        (payload, context) -> {
+          var persistent = context.player().getPersistentData();
+          var inbox = persistent.getList("BioshipVoices", net.minecraft.nbt.Tag.TAG_COMPOUND);
+          if (inbox.size() < 32) {
+            inbox.add(payload.data());
+            persistent.put("BioshipVoices", inbox);
+          }
+        });
+    registrar.playToClient(
+        TrustBurst.TYPE,
+        TrustBurst.CODEC,
+        (payload, context) -> {
+          var persistent = context.player().getPersistentData();
+          var inbox =
+              persistent.getList(BioshipTrustFeedback.INBOX, net.minecraft.nbt.Tag.TAG_COMPOUND);
+          if (inbox.size() < 32) {
+            var data = payload.data().copy();
+            data.putLong("Received", System.nanoTime());
+            inbox.add(data);
+            persistent.put(BioshipTrustFeedback.INBOX, inbox);
+          }
+        });
     registrar.playToServer(
         PathRequest.TYPE,
         PathRequest.CODEC,

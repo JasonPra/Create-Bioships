@@ -30,6 +30,8 @@ final class BioshipPriorities {
           && BioshipIntegration.blockEntities(core.ship()).stream()
               .noneMatch(e -> e.getBlockState().is(state.getBlock()))) return 0;
     }
+    if (BioshipLarynx.isLarynx(state) && BioshipLarynx.ready(core) && BioshipLarynx.missing(core))
+      return -1;
     var entity = observed ? level.getBlockEntity(pos) : null;
     boolean container =
         id.equals("biomancy:storage_sac")
@@ -51,7 +53,7 @@ final class BioshipPriorities {
           full |= !inventory.getStackInSlot(slot).isEmpty();
       return full ? 1 : 2;
     }
-    if (state.is(Create_bioships.FLESH.get()) || id.contains("flesh"))
+    if (BioshipTissue.isTissue(state) || id.contains("flesh"))
       return AirshipPrototype.available() && core.missingBiomass() > 0 ? 3 : 5;
     return 5;
   }

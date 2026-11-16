@@ -1,0 +1,166 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "create_bioships:block/living_hull_tier_2_0",
+        "y": 0,
+        "uvlock": true
+      },
+      {
+        "model": "create_bioships:block/living_hull_tier_2_0",
+        "y": 90,
+        "uvlock": true
+      },
+      {
+        "model": "create_bioships:block/living_hull_tier_2_0",
+        "y": 180,
+        "uvlock": true
+      },
+      {
+        "model": "create_bioships:block/living_hull_tier_2_0",
+        "y": 270,
+        "uvlock": true
+      },
+      {
+        "model": "create_bioships:block/living_hull_tier_2_1",
+        "y": 0,
+        "uvlock": true
+      },
+      {
+        "model": "create_bioships:block/living_hull_tier_2_1",
+        "y": 90,
+        "uvlock": true
+      },
+      {
+        "model": "create_bioships:block/living_hull_tier_2_1",
+        "y": 180,
+        "uvlock": true
+      },
+      {
+        "model": "create_bioships:block/living_hull_tier_2_1",
+        "y": 270,
+        "uvlock": true
+      },
+      {
+        "model": "create_bioships:block/living_hull_tier_2_2",
+        "y": 0,
+        "uvlock": true
+      },
+      {
+        "model": "create_bioships:block/living_hull_tier_2_2",
+        "y": 90,
+        "uvlock": true
+      },
+      {
+        "model": "create_bioships:block/living_hull_tier_2_2",
+        "y": 180,
+        "uvlock": true
+      },
+      {
+        "model": "create_bioships:block/living_hull_tier_2_2",
+        "y": 270,
+        "uvlock": true
+      },
+      {
+        "model": "create_bioships:block/living_hull_tier_2_3",
+        "y": 0,
+        "uvlock": true
+      },
+      {
+        "model": "create_bioships:block/living_hull_tier_2_3",
+        "y": 90,
+        "uvlock": true
+      },
+      {
+        "model": "create_bioships:block/living_hull_tier_2_3",
+        "y": 180,
+        "uvlock": true
+      },
+      {
+        "model": "create_bioships:block/living_hull_tier_2_3",
+        "y": 270,
+        "uvlock": true
+      },
+      {
+        "model": "create_bioships:block/living_hull_tier_2_4",
+        "y": 0,
+        "uvlock": true
+      },
+      {
+        "model": "create_bioships:block/living_hull_tier_2_4",
+        "y": 90,
+        "uvlock": true
+      },
+      {
+        "model": "create_bioships:block/living_hull_tier_2_4",
+        "y": 180,
+        "uvlock": true
+      },
+      {
+        "model": "create_bioships:block/living_hull_tier_2_4",
+        "y": 270,
+        "uvlock": true
+      },
+      {
+        "model": "create_bioships:block/living_hull_tier_2_5",
+        "y": 0,
+        "uvlock": true
+      },
+      {
+        "model": "create_bioships:block/living_hull_tier_2_5",
+        "y": 90,
+        "uvlock": true
+      },
+      {
+        "model": "create_bioships:block/living_hull_tier_2_5",
+        "y": 180,
+        "uvlock": true
+      },
+      {
+        "model": "create_bioships:block/living_hull_tier_2_5",
+        "y": 270,
+        "uvlock": true
+      },
+      {
+        "model": "create_bioships:block/living_hull_tier_2_6",
+        "y": 0,
+        "uvlock": true
+      },
+      {
+        "model": "create_bioships:block/living_hull_tier_2_6",
+        "y": 90,
+        "uvlock": true
+      },
+      {
+        "model": "create_bioships:block/living_hull_tier_2_6",
+        "y": 180,
+        "uvlock": true
+      },
+      {
+        "model": "create_bioships:block/living_hull_tier_2_6",
+        "y": 270,
+        "uvlock": true
+      },
+      {
+        "model": "create_bioships:block/living_hull_tier_2_7",
+        "y": 0,
+        "uvlock": true
+      },
+      {
+        "model": "create_bioships:block/living_hull_tier_2_7",
+        "y": 90,
+        "uvlock": true
+      },
+      {
+        "model": "create_bioships:block/living_hull_tier_2_7",
+        "y": 180,
+        "uvlock": true
+      },
+      {
+        "model": "create_bioships:block/living_hull_tier_2_7",
+        "y": 270,
+        "uvlock": true
+      }
+    ]
+  }
+}

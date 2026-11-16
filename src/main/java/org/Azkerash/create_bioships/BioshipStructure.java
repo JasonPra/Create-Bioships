@@ -7,8 +7,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
 
 /** Read-only Sable geometry adapter shared by sensing, support, repair and decay. */
-final class BioshipStructure {
-  static void visit(SubLevel ship, BiConsumer<BlockPos, BlockState> visitor) {
+public final class BioshipStructure {
+  public static void visit(SubLevel ship, BiConsumer<BlockPos, BlockState> visitor) {
     for (var holder : ship.getPlot().getLoadedChunks()) {
       var chunk = holder.getChunk();
       var sections = chunk.getSections();

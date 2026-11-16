@@ -113,7 +113,7 @@ public final class CoreMotion {
   }
 
   static boolean tissue(BlockState state) {
-    return state.is(Create_bioships.FLESH.get())
+    return BioshipTissue.isTissue(state)
         || state.is(Create_bioships.INTESTINE.get())
         || state.is(Create_bioships.CARAPACE.get());
   }

@@ -93,7 +93,7 @@ final class BioshipRecovery {
         || id.equals("biomancy:digester")) return false;
     if (core.canFly() && state.is(Create_bioships.TENTACLE.get())) return false;
     boolean disposable =
-        state.is(Create_bioships.FLESH.get())
+        BioshipTissue.isTissue(state)
             || state.is(Create_bioships.CARAPACE.get())
             || state.is(Create_bioships.TENTACLE.get())
             || state.is(Create_bioships.ONE_WAY_WINDOW.get())

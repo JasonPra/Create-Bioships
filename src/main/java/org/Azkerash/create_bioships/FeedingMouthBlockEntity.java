@@ -15,6 +15,63 @@ import net.minecraft.world.phys.Vec3;
 public class FeedingMouthBlockEntity extends BaseContainerBlockEntity {
   private NonNullList<ItemStack> items = NonNullList.withSize(9, ItemStack.EMPTY);
   private int inheritedBiomass;
+  private CompoundTag larynx = new CompoundTag();
+  private long motionStart;
+  private int motionTicks;
+  private boolean vocalMotion;
+
+  public boolean voiced() {
+    return !larynx.isEmpty();
+  }
+
+  void absorbLarynx(CompoundTag capsule) {
+    if (voiced()) throw new IllegalStateException("Mouth already has a larynx");
+    larynx = capsule.copy();
+    larynx.putBoolean("Combined", true);
+    animate(18, true);
+  }
+
+  CompoundTag larynxCapsule() {
+    return larynx.copy();
+  }
+
+  public double jawShift(float partial) {
+    if (level == null || motionTicks <= 0) return 0;
+    double t = (level.getGameTime() - motionStart + partial) / motionTicks;
+    if (t < 0 || t >= 1) return 0;
+    return Math.sin(Math.PI * t) * (vocalMotion ? -.12 : .125);
+  }
+
+  void animate(int ticks, boolean vocal) {
+    if (level == null || level.isClientSide) return;
+    motionStart = level.getGameTime();
+    motionTicks = ticks;
+    vocalMotion = vocal;
+    setChanged();
+    level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 2);
+  }
+
+  public void vocalize(boolean hurt) {
+    if (!voiced() || level == null || level.isClientSide) return;
+    BioshipVoice.play(
+        this, larynx, hurt ? BioshipVoice.Utterance.HURT : BioshipVoice.Utterance.GROWL);
+  }
+
+  public void vocalize(char letter) {
+    if (!voiced()) return;
+    BioshipVoice.letter(this, larynx, letter);
+  }
+
+  @Override
+  public net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket getUpdatePacket() {
+    return net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket.create(this);
+  }
+
+  @Override
+  public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+    return saveWithoutMetadata(registries);
+  }
+
   private boolean inheritedSlot, embeddedInHull;
 
   public FeedingMouthBlockEntity(BlockPos pos, BlockState state) {
@@ -38,7 +95,8 @@ public class FeedingMouthBlockEntity extends BaseContainerBlockEntity {
 
   @Override
   protected Component getDefaultName() {
-    return Component.translatable("block.create_bioships.feeding_mouth");
+    return Component.translatable(
+        voiced() ? "block.create_bioships.voiced_mouth" : "block.create_bioships.feeding_mouth");
   }
 
   @Override
@@ -143,6 +201,10 @@ public class FeedingMouthBlockEntity extends BaseContainerBlockEntity {
     tag.putInt("InheritedBiomass", inheritedBiomass);
     tag.putBoolean("InheritedSlot", inheritedSlot);
     tag.putBoolean("EmbeddedInHull", embeddedInHull);
+    tag.put("Larynx", larynx);
+    tag.putLong("MotionStart", motionStart);
+    tag.putInt("MotionTicks", motionTicks);
+    tag.putBoolean("VocalMotion", vocalMotion);
   }
 
   @Override
@@ -153,5 +215,9 @@ public class FeedingMouthBlockEntity extends BaseContainerBlockEntity {
     inheritedBiomass = Math.clamp(tag.getInt("InheritedBiomass"), 0, 1000000);
     inheritedSlot = tag.getBoolean("InheritedSlot");
     embeddedInHull = tag.getBoolean("EmbeddedInHull");
+    larynx = tag.getCompound("Larynx").copy();
+    motionStart = tag.getLong("MotionStart");
+    motionTicks = Math.clamp(tag.getInt("MotionTicks"), 0, 100);
+    vocalMotion = tag.getBoolean("VocalMotion");
   }
 }

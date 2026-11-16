@@ -11,6 +11,12 @@ import net.minecraft.world.phys.Vec3;
 /** Conserved cargo is swallowed first; fitting kept organs is a separate, subsequent job. */
 public final class BioshipAssimilation {
   private final List<OrganMotion.Move> arms = new ArrayList<>();
+  private final Map<UUID, String> grasperBindings = new HashMap<>();
+
+  public String grasper(UUID cargo) {
+    return grasperBindings.getOrDefault(cargo, "core");
+  }
+
   private final List<CompoundTag> stock = new ArrayList<>();
   private UUID wreck;
   private boolean settling, deploymentBlocked, resumeWreck, feedingJob;
@@ -132,7 +138,7 @@ public final class BioshipAssimilation {
     var points = new ArrayList<Vec3>();
     points.add(primary);
     for (var goal : core.brain().queuedGoals())
-      if (points.size() < 4
+      if (points.size() < BioshipGraspers.slots(core).size()
           && goal.action() == BioshipBrain.Action.ASSIMILATE
           && goal.point() != null
           && goal.point().distanceToSqr(primary) > 0
@@ -188,7 +194,9 @@ public final class BioshipAssimilation {
     var seen = new HashSet<BlockPos>();
     double reserved = core.crawl().carriedLoad(core);
     for (var source : sources) {
-      if (arms.size() == 4) break;
+      if (arms.size() >= BioshipGraspers.slots(core).size()) break;
+      var grasper = BioshipGraspers.available(core, source.point(), grasperBindings.values());
+      if (grasper == null) break;
       if (!seen.add(source.pos())
           || source.state().isAir()
           || source.state().is(Create_bioships.CORE.get())) continue;
@@ -206,6 +214,7 @@ public final class BioshipAssimilation {
       }
       if (OrganMotion.swallow(core, source.pos())) {
         arms.add(core.organMove());
+        grasperBindings.put(core.organMove().cargo(), grasper.key());
         core.organMove(null);
         reserved += extra;
       }
@@ -225,6 +234,7 @@ public final class BioshipAssimilation {
       OrganMotion.tick(core);
       arms.remove(move);
       if (core.organMove() != null) arms.add(core.organMove());
+      else grasperBindings.remove(move.cargo());
       core.workingOrganMove(null);
     }
     if (beforeArms != arms.size()) core.organMove(null);
@@ -256,6 +266,11 @@ public final class BioshipAssimilation {
             t -> BioshipPriorities.rank(core, state(core, t), core.getBlockPos())));
     for (var tag : List.copyOf(stock)) {
       var state = state(core, tag);
+      if (BioshipLarynx.isLarynx(state) && BioshipLarynx.absorb(core, tag.getCompound("Entity"))) {
+        take(tag);
+        core.setChanged();
+        continue;
+      }
       boolean keep =
           !tag.getBoolean("Wreck") && !tag.getBoolean("Recycle")
               || BioshipScavenging.keepComponent(core, state, null);
@@ -305,7 +320,7 @@ public final class BioshipAssimilation {
       }
       if (port == null) continue;
       var host = core.getLevel().getBlockState(port);
-      if (!host.isAir() && !host.is(Create_bioships.FLESH.get())) continue;
+      if (!host.isAir() && !BioshipTissue.isTissue(host)) continue;
       if (!BioshipSupport.safeAddition(core, port, state)) continue;
       if (!DigestiveSystem.reserveOrganRoute(core, core.getBlockPos(), port)) continue;
       if (!core.getLevel().setBlock(port, state, 3)) continue;
@@ -316,9 +331,7 @@ public final class BioshipAssimilation {
         data.putInt("y", port.getY());
         data.putInt("z", port.getZ());
         entity.loadWithComponents(data, core.getLevel().registryAccess());
-        entity
-            .getPersistentData()
-            .putBoolean("BioshipHostFlesh", host.is(Create_bioships.FLESH.get()));
+        BioshipTissue.remember(entity, host);
         entity.setChanged();
       }
       take(tag);
@@ -327,7 +340,7 @@ public final class BioshipAssimilation {
             .finish(
                 core,
                 port,
-                host.is(Create_bioships.FLESH.get()),
+                BioshipTissue.isTissue(host),
                 tag.getBoolean("Recycle") || emergency && !keep);
       else BioshipIntegration.finishAssimilation(core, port);
       DigestiveSystem.connect(core, core.ship());
@@ -379,6 +392,9 @@ public final class BioshipAssimilation {
     var cargo = new ListTag();
     for (var arm : arms) cargo.add(arm.save());
     tag.put("Arms", cargo);
+    var bindings = new CompoundTag();
+    grasperBindings.forEach((id, slot) -> bindings.putString(id.toString(), slot));
+    tag.put("Graspers", bindings);
     var items = new ListTag();
     stock.forEach(t -> items.add(t.copy()));
     tag.put("Stock", items);
@@ -391,9 +407,17 @@ public final class BioshipAssimilation {
 
   void load(CompoundTag tag) {
     arms.clear();
+    grasperBindings.clear();
     stock.clear();
+    var bindings = tag.getCompound("Graspers");
+    for (var id : bindings.getAllKeys()) {
+      try {
+        grasperBindings.put(UUID.fromString(id), bindings.getString(id));
+      } catch (IllegalArgumentException ignored) {
+      }
+    }
     var cargo = tag.getList("Arms", 10);
-    for (int i = 0; i < Math.min(4, cargo.size()); i++) {
+    for (int i = 0; i < Math.min(32, cargo.size()); i++) {
       var m = OrganMotion.Move.load(cargo.getCompound(i));
       if (m != null) arms.add(m);
     }

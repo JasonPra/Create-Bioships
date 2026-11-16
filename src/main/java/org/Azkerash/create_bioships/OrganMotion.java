@@ -109,6 +109,10 @@ public final class OrganMotion {
     return begin(core, source, core.getBlockPos(), false, false, true, true);
   }
 
+  static boolean storeComponent(LivingCoreBlockEntity core, BlockPos source) {
+    return begin(core, source, core.getBlockPos(), false, false, false, true);
+  }
+
   static boolean swallow(LivingCoreBlockEntity core, BlockPos source) {
     return begin(core, source, core.getBlockPos(), true, false, false, true);
   }
@@ -137,7 +141,7 @@ public final class OrganMotion {
     var ship = core.ship();
     var level = ship.getLevel();
     var host = level.getBlockState(target);
-    if (!stash && !host.isAir() && !host.is(Create_bioships.FLESH.get())) return false;
+    if (!stash && !host.isAir() && !BioshipTissue.isTissue(host)) return false;
     var state = level.getBlockState(source);
     if (state.isAir() || state.is(Create_bioships.CORE.get())) return false;
     var sourceShip = BioshipIntegration.containing(level, source);
@@ -161,10 +165,11 @@ public final class OrganMotion {
     boolean stomach =
         state.is(Create_bioships.STOMACH.get())
             || id.equals("biomancy:decomposer") && DigestiveSystem.stomach(core) == null;
-    boolean restore = false;
     var entity = level.getBlockEntity(source);
-    if (entity != null) restore = entity.getPersistentData().getBoolean("BioshipHostFlesh");
-    if (!consuming
+    var sourceHost = BioshipTissue.host(entity);
+    boolean restore = !sourceHost.isAir();
+    if (!stash
+        && !consuming
         && !external
         && !manual
         && !BioshipSupport.safeMove(core, source, target, restore)) return false;
@@ -191,7 +196,7 @@ public final class OrganMotion {
     data.putBoolean("BioshipStash", stash);
     data.putBoolean("BioshipCoreReclamation", stash && consuming);
     data.putBoolean("BioshipScavenged", scavenged);
-    data.putBoolean("ScavengeHostFlesh", host.is(Create_bioships.FLESH.get()));
+    data.putBoolean("ScavengeHostFlesh", BioshipTissue.isTissue(host));
     var selected = core.brain().lastDecision();
     data.putBoolean(
         "BioshipEmergencyRecycle",
@@ -201,8 +206,7 @@ public final class OrganMotion {
                 && selected.recycle()
                 && source.equals(selected.block()));
     cargo.setUserDataTag(data);
-    if (restore && !external)
-      level.setBlock(source, Create_bioships.FLESH.get().defaultBlockState(), 3);
+    if (restore && !external) level.setBlock(source, sourceHost, 3);
     var move =
         new Move(
             cargo.getUniqueId(),
@@ -230,7 +234,7 @@ public final class OrganMotion {
   }
 
   private static boolean tissue(net.minecraft.world.level.block.state.BlockState state) {
-    return state.is(Create_bioships.FLESH.get())
+    return BioshipTissue.isTissue(state)
         || state.is(Create_bioships.CARAPACE.get())
         || state.is(Create_bioships.INTESTINE.get())
         || state.is(Create_bioships.ONE_WAY_WINDOW.get());
@@ -329,7 +333,7 @@ public final class OrganMotion {
       return;
     }
     var host = level.getBlockState(move.target());
-    if (!host.isAir() && !host.is(Create_bioships.FLESH.get())) {
+    if (!host.isAir() && !BioshipTissue.isTissue(host)) {
       release(core, cargo);
       return;
     }
@@ -342,9 +346,7 @@ public final class OrganMotion {
         List.of(move.cargoBlock()));
     var moved = level.getBlockEntity(move.target());
     if (moved != null) {
-      moved
-          .getPersistentData()
-          .putBoolean("BioshipHostFlesh", host.is(Create_bioships.FLESH.get()));
+      BioshipTissue.remember(moved, host);
       if (move.manual()) moved.getPersistentData().putBoolean("BioshipManualPlacement", true);
       moved.setChanged();
     }
@@ -354,7 +356,7 @@ public final class OrganMotion {
           level.getBlockState(move.target()).setValue(SurfaceEyeBlock.AUTOMATIC, false),
           3);
     if (moved instanceof FeedingMouthBlockEntity mouth) {
-      mouth.embeddedInHull(host.is(Create_bioships.FLESH.get()));
+      mouth.embeddedInHull(BioshipTissue.isTissue(host));
       Direction facing = FeedingMouthBlock.outward(core, move.target());
       level.setBlock(
           move.target(),

@@ -87,7 +87,7 @@ public final class BioshipCrawl {
   int hullTier(LivingCoreBlockEntity core) {
     double unit =
         dev.ryanhcode.sable.physics.config.block_properties.PhysicsBlockPropertyHelper.getMass(
-            core.getLevel(), core.getBlockPos(), Create_bioships.FLESH.get().defaultBlockState());
+            core.getLevel(), core.getBlockPos(), BioshipTissue.body().defaultBlockState());
     double mass = 0;
     for (var part : core.plannedBody())
       mass +=
@@ -104,7 +104,7 @@ public final class BioshipCrawl {
       net.minecraft.world.level.block.state.BlockState state) {
     double unit =
         dev.ryanhcode.sable.physics.config.block_properties.PhysicsBlockPropertyHelper.getMass(
-            core.getLevel(), core.getBlockPos(), Create_bioships.FLESH.get().defaultBlockState());
+            core.getLevel(), core.getBlockPos(), BioshipTissue.body().defaultBlockState());
     return dev.ryanhcode.sable.physics.config.block_properties.PhysicsBlockPropertyHelper.getMass(
             core.getLevel(), pos, state)
         / Math.max(.001, unit);
@@ -113,7 +113,7 @@ public final class BioshipCrawl {
   public double carriedLoad(LivingCoreBlockEntity core) {
     double tissue =
         dev.ryanhcode.sable.physics.config.block_properties.PhysicsBlockPropertyHelper.getMass(
-            core.getLevel(), core.getBlockPos(), Create_bioships.FLESH.get().defaultBlockState());
+            core.getLevel(), core.getBlockPos(), BioshipTissue.body().defaultBlockState());
     return core.ship() == null
         ? 0
         : core.ship().getMassTracker().getMass() / Math.max(.001, tissue)
@@ -404,9 +404,7 @@ public final class BioshipCrawl {
     double speed =
         (2.4 + .6 * Math.max(0, Math.sin(phase)))
             * (running() ? 1.65 : mode.equals("wander") ? .65 : 1);
-    return direction
-        .scale(speed)
-        .add(new Vec3(-direction.z, 0, direction.x).scale(Math.sin(phase * .5) * .08));
+    return direction.scale(speed);
   }
 
   private BlockPos ground(ServerLevel level, BlockPos point) {
@@ -434,6 +432,7 @@ public final class BioshipCrawl {
               .subtract(core.ship().logicalPose().transformPositionInverse(here));
       wallFacing = Direction.getNearest(root.x, root.y, root.z);
       wallDistance = grip.distance();
+      stanceUp = Vec3.atLowerCornerOf(grip.direction().getOpposite().getNormal());
       supportHeight = here.y;
       return;
     }
@@ -451,7 +450,7 @@ public final class BioshipCrawl {
     boolean clinging = wallFacing != null;
     var grip = walking || clinging ? GroundRoute.grip(core, here) : null;
     wallFacing = null;
-    if (clinging && !walking && grip != null) {
+    if (clinging && grip != null) {
       braceGrip(core, here, grip);
       return;
     }
@@ -539,6 +538,7 @@ public final class BioshipCrawl {
     }
     t.putDouble("SupportHeight", supportHeight);
     t.putDouble("UpX", stanceUp.x);
+    t.putDouble("UpY", stanceUp.y);
     t.putDouble("UpZ", stanceUp.z);
     t.putInt("Cursor", cursor);
     t.putDouble("GaitPhase", gaitPhase);
@@ -572,7 +572,9 @@ public final class BioshipCrawl {
             ? new Vec3(t.getDouble("ReachX"), t.getDouble("ReachY"), t.getDouble("ReachZ"))
             : null;
     supportHeight = t.contains("SupportHeight") ? t.getDouble("SupportHeight") : Double.NaN;
-    stanceUp = new Vec3(t.getDouble("UpX"), 1, t.getDouble("UpZ")).normalize();
+    stanceUp =
+        new Vec3(t.getDouble("UpX"), t.contains("UpY") ? t.getDouble("UpY") : 1, t.getDouble("UpZ"))
+            .normalize();
     cursor = t.getInt("Cursor");
     gaitPhase = t.getDouble("GaitPhase");
     gaitSpeed = Math.max(0, t.getDouble("GaitSpeed"));

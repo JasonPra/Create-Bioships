@@ -32,9 +32,10 @@ final class BioshipNutrition {
         return true;
       }
       case COLLECT_ITEM -> {
-        return decision.item() != null
-            && (fuelValue(decision.item().getItem()) > 0
-                || BioshipScavenging.droppedBlock(decision.item().getItem()));
+        return core.loot().knows(decision.point())
+            || decision.item() != null
+                && (fuelValue(decision.item().getItem()) > 0
+                    || BioshipScavenging.droppedBlock(decision.item().getItem()));
       }
       case CONFIGURE -> {
         var stomach = DigestiveSystem.stomach(core);

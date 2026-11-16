@@ -8,7 +8,7 @@ import net.minecraft.world.phys.*;
 /** Shared shell geometry and layout-coordinate mapping; no mutations or spending. */
 final class EngineRoomLayout {
   static boolean skin(BlockState state) {
-    return state.is(Create_bioships.FLESH.get())
+    return BioshipTissue.isTissue(state)
         || state.is(Create_bioships.CARAPACE.get())
         || state.is(Create_bioships.ONE_WAY_WINDOW.get());
   }
@@ -27,7 +27,7 @@ final class EngineRoomLayout {
       if (p.getZ() >= 0 && p.getX() == 0 && skin(state) && (p.getY() <= 1 || p.getY() >= 5))
         for (int x = -delta; x <= delta; x++) result.put(p.offset(x, 0, 0), state);
     }
-    var flesh = Create_bioships.FLESH.get().defaultBlockState();
+    var flesh = BioshipTissue.body().defaultBlockState();
     for (int z : new int[] {0, 6})
       for (int y = 1; y <= 6; y++) {
         int width = (z == 0 ? 3 : 2) + delta - Math.max(0, y - 4);

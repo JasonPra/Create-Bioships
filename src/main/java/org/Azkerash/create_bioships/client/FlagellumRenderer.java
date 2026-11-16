@@ -124,6 +124,7 @@ public class FlagellumRenderer implements BlockEntityRenderer<TentacleBlockEntit
       float thickness = (float) (1 - t * 0.72);
       pose.scale(thickness, (float) direction.length(), thickness);
       segment.render(pose, consumer, light, OverlayTexture.NO_OVERLAY);
+      TentacleSuckers.render(pose, buffers, light, overlay, n);
       pose.popPose();
       previous = point;
     }

@@ -62,9 +62,7 @@ public final class BioshipSupport {
     double storedMass =
         core.assimilation().load(core)
             * PhysicsBlockPropertyHelper.getMass(
-                core.getLevel(),
-                core.getBlockPos(),
-                Create_bioships.FLESH.get().defaultBlockState());
+                core.getLevel(), core.getBlockPos(), BioshipTissue.body().defaultBlockState());
     if (storedMass > 0) {
       total += storedMass;
       var carrier =
@@ -164,7 +162,7 @@ public final class BioshipSupport {
     var moved = cells.remove(source);
     if (moved == null) return new Layout(Vec3.ZERO, List.of(), -1);
     var host = cells.remove(target);
-    if (restoreFlesh) cells.put(source, Create_bioships.FLESH.get().defaultBlockState());
+    if (restoreFlesh) cells.put(source, BioshipTissue.body().defaultBlockState());
     else if (moved.is(Create_bioships.CORE.get()) && host != null && CoreMotion.tissue(host))
       cells.put(source, host);
     cells.put(target, moved);

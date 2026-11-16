@@ -15,10 +15,10 @@ final class HatchlingFront {
       var tissue = core.getLevel().getBlockState(p);
       if (!p.equals(core.getBlockPos())
           && !p.equals(origin)
-          && !tissue.is(Create_bioships.FLESH.get())
+          && !BioshipTissue.isTissue(tissue)
           && !tissue.is(Create_bioships.CARAPACE.get())) continue;
       var north = p.north();
-      if (core.getLevel().getBlockState(p).is(Create_bioships.FLESH.get())) candidates.add(p);
+      if (BioshipTissue.isTissue(core.getLevel().getBlockState(p))) candidates.add(p);
       if (core.getLevel().getBlockState(north).isAir()) candidates.add(north);
     }
     if (source != null) candidates.add(source);
@@ -32,7 +32,7 @@ final class HatchlingFront {
       if (!core.getLevel().getBlockState(BlockPos.containing(world)).canBeReplaced()) continue;
       if (source != null && p.equals(source)) return p;
       var state = core.getLevel().getBlockState(p);
-      if (!state.isAir() && !state.is(Create_bioships.FLESH.get())) continue;
+      if (!state.isAir() && !BioshipTissue.isTissue(state)) continue;
       if (source != null && state.isAir() && !connectedAfter(cells, source, p)) continue;
       return p;
     }
@@ -84,7 +84,7 @@ final class HatchlingFront {
         var bay = core.structuralOrigin().offset(offset);
         var host = core.getLevel().getBlockState(bay);
         if (!bay.equals(source)
-            && (host.isAir() || host.is(Create_bioships.FLESH.get()))
+            && (host.isAir() || BioshipTissue.isTissue(host))
             && OrganMotion.begin(core, front, bay, false)) return;
       }
     }

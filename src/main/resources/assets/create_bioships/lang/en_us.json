@@ -64,5 +64,15 @@
   "block.create_bioships.surface_eye": "Sensory Eye",
   "entity.create_bioships.bioship_attack_surface": "Living Bioship",
   "generator.create_bioships.navigation_lab": "Bioship Navigation Lab",
-  "biome.create_bioships.navigation_lab": "Bioship Navigation Lab"
+  "biome.create_bioships.navigation_lab": "Bioship Navigation Lab",
+  "block.create_bioships.living_hull_tier_2": "Living Hull Armor II",
+  "block.create_bioships.voiced_mouth": "Vocal Feeding Maw",
+  "item.create_bioships.enderman_meat": "Raw Enderman Meat",
+  "item.create_bioships.villager_meat": "Raw Villager Meat",
+  "item.create_bioships.witch_meat": "Raw Witch Meat",
+  "item.create_bioships.creeper_meat": "Raw Creeper Meat",
+  "item.create_bioships.spider_meat": "Raw Spider Meat",
+  "item.create_bioships.illager_meat": "Raw Illager Meat",
+  "item.create_bioships.aquatic_meat": "Raw Aquatic Meat",
+  "item.create_bioships.creature_meat": "Raw Creature Meat"
 }

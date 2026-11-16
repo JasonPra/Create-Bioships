@@ -70,12 +70,30 @@ final class BioshipDigestiveGrowth {
       }
     if (mouths.size() >= target || stomachs.size() >= target) return null;
     for (var pos : BioshipDecay.blocks(core.ship()))
-      if (core.getLevel().getBlockState(pos).is(Create_bioships.FLESH.get()))
-        for (var face : Direction.Plane.HORIZONTAL) {
+      if (BioshipTissue.isTissue(core.getLevel().getBlockState(pos)))
+        for (var face : mouthDirections(core)) {
           var result = check(core, pos, pos.relative(face.getOpposite(), 2), face, true, true);
           if (result != null) return result;
         }
     return null;
+  }
+
+  private static List<Direction> mouthDirections(LivingCoreBlockEntity core) {
+    var mouths = DigestiveSystem.mouths(core);
+    var faces = new ArrayList<Direction>();
+    Direction.Plane.HORIZONTAL.forEach(faces::add);
+    faces.sort(
+        Comparator.comparingLong(
+            face ->
+                mouths.stream()
+                    .filter(
+                        p -> {
+                          var state = core.getLevel().getBlockState(p);
+                          return state.hasProperty(FeedingMouthBlock.FACING)
+                              && state.getValue(FeedingMouthBlock.FACING) == face;
+                        })
+                    .count()));
+    return faces;
   }
 
   private static Plan check(
@@ -108,7 +126,7 @@ final class BioshipDigestiveGrowth {
     double extra = 0;
     for (var pos : List.of(mouth, stomach, tube))
       if (level.getBlockState(pos).isAir())
-        extra += core.crawl().blockLoad(core, pos, Create_bioships.FLESH.get().defaultBlockState());
+        extra += core.crawl().blockLoad(core, pos, BioshipTissue.body().defaultBlockState());
     int tiers = 0;
     while (core.crawl().legTier() + tiers < 3
         && core.crawl().carriedLoad(core) + extra
@@ -135,7 +153,7 @@ final class BioshipDigestiveGrowth {
     var level = core.getLevel();
     if (!core.ship().getPlot().contains(new net.minecraft.world.level.ChunkPos(pos))) return false;
     var state = level.getBlockState(pos);
-    if (!state.isAir() && !state.is(Create_bioships.FLESH.get())) return false;
+    if (!state.isAir() && !BioshipTissue.isTissue(state)) return false;
     return BioshipIntegration.growthSpace(
         level,
         BlockPos.containing(core.ship().logicalPose().transformPosition(Vec3.atCenterOf(pos))));

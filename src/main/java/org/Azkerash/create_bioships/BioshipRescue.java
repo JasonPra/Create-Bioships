@@ -42,7 +42,7 @@ public final class BioshipRescue {
   }
 
   private static boolean hull(BlockState state) {
-    return state.is(Create_bioships.FLESH.get())
+    return BioshipTissue.isTissue(state)
         || state.is(Create_bioships.CARAPACE.get())
         || state.getBlock() instanceof OneWayWindowBlock
         || state.is(Create_bioships.DOOR.get());

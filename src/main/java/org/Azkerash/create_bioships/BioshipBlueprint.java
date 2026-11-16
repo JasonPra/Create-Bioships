@@ -218,7 +218,7 @@ public final class BioshipBlueprint {
               if (y == 1 || y == 5 || edge)
                 plan.putIfAbsent(
                     coreLocal(core, new BlockPos(px, y, pz)),
-                    Create_bioships.FLESH.get().defaultBlockState());
+                    BioshipTissue.body().defaultBlockState());
           }
       }
     var membrane =
@@ -230,8 +230,7 @@ public final class BioshipBlueprint {
           for (int y = 2; y <= 3; y++) {
             var q = coreLocal(core, new BlockPos(p.getX(), y, p.getZ()));
             if (kind == 0) plan.remove(q);
-            else
-              plan.put(q, kind == 1 ? Create_bioships.FLESH.get().defaultBlockState() : membrane);
+            else plan.put(q, kind == 1 ? BioshipTissue.body().defaultBlockState() : membrane);
           }
         });
     return plan;
@@ -271,7 +270,7 @@ public final class BioshipBlueprint {
           var local = structureLocal(core, p);
           // Exterior storage and its tubes can share floor height without being room floors.
           boolean floor =
-              s.is(Create_bioships.FLESH.get())
+              BioshipTissue.isTissue(s)
                   || s.is(Create_bioships.CARAPACE.get())
                   || s.is(Create_bioships.INTESTINE.get()) && s.getValue(IntestineBlock.ENCASED);
           if (local.getY() == 1 && floor && d.rooms.stream().anyMatch(r -> r.contains(local)))
@@ -313,7 +312,7 @@ public final class BioshipBlueprint {
   }
 
   private static boolean editable(BlockState s) {
-    return s.is(Create_bioships.FLESH.get())
+    return BioshipTissue.isTissue(s)
         || s.is(Create_bioships.CARAPACE.get())
         || s.is(Create_bioships.ONE_WAY_WINDOW.get())
         || s.is(Create_bioships.MEMBRANE.get())
@@ -688,7 +687,7 @@ public final class BioshipBlueprint {
     ordered.sort(
         Comparator.comparingInt(
             e ->
-                e.getValue().is(Create_bioships.FLESH.get())
+                BioshipTissue.isTissue(e.getValue())
                         || e.getValue().is(Create_bioships.CARAPACE.get())
                     ? e.getKey().getY()
                     : 20 + e.getKey().getY()));
