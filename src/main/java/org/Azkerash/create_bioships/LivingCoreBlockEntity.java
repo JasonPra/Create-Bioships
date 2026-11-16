@@ -763,15 +763,11 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     OrganMotion.tick(core);
     core.serverTick();
     var ship = core.ship();
+    if (ship != null) core.adaptation.tick(core);
     if (ship != null && core.primary(ship) && level.getGameTime() % 20 == 0)
-      BioshipIntegration.assimilate(core, ship);
-    if (ship != null && level.getGameTime() % 20 == 0 && core.brain.allowsConfiguration(core))
-      BioshipIntegration.orientMouth(core);
+      BioshipIntegration.collect(core);
     core.updateCabinLights();
     if (ship != null && level.getGameTime() % 20 == 0) DigestiveSystem.connect(core, ship);
-    if (ship != null && level.getGameTime() % 20 == 0 && core.brain.allowsConfiguration(core))
-      DigestiveSystem.arrangeStorage(core);
-    if (ship != null) core.adaptation.tick(core);
     if (AirshipPrototype.available()) core.growBody();
     if (core.ship() != null) core.vision.tick(core);
     if (ship != null

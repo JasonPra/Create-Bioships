@@ -45,11 +45,7 @@ final class BioshipAdaptationPlanner {
 
   static List<Proposal> plan(LivingCoreBlockEntity core, State memory) {
     var result = new ArrayList<Proposal>();
-    if (core.ship() == null
-        || core.body().dead()
-        || core.blueprint().busy()
-        || OrganMotion.busy(core)
-        || core.coreMotion().active()) return result;
+    if (!BioshipBodyBehavior.blocker(core).isEmpty()) return result;
     var stomach = DigestiveSystem.stomach(core);
     var gutRepair = BioshipDigestiveRepair.proposal(core);
     if (gutRepair != null) result.add(gutRepair);

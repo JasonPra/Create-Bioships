@@ -8579,4 +8579,127 @@ public class BioshipGameTests {
                       "An equally occluded higher perch caused pointless body rearrangement");
                 }));
   }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "parallel_body_combat")
+  public static void defensive_action_and_owned_digestive_conversion_run_independently(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var threat = EntityType.ZOMBIE.create(level);
+    threat.setNoAi(true);
+    threat.setNoGravity(true);
+    var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    threat.setPos(here.x + 8, here.y, here.z);
+    level.addFreshEntity(threat);
+    afterIndexed(
+        helper,
+        List.of(threat),
+        () -> {
+          try {
+            var root = core.getBlockPos();
+            level.setBlock(root.north(), block("biomancy:bio_forge").defaultBlockState(), 3);
+            level.setBlock(root.west(), block("biomancy:decomposer").defaultBlockState(), 3);
+            level.setBlock(root.west().north(), block("biomancy:digester").defaultBlockState(), 3);
+            core.defense().remember(core, threat);
+            helper.assertTrue(
+                core.brain().choose(core).action() == BioshipBrain.Action.DEFEND,
+                "Fixture has no defensive action");
+            var body = core.adaptation().behavior().choose(core);
+            helper.assertTrue(
+                body != null && body.action() == BioshipBrain.Action.CONFIGURE,
+                "Defense suppressed owned digestive conversion: "
+                    + core.adaptation().behavior().debug().getString("Reason"));
+            BioshipConfiguration.execute(core);
+            helper.assertTrue(
+                core.hasMouth() && DigestiveSystem.functional(core),
+                "Owned essential components did not form connected digestion during defense");
+            helper.assertTrue(
+                core.brain().choose(core).action() == BioshipBrain.Action.DEFEND,
+                "Body work replaced the defensive action");
+            var debug = NavigationDebug.inspect(core);
+            helper.assertTrue(
+                debug.getString("Action").equals("DEFEND")
+                    && debug.getCompound("BodyWork").getString("Action").equals("CONFIGURE"),
+                "Debug snapshot does not expose both independent trees");
+            helper.succeed();
+          } finally {
+            threat.discard();
+            cleanup(helper, ship);
+          }
+        });
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "parallel_body_escape")
+  public static void emergency_mouth_regrowth_continues_during_escape_and_pays_once(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    core.adaptation().creditRecovery(MaterialCost.FLESH, 8);
+    core.adaptation().creditRecovery(MaterialCost.FIBER, 4);
+    core.adaptation().creditRecovery(MaterialCost.BONE, 2);
+    var injury = core.body().save();
+    injury.putDouble("Health", 20);
+    core.body().load(injury, helper.getLevel().registryAccess());
+    var panic = new net.minecraft.nbt.CompoundTag();
+    panic.put(
+        "Danger", VisionDebug.vector(BioshipBlueprint.physical(core, BlockPos.ZERO).add(3, 0, 0)));
+    panic.putLong("PanicUntil", helper.getLevel().getGameTime() + 100);
+    core.autonomy().load(panic);
+    helper.assertTrue(
+        core.brain().choose(core).action() == BioshipBrain.Action.FLEE,
+        "Fixture has no escape action");
+    helper.runAfterDelay(
+        25,
+        () ->
+            finish(
+                helper,
+                ship,
+                () -> {
+                  var current = core(ship);
+                  helper.assertTrue(current.hasMouth(), "Escape prevented paid essential regrowth");
+                  helper.assertTrue(
+                      current.adaptation().material(MaterialCost.FLESH) == 0
+                          && current.adaptation().material(MaterialCost.FIBER) == 0
+                          && current.adaptation().material(MaterialCost.BONE) == 0,
+                      "Essential regrowth did not debit its resources exactly once");
+                  helper.assertTrue(
+                      DigestiveSystem.mouths(current).size() == 1,
+                      "Concurrent action/body work duplicated a mouth");
+                }));
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "body_transaction_lock")
+  public static void carried_organs_lock_body_replanning_without_spending_or_duplicate_regrowth(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    try {
+      var core = core(ship);
+      var level = helper.getLevel();
+      var source = core.getBlockPos().north();
+      level.setBlock(source, Create_bioships.FEEDING_MOUTH.get().defaultBlockState(), 3);
+      core.adaptation().creditRecovery(MaterialCost.FLESH, 100);
+      core.adaptation().creditRecovery(MaterialCost.FIBER, 100);
+      core.adaptation().creditRecovery(MaterialCost.BONE, 100);
+      helper.assertTrue(
+          OrganMotion.begin(core, source, core.getBlockPos().east(), false),
+          "Could not start conserved mouth movement");
+      var before = core.adaptation().save().getCompound("Reserve");
+      helper.assertTrue(
+          core.adaptation().behavior().choose(core) == null
+              && core.adaptation().proposals(core).isEmpty(),
+          "Body tree proposed regrowth while the original organ was carried");
+      helper.assertTrue(
+          !core.brain().allowsConfiguration(core),
+          "Configuration bypassed the component transaction lock");
+      BioshipIntegration.assimilate(core, ship);
+      helper.assertTrue(
+          core.organMove() != null
+              && core.adaptation().save().getCompound("Reserve").equals(before),
+          "Concurrent integration lost its transaction or spent reserved stock");
+      helper.succeed();
+    } finally {
+      cleanup(helper, ship);
+    }
+  }
 }

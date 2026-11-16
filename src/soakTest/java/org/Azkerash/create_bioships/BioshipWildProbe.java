@@ -64,9 +64,12 @@ public final class BioshipWildProbe {
             BioshipLegGrowth.missing(core) == 0
                 && BioshipStorage.amount(core, MaterialCost.FLESH) > 0;
         var action = core.brain().action();
+        var bodyWork = core.adaptation().behavior().debug();
         var cells = BioshipStructure.cells(core.ship());
         String signature =
             action
+                + ":"
+                + bodyWork.getString("Action")
                 + ":"
                 + cells.hashCode()
                 + ":"
@@ -75,9 +78,10 @@ public final class BioshipWildProbe {
                 + BioshipStorage.snapshot(core).hashCode();
         state.unchanged = signature.equals(state.signature) ? state.unchanged + 20 : 0;
         state.signature = signature;
-        if (action == BioshipBrain.Action.CONFIGURE && state.unchanged == 120) {
+        if (bodyWork.getString("Action").equals("CONFIGURE") && state.unchanged == 120) {
           failures++;
-          System.out.println("WILDPROBE FAILURE nonprogressing CONFIGURE " + core.brain().reason());
+          System.out.println(
+              "WILDPROBE FAILURE nonprogressing CONFIGURE " + bodyWork.getString("Reason"));
         }
         if (tick % 200 == 0 || core.aquatic().wet() && tick % 40 == 0)
           System.out.println(
@@ -101,6 +105,8 @@ public final class BioshipWildProbe {
                   + action
                   + " reason="
                   + core.brain().reason()
+                  + " bodyWork="
+                  + bodyWork
                   + " cells="
                   + cells.size()
                   + " stomachs="

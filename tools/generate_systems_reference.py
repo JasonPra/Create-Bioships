@@ -28,7 +28,7 @@ GROUPS=[
 ('storage','Shared usable storage','active',['BioshipStorage','BioshipStores'],'Core-first deposits, connected native/private sac stocks, external-first withdrawal and reserve refill.'),
 ('money','Costs, ledgers and reserve policy','active',['MaterialCost','MaterialLedger','EmergencyReserve'],'Affordability, payment rollback and refunds; core emergency target 32 flesh / 16 fiber / 8 bone.'),
 ('plans','Read-only anatomical proposals','active',['BioshipAdaptationPlanner','BioshipDigestiveGrowth','BioshipRecovery'],'Propose funded organ recovery, digestion, storage, reinforcement or safe reclamation; no block edits.'),
-('adapt','Execute anatomical adaptation','active',['BioshipAdaptation'],'Own core material ledger and armor bookkeeping; execute only a matching selected proposal.'),
+('adapt','Execute anatomical adaptation','active',['BioshipAdaptation','BioshipBodyBehavior','BioshipConfiguration'],'Rank body work independently of actions, share layout transaction locks, and execute paid adaptation or native configuration.'),
 ('metabolism','Metabolism and emergency fuel','active',['BioshipMetabolism'],'One metabolic step at the core cadence; nutrient paste, emergency resources, then starvation damage.'),
 ('health','Health and intended body','active',['BioshipBody'],'Health, capacity, intended-cell memory, injury, paid repair and permanent death.'),
 ('combat','Temporary arms and combat','active',['BioshipDefense','TentacleStrike','ImpactDamage','BioshipPrey','BioshipMeatDrops'],'Threat/prey sensing and shared telegraphed swipes. Native drops remain world items; missing meats are added by a drop adapter.'),
@@ -118,14 +118,15 @@ The member index lists signatures rather than method bodies; nested implementati
 [LivingCoreBlockEntity.tick]
    |-- chunk loading + aquatic safety
    |-- observe vision + remembered targets
-   |-- crawl / defense / assimilation / adaptation
-   |                 |
-   |                 v
-   |          [BioshipBrain.choose]
-   |             |-- safety + committed work
-   |             |-- needs before goals
-   |             |-- GoalQueue + weighted offers
-   |             `-- selected Decision -> actuator
+   |-- action tree: BioshipBrain.choose
+   |      |-- safety, needs before goals, weighted GoalQueue
+   |      `-- crawl / defense / external collection
+   |-- body tree: BioshipBodyBehavior.choose (20-tick cadence)
+   |      |-- separate weighted GoalQueue + feasibility checks
+   |      `-- BioshipAdaptation / BioshipConfiguration
+   |             `-- repair, growth, native organ conversion
+   |-- shared layout lock: carried organs / core moves / rescue / blueprint
+   |-- atomic material account: revalidated debit at execution
    |
    `-- serverTick (once per game tick)
           |-- metabolism every 20 ticks
@@ -134,7 +135,9 @@ The member index lists signatures rather than method bodies; nested implementati
 ```
 
 The core remains an orchestrator. Some actuators still call choose() again in the same tick;
-this is not yet a single immutable decision snapshot. An affordability quote is not resource escrow.
+this is not yet a single immutable decision snapshot. Body work is selected independently of combat,
+but in-flight component/layout transactions serialize conflicting mutations. An affordability quote
+is not resource escrow; paid work debits the shared account before mutation.
 
 ## 2. Food, materials and growth
 

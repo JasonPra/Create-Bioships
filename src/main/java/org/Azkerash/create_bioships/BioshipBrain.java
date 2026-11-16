@@ -423,63 +423,6 @@ public final class BioshipBrain {
     return objectives.stream().filter(o -> o.pos().equals(selected.block)).findFirst().orElse(null);
   }
 
-  private Decision configuration(LivingCoreBlockEntity core) {
-    var entities = BioshipIntegration.blockEntities(core.ship());
-    boolean forge = false, decomposer = false, digester = false;
-    for (var entity : entities) {
-      String id =
-          net.minecraft.core.registries.BuiltInRegistries.BLOCK
-              .getKey(entity.getBlockState().getBlock())
-              .toString();
-      forge |= id.equals("biomancy:bio_forge");
-      decomposer |= id.equals("biomancy:decomposer");
-      digester |= id.equals("biomancy:digester");
-    }
-    boolean urgent =
-        DigestiveSystem.mouths(core).size() < BioshipDigestiveGrowth.target(core) && forge
-            || DigestiveSystem.stomachs(core).size() < BioshipDigestiveGrowth.target(core)
-                && decomposer
-                && digester;
-    boolean optional = false;
-    var mouth = core.mouthBlock();
-    if (mouth != null
-        && core.getLevel().getBlockState(mouth).is(Create_bioships.FEEDING_MOUTH.get())) {
-      var entity = core.getLevel().getBlockEntity(mouth);
-      if (entity != null && !entity.getPersistentData().getBoolean("BioshipManualPlacement")) {
-        urgent |=
-            !core.buildingHull()
-                && (!core.hatchling() || HatchlingFront.canArrange(core))
-                && !FeedingMouthBlock.openFace(
-                    core,
-                    mouth,
-                    core.getLevel().getBlockState(mouth).getValue(FeedingMouthBlock.FACING));
-        if (core.hatchling()) optional |= HatchlingFront.canArrange(core);
-        else urgent |= core.huntingAllowed() && EngineRoom.inside(core, mouth);
-      }
-    }
-    var stomach = DigestiveSystem.stomach(core);
-    if (stomach != null && stomach.connected(core))
-      for (var entity : entities)
-        if (EngineRoom.storage(entity)
-            && !entity.getPersistentData().getBoolean("BioshipManualPlacement")
-            && !stomach.sacPaths.containsKey(entity.getBlockPos())
-            && DigestiveSystem.storagePort(core, entity.getBlockPos()) != null) urgent = true;
-    if (!urgent && !optional) return null;
-    return offer(
-        Action.CONFIGURE,
-        null,
-        null,
-        null,
-        null,
-        urgent ? BehaviorPriority.Band.NEED : BehaviorPriority.Band.GOAL,
-        urgent ? 1100 : 450,
-        0,
-        0,
-        urgent
-            ? "Restore an accessible functioning digestive system"
-            : "Arrange organs without obstructing the eye");
-  }
-
   Decision choose(LivingCoreBlockEntity core) {
     debugPriorities.clear();
     debugOfferCount = 0;
@@ -517,21 +460,6 @@ public final class BioshipBrain {
       return fixed(Action.PILOT, "Follow the authorized trusted pilot");
     var n = needs(core);
     var offers = new ArrayList<Decision>();
-    for (var p : core.adaptation().proposals(core))
-      offers.add(
-          offer(
-              p.action(),
-              null,
-              p.pos(),
-              null,
-              null,
-              p.urgency() > 500 ? BehaviorPriority.Band.NEED : BehaviorPriority.Band.GOAL,
-              p.urgency(),
-              0,
-              0,
-              p.reason()));
-    var config = configuration(core);
-    if (config != null) offers.add(config);
     for (var o : BioshipPriorities.worldObjectives(core)) {
       var state = core.vision().sourceState(core, o.pos());
       if (state != null)
@@ -647,33 +575,7 @@ public final class BioshipBrain {
   }
 
   boolean allowsConfiguration(LivingCoreBlockEntity core) {
-    return switch (choose(core).action) {
-      case SURFACE,
-          FLEE,
-          DEFEND,
-          HUNT,
-          COLLECT_ITEM,
-          RECONFIGURE,
-          RESCUE,
-          MOVE_COMPONENT,
-          REGROW_MOUTH,
-          REGROW_STOMACH,
-          REPAIR_DIGESTION,
-          REPOSITION_ANATOMY,
-          GROW_LARYNX,
-          GROW_LEG,
-          EVOLVE_LEGS,
-          EVOLVE_GRASPERS,
-          GROW_RESPIRATION,
-          GROW_STORAGE,
-          GROW_DIGESTION,
-          GROW_ENGINE_ROOM,
-          RECLAIM_COMPONENT,
-          STRENGTHEN_LEGS,
-          FORTIFY ->
-          false;
-      default -> true;
-    };
+    return core.adaptation().behavior().allowsConfiguration(core);
   }
 
   MaterialCost materialNeeds(LivingCoreBlockEntity core) {

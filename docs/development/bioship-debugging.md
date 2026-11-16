@@ -28,3 +28,8 @@ See [Ecosystem Lab](ecosystem-lab.md) for the runtime command-block controller a
 Vanilla `/tick rate 20` restores the ordinary target. `/tick rate 10000` requests the maximum target, but actual throughput depends on the machine. Record `/tick query` or elapsed real time and game-time advancement; do not label a run as achieving 10,000 TPS merely because it requested that rate. `/tick freeze` and `/tick step <ticks>` can define comparable intervals without using `/tick sprint`.
 
 For layout regressions, capture intermediate states as well as the end state: a temporarily disconnected body may reconnect by the final snapshot. Use a fresh same-seed world or a copied saved checkpoint for a terrain-controlled comparison. Graphical animation appearance requires separate client observation.
+
+The F3+P hologram also displays the independent body-work selection and queue count.
+`/bioship_debug inspect <id>` includes a `BodyWork` compound with `Action`, `Reason`,
+`Target` (when selected), and ranked `Priorities`. A transaction wait means another
+conserved operation owns the layout; combat alone does not block body adaptation.

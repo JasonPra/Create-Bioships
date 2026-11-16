@@ -117,11 +117,14 @@ public final class BioshipIntegration {
   }
 
   public static void assimilate(LivingCoreBlockEntity core, ServerSubLevel ship) {
-    if (OrganMotion.busy(core) || !core.brain().allowsConfiguration(core)) return;
-    for (var actor : blockEntities(ship)) {
-      convertFirstStomach(core, actor.getBlockPos());
-      convertFirstBioForge(core, actor.getBlockPos());
-    }
+    if (!BioshipBodyBehavior.blocker(core).isEmpty()) return;
+    if (core.brain().allowsConfiguration(core)) BioshipConfiguration.execute(core);
+    collect(core);
+  }
+
+  /** External collection follows the action tree; owned organ conversion follows the body tree. */
+  static void collect(LivingCoreBlockEntity core) {
+    if (!BioshipBodyBehavior.blocker(core).isEmpty()) return;
     core.assimilation().start(core, core.brain().choose(core));
   }
 
@@ -172,7 +175,7 @@ public final class BioshipIntegration {
     convertFirstBioForge(core, target);
   }
 
-  private static void convertFirstStomach(LivingCoreBlockEntity core, BlockPos pos) {
+  static void convertFirstStomach(LivingCoreBlockEntity core, BlockPos pos) {
     if (DigestiveSystem.stomachs(core).size() >= BioshipDigestiveGrowth.target(core)
         || OrganMotion.busy(core)) return;
     com.github.elenterius.biomancy.block.decomposer.DecomposerBlockEntity decomposer = null;
@@ -229,7 +232,7 @@ public final class BioshipIntegration {
     }
   }
 
-  private static void convertFirstBioForge(LivingCoreBlockEntity core, BlockPos pos) {
+  static void convertFirstBioForge(LivingCoreBlockEntity core, BlockPos pos) {
     if (DigestiveSystem.mouths(core).size() >= BioshipDigestiveGrowth.target(core)
         || !(core.getLevel().getBlockEntity(pos)
             instanceof com.github.elenterius.biomancy.block.bioforge.BioForgeBlockEntity forge))

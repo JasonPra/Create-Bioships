@@ -23,6 +23,7 @@ public final class NavigationDebug {
     data.putString("Reason", core.brain().reason());
     data.putBoolean("Flying", core.canFly());
     data.put("Priorities", core.brain().priorities());
+    data.put("BodyWork", core.adaptation().behavior().debug());
     data.putInt("OfferCount", core.brain().offerCount());
     data.putInt("QueuedGoals", core.brain().queuedGoals().size());
     data.putInt("StoredComponents", core.assimilation().stored());

@@ -39,6 +39,7 @@ public final class BioshipDiagnostics {
     data.putLong("GameTime", core.getLevel().getGameTime());
     data.putFloat("RequestedTickRate", core.getLevel().getServer().tickRateManager().tickrate());
     data.putString("Behavior", core.brain().action().name());
+    data.put("BodyWork", core.adaptation().behavior().debug());
     data.putString("Reason", core.brain().reason());
     data.putDouble("Health", core.body().health());
     data.putInt(

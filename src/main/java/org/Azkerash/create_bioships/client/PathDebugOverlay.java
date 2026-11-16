@@ -194,13 +194,16 @@ public final class PathDebugOverlay {
     words.add("Digestive pairs needed: " + data.getInt("DigestiveDemand"));
     if (data.contains("EngineCapacity"))
       words.add("Prototype engine bays: " + data.getInt("EngineCapacity"));
+    var body = data.getCompound("BodyWork");
+    words.add("Body: " + body.getString("Action") + " · " + body.getString("Reason"));
+    words.add("Body queue: " + body.getInt("QueuedGoals"));
     words.add("Priorities (needs before goals):");
     var priorities = data.getList("Priorities", Tag.TAG_COMPOUND);
     for (int i = 0; i < Math.min(5, priorities.size()); i++)
       words.add(priority(priorities.getCompound(i), i));
     var lines = new ArrayList<net.minecraft.util.FormattedCharSequence>();
     for (var word : words) lines.addAll(mc.font.split(Component.literal(word), 260));
-    int count = Math.min(16, lines.size());
+    int count = Math.min(20, lines.size());
     var anchor = VisionDebug.vector(data.getCompound("Hologram"));
     pose.pushPose();
     pose.translate(anchor.x, anchor.y + count * .25, anchor.z);
