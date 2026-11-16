@@ -4199,6 +4199,10 @@ public class BioshipGameTests {
               height[0] > root.y + 3 && current.hasMouth(),
               "Hatchling did not climb to grab the visible high component: height="
                   + height[0]
+                  + " mouth="
+                  + current.hasMouth()
+                  + " brain="
+                  + current.brain().action()
                   + " crawl="
                   + current.crawl().save());
           helper.assertTrue(!current.canFly(), "Wall climbing granted flight");

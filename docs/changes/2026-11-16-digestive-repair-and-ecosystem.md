@@ -56,3 +56,9 @@ Batch 1 verification: 51/51 unit tests passed; 117/120 required GameTests passed
 The organ-conversion conservation test now includes flesh invested in lungs, alongside paid legs. The parallel-stomach test supplies the lungs required by its larger body, resolves live stomach block entities after relocation, and checks outputs as soon as both native recipes finish instead of assuming products remain unspent after a 1,000-tick wait. It still asserts separate paste storage, core transfer of non-fuel outputs, and a single paste burn without cross-stomach depletion or trust rewards. This batch changes test fixtures and assertions, not digestion recipes, material prices, or metabolism.
 
 Batch 2 verification: 51/51 unit tests passed; 119/120 required GameTests passed. Both digestive checks and both respiratory checks passed. Wall climbing remains the single integration failure in this run; intermittent maze navigation is still being investigated. Visual animation QA is still pending.
+
+### Batch 3 — retain real wall support between tasks
+
+An established wall/ceiling grip is now checked while idle as well as while moving or reaching. Completing a collection task no longer releases tentacles from a still-present surface. The grip continues to depend on actual surface detection, so removing the wall still causes a fall. Failure diagnostics now report mouth acquisition and current behavior alongside physical state.
+
+Verification: the complete build passed, including 51/51 unit tests and 120/120 required GameTests. The real-wall climb/collection/removal test and stepped glass maze both passed. A single full pass does not resolve the earlier maze intermittency; realistic simulations, repeat navigation checks, and graphical animation QA remain pending.

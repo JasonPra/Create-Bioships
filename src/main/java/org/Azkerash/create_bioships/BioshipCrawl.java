@@ -455,7 +455,9 @@ public final class BioshipCrawl {
     var level = (ServerLevel) core.getLevel();
     Vec3 here = BioshipBlueprint.physical(core, BlockPos.ZERO);
     boolean clinging = wallFacing != null;
-    var grip = walking || reach != null ? GroundRoute.grip(core, here) : null;
+    // A planted tentacle remains attached while resting or changing tasks. Only losing the
+    // actual support surface should release an existing wall/ceiling stance.
+    var grip = walking || clinging || reach != null ? GroundRoute.grip(core, here) : null;
     wallFacing = null;
     if (clinging && grip != null) {
       braceGrip(core, here, grip);
