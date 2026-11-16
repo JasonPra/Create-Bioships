@@ -26,7 +26,7 @@ final class LabPopulation {
     level.setBlock(pos, Blocks.REPEATING_COMMAND_BLOCK.defaultBlockState(), 3);
     if (!(level.getBlockEntity(pos) instanceof CommandBlockEntity block))
       throw new IllegalStateException("Could not install ecosystem controller at " + pos);
-    block.getCommandBlock().setCommand("bioship_ecosystem replenish");
+    block.getCommandBlock().setCommand("bioship_ecosystem pulse");
     block.getCommandBlock().setTrackOutput(false);
     block.setAutomatic(true);
     block.setChanged();
@@ -69,6 +69,29 @@ final class LabPopulation {
     if (now % 200 == 0) AquaticLab.replenish(level);
     if (now % 600 == 0) spawnLand(level, state.center, false);
     if (now % 1200 == 0) spawnLand(level, state.center, true);
+  }
+
+  static final long REFILL_INTERVAL = 6000;
+
+  static boolean refillDue(EcosystemLab.State state, long now) {
+    if (state.nextRefill <= 0) {
+      state.nextRefill = now + REFILL_INTERVAL;
+      state.setDirty();
+      return false;
+    }
+    if (now < state.nextRefill) return false;
+    state.nextRefill = now + REFILL_INTERVAL;
+    state.setDirty();
+    return true;
+  }
+
+  static void replenish(ServerLevel level, EcosystemLab.State state) {
+    var counts = counts(level, state.center);
+    for (int i = counts.fish(); i < AquaticLab.FISH_CAP; i++) AquaticLab.replenish(level);
+    for (int i = counts.prey(); i < EcosystemLab.PREY_CAP; i++)
+      if (!spawnLand(level, state.center, false)) break;
+    for (int i = counts.hostiles(); i < EcosystemLab.HOSTILE_CAP; i++)
+      if (!spawnLand(level, state.center, true)) break;
   }
 
   static void prime(ServerLevel level, BlockPos center) {

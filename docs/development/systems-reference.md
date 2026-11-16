@@ -1958,7 +1958,7 @@ final class BioshipLegEvolution
 
 #### LegUsageHistory
 
-Source: `src/main/java/org/Azkerash/create_bioships/LegUsageHistory.java` (30 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/LegUsageHistory.java` (40 lines).
 
 ```java
 final class LegUsageHistory
@@ -1971,9 +1971,13 @@ final class LegUsageHistory
 
   int water(); // line 13
 
-  void restore(int samples, int water); // line 17
+  double preciseWater(); // line 17
 
-  int desired(int legs, int current); // line 21
+  void restore(int samples, double water); // line 21
+
+  void restore(int samples, int water); // line 25
+
+  int desired(int legs, int current); // line 29
 
 ```
 
@@ -1993,7 +1997,7 @@ Saved air supply, all-mouth fluid checks, surfacing need and non-flight propulsi
 
 #### BioshipAquatic
 
-Source: `src/main/java/org/Azkerash/create_bioships/BioshipAquatic.java` (230 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipAquatic.java` (236 lines).
 
 ```java
 public final class BioshipAquatic
@@ -2050,7 +2054,7 @@ public final class BioshipAquatic
 
   CompoundTag save(); // line 199
 
-  void load(CompoundTag t); // line 216
+  void load(CompoundTag t); // line 218
 
 ```
 
@@ -2117,20 +2121,26 @@ public final class RespiratoryOrganBlock extends DirectionalBlock
 
 #### ExposureHistory
 
-Source: `src/main/java/org/Azkerash/create_bioships/ExposureHistory.java` (24 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/ExposureHistory.java` (36 lines).
 
 ```java
 final class ExposureHistory
 
-  private int samples, score; // line 4
+  private int samples; // line 7
 
-  void observe(boolean exposed); // line 5
+  private double score; // line 8
 
-  int samples(); // line 10
+  void observe(boolean exposed); // line 9
 
-  int score(); // line 14
+  int samples(); // line 14
 
-  void restore(int samples, int score); // line 18
+  int score(); // line 18
+
+  double preciseScore(); // line 22
+
+  void restore(int samples, int score); // line 26
+
+  void restore(int samples, double score); // line 30
 
 ```
 
@@ -4177,7 +4187,7 @@ public final class NavigationLab
 
 #### EcosystemLab
 
-Source: `src/main/java/org/Azkerash/create_bioships/EcosystemLab.java` (317 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/EcosystemLab.java` (342 lines).
 
 ```java
 public final class EcosystemLab
@@ -4188,62 +4198,66 @@ public final class EcosystemLab
 
   static final class State extends SavedData; // line 29
 
-  static boolean lab(ServerLevel level); // line 65
+  static boolean lab(ServerLevel level); // line 68
 
-  public static void start(ServerStartedEvent event); // line 71
+  public static void start(ServerStartedEvent event); // line 74
 
-  static void prepare(ServerLevel level, BlockPos center); // line 77
+  static void prepare(ServerLevel level, BlockPos center); // line 80
 
-  private static void installFixtures(ServerLevel level, State state); // line 141
+  private static void installFixtures(ServerLevel level, State state); // line 150
 
-  static void reset(ServerLevel level); // line 149
+  static void reset(ServerLevel level); // line 158
 
-  static BlockPos habitat(ServerLevel level, BlockPos base, int kind); // line 163
+  static BlockPos habitat(ServerLevel level, BlockPos base, int kind); // line 173
 
-  public static void tick(ServerTickEvent.Post event); // line 196
+  public static void tick(ServerTickEvent.Post event); // line 206
 
-  static void sunProtection(Mob mob); // line 207
+  static void sunProtection(Mob mob); // line 218
 
-  public static void join(PlayerEvent.PlayerLoggedInEvent event); // line 214
+  public static void join(PlayerEvent.PlayerLoggedInEvent event); // line 225
 
-  public static void commands(net.neoforged.neoforge.event.RegisterCommandsEvent event); // line 234
+  public static void commands(net.neoforged.neoforge.event.RegisterCommandsEvent event); // line 245
 
 ```
 
 
 #### AquaticLab
 
-Source: `src/main/java/org/Azkerash/create_bioships/AquaticLab.java` (167 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/AquaticLab.java` (233 lines).
 
 ```java
 final class AquaticLab
 
   static final int RADIUS, DEPTH, AIR_HEIGHT, FISH_CAP; // line 16
 
-  private static final class State extends SavedData; // line 17
+  static final int ISOLATION_RADIUS; // line 17
 
-  static BlockPos center(ServerLevel level); // line 44
+  private static final class State extends SavedData; // line 19
 
-  static void build(ServerLevel level, BlockPos landCenter); // line 48
+  static BlockPos center(ServerLevel level); // line 48
 
-  private static AABB bounds(BlockPos center); // line 113
+  static void build(ServerLevel level, BlockPos landCenter); // line 52
 
-  static int fishCount(ServerLevel level); // line 119
+  static void isolate(ServerLevel level, BlockPos center); // line 126
 
-  static void replenish(ServerLevel level); // line 126
+  private static AABB bounds(BlockPos center); // line 178
 
-  static boolean contains(ServerLevel level, net.minecraft.world.phys.Vec3 point); // line 136
+  static int fishCount(ServerLevel level); // line 184
 
-  static void reset(ServerLevel level, BlockPos landCenter); // line 140
+  static void replenish(ServerLevel level); // line 191
 
-  private static void spawnFish(ServerLevel level, BlockPos center); // line 149
+  static boolean contains(ServerLevel level, net.minecraft.world.phys.Vec3 point); // line 201
+
+  static void reset(ServerLevel level, BlockPos landCenter); // line 205
+
+  private static void spawnFish(ServerLevel level, BlockPos center); // line 215
 
 ```
 
 
 #### LabPopulation
 
-Source: `src/main/java/org/Azkerash/create_bioships/LabPopulation.java` (114 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/LabPopulation.java` (137 lines).
 
 ```java
 final class LabPopulation
@@ -4264,9 +4278,15 @@ final class LabPopulation
 
   static void pulse(ServerLevel level, EcosystemLab.State state); // line 64
 
-  static void prime(ServerLevel level, BlockPos center); // line 72
+  static final long REFILL_INTERVAL; // line 72
 
-  static boolean spawnLand(ServerLevel level, BlockPos center, boolean hostile); // line 77
+  static boolean refillDue(EcosystemLab.State state, long now); // line 74
+
+  static void replenish(ServerLevel level, EcosystemLab.State state); // line 86
+
+  static void prime(ServerLevel level, BlockPos center); // line 95
+
+  static boolean spawnLand(ServerLevel level, BlockPos center, boolean hostile); // line 100
 
 ```
 

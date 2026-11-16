@@ -19,7 +19,8 @@ Operator commands restricted to their corresponding preset:
 - `/bioship_ecosystem status` — living core and population counts, cache count and controller position.
 - `/bioship_ecosystem water` — visit the aquatic observation platform.
 - `/bioship_ecosystem reset` — reset fixture creatures/cargo, caches, starter components and aquatic enclosure. It retains natural land terrain.
-- `/bioship_ecosystem replenish` — command-controller endpoint; retains its ordinary cadence and population limits.
+- `/bioship_ecosystem replenish` — immediate capped fish/prey/hostile refill; also scheduled every five in-game minutes.
+- `/bioship_ecosystem pulse` — internal gradual population-controller endpoint.
 
 See [Ecosystem Lab](ecosystem-lab.md) for the runtime command-block controller and disabled-command-block fallback. The optional `soakTest` observer is excluded from the released runtime JAR.
 

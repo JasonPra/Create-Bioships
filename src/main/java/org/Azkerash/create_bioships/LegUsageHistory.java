@@ -16,6 +16,14 @@ final class LegUsageHistory {
     return history.score();
   }
 
+  double preciseWater() {
+    return history.preciseScore();
+  }
+
+  void restore(int samples, double water) {
+    history.restore(samples, water);
+  }
+
   void restore(int samples, int water) {
     history.restore(samples, water);
   }
@@ -23,7 +31,9 @@ final class LegUsageHistory {
   int desired(int legs, int current) {
     if (legs <= 0) return 0;
     if (samples() < 40) return current;
-    if (water() >= 650) return Math.clamp((int) Math.round(legs * (water() - 450) / 550d), 1, legs);
+    if (water() >= 650)
+      return Math.max(
+          current, Math.clamp((int) Math.round(legs * (water() - 450) / 550d), 1, legs));
     if (water() <= 250) return 0;
     return current;
   }

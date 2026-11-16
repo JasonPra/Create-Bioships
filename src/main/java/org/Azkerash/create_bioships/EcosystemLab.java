@@ -31,6 +31,7 @@ public final class EcosystemLab {
   static final class State extends SavedData {
     boolean built;
     int version;
+    long nextRefill;
     final List<BlockPos> starters = new ArrayList<>();
     BlockPos center = BlockPos.ZERO;
     final List<BlockPos> caches = new ArrayList<>();
@@ -45,6 +46,7 @@ public final class EcosystemLab {
                     var s = new State();
                     s.built = tag.getBoolean("Built");
                     s.version = tag.getInt("Version");
+                    s.nextRefill = tag.getLong("NextRefill");
                     for (long p : tag.getLongArray("Starters")) s.starters.add(BlockPos.of(p));
                     s.center = BlockPos.of(tag.getLong("Center"));
                     for (long p : tag.getLongArray("Caches")) s.caches.add(BlockPos.of(p));
@@ -57,6 +59,7 @@ public final class EcosystemLab {
     public CompoundTag save(CompoundTag tag, HolderLookup.Provider lookup) {
       tag.putBoolean("Built", built);
       tag.putInt("Version", version);
+      tag.putLong("NextRefill", nextRefill);
       tag.putLongArray("Starters", starters.stream().mapToLong(BlockPos::asLong).toArray());
       tag.putLong("Center", center.asLong());
       tag.putLongArray("Caches", caches.stream().mapToLong(BlockPos::asLong).toArray());
@@ -80,6 +83,12 @@ public final class EcosystemLab {
     var state = State.get(level);
     if (state.built) {
       if (state.version < 2) installFixtures(level, state);
+      if (state.version < 3) {
+        LabPopulation.install(level, state.center);
+        state.version = 3;
+        state.setDirty();
+      }
+      AquaticLab.build(level, state.center);
       return;
     }
     state.center = center.immutable();
@@ -144,7 +153,7 @@ public final class EcosystemLab {
     LabPopulation.install(level, state.center);
     LabStarters.seed(level, state);
     LabPopulation.prime(level, state.center);
-    state.version = 2;
+    state.version = 3;
     state.setDirty();
   }
 
@@ -159,6 +168,7 @@ public final class EcosystemLab {
     AquaticLab.reset(level, state.center);
     var center = state.center;
     state.built = false;
+    state.nextRefill = 0;
     prepare(level, center);
   }
 
@@ -204,6 +214,7 @@ public final class EcosystemLab {
     // Dedicated servers commonly disable command blocks. Keep the same capped controller
     // usable there; the per-tick gate prevents duplicate execution if both paths run.
     if (!event.getServer().isCommandBlockEnabled()) LabPopulation.pulse(level, state);
+    if (LabPopulation.refillDue(state, level.getGameTime())) LabPopulation.replenish(level, state);
   }
 
   static void sunProtection(Mob mob) {
@@ -263,6 +274,15 @@ public final class EcosystemLab {
                             ctx -> {
                               var level = ctx.getSource().getLevel();
                               if (!lab(level)) return 0;
+                              LabPopulation.replenish(level, State.get(level));
+                              return 1;
+                            }))
+                .then(
+                    net.minecraft.commands.Commands.literal("pulse")
+                        .executes(
+                            ctx -> {
+                              var level = ctx.getSource().getLevel();
+                              if (!lab(level)) return 0;
                               LabPopulation.pulse(level, State.get(level));
                               return 1;
                             }))
@@ -309,7 +329,12 @@ public final class EcosystemLab {
                                                   + " Controller "
                                                   + LabPopulation.controller(state.center)
                                                   + ". Capped command spawning; natural spawning"
-                                                  + " remains enabled."),
+                                                  + " remains enabled. Full refill every five"
+                                                  + " in-game minutes; next in "
+                                                  + Math.max(
+                                                          0, state.nextRefill - level.getGameTime())
+                                                      / 20
+                                                  + " seconds."),
                                       false);
                               return 1;
                             })));

@@ -16,8 +16,10 @@ import net.minecraft.world.phys.AABB;
 final class AquaticLab {
   static final int RADIUS = 20, DEPTH = 12, AIR_HEIGHT = 8, FISH_CAP = 16;
 
+  static final int ISOLATION_RADIUS = RADIUS + 4;
+
   private static final class State extends SavedData {
-    boolean built;
+    boolean built, isolated;
     BlockPos center = BlockPos.ZERO;
 
     static State get(ServerLevel level) {
@@ -29,6 +31,7 @@ final class AquaticLab {
                   (tag, lookup) -> {
                     var state = new State();
                     state.built = tag.getBoolean("Built");
+                    state.isolated = tag.getBoolean("Isolated");
                     state.center = BlockPos.of(tag.getLong("Center"));
                     return state;
                   }),
@@ -38,6 +41,7 @@ final class AquaticLab {
     @Override
     public CompoundTag save(CompoundTag tag, HolderLookup.Provider lookup) {
       tag.putBoolean("Built", built);
+      tag.putBoolean("Isolated", isolated);
       tag.putLong("Center", center.asLong());
       return tag;
     }
@@ -49,7 +53,14 @@ final class AquaticLab {
 
   static void build(ServerLevel level, BlockPos landCenter) {
     var state = State.get(level);
-    if (state.built) return;
+    if (state.built) {
+      if (!state.isolated) {
+        isolate(level, state.center);
+        state.isolated = true;
+        state.setDirty();
+      }
+      return;
+    }
     int x = landCenter.getX() + 144, z = landCenter.getZ();
     level.getChunk(x >> 4, z >> 4);
     var center =
@@ -108,8 +119,62 @@ final class AquaticLab {
     }
     state.built = true;
     state.center = center;
+    isolate(level, center);
+    state.isolated = true;
     state.setDirty();
     for (int i = 0; i < 8; i++) spawnFish(level, center);
+  }
+
+  /** Spawn-proof viewing apron and opaque outer barrier; the glass tank and water stay intact. */
+  static void isolate(ServerLevel level, BlockPos center) {
+    var slab =
+        Blocks.STONE_SLAB
+            .defaultBlockState()
+            .setValue(
+                SlabBlock.TYPE, net.minecraft.world.level.block.state.properties.SlabType.BOTTOM);
+    for (int dx = -ISOLATION_RADIUS; dx <= ISOLATION_RADIUS; dx++)
+      for (int dz = -ISOLATION_RADIUS; dz <= ISOLATION_RADIUS; dz++) {
+        int edge = Math.max(Math.abs(dx), Math.abs(dz));
+        if (edge <= RADIUS) continue;
+        if (edge == ISOLATION_RADIUS) {
+          for (int y = -DEPTH; y <= AIR_HEIGHT + 1; y++)
+            level.setBlock(center.offset(dx, y, dz), Blocks.STONE_BRICKS.defaultBlockState(), 2);
+          level.setBlock(center.offset(dx, AIR_HEIGHT + 2, dz), slab, 2);
+        } else {
+          level.setBlock(center.offset(dx, -2, dz), Blocks.STONE.defaultBlockState(), 2);
+          level.setBlock(center.offset(dx, -1, dz), slab, 2);
+          for (int y = 0; y <= AIR_HEIGHT + 2; y++)
+            level.setBlock(center.offset(dx, y, dz), Blocks.AIR.defaultBlockState(), 2);
+        }
+      }
+    // Animals already beside the old glass should not remain trapped inside the new apron.
+    var band =
+        new AABB(
+            net.minecraft.world.phys.Vec3.atLowerCornerOf(
+                center.offset(-ISOLATION_RADIUS, -DEPTH, -ISOLATION_RADIUS)),
+            net.minecraft.world.phys.Vec3.atLowerCornerOf(
+                center.offset(ISOLATION_RADIUS + 1, AIR_HEIGHT + 3, ISOLATION_RADIUS + 1)));
+    for (var mob :
+        level.getEntitiesOfClass(
+            Mob.class,
+            band,
+            m ->
+                m instanceof net.minecraft.world.entity.animal.Animal
+                    || m instanceof net.minecraft.world.entity.monster.Monster)) {
+      if (bounds(center).contains(mob.position())) continue;
+      for (var face : Direction.Plane.HORIZONTAL) {
+        var outside = center.relative(face, ISOLATION_RADIUS + 4);
+        level.getChunk(outside.getX() >> 4, outside.getZ() >> 4);
+        var ground = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, outside);
+        if (!level.getFluidState(ground.below()).isEmpty()
+            || !level
+                .getBlockState(ground.below())
+                .isFaceSturdy(level, ground.below(), Direction.UP)) continue;
+        mob.moveTo(
+            ground.getX() + .5, ground.getY(), ground.getZ() + .5, mob.getYRot(), mob.getXRot());
+        break;
+      }
+    }
   }
 
   private static AABB bounds(BlockPos center) {
@@ -145,6 +210,7 @@ final class AquaticLab {
             net.minecraft.world.entity.animal.AbstractFish.class, bounds(center(level))))
       fish.discard();
     State.get(level).built = false;
+    State.get(level).isolated = false;
     build(level, landCenter);
   }
 

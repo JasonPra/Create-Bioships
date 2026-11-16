@@ -8181,6 +8181,19 @@ public class BioshipGameTests {
     helper.assertTrue(
         level.getBlockState(center.east(AquaticLab.RADIUS)).is(Blocks.GLASS),
         "Swimming test has an open containment wall");
+    for (var side : Direction.Plane.HORIZONTAL) {
+      var wall = center.relative(side, AquaticLab.ISOLATION_RADIUS);
+      var apron = center.relative(side, AquaticLab.RADIUS + 2).below();
+      helper.assertTrue(
+          level.getBlockState(wall).is(Blocks.STONE_BRICKS)
+              && level.getBlockState(wall.above(AquaticLab.AIR_HEIGHT + 1)).is(Blocks.STONE_BRICKS),
+          "Aquatic isolation wall has an open sight line");
+      helper.assertTrue(
+          level.getBlockState(apron).is(Blocks.STONE_SLAB)
+              && level.getBlockState(apron).getValue(SlabBlock.TYPE)
+                  == net.minecraft.world.level.block.state.properties.SlabType.BOTTOM,
+          "Aquatic apron is not spawn-proof bottom slabs");
+    }
     for (int dx : new int[] {-12, 12})
       for (int dz : new int[] {-12, 12})
         helper.assertTrue(
@@ -8202,8 +8215,23 @@ public class BioshipGameTests {
                   level.getEntitiesOfClass(
                       net.minecraft.world.entity.animal.AbstractFish.class,
                       new AABB(center).inflate(32))) fish.discard();
+              helper.runAfterDelay(1, () -> LabPopulation.replenish(level, state));
+              helper.runAfterDelay(
+                  3,
+                  () -> {
+                    var counts = LabPopulation.counts(level, state.center);
+                    helper.assertTrue(
+                        AquaticLab.fishCount(level) == AquaticLab.FISH_CAP,
+                        "A full refill did not replenish fish immediately");
+                    helper.assertTrue(
+                        counts.prey() > 0
+                            && counts.prey() <= EcosystemLab.PREY_CAP
+                            && counts.hostiles() > 0
+                            && counts.hostiles() <= EcosystemLab.HOSTILE_CAP,
+                        "Full refill omitted land populations or exceeded caps: " + counts);
+                  });
               for (int i = 0; i < 30; i++)
-                helper.runAfterDelay(i + 1, () -> AquaticLab.replenish(level));
+                helper.runAfterDelay(i + 4, () -> AquaticLab.replenish(level));
               helper.runAfterDelay(
                   35,
                   () -> {
@@ -9588,5 +9616,48 @@ public class BioshipGameTests {
     helper.assertTrue(
         !FeedingMouthBlock.openFace(core, mouth, Direction.NORTH), "Solid obstruction was ignored");
     finish(helper, ship, () -> {});
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100)
+  public static void ecosystem_full_refill_timer_is_persistent_capped_and_five_minutes(
+      GameTestHelper helper) {
+    var state = new EcosystemLab.State();
+    helper.assertTrue(!LabPopulation.refillDue(state, 100), "Fresh lab refilled immediately");
+    helper.assertTrue(
+        state.nextRefill == 6100 && !LabPopulation.refillDue(state, 6099),
+        "Refill period is not five minutes");
+    var saved = state.save(new net.minecraft.nbt.CompoundTag(), helper.getLevel().registryAccess());
+    helper.assertTrue(saved.getLong("NextRefill") == 6100, "Refill deadline was not saved");
+    helper.assertTrue(
+        LabPopulation.refillDue(state, 6100)
+            && state.nextRefill == 12100
+            && !LabPopulation.refillDue(state, 6100),
+        "Refill duplicated in one tick or lost its next deadline");
+    helper.succeed();
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100)
+  public static void fractional_aquatic_history_roundtrips_and_reads_legacy_scores(
+      GameTestHelper helper) {
+    var history = new BioshipAquatic();
+    for (int i = 0; i < 73; i++) {
+      history.legUsage().observe(i % 3 != 0);
+      history.gillUsage().observe(i % 4 != 0);
+    }
+    var saved = history.save();
+    var restored = new BioshipAquatic();
+    restored.load(saved);
+    helper.assertTrue(
+        history.legUsage().preciseWater() == restored.legUsage().preciseWater()
+            && history.gillUsage().preciseScore() == restored.gillUsage().preciseScore(),
+        "Aquatic save lost fractional history");
+    saved.remove("WaterUsePrecise");
+    saved.remove("GillUsePrecise");
+    restored.load(saved);
+    helper.assertTrue(
+        restored.legUsage().water() == saved.getInt("WaterUse")
+            && restored.gillUsage().score() == saved.getInt("GillUse"),
+        "Legacy exposure score was not migrated");
+    helper.succeed();
   }
 }

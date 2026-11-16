@@ -203,9 +203,11 @@ public final class BioshipAquatic {
     t.putInt("Air", air);
     t.putInt("GillSamples", gillUsage.samples());
     t.putInt("GillUse", gillUsage.score());
+    t.putDouble("GillUsePrecise", gillUsage.preciseScore());
     t.putBoolean("AirAccess", airAccess);
     t.putBoolean("SeekingAir", seekingAir);
     t.putInt("WaterUse", legUsage.water());
+    t.putDouble("WaterUsePrecise", legUsage.preciseWater());
     t.putInt("UseSamples", legUsage.samples());
     t.putLong("LegEvolutionAfter", nextLegEvolution);
     t.putBoolean("Wet", wet);
@@ -216,10 +218,14 @@ public final class BioshipAquatic {
   }
 
   void load(CompoundTag t) {
-    gillUsage.restore(t.getInt("GillSamples"), t.getInt("GillUse"));
+    gillUsage.restore(
+        t.getInt("GillSamples"),
+        t.contains("GillUsePrecise") ? t.getDouble("GillUsePrecise") : t.getDouble("GillUse"));
     airAccess = !t.contains("AirAccess") || t.getBoolean("AirAccess");
     seekingAir = t.getBoolean("SeekingAir");
-    legUsage.restore(t.getInt("UseSamples"), t.getInt("WaterUse"));
+    legUsage.restore(
+        t.getInt("UseSamples"),
+        t.contains("WaterUsePrecise") ? t.getDouble("WaterUsePrecise") : t.getDouble("WaterUse"));
     nextLegEvolution = t.getLong("LegEvolutionAfter");
     air = t.contains("Air") ? Math.clamp(t.getInt("Air"), 0, 300) : 300;
     wet = t.getBoolean("Wet");
