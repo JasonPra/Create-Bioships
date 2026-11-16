@@ -8947,4 +8947,33 @@ public class BioshipGameTests {
             finish(
                 helper, ship, () -> verifyDeath(helper, core(ship), BioshipDeathCause.STARVATION)));
   }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "retired_sable_owner_not_death")
+  public static void retired_physics_owner_with_an_intact_core_does_not_write_a_death_record(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    BioshipIntegration.bind(ship);
+    BioshipCoreLifecycle.removed(core);
+    ship.markRemoved();
+    core.setRemoved();
+    helper.runAfterDelay(
+        2,
+        () -> {
+          try {
+            helper.assertTrue(
+                !BioshipDecay.dead(ship) && !core.body().dead(),
+                "Retiring the physics body was mistaken for destruction of its core");
+            var deaths =
+                BioshipDecay.Deaths.get(helper.getLevel())
+                    .save(new net.minecraft.nbt.CompoundTag(), helper.getLevel().registryAccess());
+            helper.assertTrue(
+                !deaths.contains(ship.getUniqueId().toString()),
+                "Retired owner poisoned its replacement's persistent lineage");
+            helper.succeed();
+          } finally {
+            cleanup(helper, ship);
+          }
+        });
+  }
 }

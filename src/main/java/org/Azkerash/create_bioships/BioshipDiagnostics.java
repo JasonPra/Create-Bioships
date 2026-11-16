@@ -47,6 +47,38 @@ public final class BioshipDiagnostics {
             + callsite);
   }
 
+  static void removalCheck(
+      LivingCoreBlockEntity core, ServerSubLevel owner, net.minecraft.core.BlockPos pos) {
+    if (!Boolean.getBoolean("bioships.traceLifecycle")) return;
+    var holder =
+        owner
+            .getPlot()
+            .getChunkHolder(owner.getPlot().toLocal(new net.minecraft.world.level.ChunkPos(pos)));
+    System.out.println(
+        "BIOSHIP_LIFECYCLE event=validate_removal tick="
+            + owner.getLevel().getGameTime()
+            + " ship="
+            + owner.getUniqueId()
+            + " core="
+            + pos.toShortString()
+            + " receipt="
+            + core.hasTransferReceipt()
+            + " transferred="
+            + core.transferred()
+            + " ownerRemoved="
+            + owner.isRemoved()
+            + " coreRemoved="
+            + core.isRemoved()
+            + " globalState="
+            + owner.getLevel().getBlockState(pos)
+            + " plotState="
+            + (holder == null ? "unloaded" : holder.getChunk().getBlockState(pos))
+            + " plotBEisSource="
+            + (holder != null && holder.getChunk().getBlockEntities().get(pos) == core)
+            + " globalBEisSource="
+            + (owner.getLevel().getBlockEntity(pos) == core));
+  }
+
   static void death(LivingCoreBlockEntity core, BioshipDeathCause cause, long at) {
     var ship = core.ship();
     var food = core.foodLevel();

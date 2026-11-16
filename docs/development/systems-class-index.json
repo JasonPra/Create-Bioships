@@ -5574,140 +5574,140 @@
         {
           "kind": "method",
           "signature": "public static void tick(Level level, BlockPos pos, BlockState state, LivingCoreBlockEntity core)",
-          "line": 685
+          "line": 680
         },
         {
           "kind": "method",
           "signature": "private void updateCabinLights()",
-          "line": 792
+          "line": 787
         },
         {
           "kind": "method",
           "signature": "private void growBody()",
-          "line": 803
+          "line": 798
         },
         {
           "kind": "method",
           "signature": "public void sable$tick(ServerSubLevel ship)",
-          "line": 879
+          "line": 874
         },
         {
           "kind": "method",
           "signature": "private void serverTick()",
-          "line": 884
+          "line": 879
         },
         {
           "kind": "method",
           "signature": "private void incorporateAmalgam()",
-          "line": 991
+          "line": 986
         },
         {
           "kind": "method",
           "signature": "public boolean canFly()",
-          "line": 1000
+          "line": 995
         },
         {
           "kind": "method",
           "signature": "private void updateEye(boolean active)",
-          "line": 1009
+          "line": 1004
         },
         {
           "kind": "method",
           "signature": "public boolean isMature()",
-          "line": 1022
+          "line": 1017
         },
         {
           "kind": "method",
           "signature": "public boolean resting()",
-          "line": 1026
+          "line": 1021
         },
         {
           "kind": "method",
           "signature": "public boolean aggressive()",
-          "line": 1030
+          "line": 1025
         },
         {
           "kind": "method",
           "signature": "public boolean isCaptain(net.minecraft.world.entity.Entity entity)",
-          "line": 1034
+          "line": 1029
         },
         {
           "kind": "method",
           "signature": "public boolean huntingAllowed()",
-          "line": 1038
+          "line": 1033
         },
         {
           "kind": "method",
           "signature": "public int foodLevel()",
-          "line": 1046
+          "line": 1041
         },
         {
           "kind": "method",
           "signature": "public boolean starving()",
-          "line": 1050
+          "line": 1045
         },
         {
           "kind": "method",
           "signature": "public void adoptLarynx()",
-          "line": 1054
+          "line": 1049
         },
         {
           "kind": "method",
           "signature": "public boolean wantsToHunt()",
-          "line": 1059
+          "line": 1054
         },
         {
           "kind": "method",
           "signature": "public boolean hungry()",
-          "line": 1063
+          "line": 1058
         },
         {
           "kind": "method",
           "signature": "public boolean hasMouth()",
-          "line": 1067
+          "line": 1062
         },
         {
           "kind": "method",
           "signature": "public BlockPos mouthBlock()",
-          "line": 1071
+          "line": 1066
         },
         {
           "kind": "method",
           "signature": "public Vec3 mouthPosition(ServerSubLevel ship)",
-          "line": 1093
+          "line": 1088
         },
         {
           "kind": "method",
           "signature": "public int swimmingFlagella()",
-          "line": 1105
+          "line": 1100
         },
         {
           "kind": "method",
           "signature": "Vec3 gatheringGoal()",
-          "line": 1113
+          "line": 1108
         },
         {
           "kind": "method",
           "signature": "static boolean droppedSupply(ItemStack stack)",
-          "line": 1118
+          "line": 1113
         },
         {
           "kind": "method",
           "signature": "public void sable$physicsTick(ServerSubLevel ship, RigidBodyHandle body, double dt)",
-          "line": 1126
+          "line": 1121
         },
         {
           "kind": "method",
           "signature": "protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries)",
-          "line": 1176
+          "line": 1171
         },
         {
           "kind": "method",
           "signature": "protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries)",
-          "line": 1225
+          "line": 1220
         }
       ],
-      "lines": 1279
+      "lines": 1274
     },
     "DinghyGrowth": {
       "path": "src/main/java/org/Azkerash/create_bioships/DinghyGrowth.java",
@@ -6626,15 +6626,15 @@
         {
           "kind": "method",
           "signature": "public static void stop(ServerStoppedEvent event)",
-          "line": 48
+          "line": 52
         },
         {
           "kind": "method",
           "signature": "private BioshipCoreLifecycle()",
-          "line": 53
+          "line": 57
         }
       ],
-      "lines": 56
+      "lines": 60
     },
     "ShipMembraneAccess": {
       "path": "src/main/java/org/Azkerash/create_bioships/ShipMembraneAccess.java",
@@ -8781,21 +8781,26 @@
         },
         {
           "kind": "method",
-          "signature": "static void death(LivingCoreBlockEntity core, BioshipDeathCause cause, long at)",
+          "signature": "static void removalCheck( LivingCoreBlockEntity core, ServerSubLevel owner, net.minecraft.core.BlockPos pos)",
           "line": 48
         },
         {
           "kind": "method",
+          "signature": "static void death(LivingCoreBlockEntity core, BioshipDeathCause cause, long at)",
+          "line": 80
+        },
+        {
+          "kind": "method",
           "signature": "static CompoundTag snapshot(LivingCoreBlockEntity core)",
-          "line": 72
+          "line": 104
         },
         {
           "kind": "method",
           "signature": "public static void commands(RegisterCommandsEvent event)",
-          "line": 136
+          "line": 168
         }
       ],
-      "lines": 195
+      "lines": 227
     },
     "LegUsageHistory": {
       "path": "src/main/java/org/Azkerash/create_bioships/LegUsageHistory.java",

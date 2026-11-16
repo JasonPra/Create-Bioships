@@ -32,15 +32,19 @@ final class BioshipCoreLifecycle {
         pending.values().stream().filter(r -> r.level().getServer() == event.getServer()).toList();
     batch.forEach(r -> pending.remove(r.source()));
     for (var r : batch) {
-      if (r.source().transferred()) continue;
-      boolean loaded =
+      BioshipDiagnostics.removalCheck(r.source(), r.owner(), r.pos());
+      // A retired Sable object can retain its old chunks while a replacement object is loading.
+      // Its world lookup is no longer authoritative and must never write a death tombstone.
+      if (r.owner().isRemoved() || r.source().transferred()) continue;
+      var holder =
           r.owner()
-                  .getPlot()
-                  .getChunkHolder(
-                      r.owner().getPlot().toLocal(new net.minecraft.world.level.ChunkPos(r.pos())))
-              != null;
-      if (r.source().hasTransferReceipt()
-          || loaded && !r.level().getBlockState(r.pos()).is(Create_bioships.CORE.get())) {
+              .getPlot()
+              .getChunkHolder(
+                  r.owner().getPlot().toLocal(new net.minecraft.world.level.ChunkPos(r.pos())));
+      // A BE can retire or be replaced while its actual core block remains intact.
+      if (holder != null && holder.getChunk().getBlockState(r.pos()).is(Create_bioships.CORE.get()))
+        continue;
+      if (r.source().hasTransferReceipt() || holder != null) {
         r.source().body().die(r.source(), BioshipDeathCause.CORE_REMOVED);
         BioshipDecay.mark(r.owner(), BioshipDeathCause.CORE_REMOVED);
       }

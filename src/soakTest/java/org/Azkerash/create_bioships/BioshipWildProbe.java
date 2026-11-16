@@ -20,7 +20,7 @@ public final class BioshipWildProbe {
   private static final class State {
     int unchanged, feeds, lastSeen;
     String signature = "";
-    boolean digestive, produced, reportedDead, missing;
+    boolean digestive, produced, reportedDead, missing, falseDeath;
     int layoutSignature = Integer.MIN_VALUE;
     net.minecraft.world.phys.Vec3 position = net.minecraft.world.phys.Vec3.ZERO;
   }
@@ -59,6 +59,16 @@ public final class BioshipWildProbe {
         if (state == null) {
           state = new State();
           states.put(ship.getUniqueId(), state);
+        }
+        if (BioshipDecay.dead((dev.ryanhcode.sable.sublevel.ServerSubLevel) ship)
+            && !state.falseDeath) {
+          state.falseDeath = true;
+          failures++;
+          System.out.println(
+              "WILDPROBE FAILURE alive_core_marked_dead tick="
+                  + tick
+                  + " ship="
+                  + ship.getUniqueId());
         }
         state.missing = false;
         state.position = BioshipBlueprint.physical(core, BlockPos.ZERO);

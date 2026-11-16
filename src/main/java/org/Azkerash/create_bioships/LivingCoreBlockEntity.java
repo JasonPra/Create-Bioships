@@ -675,11 +675,6 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
   @Override
   public void setRemoved() {
     BioshipCoreLifecycle.removed(this);
-    if (level instanceof net.minecraft.server.level.ServerLevel
-        && ship() != null
-        && ship().getPlot().getChunkHolder(ship().getPlot().toLocal(new ChunkPos(worldPosition)))
-            != null
-        && !level.getBlockState(worldPosition).is(Create_bioships.CORE.get())) coreRemoved();
     chunkLoading.release();
     super.setRemoved();
   }

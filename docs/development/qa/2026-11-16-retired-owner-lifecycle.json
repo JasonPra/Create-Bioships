@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-16",
+  "baselineCommit": "6d5b4c4",
+  "scenario": "Fresh normal ecosystem preset, first 100 ticks only; diagnostic reproduction rather than biological qualification.",
+  "baselineResult": "FALSE_DEATH_REPRODUCED",
+  "evidence": [
+    "BIOSHIP_LIFECYCLE event=validate_removal tick=1 ship=4c691dc0-54dc-4e97-9323-8003e4ab1c83 core=20481032, 128, 20485128 receipt=false transferred=false ownerRemoved=true coreRemoved=true globalState=Block{minecraft:void_air} plotState=Block{create_bioships:living_core}[active=false,blink=false,concealed=false,facing=north,relocating=false] plotBEisSource=false globalBEisSource=false",
+    "WILDPROBE FAILURE alive_core_marked_dead tick=40 ship=4c691dc0-54dc-4e97-9323-8003e4ab1c83"
+  ],
+  "finding": "The captured Sable owner was already retired while its retained plot still contained a core. The world-level lookup returned void_air. Removal validation must reject retired owners and use the authoritative plot state.",
+  "regressionResult": "51 unit tests and all 140 required GameTests passed after rejecting retired owner callbacks and keeping intact source core blocks alive.",
+  "normalWorldReplay": "Pending in the next checkpoint."
+}
