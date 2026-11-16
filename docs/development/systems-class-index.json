@@ -273,6 +273,8 @@
       "active",
       [
         "BioshipDefense",
+        "BioshipCreeperHazard",
+        "mixin.CreeperBlastAccess",
         "TentacleStrike",
         "ImpactDamage",
         "BioshipPrey",
@@ -611,40 +613,40 @@
         {
           "kind": "method",
           "signature": "net.minecraft.nbt.CompoundTag save()",
-          "line": 69
+          "line": 70
         },
         {
           "kind": "method",
           "signature": "void load(net.minecraft.nbt.CompoundTag tag)",
-          "line": 80
+          "line": 81
         },
         {
           "kind": "method",
           "signature": "static LivingEntity target(LivingCoreBlockEntity core)",
-          "line": 93
+          "line": 94
         },
         {
           "kind": "method",
           "signature": "private static boolean eligiblePrey(LivingCoreBlockEntity core, LivingEntity entity)",
-          "line": 134
+          "line": 135
         },
         {
           "kind": "method",
           "signature": "static LivingEntity prey(LivingCoreBlockEntity core)",
-          "line": 144
+          "line": 145
         },
         {
           "kind": "method",
           "signature": "private static boolean sensesPrey(LivingCoreBlockEntity core, LivingEntity entity)",
-          "line": 165
+          "line": 166
         },
         {
           "kind": "method",
           "signature": "void tick(LivingCoreBlockEntity core)",
-          "line": 184
+          "line": 185
         }
       ],
-      "lines": 247
+      "lines": 248
     },
     "BioshipBlueprint": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipBlueprint.java",
@@ -6312,7 +6314,7 @@
       "members": [
         {
           "kind": "field",
-          "signature": "private static final int FULL_COVERAGE",
+          "signature": "private static final int FULL_COVERAGE, EVADE_TICKS",
           "line": 13
         },
         {
@@ -6421,112 +6423,122 @@
           "line": 178
         },
         {
+          "kind": "nested type",
+          "signature": "private record BlastStep(BlockPos pos, BlockPos first, int ticks)",
+          "line": 183
+        },
+        {
+          "kind": "method",
+          "signature": "private BlockPos blastExit( LivingCoreBlockEntity core, net.minecraft.world.entity.monster.Creeper creeper)",
+          "line": 185
+        },
+        {
           "kind": "method",
           "signature": "private BlockPos choose(LivingCoreBlockEntity core, boolean returning)",
-          "line": 209
+          "line": 224
         },
         {
           "kind": "method",
           "signature": "private static boolean connectedAfter(Set<BlockPos> body, BlockPos from, BlockPos to)",
-          "line": 251
+          "line": 266
         },
         {
           "kind": "method",
           "signature": "private boolean clearPerchTravel(LivingCoreBlockEntity core, BlockPos pos)",
-          "line": 269
+          "line": 284
         },
         {
           "kind": "method",
           "signature": "private boolean supportedPerch(LivingCoreBlockEntity core, BlockPos pos)",
-          "line": 278
+          "line": 293
         },
         {
           "kind": "method",
           "signature": "private boolean stableSupport(LivingCoreBlockEntity core, BlockPos pos)",
-          "line": 296
+          "line": 311
         },
         {
           "kind": "method",
           "signature": "private BlockPos perch(LivingCoreBlockEntity core, boolean returning)",
-          "line": 305
+          "line": 320
         },
         {
           "kind": "method",
           "signature": "private BlockPos reconnect(LivingCoreBlockEntity core)",
-          "line": 327
+          "line": 342
         },
         {
           "kind": "method",
           "signature": "private boolean preparePerch(LivingCoreBlockEntity core)",
-          "line": 362
+          "line": 377
         },
         {
           "kind": "method",
           "signature": "boolean tick(LivingCoreBlockEntity core)",
-          "line": 394
+          "line": 409
         },
         {
           "kind": "method",
           "signature": "private boolean begin(LivingCoreBlockEntity core, BlockPos next, boolean emergency)",
-          "line": 474
+          "line": 502
         },
         {
           "kind": "method",
           "signature": "boolean evade(LivingCoreBlockEntity core, net.minecraft.world.entity.monster.Creeper creeper)",
-          "line": 491
-        },
-        {
-          "kind": "method",
-          "signature": "static double blastSafety( LivingCoreBlockEntity core, BlockPos point, net.minecraft.world.entity.monster.Creeper creeper)",
-          "line": 507
-        },
-        {
-          "kind": "method",
-          "signature": "private BlockPos safestStep( LivingCoreBlockEntity core, net.minecraft.world.entity.monster.Creeper creeper)",
           "line": 519
         },
         {
           "kind": "method",
+          "signature": "static double blastSafety( LivingCoreBlockEntity core, BlockPos point, net.minecraft.world.entity.monster.Creeper creeper)",
+          "line": 535
+        },
+        {
+          "kind": "method",
+          "signature": "private BlockPos safestStep( LivingCoreBlockEntity core, net.minecraft.world.entity.monster.Creeper creeper)",
+          "line": 547
+        },
+        {
+          "kind": "method",
           "signature": "String scoutingHint(LivingCoreBlockEntity core)",
-          "line": 554
+          "line": 584
         },
         {
           "kind": "method",
           "signature": "void scoutNow(LivingCoreBlockEntity core)",
-          "line": 580
+          "line": 610
         },
         {
           "kind": "field",
           "signature": "private boolean feeding",
-          "line": 585
+          "line": 615
         },
         {
           "kind": "method",
           "signature": "boolean feeding()",
-          "line": 587
+          "line": 617
         },
         {
           "kind": "method",
           "signature": "void cancel(LivingCoreBlockEntity core)",
-          "line": 591
+          "line": 621
         },
         {
           "kind": "method",
           "signature": "private void commit(LivingCoreBlockEntity core)",
-          "line": 601
+          "line": 631
         },
         {
           "kind": "method",
           "signature": "CompoundTag save()",
-          "line": 632
+          "line": 662
         },
         {
           "kind": "method",
           "signature": "void load(CompoundTag tag)",
-          "line": 644
+          "line": 674
         }
       ],
-      "lines": 655
+      "lines": 685
     },
     "BioshipRespiration": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipRespiration.java",
@@ -7275,6 +7287,28 @@
         }
       ],
       "lines": 163
+    },
+    "BioshipCreeperHazard": {
+      "path": "src/main/java/org/Azkerash/create_bioships/BioshipCreeperHazard.java",
+      "declaration": "final class BioshipCreeperHazard",
+      "members": [
+        {
+          "kind": "nested type",
+          "signature": "record Estimate(double damageReach, int fuseRemaining)",
+          "line": 7
+        },
+        {
+          "kind": "method",
+          "signature": "static Estimate estimate(Creeper creeper)",
+          "line": 16
+        },
+        {
+          "kind": "method",
+          "signature": "private BioshipCreeperHazard()",
+          "line": 29
+        }
+      ],
+      "lines": 32
     },
     "OneWayWindowBlock": {
       "path": "src/main/java/org/Azkerash/create_bioships/OneWayWindowBlock.java",
@@ -8808,10 +8842,10 @@
         {
           "kind": "method",
           "signature": "public static void commands(RegisterCommandsEvent event)",
-          "line": 168
+          "line": 189
         }
       ],
-      "lines": 227
+      "lines": 248
     },
     "BioshipMountGrowth": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipMountGrowth.java",
@@ -10055,6 +10089,28 @@
       "declaration": "abstract class PathDebugKeyMixin",
       "members": [],
       "lines": 19
+    },
+    "mixin.CreeperBlastAccess": {
+      "path": "src/main/java/org/Azkerash/create_bioships/mixin/CreeperBlastAccess.java",
+      "declaration": "public interface CreeperBlastAccess",
+      "members": [
+        {
+          "kind": "method",
+          "signature": "int bioships$explosionRadius()",
+          "line": 9
+        },
+        {
+          "kind": "method",
+          "signature": "int bioships$swell()",
+          "line": 11
+        },
+        {
+          "kind": "method",
+          "signature": "int bioships$maxSwell()",
+          "line": 14
+        }
+      ],
+      "lines": 18
     },
     "mixin.ServerSubLevelMixin": {
       "path": "src/main/java/org/Azkerash/create_bioships/mixin/ServerSubLevelMixin.java",

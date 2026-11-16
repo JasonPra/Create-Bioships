@@ -10,7 +10,8 @@
     "BiometricMembraneAccessMixin",
     "ReconfigurationHeatMapMixin",
     "BiometricSubLevelCollisionMixin",
-    "SablePlotUnloadMixin"
+    "SablePlotUnloadMixin",
+    "CreeperBlastAccess"
   ],
   "client": [
     "PathDebugKeyMixin"

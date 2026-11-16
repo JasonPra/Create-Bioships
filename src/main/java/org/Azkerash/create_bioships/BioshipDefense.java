@@ -62,7 +62,8 @@ final class BioshipDefense {
             e ->
                 e.isAlive()
                     && (threatening(core, e) || e.isIgnited() || e.getSwellDir() > 0)
-                    && e.position().distanceToSqr(root) < Math.pow(e.isPowered() ? 8 : 5, 2))
+                    && e.position().distanceToSqr(root)
+                        < Math.pow(BioshipCreeperHazard.estimate(e).reactionRange(), 2))
         .stream()
         .min(java.util.Comparator.comparingDouble(e -> e.distanceToSqr(root)))
         .orElse(null);

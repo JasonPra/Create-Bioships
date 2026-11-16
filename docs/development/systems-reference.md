@@ -2137,12 +2137,12 @@ Reposition through connected anatomy for sight or defense; preserve state and in
 
 #### CoreMotion
 
-Source: `src/main/java/org/Azkerash/create_bioships/CoreMotion.java` (655 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/CoreMotion.java` (685 lines).
 
 ```java
 public final class CoreMotion
 
-  private static final int FULL_COVERAGE; // line 13
+  private static final int FULL_COVERAGE, EVADE_TICKS; // line 13
 
   private BlockPos home, target; // line 14
 
@@ -2186,47 +2186,51 @@ public final class CoreMotion
 
   boolean canAvoidBlast( LivingCoreBlockEntity core, net.minecraft.world.entity.monster.Creeper creeper); // line 178
 
-  private BlockPos choose(LivingCoreBlockEntity core, boolean returning); // line 209
+  private record BlastStep(BlockPos pos, BlockPos first, int ticks); // line 183
 
-  private static boolean connectedAfter(Set<BlockPos> body, BlockPos from, BlockPos to); // line 251
+  private BlockPos blastExit( LivingCoreBlockEntity core, net.minecraft.world.entity.monster.Creeper creeper); // line 185
 
-  private boolean clearPerchTravel(LivingCoreBlockEntity core, BlockPos pos); // line 269
+  private BlockPos choose(LivingCoreBlockEntity core, boolean returning); // line 224
 
-  private boolean supportedPerch(LivingCoreBlockEntity core, BlockPos pos); // line 278
+  private static boolean connectedAfter(Set<BlockPos> body, BlockPos from, BlockPos to); // line 266
 
-  private boolean stableSupport(LivingCoreBlockEntity core, BlockPos pos); // line 296
+  private boolean clearPerchTravel(LivingCoreBlockEntity core, BlockPos pos); // line 284
 
-  private BlockPos perch(LivingCoreBlockEntity core, boolean returning); // line 305
+  private boolean supportedPerch(LivingCoreBlockEntity core, BlockPos pos); // line 293
 
-  private BlockPos reconnect(LivingCoreBlockEntity core); // line 327
+  private boolean stableSupport(LivingCoreBlockEntity core, BlockPos pos); // line 311
 
-  private boolean preparePerch(LivingCoreBlockEntity core); // line 362
+  private BlockPos perch(LivingCoreBlockEntity core, boolean returning); // line 320
 
-  boolean tick(LivingCoreBlockEntity core); // line 394
+  private BlockPos reconnect(LivingCoreBlockEntity core); // line 342
 
-  private boolean begin(LivingCoreBlockEntity core, BlockPos next, boolean emergency); // line 474
+  private boolean preparePerch(LivingCoreBlockEntity core); // line 377
 
-  boolean evade(LivingCoreBlockEntity core, net.minecraft.world.entity.monster.Creeper creeper); // line 491
+  boolean tick(LivingCoreBlockEntity core); // line 409
 
-  static double blastSafety( LivingCoreBlockEntity core, BlockPos point, net.minecraft.world.entity.monster.Creeper creeper); // line 507
+  private boolean begin(LivingCoreBlockEntity core, BlockPos next, boolean emergency); // line 502
 
-  private BlockPos safestStep( LivingCoreBlockEntity core, net.minecraft.world.entity.monster.Creeper creeper); // line 519
+  boolean evade(LivingCoreBlockEntity core, net.minecraft.world.entity.monster.Creeper creeper); // line 519
 
-  String scoutingHint(LivingCoreBlockEntity core); // line 554
+  static double blastSafety( LivingCoreBlockEntity core, BlockPos point, net.minecraft.world.entity.monster.Creeper creeper); // line 535
 
-  void scoutNow(LivingCoreBlockEntity core); // line 580
+  private BlockPos safestStep( LivingCoreBlockEntity core, net.minecraft.world.entity.monster.Creeper creeper); // line 547
 
-  private boolean feeding; // line 585
+  String scoutingHint(LivingCoreBlockEntity core); // line 584
 
-  boolean feeding(); // line 587
+  void scoutNow(LivingCoreBlockEntity core); // line 610
 
-  void cancel(LivingCoreBlockEntity core); // line 591
+  private boolean feeding; // line 615
 
-  private void commit(LivingCoreBlockEntity core); // line 601
+  boolean feeding(); // line 617
 
-  CompoundTag save(); // line 632
+  void cancel(LivingCoreBlockEntity core); // line 621
 
-  void load(CompoundTag tag); // line 644
+  private void commit(LivingCoreBlockEntity core); // line 631
+
+  CompoundTag save(); // line 662
+
+  void load(CompoundTag tag); // line 674
 
 ```
 
@@ -3344,6 +3348,8 @@ Threat/prey sensing and shared telegraphed swipes. Native drops remain world ite
 ```text
 [combat]
   BioshipDefense
+  BioshipCreeperHazard
+  mixin.CreeperBlastAccess
   TentacleStrike
   ImpactDamage
   BioshipPrey
@@ -3353,7 +3359,7 @@ Threat/prey sensing and shared telegraphed swipes. Native drops remain world ite
 
 #### BioshipDefense
 
-Source: `src/main/java/org/Azkerash/create_bioships/BioshipDefense.java` (247 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipDefense.java` (248 lines).
 
 ```java
 final class BioshipDefense
@@ -3384,19 +3390,51 @@ final class BioshipDefense
 
   static net.minecraft.world.entity.monster.Creeper creeperThreat(LivingCoreBlockEntity core); // line 52
 
-  net.minecraft.nbt.CompoundTag save(); // line 69
+  net.minecraft.nbt.CompoundTag save(); // line 70
 
-  void load(net.minecraft.nbt.CompoundTag tag); // line 80
+  void load(net.minecraft.nbt.CompoundTag tag); // line 81
 
-  static LivingEntity target(LivingCoreBlockEntity core); // line 93
+  static LivingEntity target(LivingCoreBlockEntity core); // line 94
 
-  private static boolean eligiblePrey(LivingCoreBlockEntity core, LivingEntity entity); // line 134
+  private static boolean eligiblePrey(LivingCoreBlockEntity core, LivingEntity entity); // line 135
 
-  static LivingEntity prey(LivingCoreBlockEntity core); // line 144
+  static LivingEntity prey(LivingCoreBlockEntity core); // line 145
 
-  private static boolean sensesPrey(LivingCoreBlockEntity core, LivingEntity entity); // line 165
+  private static boolean sensesPrey(LivingCoreBlockEntity core, LivingEntity entity); // line 166
 
-  void tick(LivingCoreBlockEntity core); // line 184
+  void tick(LivingCoreBlockEntity core); // line 185
+
+```
+
+
+#### BioshipCreeperHazard
+
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipCreeperHazard.java` (32 lines).
+
+```java
+final class BioshipCreeperHazard
+
+  record Estimate(double damageReach, int fuseRemaining); // line 7
+
+  static Estimate estimate(Creeper creeper); // line 16
+
+  private BioshipCreeperHazard(); // line 29
+
+```
+
+
+#### mixin.CreeperBlastAccess
+
+Source: `src/main/java/org/Azkerash/create_bioships/mixin/CreeperBlastAccess.java` (18 lines).
+
+```java
+public interface CreeperBlastAccess
+
+  int bioships$explosionRadius(); // line 9
+
+  int bioships$swell(); // line 11
+
+  int bioships$maxSwell(); // line 14
 
 ```
 
@@ -3845,7 +3883,7 @@ F3+B sight; F3+P native floating route/priority display; goggles status above ho
 
 #### BioshipDiagnostics
 
-Source: `src/main/java/org/Azkerash/create_bioships/BioshipDiagnostics.java` (227 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipDiagnostics.java` (248 lines).
 
 ```java
 public final class BioshipDiagnostics
@@ -3860,7 +3898,7 @@ public final class BioshipDiagnostics
 
   static CompoundTag snapshot(LivingCoreBlockEntity core); // line 104
 
-  public static void commands(RegisterCommandsEvent event); // line 168
+  public static void commands(RegisterCommandsEvent event); // line 189
 
 ```
 

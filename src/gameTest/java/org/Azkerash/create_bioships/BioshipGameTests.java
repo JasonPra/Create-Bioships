@@ -9126,4 +9126,193 @@ public class BioshipGameTests {
       cleanup(helper, ship);
     }
   }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "creeper_full_blast_envelope")
+  public static void creeper_core_escape_requires_full_damage_clearance_and_usable_tissue(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var creeper = EntityType.CREEPER.create(helper.getLevel());
+    try {
+      var core = core(ship);
+      var root = core.getBlockPos();
+      var world = BioshipBlueprint.physical(core, BlockPos.ZERO);
+      creeper.setPos(world.x - 3, world.y - .5, world.z);
+      for (int x = 1; x <= 2; x++)
+        helper.getLevel().setBlock(root.east(x), BioshipTissue.body().defaultBlockState(), 3);
+      helper.assertTrue(
+          !core.coreMotion().canAvoidBlast(core, creeper),
+          "A body wholly within the damage envelope was considered safe to fight");
+      for (int x = 3; x <= 6; x++)
+        helper.getLevel().setBlock(root.east(x), BioshipTissue.body().defaultBlockState(), 3);
+      helper.assertTrue(
+          core.coreMotion().canAvoidBlast(core, creeper),
+          "A connected route beyond full blast clearance was rejected");
+      helper
+          .getLevel()
+          .setBlock(
+              root.east().north(),
+              Create_bioships.AMOEBA_LEG
+                  .get()
+                  .defaultBlockState()
+                  .setValue(AmoebaLegBlock.FACING, Direction.NORTH),
+              3);
+      helper.assertTrue(
+          !core.coreMotion().canAvoidBlast(core, creeper),
+          "Escape claimed tissue the core cannot occupy without orphaning a leg");
+      helper.succeed();
+    } finally {
+      creeper.discard();
+      cleanup(helper, ship);
+    }
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "native_creeper_fuse_budget")
+  public static void creeper_safety_reads_native_power_charge_and_remaining_fuse(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var creeper = EntityType.CREEPER.create(helper.getLevel());
+    try {
+      var core = core(ship);
+      var world = BioshipBlueprint.physical(core, BlockPos.ZERO);
+      creeper.setPos(world.x - 3, world.y - .5, world.z);
+      for (int x = 1; x <= 6; x++)
+        helper
+            .getLevel()
+            .setBlock(core.getBlockPos().east(x), BioshipTissue.body().defaultBlockState(), 3);
+      var config = new net.minecraft.nbt.CompoundTag();
+      config.putByte("ExplosionRadius", (byte) 3);
+      config.putShort("Fuse", (short) 3);
+      config.putBoolean("ignited", true);
+      creeper.readAdditionalSaveData(config);
+      helper.assertTrue(
+          BioshipCreeperHazard.estimate(creeper).damageReach() == 6
+              && !core.coreMotion().canAvoidBlast(core, creeper),
+          "Core escape ignored the native fuse budget");
+      config.putShort("Fuse", (short) 40);
+      creeper.readAdditionalSaveData(config);
+      helper.assertTrue(
+          core.coreMotion().canAvoidBlast(core, creeper),
+          "A sufficiently long primed fuse did not allow a reachable escape");
+      config.putByte("ExplosionRadius", (byte) 5);
+      config.putBoolean("powered", true);
+      creeper.readAdditionalSaveData(config);
+      helper.assertTrue(
+          BioshipCreeperHazard.estimate(creeper).damageReach() == 20
+              && !core.coreMotion().canAvoidBlast(core, creeper),
+          "Charged/custom explosion settings were replaced by a fixed small radius");
+      helper.succeed();
+    } finally {
+      creeper.discard();
+      cleanup(helper, ship);
+    }
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "creeper_interrupts_core_scout")
+  public static void unsafe_core_scouting_does_not_hold_up_the_selected_ground_escape(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    helper
+        .getLevel()
+        .setBlock(core.getBlockPos().east(), BioshipTissue.body().defaultBlockState(), 3);
+    var world = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var creeper = EntityType.CREEPER.create(helper.getLevel());
+    creeper.setNoAi(true);
+    creeper.setNoGravity(true);
+    creeper.setPos(world.x - 3, world.y - .5, world.z);
+    helper.getLevel().addFreshEntity(creeper);
+    afterIndexed(
+        helper,
+        List.of(creeper),
+        () -> {
+          try {
+            core.autonomy().load(core.autonomy().save());
+            core.autonomy().assess(core);
+            helper.assertTrue(
+                core.autonomy().creeperPanic(), "Fixture did not select unsafe-creeper panic");
+            var scout = core.coreMotion().save();
+            scout.putLong("Target", core.getBlockPos().east().asLong());
+            scout.putLong("Started", helper.getLevel().getGameTime());
+            scout.putBoolean("Evasive", false);
+            core.coreMotion().load(scout);
+            helper.assertTrue(
+                !core.coreMotion().tick(core)
+                    && !core.coreMotion().active()
+                    && core.brain().choose(core).action() == BioshipBrain.Action.FLEE,
+                "Scouting continued to suppress crawling after escape became the selected need");
+            helper.succeed();
+          } finally {
+            creeper.discard();
+            cleanup(helper, ship);
+          }
+        });
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 1400, batch = "mouth_transfer_phase_stress")
+  public static void repeated_mouth_rearrangements_keep_inventory_and_owned_metadata(
+      GameTestHelper helper) {
+    repeatMouthTransfer(helper, 0);
+  }
+
+  private static void repeatMouthTransfer(GameTestHelper helper, int iteration) {
+    if (iteration == 8) {
+      helper.succeed();
+      return;
+    }
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var root = core.getBlockPos();
+    level.setBlock(root.south(), Create_bioships.FEEDING_MOUTH.get().defaultBlockState(), 3);
+    level.setBlock(root.north(), Create_bioships.STOMACH.get().defaultBlockState(), 3);
+    var mouth = (FeedingMouthBlockEntity) level.getBlockEntity(root.south());
+    mouth.setItem(0, new ItemStack(Items.STRUCTURE_VOID, 7));
+    mouth.getPersistentData().putInt("ConservationFixture", iteration + 1);
+    DigestiveSystem.connect(core, ship);
+    BioshipIntegration.orientMouth(core);
+    var trace = new ArrayList<String>();
+    for (int at = 5; at <= 140; at += 5) {
+      int age = at;
+      helper.runAfterDelay(
+          at,
+          () -> {
+            var current = core(ship);
+            int held =
+                BioshipLarynx.mouths(current).stream().mapToInt(m -> m.getItem(0).getCount()).sum();
+            int carried = 0, marker = 0;
+            var move = current.organMove();
+            if (move != null) {
+              var cargo = SubLevelContainer.getContainer(level).getSubLevel(move.cargo());
+              if (cargo instanceof ServerSubLevel part)
+                for (var actor : BioshipIntegration.blockEntities(part))
+                  if (actor instanceof FeedingMouthBlockEntity m) {
+                    carried += m.getItem(0).getCount();
+                    marker = m.getPersistentData().getInt("ConservationFixture");
+                  }
+            }
+            trace.add(age + ":body=" + held + ",cargo=" + carried + ",marker=" + marker);
+          });
+    }
+    helper.runAfterDelay(
+        145,
+        () -> {
+          try {
+            var current = core(ship);
+            var moved = (FeedingMouthBlockEntity) level.getBlockEntity(current.mouthBlock());
+            helper.assertTrue(
+                moved != null
+                    && moved.getItem(0).getCount() == 7
+                    && moved.getPersistentData().getInt("ConservationFixture") == iteration + 1,
+                "Mouth handoff lost data at phase "
+                    + iteration
+                    + " marker="
+                    + (moved == null ? -1 : moved.getPersistentData().getInt("ConservationFixture"))
+                    + " trace="
+                    + trace.stream().skip(Math.max(0, trace.size() - 5)).toList());
+          } finally {
+            cleanup(helper, ship);
+          }
+          repeatMouthTransfer(helper, iteration + 1);
+        });
+  }
 }

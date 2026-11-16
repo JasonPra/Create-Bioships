@@ -244,6 +244,22 @@ public final class BioshipWildProbe {
   }
 
   @SubscribeEvent
+  public static void threats(ServerTickEvent.Post event) {
+    if (!Boolean.getBoolean("bioships.wildProbe")) return;
+    var level = event.getServer().overworld();
+    if (level.getGameTime() % 5 != 0) return;
+    for (var core : BioshipDiagnostics.cores(level))
+      if (!core.body().dead() && BioshipDefense.creeperThreat(core) != null)
+        System.out.println(
+            "WILDPROBE THREAT gameTime="
+                + level.getGameTime()
+                + " ship="
+                + core.ship().getUniqueId()
+                + " data="
+                + BioshipDiagnostics.snapshot(core));
+  }
+
+  @SubscribeEvent
   public static void blast(net.neoforged.neoforge.event.level.ExplosionEvent.Detonate event) {
     if (!Boolean.getBoolean("bioships.wildProbe")) return;
     var explosion = event.getExplosion();

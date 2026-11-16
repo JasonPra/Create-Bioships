@@ -187,3 +187,11 @@ Further queued requirements: prohibit leg mounts on lungs as well as the core an
 - The fresh 3,600-tick run failed biologically: 3 digestive/repeatedly fed/resource-producing, 2 alive at the end; 1,911 pork offered; one failure. The death log identified a land creature killed by EXPLOSION at game tick 934 with food 827 and air 300. This was not starvation or breathing failure.
 - The aquatic creature retained connected digestion and four legs; no healthy-core/dead-grid failures occurred. This preserves the retired-owner fix but does not qualify broader combat survival. Report: `docs/development/qa/2026-11-16-paid-mount-ecosystem.json`.
 - The next investigation checks creeper hazard sizing and the fatal encounter's movement evidence. No causal attribution to the mounting change is made from this single stochastic run. Seven broader groups remain.
+
+### Creeper escape planning checkpoint
+
+- Planning now reads native creeper explosion radius, charge and remaining fuse. Entity-damage reach is twice explosion power; core escape includes an additional cell of clearance. Actual damage remains native Minecraft damage.
+- A bounded earliest-arrival search checks usable tissue, structural move safety, protected mature-core positions and digestive-route affordability. An escape is only considered viable before the remaining fuse expires. Unsafe core scouting yields to the independently selected ground escape.
+- Inspection snapshots expose navigation, creeper panic and nearby primed hazard details. The opt-in ecosystem observer samples active threats every five ticks. No new commands.
+- Validation: build and all 147 required GameTests passed, including three new creeper regressions and eight repeated mouth transfers with inventory and custom metadata checks. The preceding 146-case run exposed one intermittent inventory-sentinel loss in the existing front-obstruction mouth-transfer test. It did not reproduce in this run; its cause remains open, and no inventory fix is claimed.
+- A fresh ecosystem replay remains necessary. Seven broader work groups remain: structural convergence; attachment/intake transitions; paid remodeling/stashing; habitat-aware shapes; extended survival/tick-rate testing; graphical animation/collision QA; final regression/packaging/docs.

@@ -11,7 +11,7 @@ import net.minecraft.world.phys.Vec3;
 
 /** The eye trades places with existing tissue. No organs, grid, or extra biomass are moved. */
 public final class CoreMotion {
-  private static final int FULL_COVERAGE = 48;
+  private static final int FULL_COVERAGE = 48, EVADE_TICKS = 4;
   private BlockPos home, target;
   private long started, nextScan;
   private boolean evasive;
@@ -93,7 +93,7 @@ public final class CoreMotion {
   }
 
   public int duration() {
-    return evasive ? 4 : 12;
+    return evasive ? EVADE_TICKS : 12;
   }
 
   public BlockPos home(LivingCoreBlockEntity core) {
@@ -179,33 +179,48 @@ public final class CoreMotion {
 
   boolean canAvoidBlast(
       LivingCoreBlockEntity core, net.minecraft.world.entity.monster.Creeper creeper) {
-    var queue = new ArrayDeque<BlockPos>();
-    var seen = new HashSet<BlockPos>();
-    queue.add(core.getBlockPos());
-    seen.add(core.getBlockPos());
-    double safe = (creeper.isPowered() ? 6 : 3) + 1;
-    while (!queue.isEmpty() && seen.size() < 160) {
-      var p = queue.removeFirst();
-      if (!p.equals(core.getBlockPos())
+    return blastExit(core, creeper) != null;
+  }
+
+  private record BlastStep(BlockPos pos, BlockPos first, int ticks) {}
+
+  private BlockPos blastExit(
+      LivingCoreBlockEntity core, net.minecraft.world.entity.monster.Creeper creeper) {
+    var hazard = BioshipCreeperHazard.estimate(creeper);
+    var source = core.getBlockPos();
+    var queue = new PriorityQueue<BlastStep>(Comparator.comparingInt(BlastStep::ticks));
+    var arrival = new HashMap<BlockPos, Integer>();
+    queue.add(new BlastStep(source, null, 0));
+    arrival.put(source, 0);
+    while (!queue.isEmpty() && arrival.size() < 160) {
+      var step = queue.remove();
+      if (step.ticks() != arrival.get(step.pos())) continue;
+      if (step.first() != null
           && core.ship()
                   .logicalPose()
-                  .transformPosition(Vec3.atCenterOf(p))
+                  .transformPosition(Vec3.atCenterOf(step.pos()))
                   .distanceToSqr(creeper.position())
-              > safe * safe) return true;
-      for (var d : Direction.values()) {
-        var next = p.relative(d);
-        if (next.distManhattan(core.getBlockPos()) <= 6
-            && !seen.contains(next)
-            && tissue(core.getLevel().getBlockState(next))
-            && (core.hatchling() || protectedInside(core, next))
-            && clearWorld(core, next)
-            && DigestiveSystem.reserveCoreRoute(core, next, false)) {
-          seen.add(next);
-          queue.add(next);
-        }
+              > hazard.clearance() * hazard.clearance()) return step.first();
+      for (var face : Direction.values()) {
+        var next = step.pos().relative(face);
+        if (next.distManhattan(source) > 6
+            || !tissue(core.getLevel().getBlockState(next))
+            || !core.hatchling() && !protectedInside(core, next)
+            || !clearWorld(core, next)
+            || !BioshipSupport.safeMove(core, source, next, false)
+            || !DigestiveSystem.reserveCoreRoute(core, next, false)) continue;
+        int hop =
+            step.first() == null && active() && evasive && next.equals(target)
+                ? (int) Math.max(1, duration() - (core.getLevel().getGameTime() - started))
+                : EVADE_TICKS;
+        int ticks = step.ticks() + hop;
+        if (ticks >= hazard.fuseRemaining()
+            || ticks >= arrival.getOrDefault(next, Integer.MAX_VALUE)) continue;
+        arrival.put(next, ticks);
+        queue.add(new BlastStep(next, step.first() == null ? next : step.first(), ticks));
       }
     }
-    return false;
+    return null;
   }
 
   private BlockPos choose(LivingCoreBlockEntity core, boolean returning) {
@@ -404,6 +419,19 @@ public final class CoreMotion {
       return false;
     }
     var level = (ServerLevel) core.getLevel();
+    if (active() && core.autonomy().creeperPanic()) {
+      // The action tree selected escape. A scouting/unsafe core transaction must not
+      // suppress the crawl tick while the whole body needs to get away.
+      cancel(core);
+      return false;
+    }
+    if (active() && creeper != null) {
+      var exit = blastExit(core, creeper);
+      if (!evasive || exit != null && !exit.equals(target)) {
+        cancel(core);
+        return evade(core, creeper);
+      }
+    }
     if (active()) {
       if (!tissue(level.getBlockState(target)) && !supportedPerch(core, target)
           || !clearWorld(core, target)
@@ -512,7 +540,7 @@ public final class CoreMotion {
       net.minecraft.world.entity.monster.Creeper creeper) {
     var world = core.ship().logicalPose().transformPosition(Vec3.atCenterOf(point));
     double distance = world.distanceTo(creeper.position());
-    double radius = creeper.isPowered() ? 6 : 3;
+    double radius = BioshipCreeperHazard.estimate(creeper).damageReach();
     boolean shielded =
         !BioshipVision.rayAtCore(core, creeper.getBoundingBox().getCenter(), world, point);
     return Math.min(distance, radius + 3) * 10 + (shielded ? 25 : 0);
@@ -520,6 +548,8 @@ public final class CoreMotion {
 
   private BlockPos safestStep(
       LivingCoreBlockEntity core, net.minecraft.world.entity.monster.Creeper creeper) {
+    var exit = blastExit(core, creeper);
+    if (exit != null) return exit;
     var source = core.getBlockPos();
     var previous = new LinkedHashMap<BlockPos, BlockPos>();
     var queue = new ArrayDeque<BlockPos>();

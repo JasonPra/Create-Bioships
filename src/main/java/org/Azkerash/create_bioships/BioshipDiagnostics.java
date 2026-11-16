@@ -118,6 +118,7 @@ public final class BioshipDiagnostics {
     data.putString("Behavior", core.brain().action().name());
     data.put("BodyWork", core.adaptation().behavior().debug());
     data.putString("Reason", core.brain().reason());
+    data.put("Navigation", core.crawl().navigationDebug(core.getLevel().getGameTime()));
     data.putDouble("Health", core.body().health());
     data.putBoolean("BodyDead", core.body().dead());
     data.putString("DeathCause", core.body().deathCause().name());
@@ -157,6 +158,26 @@ public final class BioshipDiagnostics {
                 .filter(s -> DigestiveSystem.connected(core, s))
                 .count());
     data.put("CoreMove", core.coreMotion().save());
+    data.putBoolean("CreeperPanic", core.autonomy().creeperPanic());
+    var hazards = new net.minecraft.nbt.ListTag();
+    var center = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    for (var creeper :
+        core.getLevel()
+            .getEntitiesOfClass(
+                net.minecraft.world.entity.monster.Creeper.class,
+                new net.minecraft.world.phys.AABB(center, center).inflate(32),
+                e -> e.isAlive())) {
+      var hazard = BioshipCreeperHazard.estimate(creeper);
+      var row = new CompoundTag();
+      row.putUUID("Entity", creeper.getUUID());
+      row.put("Position", VisionDebug.vector(creeper.position()));
+      row.putDouble("Distance", creeper.position().distanceTo(center));
+      row.putDouble("DamageReach", hazard.damageReach());
+      row.putInt("FuseRemaining", hazard.fuseRemaining());
+      row.putBoolean("Primed", hazard.fuseRemaining() != Integer.MAX_VALUE);
+      hazards.add(row);
+    }
+    data.put("CreeperHazards", hazards);
     data.putString("OrganMove", String.valueOf(core.organMove()));
     data.putString(
         "Cells",

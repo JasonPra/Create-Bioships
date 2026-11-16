@@ -31,7 +31,7 @@ GROUPS=[
 ('adapt','Execute anatomical adaptation','active',['BioshipAdaptation','BioshipBodyBehavior','BioshipConfiguration'],'Rank body work independently of actions, share layout transaction locks, and execute paid adaptation or native configuration.'),
 ('metabolism','Metabolism and emergency fuel','active',['BioshipMetabolism'],'One metabolic step at the core cadence; nutrient paste, emergency resources, then starvation damage.'),
 ('health','Health and intended body','active',['BioshipBody','BioshipDeathCause'],'Health, capacity, intended-cell memory, injury, paid repair and permanent death.'),
-('combat','Temporary arms and combat','active',['BioshipDefense','TentacleStrike','ImpactDamage','BioshipPrey','BioshipMeatDrops'],'Threat/prey sensing and shared telegraphed swipes. Native drops remain world items; missing meats are added by a drop adapter.'),
+('combat','Temporary arms and combat','active',['BioshipDefense','BioshipCreeperHazard','mixin.CreeperBlastAccess','TentacleStrike','ImpactDamage','BioshipPrey','BioshipMeatDrops'],'Threat/prey sensing and shared telegraphed swipes. Native drops remain world items; missing meats are added by a drop adapter.'),
 ('hostile','Native mob targeting','active',['BioshipHostility','BioshipTargetEntity'],'Inject hostile target goals; attack-surface proxy redirects native attacks to the core body.'),
 ('allies','Owner and ally permissions','active',['BioshipAccess','ShipMembraneAccess'],'Owner/whitelist checks protect allies and refresh legacy membrane permissions.'),
 ('death','Corpse lineage and decay','active',['BioshipDecay'],'Mark core removal/death, retain saved fragment lineage and rot hull before organs/special blocks.'),
