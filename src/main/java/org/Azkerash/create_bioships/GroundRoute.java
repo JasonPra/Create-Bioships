@@ -92,7 +92,12 @@ final class GroundRoute {
   }
 
   private Vec3 standing(
-      LivingCoreBlockEntity core, int x, int z, int floorTop, List<Vec3> offsets) {
+      LivingCoreBlockEntity core,
+      int x,
+      int z,
+      int floorTop,
+      List<Vec3> offsets,
+      double currentHeight) {
     var level = (ServerLevel) core.getLevel();
     for (int dy : new int[] {0, 1, -1}) {
       var floor = new BlockPos(x, floorTop + dy - 1, z);
@@ -112,9 +117,7 @@ final class GroundRoute {
         if (!core.canFly() && fits(core, raised, offsets)) return raised;
       }
     }
-    var cling =
-        new Vec3(
-            x + .5, floorTop + (core.hatchling() ? .85 : 1.25) + core.coreHeightOffset(), z + .5);
+    var cling = new Vec3(x + .5, currentHeight, z + .5);
     return core.hatchling() && grip(core, cling) != null && fits(core, cling, offsets)
         ? cling
         : null;
@@ -194,7 +197,7 @@ final class GroundRoute {
 
   private boolean lineClear(
       LivingCoreBlockEntity core, Vec3 from, Vec3 to, List<Vec3> parts, double clearance) {
-    if (Math.abs(from.y - to.y) > .25) return false;
+    if (Math.abs(from.y - to.y) > .5) return false;
     int samples = Math.max(1, (int) Math.ceil(from.distanceTo(to) / .35));
     for (int i = 1; i <= samples; i++) {
       var point = from.lerp(to, (double) i / samples);
@@ -248,7 +251,12 @@ final class GroundRoute {
       var ground = groundedDestination(core, requested);
       if (ground != null) {
         var direct = new Vec3(requested.x, ground.y, requested.z);
-        if (lineClear(core, here, direct, parts, .499)) {
+        boolean finalGrasp =
+            !core.crawl().gathering()
+                || BioshipReach.at(core, direct, goal, true)
+                    && core.assimilation().clusterReachable(core, direct);
+        boolean partial = travel >= profile.directDistance() && direct.distanceTo(goal) > 3.5;
+        if ((partial || finalGrasp) && lineClear(core, here, direct, parts, .499)) {
           path = List.of(direct);
           destination = goal;
           cursor = 0;
@@ -268,6 +276,8 @@ final class GroundRoute {
     var open = new PriorityQueue<Visit>(Comparator.comparingDouble(Visit::estimate));
     Map<BlockPos, Double> costs = new HashMap<>();
     Map<BlockPos, BlockPos> previous = new HashMap<>();
+    Map<BlockPos, Vec3> positions = new HashMap<>();
+    positions.put(start, here);
     costs.put(start, 0d);
     open.add(new Visit(start, 0, here.distanceTo(goal)));
     BlockPos end = null, progress = start;
@@ -279,6 +289,8 @@ final class GroundRoute {
         open.clear();
         costs.clear();
         previous.clear();
+        positions.clear();
+        positions.put(start, here);
         costs.put(start, 0d);
         open.add(new Visit(start, 0, here.distanceTo(goal)));
         surfaces = true;
@@ -289,8 +301,7 @@ final class GroundRoute {
       if (open.isEmpty()) break;
       var node = open.poll();
       if (node.cost() > costs.getOrDefault(node.pos(), Double.MAX_VALUE)) continue;
-      Vec3 nodePoint =
-          new Vec3(node.pos().getX() + .5, node.pos().getY() + stance, node.pos().getZ() + .5);
+      Vec3 nodePoint = positions.get(node.pos());
       // Search edges still use grid centers, but only the actual body can satisfy the start goal.
       // A hypothetical center can have a clear grasp while the real ship is blocked by a corner.
       var reachPoint = node.pos().equals(start) ? here : nodePoint;
@@ -318,6 +329,7 @@ final class GroundRoute {
           if (cost < costs.getOrDefault(key, Double.MAX_VALUE)) {
             costs.put(key, cost);
             previous.put(key, node.pos());
+            positions.put(key, point);
             open.add(new Visit(key, cost, cost + point.distanceTo(goal)));
           }
         }
@@ -327,7 +339,8 @@ final class GroundRoute {
           var next = node.pos().offset(dx, 0, dz);
           if (Math.abs(next.getX() - start.getX()) > 24
               || Math.abs(next.getZ() - start.getZ()) > 24) continue;
-          var point = standing(core, next.getX(), next.getZ(), node.pos().getY(), parts);
+          var point =
+              standing(core, next.getX(), next.getZ(), node.pos().getY(), parts, nodePoint.y);
           if (point == null
               || !firstStepClear(core, node.pos().equals(start) ? here : nodePoint, point, parts))
             continue;
@@ -341,6 +354,7 @@ final class GroundRoute {
                   + (fits(core, point, parts, profile.comfortableClearance()) ? 0 : 2);
           if (cost >= costs.getOrDefault(key, Double.MAX_VALUE)) continue;
           previous.put(key, node.pos());
+          positions.put(key, point);
           costs.put(key, cost);
           open.add(
               new Visit(
@@ -370,7 +384,7 @@ final class GroundRoute {
     }
     var result = new ArrayList<Vec3>();
     while (!end.equals(start)) {
-      result.add(new Vec3(end.getX() + .5, end.getY() + stance, end.getZ() + .5));
+      result.add(positions.get(end));
       end = previous.get(end);
     }
     Collections.reverse(result);

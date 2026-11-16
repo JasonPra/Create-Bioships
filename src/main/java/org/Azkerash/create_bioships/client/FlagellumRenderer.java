@@ -7,7 +7,6 @@ import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.builders.*;
 import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.blockentity.*;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
@@ -97,7 +96,6 @@ public class FlagellumRenderer implements BlockEntityRenderer<TentacleBlockEntit
                         .distance(plot.getSubLevel().lastPose().position())
                     * 12
                 : 0);
-    var consumer = buffers.getBuffer(RenderType.entityCutoutNoCull(SKIN));
     Vec3 previous = Vec3.ZERO;
     pose.pushPose();
     pose.translate(0.5, 1, 0.5);
@@ -123,8 +121,7 @@ public class FlagellumRenderer implements BlockEntityRenderer<TentacleBlockEntit
                       .normalize()));
       float thickness = (float) (1 - t * 0.72);
       pose.scale(thickness, (float) direction.length(), thickness);
-      segment.render(pose, consumer, light, OverlayTexture.NO_OVERLAY);
-      TentacleSuckers.render(pose, buffers, light, overlay, n);
+      TentacleSuckers.renderSegment(segment, pose, buffers, SKIN, light, overlay, n);
       pose.popPose();
       previous = point;
     }

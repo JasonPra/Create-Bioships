@@ -539,7 +539,7 @@ public final class BioshipBrain {
                 null,
                 loot.item(),
                 BehaviorPriority.Band.NEED,
-                n.criticalFood ? 1120 : 990,
+                n.criticalFood ? 1120 : n.hungry ? 910 : 860,
                 100,
                 effort(core, point),
                 "Recover known kill drops before hunting"));
@@ -558,8 +558,6 @@ public final class BioshipBrain {
         if (!core.vision().visible(core, point)) continue;
         if (item.getItem().is(Items.ROTTEN_FLESH) && !core.starving()) continue;
         int urgency = itemUrgency(n, item.getItem());
-        if (LivingCoreBlockEntity.isMeat(item.getItem()) && !item.getItem().is(Items.ROTTEN_FLESH))
-          urgency = Math.max(urgency, n.criticalFood ? 1100 : 985);
         if (!core.crawl().reachableGoal(BlockPos.containing(point))) continue;
         offers.add(
             offer(
@@ -719,17 +717,6 @@ public final class BioshipBrain {
         || core.mouthPosition(core.ship()).distanceToSqr(d.point) <= 2.25
         || BioshipReach.anchor(core, d.point).distanceToSqr(d.point) <= 2.25) {
       var one = item.getItem().copyWithCount(1);
-      if (LivingCoreBlockEntity.isMeat(one)) {
-        var flags =
-            one.getOrDefault(
-                    net.minecraft.core.component.DataComponents.CUSTOM_DATA,
-                    net.minecraft.world.item.component.CustomData.EMPTY)
-                .copyTag();
-        flags.putBoolean("BioshipHunted", true);
-        one.set(
-            net.minecraft.core.component.DataComponents.CUSTOM_DATA,
-            net.minecraft.world.item.component.CustomData.of(flags));
-      }
       boolean accepted;
       if (BioshipScavenging.droppedBlock(one))
         accepted = core.scavenging().consumeDroppedBlock(core, one);

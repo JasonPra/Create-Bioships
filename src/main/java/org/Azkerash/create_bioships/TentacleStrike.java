@@ -68,7 +68,7 @@ public final class TentacleStrike {
         && root.distanceToSqr(target.getBoundingBox().getCenter()) <= Math.pow(reach + .6, 2)
         && BioshipReach.clear(core, target.getBoundingBox().getCenter(), false, reach)) {
       hit = true;
-      var attacker = BioshipTargetEntity.ensure(core);
+      var attacker = BioshipTargetEntity.attackSource(core, target);
       return target.hurt(core.getLevel().damageSources().mobAttack(attacker), damage);
     }
     return false;

@@ -41,8 +41,7 @@ final class BioshipLootMemory {
       } else {
         var pos = BlockPos.containing(known.position);
         boolean loaded = level.getChunkSource().hasChunk(pos.getX() >> 4, pos.getZ() >> 4);
-        if (level.getGameTime() - known.at > 6000 || loaded && level.getGameTime() - known.at > 20)
-          iterator.remove();
+        if (loaded && level.getGameTime() - known.at > 20) iterator.remove();
         else result.add(new Target(entry.getKey(), known.position, null));
       }
     }

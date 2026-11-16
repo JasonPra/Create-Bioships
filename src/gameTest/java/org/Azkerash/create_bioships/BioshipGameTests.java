@@ -1924,7 +1924,7 @@ public class BioshipGameTests {
                 }));
   }
 
-  @GameTest(template = "test_empty", timeoutTicks = 260, batch = "wreck_scavenge")
+  @GameTest(template = "test_empty", timeoutTicks = 420, batch = "wreck_scavenge")
   public static void scavenging_recovers_needed_organs_and_tissue_at_a_loss(GameTestHelper helper) {
     var live = assemble(helper);
     var core = core(live);
@@ -1958,7 +1958,7 @@ public class BioshipGameTests {
     ItemStack[] recoveredStock = {ItemStack.EMPTY};
     // Batched organs can connect sooner; inspect the mouth immediately when it grows out,
     // before ordinary recipe-driven transfer to the newly recovered stomach can run.
-    for (int tick = 1; tick <= 80; tick++)
+    for (int tick = 1; tick <= 160; tick++)
       helper.runAfterDelay(
           tick,
           () -> {
@@ -1973,7 +1973,7 @@ public class BioshipGameTests {
             }
           });
     helper.runAfterDelay(
-        170,
+        280,
         () -> {
           var current = core(live);
           try {
@@ -5897,8 +5897,8 @@ public class BioshipGameTests {
                         level.getBlockState(source).isAir(), "Selected supply was not collected")));
   }
 
-  @GameTest(template = "test_empty", timeoutTicks = 180, batch = "batch_assimilation")
-  public static void four_components_are_swallowed_before_fitting_and_keep_their_inventories(
+  @GameTest(template = "test_empty", timeoutTicks = 480, batch = "batch_assimilation")
+  public static void bootstrap_batch_uses_one_slot_and_keeps_component_inventories(
       GameTestHelper helper) {
     var ship = assemble(helper);
     var core = core(ship);
@@ -5914,19 +5914,19 @@ public class BioshipGameTests {
     var decision = core.brain().choose(core);
     helper.assertTrue(core.assimilation().start(core, decision), "Batch did not start");
     helper.assertTrue(
-        core.assimilation().arms().size() == 4,
+        core.assimilation().arms().size() == 1,
         "Available appendages were not used concurrently: " + core.assimilation().arms().size());
     helper.assertTrue(
         BioshipIntegration.blockEntities(ship).stream().noneMatch(EngineRoom::storage),
         "Pickup required prematurely fitting organs");
-    for (var source : sources)
-      helper.assertTrue(
-          level.getBlockState(source).isAir(), "Batch left a reachable world component behind");
+    helper.assertTrue(
+        sources.stream().filter(p -> level.getBlockState(p).isAir()).count() == 1,
+        "Bare core used more than its single bootstrap slot");
     var restored = new BioshipAssimilation();
     restored.load(core.assimilation().save());
-    helper.assertTrue(restored.arms().size() == 4, "Reload lost active batch arms");
+    helper.assertTrue(restored.arms().size() == 1, "Reload lost active batch arms");
     helper.runAfterDelay(
-        130,
+        360,
         () ->
             finish(
                 helper,
@@ -5953,7 +5953,7 @@ public class BioshipGameTests {
                 }));
   }
 
-  @GameTest(template = "test_empty", timeoutTicks = 320, batch = "whole_wreck_batch")
+  @GameTest(template = "test_empty", timeoutTicks = 520, batch = "whole_wreck_batch")
   public static void committed_wreck_job_keeps_collecting_until_all_noncore_blocks_are_gone(
       GameTestHelper helper) {
     var ship = assemble(helper);
@@ -5987,7 +5987,7 @@ public class BioshipGameTests {
             "Recover the whole wreck");
     helper.assertTrue(core.assimilation().start(core, decision), "Wreck batch did not start");
     helper.runAfterDelay(
-        240,
+        420,
         () -> {
           try {
             helper.assertTrue(
@@ -7044,17 +7044,27 @@ public class BioshipGameTests {
     BioshipTargetEntity.ensure(core);
     var root = BioshipBlueprint.physical(core, BlockPos.ZERO);
     var zombie = net.minecraft.world.entity.EntityType.ZOMBIE.create(level);
-    zombie.setPos(root.x + 2.5, root.y - .5, root.z);
+    zombie.setPos(root.x + 1.2, root.y - .5, root.z);
     zombie.setItemSlot(
         net.minecraft.world.entity.EquipmentSlot.HEAD, new ItemStack(Items.IRON_HELMET));
     level.addFreshEntity(zombie);
+    double[] lowest = {core.body().health()};
+    for (int tick = 2; tick < 180; tick += 2)
+      helper.runAfterDelay(tick, () -> lowest[0] = Math.min(lowest[0], core(ship).body().health()));
     helper.runAfterDelay(
         180,
         () -> {
           try {
             helper.assertTrue(
-                core.body().health() < core.body().capacity(),
-                "Zombie did not damage the active hatchling");
+                lowest[0] < core(ship).body().capacity(),
+                "Zombie did not damage the active hatchling: minimum="
+                    + lowest[0]
+                    + " body="
+                    + core(ship).body().save()
+                    + " zombieHealth="
+                    + zombie.getHealth()
+                    + " target="
+                    + zombie.getTarget());
             helper.assertTrue(
                 zombie.getHealth() < zombie.getMaxHealth() || !zombie.isAlive(),
                 "Content hatchling did not retaliate");
@@ -7290,5 +7300,225 @@ public class BioshipGameTests {
                       mouth.jawShift(.5f) < 0 && mouth.voiced(),
                       "Animation or voice lost on sync/transfer");
                 }));
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "meat_drop_policy")
+  public static void new_meat_drops_preserve_normal_loot_and_exclude_undead_and_golems(
+      GameTestHelper helper) {
+    var level = helper.getLevel();
+    for (EntityType<?> type :
+        List.of(
+            EntityType.ENDERMAN,
+            EntityType.VILLAGER,
+            EntityType.WITCH,
+            EntityType.SPIDER,
+            EntityType.IRON_GOLEM,
+            EntityType.ZOMBIE,
+            EntityType.COW)) {
+      var mob = (LivingEntity) type.create(level);
+      var drops = new ArrayList<net.minecraft.world.entity.item.ItemEntity>();
+      if (type == EntityType.COW)
+        drops.add(
+            new net.minecraft.world.entity.item.ItemEntity(
+                level, 0, 80, 0, new ItemStack(Items.BEEF, 3)));
+      drops.add(
+          new net.minecraft.world.entity.item.ItemEntity(
+              level, 0, 80, 0, new ItemStack(Items.STICK)));
+      var event =
+          new net.neoforged.neoforge.event.entity.living.LivingDropsEvent(
+              mob, level.damageSources().generic(), drops, false);
+      BioshipMeatDrops.drops(event);
+      BioshipMeatDrops.drops(event);
+      int meats =
+          drops.stream()
+              .filter(d -> LivingCoreBlockEntity.isMeat(d.getItem()))
+              .mapToInt(d -> d.getItem().getCount())
+              .sum();
+      helper.assertTrue(
+          meats
+              == (type == EntityType.COW
+                  ? 3
+                  : type == EntityType.ZOMBIE || type == EntityType.IRON_GOLEM ? 0 : 1),
+          "Missing or duplicate meat for " + type + ": " + meats);
+      helper.assertTrue(
+          drops.stream().anyMatch(d -> d.getItem().is(Items.STICK)), "Native loot was suppressed");
+      helper.assertTrue(
+          BioshipPrey.eligible(mob) == (type != EntityType.ZOMBIE && type != EntityType.IRON_GOLEM),
+          "Prey policy disagrees with drop policy");
+      for (var drop : drops)
+        if (LivingCoreBlockEntity.isMeat(drop.getItem()))
+          helper.assertTrue(
+              level
+                  .getRecipeManager()
+                  .getRecipeFor(
+                      DecomposerBlockEntity.RECIPE_TYPE.get(),
+                      new net.minecraft.world.item.crafting.SingleRecipeInput(drop.getItem()),
+                      level)
+                  .isPresent(),
+              "Meat cannot be decomposed");
+    }
+    helper.succeed();
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "known_kill_loot")
+  public static void known_kill_drops_survive_lost_sight_and_reload_without_free_meals(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    try {
+      digestive(helper, core, false);
+      var prey = EntityType.VILLAGER.create(level);
+      var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+      prey.setPos(here.x + core.vision().maximumDistance(core) + 32, here.y, here.z);
+      var drops = new ArrayList<net.minecraft.world.entity.item.ItemEntity>();
+      var proxy = BioshipTargetEntity.ensure(core);
+      int before = DigestiveSystem.foodCount(core);
+      BioshipMeatDrops.drops(
+          new net.neoforged.neoforge.event.entity.living.LivingDropsEvent(
+              prey, level.damageSources().mobAttack(proxy), drops, false));
+      helper.assertTrue(
+          drops.size() == 1 && DigestiveSystem.foodCount(core) == before,
+          "Kill manufactured a meal instead of a world drop");
+      helper.assertTrue(
+          !core.vision().visible(core, drops.getFirst().position()),
+          "Fixture drop was within visual range");
+      var saved = core.saveWithFullMetadata(level.registryAccess());
+      core.loadAdditional(saved, level.registryAccess());
+      var decision = core.brain().choose(core);
+      helper.assertTrue(
+          decision.action() == BioshipBrain.Action.COLLECT_ITEM
+              && core.loot().knows(decision.point()),
+          "Known distant kill loot was forgotten or lost to hunting: " + decision);
+      helper.assertTrue(
+          drops
+              .getFirst()
+              .getItem()
+              .getOrDefault(
+                  net.minecraft.core.component.DataComponents.CUSTOM_DATA,
+                  net.minecraft.world.item.component.CustomData.EMPTY)
+              .copyTag()
+              .getBoolean("BioshipHunted"),
+          "Autonomous kill loot would reward player trust");
+      helper.succeed();
+    } finally {
+      cleanup(helper, ship);
+    }
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "mouth_grasper_slots")
+  public static void mouths_own_grasper_slots_independently_of_the_four_legs(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    try {
+      helper.assertTrue(
+          BioshipGraspers.slots(core).size() == 1
+              && BioshipGraspers.slots(core).getFirst().key().equals("core"),
+          "Bare core cannot bootstrap");
+      digestive(helper, core, false);
+      helper.assertTrue(
+          BioshipGraspers.slots(core).size() == 1
+              && !BioshipGraspers.slots(core).getFirst().key().equals("core"),
+          "Level-one mouth has wrong feeding capability");
+      level.setBlock(
+          core.getBlockPos().south(),
+          Create_bioships.FEEDING_MOUTH
+              .get()
+              .defaultBlockState()
+              .setValue(FeedingMouthBlock.FACING, Direction.SOUTH),
+          3);
+      level.setBlock(
+          core.getBlockPos().east(), Create_bioships.STOMACH.get().defaultBlockState(), 3);
+      DigestiveSystem.connect(core, ship);
+      helper.assertTrue(BioshipGraspers.slots(core).size() == 2, "Second mouth did not own a slot");
+      BioshipLarynx.absorb(core, new net.minecraft.nbt.CompoundTag());
+      helper.assertTrue(
+          BioshipGraspers.slots(core).size() == 3, "Level-two mouth did not gain its second slot");
+      BioshipLarynx.absorb(core, new net.minecraft.nbt.CompoundTag());
+      var slots = BioshipGraspers.slots(core);
+      helper.assertTrue(
+          slots.size() == 4
+              && slots.stream().map(BioshipGraspers.Slot::key).distinct().count() == 4,
+          "Slots overlap across mouths");
+      helper.assertTrue(
+          BioshipSupport.layout(core).legs().size() == 4,
+          "Grasper growth changed the walking legs");
+      helper.succeed();
+    } finally {
+      cleanup(helper, ship);
+    }
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "surface_contacts")
+  public static void wall_and_ceiling_grips_require_reachable_real_surface_contacts(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var wall = BlockPos.containing(here).east();
+    var cells = new ArrayList<BlockPos>();
+    try {
+      for (var p : BlockPos.betweenClosed(wall.offset(0, -1, -1), wall.offset(0, 3, 1))) {
+        var cell = p.immutable();
+        cells.add(cell);
+        level.setBlock(cell, Blocks.STONE.defaultBlockState(), 3);
+      }
+      var grip = GroundRoute.grip(core, here);
+      helper.assertTrue(
+          grip != null && grip.direction() == Direction.EAST,
+          "Legs did not recognize a solid wall");
+      for (var cell : cells) level.removeBlock(cell, false);
+      cells.clear();
+      var roof = BlockPos.containing(here).above(2);
+      for (var p : BlockPos.betweenClosed(roof.offset(-1, 0, -1), roof.offset(1, 0, 1))) {
+        var cell = p.immutable();
+        cells.add(cell);
+        level.setBlock(cell, Blocks.STONE.defaultBlockState(), 3);
+      }
+      grip = GroundRoute.grip(core, here);
+      helper.assertTrue(
+          grip != null && grip.direction() == Direction.UP,
+          "Legs did not recognize a reachable ceiling");
+      for (var cell : cells) level.removeBlock(cell, false);
+      cells.clear();
+      helper.assertTrue(GroundRoute.grip(core, here) == null, "Air generated an adhesive contact");
+      helper.succeed();
+    } finally {
+      for (var cell : cells) level.removeBlock(cell, false);
+      cleanup(helper, ship);
+    }
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "direct_diagonal_route")
+  public static void open_diagonal_corridors_skip_search_and_blocked_corners_do_not_get_cut(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var obstacles = List.of(BlockPos.containing(here).east(), BlockPos.containing(here).south());
+    try {
+      var direct = new GroundRoute();
+      helper.assertTrue(direct.plan(core, here.add(8, 0, 8)), "Open route failed");
+      helper.assertTrue(
+          direct.debug(level.getGameTime()).getString("Status").equals("direct_route")
+              && direct.points().size() == 1,
+          "Open diagonal unnecessarily searched or zigzagged: "
+              + direct.debug(level.getGameTime()));
+      for (var cell : obstacles) level.setBlock(cell, Blocks.STONE.defaultBlockState(), 3);
+      var corner = new GroundRoute();
+      helper.assertTrue(corner.plan(core, here.add(4, 0, 4)), "Corner detour failed");
+      var first = corner.points().getFirst();
+      helper.assertTrue(
+          !(first.x > here.x && first.z > here.z && first.y < here.y + .6),
+          "Diagonal cut through the blocked corner");
+      helper.succeed();
+    } finally {
+      for (var cell : obstacles) level.removeBlock(cell, false);
+      cleanup(helper, ship);
+    }
   }
 }

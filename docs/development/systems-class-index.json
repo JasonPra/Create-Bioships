@@ -470,7 +470,8 @@
         "LocomotionProfiles",
         "BioshipSurfaceContacts",
         "BioshipGraspers",
-        "client.TentacleSuckers"
+        "client.TentacleSuckers",
+        "MaterialRenderPass"
       ],
       "Reloadable movement capabilities, physical surface contacts, per-mouth grasper slots and shared sucker rendering. Legs remain separate and are the future flight lineage."
     ],
@@ -1140,56 +1141,56 @@
         },
         {
           "kind": "method",
-          "signature": "private Vec3 standing( LivingCoreBlockEntity core, int x, int z, int floorTop, List<Vec3> offsets)",
+          "signature": "private Vec3 standing( LivingCoreBlockEntity core, int x, int z, int floorTop, List<Vec3> offsets, double currentHeight)",
           "line": 92
         },
         {
           "kind": "method",
           "signature": "private boolean firstStepClear(LivingCoreBlockEntity core, Vec3 from, Vec3 to, List<Vec3> parts)",
-          "line": 121
+          "line": 124
         },
         {
           "kind": "method",
           "signature": "static boolean turnClear(LivingCoreBlockEntity core, double angle)",
-          "line": 133
+          "line": 136
         },
         {
           "kind": "method",
           "signature": "static Vec3 groundedDestination(LivingCoreBlockEntity core, Vec3 requested)",
-          "line": 149
+          "line": 152
         },
         {
           "kind": "method",
           "signature": "static boolean flightClear(LivingCoreBlockEntity core, Vec3 target)",
-          "line": 168
+          "line": 171
         },
         {
           "kind": "method",
           "signature": "private boolean supportedAt(LivingCoreBlockEntity core, Vec3 point)",
-          "line": 178
+          "line": 181
         },
         {
           "kind": "method",
           "signature": "private boolean lineClear( LivingCoreBlockEntity core, Vec3 from, Vec3 to, List<Vec3> parts, double clearance)",
-          "line": 193
+          "line": 196
         },
         {
           "kind": "method",
           "signature": "private List<Vec3> simplify( LivingCoreBlockEntity core, Vec3 from, List<Vec3> original, List<Vec3> parts)",
-          "line": 204
+          "line": 207
         },
         {
           "kind": "method",
           "signature": "boolean plan(LivingCoreBlockEntity core, Vec3 goal)",
-          "line": 234
+          "line": 237
         },
         {
           "kind": "method",
           "signature": "Vec3 next(LivingCoreBlockEntity core, Vec3 goal)",
-          "line": 379
+          "line": 393
         }
       ],
-      "lines": 451
+      "lines": 465
     },
     "BioshipLootMemory": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipLootMemory.java",
@@ -1228,15 +1229,15 @@
         {
           "kind": "method",
           "signature": "CompoundTag save()",
-          "line": 50
+          "line": 49
         },
         {
           "kind": "method",
           "signature": "void load(CompoundTag data)",
-          "line": 65
+          "line": 64
         }
       ],
-      "lines": 78
+      "lines": 77
     },
     "BioshipLarynx": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipLarynx.java",
@@ -2014,7 +2015,7 @@
           "line": 13
         }
       ],
-      "lines": 48
+      "lines": 62
     },
     "BioshipHostility": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipHostility.java",
@@ -2086,6 +2087,18 @@
         }
       ],
       "lines": 125
+    },
+    "MaterialRenderPass": {
+      "path": "src/main/java/org/Azkerash/create_bioships/MaterialRenderPass.java",
+      "declaration": "public final class MaterialRenderPass",
+      "members": [
+        {
+          "kind": "method",
+          "signature": "public static <Material, Buffer> void draw( Function<Material, Buffer> buffers, Material skin, Material detail, Consumer<Buffer> drawSkin, Consumer<Buffer> drawDetail, boolean includeDetail)",
+          "line": 6
+        }
+      ],
+      "lines": 17
     },
     "BioshipStores": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipStores.java",
@@ -3875,122 +3888,127 @@
           "line": 27
         },
         {
-          "kind": "field",
-          "signature": "private UUID shipId",
+          "kind": "method",
+          "signature": "static BioshipTargetEntity attackSource(LivingCoreBlockEntity core, LivingEntity victim)",
           "line": 41
         },
         {
           "kind": "field",
+          "signature": "private UUID shipId",
+          "line": 53
+        },
+        {
+          "kind": "field",
           "signature": "private net.minecraft.core.Direction face",
-          "line": 43
+          "line": 55
         },
         {
           "kind": "field",
           "signature": "private LivingCoreBlockEntity cachedCore",
-          "line": 44
+          "line": 56
         },
         {
           "kind": "method",
           "signature": "public BioshipTargetEntity(EntityType<? extends BioshipTargetEntity> type, Level level)",
-          "line": 45
-        },
-        {
-          "kind": "method",
-          "signature": "public static AttributeSupplier.Builder attributes()",
-          "line": 53
-        },
-        {
-          "kind": "method",
-          "signature": "public LivingCoreBlockEntity core()",
           "line": 57
         },
         {
           "kind": "method",
+          "signature": "public static AttributeSupplier.Builder attributes()",
+          "line": 65
+        },
+        {
+          "kind": "method",
+          "signature": "public LivingCoreBlockEntity core()",
+          "line": 69
+        },
+        {
+          "kind": "method",
           "signature": "boolean belongsTo(LivingCoreBlockEntity core)",
-          "line": 72
+          "line": 84
         },
         {
           "kind": "method",
           "signature": "public static BioshipTargetEntity ensure(LivingCoreBlockEntity core)",
-          "line": 76
+          "line": 88
         },
         {
           "kind": "method",
           "signature": "public void tick()",
-          "line": 133
+          "line": 145
         },
         {
           "kind": "method",
           "signature": "private void positionOnBody(LivingCoreBlockEntity core)",
-          "line": 154
+          "line": 166
         },
         {
           "kind": "method",
           "signature": "public boolean hurt(DamageSource source, float amount)",
-          "line": 177
-        },
-        {
-          "kind": "method",
-          "signature": "public boolean isPushable()",
           "line": 189
         },
         {
           "kind": "method",
+          "signature": "public boolean isPushable()",
+          "line": 201
+        },
+        {
+          "kind": "method",
           "signature": "public void push(Entity entity)",
-          "line": 194
+          "line": 206
         },
         {
           "kind": "method",
           "signature": "public boolean isPickable()",
-          "line": 197
+          "line": 209
         },
         {
           "kind": "method",
           "signature": "public boolean canBeHitByProjectile()",
-          "line": 202
+          "line": 214
         },
         {
           "kind": "method",
           "signature": "public void remove(RemovalReason reason)",
-          "line": 207
-        },
-        {
-          "kind": "method",
-          "signature": "public double getVisibilityPercent(Entity observer)",
           "line": 219
         },
         {
           "kind": "method",
+          "signature": "public double getVisibilityPercent(Entity observer)",
+          "line": 231
+        },
+        {
+          "kind": "method",
           "signature": "public Iterable<ItemStack> getArmorSlots()",
-          "line": 224
+          "line": 236
         },
         {
           "kind": "method",
           "signature": "public ItemStack getItemBySlot(EquipmentSlot slot)",
-          "line": 229
+          "line": 241
         },
         {
           "kind": "method",
           "signature": "public void setItemSlot(EquipmentSlot slot, ItemStack stack)",
-          "line": 234
+          "line": 246
         },
         {
           "kind": "method",
           "signature": "public HumanoidArm getMainArm()",
-          "line": 237
+          "line": 249
         },
         {
           "kind": "method",
           "signature": "public void addAdditionalSaveData(CompoundTag tag)",
-          "line": 242
+          "line": 254
         },
         {
           "kind": "method",
           "signature": "public void readAdditionalSaveData(CompoundTag tag)",
-          "line": 249
+          "line": 261
         }
       ],
-      "lines": 258
+      "lines": 270
     },
     "StomachBlockEntity": {
       "path": "src/main/java/org/Azkerash/create_bioships/StomachBlockEntity.java",
@@ -5204,50 +5222,50 @@
         {
           "kind": "method",
           "signature": "boolean allowsConfiguration(LivingCoreBlockEntity core)",
-          "line": 629
+          "line": 627
         },
         {
           "kind": "method",
           "signature": "MaterialCost materialNeeds(LivingCoreBlockEntity core)",
-          "line": 653
+          "line": 651
         },
         {
           "kind": "method",
           "signature": "boolean needsMaterials(LivingCoreBlockEntity core)",
-          "line": 658
+          "line": 656
         },
         {
           "kind": "method",
           "signature": "LivingEntity attackTarget(LivingCoreBlockEntity core)",
-          "line": 662
+          "line": 660
         },
         {
           "kind": "method",
           "signature": "Vec3 groundGoal(LivingCoreBlockEntity core)",
-          "line": 669
+          "line": 667
         },
         {
           "kind": "method",
           "signature": "private Vec3 collectItem(LivingCoreBlockEntity core, Decision d)",
-          "line": 705
+          "line": 703
         },
         {
           "kind": "method",
           "signature": "Vec3 flightVelocity(LivingCoreBlockEntity core)",
-          "line": 749
+          "line": 736
         },
         {
           "kind": "method",
           "signature": "CompoundTag save()",
-          "line": 764
+          "line": 751
         },
         {
           "kind": "method",
           "signature": "void load(CompoundTag tag)",
-          "line": 772
+          "line": 759
         }
       ],
-      "lines": 782
+      "lines": 769
     },
     "BioshipAutonomy": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipAutonomy.java",
@@ -8231,15 +8249,15 @@
         {
           "kind": "method",
           "signature": "private void renderBatch( LivingCoreBlockEntity core, float partial, PoseStack pose, MultiBufferSource buffers, int light)",
-          "line": 184
+          "line": 187
         },
         {
           "kind": "method",
           "signature": "private void renderLegs( LivingCoreBlockEntity core, float partial, PoseStack pose, MultiBufferSource buffers, int light)",
-          "line": 234
+          "line": 240
         }
       ],
-      "lines": 344
+      "lines": 353
     },
     "client.BlueprintScreen": {
       "path": "src/main/java/org/Azkerash/create_bioships/client/BlueprintScreen.java",
@@ -8450,30 +8468,30 @@
         {
           "kind": "field",
           "signature": "private static final ResourceLocation SKIN",
-          "line": 21
+          "line": 20
         },
         {
           "kind": "field",
           "signature": "private final ModelPart segment",
-          "line": 24
+          "line": 23
         },
         {
           "kind": "method",
           "signature": "public FlagellumRenderer(BlockEntityRendererProvider.Context context)",
-          "line": 25
+          "line": 24
         },
         {
           "kind": "method",
           "signature": "public boolean shouldRenderOffScreen(TentacleBlockEntity entity)",
-          "line": 35
+          "line": 34
         },
         {
           "kind": "method",
           "signature": "public void render( TentacleBlockEntity limb, float partialTick, PoseStack pose, MultiBufferSource buffers, int light, int overlay)",
-          "line": 40
+          "line": 39
         }
       ],
-      "lines": 133
+      "lines": 130
     },
     "client.PathDebugOverlay": {
       "path": "src/main/java/org/Azkerash/create_bioships/client/PathDebugOverlay.java",
@@ -8600,11 +8618,11 @@
         },
         {
           "kind": "method",
-          "signature": "static void render( PoseStack pose, MultiBufferSource buffers, int light, int overlay, int segment)",
+          "signature": "static void renderSegment( ModelPart segment, PoseStack pose, MultiBufferSource buffers, ResourceLocation skin, int light, int overlay, int index)",
           "line": 30
         }
       ],
-      "lines": 37
+      "lines": 48
     },
     "mixin.SimAssemblyHelperMixin": {
       "path": "src/main/java/org/Azkerash/create_bioships/mixin/SimAssemblyHelperMixin.java",

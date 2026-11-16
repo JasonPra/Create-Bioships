@@ -40,6 +40,18 @@ public final class BioshipTargetEntity extends LivingEntity {
             .toList();
   }
 
+  static BioshipTargetEntity attackSource(LivingCoreBlockEntity core, LivingEntity victim) {
+    return surfaces(core).stream()
+        .min(
+            Comparator.comparingDouble(
+                surface ->
+                    surface
+                        .getBoundingBox()
+                        .getCenter()
+                        .distanceToSqr(victim.getBoundingBox().getCenter())))
+        .orElseGet(() -> ensure(core));
+  }
+
   private UUID shipId;
   private net.minecraft.core.Direction face = net.minecraft.core.Direction.NORTH;
   private LivingCoreBlockEntity cachedCore;

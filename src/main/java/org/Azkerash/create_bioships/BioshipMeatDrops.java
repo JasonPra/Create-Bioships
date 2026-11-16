@@ -41,8 +41,22 @@ public final class BioshipMeatDrops {
       var core = hunter.core();
       if (core != null)
         for (var drop : event.getDrops())
-          if (LivingCoreBlockEntity.droppedSupply(drop.getItem()))
+          if (LivingCoreBlockEntity.droppedSupply(drop.getItem())) {
+            if (LivingCoreBlockEntity.isMeat(drop.getItem())) {
+              var stack = drop.getItem();
+              var flags =
+                  stack
+                      .getOrDefault(
+                          net.minecraft.core.component.DataComponents.CUSTOM_DATA,
+                          net.minecraft.world.item.component.CustomData.EMPTY)
+                      .copyTag();
+              flags.putBoolean("BioshipHunted", true);
+              stack.set(
+                  net.minecraft.core.component.DataComponents.CUSTOM_DATA,
+                  net.minecraft.world.item.component.CustomData.of(flags));
+            }
             core.loot().remember(drop, entity.level().getGameTime());
+          }
     }
   }
 }

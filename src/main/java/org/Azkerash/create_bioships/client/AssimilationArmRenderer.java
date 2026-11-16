@@ -158,7 +158,6 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
             : Math.clamp((core.getLevel().getGameTime() + partial - move.started()) / 6.0, 0, 1);
     reach = root.lerp(reach, extension);
     Vec3 previous = root;
-    var consumer = buffers.getBuffer(RenderType.entityCutoutNoCull(SKIN));
     for (int i = 1; i <= 14; i++) {
       double t = i / 14.0;
       Vec3 point =
@@ -174,10 +173,14 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
                   new Vector3f((float) delta.x, (float) delta.y, (float) delta.z).normalize()));
       float width = (float) (.55 - t * .25);
       pose.scale(width, (float) delta.length(), width);
-      segment.render(
-          pose, consumer, light, BioshipHurtFlash.overlay(core, OverlayTexture.NO_OVERLAY));
-      TentacleSuckers.render(
-          pose, buffers, light, BioshipHurtFlash.overlay(core, OverlayTexture.NO_OVERLAY), i);
+      TentacleSuckers.renderSegment(
+          segment,
+          pose,
+          buffers,
+          SKIN,
+          light,
+          BioshipHurtFlash.overlay(core, OverlayTexture.NO_OVERLAY),
+          i);
       pose.popPose();
       previous = point;
     }
@@ -208,7 +211,6 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
                   cargo.logicalPose().transformPosition(Vec3.atCenterOf(move.cargoBlock())))
               .subtract(Vec3.atLowerCornerOf(core.getBlockPos()));
       var previous = root;
-      var consumer = buffers.getBuffer(RenderType.entityCutoutNoCull(SKIN));
       for (int i = 1; i <= 14; i++) {
         double t = i / 14.0;
         var point = root.lerp(target, t).add(0, -Math.sin(Math.PI * t) * .35, 0);
@@ -223,10 +225,14 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
                     new Vector3f((float) delta.x, (float) delta.y, (float) delta.z).normalize()));
         float width = (float) (.5 - t * .25);
         pose.scale(width, (float) delta.length(), width);
-        segment.render(
-            pose, consumer, light, BioshipHurtFlash.overlay(core, OverlayTexture.NO_OVERLAY));
-        TentacleSuckers.render(
-            pose, buffers, light, BioshipHurtFlash.overlay(core, OverlayTexture.NO_OVERLAY), i);
+        TentacleSuckers.renderSegment(
+            segment,
+            pose,
+            buffers,
+            SKIN,
+            light,
+            BioshipHurtFlash.overlay(core, OverlayTexture.NO_OVERLAY),
+            i);
         pose.popPose();
         previous = point;
       }
@@ -242,7 +248,6 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
     pose.pushPose();
     var anchor = core.structuralOrigin().subtract(core.getBlockPos());
     pose.translate(anchor.getX(), anchor.getY(), anchor.getZ());
-    var consumer = buffers.getBuffer(RenderType.entityCutoutNoCull(SKIN));
     boolean scuttling = core.hatchling();
     var support = BioshipSupport.layout(core);
     int legs = support.legs().size();
@@ -331,10 +336,14 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
         float width =
             (float) ((.5 - t * .25) * core.crawl().legThickness() * (scuttling ? 1 : 1.7));
         pose.scale(width, (float) delta.length(), width);
-        segment.render(
-            pose, consumer, light, BioshipHurtFlash.overlay(core, OverlayTexture.NO_OVERLAY));
-        TentacleSuckers.render(
-            pose, buffers, light, BioshipHurtFlash.overlay(core, OverlayTexture.NO_OVERLAY), i);
+        TentacleSuckers.renderSegment(
+            segment,
+            pose,
+            buffers,
+            SKIN,
+            light,
+            BioshipHurtFlash.overlay(core, OverlayTexture.NO_OVERLAY),
+            i);
         pose.popPose();
         previous = point;
       }

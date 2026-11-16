@@ -29,9 +29,20 @@ final class TentacleSuckers {
     return LayerDefinition.create(mesh, 16, 16).bakeRoot().getChild("cups");
   }
 
-  static void render(
-      PoseStack pose, MultiBufferSource buffers, int light, int overlay, int segment) {
-    if ((segment & 1) == 0)
-      CUPS.render(pose, buffers.getBuffer(RenderType.entityCutoutNoCull(TEXTURE)), light, overlay);
+  static void renderSegment(
+      ModelPart segment,
+      PoseStack pose,
+      MultiBufferSource buffers,
+      ResourceLocation skin,
+      int light,
+      int overlay,
+      int index) {
+    org.Azkerash.create_bioships.MaterialRenderPass.draw(
+        buffers::getBuffer,
+        RenderType.entityCutoutNoCull(skin),
+        RenderType.entityCutoutNoCull(TEXTURE),
+        consumer -> segment.render(pose, consumer, light, overlay),
+        consumer -> CUPS.render(pose, consumer, light, overlay),
+        (index & 1) == 0);
   }
 }

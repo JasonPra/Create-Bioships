@@ -58,3 +58,13 @@ At the user's request this work is delivered in two phases: first a compile-chec
 - Walking legs are separate from food/component graspers. One level-one mouth supplies one gathering slot; its larynx upgrade supplies two. Concurrent jobs bind to specific mouth slots and preserve those bindings. Additional mouths prefer less occupied outward directions; the primary mouth remains forward-facing. A bare core retains bootstrap uptake.
 - Shared recessed sucker cups render on locomotion and feeding tentacles. Future grasper providers can contribute slots without replacing the collector, route search or support system.
 - The future legs-to-flight lineage and fixed internal-airship mouth are documented, without enabling the dormant stage.
+
+## Follow-up crash and regression corrections
+
+The user's client log identified `IllegalStateException: Not building!` in `AssimilationArmRenderer.renderLegs`. The sucker material switched the shared buffer source and invalidated the skin consumer cached outside the segment loop. All leg/arm segment drawing now uses one shared material-pass adapter that acquires the current consumer at the instant of drawing. A headless regression models shared-buffer invalidation while alternating skin and sucker passes. This verifies buffer ownership; it is not a graphical client smoke test.
+
+The test pass also corrects final-grasp validation on the direct-route shortcut, preserves actual non-grid node heights on walls/ceilings, stores every route node's position, retains kill-drop memory across unloaded chunks, and marks the creature's own kill meat as autonomous food without changing deliberately supplied floor food. Food offers outrank hunting without displacing optional component collection above the pressing-food threshold.
+
+The damage source for a swipe now uses the body surface nearest its victim, rather than the default underside proxy, so native retaliation does not target a point under the body. Tests record damage while it occurs instead of requiring damage to remain after passive healing.
+
+Old multi-arm timing fixtures are adjusted for the single bootstrap uptake slot. Additional tests cover drop/recipe policy, persistent unseen kill loot, per-mouth grasper ownership, real wall/ceiling contacts, direct diagonals and blocked corners. Full gameplay verification continues after the user-requested crash-fix push.
