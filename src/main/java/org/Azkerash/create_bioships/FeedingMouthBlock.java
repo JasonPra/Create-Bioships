@@ -83,8 +83,8 @@ public class FeedingMouthBlock extends BaseEntityBlock {
             core.ship()
                 .logicalPose()
                 .transformPosition(net.minecraft.world.phys.Vec3.atCenterOf(front)));
-    return level.getBlockState(physical).getCollisionShape(level, physical).isEmpty()
-        && level.getFluidState(physical).isEmpty();
+    // Water is habitat, not a solid obstruction. Respiration checks air access separately.
+    return level.getBlockState(physical).getCollisionShape(level, physical).isEmpty();
   }
 
   @Override
@@ -97,10 +97,14 @@ public class FeedingMouthBlock extends BaseEntityBlock {
   }
 
   @Override
-  protected void onRemove(
-      BlockState state, Level level, BlockPos pos, BlockState next, boolean moved) {
-    if (!state.is(next.getBlock()))
-      net.minecraft.world.Containers.dropContentsOnDestroy(state, next, level, pos);
-    super.onRemove(state, level, pos, next, moved);
+  protected java.util.List<net.minecraft.world.item.ItemStack> getDrops(
+      BlockState state, net.minecraft.world.level.storage.loot.LootParams.Builder params) {
+    return BioshipContainerState.packDrops(super.getDrops(state, params), params);
+  }
+
+  @Override
+  public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+    BioshipContainerState.creativeBreak(level, pos, player);
+    return super.playerWillDestroy(level, pos, state, player);
   }
 }

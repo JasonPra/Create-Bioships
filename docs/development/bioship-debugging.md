@@ -55,3 +55,7 @@ breathing organs), `CORE_REMOVED`, `COMBAT`, `EXPLOSION`, `INJURY`, and `UNKNOWN
 Living bodies use `NONE`; old deaths without evidence remain `UNKNOWN` with time
 `-1`. The first fatal event is retained rather than overwritten by later cleanup.
 No new command is required for death logging.
+
+### Container handoff tracing
+
+Optional JVM argument `-Dbioships.traceContainers=true` logs mouth capture/load records and missing destination block entities during physical handoffs. Pair it with `/bioship_debug inspect <id>` and F3+P. It is disabled by default. `Water.WaterContact` in inspection data describes habitat contact; `Water.Wet` remains the stricter swimming-physics classification. No new in-game commands. See [container persistence](container-persistence.md) for native item-component restoration and resource ownership.

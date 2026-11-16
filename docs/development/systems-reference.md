@@ -250,7 +250,7 @@ public class Create_bioships
 
 #### LivingCoreBlock
 
-Source: `src/main/java/org/Azkerash/create_bioships/LivingCoreBlock.java` (175 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/LivingCoreBlock.java` (187 lines).
 
 ```java
 public class LivingCoreBlock extends BaseEntityBlock implements dev.ryanhcode.sable.api.block.BlockSubLevelAssemblyListener
@@ -298,6 +298,10 @@ public class LivingCoreBlock extends BaseEntityBlock implements dev.ryanhcode.sa
   protected InteractionResult useWithoutItem( BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit); // line 160
 
   public void attack(BlockState state, Level level, BlockPos pos, Player player); // line 168
+
+  protected java.util.List<ItemStack> getDrops( BlockState state, net.minecraft.world.level.storage.loot.LootParams.Builder params); // line 174
+
+  public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player); // line 180
 
 ```
 
@@ -1989,7 +1993,7 @@ Saved air supply, all-mouth fluid checks, surfacing need and non-flight propulsi
 
 #### BioshipAquatic
 
-Source: `src/main/java/org/Azkerash/create_bioships/BioshipAquatic.java` (188 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipAquatic.java` (230 lines).
 
 ```java
 public final class BioshipAquatic
@@ -2000,47 +2004,53 @@ public final class BioshipAquatic
 
   private volatile boolean wet, swimming; // line 15
 
-  private boolean breathing, airAccess; // line 16
+  private boolean waterContact; // line 16
 
-  private final ExposureHistory gillUsage; // line 17
+  private boolean breathing, airAccess; // line 17
 
-  ExposureHistory gillUsage(); // line 18
+  private final ExposureHistory gillUsage; // line 18
 
-  private volatile Vec3 velocity; // line 22
+  ExposureHistory gillUsage(); // line 19
 
-  private final LegUsageHistory legUsage; // line 24
+  private volatile Vec3 velocity; // line 23
 
-  private long nextLegEvolution; // line 26
+  private final LegUsageHistory legUsage; // line 25
 
-  LegUsageHistory legUsage(); // line 27
+  private long nextLegEvolution; // line 27
 
-  long nextLegEvolution(); // line 31
+  LegUsageHistory legUsage(); // line 28
 
-  void legEvolved(long next); // line 35
+  long nextLegEvolution(); // line 32
 
-  public boolean wet(); // line 39
+  void legEvolved(long next); // line 36
 
-  public boolean swimming(); // line 43
+  public boolean wet(); // line 40
 
-  public int air(); // line 47
+  public boolean swimming(); // line 44
 
-  boolean needsAir(); // line 51
+  public int air(); // line 48
 
-  void tick(LivingCoreBlockEntity core); // line 55
+  boolean needsAir(); // line 52
 
-  static boolean canBreathe(LivingCoreBlockEntity core); // line 117
+  void tick(LivingCoreBlockEntity core); // line 56
 
-  static boolean aboveFluid(LivingCoreBlockEntity core, Vec3 point); // line 121
+  static boolean touchesWater(LivingCoreBlockEntity core); // line 121
 
-  private static boolean waterWithinReach(LivingCoreBlockEntity core, Vec3 here); // line 127
+  private static boolean waterAt(LivingCoreBlockEntity core, Vec3 point); // line 152
 
-  private boolean clear(LivingCoreBlockEntity core, Vec3 offset); // line 135
+  static boolean canBreathe(LivingCoreBlockEntity core); // line 157
 
-  void propel(ServerSubLevel ship, RigidBodyHandle body, double dt); // line 147
+  static boolean aboveFluid(LivingCoreBlockEntity core, Vec3 point); // line 161
 
-  CompoundTag save(); // line 159
+  private static boolean waterWithinReach(LivingCoreBlockEntity core, Vec3 here); // line 167
 
-  void load(CompoundTag t); // line 175
+  private boolean clear(LivingCoreBlockEntity core, Vec3 offset); // line 175
+
+  void propel(ServerSubLevel ship, RigidBodyHandle body, double dt); // line 187
+
+  CompoundTag save(); // line 199
+
+  void load(CompoundTag t); // line 216
 
 ```
 
@@ -2335,12 +2345,13 @@ Move one actual component/Sable cargo with its complete state; route tube costs 
 ```text
 [transport]
   OrganMotion
+  BioshipContainerState
 ```
 
 
 #### OrganMotion
 
-Source: `src/main/java/org/Azkerash/create_bioships/OrganMotion.java` (439 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/OrganMotion.java` (446 lines).
 
 ```java
 public final class OrganMotion
@@ -2365,17 +2376,39 @@ public final class OrganMotion
 
   private static boolean begin( LivingCoreBlockEntity core, BlockPos source, BlockPos target, boolean external, boolean manual, boolean consuming, boolean stash); // line 128
 
-  private static boolean tissue(net.minecraft.world.level.block.state.BlockState state); // line 241
+  private static boolean tissue(net.minecraft.world.level.block.state.BlockState state); // line 243
 
-  static List<BlockPos> findTissuePath( LivingCoreBlockEntity core, BlockPos source, BlockPos target); // line 248
+  static List<BlockPos> findTissuePath( LivingCoreBlockEntity core, BlockPos source, BlockPos target); // line 250
 
-  private static Vec3 alongTissue(List<BlockPos> path, double progress); // line 284
+  private static Vec3 alongTissue(List<BlockPos> path, double progress); // line 286
 
-  public static void tick(LivingCoreBlockEntity core); // line 291
+  public static void tick(LivingCoreBlockEntity core); // line 293
 
-  private static void release(LivingCoreBlockEntity core, ServerSubLevel cargo); // line 418
+  private static void release(LivingCoreBlockEntity core, ServerSubLevel cargo); // line 425
 
-  public static void abandon(LivingCoreBlockEntity core); // line 430
+  public static void abandon(LivingCoreBlockEntity core); // line 437
+
+```
+
+
+#### BioshipContainerState
+
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipContainerState.java` (128 lines).
+
+```java
+final class BioshipContainerState
+
+  static CompoundTag capture(Level level, BlockEntity entity); // line 13
+
+  static BlockEntity entity( Level level, dev.ryanhcode.sable.sublevel.ServerSubLevel owner, BlockPos pos); // line 25
+
+  static void restore( Level level, dev.ryanhcode.sable.sublevel.ServerSubLevel owner, BlockPos destination, CompoundTag capsule); // line 33
+
+  static List<ItemStack> packDrops(List<ItemStack> drops, LootParams.Builder params); // line 65
+
+  static void creativeBreak( Level level, BlockPos pos, net.minecraft.world.entity.player.Player player); // line 94
+
+  private BioshipContainerState(); // line 125
 
 ```
 
@@ -2572,7 +2605,7 @@ final class BioshipDigestiveRepair
 
 #### FeedingMouthBlockEntity
 
-Source: `src/main/java/org/Azkerash/create_bioships/FeedingMouthBlockEntity.java` (247 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/FeedingMouthBlockEntity.java` (258 lines).
 
 ```java
 public class FeedingMouthBlockEntity extends BaseContainerBlockEntity
@@ -2650,7 +2683,7 @@ public class FeedingMouthBlockEntity extends BaseContainerBlockEntity
 
 #### FeedingMouthBlock
 
-Source: `src/main/java/org/Azkerash/create_bioships/FeedingMouthBlock.java` (106 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/FeedingMouthBlock.java` (110 lines).
 
 ```java
 public class FeedingMouthBlock extends BaseEntityBlock
@@ -2677,7 +2710,9 @@ public class FeedingMouthBlock extends BaseEntityBlock
 
   protected InteractionResult useWithoutItem( BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit); // line 88
 
-  protected void onRemove( BlockState state, Level level, BlockPos pos, BlockState next, boolean moved); // line 97
+  protected java.util.List<net.minecraft.world.item.ItemStack> getDrops( BlockState state, net.minecraft.world.level.storage.loot.LootParams.Builder params); // line 97
+
+  public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player); // line 103
 
 ```
 
@@ -2831,7 +2866,7 @@ public class StomachBlockEntity extends BlockEntity implements MenuProvider, Mat
 
 #### StomachBlock
 
-Source: `src/main/java/org/Azkerash/create_bioships/StomachBlock.java` (61 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/StomachBlock.java` (73 lines).
 
 ```java
 public class StomachBlock extends BaseEntityBlock
@@ -2853,6 +2888,10 @@ public class StomachBlock extends BaseEntityBlock
   public <T extends BlockEntity> BlockEntityTicker<T> getTicker( Level level, BlockState state, BlockEntityType<T> type); // line 43
 
   protected InteractionResult useWithoutItem( BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit); // line 51
+
+  protected java.util.List<net.minecraft.world.item.ItemStack> getDrops( BlockState state, net.minecraft.world.level.storage.loot.LootParams.Builder params); // line 60
+
+  public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player); // line 66
 
 ```
 

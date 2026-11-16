@@ -21,7 +21,7 @@ GROUPS=[
 ('water','Swimming and breathing','active',['BioshipAquatic','BioshipRespiration','RespiratoryOrganBlock','ExposureHistory'],'Saved air supply, all-mouth fluid checks, surfacing need and non-flight propulsion intent.'),
 ('scout','Move the existing core','active',['CoreMotion'],'Reposition through connected anatomy for sight or defense; preserve state and inventory.'),
 ('collect','Batch assimilation','active',['BioshipAssimilation','BioshipFoodCollection'],'Mouth-bound collection slots, persistent swallowed stock, batch settlement and committed wreck ownership.'),
-('transport','Conserved component transport','active',['OrganMotion'],'Move one actual component/Sable cargo with its complete state; route tube costs before transfer.'),
+('transport','Conserved component transport','active',['OrganMotion','BioshipContainerState'],'Move one actual component/Sable cargo with its complete state; route tube costs before transfer.'),
 ('salvage','Scavenging and recycling','active',['BioshipScavenging'],'Find eligible wreck sources, keep needed organs, conserve inventories and apply fractional lossy yields.'),
 ('gut','Mouths and physical gut graph','active',['DigestiveSystem','BioshipDigestiveRepair','FeedingMouthBlockEntity','FeedingMouthBlock','IntestineBlock'],'Assign distinct stomachs, validate tube paths, buffer mouth input and connect food sacs.'),
 ('stomach','Recipe digestion','active',['StomachBlockEntity','StomachBlock'],'Native Biomancy recipes and output rolls, acid, input queues, local nutrient paste and tube stock.'),

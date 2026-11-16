@@ -14,6 +14,7 @@ public final class BioshipAquatic {
   private int air = 300;
   private long lastTick = Long.MIN_VALUE;
   private volatile boolean wet, swimming;
+  private boolean waterContact;
   private boolean breathing = true, airAccess = true, seekingAir;
   private final ExposureHistory gillUsage = new ExposureHistory();
 
@@ -67,9 +68,12 @@ public final class BioshipAquatic {
           && !aboveFluid(core, point)) immersed++;
     }
     wet = immersed > 0 && immersed * 4 >= total;
-    if (level.getGameTime() % 20 == 0) legUsage.observe(wet);
+    if (level.getGameTime() % 20 == 0) {
+      waterContact = touchesWater(core);
+      legUsage.observe(waterContact);
+      gillUsage.observe(waterContact);
+    }
     airAccess = BioshipRespiration.airAccess(core);
-    if (level.getGameTime() % 20 == 0) gillUsage.observe(!airAccess);
     breathing = canBreathe(core);
     if (!breathing) {
       air = Math.max(0, air - 1);
@@ -114,6 +118,42 @@ public final class BioshipAquatic {
       core.setChanged();
       level.sendBlockUpdated(core.getBlockPos(), core.getBlockState(), core.getBlockState(), 2);
     }
+  }
+
+  /**
+   * Habitat exposure includes partial body and actual extended-leg contact, independently of air
+   * access.
+   */
+  static boolean touchesWater(LivingCoreBlockEntity core) {
+    var transform = core.ship().logicalPose();
+    for (var cell : BioshipDecay.blocks(core.ship()))
+      for (double x : new double[] {-.49, 0, .49})
+        for (double y : new double[] {-.49, 0, .49})
+          for (double z : new double[] {-.49, 0, .49})
+            if (waterAt(core, transform.transformPosition(Vec3.atCenterOf(cell).add(x, y, z))))
+              return true;
+    var legs = BioshipSupport.layout(core).legs();
+    var origin = Vec3.atLowerCornerOf(core.structuralOrigin());
+    long now = core.getLevel().getGameTime();
+    for (int i = 0; i < legs.size(); i++) {
+      var leg = legs.get(i);
+      var root = transform.transformPosition(origin.add(leg.root()));
+      var tip =
+          core.aquatic().swimming()
+              ? transform.transformPosition(
+                  origin.add(leg.swimmingFoot(now * .45 + i * Math.PI / 2)))
+              : core.crawl().legAnchors().foot(i, now);
+      if (tip == null) continue;
+      int steps = Math.max(1, (int) Math.ceil(root.distanceTo(tip) * 4));
+      for (int step = 0; step <= steps; step++)
+        if (waterAt(core, root.lerp(tip, step / (double) steps))) return true;
+    }
+    return false;
+  }
+
+  private static boolean waterAt(LivingCoreBlockEntity core, Vec3 point) {
+    return core.getLevel().getFluidState(BlockPos.containing(point)).is(FluidTags.WATER)
+        && !aboveFluid(core, point);
   }
 
   static boolean canBreathe(LivingCoreBlockEntity core) {
@@ -169,6 +209,7 @@ public final class BioshipAquatic {
     t.putInt("UseSamples", legUsage.samples());
     t.putLong("LegEvolutionAfter", nextLegEvolution);
     t.putBoolean("Wet", wet);
+    t.putBoolean("WaterContact", waterContact);
     t.putBoolean("Breathing", breathing);
     t.putBoolean("Swimming", swimming);
     return t;
@@ -182,6 +223,7 @@ public final class BioshipAquatic {
     nextLegEvolution = t.getLong("LegEvolutionAfter");
     air = t.contains("Air") ? Math.clamp(t.getInt("Air"), 0, 300) : 300;
     wet = t.getBoolean("Wet");
+    waterContact = t.getBoolean("WaterContact");
     breathing = !t.contains("Breathing") || t.getBoolean("Breathing");
     swimming = t.getBoolean("Swimming");
   }

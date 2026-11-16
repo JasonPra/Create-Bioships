@@ -1,0 +1,13 @@
+{
+  "runtimeCommit": "8a124fa",
+  "result": "PASSED",
+  "scenario": "Fresh ecosystem_lab seed 8675309, normal difficulty, view 12/simulation 10, ordinary spawning and terrain; 3600 ticks; up to four mouth-feeding cycles.",
+  "summary": "WILDPROBE COMPLETE ticks=3600 observed=3 digestive=3 repeatedlyFed=3 alive=3 resourceProducing=3 expected=3 porkOffered=1971 failures=0",
+  "actualDeaths": [],
+  "falseCorpseFailures": [],
+  "activeCreeperThreatSamples": 0,
+  "limitations": [
+    "No active creeper threat was sampled, so this run does not itself qualify escape from a live primed creeper. Dedicated GameTests cover blast reach, native charge/radius, fuse timing and unsafe scouting cancellation.",
+    "One normal-rate seeded run does not qualify extended survival, accelerated tick rates or graphical animation."
+  ]
+}

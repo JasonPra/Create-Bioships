@@ -195,3 +195,27 @@ Further queued requirements: prohibit leg mounts on lungs as well as the core an
 - Inspection snapshots expose navigation, creeper panic and nearby primed hazard details. The opt-in ecosystem observer samples active threats every five ticks. No new commands.
 - Validation: build and all 147 required GameTests passed, including three new creeper regressions and eight repeated mouth transfers with inventory and custom metadata checks. The preceding 146-case run exposed one intermittent inventory-sentinel loss in the existing front-obstruction mouth-transfer test. It did not reproduce in this run; its cause remains open, and no inventory fix is claimed.
 - A fresh ecosystem replay remains necessary. Seven broader work groups remain: structural convergence; attachment/intake transitions; paid remodeling/stashing; habitat-aware shapes; extended survival/tick-rate testing; graphical animation/collision QA; final regression/packaging/docs.
+
+### Creeper-checkpoint ecosystem replay
+
+- Runtime `8a124fa` passed a fresh 3,600-tick normal ecosystem run: 3/3 alive, digestive, repeatedly fed and resource-producing; 1,971 pork offered; zero failures or death logs. Report: `docs/development/qa/2026-11-16-creeper-clearance-ecosystem.json`.
+- No active creeper threat was sampled in this replay. It therefore qualifies this seeded survival run, not live primed-creeper escape; dedicated GameTests provide the current evidence for that policy.
+
+### Portable inventory and data-reserve containers
+
+- Mouth item drops now carry their block-entity contents instead of also scattering loose food. The same block entity covers ordinary, voiced and aquatic-grasper mouth variations; their larynx and grasper upgrade data travel with the item. Nonempty creative breaks produce a packed item as well.
+- Stomach items preserve queued input, digestion state, nutrient paste, tissue reserves and remaining tube stock. Old mouth/sac/path coordinates are excluded from portable items so new placement reconnects locally. The bootstrap flag is retained to prevent farming a fresh free connection on every placement.
+- Core item drops carry emergency material reserves and food/growth resource counters. Old body/death records, captain/ship ownership, pending cargo, coordinates and behavior queues are excluded. Added the previously missing core loot table. Components already released by the existing death/abandon path remain separate physical resources; the core item does not copy them.
+- `BioshipContainerState` centralizes packing and synchronous state handoffs. Organ transport captures current complete block-entity state before each physical transfer, including native machines and storage sacs. Commit captures the current cargo state; it does not replay a pre-transit snapshot that could recreate consumed resources.
+- Native Biomancy storage-sac item persistence is retained. No database is introduced. No new commands.
+- The initial 150-case run caught the missing core loot table. Later runs corrected test-harness assumptions about ticking chunks and the vanilla item-component placement step. The subsequent transfer trace and validation are recorded below. Seven broader groups remain open.
+
+### Waterline adaptation and inventory trace follow-up
+
+- Aquatic-use history now samples partial body contact and extended leg segments at the existing one-second cadence. It no longer reuses the stricter center-submersion ratio used for swimming physics. Gill exposure uses habitat contact too; getting a mouth above water remains a separate respiration decision. Dry ground still decreases exposure, and existing duration, resource and reserve gates remain.
+- An underwater mouth with clear space in front is anatomically open. Water alone no longer makes the body queue repeatedly reorient it ahead of aquatic upgrades. Solid obstruction checks remain; finite air and exposed-gill checks still determine whether it can breathe.
+- The container stress test reproduced again despite packed items: a source mouth had seven items and its marker before assembly, no cargo hydration occurred, and the later cargo snapshot was empty. Transport now resolves block entities through their owning Sable plot holders instead of the generic world chunk lookup, for source capture, cargo hydration, cargo commit and final actor updates.
+- Optional JVM flag `-Dbioships.traceContainers=true` logs mouth capture/load and missing destination hydration. It does not change behavior and adds no in-game commands.
+
+- Validation after the owning-plot correction: build, all 51 unit tests and all 155 required GameTests passed. Eight repeated mouth transfers retained inventory and custom metadata; a separate in-transit reduction retained three items rather than restoring the original seven. Packed mouth variants, empty upgraded creative drops, native sacs, stomach reserves/progress/bootstrap accounting, core reserves, partial-water contact and clear underwater mouth orientation all passed.
+- The trace identifies the missing initial cargo hydration; the owning-plot correction targets that observed failure. One passing stress run is not extended endurance sign-off. The fresh ecosystem replay follows. Seven broader groups remain: structural convergence; attachment/intake transitions; paid remodeling/stashing; habitat-aware shapes; extended survival/tick-rate tests; graphical animation/collision QA; final regression/packaging/docs.

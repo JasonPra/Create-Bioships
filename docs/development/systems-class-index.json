@@ -169,7 +169,8 @@
       "Conserved component transport",
       "active",
       [
-        "OrganMotion"
+        "OrganMotion",
+        "BioshipContainerState"
       ],
       "Move one actual component/Sable cargo with its complete state; route tube costs before transfer."
     ],
@@ -1698,9 +1699,19 @@
           "kind": "method",
           "signature": "protected InteractionResult useWithoutItem( BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit)",
           "line": 51
+        },
+        {
+          "kind": "method",
+          "signature": "protected java.util.List<net.minecraft.world.item.ItemStack> getDrops( BlockState state, net.minecraft.world.level.storage.loot.LootParams.Builder params)",
+          "line": 60
+        },
+        {
+          "kind": "method",
+          "signature": "public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player)",
+          "line": 66
         }
       ],
-      "lines": 61
+      "lines": 73
     },
     "TentacleBlock": {
       "path": "src/main/java/org/Azkerash/create_bioships/TentacleBlock.java",
@@ -3053,7 +3064,7 @@
           "line": 231
         }
       ],
-      "lines": 247
+      "lines": 258
     },
     "BioshipLegEvolution": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipLegEvolution.java",
@@ -3233,35 +3244,35 @@
         {
           "kind": "method",
           "signature": "private static boolean tissue(net.minecraft.world.level.block.state.BlockState state)",
-          "line": 241
+          "line": 243
         },
         {
           "kind": "method",
           "signature": "static List<BlockPos> findTissuePath( LivingCoreBlockEntity core, BlockPos source, BlockPos target)",
-          "line": 248
+          "line": 250
         },
         {
           "kind": "method",
           "signature": "private static Vec3 alongTissue(List<BlockPos> path, double progress)",
-          "line": 284
+          "line": 286
         },
         {
           "kind": "method",
           "signature": "public static void tick(LivingCoreBlockEntity core)",
-          "line": 291
+          "line": 293
         },
         {
           "kind": "method",
           "signature": "private static void release(LivingCoreBlockEntity core, ServerSubLevel cargo)",
-          "line": 418
+          "line": 425
         },
         {
           "kind": "method",
           "signature": "public static void abandon(LivingCoreBlockEntity core)",
-          "line": 430
+          "line": 437
         }
       ],
-      "lines": 439
+      "lines": 446
     },
     "BioshipEnergy": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipEnergy.java",
@@ -3351,11 +3362,16 @@
         },
         {
           "kind": "method",
-          "signature": "protected void onRemove( BlockState state, Level level, BlockPos pos, BlockState next, boolean moved)",
+          "signature": "protected java.util.List<net.minecraft.world.item.ItemStack> getDrops( BlockState state, net.minecraft.world.level.storage.loot.LootParams.Builder params)",
           "line": 97
+        },
+        {
+          "kind": "method",
+          "signature": "public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player)",
+          "line": 103
         }
       ],
-      "lines": 106
+      "lines": 110
     },
     "BioshipVision": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipVision.java",
@@ -4565,111 +4581,126 @@
         },
         {
           "kind": "field",
-          "signature": "private boolean breathing, airAccess",
+          "signature": "private boolean waterContact",
           "line": 16
         },
         {
           "kind": "field",
-          "signature": "private final ExposureHistory gillUsage",
+          "signature": "private boolean breathing, airAccess",
           "line": 17
+        },
+        {
+          "kind": "field",
+          "signature": "private final ExposureHistory gillUsage",
+          "line": 18
         },
         {
           "kind": "method",
           "signature": "ExposureHistory gillUsage()",
-          "line": 18
+          "line": 19
         },
         {
           "kind": "field",
           "signature": "private volatile Vec3 velocity",
-          "line": 22
+          "line": 23
         },
         {
           "kind": "field",
           "signature": "private final LegUsageHistory legUsage",
-          "line": 24
+          "line": 25
         },
         {
           "kind": "field",
           "signature": "private long nextLegEvolution",
-          "line": 26
-        },
-        {
-          "kind": "method",
-          "signature": "LegUsageHistory legUsage()",
           "line": 27
         },
         {
           "kind": "method",
+          "signature": "LegUsageHistory legUsage()",
+          "line": 28
+        },
+        {
+          "kind": "method",
           "signature": "long nextLegEvolution()",
-          "line": 31
+          "line": 32
         },
         {
           "kind": "method",
           "signature": "void legEvolved(long next)",
-          "line": 35
+          "line": 36
         },
         {
           "kind": "method",
           "signature": "public boolean wet()",
-          "line": 39
+          "line": 40
         },
         {
           "kind": "method",
           "signature": "public boolean swimming()",
-          "line": 43
+          "line": 44
         },
         {
           "kind": "method",
           "signature": "public int air()",
-          "line": 47
+          "line": 48
         },
         {
           "kind": "method",
           "signature": "boolean needsAir()",
-          "line": 51
+          "line": 52
         },
         {
           "kind": "method",
           "signature": "void tick(LivingCoreBlockEntity core)",
-          "line": 55
+          "line": 56
         },
         {
           "kind": "method",
-          "signature": "static boolean canBreathe(LivingCoreBlockEntity core)",
-          "line": 117
-        },
-        {
-          "kind": "method",
-          "signature": "static boolean aboveFluid(LivingCoreBlockEntity core, Vec3 point)",
+          "signature": "static boolean touchesWater(LivingCoreBlockEntity core)",
           "line": 121
         },
         {
           "kind": "method",
+          "signature": "private static boolean waterAt(LivingCoreBlockEntity core, Vec3 point)",
+          "line": 152
+        },
+        {
+          "kind": "method",
+          "signature": "static boolean canBreathe(LivingCoreBlockEntity core)",
+          "line": 157
+        },
+        {
+          "kind": "method",
+          "signature": "static boolean aboveFluid(LivingCoreBlockEntity core, Vec3 point)",
+          "line": 161
+        },
+        {
+          "kind": "method",
           "signature": "private static boolean waterWithinReach(LivingCoreBlockEntity core, Vec3 here)",
-          "line": 127
+          "line": 167
         },
         {
           "kind": "method",
           "signature": "private boolean clear(LivingCoreBlockEntity core, Vec3 offset)",
-          "line": 135
+          "line": 175
         },
         {
           "kind": "method",
           "signature": "void propel(ServerSubLevel ship, RigidBodyHandle body, double dt)",
-          "line": 147
+          "line": 187
         },
         {
           "kind": "method",
           "signature": "CompoundTag save()",
-          "line": 159
+          "line": 199
         },
         {
           "kind": "method",
           "signature": "void load(CompoundTag t)",
-          "line": 175
+          "line": 216
         }
       ],
-      "lines": 188
+      "lines": 230
     },
     "BioshipTargetEntity": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipTargetEntity.java",
@@ -6784,9 +6815,19 @@
           "kind": "method",
           "signature": "public void attack(BlockState state, Level level, BlockPos pos, Player player)",
           "line": 168
+        },
+        {
+          "kind": "method",
+          "signature": "protected java.util.List<ItemStack> getDrops( BlockState state, net.minecraft.world.level.storage.loot.LootParams.Builder params)",
+          "line": 174
+        },
+        {
+          "kind": "method",
+          "signature": "public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player)",
+          "line": 180
         }
       ],
-      "lines": 175
+      "lines": 187
     },
     "BioshipMetabolism": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipMetabolism.java",
@@ -6804,6 +6845,43 @@
         }
       ],
       "lines": 36
+    },
+    "BioshipContainerState": {
+      "path": "src/main/java/org/Azkerash/create_bioships/BioshipContainerState.java",
+      "declaration": "final class BioshipContainerState",
+      "members": [
+        {
+          "kind": "method",
+          "signature": "static CompoundTag capture(Level level, BlockEntity entity)",
+          "line": 13
+        },
+        {
+          "kind": "method",
+          "signature": "static BlockEntity entity( Level level, dev.ryanhcode.sable.sublevel.ServerSubLevel owner, BlockPos pos)",
+          "line": 25
+        },
+        {
+          "kind": "method",
+          "signature": "static void restore( Level level, dev.ryanhcode.sable.sublevel.ServerSubLevel owner, BlockPos destination, CompoundTag capsule)",
+          "line": 33
+        },
+        {
+          "kind": "method",
+          "signature": "static List<ItemStack> packDrops(List<ItemStack> drops, LootParams.Builder params)",
+          "line": 65
+        },
+        {
+          "kind": "method",
+          "signature": "static void creativeBreak( Level level, BlockPos pos, net.minecraft.world.entity.player.Player player)",
+          "line": 94
+        },
+        {
+          "kind": "method",
+          "signature": "private BioshipContainerState()",
+          "line": 125
+        }
+      ],
+      "lines": 128
     },
     "BodyTopology": {
       "path": "src/main/java/org/Azkerash/create_bioships/BodyTopology.java",

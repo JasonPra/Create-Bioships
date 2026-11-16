@@ -172,4 +172,16 @@ public class LivingCoreBlock extends BaseEntityBlock
     if (!level.isClientSide && level.getBlockEntity(pos) instanceof LivingCoreBlockEntity core)
       core.body().struck(core, player);
   }
+
+  @Override
+  protected java.util.List<ItemStack> getDrops(
+      BlockState state, net.minecraft.world.level.storage.loot.LootParams.Builder params) {
+    return BioshipContainerState.packDrops(super.getDrops(state, params), params);
+  }
+
+  @Override
+  public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+    BioshipContainerState.creativeBreak(level, pos, player);
+    return super.playerWillDestroy(level, pos, state, player);
+  }
 }

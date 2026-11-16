@@ -172,7 +172,7 @@ public final class OrganMotion {
     boolean stomach =
         state.is(Create_bioships.STOMACH.get())
             || id.equals("biomancy:decomposer") && DigestiveSystem.stomach(core) == null;
-    var entity = level.getBlockEntity(source);
+    var entity = BioshipContainerState.entity(level, sourceShip, source);
     var sourceHost = BioshipTissue.host(entity);
     boolean restore = !sourceHost.isAir();
     if (!stash
@@ -190,10 +190,12 @@ public final class OrganMotion {
         && (!external || entity != null && EngineRoom.storage(entity))
         && !DigestiveSystem.reserveOrganRoute(core, source, target)) return false;
     BioshipIntegration.clearGrowthPlant(level, BlockPos.containing(destination));
+    var capsule = BioshipContainerState.capture(level, entity);
     var cargo =
         SubLevelAssemblyHelper.assembleBlocks(
             level, source, List.of(source), new BoundingBox3i(source, source));
     if (cargo == null) return false;
+    BioshipContainerState.restore(level, cargo, cargo.getPlot().getCenterBlock(), capsule);
     SubLevelContainer.getContainer(level)
         .addForceLoadTicket(cargo, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
     cargo.setName(external ? "Bioship assimilation" : "Bioship moving organ");
@@ -357,12 +359,17 @@ public final class OrganMotion {
       }
     }
     if (!host.isAir()) level.removeBlock(move.target(), false);
+    // Snapshot the current cargo, never an old pre-digestion/pre-growth copy.
+    var capsule =
+        BioshipContainerState.capture(
+            level, BioshipContainerState.entity(level, cargo, move.cargoBlock()));
     SubLevelAssemblyHelper.moveBlocks(
         level,
         new SubLevelAssemblyHelper.AssemblyTransform(
             move.cargoBlock(), move.target(), 0, Rotation.NONE, level),
         List.of(move.cargoBlock()));
-    var moved = level.getBlockEntity(move.target());
+    BioshipContainerState.restore(level, owner, move.target(), capsule);
+    var moved = BioshipContainerState.entity(level, owner, move.target());
     if (moved != null) {
       BioshipTissue.remember(moved, host);
       if (move.manual()) moved.getPersistentData().putBoolean("BioshipManualPlacement", true);

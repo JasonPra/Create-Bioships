@@ -232,6 +232,17 @@ public class FeedingMouthBlockEntity extends BaseContainerBlockEntity {
 
   @Override
   protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+    if (Boolean.getBoolean("bioships.traceContainers")) {
+      System.out.println(
+          "MOUTH_LOAD pos="
+              + worldPosition
+              + " instance="
+              + System.identityHashCode(this)
+              + " oldMarker="
+              + getPersistentData().getInt("ConservationFixture")
+              + " incoming="
+              + tag);
+    }
     super.loadAdditional(tag, registries);
     items = NonNullList.withSize(9, ItemStack.EMPTY);
     ContainerHelper.loadAllItems(tag, items, registries);

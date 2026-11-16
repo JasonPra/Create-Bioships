@@ -2675,7 +2675,7 @@ public class BioshipGameTests {
     helper.assertTrue(
         BioshipIntegration.growthSpace(level, physical), "Replaceable grass blocks construction");
     var water = physical.east();
-    level.setBlock(water, Blocks.WATER.defaultBlockState(), 3);
+    level.setBlock(water, Blocks.WATER.defaultBlockState().setValue(LiquidBlock.LEVEL, 4), 3);
     helper.assertTrue(
         !BioshipIntegration.growthSpace(level, water),
         "Growth clearance treats water as replaceable air");
@@ -9299,6 +9299,16 @@ public class BioshipGameTests {
           try {
             var current = core(ship);
             var moved = (FeedingMouthBlockEntity) level.getBlockEntity(current.mouthBlock());
+            if (moved == null
+                || moved.getItem(0).getCount() != 7
+                || moved.getPersistentData().getInt("ConservationFixture") != iteration + 1)
+              System.out.println(
+                  "MOUTH_CONSERVATION_TRACE phase="
+                      + iteration
+                      + " trace="
+                      + trace
+                      + " snapshot="
+                      + BioshipDiagnostics.snapshot(current));
             helper.assertTrue(
                 moved != null
                     && moved.getItem(0).getCount() == 7
@@ -9314,5 +9324,269 @@ public class BioshipGameTests {
           }
           repeatMouthTransfer(helper, iteration + 1);
         });
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100)
+  public static void mouth_variants_pack_inventory_and_larynx_without_loose_duplicates(
+      GameTestHelper helper) {
+    var level = helper.getLevel();
+    var pos = location();
+    for (int variant = 0; variant < 4; variant++) {
+      level.setBlock(pos, Create_bioships.FEEDING_MOUTH.get().defaultBlockState(), 3);
+      var mouth = (FeedingMouthBlockEntity) level.getBlockEntity(pos);
+      mouth.setItem(0, new ItemStack(Items.PORKCHOP, 17));
+      if ((variant & 1) != 0) {
+        var voice = new net.minecraft.nbt.CompoundTag();
+        voice.putString("Source", "biomancy:modular_larynx");
+        mouth.absorbLarynx(voice);
+      }
+      mouth.swimmingGrasper(0, (variant & 2) != 0);
+      var packed = packedRoundTrip(helper, pos);
+      helper.assertTrue(packed instanceof FeedingMouthBlockEntity, "Mouth type lost");
+      var restored = (FeedingMouthBlockEntity) packed;
+      helper.assertTrue(
+          restored.getItem(0).getCount() == 17
+              && restored.voiced() == ((variant & 1) != 0)
+              && restored.swimmingGrasper(0) == ((variant & 2) != 0),
+          "Mouth variant lost inventory or upgrade");
+      level.removeBlock(pos, false);
+    }
+    helper.succeed();
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100)
+  public static void stomach_packs_data_reserves_and_digestion_without_old_world_links(
+      GameTestHelper helper) {
+    var level = helper.getLevel();
+    var pos = location();
+    level.setBlock(pos, Create_bioships.STOMACH.get().defaultBlockState(), 3);
+    var stomach = (StomachBlockEntity) level.getBlockEntity(pos);
+    var data = stomach.saveWithFullMetadata(level.registryAccess());
+    data.putInt("NutrientReserve", 19);
+    data.putInt("Progress", 7);
+    data.putInt("Duration", 40);
+    data.putInt("PaidTubeStock", 3);
+    data.putInt("FreeTubeStock", 2);
+    data.putBoolean("TubeBootstrapped", true);
+    data.putLong("ConnectedMouth", pos.north().asLong());
+    var reserves = new net.minecraft.nbt.CompoundTag();
+    reserves.putInt("biomancy:flesh_bits", 31);
+    data.put("TissueReserves", reserves);
+    stomach.loadWithComponents(data, level.registryAccess());
+    var restored = packedRoundTrip(helper, pos).saveWithFullMetadata(level.registryAccess());
+    helper.assertTrue(
+        restored.getInt("NutrientReserve") == 19
+            && restored.getCompound("TissueReserves").getInt("biomancy:flesh_bits") == 31
+            && restored.getInt("Progress") == 7
+            && restored.getInt("PaidTubeStock") == 3
+            && restored.getBoolean("TubeBootstrapped")
+            && !restored.contains("ConnectedMouth"),
+        "Stomach lost data-only resources/progress or retained stale topology");
+    level.removeBlock(pos, false);
+    helper.succeed();
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100)
+  public static void core_item_keeps_emergency_resources_without_dead_body_identity(
+      GameTestHelper helper) {
+    var level = helper.getLevel();
+    var pos = location();
+    level.setBlock(pos, Create_bioships.CORE.get().defaultBlockState(), 3);
+    var core = (LivingCoreBlockEntity) level.getBlockEntity(pos);
+    core.adaptation().creditRecovery("biomancy:flesh_bits", 37);
+    var restored = (LivingCoreBlockEntity) packedRoundTrip(helper, pos);
+    helper.assertTrue(
+        restored.adaptation().material("biomancy:flesh_bits") == 37
+            && !restored.body().dead()
+            && restored.organMove() == null,
+        "Core reserve lost or old death/transport state inherited");
+    level.removeBlock(pos, false);
+    helper.succeed();
+  }
+
+  private static BlockEntity packedRoundTrip(GameTestHelper helper, BlockPos pos) {
+    var level = helper.getLevel();
+    var state = level.getBlockState(pos);
+    var entity = level.getBlockEntity(pos);
+    var drops =
+        state.getDrops(
+            new net.minecraft.world.level.storage.loot.LootParams.Builder(level)
+                .withParameter(
+                    net.minecraft.world.level.storage.loot.parameters.LootContextParams.ORIGIN,
+                    Vec3.atCenterOf(pos))
+                .withParameter(
+                    net.minecraft.world.level.storage.loot.parameters.LootContextParams.TOOL,
+                    ItemStack.EMPTY)
+                .withParameter(
+                    net.minecraft.world.level.storage.loot.parameters.LootContextParams
+                        .BLOCK_ENTITY,
+                    entity));
+    helper.assertTrue(
+        drops.size() == 1 && drops.getFirst().getCount() == 1,
+        "Container did not yield exactly one packed item");
+    var box = new AABB(pos).inflate(2);
+    int before =
+        level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, box).size();
+    level.removeBlock(pos, false);
+    helper.assertTrue(
+        level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, box).size()
+            == before,
+        "Removing a packed container also spilled loose duplicate contents");
+    level.setBlock(pos, state, 3);
+    boolean restoredNbt = BlockItem.updateCustomBlockEntityTag(level, null, pos, drops.getFirst());
+    helper.assertTrue(
+        !drops.getFirst().has(net.minecraft.core.component.DataComponents.BLOCK_ENTITY_DATA)
+            || restoredNbt,
+        "Packed block-entity NBT refused vanilla item placement");
+    var restored = level.getBlockEntity(pos);
+    restored.applyComponentsFromItemStack(drops.getFirst());
+    return restored;
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100)
+  public static void creative_break_keeps_packed_contents_once(GameTestHelper helper) {
+    var level = helper.getLevel();
+    var pos = helper.absolutePos(new BlockPos(1, 2, 1));
+    var user = player(helper, "PackedCreative");
+    user.setGameMode(GameType.CREATIVE);
+    level.setBlock(pos, Create_bioships.FEEDING_MOUTH.get().defaultBlockState(), 3);
+    ((FeedingMouthBlockEntity) level.getBlockEntity(pos))
+        .setItem(0, new ItemStack(Items.PORKCHOP, 23));
+    var state = level.getBlockState(pos);
+    state.getBlock().playerWillDestroy(level, pos, state, user);
+    level.removeBlock(pos, false);
+    var drops =
+        level.getEntitiesOfClass(
+            net.minecraft.world.entity.item.ItemEntity.class, new AABB(pos).inflate(2));
+    helper.assertTrue(
+        drops.size() == 1
+            && drops.getFirst().getItem().is(Create_bioships.FEEDING_MOUTH.get().asItem()),
+        "Creative break lost the packed item or also spilled contents");
+    var item = drops.getFirst().getItem();
+    level.setBlock(pos, state, 3);
+    BlockItem.updateCustomBlockEntityTag(level, null, pos, item);
+    level.getBlockEntity(pos).applyComponentsFromItemStack(item);
+    helper.assertTrue(
+        ((FeedingMouthBlockEntity) level.getBlockEntity(pos)).getItem(0).getCount() == 23,
+        "Creative packed item lost its food");
+    drops.forEach(Entity::discard);
+    level.removeBlock(pos, false);
+    level.setBlock(pos, state, 3);
+    ((FeedingMouthBlockEntity) level.getBlockEntity(pos)).swimmingGrasper(0, true);
+    state.getBlock().playerWillDestroy(level, pos, state, user);
+    level.removeBlock(pos, false);
+    var upgraded =
+        level.getEntitiesOfClass(
+            net.minecraft.world.entity.item.ItemEntity.class, new AABB(pos).inflate(2));
+    helper.assertTrue(upgraded.size() == 1, "Empty paid aquatic mouth was discarded in creative");
+    level.setBlock(pos, state, 3);
+    BlockItem.updateCustomBlockEntityTag(level, null, pos, upgraded.getFirst().getItem());
+    level.getBlockEntity(pos).applyComponentsFromItemStack(upgraded.getFirst().getItem());
+    helper.assertTrue(
+        ((FeedingMouthBlockEntity) level.getBlockEntity(pos)).swimmingGrasper(0),
+        "Empty aquatic mouth item lost its paid grasper upgrade");
+    upgraded.forEach(Entity::discard);
+    level.removeBlock(pos, false);
+    helper.succeed();
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100)
+  public static void native_storage_sac_still_keeps_inventory_in_item_form(GameTestHelper helper) {
+    var level = helper.getLevel();
+    var pos = location();
+    level.setBlock(pos, block("biomancy:storage_sac").defaultBlockState(), 3);
+    var inventory = level.getCapability(Capabilities.ItemHandler.BLOCK, pos, null);
+    helper.assertTrue(
+        inventory != null
+            && inventory.insertItem(0, new ItemStack(Items.BONE, 13), false).isEmpty(),
+        "Native sac fixture refused inventory");
+    packedRoundTrip(helper, pos);
+    var restored = level.getCapability(Capabilities.ItemHandler.BLOCK, pos, null);
+    helper.assertTrue(
+        restored != null && restored.getStackInSlot(0).getCount() == 13,
+        "Native sac item roundtrip lost inventory");
+    level.removeBlock(pos, false);
+    helper.succeed();
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 180)
+  public static void organ_handoff_keeps_current_cargo_contents_instead_of_old_snapshot(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var source = core.getBlockPos().south();
+    var target = core.getBlockPos().north();
+    level.setBlock(source, Create_bioships.FEEDING_MOUTH.get().defaultBlockState(), 3);
+    ((FeedingMouthBlockEntity) level.getBlockEntity(source))
+        .setItem(0, new ItemStack(Items.STRUCTURE_VOID, 7));
+    helper.assertTrue(
+        OrganMotion.begin(core, source, target, false), "Mouth transfer did not start");
+    var move = core.organMove();
+    var cargo = (ServerSubLevel) SubLevelContainer.getContainer(level).getSubLevel(move.cargo());
+    var mouth =
+        (FeedingMouthBlockEntity)
+            cargo.getPlot().getLoadedChunks().stream()
+                .flatMap(c -> c.getChunk().getBlockEntities().values().stream())
+                .filter(e -> e instanceof FeedingMouthBlockEntity)
+                .findFirst()
+                .orElseThrow();
+    helper.assertTrue(mouth.getItem(0).getCount() == 7, "Initial cargo handoff lost contents");
+    mouth.removeItem(0, 4);
+    mouth.getPersistentData().putInt("ChangedInTransit", 42);
+    helper.runAfterDelay(
+        60,
+        () -> {
+          try {
+            var mouths = BioshipLarynx.mouths(core(ship));
+            helper.assertTrue(
+                mouths.size() == 1
+                    && mouths.getFirst().getItem(0).getCount() == 3
+                    && mouths.getFirst().getPersistentData().getInt("ChangedInTransit") == 42,
+                "Commit lost current cargo state or resurrected the original seven items");
+            helper.succeed();
+          } finally {
+            cleanup(helper, ship);
+          }
+        });
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100)
+  public static void waterline_contact_keeps_aquatic_history_while_mouth_can_breathe(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var root = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var water = BlockPos.containing(root.add(0, -.49, 0));
+    level.setBlock(water, Blocks.WATER.defaultBlockState().setValue(LiquidBlock.LEVEL, 4), 3);
+    helper.assertTrue(BioshipAquatic.aboveFluid(core, root), "Fixture center must be above water");
+    helper.assertTrue(BioshipAquatic.touchesWater(core), "Partly wet body was classified as dry");
+    level.setBlock(water, Blocks.STONE.defaultBlockState(), 3);
+    helper.assertTrue(!BioshipAquatic.touchesWater(core), "Dry body retained false water contact");
+    finish(helper, ship, () -> {});
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100)
+  public static void underwater_open_mouth_does_not_request_pointless_reorientation(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var mouth = core.getBlockPos().north();
+    level.setBlock(mouth, Create_bioships.FEEDING_MOUTH.get().defaultBlockState(), 3);
+    var outside =
+        BlockPos.containing(ship.logicalPose().transformPosition(Vec3.atCenterOf(mouth.north())));
+    level.setBlock(outside, Blocks.WATER.defaultBlockState(), 3);
+    helper.assertTrue(
+        FeedingMouthBlock.openFace(core, mouth, Direction.NORTH),
+        "Water treated as solid mouth obstruction");
+    helper.assertTrue(
+        !HatchlingFront.canArrange(core),
+        "Clear underwater front mouth keeps monopolizing body adaptation");
+    level.setBlock(outside, Blocks.STONE.defaultBlockState(), 3);
+    helper.assertTrue(
+        !FeedingMouthBlock.openFace(core, mouth, Direction.NORTH), "Solid obstruction was ignored");
+    finish(helper, ship, () -> {});
   }
 }
