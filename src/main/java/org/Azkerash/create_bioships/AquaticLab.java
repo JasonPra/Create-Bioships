@@ -8,7 +8,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.block.*;
-import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.phys.AABB;
@@ -54,13 +53,15 @@ final class AquaticLab {
     int x = landCenter.getX() + 144, z = landCenter.getZ();
     level.getChunk(x >> 4, z >> 4);
     var center =
-        new BlockPos(
-            x,
-            Math.clamp(
-                level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) + 2,
-                level.getMinBuildHeight() + DEPTH + 2,
-                level.getMaxBuildHeight() - AIR_HEIGHT - 2),
-            z);
+        !state.center.equals(BlockPos.ZERO)
+            ? state.center
+            : new BlockPos(
+                x,
+                Math.clamp(
+                    level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) + 2,
+                    level.getMinBuildHeight() + DEPTH + 2,
+                    level.getMaxBuildHeight() - AIR_HEIGHT - 2),
+                z);
     for (int dx = -RADIUS; dx <= RADIUS; dx++)
       for (int dz = -RADIUS; dz <= RADIUS; dz++)
         for (int y = -DEPTH; y <= AIR_HEIGHT; y++) {
@@ -76,23 +77,6 @@ final class AquaticLab {
     for (int dx = -18; dx <= -15; dx++)
       for (int dz = -2; dz <= 2; dz++)
         level.setBlock(center.offset(dx, 1, dz), Blocks.STONE.defaultBlockState(), 2);
-    for (int dx : new int[] {-12, 12})
-      for (int dz : new int[] {-12, 12}) {
-        var pos = center.offset(dx, -DEPTH + 1, dz);
-        level.setBlock(pos, Blocks.SPAWNER.defaultBlockState(), 3);
-        if (!(level.getBlockEntity(pos) instanceof SpawnerBlockEntity spawner))
-          throw new IllegalStateException(
-              "Aquatic spawner placement failed at " + pos + " state=" + level.getBlockState(pos));
-        spawner.setEntityId(EntityType.COD, level.random);
-        var data = spawner.saveWithFullMetadata(level.registryAccess());
-        data.putShort("MinSpawnDelay", (short) 200);
-        data.putShort("MaxSpawnDelay", (short) 800);
-        data.putShort("SpawnCount", (short) 2);
-        data.putShort("MaxNearbyEntities", (short) 6);
-        data.putShort("RequiredPlayerRange", (short) 64);
-        data.putShort("SpawnRange", (short) 6);
-        spawner.loadWithComponents(data, level.registryAccess());
-      }
     int n = 0;
     for (var id : new String[] {"bio_forge", "decomposer", "digester"}) {
       level.setBlock(
@@ -134,30 +118,34 @@ final class AquaticLab {
         net.minecraft.world.phys.Vec3.atLowerCornerOf(center.offset(RADIUS, AIR_HEIGHT, RADIUS)));
   }
 
-  static void tick(ServerLevel level) {
+  static int fishCount(ServerLevel level) {
+    return level
+        .getEntitiesOfClass(
+            net.minecraft.world.entity.animal.AbstractFish.class, bounds(center(level)))
+        .size();
+  }
+
+  static void replenish(ServerLevel level) {
     var state = State.get(level);
-    if (!state.built || level.getGameTime() % 200 != 0) return;
-    var center = state.center;
-    if (level.getNearestPlayer(center.getX(), center.getY(), center.getZ(), 64, false) != null)
-      return;
-    boolean creature =
-        dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(level)
-            .getAllSubLevels()
-            .stream()
-            .filter(ship -> ship instanceof dev.ryanhcode.sable.sublevel.ServerSubLevel)
-            .map(ship -> (dev.ryanhcode.sable.sublevel.ServerSubLevel) ship)
-            .flatMap(ship -> BioshipIntegration.blockEntities(ship).stream())
-            .anyMatch(
-                entity ->
-                    entity instanceof LivingCoreBlockEntity core
-                        && !core.body().dead()
-                        && bounds(center).contains(BioshipBlueprint.physical(core, BlockPos.ZERO)));
-    if (creature
-        && level
-                .getEntitiesOfClass(
-                    net.minecraft.world.entity.animal.AbstractFish.class, bounds(center))
-                .size()
-            < FISH_CAP) spawnFish(level, center);
+    if (!state.built) return;
+    if (level
+            .getEntitiesOfClass(
+                net.minecraft.world.entity.animal.AbstractFish.class, bounds(state.center))
+            .size()
+        < FISH_CAP) spawnFish(level, state.center);
+  }
+
+  static boolean contains(ServerLevel level, net.minecraft.world.phys.Vec3 point) {
+    return bounds(center(level)).contains(point);
+  }
+
+  static void reset(ServerLevel level, BlockPos landCenter) {
+    for (var fish :
+        level.getEntitiesOfClass(
+            net.minecraft.world.entity.animal.AbstractFish.class, bounds(center(level))))
+      fish.discard();
+    State.get(level).built = false;
+    build(level, landCenter);
   }
 
   private static void spawnFish(ServerLevel level, BlockPos center) {
@@ -170,6 +158,10 @@ final class AquaticLab {
     var fish = EntityType.COD.create(level);
     if (fish == null) return;
     fish.moveTo(pos.getX() + .5, pos.getY() + .5, pos.getZ() + .5, 0, 0);
-    if (level.noCollision(fish, fish.getBoundingBox())) level.addFreshEntity(fish);
+    if (level.noCollision(fish, fish.getBoundingBox())) {
+      fish.setPersistenceRequired();
+      fish.getPersistentData().putBoolean(LabPopulation.MARKER, true);
+      level.addFreshEntity(fish);
+    }
   }
 }

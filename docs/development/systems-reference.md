@@ -1403,7 +1403,7 @@ Full-body routes, stuck handling, paid legs, footing, speed and accessible front
 
 #### BioshipCrawl
 
-Source: `src/main/java/org/Azkerash/create_bioships/BioshipCrawl.java` (604 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipCrawl.java` (606 lines).
 
 ```java
 public final class BioshipCrawl
@@ -1544,9 +1544,9 @@ public final class BioshipCrawl
 
   private void brace(LivingCoreBlockEntity core); // line 446
 
-  CompoundTag save(); // line 537
+  CompoundTag save(); // line 539
 
-  void load(CompoundTag t); // line 569
+  void load(CompoundTag t); // line 571
 
 ```
 
@@ -3851,6 +3851,8 @@ Normal-world flat/elevation glass courses, world preset and reset command.
   NavigationLab
   EcosystemLab
   AquaticLab
+  LabPopulation
+  LabStarters
 ```
 
 
@@ -3892,60 +3894,116 @@ public final class NavigationLab
 
 #### EcosystemLab
 
-Source: `src/main/java/org/Azkerash/create_bioships/EcosystemLab.java` (302 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/EcosystemLab.java` (317 lines).
 
 ```java
 public final class EcosystemLab
 
-  private static final ResourceKey<net.minecraft.world.level.biome.Biome> BIOME; // line 25
+  private static final ResourceKey<net.minecraft.world.level.biome.Biome> BIOME; // line 24
 
-  private static final String MARKER; // line 29
+  static final int RADIUS, PREY_CAP, HOSTILE_CAP; // line 28
 
-  static final int RADIUS, PREY_CAP, HOSTILE_CAP; // line 30
+  static final class State extends SavedData; // line 29
 
-  static final class State extends SavedData; // line 31
+  static boolean lab(ServerLevel level); // line 65
 
-  static boolean lab(ServerLevel level); // line 61
+  public static void start(ServerStartedEvent event); // line 71
 
-  public static void start(ServerStartedEvent event); // line 67
+  static void prepare(ServerLevel level, BlockPos center); // line 77
 
-  static void prepare(ServerLevel level, BlockPos center); // line 73
+  private static void installFixtures(ServerLevel level, State state); // line 141
 
-  static BlockPos habitat(ServerLevel level, BlockPos base, int kind); // line 133
+  static void reset(ServerLevel level); // line 149
 
-  public static void tick(ServerTickEvent.Post event); // line 166
+  static BlockPos habitat(ServerLevel level, BlockPos base, int kind); // line 163
 
-  static void sunProtection(Mob mob); // line 178
+  public static void tick(ServerTickEvent.Post event); // line 196
 
-  private static void replenish(ServerLevel level, State state, boolean hostile); // line 185
+  static void sunProtection(Mob mob); // line 207
 
-  public static void join(PlayerEvent.PlayerLoggedInEvent event); // line 239
+  public static void join(PlayerEvent.PlayerLoggedInEvent event); // line 214
 
-  public static void commands(net.neoforged.neoforge.event.RegisterCommandsEvent event); // line 259
+  public static void commands(net.neoforged.neoforge.event.RegisterCommandsEvent event); // line 234
 
 ```
 
 
 #### AquaticLab
 
-Source: `src/main/java/org/Azkerash/create_bioships/AquaticLab.java` (175 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/AquaticLab.java` (167 lines).
 
 ```java
 final class AquaticLab
 
-  static final int RADIUS, DEPTH, AIR_HEIGHT, FISH_CAP; // line 17
+  static final int RADIUS, DEPTH, AIR_HEIGHT, FISH_CAP; // line 16
 
-  private static final class State extends SavedData; // line 18
+  private static final class State extends SavedData; // line 17
 
-  static BlockPos center(ServerLevel level); // line 45
+  static BlockPos center(ServerLevel level); // line 44
 
-  static void build(ServerLevel level, BlockPos landCenter); // line 49
+  static void build(ServerLevel level, BlockPos landCenter); // line 48
 
-  private static AABB bounds(BlockPos center); // line 129
+  private static AABB bounds(BlockPos center); // line 113
 
-  static void tick(ServerLevel level); // line 135
+  static int fishCount(ServerLevel level); // line 119
 
-  private static void spawnFish(ServerLevel level, BlockPos center); // line 161
+  static void replenish(ServerLevel level); // line 126
+
+  static boolean contains(ServerLevel level, net.minecraft.world.phys.Vec3 point); // line 136
+
+  static void reset(ServerLevel level, BlockPos landCenter); // line 140
+
+  private static void spawnFish(ServerLevel level, BlockPos center); // line 149
+
+```
+
+
+#### LabPopulation
+
+Source: `src/main/java/org/Azkerash/create_bioships/LabPopulation.java` (114 lines).
+
+```java
+final class LabPopulation
+
+  static final String MARKER; // line 15
+
+  private static final Map<ServerLevel, Long> LAST; // line 16
+
+  static BlockPos controller(BlockPos center); // line 18
+
+  static void install(ServerLevel level, BlockPos center); // line 22
+
+  static AABB landBounds(ServerLevel level, BlockPos center); // line 33
+
+  record Counts(int fish, int prey, int hostiles, int cores); // line 43
+
+  static Counts counts(ServerLevel level, BlockPos center); // line 45
+
+  static void pulse(ServerLevel level, EcosystemLab.State state); // line 64
+
+  static void prime(ServerLevel level, BlockPos center); // line 72
+
+  static boolean spawnLand(ServerLevel level, BlockPos center, boolean hostile); // line 77
+
+```
+
+
+#### LabStarters
+
+Source: `src/main/java/org/Azkerash/create_bioships/LabStarters.java` (112 lines).
+
+```java
+final class LabStarters
+
+  private static final String MARKER; // line 14
+
+  static void seed(ServerLevel level, EcosystemLab.State state); // line 15
+
+  private static void component( ServerLevel level, EcosystemLab.State state, BlockPos pos, int index); // line 45
+
+  static void core(ServerLevel level, EcosystemLab.State state, BlockPos pos); // line 55
+
+  static void clear(ServerLevel level, EcosystemLab.State state); // line 72
 
 ```
 

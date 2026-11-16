@@ -8159,8 +8159,8 @@ public class BioshipGameTests {
     }
   }
 
-  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "aquatic_fixture_geometry")
-  public static void aquatic_test_zone_has_real_water_air_containment_and_fish_spawners(
+  @GameTest(template = "test_empty", timeoutTicks = 600, batch = "aquatic_fixture_geometry")
+  public static void aquatic_test_zone_has_real_water_air_containment_and_capped_replenishment(
       GameTestHelper helper) {
     var level = helper.getLevel();
     AquaticLab.build(level, new BlockPos(1000000, 80, 1000000));
@@ -8175,12 +8175,84 @@ public class BioshipGameTests {
     helper.assertTrue(
         level.getBlockState(center.east(AquaticLab.RADIUS)).is(Blocks.GLASS),
         "Swimming test has an open containment wall");
-    int spawners = 0;
     for (int dx : new int[] {-12, 12})
       for (int dz : new int[] {-12, 12})
-        if (level.getBlockEntity(center.offset(dx, -AquaticLab.DEPTH + 1, dz))
-            instanceof net.minecraft.world.level.block.entity.SpawnerBlockEntity) spawners++;
-    helper.assertTrue(spawners == 4, "Aquatic test spawners were outside valid build height");
-    helper.succeed();
+        helper.assertTrue(
+            !level.getBlockState(center.offset(dx, -AquaticLab.DEPTH + 1, dz)).is(Blocks.SPAWNER),
+            "Aquatic lab still depends on ordinary fish spawners");
+    var state = EcosystemLab.State.get(level);
+    LabStarters.core(level, state, center.offset(-8, -2, 0));
+    helper
+        .startSequence()
+        .thenWaitUntil(
+            () ->
+                helper.assertTrue(
+                    AquaticLab.fishCount(level) >= 8,
+                    "Waiting for real creature-owned chunks and initial fish to enter entity"
+                        + " simulation"))
+        .thenExecute(
+            () -> {
+              for (var fish :
+                  level.getEntitiesOfClass(
+                      net.minecraft.world.entity.animal.AbstractFish.class,
+                      new AABB(center).inflate(32))) fish.discard();
+              for (int i = 0; i < 30; i++)
+                helper.runAfterDelay(i + 1, () -> AquaticLab.replenish(level));
+              helper.runAfterDelay(
+                  35,
+                  () -> {
+                    helper.assertTrue(
+                        AquaticLab.fishCount(level) == AquaticLab.FISH_CAP,
+                        "Fish replenishment count="
+                            + AquaticLab.fishCount(level)
+                            + ", expected="
+                            + AquaticLab.FISH_CAP);
+                    var before = AquaticLab.center(level);
+                    LabStarters.clear(level, state);
+                    AquaticLab.reset(level, new BlockPos(1000000, 80, 1000000));
+                    helper.assertTrue(
+                        AquaticLab.center(level).equals(before),
+                        "Reset moved the water enclosure upward");
+                    helper.succeed();
+                  });
+            });
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 200, batch = "ecosystem_runtime_fixtures")
+  public static void ecosystem_runtime_seeds_cores_and_reset_replaces_them_without_a_probe(
+      GameTestHelper helper) {
+    var level = helper.getLevel();
+    var center = new BlockPos(2000000, 80, 2000000);
+    EcosystemLab.prepare(level, center);
+    var state = EcosystemLab.State.get(level);
+    helper.assertTrue(
+        state.starters.size() == 12,
+        "Preset did not create three cores and nine native starter components");
+    helper.assertTrue(
+        level.getBlockEntity(LabPopulation.controller(state.center))
+            instanceof net.minecraft.world.level.block.entity.CommandBlockEntity,
+        "Preset did not install a command-block population controller");
+    helper.runAfterDelay(
+        10,
+        () -> {
+          helper.assertTrue(
+              LabPopulation.counts(level, state.center).cores() == 3,
+              "Preset starters were missing without the optional observer");
+          LabStarters.clear(level, state);
+          helper.assertTrue(
+              LabPopulation.counts(level, state.center).cores() == 0,
+              "Reset cleanup left old bioship cores behind");
+          LabStarters.seed(level, state);
+          helper.runAfterDelay(
+              10,
+              () -> {
+                helper.assertTrue(
+                    state.starters.size() == 12
+                        && LabPopulation.counts(level, state.center).cores() == 3,
+                    "Reset duplicated or omitted starter creatures");
+                LabStarters.clear(level, state);
+                helper.succeed();
+              });
+        });
   }
 }

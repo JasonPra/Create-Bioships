@@ -356,7 +356,9 @@
       [
         "NavigationLab",
         "EcosystemLab",
-        "AquaticLab"
+        "AquaticLab",
+        "LabPopulation",
+        "LabStarters"
       ],
       "Normal-world flat/elevation glass courses, world preset and reset command."
     ],
@@ -1307,70 +1309,70 @@
         {
           "kind": "field",
           "signature": "private static final ResourceKey<net.minecraft.world.level.biome.Biome> BIOME",
-          "line": 25
-        },
-        {
-          "kind": "field",
-          "signature": "private static final String MARKER",
-          "line": 29
+          "line": 24
         },
         {
           "kind": "field",
           "signature": "static final int RADIUS, PREY_CAP, HOSTILE_CAP",
-          "line": 30
+          "line": 28
         },
         {
           "kind": "nested type",
           "signature": "static final class State extends SavedData",
-          "line": 31
+          "line": 29
         },
         {
           "kind": "method",
           "signature": "static boolean lab(ServerLevel level)",
-          "line": 61
+          "line": 65
         },
         {
           "kind": "method",
           "signature": "public static void start(ServerStartedEvent event)",
-          "line": 67
+          "line": 71
         },
         {
           "kind": "method",
           "signature": "static void prepare(ServerLevel level, BlockPos center)",
-          "line": 73
+          "line": 77
+        },
+        {
+          "kind": "method",
+          "signature": "private static void installFixtures(ServerLevel level, State state)",
+          "line": 141
+        },
+        {
+          "kind": "method",
+          "signature": "static void reset(ServerLevel level)",
+          "line": 149
         },
         {
           "kind": "method",
           "signature": "static BlockPos habitat(ServerLevel level, BlockPos base, int kind)",
-          "line": 133
+          "line": 163
         },
         {
           "kind": "method",
           "signature": "public static void tick(ServerTickEvent.Post event)",
-          "line": 166
+          "line": 196
         },
         {
           "kind": "method",
           "signature": "static void sunProtection(Mob mob)",
-          "line": 178
-        },
-        {
-          "kind": "method",
-          "signature": "private static void replenish(ServerLevel level, State state, boolean hostile)",
-          "line": 185
+          "line": 207
         },
         {
           "kind": "method",
           "signature": "public static void join(PlayerEvent.PlayerLoggedInEvent event)",
-          "line": 239
+          "line": 214
         },
         {
           "kind": "method",
           "signature": "public static void commands(net.neoforged.neoforge.event.RegisterCommandsEvent event)",
-          "line": 259
+          "line": 234
         }
       ],
-      "lines": 302
+      "lines": 317
     },
     "BioshipLarynx": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipLarynx.java",
@@ -1873,6 +1875,63 @@
         }
       ],
       "lines": 71
+    },
+    "LabPopulation": {
+      "path": "src/main/java/org/Azkerash/create_bioships/LabPopulation.java",
+      "declaration": "final class LabPopulation",
+      "members": [
+        {
+          "kind": "field",
+          "signature": "static final String MARKER",
+          "line": 15
+        },
+        {
+          "kind": "field",
+          "signature": "private static final Map<ServerLevel, Long> LAST",
+          "line": 16
+        },
+        {
+          "kind": "method",
+          "signature": "static BlockPos controller(BlockPos center)",
+          "line": 18
+        },
+        {
+          "kind": "method",
+          "signature": "static void install(ServerLevel level, BlockPos center)",
+          "line": 22
+        },
+        {
+          "kind": "method",
+          "signature": "static AABB landBounds(ServerLevel level, BlockPos center)",
+          "line": 33
+        },
+        {
+          "kind": "nested type",
+          "signature": "record Counts(int fish, int prey, int hostiles, int cores)",
+          "line": 43
+        },
+        {
+          "kind": "method",
+          "signature": "static Counts counts(ServerLevel level, BlockPos center)",
+          "line": 45
+        },
+        {
+          "kind": "method",
+          "signature": "static void pulse(ServerLevel level, EcosystemLab.State state)",
+          "line": 64
+        },
+        {
+          "kind": "method",
+          "signature": "static void prime(ServerLevel level, BlockPos center)",
+          "line": 72
+        },
+        {
+          "kind": "method",
+          "signature": "static boolean spawnLand(ServerLevel level, BlockPos center, boolean hostile)",
+          "line": 77
+        }
+      ],
+      "lines": 114
     },
     "LocomotionProfile": {
       "path": "src/main/java/org/Azkerash/create_bioships/LocomotionProfile.java",
@@ -2455,6 +2514,38 @@
         }
       ],
       "lines": 17
+    },
+    "LabStarters": {
+      "path": "src/main/java/org/Azkerash/create_bioships/LabStarters.java",
+      "declaration": "final class LabStarters",
+      "members": [
+        {
+          "kind": "field",
+          "signature": "private static final String MARKER",
+          "line": 14
+        },
+        {
+          "kind": "method",
+          "signature": "static void seed(ServerLevel level, EcosystemLab.State state)",
+          "line": 15
+        },
+        {
+          "kind": "method",
+          "signature": "private static void component( ServerLevel level, EcosystemLab.State state, BlockPos pos, int index)",
+          "line": 45
+        },
+        {
+          "kind": "method",
+          "signature": "static void core(ServerLevel level, EcosystemLab.State state, BlockPos pos)",
+          "line": 55
+        },
+        {
+          "kind": "method",
+          "signature": "static void clear(ServerLevel level, EcosystemLab.State state)",
+          "line": 72
+        }
+      ],
+      "lines": 112
     },
     "BioshipStores": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipStores.java",
@@ -3884,40 +3975,55 @@
         {
           "kind": "field",
           "signature": "static final int RADIUS, DEPTH, AIR_HEIGHT, FISH_CAP",
-          "line": 17
+          "line": 16
         },
         {
           "kind": "nested type",
           "signature": "private static final class State extends SavedData",
-          "line": 18
+          "line": 17
         },
         {
           "kind": "method",
           "signature": "static BlockPos center(ServerLevel level)",
-          "line": 45
+          "line": 44
         },
         {
           "kind": "method",
           "signature": "static void build(ServerLevel level, BlockPos landCenter)",
-          "line": 49
+          "line": 48
         },
         {
           "kind": "method",
           "signature": "private static AABB bounds(BlockPos center)",
-          "line": 129
+          "line": 113
         },
         {
           "kind": "method",
-          "signature": "static void tick(ServerLevel level)",
-          "line": 135
+          "signature": "static int fishCount(ServerLevel level)",
+          "line": 119
+        },
+        {
+          "kind": "method",
+          "signature": "static void replenish(ServerLevel level)",
+          "line": 126
+        },
+        {
+          "kind": "method",
+          "signature": "static boolean contains(ServerLevel level, net.minecraft.world.phys.Vec3 point)",
+          "line": 136
+        },
+        {
+          "kind": "method",
+          "signature": "static void reset(ServerLevel level, BlockPos landCenter)",
+          "line": 140
         },
         {
           "kind": "method",
           "signature": "private static void spawnFish(ServerLevel level, BlockPos center)",
-          "line": 161
+          "line": 149
         }
       ],
-      "lines": 175
+      "lines": 167
     },
     "TargetMemory": {
       "path": "src/main/java/org/Azkerash/create_bioships/TargetMemory.java",
@@ -8237,15 +8343,15 @@
         {
           "kind": "method",
           "signature": "CompoundTag save()",
-          "line": 537
+          "line": 539
         },
         {
           "kind": "method",
           "signature": "void load(CompoundTag t)",
-          "line": 569
+          "line": 571
         }
       ],
-      "lines": 604
+      "lines": 606
     },
     "StomachMenu": {
       "path": "src/main/java/org/Azkerash/create_bioships/StomachMenu.java",

@@ -11,7 +11,6 @@ import net.minecraft.world.item.*;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.saveddata.SavedData;
-import net.minecraft.world.phys.AABB;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
@@ -27,11 +26,12 @@ public final class EcosystemLab {
       ResourceKey.create(
           Registries.BIOME,
           ResourceLocation.fromNamespaceAndPath(Create_bioships.MOD_ID, "ecosystem_lab"));
-  private static final String MARKER = "BioshipEcosystemMob";
   static final int RADIUS = 64, PREY_CAP = 12, HOSTILE_CAP = 4;
 
   static final class State extends SavedData {
     boolean built;
+    int version;
+    final List<BlockPos> starters = new ArrayList<>();
     BlockPos center = BlockPos.ZERO;
     final List<BlockPos> caches = new ArrayList<>();
 
@@ -44,6 +44,8 @@ public final class EcosystemLab {
                   (tag, lookup) -> {
                     var s = new State();
                     s.built = tag.getBoolean("Built");
+                    s.version = tag.getInt("Version");
+                    for (long p : tag.getLongArray("Starters")) s.starters.add(BlockPos.of(p));
                     s.center = BlockPos.of(tag.getLong("Center"));
                     for (long p : tag.getLongArray("Caches")) s.caches.add(BlockPos.of(p));
                     return s;
@@ -54,6 +56,8 @@ public final class EcosystemLab {
     @Override
     public CompoundTag save(CompoundTag tag, HolderLookup.Provider lookup) {
       tag.putBoolean("Built", built);
+      tag.putInt("Version", version);
+      tag.putLongArray("Starters", starters.stream().mapToLong(BlockPos::asLong).toArray());
       tag.putLong("Center", center.asLong());
       tag.putLongArray("Caches", caches.stream().mapToLong(BlockPos::asLong).toArray());
       return tag;
@@ -69,12 +73,15 @@ public final class EcosystemLab {
   @SubscribeEvent
   public static void start(ServerStartedEvent event) {
     var level = event.getServer().overworld();
-    if (lab(level) && !State.get(level).built) prepare(level, level.getSharedSpawnPos());
+    if (lab(level)) prepare(level, level.getSharedSpawnPos());
   }
 
   static void prepare(ServerLevel level, BlockPos center) {
     var state = State.get(level);
-    if (state.built) return;
+    if (state.built) {
+      if (state.version < 2) installFixtures(level, state);
+      return;
+    }
     state.center = center.immutable();
     int top = level.getHeight(Heightmap.Types.MOTION_BLOCKING, center.getX(), center.getZ()) + 40;
     for (int x = -RADIUS; x <= RADIUS; x++)
@@ -129,7 +136,30 @@ public final class EcosystemLab {
     }
     AquaticLab.build(level, center);
     state.built = true;
+    installFixtures(level, state);
     state.setDirty();
+  }
+
+  private static void installFixtures(ServerLevel level, State state) {
+    LabPopulation.install(level, state.center);
+    LabStarters.seed(level, state);
+    LabPopulation.prime(level, state.center);
+    state.version = 2;
+    state.setDirty();
+  }
+
+  static void reset(ServerLevel level) {
+    var state = State.get(level);
+    LabStarters.clear(level, state);
+    for (var mob :
+        level.getEntitiesOfClass(Mob.class, LabPopulation.landBounds(level, state.center)))
+      if (mob.getPersistentData().getBoolean(LabPopulation.MARKER)) mob.discard();
+    for (var pos : state.caches) level.removeBlock(pos, false);
+    state.caches.clear();
+    AquaticLab.reset(level, state.center);
+    var center = state.center;
+    state.built = false;
+    prepare(level, center);
   }
 
   static BlockPos habitat(ServerLevel level, BlockPos base, int kind) {
@@ -171,70 +201,15 @@ public final class EcosystemLab {
     if (!lab(level) && !Boolean.getBoolean("bioships.wildProbe")) return;
     var state = State.get(level);
     if (!state.built) return;
-    AquaticLab.tick(level);
-    long now = level.getGameTime();
-    if (now % 600 == 0) replenish(level, state, false);
-    if (now % 1200 == 0) replenish(level, state, true);
+    // Dedicated servers commonly disable command blocks. Keep the same capped controller
+    // usable there; the per-tick gate prevents duplicate execution if both paths run.
+    if (!event.getServer().isCommandBlockEnabled()) LabPopulation.pulse(level, state);
   }
 
   static void sunProtection(Mob mob) {
     if (mob.getType().is(net.minecraft.tags.EntityTypeTags.UNDEAD)) {
       mob.setItemSlot(EquipmentSlot.HEAD, new ItemStack(Items.LEATHER_HELMET));
       mob.setDropChance(EquipmentSlot.HEAD, 0);
-    }
-  }
-
-  private static void replenish(ServerLevel level, State state, boolean hostile) {
-    if (!level.getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_DOMOBSPAWNING))
-      return;
-    var bounds = new AABB(state.center).inflate(RADIUS, 40, RADIUS);
-    long count =
-        level
-            .getEntitiesOfClass(
-                Mob.class,
-                bounds,
-                m ->
-                    hostile
-                        ? m instanceof net.minecraft.world.entity.monster.Monster
-                        : m instanceof net.minecraft.world.entity.animal.Animal)
-            .size();
-    if (count >= (hostile ? HOSTILE_CAP : PREY_CAP)) return;
-    List<EntityType<? extends Mob>> choices =
-        hostile
-            ? List.of(EntityType.ZOMBIE, EntityType.SKELETON, EntityType.CREEPER)
-            : List.of(EntityType.PIG, EntityType.COW, EntityType.SHEEP, EntityType.CHICKEN);
-    var type = choices.get(level.random.nextInt(choices.size()));
-    for (int i = 0; i < 16; i++) {
-      int x = state.center.getX() + level.random.nextInt(100) - 50,
-          z = state.center.getZ() + level.random.nextInt(100) - 50;
-      if (!level.getChunkSource().hasChunk(x >> 4, z >> 4)) continue;
-      var pos =
-          level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, new BlockPos(x, 0, z));
-      if (hostile && level.canSeeSky(pos)) {
-        for (int y = pos.getY() - 1; y > pos.getY() - 40; y--) {
-          var cave = new BlockPos(x, y, z);
-          if (level.getBlockState(cave).isAir()
-              && level.getBlockState(cave.above()).isAir()
-              && level.getBlockState(cave.below()).isFaceSturdy(level, cave.below(), Direction.UP)
-              && !level.canSeeSky(cave)) {
-            pos = cave;
-            break;
-          }
-        }
-      }
-      if (level.getNearestPlayer(pos.getX(), pos.getY(), pos.getZ(), 24, false) != null) continue;
-      if (!SpawnPlacements.checkSpawnRules(type, level, MobSpawnType.NATURAL, pos, level.random))
-        continue;
-      var mob = type.create(level);
-      if (mob == null) return;
-      mob.moveTo(pos.getX() + .5, pos.getY(), pos.getZ() + .5, level.random.nextFloat() * 360, 0);
-      if (!level.noCollision(mob, mob.getBoundingBox())) continue;
-      net.neoforged.neoforge.event.EventHooks.finalizeMobSpawn(
-          mob, level, level.getCurrentDifficultyAt(pos), MobSpawnType.NATURAL, null);
-      sunProtection(mob);
-      mob.getPersistentData().putBoolean(MARKER, true);
-      level.addFreshEntity(mob);
-      return;
     }
   }
 
@@ -266,6 +241,32 @@ public final class EcosystemLab {
             net.minecraft.commands.Commands.literal("bioship_ecosystem")
                 .requires(s -> s.hasPermission(2))
                 .then(
+                    net.minecraft.commands.Commands.literal("reset")
+                        .executes(
+                            ctx -> {
+                              var level = ctx.getSource().getLevel();
+                              if (!lab(level)) return 0;
+                              reset(level);
+                              ctx.getSource()
+                                  .sendSuccess(
+                                      () ->
+                                          net.minecraft.network.chat.Component.literal(
+                                              "Reset ecosystem fixtures, populations, water"
+                                                  + " enclosure and three starter cores. Natural"
+                                                  + " terrain is retained."),
+                                      false);
+                              return 1;
+                            }))
+                .then(
+                    net.minecraft.commands.Commands.literal("replenish")
+                        .executes(
+                            ctx -> {
+                              var level = ctx.getSource().getLevel();
+                              if (!lab(level)) return 0;
+                              LabPopulation.pulse(level, State.get(level));
+                              return 1;
+                            }))
+                .then(
                     net.minecraft.commands.Commands.literal("water")
                         .executes(
                             ctx -> {
@@ -285,6 +286,7 @@ public final class EcosystemLab {
                               var level = ctx.getSource().getLevel();
                               if (!lab(level)) return 0;
                               var state = State.get(level);
+                              var counts = LabPopulation.counts(level, state.center);
                               ctx.getSource()
                                   .sendSuccess(
                                       () ->
@@ -293,8 +295,21 @@ public final class EcosystemLab {
                                                   + state.center
                                                   + ", radius 64, caches "
                                                   + state.caches.size()
-                                                  + ", prey cap 12, hostile cap 4. Natural spawning"
-                                                  + " checks apply."),
+                                                  + ", living starters "
+                                                  + counts.cores()
+                                                  + ", fish "
+                                                  + counts.fish()
+                                                  + "/16"
+                                                  + ", prey "
+                                                  + counts.prey()
+                                                  + "/12"
+                                                  + ", hostiles "
+                                                  + counts.hostiles()
+                                                  + "/4, prey cap 12, hostile cap 4, fish cap 16."
+                                                  + " Controller "
+                                                  + LabPopulation.controller(state.center)
+                                                  + ". Capped command spawning; natural spawning"
+                                                  + " remains enabled."),
                                       false);
                               return 1;
                             })));

@@ -39,7 +39,7 @@ GROUPS=[
 ('render','Client rendering','active',['client.BioshipClient','client.AssimilationArmRenderer','client.EquipmentModels'],'Client registration, core/collection arms, supported legs and equipment meshes.'),
 ('overlay','Sight, path and status overlays','active',['client.SightDebugOverlay','client.PathDebugOverlay','client.AppendageDebugOverlay','client.SymbioticTooltip'],'F3+B sight; F3+P native floating route/priority display; goggles status above hotbar.'),
 ('tools','Player tools and stomach UI','active',['BioshipWrenchItem','BioshipGogglesItem','StomachMenu','client.StomachScreen'],'Conserved manual component moves, wearable inspection and digestive inventory UI.'),
-('lab','Packaged development world','active',['NavigationLab','EcosystemLab','AquaticLab'],'Normal-world flat/elevation glass courses, world preset and reset command.'),
+('lab','Packaged development world','active',['NavigationLab','EcosystemLab','AquaticLab','LabPopulation','LabStarters'],'Normal-world flat/elevation glass courses, world preset and reset command.'),
 ('platform','Sable and assembly hooks','active',['mixin.SimAssemblyHelperMixin','mixin.DisassemblyPreventionMixin','mixin.ServerSubLevelMixin','mixin.SablePlotUnloadMixin'],'Protected assembly, safe transfer/disassembly, split lineage and Sable-owned plot unloading.'),
 ('accesshooks','Membrane and key hooks','active',['mixin.BiometricMembraneAccessMixin','mixin.BiometricSubLevelCollisionMixin','mixin.PathDebugKeyMixin'],'Native biometric permission/collision hooks and independent F3+P key handling.'),
 ('gate','Airship implementation boundary','gate',['AirshipPrototype'],'available() returns false. Saved stage data does not activate hull construction or flight.'),
