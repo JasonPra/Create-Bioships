@@ -1386,7 +1386,8 @@ public class BioshipGameTests {
     core.incorporateBiomass(64);
     var owner = player(helper, "TissueOwner");
     core.claimCreator(owner.getUUID());
-    stomach.retainFlesh(8);
+    stomach.retainFlesh(12);
+    stomach.credit(MaterialCost.FIBER, 4);
     var p = core.getBlockPos().east();
     level.setBlock(p, BioshipTissue.body().defaultBlockState(), 3);
     core.body().observe(core);
@@ -1415,8 +1416,9 @@ public class BioshipGameTests {
                   helper.assertTrue(
                       BioshipTissue.isTissue(level.getBlockState(p)), "Tissue did not regrow");
                   helper.assertTrue(
-                      stomach.material("biomancy:flesh_bits") == 7,
-                      "Repair did not spend exactly one flesh bit");
+                      stomach.material("biomancy:flesh_bits") == 4
+                          && stomach.material(MaterialCost.FIBER) == 0,
+                      "Packed tissue repair did not pay its dense-tissue material cost");
                   helper.assertTrue(
                       core.body().health() == healthy, "Repair did not restore health");
                   var guest = player(helper, "GuestBreaks");
@@ -2098,6 +2100,18 @@ public class BioshipGameTests {
     level.addNewPlayer(target);
     core.claimCreator(target.getUUID());
     var root = BioshipReach.anchor(core, target.getBoundingBox().getCenter());
+    helper.assertTrue(
+        TentacleStrike.tipCollision(
+            new net.minecraft.world.phys.AABB(2, -.1, -.1, 2.2, .1, .1),
+            new Vec3(1, 0, 0),
+            new Vec3(3, 0, 0)),
+        "Fast tip skipped a collision between ticks");
+    helper.assertTrue(
+        !TentacleStrike.tipCollision(
+            new net.minecraft.world.phys.AABB(.5, -.1, -.1, .7, .1, .1),
+            new Vec3(3, 0, -.5),
+            new Vec3(3, 0, .5)),
+        "Shaft contact incorrectly counted as tip contact");
     var strike = new TentacleStrike();
     strike.begin(target, level.getGameTime());
     helper.runAfterDelay(
@@ -7049,8 +7063,15 @@ public class BioshipGameTests {
         net.minecraft.world.entity.EquipmentSlot.HEAD, new ItemStack(Items.IRON_HELMET));
     level.addFreshEntity(zombie);
     double[] lowest = {core.body().health()};
+    boolean[] swiped = {false};
     for (int tick = 2; tick < 180; tick += 2)
-      helper.runAfterDelay(tick, () -> lowest[0] = Math.min(lowest[0], core(ship).body().health()));
+      helper.runAfterDelay(
+          tick,
+          () -> {
+            var current = core(ship);
+            lowest[0] = Math.min(lowest[0], current.body().health());
+            swiped[0] |= current.defense().save().getCompound("Strike").contains("Aim");
+          });
     helper.runAfterDelay(
         180,
         () -> {
@@ -7066,8 +7087,8 @@ public class BioshipGameTests {
                     + " target="
                     + zombie.getTarget());
             helper.assertTrue(
-                zombie.getHealth() < zombie.getMaxHealth() || !zombie.isAlive(),
-                "Content hatchling did not retaliate");
+                swiped[0] || zombie.getHealth() < zombie.getMaxHealth() || !zombie.isAlive(),
+                "Content hatchling did not attempt a telegraphed defensive swipe");
             helper.assertTrue(!core.aggressive(), "Retaliation required or caused aggression");
             helper.succeed();
           } finally {
@@ -7521,4 +7542,94 @@ public class BioshipGameTests {
       cleanup(helper, ship);
     }
   }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "packed_tissue_budget")
+  public static void dense_tissue_growth_cannot_multiply_native_decomposition_resources(
+      GameTestHelper helper) {
+    var level = helper.getLevel();
+    var recipe =
+        level
+            .getRecipeManager()
+            .getRecipeFor(
+                DecomposerBlockEntity.RECIPE_TYPE.get(),
+                new net.minecraft.world.item.crafting.SingleRecipeInput(
+                    new ItemStack(BioshipTissue.body())),
+                level)
+            .orElseThrow()
+            .value();
+    int maximumFlesh =
+        recipe.getOutputs().stream()
+            .filter(o -> o.getItem() == item(MaterialCost.FLESH))
+            .mapToInt(o -> o.getCountRange().getMaxCount())
+            .sum();
+    int maximumProducts =
+        recipe.getOutputs().stream().mapToInt(o -> o.getCountRange().getMaxCount()).sum();
+    var price = BioshipTissue.GROWTH_COST;
+    helper.assertTrue(
+        price.flesh() > maximumFlesh
+            && price.flesh() + price.fiber() + price.bone() > maximumProducts,
+        "Dense tissue can generate free resources through native decomposition");
+    var stock = new MaterialLedger();
+    stock.credit(MaterialCost.FLESH, price.flesh());
+    helper.assertTrue(
+        !price.pay(stock) && stock.material(MaterialCost.FLESH) == price.flesh(),
+        "Partial dense-tissue funding spent resources");
+    stock.credit(MaterialCost.FIBER, price.fiber());
+    helper.assertTrue(price.pay(stock), "Fully funded tissue was rejected");
+    helper.assertTrue(stock.snapshot().isEmpty(), "Tissue payment did not conserve stock");
+    helper.succeed();
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "mouth_food_binding")
+  public static void floor_food_enters_the_stomach_of_its_graspers_mouth(GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var first = digestive(helper, core, false);
+    var rear = core.getBlockPos().south();
+    level.setBlock(
+        rear,
+        Create_bioships.FEEDING_MOUTH
+            .get()
+            .defaultBlockState()
+            .setValue(FeedingMouthBlock.FACING, Direction.SOUTH),
+        3);
+    level.setBlock(core.getBlockPos().east(), Create_bioships.STOMACH.get().defaultBlockState(), 3);
+    DigestiveSystem.connect(core, ship);
+    helper.runAfterDelay(
+        1,
+        () -> {
+          var current = core(ship);
+          var point = ship.logicalPose().transformPosition(Vec3.atCenterOf(rear).add(0, 0, 1));
+          var drop =
+              new net.minecraft.world.entity.item.ItemEntity(
+                  level, point.x, point.y, point.z, new ItemStack(Items.BEEF));
+          drop.setNoGravity(true);
+          level.addFreshEntity(drop);
+          try {
+            var intake = DigestiveSystem.forMouth(current, rear);
+            helper.assertTrue(intake != null && intake != first, "Fixture mouths shared a stomach");
+            var result =
+                BioshipFoodCollection.collect(current, drop.position().add(0, .2, 0), drop);
+            helper.assertTrue(
+                intake.queuedFood() == 1 && first.queuedFood() == 0,
+                "Food grasper delivered to a different mouth's stomach: first="
+                    + first.queuedFood()
+                    + " selected="
+                    + intake.queuedFood()
+                    + " result="
+                    + result
+                    + " connected="
+                    + intake.connected(current));
+            helper.assertTrue(
+                ((FeedingMouthBlockEntity) level.getBlockEntity(rear)).jawShift(.5f) > 0,
+                "Receiving mouth did not swallow");
+            helper.succeed();
+          } finally {
+            drop.discard();
+            cleanup(helper, ship);
+          }
+        });
+  }
+
 }

@@ -13,6 +13,10 @@ public final class BioshipAssimilation {
   private final List<OrganMotion.Move> arms = new ArrayList<>();
   private final Map<UUID, String> grasperBindings = new HashMap<>();
 
+  Collection<String> busyGraspers() {
+    return List.copyOf(grasperBindings.values());
+  }
+
   public String grasper(UUID cargo) {
     return grasperBindings.getOrDefault(cargo, "core");
   }

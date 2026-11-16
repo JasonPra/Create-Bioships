@@ -196,6 +196,8 @@ public final class BioshipBody {
         }
         restored = restored.setValue(IntestineBlock.PAID, paid);
         stomach.setChanged();
+      } else if (restored.is(BioshipTissue.body())) {
+        if (!BioshipTissue.GROWTH_COST.pay(stomach)) return;
       } else if (!stomach.spend("biomancy:flesh_bits", 1)) return;
       core.getLevel().setBlock(pos, restored, 3);
       injured.remove(e.getKey());

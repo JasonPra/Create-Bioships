@@ -5,6 +5,9 @@ import net.minecraft.world.level.block.state.BlockState;
 
 /** Ordinary tissue is native Packed Flesh; registered hull blocks remain future armor. */
 public final class BioshipTissue {
+  // Dense native tissue must not turn one repair bit into up to seven decomposed bits.
+  static final MaterialCost GROWTH_COST = new MaterialCost(8, 4, 0);
+
   public static Block body() {
     return com.github.elenterius.biomancy.init.ModBlocks.PACKED_FLESH.get();
   }

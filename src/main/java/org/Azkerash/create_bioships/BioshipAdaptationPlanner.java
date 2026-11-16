@@ -209,14 +209,14 @@ final class BioshipAdaptationPlanner {
         || overloaded
         || core.buildingHull()
         || memory.armor().size() >= (core.hatchling() ? 8 : 16)) return result;
+    var tissueCost = core.hatchling() ? BioshipTissue.GROWTH_COST : new MaterialCost(1, 0, 1);
     int fleshReserve =
         !AirshipPrototype.available() || core.isMature()
             ? 0
             : core.missingBiomass()
                 + 8 * Math.max(0, core.crawl().hullTier(core) - core.crawl().legTier());
-    if (stomach.material(FLESH) < fleshReserve + 1
-        || !EmergencyReserve.after(core, new MaterialCost(1, 0, core.hatchling() ? 0 : 1)))
-      return result;
+    if (stomach.material(FLESH) < fleshReserve + tissueCost.flesh()
+        || !EmergencyReserve.after(core, tissueCost)) return result;
     var cells = BioshipDecay.blocks(core.ship());
     int low = cells.stream().mapToInt(BlockPos::getY).min().orElse(core.getBlockPos().getY());
     var center =
@@ -241,8 +241,8 @@ final class BioshipAdaptationPlanner {
       var state =
           (core.hatchling() ? BioshipTissue.body() : Create_bioships.CARAPACE.get())
               .defaultBlockState();
-      int bone = core.hatchling() ? 0 : 1;
-      if (!funded(stomach, 1, 0, bone) || !BioshipSupport.safeAddition(core, pos, state)) continue;
+      int bone = tissueCost.bone();
+      if (!tissueCost.funded(stomach) || !BioshipSupport.safeAddition(core, pos, state)) continue;
       double extra = core.crawl().blockLoad(core, pos, state);
       int tiers = 0;
       while (core.crawl().legTier() + tiers < 3
@@ -250,14 +250,18 @@ final class BioshipAdaptationPlanner {
               > BioshipCrawl.capacityFor(core.crawl().legTier() + tiers)) tiers++;
       if (core.crawl().carriedLoad(core) + extra
           > BioshipCrawl.capacityFor(core.crawl().legTier() + tiers)) continue;
-      if (!funded(stomach, 1 + 8 * tiers, 4 * tiers, bone + 2 * tiers)) continue;
+      if (!funded(
+          stomach,
+          tissueCost.flesh() + 8 * tiers,
+          tissueCost.fiber() + 4 * tiers,
+          bone + 2 * tiers)) continue;
       result.add(
           new Proposal(
               tiers > 0 ? BioshipBrain.Action.STRENGTHEN_LEGS : BioshipBrain.Action.FORTIFY,
               pos,
               state,
-              1,
-              0,
+              tissueCost.flesh(),
+              tissueCost.fiber(),
               bone,
               300,
               tiers > 0

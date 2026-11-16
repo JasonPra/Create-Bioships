@@ -696,43 +696,10 @@ public final class BioshipBrain {
         }
         return d.point;
       case COLLECT_ITEM:
-        return collectItem(core, d);
+        return BioshipFoodCollection.collect(core, d.point, d.item);
       default:
         return null;
     }
-  }
-
-  private Vec3 collectItem(LivingCoreBlockEntity core, Decision d) {
-    var item = d.item;
-    var stomach = DigestiveSystem.stomach(core);
-    if (stomach == null) return null;
-    if (item == null) return d.point;
-    if (!item.isAlive()) return null;
-    if (!BioshipReach.clear(core, d.point, false)) return d.point;
-    core.crawl().reach(item.position());
-    item.setDeltaMovement(
-        core.mouthPosition(core.ship()).subtract(item.position()).normalize().scale(.3));
-    var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
-    if (here.distanceToSqr(d.point) <= 4
-        || core.mouthPosition(core.ship()).distanceToSqr(d.point) <= 2.25
-        || BioshipReach.anchor(core, d.point).distanceToSqr(d.point) <= 2.25) {
-      var one = item.getItem().copyWithCount(1);
-      boolean accepted;
-      if (BioshipScavenging.droppedBlock(one))
-        accepted = core.scavenging().consumeDroppedBlock(core, one);
-      else if ((one.is(BioshipIntegration.constructionMaterial())
-              || BioshipNutrition.fuelValue(one) > 0)
-          && !LivingCoreBlockEntity.isMeat(one)) {
-        stomach.retain(one);
-        accepted = true;
-      } else accepted = DigestiveSystem.offerFood(core, one, false);
-      if (accepted) {
-        BioshipLarynx.bite(core);
-        item.getItem().shrink(1);
-        if (item.getItem().isEmpty()) item.discard();
-      }
-    }
-    return null;
   }
 
   Vec3 flightVelocity(LivingCoreBlockEntity core) {

@@ -4,11 +4,13 @@ import java.util.UUID;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 /** A telegraphed, world-locked swipe. It never changes its victim's velocity or position. */
 public final class TentacleStrike {
   public static final int WINDUP = 12, SWEEP = 6;
+  public static final double TIP_HALF_SIZE = .2;
   private Vec3 aim;
   private UUID victim;
   private long started;
@@ -59,19 +61,23 @@ public final class TentacleStrike {
         || hit
         || target == null
         || !target.isAlive()) return false;
-    var box = target.getBoundingBox().inflate(.3);
     var end = tip(root, now, reach);
-    var previous = tip(root, now - 1, reach);
-    if ((box.contains(end)
-            || box.clip(root, end).isPresent()
-            || box.clip(previous, end).isPresent())
-        && root.distanceToSqr(target.getBoundingBox().getCenter()) <= Math.pow(reach + .6, 2)
+    var previous = tip(root, Math.max(started + WINDUP, now - 1), reach);
+    if (tipCollision(target.getBoundingBox(), previous, end)
         && BioshipReach.clear(core, target.getBoundingBox().getCenter(), false, reach)) {
       hit = true;
       var attacker = BioshipTargetEntity.attackSource(core, target);
       return target.hurt(core.getLevel().damageSources().mobAttack(attacker), damage);
     }
     return false;
+  }
+
+  /** Sweeps a 0.4-block tip box, never the shaft, to prevent tunneling between ticks. */
+  static boolean tipCollision(AABB target, Vec3 previous, Vec3 current) {
+    var expanded = target.inflate(TIP_HALF_SIZE);
+    return expanded.contains(previous)
+        || expanded.contains(current)
+        || expanded.clip(previous, current).isPresent();
   }
 
   CompoundTag save() {

@@ -68,3 +68,11 @@ The test pass also corrects final-grasp validation on the direct-route shortcut,
 The damage source for a swipe now uses the body surface nearest its victim, rather than the default underside proxy, so native retaliation does not target a point under the body. Tests record damage while it occurs instead of requiring damage to remain after passive healing.
 
 Old multi-arm timing fixtures are adjusted for the single bootstrap uptake slot. Additional tests cover drop/recipe policy, persistent unseen kill loot, per-mouth grasper ownership, real wall/ceiling contacts, direct diagonals and blocked corners. Full gameplay verification continues after the user-requested crash-fix push.
+
+## Additional checkpoint
+
+Lash damage now uses a **0.4-block tip box swept between successive attack ticks**, rather than the whole root-to-tip line. Contact along the shaft cannot damage the victim; wind-up remains harmless, aim remains dodgeable, and a strike damages at most once. Tests exercise between-tick contact and rejection of shaft-only contact.
+
+Floor food intake is separated into `BioshipFoodCollection` and binds intake and swallowing animation to the collecting mouth's own stomach. Whole Packed Flesh growth and block restoration now charge **8 Flesh Bits and 4 Elastic Fibers**. The decomposition maximum is lower than that expenditure, preventing a grow/recycle resource loop.
+
+The last all-green gameplay baseline was **106 required GameTests and 45 unit tests**. The subsequent 107-test run caught a two-mouth test fixture consuming its item before the explicit intake assertion. The fixture is corrected; confirmation is pending. Procedural feet, face-aware leg attachments and the new Amoeba Leg block are subsequent work and are not part of this checkpoint.
