@@ -1,0 +1,27 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "create_bioships:block/amoeba_leg"
+    },
+    "facing=south": {
+      "model": "create_bioships:block/amoeba_leg",
+      "y": 180
+    },
+    "facing=east": {
+      "model": "create_bioships:block/amoeba_leg",
+      "y": 90
+    },
+    "facing=west": {
+      "model": "create_bioships:block/amoeba_leg",
+      "y": 270
+    },
+    "facing=up": {
+      "model": "create_bioships:block/amoeba_leg",
+      "x": 270
+    },
+    "facing=down": {
+      "model": "create_bioships:block/amoeba_leg",
+      "x": 90
+    }
+  }
+}

@@ -169,6 +169,10 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
 
   private final BioshipDefense defense = new BioshipDefense();
 
+  public boolean attackSweeping() {
+    return level != null && defense.sweeping(level.getGameTime());
+  }
+
   BioshipDefense defense() {
     return defense;
   }

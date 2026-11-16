@@ -34,7 +34,8 @@ public final class BioshipScavenging {
   }
 
   static boolean fiberMaterial(BlockState state) {
-    return state.is(Create_bioships.TENTACLE.get())
+    return state.is(Create_bioships.AMOEBA_LEG.get())
+        || state.is(Create_bioships.TENTACLE.get())
         || state.is(Create_bioships.INTESTINE.get())
         || state.getBlock() instanceof LivingThrottleBlock
         || state.getBlock() instanceof NerveControlBlock
@@ -50,6 +51,7 @@ public final class BioshipScavenging {
         BioshipIntegration.blockEntities(core.ship()).stream()
             .filter(e -> !e.getBlockPos().equals(exclude))
             .toList();
+    if (state.is(Create_bioships.AMOEBA_LEG.get())) return BioshipLegGrowth.missing(core) > 0;
     if (state.is(Create_bioships.FEEDING_MOUTH.get())
         || id.equals("biomancy:bio_forge")
         || id.equals("biomancy:maw_hopper"))

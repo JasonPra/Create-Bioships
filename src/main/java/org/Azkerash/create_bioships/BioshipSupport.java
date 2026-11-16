@@ -3,6 +3,7 @@ package org.Azkerash.create_bioships;
 import dev.ryanhcode.sable.physics.config.block_properties.PhysicsBlockPropertyHelper;
 import java.util.*;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
@@ -11,11 +12,40 @@ import net.minecraft.world.phys.Vec3;
  * checks.
  */
 public final class BioshipSupport {
-  public record Leg(Vec3 root, Vec3 foot) {}
+  /** Attachment and resting tip are relative to the structural origin, never world-grid axes. */
+  public record Leg(Vec3 root, Vec3 foot, Direction face, boolean bootstrap) {
+    public Leg(Vec3 root, Vec3 foot, Direction face) {
+      this(root, foot, face, false);
+    }
+
+    public Vec3 outward() {
+      return Vec3.atLowerCornerOf(face.getNormal());
+    }
+
+    public Vec3 curve(Vec3 tip, Vec3 tipUp, double t) {
+      double u = 1 - t;
+      var first = root.add(outward().scale(.6));
+      var second = tip.add(tipUp.scale(.45));
+      return root.scale(u * u * u)
+          .add(first.scale(3 * u * u * t))
+          .add(second.scale(3 * u * t * t))
+          .add(tip.scale(t * t * t));
+    }
+  }
+
+  private static final List<java.util.function.Function<LivingCoreBlockEntity, List<Leg>>>
+      LEG_PROVIDERS = new ArrayList<>();
+
+  /** Body-mounted leg components can supply face-oriented attachments; bare cores stay separate. */
+  public static void registerLegProvider(
+      java.util.function.Function<LivingCoreBlockEntity, List<Leg>> provider) {
+    LEG_PROVIDERS.add(Objects.requireNonNull(provider));
+    CACHE.clear();
+  }
 
   public record Layout(Vec3 center, List<Leg> legs, double margin) {
     public boolean stable() {
-      return legs.size() == 4 && margin >= .15;
+      return legs.size() >= 3 && margin >= .15;
     }
   }
 
@@ -57,7 +87,8 @@ public final class BioshipSupport {
         center = center.add(Vec3.atCenterOf(e.getKey()).subtract(origin).scale(mass));
       }
       if (!cells.containsKey(e.getKey().below())
-          && !e.getValue().is(Create_bioships.SURFACE_EYE.get())) roots.add(e.getKey());
+          && !e.getValue().is(Create_bioships.SURFACE_EYE.get())
+          && !e.getValue().is(Create_bioships.AMOEBA_LEG.get())) roots.add(e.getKey());
     }
     double storedMass =
         core.assimilation().load(core)
@@ -102,6 +133,18 @@ public final class BioshipSupport {
         core.hatchling()
             ? Math.min(1.2, Math.max(.4, halfZ - .25))
             : Math.min(4.5, Math.max(.4, halfZ - .5));
+    boolean bootstrap =
+        cells.size() == 1 && cells.values().iterator().next().is(Create_bioships.CORE.get());
+    if (!bootstrap) {
+      var attached = new ArrayList<Leg>(BioshipLegGrowth.attachments(core, cells));
+      for (var provider : LEG_PROVIDERS)
+        for (var leg : provider.apply(core)) if (attached.size() < 32) attached.add(leg);
+      if (attached.size() >= 4) {
+        boolean balanced =
+            containsProjection(center, attached.stream().map(Leg::foot).toArray(Vec3[]::new));
+        return new Layout(center, List.copyOf(attached), balanced ? .15 : -1);
+      }
+    }
     var legs = new ArrayList<Leg>();
     double margin = Math.min(width, length) - Math.max(0, center.y - lowest) * .3;
     for (int i = 0; i < 4; i++) {
@@ -138,7 +181,13 @@ public final class BioshipSupport {
         var clamped = root.add(delta.scale(reachable / horizontal));
         foot = new Vec3(clamped.x, foot.y, clamped.z);
       }
-      legs.add(new Leg(root, foot));
+      var face = bootstrap ? Direction.DOWN : side < 0 ? Direction.WEST : Direction.EAST;
+      if (!bootstrap)
+        root =
+            Vec3.atLowerCornerOf(best)
+                .subtract(origin)
+                .add(side < 0 ? .01 : .99, .35, .5 + front * .35);
+      legs.add(new Leg(root, foot, face, bootstrap));
     }
     var feet = legs.stream().map(Leg::foot).toArray(Vec3[]::new);
     if (!containsProjection(center, feet)) margin = -1;

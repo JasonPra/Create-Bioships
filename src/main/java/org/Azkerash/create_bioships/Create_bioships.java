@@ -250,6 +250,16 @@ public class Create_bioships {
                       .strength(2)
                       .sound(SoundType.SLIME_BLOCK)
                       .noOcclusion()));
+  public static final DeferredBlock<AmoebaLegBlock> AMOEBA_LEG =
+      BLOCKS.register(
+          "amoeba_leg",
+          () ->
+              new AmoebaLegBlock(
+                  BlockBehaviour.Properties.of()
+                      .strength(1)
+                      .sound(SoundType.SLIME_BLOCK)
+                      .noOcclusion()
+                      .noCollission()));
   public static final DeferredBlock<TentacleBlock> TENTACLE =
       BLOCKS.register(
           "tentacle",
@@ -338,6 +348,7 @@ public class Create_bioships {
                 .displayItems(
                     (parameters, output) -> {
                       output.accept(CORE_ITEM.get());
+                      output.accept(AMOEBA_LEG.get());
                       if (AirshipPrototype.available()) output.accept(DOOR_ITEM.get());
                       output.accept(BIOSHIP_WRENCH.get());
                       output.accept(BIOSHIP_GOGGLES.get());

@@ -33,3 +33,13 @@ Navigation checks a supported direct corridor first. If blocked, it searches dia
 ## Future airship constraints
 
 The locomotion legs are the intended lineage for future flight appendages. Airship behavior is still disabled. Keep one internal mouth in the future hull, with extra exterior mouths for hunting; an internal mouth does not need to migrate outside merely because hunting starts. This is a recorded design constraint, not enabled airship behavior.
+
+## Procedural locomotion attachments
+
+`create_bioships:amoeba_leg` supplies a face-mounted locomotion socket. Its `facing` state points away from the host block. `BioshipLegGrowth` quotes and pays growth; it never animates limbs. Each socket costs 4 Flesh Bits, 2 Elastic Fibers and 1 Bone Fragment. Four sockets take priority over a larynx upgrade. The first native stomach conversion supplies a one-time, saved material allocation for that initial set; replacements retain the normal cost and emergency-reserve check.
+
+`BioshipSupport.Leg` carries the attachment root, resting foot, outward block face and a separate bare-core bootstrap marker. Body-mounted sockets and future `BioshipSupport.registerLegProvider` adapters supply these records. Once four sockets exist, the body uses those attachments instead of its temporary layout. A provider's coordinates are relative to the core's structural origin; registered providers must exist on both logical sides.
+
+`BioshipLegAnchors` owns up to 32 world-space feet. Terrain shape intersections produce tip contact boxes and surface normals. Planted feet remain fixed until a new step is needed; five-tick step arcs transfer alternating groups. Missing contacts retract the endpoint. `BioshipCrawl` consumes settled contacts for support, and the renderer converts world feet through the current Sable render transform. A cubic curve starts along the attachment face and ends against the sensed surface normal. Swimming retains a separate paddling stroke. No animation library or prerecorded walking clip is required.
+
+F3+B displays green 0.24-block foot/contact volumes. Attacking graspers display red 0.4-block tip volumes only during a lash's damaging sweep; swept collision between consecutive tip positions prevents tunneling. The shaft itself does not deal damage. F3+P remains the independent route/behavior display.

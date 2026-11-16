@@ -26,6 +26,23 @@ final class BioshipAdaptation {
   private final MaterialLedger reserve = new MaterialLedger();
   private final Set<BlockPos> armor = new HashSet<>();
   private long nextWork;
+  private boolean starterLegSalvage;
+  private int starterLegBudget;
+
+  int starterLegBudget() {
+    return starterLegBudget;
+  }
+
+  void usedStarterLeg() {
+    if (starterLegBudget > 0) starterLegBudget--;
+  }
+
+  void salvageStarterLegs() {
+    if (starterLegSalvage) return;
+    starterLegSalvage = true;
+    starterLegBudget = 4;
+    new MaterialCost(16, 8, 4).refund(reserve);
+  }
 
   MaterialLedger ledger() {
     return reserve;
@@ -87,6 +104,8 @@ final class BioshipAdaptation {
                     4));
           }
           DigestiveSystem.connect(core, core.ship());
+        } else if (p.action == BioshipBrain.Action.GROW_LEG) {
+          if (!BioshipLegGrowth.develop(core, p.pos, p.state)) return;
         } else if (p.action == BioshipBrain.Action.GROW_LARYNX) {
           if (!BioshipLarynx.develop(core, p.pos)) return;
         } else if (p.action == BioshipBrain.Action.GROW_ENGINE_ROOM) {
@@ -153,6 +172,8 @@ final class BioshipAdaptation {
           var stomach = DigestiveSystem.stomach(core);
           if (stomach == null || !new MaterialCost(p.flesh, p.fiber, p.bone).funded(stomach))
             return;
+          if (p.action == BioshipBrain.Action.GROW_STORAGE
+              && !EmergencyReserve.after(core, new MaterialCost(p.flesh, p.fiber, p.bone))) return;
           if (!new MaterialCost(p.flesh, p.fiber, p.bone).pay(stomach)) return;
           if (!core.getLevel().setBlock(p.pos, p.state, 3)) {
             new MaterialCost(p.flesh, p.fiber, p.bone).refund(stomach);
@@ -192,6 +213,8 @@ final class BioshipAdaptation {
     t.put("Reserve", stock);
     t.putLongArray("Armor", armor.stream().mapToLong(BlockPos::asLong).toArray());
     t.putLong("Next", nextWork);
+    t.putBoolean("StarterLegSalvage", starterLegSalvage);
+    t.putInt("StarterLegBudget", starterLegBudget);
     return t;
   }
 
@@ -203,5 +226,7 @@ final class BioshipAdaptation {
     armor.clear();
     for (long pos : t.getLongArray("Armor")) armor.add(BlockPos.of(pos));
     nextWork = t.getLong("Next");
+    starterLegSalvage = t.getBoolean("StarterLegSalvage");
+    starterLegBudget = Math.clamp(t.getInt("StarterLegBudget"), 0, 4);
   }
 }

@@ -214,6 +214,8 @@ public final class BioshipIntegration {
     core.getLevel().setBlock(destination, Create_bioships.STOMACH.get().defaultBlockState(), 3);
     if (core.getLevel().getBlockEntity(destination) instanceof StomachBlockEntity stomach) {
       BioshipTissue.remember(stomach, stomachHost);
+      core.adaptation().salvageStarterLegs();
+      core.setChanged();
       for (var stack : stores) stomach.retain(stack);
       for (var stack : queued) stomach.inheritInput(stack);
       stomach.addNutrients(nutrients);

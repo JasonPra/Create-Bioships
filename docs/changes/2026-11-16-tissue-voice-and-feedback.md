@@ -44,7 +44,7 @@ Actual accepted damage starts an **eight-tick vanilla red hurt overlay** across 
 
 ## Validation
 
-Final counts and checks are recorded after the verification run. Automated tests validate gameplay state, priority eligibility, per-mouth ownership, resource conservation, native capsule preservation, synchronization, feedback lifetime, frame budgets and alphabet input boundaries. A graphical client and listening session are still needed to assess visual appearance and sound quality; headless GameTests cannot certify those subjective details.
+The final Java 21 `build runGameTestServer` run passed **45 unit tests and all 109 required GameTests**. **23 dormant airship-only scenarios remain unregistered and were not run.** Resource checks parsed 241 JSON files, verified 47 PNG images, and confirmed the runtime JAR excludes test classes and private uploaded worlds. `git diff --check` passed. Automated tests validate gameplay state, priority eligibility, per-mouth ownership, resource conservation, native capsule preservation, synchronization, feedback lifetime, frame budgets and alphabet input boundaries. A graphical client and listening session are still needed to assess visual appearance and sound quality; headless GameTests cannot certify those subjective details.
 
 ## Expanded implementation: drop-based hunting and appendages
 
@@ -65,6 +65,8 @@ The user's client log identified `IllegalStateException: Not building!` in `Assi
 
 The test pass also corrects final-grasp validation on the direct-route shortcut, preserves actual non-grid node heights on walls/ceilings, stores every route node's position, retains kill-drop memory across unloaded chunks, and marks the creature's own kill meat as autonomous food without changing deliberately supplied floor food. Food offers outrank hunting without displacing optional component collection above the pressing-food threshold.
 
+Storage-sac proposals and their executor now preserve the emergency reserve even when the new leg investment competes for the same resources. Overflow fixtures include that additional investment and account for all paid sockets.
+
 The damage source for a swipe now uses the body surface nearest its victim, rather than the default underside proxy, so native retaliation does not target a point under the body. Tests record damage while it occurs instead of requiring damage to remain after passive healing.
 
 Old multi-arm timing fixtures are adjusted for the single bootstrap uptake slot. Additional tests cover drop/recipe policy, persistent unseen kill loot, per-mouth grasper ownership, real wall/ceiling contacts, direct diagonals and blocked corners. Full gameplay verification continues after the user-requested crash-fix push.
@@ -76,3 +78,20 @@ Lash damage now uses a **0.4-block tip box swept between successive attack ticks
 Floor food intake is separated into `BioshipFoodCollection` and binds intake and swallowing animation to the collecting mouth's own stomach. Whole Packed Flesh growth and block restoration now charge **8 Flesh Bits and 4 Elastic Fibers**. The decomposition maximum is lower than that expenditure, preventing a grow/recycle resource loop.
 
 The last all-green gameplay baseline was **106 required GameTests and 45 unit tests**. The subsequent 107-test run caught a two-mouth test fixture consuming its item before the explicit intake assertion. The fixture is corrected; confirmation is pending. Procedural feet, face-aware leg attachments and the new Amoeba Leg block are subsequent work and are not part of this checkpoint.
+
+## Procedural legs and face-mounted Amoeba Leg components
+
+- `create_bioships:amoeba_leg` is a separate locomotion socket with six attachment orientations. It has a block/item model, creative entry, survival drops and a lossy Biomancy decomposition recipe. Walking legs remain separate from mouth-bound graspers.
+- Each grown leg costs **4 Flesh Bits, 2 Elastic Fibers and 1 Bone Fragment**. The goal queue offers four legs at **985**, above the larynx's 970 and below missing digestive essentials and urgent food/safety. The planner checks the full outstanding four-leg budget and carrying capacity before starting. Ordinary replacements preserve the emergency reserve.
+- The first conversion of an actual native Decomposer/Digester pair recovers **16 Flesh Bits, 8 Elastic Fibers and 4 Bone Fragments** for four starter legs. This is an explicit one-time startup allowance from converted machine bodies. A saved flag prevents it recurring after reload, stomach loss or further conversions. Individual leg growth still pays the standard resource transaction. A saved four-leg startup budget permits that initial investment without demanding the later emergency stock first; it does not mint another allocation.
+- Bare cores retain their separate temporary four-leg arrangement. Body-mounted sockets carry their own outward face, root and resting tip. Four completed sockets replace the temporary arrangement; additional sockets can surround the body. Future leg providers can supply their own face-oriented attachment geometry, up to the bounded 32-leg rendering/contact limit.
+- `BioshipLegAnchors` senses real world collision shapes. A **0.24-block contact box** at each tip marks its planted anchor. Feet stay in world space while the body moves; a short lifted step transfers a foot to another valid surface after it exceeds its placement tolerance. Opposing step groups avoid lifting both sides together. Contact normals drive wall/ceiling foot orientation, and planted contacts participate in the support-plane calculation.
+- Legs use a procedural cubic curve whose initial direction follows the socket's outward face and whose ending direction follows the surface normal. Unsupported tips retract toward their roots. The walking cycle no longer slides feet through a repeating sine loop; swimming keeps its separate paddling stroke. Animation contacts are synchronized when steps change, rather than waiting for the slower ordinary core update.
+- **F3+B** exposes green leg-tip contact boxes and red attacking grasper-tip boxes during the damaging sweep. These are collision/anchor volumes, not separate living mobs. Full graphical assessment of foot planting, retraction and bend appearance remains an in-game check.
+
+
+## Final verification and delivery
+
+The final rerun after shared-digestion cleanup completed with `BUILD SUCCESSFUL`: 45 unit tests and all 109 required GameTests passed. This includes both real-physics glass mazes, per-mouth floor-food routing, tip hit/dodge checks, world-planted feet, six attachment directions, exact four-leg costs, one-time starter allocation/reload protection, emergency-stock protection, native combat and the existing recovery/scavenging scenarios. The source reference covers 132 classes in 48 subsystems and is also provided as a 73-page vector PDF.
+
+The earlier implementation/crash checkpoints were pushed before this final test pass as requested. Graphical appearance, animation smoothness and listening quality still require an in-game client assessment; headless verification does not certify those subjective properties.

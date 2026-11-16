@@ -11,6 +11,11 @@ final class BioshipDefense {
   private int cooldown;
   private boolean extending;
   private final TentacleStrike strike = new TentacleStrike();
+
+  public boolean sweeping(long now) {
+    return strike.sweeping(now);
+  }
+
   private java.util.UUID attacker;
   private long threatenedUntil;
   private Vec3 lastThreat;

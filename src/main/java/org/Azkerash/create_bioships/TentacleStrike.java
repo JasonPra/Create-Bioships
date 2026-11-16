@@ -52,6 +52,10 @@ public final class TentacleStrike {
     return root.add(delta.yRot((float) (.65 - 1.3 * t)));
   }
 
+  public boolean sweeping(long now) {
+    return active() && now - started >= WINDUP && now - started <= WINDUP + SWEEP && !hit;
+  }
+
   boolean tick(
       LivingCoreBlockEntity core, Vec3 root, LivingEntity target, double reach, float damage) {
     long now = core.getLevel().getGameTime();

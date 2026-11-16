@@ -56,7 +56,7 @@ final class BioshipSurfaceContacts {
     return best;
   }
 
-  private static BlockHitResult terrainRay(ServerLevel level, Vec3 from, Vec3 to) {
+  static BlockHitResult terrainRay(ServerLevel level, Vec3 from, Vec3 to) {
     int samples = Math.max(1, (int) Math.ceil(from.distanceTo(to) / .15));
     BlockPos previous = null;
     for (int i = 1; i <= samples; i++) {

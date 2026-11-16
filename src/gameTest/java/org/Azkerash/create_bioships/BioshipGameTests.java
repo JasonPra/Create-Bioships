@@ -855,8 +855,8 @@ public class BioshipGameTests {
           "Additional crafting machines were converted");
       var stomach = DigestiveSystem.stomach(core);
       helper.assertTrue(
-          stomach.material("biomancy:bone_fragments") == 8
-              && stomach.material("biomancy:elastic_fibers") == 12,
+          stomach.material("biomancy:bone_fragments") == 12
+              && stomach.material("biomancy:elastic_fibers") == 20,
           "Existing decomposition products were lost");
       helper.assertTrue(
           stomach.material("biomancy:nutrients") == 3
@@ -882,7 +882,13 @@ public class BioshipGameTests {
                         core.saveWithFullMetadata(level.registryAccess()).getInt("Biomass")
                             + stomach.material("biomancy:flesh_bits");
                     helper.assertTrue(
-                        total == 80, "Stored Bio-Forge biomass was not transferred: " + total);
+                        total
+                                + 4
+                                    * BioshipStructure.cells(core.ship()).values().stream()
+                                        .filter(state -> state.is(Create_bioships.AMOEBA_LEG.get()))
+                                        .count()
+                            == 96,
+                        "Stored Bio-Forge biomass or one-time leg salvage was lost: " + total);
                     helper.assertTrue(
                         core.saveWithFullMetadata(level.registryAccess()).getInt("Satiety") <= 600,
                         "Inherited tissue supplied nutrition");
@@ -6732,7 +6738,7 @@ public class BioshipGameTests {
     core.incorporateBiomass(64);
     stomach.retainFlesh(400);
     stomach.retain(new ItemStack(item(MaterialCost.FIBER), 64));
-    stomach.retain(new ItemStack(item(MaterialCost.BONE), 12));
+    stomach.retain(new ItemStack(item(MaterialCost.BONE), 20));
     helper.runAfterDelay(
         500,
         () ->
@@ -6757,8 +6763,11 @@ public class BioshipGameTests {
                       "Storage investment did not replenish emergency core stock");
                   helper.assertTrue(
                       BioshipStorage.amount(current, MaterialCost.BONE)
-                          == 12
+                          == 20
                               - sacs.size()
+                              - BioshipStructure.cells(current.ship()).values().stream()
+                                  .filter(state -> state.is(Create_bioships.AMOEBA_LEG.get()))
+                                  .count()
                               - 2 * current.crawl().legTier()
                               - BioshipLarynx.mouths(current).stream()
                                       .filter(FeedingMouthBlockEntity::voiced)
@@ -7632,4 +7641,108 @@ public class BioshipGameTests {
         });
   }
 
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "procedural_feet")
+  public static void planted_leg_tips_use_collision_contacts_and_step_arcs(GameTestHelper helper) {
+    var ship = assemble(helper);
+    try {
+      var core = core(ship);
+      var level = helper.getLevel();
+      var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+      var floor = BlockPos.containing(here).below();
+      for (var cell : BlockPos.betweenClosed(floor.offset(-4, 0, -4), floor.offset(4, 0, 4)))
+        level.setBlock(cell, Blocks.STONE.defaultBlockState(), 3);
+      var anchors = new BioshipLegAnchors();
+      anchors.tick(core);
+      for (int leg = 0; leg < 4; leg++) {
+        var foot = anchors.foot(leg, level.getGameTime());
+        helper.assertTrue(
+            foot != null && Math.abs(foot.y - (floor.getY() + 1)) < .001,
+            "Leg tip did not anchor to the actual floor surface: leg="
+                + leg
+                + " foot="
+                + foot
+                + " floor="
+                + floor
+                + " here="
+                + here
+                + " layout="
+                + BioshipSupport.layout(core));
+        helper.assertTrue(
+            anchors.contactBox(leg).contains(foot), "Tip contact escaped its collision box");
+        anchors.tick(core);
+        helper.assertTrue(
+            anchors.foot(leg, level.getGameTime() + 1).distanceToSqr(foot) < .0001,
+            "Stationary planted foot slid");
+      }
+      var saved = anchors.save();
+      var step = saved.getCompound("Leg0");
+      var start = anchors.foot(0, level.getGameTime());
+      step.put("From", VisionDebug.vector(start));
+      step.put("To", VisionDebug.vector(start.add(1, 0, 0)));
+      step.put("Up", VisionDebug.vector(new Vec3(0, 1, 0)));
+      step.putLong("Started", level.getGameTime());
+      anchors.load(saved);
+      var mid = anchors.foot(0, level.getGameTime() + 2.5);
+      helper.assertTrue(
+          Math.abs(mid.x - start.x - .5) < .001 && mid.y > start.y + .29,
+          "Procedural step did not lift between planted contacts");
+      helper.assertTrue(
+          anchors.foot(0, level.getGameTime() + 5).distanceToSqr(start.add(1, 0, 0)) < .0001,
+          "Procedural step missed its destination");
+      helper.succeed();
+    } finally {
+      cleanup(helper, ship);
+    }
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "amoeba_leg_growth")
+  public static void amoeba_legs_are_paid_face_aware_and_beat_voice_growth(GameTestHelper helper) {
+    var ship = assemble(helper);
+    try {
+      var core = core(ship);
+      var stomach = digestive(helper, core, false);
+      core.adaptation().salvageStarterLegs();
+      var initial = BioshipStorage.account(core);
+      helper.assertTrue(
+          initial.material(MaterialCost.FLESH) == 16
+              && initial.material(MaterialCost.FIBER) == 8
+              && initial.material(MaterialCost.BONE) == 4,
+          "Starter salvage did not fund exactly four legs");
+      var saved = core.adaptation().save();
+      core.adaptation().load(saved);
+      core.adaptation().salvageStarterLegs();
+      helper.assertTrue(
+          initial.material(MaterialCost.FLESH) == 16, "Starter salvage duplicated after reload");
+      for (int i = 0; i < 4; i++) {
+        var plan = BioshipLegGrowth.proposal(core);
+        helper.assertTrue(
+            plan != null && plan.urgency() > 970, "Mobility did not precede larynx growth");
+        helper.assertTrue(
+            BioshipLegGrowth.develop(core, plan.pos(), plan.state()), "Paid leg failed to grow");
+      }
+      helper.assertTrue(BioshipLegGrowth.missing(core) == 0, "Four leg sockets were not created");
+      helper.assertTrue(
+          initial.material(MaterialCost.FLESH) == 0
+              && initial.material(MaterialCost.FIBER) == 0
+              && initial.material(MaterialCost.BONE) == 0,
+          "Leg growth did not deduct its resources exactly");
+      stomach.retainFlesh(400);
+      stomach.credit(MaterialCost.FIBER, 64);
+      stomach.credit(MaterialCost.BONE, 8);
+      helper.assertTrue(
+          core.adaptation().proposals(core).stream()
+              .noneMatch(p -> p.action() == BioshipBrain.Action.GROW_STORAGE),
+          "Overflow storage consumed the emergency reserve");
+      for (var face : Direction.values()) {
+        var leg = new BioshipSupport.Leg(Vec3.ZERO, new Vec3(1, -1, 1), face);
+        var start = leg.curve(leg.foot(), new Vec3(0, 1, 0), .001);
+        helper.assertTrue(
+            start.dot(Vec3.atLowerCornerOf(face.getNormal())) > 0,
+            "Leg bent into its attachment face: " + face);
+      }
+      helper.succeed();
+    } finally {
+      cleanup(helper, ship);
+    }
+  }
 }

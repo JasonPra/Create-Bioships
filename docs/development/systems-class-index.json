@@ -120,7 +120,10 @@
       "active",
       [
         "BioshipSupport",
-        "BioshipRighting"
+        "BioshipRighting",
+        "BioshipLegAnchors",
+        "BioshipLegGrowth",
+        "AmoebaLegBlock"
       ],
       "Mass-weighted COM, leg attachments, support polygon, reachable contacts and inverted recovery torque."
     ],
@@ -147,9 +150,10 @@
       "Batch assimilation",
       "active",
       [
-        "BioshipAssimilation"
+        "BioshipAssimilation",
+        "BioshipFoodCollection"
       ],
-      "Four collection arms, persistent swallowed stock, batch settlement and committed wreck ownership."
+      "Mouth-bound collection slots, persistent swallowed stock, batch settlement and committed wreck ownership."
     ],
     [
       "transport",
@@ -534,77 +538,82 @@
           "line": 12
         },
         {
-          "kind": "field",
-          "signature": "private java.util.UUID attacker",
+          "kind": "method",
+          "signature": "public boolean sweeping(long now)",
           "line": 13
         },
         {
           "kind": "field",
+          "signature": "private java.util.UUID attacker",
+          "line": 17
+        },
+        {
+          "kind": "field",
           "signature": "private long threatenedUntil",
-          "line": 14
+          "line": 19
         },
         {
           "kind": "field",
           "signature": "private Vec3 lastThreat",
-          "line": 15
+          "line": 20
         },
         {
           "kind": "method",
           "signature": "void remember(LivingCoreBlockEntity core, LivingEntity entity)",
-          "line": 16
+          "line": 21
         },
         {
           "kind": "method",
           "signature": "Vec3 dangerPosition(LivingCoreBlockEntity core)",
-          "line": 25
+          "line": 30
         },
         {
           "kind": "method",
           "signature": "static boolean threatening(LivingCoreBlockEntity core, LivingEntity entity)",
-          "line": 34
+          "line": 39
         },
         {
           "kind": "method",
           "signature": "static net.minecraft.world.entity.monster.Creeper creeperThreat(LivingCoreBlockEntity core)",
-          "line": 42
+          "line": 47
         },
         {
           "kind": "method",
           "signature": "net.minecraft.nbt.CompoundTag save()",
-          "line": 59
+          "line": 64
         },
         {
           "kind": "method",
           "signature": "void load(net.minecraft.nbt.CompoundTag tag)",
-          "line": 69
+          "line": 74
         },
         {
           "kind": "method",
           "signature": "static LivingEntity target(LivingCoreBlockEntity core)",
-          "line": 78
+          "line": 83
         },
         {
           "kind": "method",
           "signature": "private static boolean eligiblePrey(LivingCoreBlockEntity core, LivingEntity entity)",
-          "line": 119
+          "line": 124
         },
         {
           "kind": "method",
           "signature": "static LivingEntity prey(LivingCoreBlockEntity core)",
-          "line": 129
+          "line": 134
         },
         {
           "kind": "method",
           "signature": "private static boolean sensesPrey(LivingCoreBlockEntity core, LivingEntity entity)",
-          "line": 150
+          "line": 155
         },
         {
           "kind": "method",
           "signature": "void tick(LivingCoreBlockEntity core)",
-          "line": 169
+          "line": 174
         }
       ],
-      "lines": 230
+      "lines": 235
     },
     "BioshipBlueprint": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipBlueprint.java",
@@ -1019,26 +1028,31 @@
         },
         {
           "kind": "method",
-          "signature": "public static boolean offerFood(LivingCoreBlockEntity core, ItemStack stack, boolean inherited)",
+          "signature": "static boolean functional(LivingCoreBlockEntity core)",
           "line": 574
         },
         {
           "kind": "method",
-          "signature": "static boolean offerFood( LivingCoreBlockEntity core, BlockPos mouth, ItemStack stack, boolean inherited)",
-          "line": 579
-        },
-        {
-          "kind": "method",
-          "signature": "private static boolean offerFood( LivingCoreBlockEntity core, StomachBlockEntity stomach, ItemStack stack, boolean inherited)",
+          "signature": "public static boolean offerFood(LivingCoreBlockEntity core, ItemStack stack, boolean inherited)",
           "line": 584
         },
         {
           "kind": "method",
+          "signature": "static boolean offerFood( LivingCoreBlockEntity core, BlockPos mouth, ItemStack stack, boolean inherited)",
+          "line": 589
+        },
+        {
+          "kind": "method",
+          "signature": "private static boolean offerFood( LivingCoreBlockEntity core, StomachBlockEntity stomach, ItemStack stack, boolean inherited)",
+          "line": 594
+        },
+        {
+          "kind": "method",
           "signature": "public static void pullStoredFood(LivingCoreBlockEntity core, StomachBlockEntity stomach)",
-          "line": 606
+          "line": 616
         }
       ],
-      "lines": 634
+      "lines": 644
     },
     "GroundRoute": {
       "path": "src/main/java/org/Azkerash/create_bioships/GroundRoute.java",
@@ -1276,45 +1290,45 @@
         {
           "kind": "method",
           "signature": "static BioshipAdaptation.Proposal proposal(LivingCoreBlockEntity core)",
-          "line": 45
+          "line": 40
         },
         {
           "kind": "method",
           "signature": "static boolean absorb(LivingCoreBlockEntity core, CompoundTag capsule)",
-          "line": 67
+          "line": 62
         },
         {
           "kind": "method",
           "signature": "static boolean develop(LivingCoreBlockEntity core, BlockPos pos)",
-          "line": 75
+          "line": 70
         },
         {
           "kind": "method",
           "signature": "private static BlockEntity nativeSource( LivingCoreBlockEntity core, FeedingMouthBlockEntity mouth)",
-          "line": 94
+          "line": 89
         },
         {
           "kind": "method",
           "signature": "static void bite(LivingCoreBlockEntity core)",
-          "line": 106
+          "line": 101
         },
         {
           "kind": "method",
           "signature": "static void growl(LivingCoreBlockEntity core)",
-          "line": 111
+          "line": 106
         },
         {
           "kind": "method",
           "signature": "static void hurt(LivingCoreBlockEntity core)",
-          "line": 115
+          "line": 110
         },
         {
           "kind": "method",
           "signature": "private static void vocalize(LivingCoreBlockEntity core, boolean hurt)",
-          "line": 119
+          "line": 114
         }
       ],
-      "lines": 128
+      "lines": 123
     },
     "CarapaceBlock": {
       "path": "src/main/java/org/Azkerash/create_bioships/CarapaceBlock.java",
@@ -1882,61 +1896,66 @@
         },
         {
           "kind": "field",
-          "signature": "public static final DeferredBlock<TentacleBlock> TENTACLE",
+          "signature": "public static final DeferredBlock<AmoebaLegBlock> AMOEBA_LEG",
           "line": 252
         },
         {
           "kind": "field",
+          "signature": "public static final DeferredBlock<TentacleBlock> TENTACLE",
+          "line": 262
+        },
+        {
+          "kind": "field",
           "signature": "public static final java.util.List<DeferredBlock<NerveControlBlock>> CONTROLS",
-          "line": 261
+          "line": 271
         },
         {
           "kind": "field",
           "signature": "public static final DeferredItem<BioshipWrenchItem> BIOSHIP_WRENCH",
-          "line": 277
+          "line": 287
         },
         {
           "kind": "field",
           "signature": "public static final DeferredItem<BioshipGogglesItem> BIOSHIP_GOGGLES",
-          "line": 280
+          "line": 290
         },
         {
           "kind": "field",
           "signature": "public static final DeferredItem<BlockItem> CORE_ITEM",
-          "line": 283
+          "line": 293
         },
         {
           "kind": "field",
           "signature": "public static final DeferredItem<net.minecraft.world.item.DoubleHighBlockItem> DOOR_ITEM",
-          "line": 285
+          "line": 295
         },
         {
           "kind": "field",
           "signature": "public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<LivingCoreBlockEntity>> CORE_ENTITY",
-          "line": 299
+          "line": 309
         },
         {
           "kind": "field",
           "signature": "public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<StomachBlockEntity>> STOMACH_ENTITY",
-          "line": 308
+          "line": 318
         },
         {
           "kind": "field",
           "signature": "public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<FeedingMouthBlockEntity>> FEEDING_MOUTH_ENTITY",
-          "line": 315
+          "line": 325
         },
         {
           "kind": "field",
           "signature": "public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TentacleBlockEntity>> TENTACLE_ENTITY",
-          "line": 322
+          "line": 332
         },
         {
           "kind": "method",
           "signature": "public Create_bioships(IEventBus bus)",
-          "line": 347
+          "line": 358
         }
       ],
-      "lines": 380
+      "lines": 391
     },
     "BioshipChunks": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipChunks.java",
@@ -2179,95 +2198,95 @@
         {
           "kind": "method",
           "signature": "static boolean keepComponent(LivingCoreBlockEntity core, BlockState state, BlockPos exclude)",
-          "line": 45
+          "line": 46
         },
         {
           "kind": "method",
           "signature": "static boolean component(BlockState state)",
-          "line": 71
+          "line": 73
         },
         {
           "kind": "method",
           "signature": "static boolean emptyComponent(LivingCoreBlockEntity core, BlockPos pos)",
-          "line": 75
+          "line": 77
         },
         {
           "kind": "method",
           "signature": "static boolean needed(LivingCoreBlockEntity core, BlockState state)",
-          "line": 89
+          "line": 91
         },
         {
           "kind": "nested type",
           "signature": "record Source(BlockPos pos, Vec3 point, BlockState state)",
-          "line": 117
-        },
-        {
-          "kind": "method",
-          "signature": "static java.util.List<Source> visibleSources(LivingCoreBlockEntity core)",
           "line": 119
         },
         {
           "kind": "method",
+          "signature": "static java.util.List<Source> visibleSources(LivingCoreBlockEntity core)",
+          "line": 121
+        },
+        {
+          "kind": "method",
           "signature": "static boolean collect(LivingCoreBlockEntity core, ServerSubLevel own)",
-          "line": 144
+          "line": 146
         },
         {
           "kind": "method",
           "signature": "static boolean physicallyReachable( LivingCoreBlockEntity core, ServerSubLevel wreck, BlockPos source, Vec3 point)",
-          "line": 151
+          "line": 153
         },
         {
           "kind": "method",
           "signature": "private static boolean visible( LivingCoreBlockEntity core, ServerSubLevel wreck, BlockPos source, Vec3 eye, Vec3 point)",
-          "line": 168
+          "line": 170
         },
         {
           "kind": "method",
           "signature": "void finish(LivingCoreBlockEntity core, BlockPos target, boolean restoreHost)",
-          "line": 200
+          "line": 202
         },
         {
           "kind": "method",
           "signature": "void finish(LivingCoreBlockEntity core, BlockPos target, boolean restoreHost, boolean forced)",
-          "line": 204
+          "line": 206
         },
         {
           "kind": "method",
           "signature": "static boolean droppedBlock(ItemStack stack)",
-          "line": 269
+          "line": 271
         },
         {
           "kind": "method",
           "signature": "boolean consumeDroppedBlock(LivingCoreBlockEntity core, ItemStack stack)",
-          "line": 276
+          "line": 278
         },
         {
           "kind": "method",
           "signature": "void recycleToCore(LivingCoreBlockEntity core, BlockState state)",
-          "line": 292
+          "line": 294
         },
         {
           "kind": "method",
           "signature": "void recycle(BlockState state)",
-          "line": 304
+          "line": 306
         },
         {
           "kind": "method",
           "signature": "void deliver(LivingCoreBlockEntity core)",
-          "line": 324
+          "line": 326
         },
         {
           "kind": "method",
           "signature": "CompoundTag save()",
-          "line": 358
+          "line": 360
         },
         {
           "kind": "method",
           "signature": "void load(CompoundTag t)",
-          "line": 370
+          "line": 372
         }
       ],
-      "lines": 381
+      "lines": 383
     },
     "BioshipNutrition": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipNutrition.java",
@@ -2333,20 +2352,20 @@
         {
           "kind": "method",
           "signature": "private static boolean funded(StomachBlockEntity stomach, int flesh, int fiber, int bone)",
-          "line": 269
+          "line": 281
         },
         {
           "kind": "method",
           "signature": "private static BlockPos shedCandidate( LivingCoreBlockEntity core, StomachBlockEntity stomach, boolean sacsOnly, Set<BlockPos> armor)",
-          "line": 273
+          "line": 285
         },
         {
           "kind": "method",
           "signature": "private static boolean connectedWithout(Set<BlockPos> body, BlockPos removed, BlockPos root)",
-          "line": 312
+          "line": 324
         }
       ],
-      "lines": 330
+      "lines": 342
     },
     "FeedingMouthBlockEntity": {
       "path": "src/main/java/org/Azkerash/create_bioships/FeedingMouthBlockEntity.java",
@@ -2504,6 +2523,73 @@
         }
       ],
       "lines": 223
+    },
+    "BioshipLegAnchors": {
+      "path": "src/main/java/org/Azkerash/create_bioships/BioshipLegAnchors.java",
+      "declaration": "public final class BioshipLegAnchors",
+      "members": [
+        {
+          "kind": "field",
+          "signature": "public static final double TIP_RADIUS",
+          "line": 10
+        },
+        {
+          "kind": "field",
+          "signature": "private static final int STEP_TICKS",
+          "line": 11
+        },
+        {
+          "kind": "field",
+          "signature": "private final Vec3[] from, to, up",
+          "line": 12
+        },
+        {
+          "kind": "field",
+          "signature": "private final long[] started",
+          "line": 13
+        },
+        {
+          "kind": "method",
+          "signature": "public Vec3 normal(int leg)",
+          "line": 14
+        },
+        {
+          "kind": "method",
+          "signature": "public AABB contactBox(int leg)",
+          "line": 18
+        },
+        {
+          "kind": "method",
+          "signature": "public Vec3 foot(int leg, double time)",
+          "line": 22
+        },
+        {
+          "kind": "method",
+          "signature": "void tick(LivingCoreBlockEntity core)",
+          "line": 28
+        },
+        {
+          "kind": "method",
+          "signature": "Vec3 supportContact(ServerLevel level, int leg, long now)",
+          "line": 108
+        },
+        {
+          "kind": "method",
+          "signature": "private static boolean touching(ServerLevel level, AABB box)",
+          "line": 117
+        },
+        {
+          "kind": "method",
+          "signature": "CompoundTag save()",
+          "line": 129
+        },
+        {
+          "kind": "method",
+          "signature": "void load(CompoundTag tag)",
+          "line": 143
+        }
+      ],
+      "lines": 156
     },
     "BioshipGogglesItem": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipGogglesItem.java",
@@ -3714,50 +3800,50 @@
         {
           "kind": "method",
           "signature": "boolean combatDamage( LivingCoreBlockEntity core, net.minecraft.world.damagesource.DamageSource source, float amount)",
-          "line": 210
+          "line": 212
         },
         {
           "kind": "method",
           "signature": "void struck(LivingCoreBlockEntity core, Player player)",
-          "line": 230
+          "line": 232
         },
         {
           "kind": "method",
           "signature": "void damage(LivingCoreBlockEntity core, BlockPos pos, Player player)",
-          "line": 236
+          "line": 238
         },
         {
           "kind": "field",
           "signature": "public static void broken(BlockEvent.BreakEvent event)",
-          "line": 244
+          "line": 246
         },
         {
           "kind": "method",
           "signature": "public static void blast(net.neoforged.neoforge.event.level.ExplosionEvent.Detonate event)",
-          "line": 255
+          "line": 257
         },
         {
           "kind": "method",
           "signature": "CompoundTag save()",
-          "line": 270
+          "line": 272
         },
         {
           "kind": "method",
           "signature": "void load(CompoundTag tag, HolderLookup.Provider registries)",
-          "line": 283
+          "line": 285
         },
         {
           "kind": "method",
           "signature": "static ListTag saveCells(Map<BlockPos, BlockState> cells)",
-          "line": 296
+          "line": 298
         },
         {
           "kind": "method",
           "signature": "static Map<BlockPos, BlockState> loadCells(ListTag list, HolderLookup.Provider registries)",
-          "line": 308
+          "line": 310
         }
       ],
-      "lines": 320
+      "lines": 322
     },
     "AirshipPrototype": {
       "path": "src/main/java/org/Azkerash/create_bioships/AirshipPrototype.java",
@@ -4448,451 +4534,456 @@
         },
         {
           "kind": "method",
-          "signature": "BioshipDefense defense()",
+          "signature": "public boolean attackSweeping()",
           "line": 170
         },
         {
           "kind": "method",
-          "signature": "public boolean hatchling()",
+          "signature": "BioshipDefense defense()",
           "line": 174
+        },
+        {
+          "kind": "method",
+          "signature": "public boolean hatchling()",
+          "line": 178
         },
         {
           "kind": "field",
           "signature": "private int bodyLayoutVersion",
-          "line": 178
+          "line": 182
         },
         {
           "kind": "method",
           "signature": "public int layoutVersion()",
-          "line": 180
+          "line": 184
         },
         {
           "kind": "method",
           "signature": "public java.util.List<DinghyGrowth.Part> plannedBody()",
-          "line": 184
-        },
-        {
-          "kind": "field",
-          "signature": "private String growthObstacle",
           "line": 188
         },
         {
           "kind": "field",
+          "signature": "private String growthObstacle",
+          "line": 192
+        },
+        {
+          "kind": "field",
           "signature": "private long lastServerTick",
-          "line": 190
+          "line": 194
         },
         {
           "kind": "field",
           "signature": "private final BioshipAquatic aquatic",
-          "line": 191
+          "line": 195
         },
         {
           "kind": "field",
           "signature": "private final BioshipEngineRoom engineRoom",
-          "line": 192
+          "line": 196
         },
         {
           "kind": "method",
           "signature": "BioshipEngineRoom engineRoom()",
-          "line": 193
+          "line": 197
         },
         {
           "kind": "method",
           "signature": "public BioshipAquatic aquatic()",
-          "line": 197
-        },
-        {
-          "kind": "field",
-          "signature": "private double hoverHeight",
           "line": 201
         },
         {
           "kind": "field",
+          "signature": "private double hoverHeight",
+          "line": 205
+        },
+        {
+          "kind": "field",
           "signature": "private volatile FlightIntent flight",
-          "line": 203
+          "line": 207
         },
         {
           "kind": "method",
           "signature": "void inheritFlight(LivingCoreBlockEntity previous)",
-          "line": 204
+          "line": 208
         },
         {
           "kind": "nested type",
           "signature": "private record FlightIntent( boolean lift, Vec3 velocity, double turn, double supportHeight, Vec3 stanceUp)",
-          "line": 208
+          "line": 212
         },
         {
           "kind": "method",
           "signature": "public LivingCoreBlockEntity(BlockPos pos, BlockState state)",
-          "line": 215
-        },
-        {
-          "kind": "method",
-          "signature": "ServerSubLevel ship()",
           "line": 219
         },
         {
           "kind": "method",
+          "signature": "ServerSubLevel ship()",
+          "line": 223
+        },
+        {
+          "kind": "method",
           "signature": "boolean primary(ServerSubLevel ship)",
-          "line": 227
+          "line": 231
         },
         {
           "kind": "method",
           "signature": "public void interact(Player player, ItemStack stack)",
-          "line": 235
+          "line": 239
         },
         {
           "kind": "field",
           "signature": "private int goggleFlesh, goggleBone, goggleFiber",
-          "line": 273
+          "line": 277
         },
         {
           "kind": "method",
           "signature": "public java.util.List<Component> goggleTooltip()",
-          "line": 275
+          "line": 279
         },
         {
           "kind": "method",
           "signature": "public boolean feedAtMouth(Player player, ItemStack stack)",
-          "line": 367
-        },
-        {
-          "kind": "method",
-          "signature": "public boolean feedAtMouth(BlockPos mouth, Player player, ItemStack stack)",
           "line": 371
         },
         {
           "kind": "method",
+          "signature": "public boolean feedAtMouth(BlockPos mouth, Player player, ItemStack stack)",
+          "line": 375
+        },
+        {
+          "kind": "method",
           "signature": "public static boolean isMeat(ItemStack stack)",
-          "line": 403
+          "line": 407
         },
         {
           "kind": "field",
           "signature": "final BioshipTrustFeedback trustFeedback",
-          "line": 407
+          "line": 411
         },
         {
           "kind": "method",
           "signature": "int poisonSeconds()",
-          "line": 409
-        },
-        {
-          "kind": "method",
-          "signature": "public void digestMeal(ItemStack stack)",
           "line": 413
         },
         {
           "kind": "method",
+          "signature": "public void digestMeal(ItemStack stack)",
+          "line": 417
+        },
+        {
+          "kind": "method",
           "signature": "public boolean acceptAmalgam(ItemStack stack)",
-          "line": 432
+          "line": 436
         },
         {
           "kind": "field",
           "signature": "private final BioshipScavenging scavenging",
-          "line": 440
+          "line": 444
         },
         {
           "kind": "method",
           "signature": "public BioshipScavenging scavenging()",
-          "line": 442
+          "line": 446
         },
         {
           "kind": "field",
           "signature": "private final BioshipCrawl crawl",
-          "line": 446
+          "line": 450
         },
         {
           "kind": "method",
           "signature": "public BioshipCrawl crawl()",
-          "line": 448
+          "line": 452
         },
         {
           "kind": "field",
           "signature": "private final BioshipAdaptation adaptation",
-          "line": 452
+          "line": 456
         },
         {
           "kind": "method",
           "signature": "BioshipAdaptation adaptation()",
-          "line": 454
-        },
-        {
-          "kind": "field",
-          "signature": "private final BioshipBody body",
           "line": 458
         },
         {
           "kind": "field",
+          "signature": "private final BioshipBody body",
+          "line": 462
+        },
+        {
+          "kind": "field",
           "signature": "private final BioshipBlueprint blueprint",
-          "line": 460
+          "line": 464
         },
         {
           "kind": "method",
           "signature": "public BioshipBody body()",
-          "line": 461
-        },
-        {
-          "kind": "method",
-          "signature": "public BioshipBlueprint blueprint()",
           "line": 465
         },
         {
           "kind": "method",
-          "signature": "public BlockPos layoutPos(BlockPos offset)",
+          "signature": "public BioshipBlueprint blueprint()",
           "line": 469
+        },
+        {
+          "kind": "method",
+          "signature": "public BlockPos layoutPos(BlockPos offset)",
+          "line": 473
         },
         {
           "kind": "field",
           "signature": "final BioshipChunks chunkLoading",
-          "line": 474
+          "line": 478
         },
         {
           "kind": "field",
           "signature": "private final BioshipBrain brain",
-          "line": 476
+          "line": 480
         },
         {
           "kind": "method",
           "signature": "public BioshipBrain brain()",
-          "line": 477
-        },
-        {
-          "kind": "method",
-          "signature": "int satiety()",
           "line": 481
         },
         {
           "kind": "method",
-          "signature": "boolean frameFunded()",
+          "signature": "int satiety()",
           "line": 485
         },
         {
           "kind": "method",
-          "signature": "boolean buildingHull()",
+          "signature": "boolean frameFunded()",
           "line": 489
+        },
+        {
+          "kind": "method",
+          "signature": "boolean buildingHull()",
+          "line": 493
         },
         {
           "kind": "field",
           "signature": "private boolean framePaid, larynxDeveloped",
-          "line": 493
+          "line": 497
         },
         {
           "kind": "method",
           "signature": "public boolean wantsStoredFood()",
-          "line": 495
+          "line": 499
         },
         {
           "kind": "method",
           "signature": "private boolean prepareFrame()",
-          "line": 504
+          "line": 508
         },
         {
           "kind": "method",
           "signature": "private void developLarynx(ServerSubLevel ship)",
-          "line": 537
+          "line": 541
         },
         {
           "kind": "method",
           "signature": "public int incorporateBiomass(int amount)",
-          "line": 561
+          "line": 565
         },
         {
           "kind": "method",
           "signature": "public int missingBiomass()",
-          "line": 567
-        },
-        {
-          "kind": "method",
-          "signature": "private static void message(Player player, String key, Object... args)",
           "line": 571
         },
         {
           "kind": "method",
-          "signature": "public void mistreat()",
+          "signature": "private static void message(Player player, String key, Object... args)",
           "line": 575
         },
         {
           "kind": "method",
+          "signature": "public void mistreat()",
+          "line": 579
+        },
+        {
+          "kind": "method",
           "signature": "private boolean clearForGrowth(ServerSubLevel ship, BlockPos pos)",
-          "line": 583
+          "line": 587
         },
         {
           "kind": "method",
           "signature": "private void recordGrowthObstacle(ServerSubLevel ship, BlockPos offset)",
-          "line": 592
+          "line": 596
         },
         {
           "kind": "method",
           "signature": "private boolean roomToGrow(ServerSubLevel ship)",
-          "line": 610
+          "line": 614
         },
         {
           "kind": "field",
           "signature": "private net.minecraft.server.level.ServerLevel transferLevel",
-          "line": 631
+          "line": 635
         },
         {
           "kind": "field",
           "signature": "private BlockPos transferTarget",
-          "line": 633
+          "line": 637
         },
         {
           "kind": "method",
           "signature": "void recordTransfer(net.minecraft.server.level.ServerLevel destination, BlockPos pos)",
-          "line": 634
+          "line": 638
         },
         {
           "kind": "method",
           "signature": "private boolean transferred()",
-          "line": 639
+          "line": 643
         },
         {
           "kind": "method",
           "signature": "void coreRemoved()",
-          "line": 647
+          "line": 651
         },
         {
           "kind": "method",
           "signature": "public void setRemoved()",
-          "line": 653
+          "line": 657
         },
         {
           "kind": "method",
           "signature": "public static void tick(Level level, BlockPos pos, BlockState state, LivingCoreBlockEntity core)",
-          "line": 683
+          "line": 687
         },
         {
           "kind": "method",
           "signature": "private void updateCabinLights()",
-          "line": 792
+          "line": 796
         },
         {
           "kind": "method",
           "signature": "private void growBody()",
-          "line": 803
+          "line": 807
         },
         {
           "kind": "method",
           "signature": "public void sable$tick(ServerSubLevel ship)",
-          "line": 879
+          "line": 883
         },
         {
           "kind": "method",
           "signature": "private void serverTick()",
-          "line": 884
+          "line": 888
         },
         {
           "kind": "method",
           "signature": "private void incorporateAmalgam()",
-          "line": 991
+          "line": 995
         },
         {
           "kind": "method",
           "signature": "public boolean canFly()",
-          "line": 1000
+          "line": 1004
         },
         {
           "kind": "method",
           "signature": "private void updateEye(boolean active)",
-          "line": 1009
+          "line": 1013
         },
         {
           "kind": "method",
           "signature": "public boolean isMature()",
-          "line": 1022
-        },
-        {
-          "kind": "method",
-          "signature": "public boolean resting()",
           "line": 1026
         },
         {
           "kind": "method",
-          "signature": "public boolean aggressive()",
+          "signature": "public boolean resting()",
           "line": 1030
         },
         {
           "kind": "method",
-          "signature": "public boolean isCaptain(net.minecraft.world.entity.Entity entity)",
+          "signature": "public boolean aggressive()",
           "line": 1034
         },
         {
           "kind": "method",
-          "signature": "public boolean huntingAllowed()",
+          "signature": "public boolean isCaptain(net.minecraft.world.entity.Entity entity)",
           "line": 1038
         },
         {
           "kind": "method",
-          "signature": "public int foodLevel()",
-          "line": 1046
+          "signature": "public boolean huntingAllowed()",
+          "line": 1042
         },
         {
           "kind": "method",
-          "signature": "public boolean starving()",
+          "signature": "public int foodLevel()",
           "line": 1050
         },
         {
           "kind": "method",
-          "signature": "public void adoptLarynx()",
+          "signature": "public boolean starving()",
           "line": 1054
         },
         {
           "kind": "method",
-          "signature": "public boolean wantsToHunt()",
-          "line": 1059
+          "signature": "public void adoptLarynx()",
+          "line": 1058
         },
         {
           "kind": "method",
-          "signature": "public boolean hungry()",
+          "signature": "public boolean wantsToHunt()",
           "line": 1063
         },
         {
           "kind": "method",
-          "signature": "public boolean hasMouth()",
+          "signature": "public boolean hungry()",
           "line": 1067
         },
         {
           "kind": "method",
-          "signature": "public BlockPos mouthBlock()",
+          "signature": "public boolean hasMouth()",
           "line": 1071
         },
         {
           "kind": "method",
+          "signature": "public BlockPos mouthBlock()",
+          "line": 1075
+        },
+        {
+          "kind": "method",
           "signature": "public Vec3 mouthPosition(ServerSubLevel ship)",
-          "line": 1093
+          "line": 1097
         },
         {
           "kind": "method",
           "signature": "public int swimmingFlagella()",
-          "line": 1105
+          "line": 1109
         },
         {
           "kind": "method",
           "signature": "Vec3 gatheringGoal()",
-          "line": 1113
+          "line": 1117
         },
         {
           "kind": "method",
           "signature": "static boolean droppedSupply(ItemStack stack)",
-          "line": 1118
+          "line": 1122
         },
         {
           "kind": "method",
           "signature": "public void sable$physicsTick(ServerSubLevel ship, RigidBodyHandle body, double dt)",
-          "line": 1126
+          "line": 1130
         },
         {
           "kind": "method",
           "signature": "protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries)",
-          "line": 1176
+          "line": 1180
         },
         {
           "kind": "method",
           "signature": "protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries)",
-          "line": 1225
+          "line": 1229
         }
       ],
-      "lines": 1279
+      "lines": 1283
     },
     "DinghyGrowth": {
       "path": "src/main/java/org/Azkerash/create_bioships/DinghyGrowth.java",
@@ -5044,7 +5135,7 @@
         },
         {
           "kind": "method",
-          "signature": "private static BlockHitResult terrainRay(ServerLevel level, Vec3 from, Vec3 to)",
+          "signature": "static BlockHitResult terrainRay(ServerLevel level, Vec3 from, Vec3 to)",
           "line": 57
         }
       ],
@@ -5062,210 +5153,205 @@
         {
           "kind": "nested type",
           "signature": "public record Decision( Action action, Vec3 point, BlockPos block, LivingEntity entity, ItemEntity item, BehaviorPriority.Offer offer, String reason, boolean recycle)",
-          "line": 47
+          "line": 48
         },
         {
           "kind": "nested type",
           "signature": "private record Needs( boolean digestive, boolean hungry, int food, int flesh, int bone, int fiber, boolean growth, boolean criticalFood)",
-          "line": 72
+          "line": 73
         },
         {
           "kind": "field",
           "signature": "private String previous, reason",
-          "line": 86
+          "line": 87
         },
         {
           "kind": "field",
           "signature": "private Action action",
-          "line": 88
-        },
-        {
-          "kind": "field",
-          "signature": "private boolean growthBlocked",
           "line": 89
         },
         {
           "kind": "field",
-          "signature": "private Decision lastDecision",
+          "signature": "private boolean growthBlocked",
           "line": 90
         },
         {
           "kind": "field",
-          "signature": "private final GoalQueue<Decision> goals",
+          "signature": "private Decision lastDecision",
           "line": 91
         },
         {
-          "kind": "method",
-          "signature": "java.util.List<Decision> queuedGoals()",
+          "kind": "field",
+          "signature": "private final GoalQueue<Decision> goals",
           "line": 92
         },
         {
           "kind": "method",
+          "signature": "java.util.List<Decision> queuedGoals()",
+          "line": 93
+        },
+        {
+          "kind": "method",
           "signature": "private void refreshGoals(List<Decision> proposals)",
-          "line": 96
+          "line": 97
         },
         {
           "kind": "field",
           "signature": "private net.minecraft.nbt.ListTag debugPriorities",
-          "line": 100
+          "line": 101
         },
         {
           "kind": "field",
           "signature": "private int debugOfferCount",
-          "line": 102
-        },
-        {
-          "kind": "method",
-          "signature": "net.minecraft.nbt.ListTag priorities()",
           "line": 103
         },
         {
           "kind": "method",
+          "signature": "net.minecraft.nbt.ListTag priorities()",
+          "line": 104
+        },
+        {
+          "kind": "method",
           "signature": "int offerCount()",
-          "line": 107
+          "line": 108
         },
         {
           "kind": "method",
           "signature": "private void rankForDebug(List<Decision> offers)",
-          "line": 111
+          "line": 112
         },
         {
           "kind": "method",
           "signature": "Decision lastDecision()",
-          "line": 130
+          "line": 131
         },
         {
           "kind": "method",
           "signature": "public Action action()",
-          "line": 134
+          "line": 135
         },
         {
           "kind": "method",
           "signature": "public String reason()",
-          "line": 138
+          "line": 139
         },
         {
           "kind": "method",
           "signature": "void growthBlocked(boolean blocked)",
-          "line": 142
+          "line": 143
         },
         {
           "kind": "method",
           "signature": "private Needs needs(LivingCoreBlockEntity core)",
-          "line": 146
+          "line": 147
         },
         {
           "kind": "method",
           "signature": "boolean shouldHunt(LivingCoreBlockEntity core)",
-          "line": 212
+          "line": 217
         },
         {
           "kind": "method",
           "signature": "private Decision fixed(Action next, String why)",
-          "line": 228
+          "line": 233
         },
         {
           "kind": "method",
           "signature": "private Decision remember(Decision selected)",
-          "line": 240
+          "line": 245
         },
         {
           "kind": "method",
           "signature": "private Decision offer( Action next, Vec3 point, BlockPos block, LivingEntity entity, ItemEntity item, BehaviorPriority.Band band, int urgency, int value, double effort, String why)",
-          "line": 254
+          "line": 259
         },
         {
           "kind": "method",
           "signature": "private Decision chooseOffers(List<Decision> offers)",
-          "line": 281
-        },
-        {
-          "kind": "method",
-          "signature": "private double effort(LivingCoreBlockEntity core, Vec3 point)",
           "line": 286
         },
         {
           "kind": "method",
+          "signature": "private double effort(LivingCoreBlockEntity core, Vec3 point)",
+          "line": 291
+        },
+        {
+          "kind": "method",
           "signature": "boolean interruptsForFood(LivingCoreBlockEntity core)",
-          "line": 290
+          "line": 295
         },
         {
           "kind": "method",
           "signature": "private int materialUrgency(Needs n, BlockState state, boolean wreck)",
-          "line": 294
+          "line": 299
         },
         {
           "kind": "method",
           "signature": "private int itemUrgency(Needs n, ItemStack stack)",
-          "line": 306
+          "line": 311
         },
         {
           "kind": "method",
           "signature": "private Decision source( LivingCoreBlockEntity core, Needs n, BlockPos pos, Vec3 point, BlockState state, int rank, boolean wreck)",
-          "line": 321
+          "line": 326
         },
         {
           "kind": "method",
           "signature": "BioshipPriorities.Objective bestWorld(LivingCoreBlockEntity core)",
-          "line": 386
+          "line": 391
         },
         {
           "kind": "method",
           "signature": "private Decision configuration(LivingCoreBlockEntity core)",
-          "line": 405
+          "line": 410
         },
         {
           "kind": "method",
           "signature": "Decision choose(LivingCoreBlockEntity core)",
-          "line": 461
+          "line": 466
         },
         {
           "kind": "method",
           "signature": "boolean allowsConfiguration(LivingCoreBlockEntity core)",
-          "line": 627
+          "line": 632
         },
         {
           "kind": "method",
           "signature": "MaterialCost materialNeeds(LivingCoreBlockEntity core)",
-          "line": 651
+          "line": 657
         },
         {
           "kind": "method",
           "signature": "boolean needsMaterials(LivingCoreBlockEntity core)",
-          "line": 656
+          "line": 662
         },
         {
           "kind": "method",
           "signature": "LivingEntity attackTarget(LivingCoreBlockEntity core)",
-          "line": 660
+          "line": 666
         },
         {
           "kind": "method",
           "signature": "Vec3 groundGoal(LivingCoreBlockEntity core)",
-          "line": 667
-        },
-        {
-          "kind": "method",
-          "signature": "private Vec3 collectItem(LivingCoreBlockEntity core, Decision d)",
-          "line": 703
+          "line": 673
         },
         {
           "kind": "method",
           "signature": "Vec3 flightVelocity(LivingCoreBlockEntity core)",
-          "line": 736
+          "line": 709
         },
         {
           "kind": "method",
           "signature": "CompoundTag save()",
-          "line": 751
+          "line": 724
         },
         {
           "kind": "method",
           "signature": "void load(CompoundTag tag)",
-          "line": 759
+          "line": 732
         }
       ],
-      "lines": 769
+      "lines": 742
     },
     "BioshipAutonomy": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipAutonomy.java",
@@ -5848,6 +5934,43 @@
       ],
       "lines": 36
     },
+    "AmoebaLegBlock": {
+      "path": "src/main/java/org/Azkerash/create_bioships/AmoebaLegBlock.java",
+      "declaration": "public final class AmoebaLegBlock extends DirectionalBlock",
+      "members": [
+        {
+          "kind": "field",
+          "signature": "public static final MapCodec<AmoebaLegBlock> CODEC",
+          "line": 12
+        },
+        {
+          "kind": "method",
+          "signature": "public AmoebaLegBlock(Properties properties)",
+          "line": 13
+        },
+        {
+          "kind": "method",
+          "signature": "protected MapCodec<? extends DirectionalBlock> codec()",
+          "line": 18
+        },
+        {
+          "kind": "method",
+          "signature": "protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder)",
+          "line": 23
+        },
+        {
+          "kind": "method",
+          "signature": "public BlockState getStateForPlacement(BlockPlaceContext context)",
+          "line": 28
+        },
+        {
+          "kind": "method",
+          "signature": "protected VoxelShape getShape( BlockState state, BlockGetter level, BlockPos pos, CollisionContext context)",
+          "line": 33
+        }
+      ],
+      "lines": 47
+    },
     "EngineRoomLayout": {
       "path": "src/main/java/org/Azkerash/create_bioships/EngineRoomLayout.java",
       "declaration": "final class EngineRoomLayout",
@@ -6032,6 +6155,18 @@
         }
       ],
       "lines": 224
+    },
+    "BioshipFoodCollection": {
+      "path": "src/main/java/org/Azkerash/create_bioships/BioshipFoodCollection.java",
+      "declaration": "final class BioshipFoodCollection",
+      "members": [
+        {
+          "kind": "method",
+          "signature": "static Vec3 collect(LivingCoreBlockEntity core, Vec3 point, ItemEntity item)",
+          "line": 8
+        }
+      ],
+      "lines": 50
     },
     "BioshipNetwork": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipNetwork.java",
@@ -6258,61 +6393,71 @@
       "members": [
         {
           "kind": "nested type",
-          "signature": "public record Leg(Vec3 root, Vec3 foot)",
-          "line": 13
+          "signature": "public record Leg(Vec3 root, Vec3 foot, Direction face, boolean bootstrap)",
+          "line": 14
+        },
+        {
+          "kind": "field",
+          "signature": "private static final List<java.util.function.Function<LivingCoreBlockEntity, List<Leg>>> LEG_PROVIDERS",
+          "line": 34
+        },
+        {
+          "kind": "method",
+          "signature": "public static void registerLegProvider( java.util.function.Function<LivingCoreBlockEntity, List<Leg>> provider)",
+          "line": 37
         },
         {
           "kind": "nested type",
           "signature": "public record Layout(Vec3 center, List<Leg> legs, double margin)",
-          "line": 14
+          "line": 44
         },
         {
           "kind": "nested type",
           "signature": "private record Cached(long time, Layout layout)",
-          "line": 20
+          "line": 50
         },
         {
           "kind": "field",
           "signature": "private static final Map<LivingCoreBlockEntity, Cached> CACHE",
-          "line": 22
+          "line": 52
         },
         {
           "kind": "method",
           "signature": "private static Map<BlockPos, BlockState> cells(LivingCoreBlockEntity core)",
-          "line": 25
+          "line": 55
         },
         {
           "kind": "method",
           "signature": "public static Layout layout(LivingCoreBlockEntity core)",
-          "line": 37
+          "line": 67
         },
         {
           "kind": "method",
           "signature": "private static Layout layout(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells)",
-          "line": 46
+          "line": 76
         },
         {
           "kind": "method",
           "signature": "static boolean safeAddition(LivingCoreBlockEntity core, BlockPos pos, BlockState state)",
-          "line": 146
+          "line": 195
         },
         {
           "kind": "method",
           "signature": "static boolean safeMove( LivingCoreBlockEntity core, BlockPos source, BlockPos target, boolean restoreFlesh)",
-          "line": 152
+          "line": 201
         },
         {
           "kind": "method",
           "signature": "static Layout movedLayout( LivingCoreBlockEntity core, BlockPos source, BlockPos target, boolean restoreFlesh)",
-          "line": 157
+          "line": 206
         },
         {
           "kind": "method",
           "signature": "static boolean containsProjection(Vec3 point, Vec3[] contacts)",
-          "line": 174
+          "line": 223
         }
       ],
-      "lines": 193
+      "lines": 242
     },
     "BioshipRescue": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipRescue.java",
@@ -6870,30 +7015,30 @@
         {
           "kind": "method",
           "signature": "private static void convertFirstBioForge(LivingCoreBlockEntity core, BlockPos pos)",
-          "line": 221
+          "line": 223
         },
         {
           "kind": "method",
           "signature": "static void orientMouth(LivingCoreBlockEntity core)",
-          "line": 246
+          "line": 248
         },
         {
           "kind": "method",
           "signature": "public static void relocateMouth(LivingCoreBlockEntity core, ServerSubLevel ship)",
-          "line": 267
+          "line": 269
         },
         {
           "kind": "method",
           "signature": "public static void routeBioshipWrench(PlayerInteractEvent.RightClickBlock event)",
-          "line": 315
+          "line": 317
         },
         {
           "kind": "method",
           "signature": "public static void feedMaw(PlayerInteractEvent.RightClickBlock event)",
-          "line": 323
+          "line": 325
         }
       ],
-      "lines": 346
+      "lines": 348
     },
     "BioshipAdaptation": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipAdaptation.java",
@@ -6925,57 +7070,82 @@
           "line": 27
         },
         {
+          "kind": "field",
+          "signature": "private boolean starterLegSalvage",
+          "line": 28
+        },
+        {
+          "kind": "field",
+          "signature": "private int starterLegBudget",
+          "line": 29
+        },
+        {
+          "kind": "method",
+          "signature": "int starterLegBudget()",
+          "line": 30
+        },
+        {
+          "kind": "method",
+          "signature": "void usedStarterLeg()",
+          "line": 34
+        },
+        {
+          "kind": "method",
+          "signature": "void salvageStarterLegs()",
+          "line": 38
+        },
+        {
           "kind": "method",
           "signature": "MaterialLedger ledger()",
-          "line": 28
+          "line": 45
         },
         {
           "kind": "method",
           "signature": "int material(String id)",
-          "line": 32
+          "line": 49
         },
         {
           "kind": "method",
           "signature": "void creditRecovery(String id, int count)",
-          "line": 36
-        },
-        {
-          "kind": "method",
-          "signature": "private boolean pay(LivingCoreBlockEntity core, int flesh, int fiber, int bone)",
-          "line": 40
-        },
-        {
-          "kind": "method",
-          "signature": "void maintain(LivingCoreBlockEntity core)",
-          "line": 44
-        },
-        {
-          "kind": "method",
-          "signature": "List<Proposal> proposals(LivingCoreBlockEntity core)",
           "line": 53
         },
         {
           "kind": "method",
+          "signature": "private boolean pay(LivingCoreBlockEntity core, int flesh, int fiber, int bone)",
+          "line": 57
+        },
+        {
+          "kind": "method",
+          "signature": "void maintain(LivingCoreBlockEntity core)",
+          "line": 61
+        },
+        {
+          "kind": "method",
+          "signature": "List<Proposal> proposals(LivingCoreBlockEntity core)",
+          "line": 70
+        },
+        {
+          "kind": "method",
           "signature": "void tick(LivingCoreBlockEntity core)",
-          "line": 58
+          "line": 75
         },
         {
           "kind": "method",
           "signature": "int burnEmergency(LivingCoreBlockEntity core)",
-          "line": 173
+          "line": 194
         },
         {
           "kind": "method",
           "signature": "CompoundTag save()",
-          "line": 186
+          "line": 207
         },
         {
           "kind": "method",
           "signature": "void load(CompoundTag t)",
-          "line": 196
+          "line": 219
         }
       ],
-      "lines": 207
+      "lines": 232
     },
     "HatchlingFront": {
       "path": "src/main/java/org/Azkerash/create_bioships/HatchlingFront.java",
@@ -7149,281 +7319,291 @@
         },
         {
           "kind": "field",
-          "signature": "private int legTier",
+          "signature": "private final BioshipLegAnchors legAnchors",
           "line": 54
+        },
+        {
+          "kind": "method",
+          "signature": "public BioshipLegAnchors legAnchors()",
+          "line": 56
+        },
+        {
+          "kind": "field",
+          "signature": "private int legTier",
+          "line": 60
         },
         {
           "kind": "field",
           "signature": "private double measuredLoad",
-          "line": 56
+          "line": 62
         },
         {
           "kind": "method",
           "signature": "public double measuredLoad()",
-          "line": 57
+          "line": 63
         },
         {
           "kind": "method",
           "signature": "public int legTier()",
-          "line": 61
+          "line": 67
         },
         {
           "kind": "method",
           "signature": "public int extraLift()",
-          "line": 65
+          "line": 71
         },
         {
           "kind": "method",
           "signature": "public int footingReach()",
-          "line": 69
+          "line": 75
         },
         {
           "kind": "method",
           "signature": "public double legThickness()",
-          "line": 73
+          "line": 79
         },
         {
           "kind": "method",
           "signature": "public double loadCapacity()",
-          "line": 77
+          "line": 83
         },
         {
           "kind": "method",
           "signature": "static double capacityFor(int tier)",
-          "line": 81
+          "line": 87
         },
         {
           "kind": "method",
           "signature": "int hullTier(LivingCoreBlockEntity core)",
-          "line": 85
+          "line": 91
         },
         {
           "kind": "method",
           "signature": "double blockLoad( LivingCoreBlockEntity core, BlockPos pos, net.minecraft.world.level.block.state.BlockState state)",
-          "line": 99
+          "line": 105
         },
         {
           "kind": "method",
           "signature": "public double carriedLoad(LivingCoreBlockEntity core)",
-          "line": 111
+          "line": 117
         },
         {
           "kind": "method",
           "signature": "boolean canEnhance(LivingCoreBlockEntity core)",
-          "line": 121
+          "line": 127
         },
         {
           "kind": "method",
           "signature": "private void payEnhancement(LivingCoreBlockEntity core)",
-          "line": 131
+          "line": 137
         },
         {
           "kind": "method",
           "signature": "boolean enhance(LivingCoreBlockEntity core)",
-          "line": 141
+          "line": 147
         },
         {
           "kind": "method",
           "signature": "private boolean supportLoad(LivingCoreBlockEntity core)",
-          "line": 148
+          "line": 154
         },
         {
           "kind": "field",
           "signature": "private int cursor",
-          "line": 155
+          "line": 161
         },
         {
           "kind": "field",
           "signature": "private final GroundRoute route",
-          "line": 157
+          "line": 163
         },
         {
           "kind": "field",
           "signature": "private String selection",
-          "line": 158
+          "line": 164
         },
         {
           "kind": "method",
           "signature": "private void retireChangedSelection(LivingCoreBlockEntity core)",
-          "line": 159
+          "line": 165
         },
         {
           "kind": "field",
           "signature": "private final Map<BlockPos, Long> unreachable",
-          "line": 165
+          "line": 171
         },
         {
           "kind": "method",
           "signature": "net.minecraft.nbt.CompoundTag navigationDebug(long now)",
-          "line": 167
+          "line": 173
         },
         {
           "kind": "method",
           "signature": "public java.util.List<Vec3> path()",
-          "line": 176
+          "line": 182
         },
         {
           "kind": "method",
           "signature": "boolean reachableGoal(BlockPos pos)",
-          "line": 180
+          "line": 186
         },
         {
           "kind": "field",
           "signature": "private long currentTime",
-          "line": 184
+          "line": 190
         },
         {
           "kind": "method",
           "signature": "void lowerHeight(double height)",
-          "line": 186
+          "line": 192
         },
         {
           "kind": "method",
           "signature": "void stepHeight(double height)",
-          "line": 190
-        },
-        {
-          "kind": "field",
-          "signature": "private boolean gathering",
-          "line": 194
-        },
-        {
-          "kind": "field",
-          "signature": "private Direction wallFacing",
           "line": 196
         },
         {
           "kind": "field",
+          "signature": "private boolean gathering",
+          "line": 200
+        },
+        {
+          "kind": "field",
+          "signature": "private Direction wallFacing",
+          "line": 202
+        },
+        {
+          "kind": "field",
           "signature": "private double wallDistance",
-          "line": 197
+          "line": 203
         },
         {
           "kind": "method",
           "signature": "public Direction wallFacing()",
-          "line": 198
+          "line": 204
         },
         {
           "kind": "method",
           "signature": "public double wallDistance()",
-          "line": 202
+          "line": 208
         },
         {
           "kind": "method",
           "signature": "void clingHeight(double height)",
-          "line": 206
+          "line": 212
         },
         {
           "kind": "field",
           "signature": "private Vec3 reach",
-          "line": 210
+          "line": 216
         },
         {
           "kind": "method",
           "signature": "public Vec3 reach()",
-          "line": 212
+          "line": 218
         },
         {
           "kind": "method",
           "signature": "void reach(Vec3 point)",
-          "line": 216
+          "line": 222
         },
         {
           "kind": "field",
           "signature": "private double supportHeight",
-          "line": 220
+          "line": 226
         },
         {
           "kind": "field",
           "signature": "private Vec3 stanceUp",
-          "line": 222
+          "line": 228
         },
         {
           "kind": "method",
           "signature": "public boolean bracing()",
-          "line": 223
+          "line": 229
         },
         {
           "kind": "method",
           "signature": "public double supportHeight()",
-          "line": 227
+          "line": 233
         },
         {
           "kind": "method",
           "signature": "public Vec3 stanceUp()",
-          "line": 231
+          "line": 237
         },
         {
           "kind": "method",
           "signature": "public boolean walking()",
-          "line": 235
+          "line": 241
         },
         {
           "kind": "method",
           "signature": "public boolean gathering()",
-          "line": 239
+          "line": 245
         },
         {
           "kind": "method",
           "signature": "void stop()",
-          "line": 243
+          "line": 249
         },
         {
           "kind": "method",
           "signature": "Vec3 steeringGoal()",
-          "line": 252
+          "line": 258
         },
         {
           "kind": "method",
           "signature": "public Vec3 goal()",
-          "line": 257
+          "line": 263
         },
         {
           "kind": "method",
           "signature": "void tick(LivingCoreBlockEntity core, boolean blocked)",
-          "line": 261
+          "line": 267
         },
         {
           "kind": "method",
           "signature": "boolean clear(LivingCoreBlockEntity core, Vec3 candidate)",
-          "line": 334
+          "line": 341
         },
         {
           "kind": "method",
           "signature": "Vec3 velocity(LivingCoreBlockEntity core)",
-          "line": 372
+          "line": 379
         },
         {
           "kind": "method",
           "signature": "private BlockPos ground(ServerLevel level, BlockPos point)",
-          "line": 408
+          "line": 415
         },
         {
           "kind": "method",
           "signature": "private BlockPos ground(ServerLevel level, BlockPos point, double highestTop)",
-          "line": 412
+          "line": 419
         },
         {
           "kind": "method",
           "signature": "private void braceGrip(LivingCoreBlockEntity core, Vec3 here, GroundRoute.Grip grip)",
-          "line": 423
+          "line": 430
         },
         {
           "kind": "method",
           "signature": "private void brace(LivingCoreBlockEntity core)",
-          "line": 439
+          "line": 446
         },
         {
           "kind": "method",
           "signature": "CompoundTag save()",
-          "line": 525
+          "line": 537
         },
         {
           "kind": "method",
           "signature": "void load(CompoundTag t)",
-          "line": 556
+          "line": 569
         }
       ],
-      "lines": 590
+      "lines": 604
     },
     "StomachMenu": {
       "path": "src/main/java/org/Azkerash/create_bioships/StomachMenu.java",
@@ -7586,6 +7766,38 @@
       ],
       "lines": 98
     },
+    "BioshipLegGrowth": {
+      "path": "src/main/java/org/Azkerash/create_bioships/BioshipLegGrowth.java",
+      "declaration": "final class BioshipLegGrowth",
+      "members": [
+        {
+          "kind": "field",
+          "signature": "static final MaterialCost COST",
+          "line": 9
+        },
+        {
+          "kind": "method",
+          "signature": "static int missing(LivingCoreBlockEntity core)",
+          "line": 10
+        },
+        {
+          "kind": "method",
+          "signature": "static BioshipAdaptation.Proposal proposal(LivingCoreBlockEntity core)",
+          "line": 20
+        },
+        {
+          "kind": "method",
+          "signature": "static boolean develop(LivingCoreBlockEntity core, BlockPos pos, BlockState state)",
+          "line": 84
+        },
+        {
+          "kind": "method",
+          "signature": "static List<BioshipSupport.Leg> attachments( LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells)",
+          "line": 98
+        }
+      ],
+      "lines": 118
+    },
     "EmergencyReserve": {
       "path": "src/main/java/org/Azkerash/create_bioships/EmergencyReserve.java",
       "declaration": "final class EmergencyReserve",
@@ -7620,102 +7832,122 @@
         {
           "kind": "field",
           "signature": "public static final int WINDUP, SWEEP",
-          "line": 10
-        },
-        {
-          "kind": "field",
-          "signature": "private Vec3 aim",
           "line": 11
         },
         {
           "kind": "field",
-          "signature": "private UUID victim",
+          "signature": "public static final double TIP_HALF_SIZE",
           "line": 12
         },
         {
           "kind": "field",
-          "signature": "private long started",
+          "signature": "private Vec3 aim",
           "line": 13
         },
         {
           "kind": "field",
-          "signature": "private boolean hit",
+          "signature": "private UUID victim",
           "line": 14
+        },
+        {
+          "kind": "field",
+          "signature": "private long started",
+          "line": 15
+        },
+        {
+          "kind": "field",
+          "signature": "private boolean hit",
+          "line": 16
         },
         {
           "kind": "method",
           "signature": "public boolean active()",
-          "line": 15
+          "line": 17
         },
         {
           "kind": "method",
           "signature": "public LivingEntity victim(ServerLevel level)",
-          "line": 19
+          "line": 21
         },
         {
           "kind": "method",
           "signature": "void begin(LivingEntity target, long now)",
-          "line": 23
+          "line": 25
         },
         {
           "kind": "method",
           "signature": "void clear()",
-          "line": 30
+          "line": 32
         },
         {
           "kind": "method",
           "signature": "public boolean finished(long now)",
-          "line": 36
+          "line": 38
         },
         {
           "kind": "method",
           "signature": "public Vec3 tip(Vec3 root, double now, double reach)",
-          "line": 40
+          "line": 42
+        },
+        {
+          "kind": "method",
+          "signature": "public boolean sweeping(long now)",
+          "line": 53
         },
         {
           "kind": "method",
           "signature": "boolean tick( LivingCoreBlockEntity core, Vec3 root, LivingEntity target, double reach, float damage)",
-          "line": 51
+          "line": 57
+        },
+        {
+          "kind": "method",
+          "signature": "static boolean tipCollision(AABB target, Vec3 previous, Vec3 current)",
+          "line": 77
         },
         {
           "kind": "method",
           "signature": "CompoundTag save()",
-          "line": 75
+          "line": 85
         },
         {
           "kind": "method",
           "signature": "void load(CompoundTag tag)",
-          "line": 84
+          "line": 94
         }
       ],
-      "lines": 92
+      "lines": 102
     },
     "BioshipTissue": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipTissue.java",
       "declaration": "public final class BioshipTissue",
       "members": [
         {
-          "kind": "method",
-          "signature": "public static Block body()",
+          "kind": "field",
+          "signature": "static final MaterialCost GROWTH_COST",
           "line": 7
         },
         {
           "kind": "method",
+          "signature": "public static Block body()",
+          "line": 9
+        },
+        {
+          "kind": "method",
           "signature": "public static boolean isTissue(BlockState state)",
-          "line": 10
+          "line": 13
         },
         {
           "kind": "method",
           "signature": "static void remember( net.minecraft.world.level.block.entity.BlockEntity entity, BlockState state)",
-          "line": 14
+          "line": 17
         },
         {
           "kind": "method",
           "signature": "static BlockState host(net.minecraft.world.level.block.entity.BlockEntity entity)",
-          "line": 24
+          "line": 27
         }
       ],
-      "lines": 40
+      "lines": 43
     },
     "NavigationLab": {
       "path": "src/main/java/org/Azkerash/create_bioships/NavigationLab.java",
@@ -7884,141 +8116,146 @@
         },
         {
           "kind": "method",
-          "signature": "public String grasper(UUID cargo)",
+          "signature": "Collection<String> busyGraspers()",
           "line": 14
         },
         {
-          "kind": "field",
-          "signature": "private final List<CompoundTag> stock",
+          "kind": "method",
+          "signature": "public String grasper(UUID cargo)",
           "line": 18
         },
         {
           "kind": "field",
-          "signature": "private UUID wreck",
-          "line": 20
-        },
-        {
-          "kind": "field",
-          "signature": "private boolean settling, deploymentBlocked, resumeWreck, feedingJob",
-          "line": 21
-        },
-        {
-          "kind": "method",
-          "signature": "boolean feeding()",
+          "signature": "private final List<CompoundTag> stock",
           "line": 22
         },
         {
           "kind": "field",
-          "signature": "private long retry",
+          "signature": "private UUID wreck",
+          "line": 24
+        },
+        {
+          "kind": "field",
+          "signature": "private boolean settling, deploymentBlocked, resumeWreck, feedingJob",
+          "line": 25
+        },
+        {
+          "kind": "method",
+          "signature": "boolean feeding()",
           "line": 26
+        },
+        {
+          "kind": "field",
+          "signature": "private long retry",
+          "line": 30
         },
         {
           "kind": "method",
           "signature": "public List<OrganMotion.Move> arms()",
-          "line": 28
-        },
-        {
-          "kind": "method",
-          "signature": "boolean active()",
           "line": 32
         },
         {
           "kind": "method",
-          "signature": "boolean committed()",
+          "signature": "boolean active()",
           "line": 36
         },
         {
           "kind": "method",
-          "signature": "boolean pending()",
+          "signature": "boolean committed()",
           "line": 40
         },
         {
           "kind": "method",
-          "signature": "boolean finishing()",
+          "signature": "boolean pending()",
           "line": 44
         },
         {
           "kind": "method",
-          "signature": "int stored()",
+          "signature": "boolean finishing()",
           "line": 48
         },
         {
           "kind": "method",
-          "signature": "double load(LivingCoreBlockEntity core)",
+          "signature": "int stored()",
           "line": 52
         },
         {
           "kind": "method",
+          "signature": "double load(LivingCoreBlockEntity core)",
+          "line": 56
+        },
+        {
+          "kind": "method",
           "signature": "private static BlockState state(LivingCoreBlockEntity core, CompoundTag tag)",
-          "line": 61
+          "line": 65
         },
         {
           "kind": "method",
           "signature": "boolean acceptItem(LivingCoreBlockEntity core, net.minecraft.world.item.ItemStack stack)",
-          "line": 69
+          "line": 73
         },
         {
           "kind": "method",
           "signature": "void receive(LivingCoreBlockEntity core, ServerSubLevel cargo, BlockPos pos)",
-          "line": 86
+          "line": 90
         },
         {
           "kind": "method",
           "signature": "List<BioshipScavenging.Source> remaining(LivingCoreBlockEntity core)",
-          "line": 112
+          "line": 116
         },
         {
           "kind": "method",
           "signature": "private List<Vec3> cluster(LivingCoreBlockEntity core, Vec3 primary)",
-          "line": 135
+          "line": 139
         },
         {
           "kind": "method",
           "signature": "Vec3 gatheringPoint(LivingCoreBlockEntity core, Vec3 primary)",
-          "line": 147
+          "line": 151
         },
         {
           "kind": "method",
           "signature": "boolean clusterReachable(LivingCoreBlockEntity core, Vec3 candidate)",
-          "line": 154
+          "line": 158
         },
         {
           "kind": "method",
           "signature": "boolean start(LivingCoreBlockEntity core, BioshipBrain.Decision chosen)",
-          "line": 163
+          "line": 167
         },
         {
           "kind": "method",
           "signature": "void tick(LivingCoreBlockEntity core)",
-          "line": 227
+          "line": 231
         },
         {
           "kind": "method",
           "signature": "private void settle(LivingCoreBlockEntity core)",
-          "line": 258
+          "line": 262
         },
         {
           "kind": "method",
           "signature": "private void take(CompoundTag tag)",
-          "line": 352
+          "line": 356
         },
         {
           "kind": "method",
           "signature": "void abandon(LivingCoreBlockEntity core)",
-          "line": 358
+          "line": 362
         },
         {
           "kind": "method",
           "signature": "CompoundTag save()",
-          "line": 388
+          "line": 392
         },
         {
           "kind": "method",
           "signature": "void load(CompoundTag tag)",
-          "line": 406
+          "line": 410
         }
       ],
-      "lines": 431
+      "lines": 435
     },
     "EngineRoomSizing": {
       "path": "src/main/java/org/Azkerash/create_bioships/EngineRoomSizing.java",
@@ -8249,15 +8486,15 @@
         {
           "kind": "method",
           "signature": "private void renderBatch( LivingCoreBlockEntity core, float partial, PoseStack pose, MultiBufferSource buffers, int light)",
-          "line": 187
+          "line": 199
         },
         {
           "kind": "method",
           "signature": "private void renderLegs( LivingCoreBlockEntity core, float partial, PoseStack pose, MultiBufferSource buffers, int light)",
-          "line": 240
+          "line": 252
         }
       ],
-      "lines": 353
+      "lines": 357
     },
     "client.BlueprintScreen": {
       "path": "src/main/java/org/Azkerash/create_bioships/client/BlueprintScreen.java",

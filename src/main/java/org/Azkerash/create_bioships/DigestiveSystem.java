@@ -573,6 +573,16 @@ public final class DigestiveSystem {
     return path != null && connectedStore(core, stomach, pos, path);
   }
 
+  /** Shared functional-digestion prerequisite, independent of the upgrade being considered. */
+  static boolean functional(LivingCoreBlockEntity core) {
+    if (core.ship() == null || core.body().dead()) return false;
+    var stomachs = stomachs(core);
+    int required = BioshipDigestiveGrowth.target(core);
+    return mouths(core).size() >= required
+        && stomachs.size() >= required
+        && stomachs.stream().allMatch(stomach -> stomach.connected(core));
+  }
+
   public static boolean offerFood(LivingCoreBlockEntity core, ItemStack stack, boolean inherited) {
     for (var stomach : stomachs(core)) if (offerFood(core, stomach, stack, inherited)) return true;
     return false;

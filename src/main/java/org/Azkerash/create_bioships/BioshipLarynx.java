@@ -36,12 +36,7 @@ final class BioshipLarynx {
   }
 
   static boolean ready(LivingCoreBlockEntity core) {
-    if (core.ship() == null || core.body().dead() || BioshipNutrition.critical(core)) return false;
-    var stomachs = DigestiveSystem.stomachs(core);
-    int required = BioshipDigestiveGrowth.target(core);
-    return DigestiveSystem.mouths(core).size() >= required
-        && stomachs.size() >= required
-        && stomachs.stream().allMatch(s -> s.connected(core));
+    return !BioshipNutrition.critical(core) && DigestiveSystem.functional(core);
   }
 
   static BioshipAdaptation.Proposal proposal(LivingCoreBlockEntity core) {

@@ -184,6 +184,18 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
       pose.popPose();
       previous = point;
     }
+    if (core.attackSweeping()
+        && net.minecraft.client.Minecraft.getInstance()
+            .getEntityRenderDispatcher()
+            .shouldRenderHitBoxes())
+      LevelRenderer.renderLineBox(
+          pose,
+          buffers.getBuffer(RenderType.lines()),
+          new net.minecraft.world.phys.AABB(reach, reach).inflate(TentacleStrike.TIP_HALF_SIZE),
+          1f,
+          .2f,
+          .2f,
+          1f);
   }
 
   private void renderBatch(
@@ -271,60 +283,40 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
               0,
               moving ? Math.max(0, Math.sin(phase)) * (scuttling ? .16 : .45) : 0,
               moving ? Math.cos(phase) * (scuttling ? .25 : .45) : 0);
-      if (scuttling && core.crawl().wallFacing() != null) {
-        var normal = Vec3.atLowerCornerOf(core.crawl().wallFacing().getNormal());
-        var tangent =
-            Math.abs(normal.y) > .5 ? new Vec3(1, 0, 0) : new Vec3(-normal.z, 0, normal.x);
-        var second = normal.cross(tangent);
-        foot =
-            new Vec3(.5, .4, .5)
-                .add(
-                    normal.scale(
-                        core.crawl().wallDistance()
-                            - (moving ? Math.max(0, Math.sin(phase)) * .12 : 0)))
-                .add(tangent.scale(side * .7))
-                .add(second.scale(front * .65 + (moving ? Math.cos(phase) * .2 : 0)));
-      }
-      if (core.crawl().wallFacing() == null && !core.aquatic().swimming()) {
+      if (!core.aquatic().swimming()) {
+        var planted = core.crawl().legAnchors().foot(leg, core.getLevel().getGameTime() + partial);
         var container = SubLevelContainer.getContainer(core.getLevel());
         var plot = container == null ? null : container.getPlot(new ChunkPos(core.getBlockPos()));
-        if (plot != null) {
+        if (planted != null && plot != null) {
           var transform =
               plot.getSubLevel() instanceof ClientSubLevel client
                   ? client.renderPose(partial)
                   : plot.getSubLevel().logicalPose();
-          var world =
-              transform.transformPosition(
-                  Vec3.atLowerCornerOf(core.structuralOrigin())
-                      .add(foot.x, base.y + (scuttling ? .85 : 1.25), foot.z));
-          for (int reach = 0; reach <= core.crawl().footingReach(); reach++) {
-            var floor = net.minecraft.core.BlockPos.containing(world).below(reach);
-            if (core.getLevel()
-                .getBlockState(floor)
-                .isFaceSturdy(core.getLevel(), floor, net.minecraft.core.Direction.UP)) {
-              var local =
-                  transform.transformPositionInverse(new Vec3(world.x, floor.getY() + 1, world.z));
-              foot =
-                  new Vec3(
-                      foot.x,
-                      local.y
-                          - core.structuralOrigin().getY()
-                          + (moving ? Math.max(0, Math.sin(phase)) * .16 : 0),
-                      foot.z);
-              break;
-            }
-          }
-        }
+          foot =
+              transform
+                  .transformPositionInverse(planted)
+                  .subtract(Vec3.atLowerCornerOf(core.structuralOrigin()));
+        } else foot = root;
       }
+      var tipUp = new Vec3(0, 1, 0);
+      var container = SubLevelContainer.getContainer(core.getLevel());
+      var plot = container == null ? null : container.getPlot(new ChunkPos(core.getBlockPos()));
+      if (plot != null) {
+        var transform =
+            plot.getSubLevel() instanceof ClientSubLevel client
+                ? client.renderPose(partial)
+                : plot.getSubLevel().logicalPose();
+        tipUp =
+            transform
+                .transformPositionInverse(core.crawl().legAnchors().normal(leg))
+                .subtract(transform.transformPositionInverse(Vec3.ZERO))
+                .normalize();
+      }
+      if (root.distanceToSqr(foot) < .0001) continue;
       Vec3 previous = root;
       for (int i = 1; i <= 10; i++) {
         double t = i / 10.0;
-        Vec3 point =
-            root.lerp(foot, t)
-                .add(
-                    side * Math.sin(Math.PI * t) * .3,
-                    Math.sin(Math.PI * t) * (scuttling ? .25 : .6),
-                    0);
+        Vec3 point = support.legs().get(leg).curve(foot, tipUp, t);
         Vec3 delta = point.subtract(previous);
         pose.pushPose();
         pose.translate(previous.x, previous.y, previous.z);
@@ -346,6 +338,18 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
             i);
         pose.popPose();
         previous = point;
+      }
+      if (net.minecraft.client.Minecraft.getInstance()
+          .getEntityRenderDispatcher()
+          .shouldRenderHitBoxes()) {
+        LevelRenderer.renderLineBox(
+            pose,
+            buffers.getBuffer(RenderType.lines()),
+            new net.minecraft.world.phys.AABB(foot, foot).inflate(BioshipLegAnchors.TIP_RADIUS),
+            .2f,
+            1f,
+            .4f,
+            1f);
       }
     }
     pose.popPose();

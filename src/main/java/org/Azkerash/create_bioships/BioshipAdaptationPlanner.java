@@ -102,6 +102,8 @@ final class BioshipAdaptationPlanner {
                 "Reclaim nonessential tissue into resources for digestive recovery"));
     }
     if (stomach == null || !core.hasMouth() || !stomach.connected(core)) return result;
+    var legs = BioshipLegGrowth.proposal(core);
+    if (legs != null) result.add(legs);
     var voice = BioshipLarynx.proposal(core);
     if (voice != null) result.add(voice);
     var room = core.engineRoom().quote(core);
@@ -171,6 +173,12 @@ final class BioshipAdaptationPlanner {
                 8 + tubes + (stronger ? 8 : 0),
                 4 + tubes + (stronger ? 4 : 0),
                 stronger ? 3 : 1)
+            && EmergencyReserve.after(
+                core,
+                new MaterialCost(
+                    8 + tubes + (stronger ? 8 : 0),
+                    4 + tubes + (stronger ? 4 : 0),
+                    stronger ? 3 : 1))
             && (!stronger || core.crawl().canEnhance(core))
             && BioshipSupport.safeAddition(core, pos, state))
           result.add(

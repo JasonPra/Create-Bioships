@@ -74,5 +74,6 @@
   "item.create_bioships.spider_meat": "Raw Spider Meat",
   "item.create_bioships.illager_meat": "Raw Illager Meat",
   "item.create_bioships.aquatic_meat": "Raw Aquatic Meat",
-  "item.create_bioships.creature_meat": "Raw Creature Meat"
+  "item.create_bioships.creature_meat": "Raw Creature Meat",
+  "block.create_bioships.amoeba_leg": "Amoeba Leg"
 }

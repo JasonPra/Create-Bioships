@@ -35,6 +35,9 @@ For the complete class structure beneath each subsystem, see the
 | `BioshipAdaptation` | Persistent adaptive state and executing the selected funded proposal | Its own competing target selector or independent resource policy |
 | `BioshipStructure` | Reading loaded Sable cells through one shared adapter | Deciding whether a block should be eaten, repaired or moved |
 | `BioshipSupport` | Common mass-weighted attachments, support footprint and hypothetical relocation checks | Moving the core or paying for stronger legs |
+| `BioshipLegGrowth` | Quotes and pays for face-mounted Amoeba Leg sockets | Uses shared functional digestion, the material account and the existing goal queue |
+| `BioshipLegAnchors` | Planted world-space contact boxes and procedural step state | Senses terrain; does not select goals, spend resources or replace the physics actuator |
+| `BioshipFoodCollection` | Executes selected intake through a mouth-bound grasper | Routes food into that mouth's own stomach; does not select behavior |
 | `BioshipVision` / `TargetMemory` | Visibility and observation lifetime | Choosing a goal or moving toward it |
 | `GroundRoute` / `BioshipCrawl` | Collision-aware routes, movement progress/failure and supported gait | A second independent supply target selector |
 | `BioshipAssimilation` | Batch progress, conserved swallowed stock and wreck-job continuation | Hunger thresholds or a second resource accounting policy |

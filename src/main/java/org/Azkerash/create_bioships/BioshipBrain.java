@@ -30,6 +30,7 @@ public final class BioshipBrain {
     REGROW_MOUTH,
     REGROW_STOMACH,
     GROW_LARYNX,
+    GROW_LEG,
     GROW_STORAGE,
     GROW_DIGESTION,
     GROW_ENGINE_ROOM,
@@ -169,6 +170,7 @@ public final class BioshipBrain {
                             .filter(e -> BioshipLarynx.isLarynx(e.getBlockState()))
                             .count())
             : 0;
+    int legs = digestive ? BioshipLegGrowth.missing(core) : 0;
     int repair = (int) Math.ceil(Math.max(0, core.body().capacity() - core.body().health()) / 4);
     int flesh =
         (AirshipPrototype.available() ? core.missingBiomass() : 0)
@@ -178,7 +180,8 @@ public final class BioshipBrain {
             + EmergencyReserve.TARGET.flesh()
             + 8 * extraMouths
             + 16 * extraStomachs
-            + 8 * voice;
+            + 8 * voice
+            + 4 * legs;
     int bone =
         (core.frameFunded() ? 0 : 8)
             + 2 * upgrades
@@ -186,7 +189,8 @@ public final class BioshipBrain {
             + EmergencyReserve.TARGET.bone()
             + 2 * extraMouths
             + 4 * extraStomachs
-            + 2 * voice;
+            + 2 * voice
+            + legs;
     int fiber =
         (core.frameFunded() ? 0 : 12)
             + 4 * upgrades
@@ -194,7 +198,8 @@ public final class BioshipBrain {
             + EmergencyReserve.TARGET.fiber()
             + 4 * extraMouths
             + 8 * extraStomachs
-            + 4 * voice;
+            + 4 * voice
+            + 2 * legs;
     if (stomach != null) {
       flesh -= stomach.material("biomancy:flesh_bits");
       bone -= stomach.material("biomancy:bone_fragments");
@@ -639,6 +644,7 @@ public final class BioshipBrain {
           REGROW_MOUTH,
           REGROW_STOMACH,
           GROW_LARYNX,
+          GROW_LEG,
           GROW_STORAGE,
           GROW_DIGESTION,
           GROW_ENGINE_ROOM,

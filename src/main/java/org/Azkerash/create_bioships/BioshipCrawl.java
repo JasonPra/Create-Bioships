@@ -53,6 +53,12 @@ public final class BioshipCrawl {
     return mode.equals("flee") || mode.equals("defend") || mode.equals("forage") && goal != null;
   }
 
+  private final BioshipLegAnchors legAnchors = new BioshipLegAnchors();
+
+  public BioshipLegAnchors legAnchors() {
+    return legAnchors;
+  }
+
   private int legTier;
   private double measuredLoad;
 
@@ -267,6 +273,7 @@ public final class BioshipCrawl {
     unreachable.entrySet().removeIf(e -> e.getValue() <= currentTime);
     boolean supported = core.canFly() || supportLoad(core);
     brace(core);
+    legAnchors.tick(core);
     if (core.isMature() && core.canFly()
         || !supported
         || core.body().health() <= 0
@@ -464,12 +471,12 @@ public final class BioshipCrawl {
     }
     var layout = BioshipSupport.layout(core);
     if (!layout.stable()) return;
-    Vec3[] contacts = new Vec3[4];
+    Vec3[] contacts = new Vec3[layout.legs().size()];
     int count = 0;
     double highest = -Double.MAX_VALUE;
     double sum = 0;
     double legHeight = core.hatchling() ? .85 : 1.25;
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < layout.legs().size(); i++) {
       var foot = layout.legs().get(i).foot();
       var local =
           Vec3.atLowerCornerOf(core.structuralOrigin()).add(foot.x, foot.y + legHeight, foot.z);
@@ -478,7 +485,12 @@ public final class BioshipCrawl {
       var floor = ground(level, BlockPos.containing(point), point.y - legHeight + extraLift() + .5);
       if (floor == null) continue;
       double top = floor.getY() + 1;
-      contacts[i] = new Vec3(point.x, top, point.z);
+      var planted = legAnchors.supportContact(level, i, level.getGameTime());
+      contacts[i] =
+          planted != null && planted.distanceToSqr(world) < Math.pow(footingReach(), 2)
+              ? planted
+              : new Vec3(point.x, top, point.z);
+      top = contacts[i].y;
       highest = Math.max(highest, top);
       sum += top;
       count++;
@@ -508,7 +520,7 @@ public final class BioshipCrawl {
     if (highest - (anchor.y + underside) > extraLift() + .25
         || anchor.y + underside - highest > 2.75 + legTier) return;
     supportHeight = wanted;
-    if (count == 4) {
+    if (count == 4 && contacts.length == 4) {
       var right = contacts[1].add(contacts[3]).subtract(contacts[0]).subtract(contacts[2]);
       var forward = contacts[0].add(contacts[1]).subtract(contacts[2]).subtract(contacts[3]);
       var normal = right.cross(forward).normalize();
@@ -528,6 +540,7 @@ public final class BioshipCrawl {
     var t = new CompoundTag();
     t.putInt("Wall", wallFacing == null ? -1 : wallFacing.ordinal());
     t.putDouble("WallDistance", wallDistance);
+    t.put("LegAnchors", legAnchors.save());
     t.putString("Mode", mode);
     t.putBoolean("Walking", walking);
     t.putBoolean("Gathering", gathering);
@@ -556,6 +569,7 @@ public final class BioshipCrawl {
   }
 
   void load(CompoundTag t) {
+    legAnchors.load(t.getCompound("LegAnchors"));
     // Routes and selection identity are transient; a restored goal must be replanned together.
     selection = "";
     route.clear();
