@@ -8415,4 +8415,39 @@ public class BioshipGameTests {
                       "Canceled mounting lost the real leg cargo");
                 }));
   }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "face_connected_anatomy")
+  public static void body_topology_distinguishes_edges_bridges_and_conserved_repair(
+      GameTestHelper helper) {
+    helper.assertTrue(
+        BodyTopology.components(Set.of(BlockPos.ZERO, new BlockPos(1, 1, 0))) == 2,
+        "Corner contact counted as face-connected anatomy");
+    helper.assertTrue(
+        BodyTopology.components(Set.of(BlockPos.ZERO, new BlockPos(1, 0, 0))) == 1,
+        "Shared full cell face was disconnected");
+    var body = Set.of(BlockPos.ZERO, new BlockPos(1, 0, 0), new BlockPos(2, 0, 0));
+    helper.assertTrue(
+        !BodyTopology.canRemove(body, new BlockPos(1, 0, 0))
+            && !BodyTopology.canMove(body, new BlockPos(1, 0, 0), new BlockPos(1, 1, 0), false),
+        "In-transit removal disconnected a structural bridge");
+    helper.assertTrue(
+        BodyTopology.canMove(body, new BlockPos(1, 0, 0), new BlockPos(1, 1, 0), true),
+        "Retained support was ignored");
+    var socketBridge =
+        Map.of(
+            BlockPos.ZERO,
+            Create_bioships.CORE.get().defaultBlockState(),
+            new BlockPos(1, 0, 0),
+            Create_bioships.AMOEBA_LEG.get().defaultBlockState(),
+            new BlockPos(2, 0, 0),
+            BioshipTissue.body().defaultBlockState());
+    helper.assertTrue(
+        BodyTopology.components(BodyTopology.structuralCells(socketBridge)) == 2,
+        "Leg socket counted as a structural bridge between body sections");
+    var broken = Set.of(BlockPos.ZERO, new BlockPos(1, 1, 0));
+    helper.assertTrue(
+        BodyTopology.canMove(broken, new BlockPos(1, 1, 0), new BlockPos(1, 0, 0), false),
+        "Repair could not reconnect an existing disconnected component");
+    helper.succeed();
+  }
 }

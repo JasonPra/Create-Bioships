@@ -1,0 +1,71 @@
+{
+  "checkpoint": "c87c927 + read-only diagnostic commands",
+  "seed": 8675309,
+  "method": "Copied saved world; reset starters with ticks frozen, bootstrap up to a mouth, two fills of nine mouth slots with 64 pork each, two 600-tick intervals. Explicit /tick rate and /tick step, no /tick sprint.",
+  "cases": [
+    {
+      "requested_tps": 20,
+      "intervals": [
+        {
+          "ticks": 200,
+          "actual_ticks": 200.0,
+          "seconds": 10.221930747997249,
+          "observed_tps": 19.565775285572677
+        },
+        {
+          "ticks": 600,
+          "actual_ticks": 600.0,
+          "seconds": 32.92918152100174,
+          "observed_tps": 18.220920541779304
+        },
+        {
+          "ticks": 600,
+          "actual_ticks": 600.0,
+          "seconds": 37.604353939997964,
+          "observed_tps": 15.955599209532185
+        }
+      ],
+      "mouth_slot_fills": 18,
+      "peak_height": 2.0,
+      "peak_grid_sections": 2.0,
+      "final_grid_sections": 1.0,
+      "final_snapshot": "{Behavior:\"ASSIMILATE\",Blocks:7,Cells:\"[BlockPos{x=0, y=0, z=0}=Block{create_bioships:feeding_mouth}[facing=north], BlockPos{x=1, y=0, z=0}=Block{create_bioships:amoeba_leg}[facing=east], BlockPos{x=0, y=0, z=1}=Block{create_bioships:stomach}[facing=west], BlockPos{x=0, y=0, z=2}=Block{create_bioships:amoeba_leg}[facing=south], BlockPos{x=0, y=1, z=-2}=Block{create_bioships:amoeba_leg}[facing=north], BlockPos{x=0, y=1, z=-1}=Block{create_bioships:living_core}[active=true,blink=false,concealed=false,facing=east,relocating=false], BlockPos{x=0, y=1, z=0}=Block{create_bioships:amoeba_leg}[facing=south]]\",ChunkLease:1b,ConnectedStomachs:1,CoreCoverage:16,CoreElevation:1,CoreMove:{Evasive:0b,Feeding:0b,Home:5629783292128559232L,LayoutDirty:0b,NextScan:8957L,Started:7577L},FaceConnectedComponents:1,Food:1074,GameTime:8920L,Health:100.0d,Height:2,InvalidLegMounts:0,LogicalCore:\"20481032, 129, 20487175\",LogicalMouths:\"[BlockPos{x=20481032, y=128, z=20487176}]\",MassCenter:{X:0.6428571428571428d,Y:0.9285714285714285d,Z:0.5d},OrganMove:\"null\",Position:{X:2.5670941285182187d,Y:67.02582723211003d,Z:105.05440180148233d},Reason:\"Assimilate a useful component before routine growth\",RequestedTickRate:20.0f,Ship:[I;-2117200770,-839628714,-1249937648,-644284119],SimulationChunks:10,StableSupport:1b,Stomachs:1,ViewChunks:12,Water:{Air:300,AirAccess:1b,Breathing:1b,GillSamples:70,GillUse:0,LegEvolutionAfter:0L,SeekingAir:0b,Swimming:0b,UseSamples:70,WaterUse:0,Wet:0b}}\n",
+      "first_split_snapshot": "{Behavior:\"MOVE_COMPONENT\",Blocks:2,Cells:\"[BlockPos{x=0, y=0, z=0}=Block{create_bioships:feeding_mouth}[facing=south], BlockPos{x=0, y=1, z=-1}=Block{create_bioships:living_core}[active=true,blink=false,concealed=false,facing=east,relocating=false]]\",ChunkLease:1b,ConnectedStomachs:0,CoreCoverage:41,CoreElevation:1,CoreMove:{Evasive:0b,Feeding:0b,Home:5629783292128559232L,LayoutDirty:0b,NextScan:7753L,Started:7577L},FaceConnectedComponents:2,Food:592,GameTime:7720L,Health:100.0d,Height:2,InvalidLegMounts:0,LogicalCore:\"20481032, 129, 20487175\",LogicalMouths:\"[BlockPos{x=20481032, y=128, z=20487176}]\",MassCenter:{X:0.5d,Y:0.75d,Z:-0.5d},OrganMove:\"Move[cargo=cc809521-5a41-4409-920d-29963f775224, cargoBlock=BlockPos{x=20481032, y=128, z=20481032}, source=BlockPos{x=20481032, y=128, z=20487175}, target=BlockPos{x=20481032, y=128, z=20487177}, start=(-4.313954659407888, 63.89433387598735, 64.43689713574832), started=7720, external=false, restoreFlesh=false, mouth=false, stomach=true, manual=false, ownerForced=true, tissuePath=[]]\",Position:{X:-4.313737509809138d,Y:64.89433384792727d,Z:64.43699182578185d},Reason:\"Finish a conserved component or food-recovery move\",RequestedTickRate:20.0f,Ship:[I;-2117200770,-839628714,-1249937648,-644284119],SimulationChunks:10,StableSupport:1b,Stomachs:0,ViewChunks:12,Water:{Air:300,AirAccess:1b,Breathing:1b,GillSamples:10,GillUse:0,LegEvolutionAfter:0L,SeekingAir:0b,Swimming:0b,UseSamples:10,WaterUse:0,Wet:0b}}\n"
+    },
+    {
+      "requested_tps": 10000,
+      "intervals": [
+        {
+          "ticks": 200,
+          "actual_ticks": 200.0,
+          "seconds": 4.805704831989715,
+          "observed_tps": 41.61720434194741
+        },
+        {
+          "ticks": 600,
+          "actual_ticks": 600.0,
+          "seconds": 21.01885400901665,
+          "observed_tps": 28.545799868185608
+        },
+        {
+          "ticks": 600,
+          "actual_ticks": 600.0,
+          "seconds": 14.309327675990062,
+          "observed_tps": 41.93069119569841
+        }
+      ],
+      "mouth_slot_fills": 18,
+      "peak_height": 3.0,
+      "peak_grid_sections": 2.0,
+      "final_grid_sections": 2.0,
+      "final_snapshot": "{Behavior:\"DEFEND\",Blocks:8,Cells:\"[BlockPos{x=0, y=-1, z=0}=Block{create_bioships:amoeba_leg}[facing=down], BlockPos{x=0, y=-1, z=1}=Block{biomancy:storage_sac}[facing=up,waterlogged=false], BlockPos{x=-1, y=0, z=0}=Block{create_bioships:amoeba_leg}[facing=west], BlockPos{x=0, y=0, z=0}=Block{create_bioships:feeding_mouth}[facing=north], BlockPos{x=1, y=0, z=0}=Block{create_bioships:amoeba_leg}[facing=east], BlockPos{x=0, y=0, z=1}=Block{create_bioships:stomach}[facing=west], BlockPos{x=1, y=0, z=1}=Block{create_bioships:amoeba_leg}[facing=east], BlockPos{x=0, y=1, z=-1}=Block{create_bioships:living_core}[active=true,blink=false,concealed=false,facing=west,relocating=false]]\",ChunkLease:1b,ConnectedStomachs:1,CoreCoverage:28,CoreElevation:1,CoreMove:{Evasive:0b,Feeding:0b,Home:5629783292128559232L,LayoutDirty:0b,NextScan:6817L,Started:5457L},FaceConnectedComponents:2,Food:1074,GameTime:6800L,Health:100.0d,Height:3,InvalidLegMounts:0,LogicalCore:\"20481032, 129, 20487175\",LogicalMouths:\"[BlockPos{x=20481032, y=128, z=20487176}]\",MassCenter:{X:0.625d,Y:0.375d,Z:0.75d},OrganMove:\"null\",Position:{X:-26.087440604209704d,Y:70.05155718979573d,Z:110.17186847194114d},Reason:\"Defend against an immediate threat\",RequestedTickRate:10000.0f,Ship:[I;1712215351,39534734,-1781011901,-1684296369],SimulationChunks:10,StableSupport:1b,Stomachs:1,ViewChunks:12,Water:{Air:300,AirAccess:1b,Breathing:1b,GillSamples:70,GillUse:0,LegEvolutionAfter:0L,SeekingAir:0b,Swimming:0b,UseSamples:70,WaterUse:0,Wet:0b}}\n",
+      "first_split_snapshot": "{Behavior:\"MOVE_COMPONENT\",Blocks:2,Cells:\"[BlockPos{x=0, y=0, z=0}=Block{create_bioships:feeding_mouth}[facing=south], BlockPos{x=0, y=1, z=-1}=Block{create_bioships:living_core}[active=true,blink=false,concealed=false,facing=east,relocating=false]]\",ChunkLease:1b,ConnectedStomachs:0,CoreCoverage:41,CoreElevation:1,CoreMove:{Evasive:0b,Feeding:0b,Home:5629783292128559232L,LayoutDirty:0b,NextScan:5633L,Started:5457L},FaceConnectedComponents:2,Food:592,GameTime:5600L,Health:100.0d,Height:2,InvalidLegMounts:0,LogicalCore:\"20481032, 129, 20487175\",LogicalMouths:\"[BlockPos{x=20481032, y=128, z=20487176}]\",MassCenter:{X:0.5d,Y:0.75d,Z:-0.5d},OrganMove:\"Move[cargo=b001d092-15ae-4894-af97-ebfb86a980b7, cargoBlock=BlockPos{x=20481032, y=128, z=20481032}, source=BlockPos{x=20481032, y=128, z=20487175}, target=BlockPos{x=20481032, y=128, z=20487177}, start=(-4.219738313513783, 63.89406482546745, 64.58839068360066), started=5600, external=false, restoreFlesh=false, mouth=false, stomach=true, manual=false, ownerForced=true, tissuePath=[]]\",Position:{X:-4.219584481687458d,Y:64.89406480160639d,Z:64.58854578967667d},Reason:\"Finish a conserved component or food-recovery move\",RequestedTickRate:10000.0f,Ship:[I;1712215351,39534734,-1781011901,-1684296369],SimulationChunks:10,StableSupport:1b,Stomachs:0,ViewChunks:12,Water:{Air:300,AirAccess:1b,Breathing:1b,GillSamples:10,GillUse:0,LegEvolutionAfter:0L,SeekingAir:0b,Swimming:0b,UseSamples:10,WaterUse:0,Wet:0b}}\n"
+    }
+  ],
+  "findings": [
+    "Normal-speed trace temporarily disconnected the core when the supporting stomach moved.",
+    "Normal final grid-face connection relied on a leg socket; excluding appendages exposes the structural split.",
+    "Accelerated-target final snapshot retained two grid-face sections.",
+    "No full tower was reproduced in these two cases. Biological soak and visual QA remain unresolved."
+  ]
+}

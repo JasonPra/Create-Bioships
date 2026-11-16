@@ -35,7 +35,8 @@
       [
         "BioshipStructure",
         "BioshipIntegration",
-        "BioshipReach"
+        "BioshipReach",
+        "BodyTopology"
       ],
       "Read loaded Sable cells, integrate native machines, distinguish visibility from physical reach."
     ],
@@ -330,6 +331,7 @@
       "Sight, path and status overlays",
       "active",
       [
+        "BioshipDiagnostics",
         "client.SightDebugOverlay",
         "client.PathDebugOverlay",
         "client.AppendageDebugOverlay",
@@ -6630,6 +6632,33 @@
       ],
       "lines": 36
     },
+    "BodyTopology": {
+      "path": "src/main/java/org/Azkerash/create_bioships/BodyTopology.java",
+      "declaration": "final class BodyTopology",
+      "members": [
+        {
+          "kind": "method",
+          "signature": "static Set<BlockPos> structuralCells(Map<BlockPos, BlockState> cells)",
+          "line": 8
+        },
+        {
+          "kind": "method",
+          "signature": "static int components(Set<BlockPos> cells)",
+          "line": 18
+        },
+        {
+          "kind": "method",
+          "signature": "static boolean canRemove(Set<BlockPos> cells, BlockPos source)",
+          "line": 38
+        },
+        {
+          "kind": "method",
+          "signature": "static boolean canMove( Set<BlockPos> cells, BlockPos source, BlockPos target, boolean retainSource)",
+          "line": 45
+        }
+      ],
+      "lines": 55
+    },
     "AmoebaLegBlock": {
       "path": "src/main/java/org/Azkerash/create_bioships/AmoebaLegBlock.java",
       "declaration": "public final class AmoebaLegBlock extends DirectionalBlock",
@@ -8533,6 +8562,28 @@
         }
       ],
       "lines": 98
+    },
+    "BioshipDiagnostics": {
+      "path": "src/main/java/org/Azkerash/create_bioships/BioshipDiagnostics.java",
+      "declaration": "public final class BioshipDiagnostics",
+      "members": [
+        {
+          "kind": "method",
+          "signature": "static List<LivingCoreBlockEntity> cores(ServerLevel level)",
+          "line": 18
+        },
+        {
+          "kind": "method",
+          "signature": "static CompoundTag snapshot(LivingCoreBlockEntity core)",
+          "line": 27
+        },
+        {
+          "kind": "method",
+          "signature": "public static void commands(RegisterCommandsEvent event)",
+          "line": 85
+        }
+      ],
+      "lines": 144
     },
     "LegUsageHistory": {
       "path": "src/main/java/org/Azkerash/create_bioships/LegUsageHistory.java",

@@ -636,6 +636,7 @@ Read loaded Sable cells, integrate native machines, distinguish visibility from 
   BioshipStructure
   BioshipIntegration
   BioshipReach
+  BodyTopology
 ```
 
 
@@ -735,6 +736,24 @@ final class BioshipReach
   static boolean clear(LivingCoreBlockEntity core, Vec3 target, boolean blockTarget, double reach); // line 54
 
   static boolean clear(LivingCoreBlockEntity core, Vec3 target, boolean blockTarget); // line 58
+
+```
+
+
+#### BodyTopology
+
+Source: `src/main/java/org/Azkerash/create_bioships/BodyTopology.java` (55 lines).
+
+```java
+final class BodyTopology
+
+  static Set<BlockPos> structuralCells(Map<BlockPos, BlockState> cells); // line 8
+
+  static int components(Set<BlockPos> cells); // line 18
+
+  static boolean canRemove(Set<BlockPos> cells, BlockPos source); // line 38
+
+  static boolean canMove( Set<BlockPos> cells, BlockPos source, BlockPos target, boolean retainSource); // line 45
 
 ```
 
@@ -3660,10 +3679,27 @@ F3+B sight; F3+P native floating route/priority display; goggles status above ho
 
 ```text
 [overlay]
+  BioshipDiagnostics
   client.SightDebugOverlay
   client.PathDebugOverlay
   client.AppendageDebugOverlay
   client.SymbioticTooltip
+```
+
+
+#### BioshipDiagnostics
+
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipDiagnostics.java` (144 lines).
+
+```java
+public final class BioshipDiagnostics
+
+  static List<LivingCoreBlockEntity> cores(ServerLevel level); // line 18
+
+  static CompoundTag snapshot(LivingCoreBlockEntity core); // line 27
+
+  public static void commands(RegisterCommandsEvent event); // line 85
+
 ```
 
 
