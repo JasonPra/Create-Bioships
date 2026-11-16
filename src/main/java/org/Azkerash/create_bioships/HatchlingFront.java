@@ -14,6 +14,7 @@ final class HatchlingFront {
       if (p.getY() != origin.getY() || p.equals(source)) continue;
       var tissue = core.getLevel().getBlockState(p);
       if (!p.equals(core.getBlockPos())
+          && !p.equals(origin)
           && !tissue.is(Create_bioships.FLESH.get())
           && !tissue.is(Create_bioships.CARAPACE.get())) continue;
       var north = p.north();

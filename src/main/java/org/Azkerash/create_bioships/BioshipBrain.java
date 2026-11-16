@@ -347,7 +347,7 @@ public final class BioshipBrain {
       return remember(
           offer(
               Action.DEFEND,
-              threat.getBoundingBox().getCenter(),
+              core.vision().knownPosition(threat),
               null,
               threat,
               null,
@@ -412,7 +412,7 @@ public final class BioshipBrain {
       offers.add(
           offer(
               Action.HUNT,
-              prey.getBoundingBox().getCenter(),
+              core.vision().knownPosition(prey),
               null,
               prey,
               null,
@@ -451,7 +451,7 @@ public final class BioshipBrain {
             "No reachable urgent need or funded goal"));
     rankForDebug(offers);
     var selected = remember(chooseOffers(offers));
-    if (selected.action == Action.ASSIMILATE) core.supplyTarget = selected.block;
+    core.supplyTarget = selected.action == Action.ASSIMILATE ? selected.block : null;
     return selected;
   }
 

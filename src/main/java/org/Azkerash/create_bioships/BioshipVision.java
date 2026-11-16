@@ -109,7 +109,58 @@ public final class BioshipVision {
       net.minecraft.world.level.block.state.BlockState state, long seen, boolean full) {}
 
   private final Map<BlockPos, Sighting> remembered = new HashMap<>();
-  private static final long MEMORY_TICKS = 2400;
+  private final TargetMemory<java.util.UUID> entityFreshness = new TargetMemory<>();
+  private net.minecraft.world.entity.LivingEntity trackedEntity;
+  private Vec3 trackedPoint;
+
+  void rememberEntity(net.minecraft.world.entity.LivingEntity entity) {
+    if (trackedEntity != entity) entityFreshness.clear();
+    trackedEntity = entity;
+    trackedPoint = entity.getBoundingBox().getCenter();
+    entityFreshness.observe(entity.getUUID());
+  }
+
+  net.minecraft.world.entity.LivingEntity rememberedEntity(LivingCoreBlockEntity core) {
+    if (trackedEntity == null
+        || !trackedEntity.isAlive()
+        || trackedEntity.level() != core.getLevel()
+        || !entityFreshness.retains(trackedEntity.getUUID())) {
+      trackedEntity = null;
+      trackedPoint = null;
+      entityFreshness.clear();
+    }
+    return trackedEntity;
+  }
+
+  Vec3 knownPosition(net.minecraft.world.entity.LivingEntity entity) {
+    return trackedEntity == entity && trackedPoint != null
+        ? trackedPoint
+        : entity.getBoundingBox().getCenter();
+  }
+
+  Vec3 focus(LivingCoreBlockEntity core) {
+    var selected = core.brain().lastDecision();
+    if (selected == null) return null;
+    if (selected.entity() != null)
+      return rememberedEntity(core) == selected.entity() ? knownPosition(selected.entity()) : null;
+    if (selected.action() == BioshipBrain.Action.ASSIMILATE)
+      return selected.block() != null && sourceFreshness.retains(selected.block())
+          ? selected.point()
+          : null;
+    return selected.point();
+  }
+
+  private final TargetMemory<BlockPos> sourceFreshness = new TargetMemory<>();
+
+  long unseenNanos(BlockPos pos) {
+    return sourceFreshness.age(pos);
+  }
+
+  void forget(LivingCoreBlockEntity core, BlockPos pos) {
+    remembered.remove(pos);
+    sourceFreshness.forget(pos);
+    if (pos.equals(core.supplyTarget)) core.supplyTarget = null;
+  }
 
   java.util.Set<BlockPos> rememberedSources() {
     return java.util.Set.copyOf(remembered.keySet());
@@ -118,11 +169,6 @@ public final class BioshipVision {
   net.minecraft.world.level.block.state.BlockState rememberedState(BlockPos pos) {
     var seen = remembered.get(pos);
     return seen == null ? null : seen.state;
-  }
-
-  long lastSeen(BlockPos pos) {
-    var seen = remembered.get(pos);
-    return seen == null ? Long.MIN_VALUE : seen.seen;
   }
 
   boolean rememberedFull(BlockPos pos) {
@@ -135,7 +181,7 @@ public final class BioshipVision {
     if (visible(core, Vec3.atCenterOf(source))) {
       var state = core.getLevel().getBlockState(source);
       if (!BioshipPriorities.supply(state) || !openToNature(core.getLevel(), source)) {
-        remembered.remove(source);
+        forget(core, source);
         return null;
       }
       var inventory =
@@ -149,17 +195,18 @@ public final class BioshipVision {
         for (int slot = 0; slot < inventory.getSlots(); slot++)
           full |= !inventory.getStackInSlot(slot).isEmpty();
       remembered.put(source.immutable(), new Sighting(state, now, full));
+      sourceFreshness.observe(source.immutable());
       if (remembered.size() > 128)
         remembered.entrySet().stream()
             .filter(e -> !e.getKey().equals(core.supplyTarget))
             .min(java.util.Comparator.comparingLong(e -> e.getValue().seen))
-            .ifPresent(e -> remembered.remove(e.getKey()));
+            .ifPresent(e -> forget(core, e.getKey()));
       return state;
     }
     var seen = remembered.get(source);
-    return seen != null && (now - seen.seen <= MEMORY_TICKS || source.equals(core.supplyTarget))
-        ? seen.state
-        : null;
+    if (seen != null && sourceFreshness.retains(source)) return seen.state;
+    forget(core, source);
+    return null;
   }
 
   private int surveyed;
@@ -211,12 +258,19 @@ public final class BioshipVision {
 
   private void turn(LivingCoreBlockEntity core) {
     if (!core.getBlockState().getValue(LivingCoreBlock.CONCEALED)) surveyed = 63;
-    remembered
-        .entrySet()
-        .removeIf(
-            e ->
-                !e.getKey().equals(core.supplyTarget)
-                    && e.getValue().seen < core.getLevel().getGameTime() - MEMORY_TICKS);
+    var focus = focus(core);
+    if (core.hatchling() && focus != null) {
+      var delta =
+          core.ship()
+              .logicalPose()
+              .transformPositionInverse(focus)
+              .subtract(Vec3.atCenterOf(core.getBlockPos()));
+      look(core, Direction.getNearest(delta.x, delta.y, delta.z));
+    }
+    for (var pos : java.util.List.copyOf(remembered.keySet()))
+      if (pos.equals(core.supplyTarget)
+          || core.getLevel().getGameTime() % 20 == 0
+          || !sourceFreshness.retains(pos)) sourceState(core, pos);
   }
 
   static boolean exposedTube(net.minecraft.world.level.block.state.BlockState state) {
@@ -296,6 +350,7 @@ public final class BioshipVision {
   }
 
   void tick(LivingCoreBlockEntity core) {
+    if (core.getLevel().getGameTime() % 10 == 0 && !core.hatchling() && trackFocus(core)) return;
     if (core.getLevel().getGameTime() % 80 == 0 && !reabsorb(core)) growEyes(core);
   }
 
@@ -308,6 +363,7 @@ public final class BioshipVision {
           var entry = new net.minecraft.nbt.CompoundTag();
           entry.putLong("Pos", pos.asLong());
           entry.putLong("Seen", memory.seen);
+          entry.putLong("ObservedMillis", sourceFreshness.observedMillis(pos));
           entry.putBoolean("Full", memory.full);
           entry.put("State", net.minecraft.nbt.NbtUtils.writeBlockState(memory.state));
           list.add(entry);
@@ -320,6 +376,7 @@ public final class BioshipVision {
       net.minecraft.nbt.CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries) {
     surveyed = tag.getInt("Surveyed") & 63;
     remembered.clear();
+    sourceFreshness.clear();
     var entries = tag.getList("Sources", net.minecraft.nbt.Tag.TAG_COMPOUND);
     for (int i = 0; i < Math.min(128, entries.size()); i++) {
       var entry = entries.getCompound(i);
@@ -327,10 +384,17 @@ public final class BioshipVision {
           net.minecraft.nbt.NbtUtils.readBlockState(
               registries.lookupOrThrow(net.minecraft.core.registries.Registries.BLOCK),
               entry.getCompound("State"));
-      if (BioshipPriorities.supply(state))
+      if (BioshipPriorities.supply(state)) {
+        var pos = BlockPos.of(entry.getLong("Pos"));
+        sourceFreshness.restore(
+            pos,
+            entry.contains("ObservedMillis")
+                ? entry.getLong("ObservedMillis")
+                : System.currentTimeMillis());
         remembered.put(
             BlockPos.of(entry.getLong("Pos")),
             new Sighting(state, entry.getLong("Seen"), entry.getBoolean("Full")));
+      }
     }
     scanned = Long.MIN_VALUE;
   }
@@ -357,6 +421,8 @@ public final class BioshipVision {
             if (x != 0 || y != 0 || z != 0)
               targets.add(view.origin().add(new Vec3(x, y, z).normalize().scale(8)));
       remembered.keySet().forEach(p -> targets.add(Vec3.atCenterOf(p)));
+      var focus = focus(core);
+      if (focus != null) targets.add(focus);
       boolean needed = false;
       for (var point : targets)
         if (inView(core, view, point) && ray(core, view.origin(), point)) {
@@ -381,6 +447,81 @@ public final class BioshipVision {
               net.minecraft.core.registries.BuiltInRegistries.ITEM.get(
                   net.minecraft.resources.ResourceLocation.parse("biomancy:elastic_fibers"))));
       scanned = Long.MIN_VALUE;
+      core.setChanged();
+      return true;
+    }
+    return false;
+  }
+
+  boolean trackFocus(LivingCoreBlockEntity core) {
+    var focus = focus(core);
+    if (focus == null
+        || visible(core, focus)
+        || core.body().dead()
+        || core.blueprint().busy()
+        || OrganMotion.busy(core)
+        || core.coreMotion().active()) return false;
+    scan(core);
+    var level = core.getLevel();
+    record Mount(BlockPos pos, Direction direction, double distance) {}
+    var candidates = new ArrayList<Mount>();
+    for (var host : BioshipDecay.blocks(core.ship())) {
+      var tissue = level.getBlockState(host);
+      if (!tissue.is(Create_bioships.FLESH.get())
+          && !tissue.is(Create_bioships.CARAPACE.get())
+          && !tissue.is(Create_bioships.ONE_WAY_WINDOW.get())) continue;
+      for (var direction : Direction.values()) {
+        if (tissue.is(Create_bioships.ONE_WAY_WINDOW.get())
+            && tissue.getValue(OneWayWindowBlock.FACING) != direction) continue;
+        var pos = host.relative(direction);
+        if (!core.ship().getPlot().contains(new net.minecraft.world.level.ChunkPos(pos))) continue;
+        var state = level.getBlockState(pos);
+        if (!state.isAir()
+            && !(state.is(Create_bioships.SURFACE_EYE.get())
+                && state.getValue(SurfaceEyeBlock.AUTOMATIC))) continue;
+        var origin =
+            core.ship()
+                .logicalPose()
+                .transformPosition(Vec3.atCenterOf(pos).relative(direction, -.22));
+        var forward =
+            core.ship().logicalPose().transformNormal(Vec3.atLowerCornerOf(direction.getNormal()));
+        var view = new View(origin, forward, maximumDistance(core));
+        if (inView(core, view, focus) && ray(core, origin, focus))
+          candidates.add(new Mount(pos.immutable(), direction, origin.distanceToSqr(focus)));
+      }
+    }
+    candidates.sort(Comparator.comparingDouble(Mount::distance));
+    for (var mount : candidates) {
+      var targetState = level.getBlockState(mount.pos);
+      if (targetState.is(Create_bioships.SURFACE_EYE.get())) {
+        level.setBlock(mount.pos, targetState.setValue(SurfaceEyeBlock.FACING, mount.direction), 3);
+        invalidate();
+        return true;
+      }
+      for (var eye : eyes) {
+        var original = level.getBlockState(eye);
+        if (!original.getValue(SurfaceEyeBlock.AUTOMATIC)) continue;
+        level.setBlock(eye, original.setValue(SurfaceEyeBlock.FACING, mount.direction), 2);
+        if (OrganMotion.begin(core, eye, mount.pos, false)) return true;
+        level.setBlock(eye, original, 2);
+      }
+      var stomach = DigestiveSystem.stomach(core);
+      if (stomach == null
+          || !stomach.connected(core)
+          || core.hungry()
+          || eyes.size() >= 8
+          || stomach.material("biomancy:flesh_bits") < 2
+          || stomach.material("biomancy:elastic_fibers") < 1) continue;
+      var state =
+          Create_bioships.SURFACE_EYE
+              .get()
+              .defaultBlockState()
+              .setValue(SurfaceEyeBlock.FACING, mount.direction)
+              .setValue(SurfaceEyeBlock.AUTOMATIC, true);
+      level.setBlock(mount.pos, SurfaceEyeBlock.mounted(state, level, mount.pos), 3);
+      stomach.spend("biomancy:flesh_bits", 2);
+      stomach.spend("biomancy:elastic_fibers", 1);
+      invalidate();
       core.setChanged();
       return true;
     }

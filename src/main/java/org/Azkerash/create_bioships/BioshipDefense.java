@@ -17,6 +17,7 @@ final class BioshipDefense {
 
   void remember(LivingCoreBlockEntity core, LivingEntity entity) {
     if (!core.aggressive() && core.access().allows(core, entity)) return;
+    core.vision().rememberEntity(entity);
     attacker = entity.getUUID();
     lastThreat = entity.position();
     threatenedUntil = core.getLevel().getGameTime() + 200;
@@ -26,7 +27,7 @@ final class BioshipDefense {
   Vec3 dangerPosition(LivingCoreBlockEntity core) {
     var threat = target(core);
     if (threat != null && threatening(core, threat)) {
-      lastThreat = threat.position();
+      lastThreat = core.vision().knownPosition(threat);
       threatenedUntil = core.getLevel().getGameTime() + 200;
     }
     return core.getLevel().getGameTime() < threatenedUntil ? lastThreat : null;
@@ -104,29 +105,47 @@ final class BioshipDefense {
         distance = score;
       }
     }
+    if (nearest != null) core.vision().rememberEntity(nearest);
+    else {
+      var remembered = core.vision().rememberedEntity(core);
+      if (remembered != null
+          && TentacleBlockEntity.attackable(remembered)
+          && (threatening(core, remembered)
+              || core.aggressive()
+                  && core.vision().knownPosition(remembered).distanceToSqr(root) <= 64))
+        nearest = remembered;
+    }
     return nearest;
+  }
+
+  private static boolean eligiblePrey(LivingCoreBlockEntity core, LivingEntity entity) {
+    return TentacleBlockEntity.attackable(entity)
+        && TentacleBlockEntity.edible(entity)
+        && !(entity instanceof net.minecraft.world.entity.monster.Zombie)
+        && !core.access().allows(core, entity)
+        && !(entity instanceof net.minecraft.world.entity.TamableAnimal tame && tame.isTame())
+        && !entity.isPassenger();
   }
 
   static LivingEntity prey(LivingCoreBlockEntity core) {
     if (!core.wantsToHunt()) return null;
     var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
-    return core
-        .getLevel()
-        .getEntitiesOfClass(
-            LivingEntity.class,
-            new AABB(here, here).inflate(core.vision().maximumDistance(core)),
-            e ->
-                TentacleBlockEntity.attackable(e)
-                    && TentacleBlockEntity.edible(e)
-                    && !(e instanceof net.minecraft.world.entity.monster.Zombie)
-                    && !core.access().allows(core, e)
-                    && !(e instanceof net.minecraft.world.entity.TamableAnimal tame
-                        && tame.isTame())
-                    && !e.isPassenger()
-                    && sensesPrey(core, e))
-        .stream()
-        .min(java.util.Comparator.comparingDouble(e -> e.distanceToSqr(here)))
-        .orElse(null);
+    var selected =
+        core
+            .getLevel()
+            .getEntitiesOfClass(
+                LivingEntity.class,
+                new AABB(here, here).inflate(core.vision().maximumDistance(core)),
+                e -> eligiblePrey(core, e) && sensesPrey(core, e))
+            .stream()
+            .min(java.util.Comparator.comparingDouble(e -> e.distanceToSqr(here)))
+            .orElse(null);
+    if (selected != null) {
+      core.vision().rememberEntity(selected);
+      return selected;
+    }
+    var remembered = core.vision().rememberedEntity(core);
+    return remembered != null && eligiblePrey(core, remembered) ? remembered : null;
   }
 
   private static boolean sensesPrey(LivingCoreBlockEntity core, LivingEntity entity) {

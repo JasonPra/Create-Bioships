@@ -15,6 +15,82 @@ public final class CoreMotion {
   private BlockPos home, target;
   private long started, nextScan;
   private boolean evasive;
+  private boolean layoutDirty;
+
+  void layoutChanged(LivingCoreBlockEntity core) {
+    layoutDirty = true;
+    nextScan = Math.max(1, core.getLevel().getGameTime());
+    core.vision().invalidate();
+  }
+
+  static boolean protectedInside(LivingCoreBlockEntity core, BlockPos pos) {
+    return protectedInside(core, pos, new HashSet<>(BioshipDecay.blocks(core.ship())));
+  }
+
+  private static boolean protectedInside(
+      LivingCoreBlockEntity core, BlockPos pos, Set<BlockPos> cells) {
+    for (var direction : Direction.values()) {
+      boolean shield = false;
+      for (int distance = 1; distance <= 24; distance++) {
+        var sample = pos.relative(direction, distance);
+        if (cells.contains(sample)) {
+          var state = core.getLevel().getBlockState(sample);
+          if (state.isFaceSturdy(core.getLevel(), sample, direction.getOpposite())) {
+            shield = true;
+            break;
+          }
+        }
+      }
+      if (!shield) return false;
+    }
+    return true;
+  }
+
+  private BlockPos shelteredStep(
+      LivingCoreBlockEntity core, net.minecraft.world.entity.LivingEntity threat) {
+    var source = core.getBlockPos();
+    var cells = new HashSet<>(BioshipDecay.blocks(core.ship()));
+    var queue = new ArrayDeque<BlockPos>();
+    var previous = new LinkedHashMap<BlockPos, BlockPos>();
+    queue.add(source);
+    previous.put(source, source);
+    BlockPos best = source;
+    double bestScore =
+        protectedInside(core, source, cells)
+            ? shelterScore(core, source, threat)
+            : -Double.MAX_VALUE;
+    while (!queue.isEmpty() && previous.size() < 160) {
+      var point = queue.removeFirst();
+      for (var direction : Direction.values()) {
+        var next = point.relative(direction);
+        if (previous.containsKey(next)
+            || next.distManhattan(source) > 6
+            || !cells.contains(next)
+            || !tissue(core.getLevel().getBlockState(next))
+            || !protectedInside(core, next, cells)
+            || !clearWorld(core, next)
+            || !DigestiveSystem.reserveCoreRoute(core, next, false)) continue;
+        previous.put(next, point);
+        queue.add(next);
+        double score = shelterScore(core, next, threat);
+        if (score > bestScore + .001) {
+          bestScore = score;
+          best = next;
+        }
+      }
+    }
+    if (best.equals(source)) return null;
+    while (!previous.get(best).equals(source)) best = previous.get(best);
+    return best;
+  }
+
+  private double shelterScore(
+      LivingCoreBlockEntity core, BlockPos pos, net.minecraft.world.entity.LivingEntity threat) {
+    if (threat == null) return -pos.distSqr(core.getBlockPos());
+    var world = core.ship().logicalPose().transformPosition(Vec3.atCenterOf(pos));
+    return Math.min(16, world.distanceTo(threat.position()))
+        + (BioshipVision.rayAtCore(core, threat.getEyePosition(), world, pos) ? 0 : 50);
+  }
 
   public int duration() {
     return evasive ? 4 : 12;
@@ -79,12 +155,9 @@ public final class CoreMotion {
   }
 
   private Vec3 blockedSupply(LivingCoreBlockEntity core) {
-    if (core.supplyTarget == null) return null;
-    var focus = Vec3.atCenterOf(core.supplyTarget);
-    return focus.distanceToSqr(BioshipBlueprint.physical(core, BlockPos.ZERO)) < 64
-            && !core.vision().visible(core, focus)
-        ? focus
-        : null;
+    var focus = core.vision().focus(core);
+    if (focus == null && core.supplyTarget != null) focus = Vec3.atCenterOf(core.supplyTarget);
+    return focus != null && !core.vision().visible(core, focus) ? focus : null;
   }
 
   private int score(LivingCoreBlockEntity core, BlockPos vantage) {
@@ -120,6 +193,7 @@ public final class CoreMotion {
         if (next.distManhattan(core.getBlockPos()) <= 6
             && !seen.contains(next)
             && tissue(core.getLevel().getBlockState(next))
+            && (core.hatchling() || protectedInside(core, next))
             && clearWorld(core, next)
             && DigestiveSystem.reserveCoreRoute(core, next, false)) {
           seen.add(next);
@@ -144,6 +218,7 @@ public final class CoreMotion {
       for (var dir : Direction.values()) {
         var next = pos.relative(dir);
         if (previous.containsKey(next)
+            || core.hasMouth() && next.equals(home(core).north())
             || next.distManhattan(home(core)) > 6
             || !tissue(level.getBlockState(next))) continue;
         if (!clearWorld(core, next) || !DigestiveSystem.reserveCoreRoute(core, next, false))
@@ -158,8 +233,7 @@ public final class CoreMotion {
           }
         } else {
           int value = score(core, next);
-          if (value > score
-              || value == score && value > score(core, source) && next.getY() > best.getY()) {
+          if (value > score || value == score && next.getY() > best.getY()) {
             best = next;
             score = value;
           }
@@ -175,8 +249,8 @@ public final class CoreMotion {
   /** Returning true retires this block tick, since a commit replaces its block entity. */
   boolean tick(LivingCoreBlockEntity core) {
     var creeper = BioshipDefense.creeperThreat(core);
-    if ((!core.hatchling() && creeper == null && !(active() && evasive))
-        || core.body().dead()
+    if (core.body().dead()
+        || !core.hatchling() && !core.isMature()
         || core.blueprint().busy()
         || OrganMotion.busy(core)) {
       if (active()) cancel(core);
@@ -184,7 +258,9 @@ public final class CoreMotion {
     }
     var level = (ServerLevel) core.getLevel();
     if (active()) {
-      if (!tissue(level.getBlockState(target)) || !clearWorld(core, target)) {
+      if (!tissue(level.getBlockState(target))
+          || !clearWorld(core, target)
+          || !core.hatchling() && !protectedInside(core, target)) {
         cancel(core);
         return false;
       }
@@ -192,6 +268,24 @@ public final class CoreMotion {
       return true;
     }
     if (core.autonomy().creeperPanic()) return false;
+    if (!core.hatchling()) {
+      if (creeper != null) return evade(core, creeper);
+      var threat = BioshipDefense.target(core);
+      boolean exposed =
+          threat != null
+              && BioshipVision.rayAtCore(
+                  core,
+                  threat.getEyePosition(),
+                  core.ship().logicalPose().transformPosition(Vec3.atCenterOf(core.getBlockPos())),
+                  core.getBlockPos());
+      if (!protectedInside(core, core.getBlockPos()) || exposed) {
+        if (level.getGameTime() < nextScan) return false;
+        nextScan = level.getGameTime() + 40;
+        var shelter = shelteredStep(core, threat);
+        if (shelter != null) return begin(core, shelter, false);
+      }
+      return false;
+    }
     if (creeper != null) return evade(core, creeper);
     if (nextScan == 0) {
       nextScan = level.getGameTime() + 200;
@@ -201,12 +295,16 @@ public final class CoreMotion {
     if (!returning && core.growthStockReady()) return false;
     if (!returning && level.getGameTime() < nextScan) return false;
     nextScan = level.getGameTime() + 40;
+    boolean changed = layoutDirty;
+    layoutDirty = false;
     if (!returning
+        && !changed
         && (BioshipDefense.target(core) != null
             || coverage(core, core.getBlockPos()) == FULL_COVERAGE && blockedSupply(core) == null))
       return false;
     var objective = BioshipPriorities.bestWorld(core);
     if (!returning
+        && !changed
         && objective != null
         && objective.rank() == 0
         && Vec3.atCenterOf(objective.pos())
@@ -215,15 +313,21 @@ public final class CoreMotion {
         && blockedSupply(core) == null) return false;
     var next = choose(core, returning);
     if (next == null) return false;
+    return begin(core, next, false);
+  }
+
+  private boolean begin(LivingCoreBlockEntity core, BlockPos next, boolean emergency) {
     if (!DigestiveSystem.reserveCoreRoute(core, next, true)) return false;
     if (home == null) home = core.getBlockPos();
     target = next;
-    evasive = false;
-    started = level.getGameTime();
-    level.setBlock(
-        core.getBlockPos(), core.getBlockState().setValue(LivingCoreBlock.RELOCATING, true), 2);
+    evasive = emergency;
+    started = core.getLevel().getGameTime();
+    core.getLevel()
+        .setBlock(
+            core.getBlockPos(), core.getBlockState().setValue(LivingCoreBlock.RELOCATING, true), 2);
     core.setChanged();
-    level.sendBlockUpdated(core.getBlockPos(), core.getBlockState(), core.getBlockState(), 2);
+    core.getLevel()
+        .sendBlockUpdated(core.getBlockPos(), core.getBlockState(), core.getBlockState(), 2);
     return true;
   }
 
@@ -271,6 +375,7 @@ public final class CoreMotion {
         if (previous.containsKey(next)
             || next.distManhattan(source) > 6
             || !tissue(core.getLevel().getBlockState(next))
+            || !core.hatchling() && !protectedInside(core, next)
             || !clearWorld(core, next)
             || !DigestiveSystem.reserveCoreRoute(core, next, false)) continue;
         double value = blastSafety(core, next, creeper);
@@ -350,6 +455,7 @@ public final class CoreMotion {
     moved.body().rebase(delta);
     Map<BlockPos, BlockState> shifted = new LinkedHashMap<>();
     before.forEach((p, s) -> shifted.put(p.offset(delta), s));
+    moved.inheritFlight(core);
     moved.crawl().stop();
     DigestiveSystem.connect(moved, ship);
     moved.body().reconcile(moved, shifted);
@@ -364,6 +470,7 @@ public final class CoreMotion {
     tag.putBoolean("Evasive", evasive);
     tag.putLong("Started", started);
     tag.putLong("NextScan", nextScan);
+    tag.putBoolean("LayoutDirty", layoutDirty);
     return tag;
   }
 
@@ -373,5 +480,6 @@ public final class CoreMotion {
     evasive = tag.getBoolean("Evasive");
     started = tag.getLong("Started");
     nextScan = tag.getLong("NextScan");
+    layoutDirty = tag.getBoolean("LayoutDirty");
   }
 }

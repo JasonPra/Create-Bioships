@@ -32,11 +32,9 @@ public final class NavigationDebug {
     var decision = core.brain().lastDecision();
     if (decision != null) {
       Vec3 target =
-          decision.item() != null
-              ? decision.item().position()
-              : decision.entity() != null
-                  ? decision.entity().getBoundingBox().getCenter()
-                  : decision.point();
+          decision.point() != null
+              ? decision.point()
+              : decision.item() != null ? decision.item().position() : null;
       if (target != null) data.put("Target", VisionDebug.vector(target));
       String label =
           decision.item() != null
@@ -48,8 +46,12 @@ public final class NavigationDebug {
           // Report the observation the behavior is pursuing, not unseen world changes.
           label = remembered.getBlock().getName().getString();
           data.putLong(
-              "TargetSeenAge",
-              Math.max(0, level.getGameTime() - core.vision().lastSeen(decision.block())));
+              "TargetMemoryMillis",
+              Math.max(
+                  0,
+                  (TargetMemory.TIMEOUT - core.vision().unseenNanos(decision.block()))
+                      / 1_000_000L));
+          data.putLong("TargetSeenAge", core.vision().unseenNanos(decision.block()) / 50_000_000L);
         } else if (level
             .getChunkSource()
             .hasChunk(decision.block().getX() >> 4, decision.block().getZ() >> 4))

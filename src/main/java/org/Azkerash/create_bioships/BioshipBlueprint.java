@@ -160,21 +160,36 @@ public final class BioshipBlueprint {
     return s == null ? 0 : s.material("biomancy:flesh_bits");
   }
 
+  private static BlockPos structureLocal(LivingCoreBlockEntity core, BlockPos local) {
+    return local.offset(core.getBlockPos().subtract(core.structuralOrigin()));
+  }
+
+  private static BlockPos coreLocal(LivingCoreBlockEntity core, BlockPos local) {
+    return local.offset(core.structuralOrigin().subtract(core.getBlockPos()));
+  }
+
   public Map<BlockPos, BlockState> proposal(LivingCoreBlockEntity core, Draft draft) {
     var plan = new LinkedHashMap<BlockPos, BlockState>();
     sources.clear();
     for (var e : core.body().memory.entrySet()) {
       var p = e.getKey();
       var q = p;
-      if (!p.equals(BlockPos.ZERO))
+      if (!p.equals(BlockPos.ZERO) && !p.equals(coreLocal(core, BlockPos.ZERO)))
         for (var old : rooms)
-          if (old.contains(p)) {
+          if (old.contains(structureLocal(core, p))) {
             var next = draft.rooms.stream().filter(r -> r.id == old.id).findFirst().orElse(old);
             q = p.offset(next.x - old.x, 0, next.z - old.z);
             break;
           }
       plan.put(q, e.getValue());
       sources.put(q, p);
+    }
+    // An internally sheltered core can occupy a floor cell. Moving room tissue must not
+    // overwrite that protected anchor, even when a translated floor lands on its position.
+    var anchor = core.body().memory.get(BlockPos.ZERO);
+    if (anchor != null) {
+      plan.put(BlockPos.ZERO, anchor);
+      sources.put(BlockPos.ZERO, BlockPos.ZERO);
     }
     for (var room : draft.rooms)
       if (rooms.stream().noneMatch(r -> r.id == room.id)) {
@@ -192,7 +207,8 @@ public final class BioshipBlueprint {
             for (int y = 1; y <= 5; y++)
               if (y == 1 || y == 5 || edge)
                 plan.putIfAbsent(
-                    new BlockPos(px, y, pz), Create_bioships.FLESH.get().defaultBlockState());
+                    coreLocal(core, new BlockPos(px, y, pz)),
+                    Create_bioships.FLESH.get().defaultBlockState());
           }
       }
     var membrane =
@@ -202,7 +218,7 @@ public final class BioshipBlueprint {
     draft.edits.forEach(
         (p, kind) -> {
           for (int y = 2; y <= 3; y++) {
-            var q = new BlockPos(p.getX(), y, p.getZ());
+            var q = coreLocal(core, new BlockPos(p.getX(), y, p.getZ()));
             if (kind == 0) plan.remove(q);
             else
               plan.put(q, kind == 1 ? Create_bioships.FLESH.get().defaultBlockState() : membrane);
@@ -230,7 +246,7 @@ public final class BioshipBlueprint {
             && Math.abs(r.z - other.z) < r.length / 2 + other.length / 2)
           return "Room interiors overlap";
     for (var edit : d.edits.keySet()) {
-      var old = plan.get(edit);
+      var old = plan.get(coreLocal(core, edit));
       if (old != null && !editable(old))
         return "Move organs with the wrench; this panel edits tissue and doors";
       if (d.rooms.stream().noneMatch(r -> r.contains(edit)))
@@ -242,7 +258,7 @@ public final class BioshipBlueprint {
     Set<BlockPos> floors = new HashSet<>();
     plan.forEach(
         (p, s) -> {
-          if (p.getY() == 1) floors.add(p);
+          if (structureLocal(core, p).getY() == 1) floors.add(p);
         });
     if (floors.isEmpty()) return "A ship needs floors";
     Set<BlockPos> seen = new HashSet<>();
@@ -431,7 +447,10 @@ public final class BioshipBlueprint {
             level, new BlockPos(ground.getX(), height + h, ground.getZ()))) return null;
     }
     if (y <= level.getMinBuildHeight() || y + 10 >= level.getMaxBuildHeight()) return null;
-    return new Vec3(candidate.x, y + .5, candidate.z);
+    return new Vec3(
+        candidate.x,
+        y + .5 + core.getBlockPos().getY() - core.structuralOrigin().getY(),
+        candidate.z);
   }
 
   public Vec3 flight(LivingCoreBlockEntity core) {
@@ -486,7 +505,7 @@ public final class BioshipBlueprint {
         core.ship()
             .logicalPose()
             .transformPositionInverse(entity.position())
-            .subtract(Vec3.atLowerCornerOf(core.getBlockPos()));
+            .subtract(Vec3.atLowerCornerOf(core.structuralOrigin()));
     if (p.y < -.5 || p.y > 10) return false;
     return rooms.stream()
             .anyMatch(
@@ -516,7 +535,7 @@ public final class BioshipBlueprint {
             core.ship()
                 .logicalPose()
                 .transformPositionInverse(point)
-                .subtract(Vec3.atLowerCornerOf(core.getBlockPos()));
+                .subtract(Vec3.atLowerCornerOf(core.structuralOrigin()));
         if (rooms.stream().anyMatch(r -> r.contains(BlockPos.containing(local)))
             || pendingRooms.stream().anyMatch(r -> r.contains(BlockPos.containing(local))))
           continue;

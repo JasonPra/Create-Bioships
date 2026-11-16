@@ -171,6 +171,10 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
   private double hoverHeight = Double.NaN;
   private volatile FlightIntent flight = new FlightIntent(false, Vec3.ZERO, 0);
 
+  void inheritFlight(LivingCoreBlockEntity previous) {
+    if (!hatchling()) flight = previous.flight;
+  }
+
   private record FlightIntent(
       boolean lift, Vec3 velocity, double turn, double supportHeight, Vec3 stanceUp) {
     FlightIntent(boolean lift, Vec3 velocity, double turn) {
@@ -586,8 +590,10 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     if (core.ship() != null && core.coreMotion.tick(core)) {
       if (!core.isRemoved()) core.defense.tick(core);
       if (!core.isRemoved()) core.serverTick();
-      core.flight =
-          new FlightIntent(false, Vec3.ZERO, 0, core.crawl.supportHeight(), core.crawl.stanceUp());
+      if (core.hatchling())
+        core.flight =
+            new FlightIntent(
+                false, Vec3.ZERO, 0, core.crawl.supportHeight(), core.crawl.stanceUp());
       return;
     }
     if (core.ship() != null) core.vision.observe(core);

@@ -139,7 +139,9 @@ Breaking down wreck tissue loses material: **two hull/tissue blocks yield one fl
 
 ## Foraging memory, combat and retreat
 
-Last-seen world supplies remain remembered for two minutes, and the selected source stays remembered while it is being pursued. These snapshots persist across saves and core relocation. A hidden target is pursued from its last observation; looking at its now-empty location invalidates the memory. Darkness and solid-obstacle sight rules remain unchanged.
+Last-seen components and tracked creatures remain eligible for three real seconds without renewed sight. The remaining memory survives saves and core relocation. During that window, the ship can approach and grasp a remembered component if its appendages can physically reach it. Expiry clears that target and its route; the weighted behavior controller chooses the next eligible need or goal. Darkness and solid-obstacle sight rules remain unchanged.
+
+Hatchlings turn their core toward their target and reassess connected tissue for a better vantage after assimilating organs. Grown ships keep their core protected inside the hull, relocating only within sheltered tissue. Their surface eyes can move to suitable exterior or interior mounts to watch a target; additional eyes still consume flesh and fibers.
 
 Idle hatchlings and ships in hunting mode explore reachable nearby space when no higher-priority target is available. Urgent foraging and defense use a faster running gait. A hatchling's mouth moves to its actual front face and the body turns toward its goal when surrounding clearance permits; manual organ placements remain respected.
 

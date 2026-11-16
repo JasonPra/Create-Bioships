@@ -165,7 +165,11 @@ public final class PathDebugOverlay {
     words.add("Target: " + data.getString("TargetLabel") + " · " + position(data, "Target"));
     if (data.getLong("TargetSeenAge") > 20)
       words.add(
-          "Last seen " + data.getLong("TargetSeenAge") / 20 + "s ago · awaiting visual recheck");
+          "Last seen "
+              + data.getLong("TargetSeenAge") / 20
+              + "s ago · memory expires in "
+              + data.getLong("TargetMemoryMillis") / 1000.0
+              + "s");
     words.add(
         String.format(
             Locale.ROOT,

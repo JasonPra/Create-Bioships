@@ -109,6 +109,21 @@ public final class BioshipIntegration {
     return count;
   }
 
+  static boolean knownReachableSource(LivingCoreBlockEntity core, BlockPos source) {
+    var level = core.getLevel();
+    if (level == null
+        || !BioshipVision.openToNature(level, source)
+        || !BioshipReach.clear(core, Vec3.atCenterOf(source), true)) return false;
+    var known = core.vision().sourceState(core, source);
+    var actual = level.getBlockState(source);
+    // A clear tentacle approach can verify a remembered component by contact.
+    if (known == null || !known.is(actual.getBlock()) || !BioshipPriorities.supply(actual)) {
+      core.vision().forget(core, source);
+      return false;
+    }
+    return true;
+  }
+
   public static void assimilate(LivingCoreBlockEntity core, ServerSubLevel ship) {
     if (OrganMotion.busy(core) || !core.brain().allowsConfiguration(core)) return;
     ServerLevel level = ship.getLevel();
@@ -143,8 +158,7 @@ public final class BioshipIntegration {
           || containing(level, source) != null) continue;
       BlockState state = level.getBlockState(source);
       if (!source.equals(decision.block())) continue;
-      if (!core.vision().exposed(core, source)
-          || !BioshipReach.clear(core, Vec3.atCenterOf(source), true)) continue;
+      if (!knownReachableSource(core, source)) continue;
       if (!BuiltInRegistries.BLOCK.getKey(state.getBlock()).getNamespace().equals("biomancy")
           || state.getBlock() instanceof net.minecraft.world.level.block.LiquidBlock) continue;
       BlockPos target =

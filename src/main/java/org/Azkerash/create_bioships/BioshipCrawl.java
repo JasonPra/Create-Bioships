@@ -143,6 +143,14 @@ public final class BioshipCrawl {
 
   private int cursor;
   private final GroundRoute route = new GroundRoute();
+  private String selection = "";
+
+  private void retireChangedSelection(LivingCoreBlockEntity core) {
+    var decision = core.brain().lastDecision();
+    if (!selection.isEmpty() && decision != null && !selection.equals(decision.offer().key()))
+      stop();
+  }
+
   private final Map<BlockPos, Long> unreachable = new HashMap<>();
 
   net.minecraft.nbt.CompoundTag navigationDebug(long now) {
@@ -222,6 +230,9 @@ public final class BioshipCrawl {
   }
 
   void stop() {
+    route.clear();
+    selection = "";
+    reach = null;
     goal = null;
     walking = false;
     gathering = false;
@@ -239,6 +250,7 @@ public final class BioshipCrawl {
   void tick(LivingCoreBlockEntity core, boolean blocked) {
     currentTime = core.getLevel().getGameTime();
     measureGait(core);
+    retireChangedSelection(core);
     unreachable.entrySet().removeIf(e -> e.getValue() <= currentTime);
     boolean supported = core.canFly() || supportLoad(core);
     brace(core);
@@ -246,8 +258,7 @@ public final class BioshipCrawl {
         || !supported
         || core.body().health() <= 0
         || core.blueprint().busy()) {
-      goal = null;
-      walking = false;
+      stop();
       return;
     }
     if (core.getLevel().getGameTime() % 10 != 0) return;
@@ -255,7 +266,13 @@ public final class BioshipCrawl {
     core.brain().growthBlocked(blocked);
     var decision = core.brain().choose(core);
     if (decision.action() != BioshipBrain.Action.GROW_SITE) {
-      goal = core.gatheringGoal();
+      var nextGoal = core.gatheringGoal();
+      var chosen = core.brain().lastDecision();
+      var nextSelection = chosen == null ? "" : chosen.offer().key();
+      if (!selection.equals(nextSelection) || goal == null && nextGoal != null || nextGoal == null)
+        route.clear();
+      selection = nextSelection;
+      goal = nextGoal;
       mode =
           switch (decision.action()) {
             case FLEE -> "flee";
@@ -342,6 +359,7 @@ public final class BioshipCrawl {
   }
 
   Vec3 velocity(LivingCoreBlockEntity core) {
+    retireChangedSelection(core);
     if (!walking || goal == null) return Vec3.ZERO;
     var level = (ServerLevel) core.getLevel();
     Vec3 here = BioshipBlueprint.physical(core, BlockPos.ZERO);

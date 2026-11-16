@@ -27,6 +27,17 @@ final class GroundRoute {
     return tag;
   }
 
+  void clear() {
+    path = List.of();
+    destination = null;
+    cursor = 0;
+    retryAfter = 0;
+    failed = false;
+    complete = false;
+    debugStatus = "idle";
+    plannedAt = 0;
+  }
+
   boolean complete() {
     return complete;
   }

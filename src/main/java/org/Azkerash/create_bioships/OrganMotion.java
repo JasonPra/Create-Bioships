@@ -171,6 +171,7 @@ public final class OrganMotion {
       if (restore) core.body().memory.put(local, level.getBlockState(source));
     }
     core.organMove(move);
+    if (external && sourceShip == null) core.vision().forget(core, source);
     return true;
   }
 
@@ -314,6 +315,7 @@ public final class OrganMotion {
     if (scavenged) core.scavenging().finish(core, move.target(), hostFlesh);
     else if (move.external()) BioshipIntegration.finishAssimilation(core, move.target());
     DigestiveSystem.connect(core, owner);
+    core.coreMotion().layoutChanged(core);
     BioshipAccess.tick(core);
   }
 
