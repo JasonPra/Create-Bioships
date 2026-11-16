@@ -1,0 +1,99 @@
+{
+  "date": "2026-11-16",
+  "runtimeCommit": "b685970",
+  "scenario": "Fresh ecosystem_lab preset, seed 8675309; two land starters and one aquatic starter; ordinary world terrain/spawning, normal difficulty; view 12, simulation 10, requested tick rate 20. Mouth food supplied up to four cycles, no behavior override.",
+  "ticks": 3600,
+  "result": "FAILED",
+  "summary": {
+    "ticks": 3600,
+    "observed": 3,
+    "digestive": 3,
+    "repeatedlyFed": 3,
+    "alive": 2,
+    "resourceProducing": 3,
+    "expected": 3,
+    "porkOffered": 1910,
+    "failures": 1
+  },
+  "creatures": [
+    {
+      "ship": "28220687-9df3-4662-b0d7-5922640e5eae",
+      "firstSampleTick": 120,
+      "lastSampleTick": 3600,
+      "finalPeriodicSample": {
+        "tick": 3600,
+        "health": 100.0,
+        "action": "WANDER",
+        "blocks": 6,
+        "stomachs": 1,
+        "connectedStomachs": 0,
+        "legsMissing": 3,
+        "feeds": 4
+      },
+      "sampledActions": {
+        "MOVE_COMPONENT": 1,
+        "ASSIMILATE": 8,
+        "WANDER": 39,
+        "COLLECT_ITEM": 3
+      },
+      "minimumConnectedStomachs": 0,
+      "maximumMissingLegs": 4,
+      "firstRawSample": "WILDPROBE tick=120 ship=28220687-9df3-4662-b0d7-5922640e5eae position=(151.47333967194356, 64.86303591122049, 80.28684448166021) health=100.0 air=291 wet=true aquatic={Air:291,AirAccess:0b,Breathing:0b,GillSamples:6,GillUse:92,LegEvolutionAfter:0L,SeekingAir:0b,Swimming:1b,UseSamples:6,WaterUse:92,Wet:1b} organMove=Move[cargo=5896e134-58a7-4dc6-b776-123155c14092, cargoBlock=BlockPos{x=20481032, y=128, z=20487176}, source=BlockPos{x=20481031, y=128, z=20485128}, target=BlockPos{x=20481032, y=129, z=20485127}, start=(150.65154793691215, 65.61106703187541, 80.00874600060692), started=96, external=false, restoreFlesh=false, mouth=false, stomach=false, manual=false, ownerForced=true, tissuePath=[]] action=MOVE_COMPONENT reason=Finish a conserved component or food-recovery move bodyWork={Action:\"IDLE\",Priorities:[],QueuedGoals:0,Reason:\"Component transaction owns the layout\"} cells=2 stomachs=0 connected=0 coreMotion=false coreRemoved=false primary=true digestion=[] mouthFood=[] waterUse=92 swimmingLegs=0.0 legsMissing=4 materials={} feeds=0",
+      "lastRawSample": "WILDPROBE tick=3600 ship=28220687-9df3-4662-b0d7-5922640e5eae position=(155.66636023522406, 65.7964757105598, 78.66947747330062) health=100.0 air=300 wet=true aquatic={Air:300,AirAccess:1b,Breathing:1b,GillSamples:180,GillUse:351,LegEvolutionAfter:0L,SeekingAir:0b,Swimming:1b,UseSamples:180,WaterUse:580,Wet:1b} organMove=null action=WANDER reason=No reachable urgent need or funded goal bodyWork={Action:\"IDLE\",Priorities:[],QueuedGoals:0,Reason:\"No feasible funded body work\"} cells=6 stomachs=1 connected=0 coreMotion=false coreRemoved=false primary=true digestion=[acid=951, queued=80, progress=52/185] mouthFood=[] waterUse=580 swimmingLegs=0.0 legsMissing=3 materials={biomancy:nutrient_paste=10, biomancy:bone_fragments=40, biomancy:flesh_bits=29, biomancy:elastic_fibers=12} feeds=4"
+    },
+    {
+      "ship": "3847f354-45d8-4a82-a593-db2ce308a837",
+      "firstSampleTick": 200,
+      "lastSampleTick": 800,
+      "finalPeriodicSample": {
+        "tick": 800,
+        "health": 100.0,
+        "action": "FLEE",
+        "blocks": 8,
+        "stomachs": 1,
+        "connectedStomachs": 1,
+        "legsMissing": 0,
+        "feeds": 2
+      },
+      "sampledActions": {
+        "ASSIMILATE": 3,
+        "FLEE": 1
+      },
+      "minimumConnectedStomachs": 1,
+      "maximumMissingLegs": 4,
+      "firstRawSample": "WILDPROBE tick=200 ship=3847f354-45d8-4a82-a593-db2ce308a837 position=(-4.58098926850356, 64.90744752412111, 65.10542454092875) health=100.0 air=300 wet=false aquatic={Air:300,AirAccess:1b,Breathing:1b,GillSamples:10,GillUse:0,LegEvolutionAfter:0L,SeekingAir:0b,Swimming:0b,UseSamples:10,WaterUse:0,Wet:0b} organMove=null action=ASSIMILATE reason=Assimilate a useful component before routine growth bodyWork={Action:\"CONFIGURE\",Priorities:[{Action:\"CONFIGURE\",Band:\"NEED\",Reason:\"Restore an accessible functioning digestive system\",Urgency:1100,Weight:1100012.0d}],QueuedGoals:1,Reason:\"Restore an accessible functioning digestive system\",Target:5629783292103397505L} cells=3 stomachs=1 connected=1 coreMotion=false coreRemoved=false primary=true digestion=[acid=200, queued=1, progress=0/0] mouthFood=[63] waterUse=0 swimmingLegs=0.0 legsMissing=4 materials={biomancy:elastic_fibers=8, biomancy:bone_fragments=4, biomancy:flesh_bits=16} feeds=1",
+      "lastRawSample": "WILDPROBE tick=800 ship=3847f354-45d8-4a82-a593-db2ce308a837 position=(-20.620908068145276, 67.47615760143817, 107.05143442541211) health=100.0 air=300 wet=false aquatic={Air:300,AirAccess:1b,Breathing:1b,GillSamples:40,GillUse:0,LegEvolutionAfter:0L,SeekingAir:0b,Swimming:0b,UseSamples:40,WaterUse:0,Wet:0b} organMove=null action=FLEE reason=Escape an unsafe creeper or a critical injury bodyWork={Action:\"IDLE\",Priorities:[],QueuedGoals:0,Reason:\"No feasible funded body work\"} cells=8 stomachs=1 connected=1 coreMotion=false coreRemoved=false primary=true digestion=[acid=400, queued=46, progress=45/185] mouthFood=[54] waterUse=0 swimmingLegs=0.0 legsMissing=0 materials={biomancy:nutrient_paste=0, biomancy:bone_fragments=38, biomancy:flesh_bits=35, biomancy:elastic_fibers=32} feeds=2"
+    },
+    {
+      "ship": "adfba344-a05f-4e59-8fc1-3886c7446cd4",
+      "firstSampleTick": 200,
+      "lastSampleTick": 3600,
+      "finalPeriodicSample": {
+        "tick": 3600,
+        "health": 100.0,
+        "action": "WANDER",
+        "blocks": 10,
+        "stomachs": 1,
+        "connectedStomachs": 1,
+        "legsMissing": 0,
+        "feeds": 4
+      },
+      "sampledActions": {
+        "ASSIMILATE": 1,
+        "WANDER": 16,
+        "MOVE_COMPONENT": 1
+      },
+      "minimumConnectedStomachs": 1,
+      "maximumMissingLegs": 4,
+      "firstRawSample": "WILDPROBE tick=200 ship=adfba344-a05f-4e59-8fc1-3886c7446cd4 position=(35.6612137932312, 65.88252375698251, 64.38947598795112) health=100.0 air=300 wet=false aquatic={Air:300,AirAccess:1b,Breathing:1b,GillSamples:10,GillUse:0,LegEvolutionAfter:0L,SeekingAir:0b,Swimming:0b,UseSamples:10,WaterUse:0,Wet:0b} organMove=null action=ASSIMILATE reason=Assimilate a useful component before routine growth bodyWork={Action:\"CONFIGURE\",Priorities:[{Action:\"CONFIGURE\",Band:\"NEED\",Reason:\"Restore an accessible functioning digestive system\",Urgency:1100,Weight:1100012.0d}],QueuedGoals:1,Reason:\"Restore an accessible functioning digestive system\",Target:5629783292111777921L} cells=3 stomachs=1 connected=1 coreMotion=false coreRemoved=false primary=true digestion=[acid=200, queued=1, progress=0/0] mouthFood=[63] waterUse=0 swimmingLegs=0.0 legsMissing=4 materials={biomancy:elastic_fibers=8, biomancy:bone_fragments=4, biomancy:flesh_bits=16} feeds=1",
+      "lastRawSample": "WILDPROBE tick=3600 ship=adfba344-a05f-4e59-8fc1-3886c7446cd4 position=(12.085149971901991, 64.41662601002456, 58.27299915358357) health=100.0 air=300 wet=false aquatic={Air:300,AirAccess:1b,Breathing:1b,GillSamples:180,GillUse:0,LegEvolutionAfter:0L,SeekingAir:0b,Swimming:0b,UseSamples:180,WaterUse:0,Wet:0b} organMove=null action=WANDER reason=No reachable urgent need or funded goal bodyWork={Action:\"IDLE\",Priorities:[],QueuedGoals:0,Reason:\"No feasible funded body work\"} cells=10 stomachs=1 connected=1 coreMotion=false coreRemoved=false primary=true digestion=[acid=969, queued=153, progress=70/185] mouthFood=[0] waterUse=0 swimmingLegs=0.0 legsMissing=0 materials={biomancy:nutrient_paste=11, biomancy:bone_fragments=44, biomancy:flesh_bits=57, biomancy:elastic_fibers=18} feeds=4"
+    }
+  ],
+  "limitations": [
+    "One seeded run; no high-rate or graphical animation qualification.",
+    "Resource-producing/digestive/repeated-feeding flags are cumulative, not proof that every creature retained all components.",
+    "One land creature stopped appearing after a sampled FLEE action. This trace cannot distinguish death, removal or an observation/lease failure.",
+    "Aquatic samples show loss/recovery of digestive organs and missing legs. Exact removal events and structural layouts were not logged; root cause remains unproven.",
+    "Gradle/server shutdown succeeded; that does not make the biological test pass."
+  ]
+}
