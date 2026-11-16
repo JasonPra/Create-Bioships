@@ -133,10 +133,24 @@ public final class BioshipWildProbe {
           failures++;
           System.out.println("WILDPROBE FAILURE nonprogressing CONFIGURE " + core.brain().reason());
         }
-        if (tick % 200 == 0)
+        if (tick % 200 == 0 || core.aquatic().wet() && tick % 40 == 0)
           System.out.println(
               "WILDPROBE tick="
                   + tick
+                  + " ship="
+                  + ship.getUniqueId()
+                  + " position="
+                  + BioshipBlueprint.physical(core, BlockPos.ZERO)
+                  + " health="
+                  + core.body().health()
+                  + " air="
+                  + core.aquatic().air()
+                  + " wet="
+                  + core.aquatic().wet()
+                  + " aquatic="
+                  + core.aquatic().save()
+                  + " organMove="
+                  + core.organMove()
                   + " action="
                   + action
                   + " reason="
@@ -188,8 +202,9 @@ public final class BioshipWildProbe {
       long alive = states.values().stream().filter(s -> tick - s.lastSeen <= 40).count();
       if (fed < states.size() || digestive < states.size() || alive < states.size()) failures++;
 
-      boolean produced = states.values().stream().anyMatch(s -> s.produced);
-      if (!produced) failures++;
+      long produced = states.values().stream().filter(s -> s.produced).count();
+      int expected = Boolean.getBoolean("bioships.wildSwim") ? 3 : 2;
+      if (states.size() != expected || produced < expected) failures++;
       System.out.println(
           "WILDPROBE COMPLETE ticks="
               + tick
@@ -199,6 +214,12 @@ public final class BioshipWildProbe {
               + digestive
               + " repeatedlyFed="
               + fed
+              + " alive="
+              + alive
+              + " resourceProducing="
+              + produced
+              + " expected="
+              + expected
               + " porkOffered="
               + offered
               + " failures="

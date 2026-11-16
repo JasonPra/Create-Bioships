@@ -62,3 +62,11 @@ Batch 2 verification: 51/51 unit tests passed; 119/120 required GameTests passed
 An established wall/ceiling grip is now checked while idle as well as while moving or reaching. Completing a collection task no longer releases tentacles from a still-present surface. The grip continues to depend on actual surface detection, so removing the wall still causes a fall. Failure diagnostics now report mouth acquisition and current behavior alongside physical state.
 
 Verification: the complete build passed, including 51/51 unit tests and 120/120 required GameTests. The real-wall climb/collection/removal test and stepped glass maze both passed. A single full pass does not resolve the earlier maze intermittency; realistic simulations, repeat navigation checks, and graphical animation QA remain pending.
+
+### Batch 4 — stricter normal-world observation (failed simulation)
+
+The optional development probe now requires all expected starters to be observed, survive, digest, receive repeated feedings, and produce resources. It reports survival/production counts separately and records identity, position, health, air state and conserved component movement, with more frequent underwater samples. This tooling remains excluded from the runtime JAR.
+
+Fresh normal-terrain land/water run, seed 8675309, normal difficulty, player-sized chunk ranges, 3,600 ticks: 3 observed, 3 developed digestion, 3 repeatedly fed, 2 alive at completion, 2 resource-producing, 1,888 pork offered, 2 probe failures. This is a failed simulation, not a pass. One creature repeatedly selected surfacing without progress; the aquatic creature lost digestive parts and was no longer alive at completion. Investigation continues with the expanded telemetry.
+
+Queued lab usability correction requested during this batch: deterministic capped command-block replenishment independent of ordinary spawner light/player restrictions, an ecosystem reset command, and starter cores/components included by the actual preset rather than only the optional observer. Validate the preset with the probe disabled.
