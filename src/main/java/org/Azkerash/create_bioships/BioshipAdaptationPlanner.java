@@ -19,7 +19,8 @@ final class BioshipAdaptationPlanner {
 
   private static boolean clear(LivingCoreBlockEntity core, BlockPos pos) {
     if (!core.ship().getPlot().contains(new net.minecraft.world.level.ChunkPos(pos))) return false;
-    if (!core.getLevel().getBlockState(pos).isAir()) return false;
+    if (!core.getLevel().getBlockState(pos).isAir() || !DigestiveSystem.permitsPlacement(core, pos))
+      return false;
     var p = core.ship().logicalPose().transformPosition(Vec3.atCenterOf(pos));
     if (!BioshipIntegration.growthSpace(core.getLevel(), BlockPos.containing(p))) return false;
     return core.getLevel()
@@ -50,6 +51,12 @@ final class BioshipAdaptationPlanner {
         || OrganMotion.busy(core)
         || core.coreMotion().active()) return result;
     var stomach = DigestiveSystem.stomach(core);
+    var gutRepair = BioshipDigestiveRepair.proposal(core);
+    if (gutRepair != null) result.add(gutRepair);
+    var respiration = BioshipRespiration.proposal(core);
+    if (respiration != null) result.add(respiration);
+    var anatomy = BioshipAnatomy.proposal(core);
+    if (anatomy != null) result.add(anatomy);
     var options = BioshipRecovery.options(core);
     if (!options.mouth()
         && !core.hasMouth()
@@ -104,6 +111,10 @@ final class BioshipAdaptationPlanner {
     if (stomach == null || !core.hasMouth() || !stomach.connected(core)) return result;
     var legs = BioshipLegGrowth.proposal(core);
     if (legs != null) result.add(legs);
+    var grasperEvolution = BioshipGrasperEvolution.proposal(core);
+    if (grasperEvolution != null) result.add(grasperEvolution);
+    var evolution = BioshipLegEvolution.proposal(core);
+    if (evolution != null) result.add(evolution);
     var voice = BioshipLarynx.proposal(core);
     if (voice != null) result.add(voice);
     var room = core.engineRoom().quote(core);
@@ -211,71 +222,9 @@ final class BioshipAdaptationPlanner {
                 250,
                 "Reabsorb an empty excess storage sac"));
     }
-    if (stomach.material(FLESH) < 128
-        || stomach.material(FIBER) < 32
-        || stomach.material(BONE) < 32
-        || overloaded
-        || core.buildingHull()
-        || memory.armor().size() >= (core.hatchling() ? 8 : 16)) return result;
-    var tissueCost = core.hatchling() ? BioshipTissue.GROWTH_COST : new MaterialCost(1, 0, 1);
-    int fleshReserve =
-        !AirshipPrototype.available() || core.isMature()
-            ? 0
-            : core.missingBiomass()
-                + 8 * Math.max(0, core.crawl().hullTier(core) - core.crawl().legTier());
-    if (stomach.material(FLESH) < fleshReserve + tissueCost.flesh()
-        || !EmergencyReserve.after(core, tissueCost)) return result;
-    var cells = BioshipDecay.blocks(core.ship());
-    int low = cells.stream().mapToInt(BlockPos::getY).min().orElse(core.getBlockPos().getY());
-    var center =
-        BioshipSupport.layout(core).center().add(Vec3.atLowerCornerOf(core.structuralOrigin()));
-    var candidates = new HashSet<BlockPos>();
-    for (var cell : cells)
-      if (cell.getY() == low)
-        for (var face : Direction.Plane.HORIZONTAL) candidates.add(cell.relative(face));
-    var order =
-        candidates.stream()
-            .filter(p -> p.distManhattan(core.structuralOrigin()) <= 24)
-            .sorted(Comparator.comparingDouble(p -> p.distToCenterSqr(center)))
-            .toList();
-    for (var pos : order) {
-      var mouth = core.mouthBlock();
-      if (mouth != null
-          && pos.equals(
-              mouth.relative(
-                  core.getLevel().getBlockState(mouth).getValue(FeedingMouthBlock.FACING))))
-        continue;
-      if (!clear(core, pos)) continue;
-      var state =
-          (core.hatchling() ? BioshipTissue.body() : Create_bioships.CARAPACE.get())
-              .defaultBlockState();
-      int bone = tissueCost.bone();
-      if (!tissueCost.funded(stomach) || !BioshipSupport.safeAddition(core, pos, state)) continue;
-      double extra = core.crawl().blockLoad(core, pos, state);
-      int tiers = 0;
-      while (core.crawl().legTier() + tiers < 3
-          && core.crawl().carriedLoad(core) + extra
-              > BioshipCrawl.capacityFor(core.crawl().legTier() + tiers)) tiers++;
-      if (core.crawl().carriedLoad(core) + extra
-          > BioshipCrawl.capacityFor(core.crawl().legTier() + tiers)) continue;
-      if (!funded(
-          stomach,
-          tissueCost.flesh() + 8 * tiers,
-          tissueCost.fiber() + 4 * tiers,
-          bone + 2 * tiers)) continue;
-      result.add(
-          new Proposal(
-              tiers > 0 ? BioshipBrain.Action.STRENGTHEN_LEGS : BioshipBrain.Action.FORTIFY,
-              pos,
-              state,
-              tissueCost.flesh(),
-              tissueCost.fiber(),
-              bone,
-              300,
-              tiers > 0
-                  ? "Strengthen legs before adding body mass"
-                  : "Grow paid protective tissue around a balanced base"));
-      break;
+    if (!overloaded && !core.buildingHull()) {
+      var protection = BioshipAnatomy.protection(core);
+      if (protection != null) result.add(protection);
     }
     return result;
   }

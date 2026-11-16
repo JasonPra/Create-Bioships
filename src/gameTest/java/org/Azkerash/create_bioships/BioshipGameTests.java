@@ -7745,4 +7745,427 @@ public class BioshipGameTests {
       cleanup(helper, ship);
     }
   }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "digestive_obstruction_repair")
+  public static void repairs_all_stomachs_without_overwriting_an_obstructing_component(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    try {
+      var core = core(ship);
+      var level = helper.getLevel();
+      var first = digestive(helper, core, false);
+      var mouth = core.getBlockPos().south();
+      var pos = core.getBlockPos().east();
+      level.setBlock(
+          mouth,
+          Create_bioships.FEEDING_MOUTH
+              .get()
+              .defaultBlockState()
+              .setValue(FeedingMouthBlock.FACING, Direction.SOUTH),
+          3);
+      level.setBlock(pos, Create_bioships.STOMACH.get().defaultBlockState(), 3);
+      DigestiveSystem.connect(core, ship);
+      var second = (StomachBlockEntity) level.getBlockEntity(pos);
+      var blocked =
+          first.gutPath.stream().filter(p -> !second.gutPath.contains(p)).findFirst().orElseThrow();
+      level.setBlock(blocked, block("biomancy:storage_sac").defaultBlockState(), 3);
+      var inventory = level.getCapability(Capabilities.ItemHandler.BLOCK, blocked, null);
+      net.neoforged.neoforge.items.ItemHandlerHelper.insertItemStacked(
+          inventory, new ItemStack(Items.DIAMOND, 7), false);
+      first.retainFlesh(100);
+      first.credit(MaterialCost.FIBER, 100);
+      DigestiveSystem.connect(core, ship);
+      helper.assertTrue(
+          first.connected(core) && second.connected(core), "Repair did not restore every stomach");
+      helper.assertTrue(
+          level.getBlockState(blocked).is(block("biomancy:storage_sac"))
+              && inventory.getStackInSlot(0).getCount() == 7,
+          "Repair overwrote an obstructing component or its inventory");
+      helper.assertTrue(
+          !DigestiveSystem.permitsPlacement(core, first.gutPath.getFirst()),
+          "Automatic placement could occupy a reserved intestine");
+      int before = BioshipStorage.amount(core, MaterialCost.FIBER);
+      DigestiveSystem.connect(core, ship);
+      helper.assertTrue(
+          BioshipStorage.amount(core, MaterialCost.FIBER) == before,
+          "Stable digestive repair charged twice");
+      helper.succeed();
+    } finally {
+      cleanup(helper, ship);
+    }
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "digestive_repair_cost")
+  public static void damaged_guts_reuse_stock_before_paying_for_new_intestines(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    try {
+      var core = core(ship);
+      var stomach = digestive(helper, core, false);
+      var level = helper.getLevel();
+      for (var tube : List.copyOf(stomach.gutPath)) level.removeBlock(tube, false);
+      stomach.freeTubeStock = 0;
+      stomach.paidTubeStock = 0;
+      DigestiveSystem.connect(core, ship);
+      helper.assertTrue(!stomach.connected(core), "Unfunded repair created free intestines");
+      int quote = BioshipDigestiveRepair.purchases(core);
+      helper.assertTrue(quote > 0, "Missing intestine materials were absent from the repair quote");
+      stomach.paidTubeStock = quote;
+      DigestiveSystem.connect(core, ship);
+      helper.assertTrue(
+          stomach.connected(core) && stomach.paidTubeStock == 0,
+          "Prepaid intestine stock was not reused exactly");
+      for (var tube : List.copyOf(stomach.gutPath)) level.removeBlock(tube, false);
+      stomach.retainFlesh(quote);
+      stomach.credit(MaterialCost.FIBER, quote);
+      DigestiveSystem.connect(core, ship);
+      helper.assertTrue(
+          stomach.connected(core)
+              && stomach.material(MaterialCost.FLESH) == 0
+              && stomach.material(MaterialCost.FIBER) == 0,
+          "New intestines did not pay matching flesh and fiber");
+      helper.succeed();
+    } finally {
+      cleanup(helper, ship);
+    }
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "configure_liveness")
+  public static void infeasible_cosmetic_configuration_does_not_block_other_behaviors(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    try {
+      var core = core(ship);
+      var level = helper.getLevel();
+      digestive(helper, core, false);
+      var mouth = core.mouthBlock();
+      level.setBlock(mouth.north(), BioshipTissue.body().defaultBlockState(), 3);
+      level.setBlock(
+          mouth, level.getBlockState(mouth).setValue(FeedingMouthBlock.FACING, Direction.WEST), 3);
+      helper.assertTrue(
+          !mouth.equals(HatchlingFront.port(core, mouth)),
+          "Fixture did not propose an alternate front port");
+      helper.assertTrue(
+          !HatchlingFront.canArrange(core),
+          "Fixture unexpectedly allowed the disconnected cosmetic move");
+      helper.assertTrue(
+          core.brain().choose(core).action() != BioshipBrain.Action.CONFIGURE,
+          "Unexecutable configuration monopolized the goal queue");
+      var state = core.brain().save();
+      state.putString("Action", "CONFIGURE");
+      state.putString("Reason", "Snapshot configuration");
+      core.brain().load(state);
+      helper.assertTrue(
+          core.brain().action() == BioshipBrain.Action.CONFIGURE,
+          "Goggles mislabeled the synchronized behavior as IDLE");
+      helper.succeed();
+    } finally {
+      cleanup(helper, ship);
+    }
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "ecosystem_sun_protection")
+  public static void ecosystem_undead_receive_a_non_dropping_sun_helmet(GameTestHelper helper) {
+    var zombie = EntityType.ZOMBIE.create(helper.getLevel());
+    EcosystemLab.sunProtection(zombie);
+    helper.assertTrue(
+        zombie.getItemBySlot(EquipmentSlot.HEAD).is(Items.LEATHER_HELMET),
+        "Test undead has no sunlight protection");
+    var data = zombie.saveWithoutId(new net.minecraft.nbt.CompoundTag());
+    helper.assertTrue(
+        data.getList("ArmorDropChances", net.minecraft.nbt.Tag.TAG_FLOAT).getFloat(3) == 0,
+        "Test helmet became renewable loot");
+    helper.succeed();
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "anatomy_balance_protection")
+  public static void buried_legs_queue_relocation_before_protection_and_armor(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    try {
+      var core = core(ship);
+      var level = helper.getLevel();
+      var stomach = digestive(helper, core, false);
+      core.adaptation().salvageStarterLegs();
+      for (int n = 0; n < 4; n++) {
+        var plan = BioshipLegGrowth.proposal(core);
+        helper.assertTrue(
+            plan != null && BioshipLegGrowth.develop(core, plan.pos(), plan.state()),
+            "Fixture could not grow four actual legs");
+      }
+      stomach.retainFlesh(200);
+      stomach.credit(MaterialCost.FIBER, 100);
+      stomach.credit(MaterialCost.BONE, 100);
+      var covering = BioshipAnatomy.protection(core);
+      helper.assertTrue(
+          covering != null && covering.state().is(BioshipTissue.body()),
+          "Unprotected organs skipped flesh covering and proceeded to armor");
+      var leg =
+          BioshipStructure.cells(ship).entrySet().stream()
+              .filter(e -> e.getValue().is(Create_bioships.AMOEBA_LEG.get()))
+              .filter(
+                  e ->
+                      level
+                          .getBlockState(
+                              e.getKey().relative(e.getValue().getValue(AmoebaLegBlock.FACING)))
+                          .isAir())
+              .findFirst()
+              .orElseThrow();
+      var blocked = leg.getKey().relative(leg.getValue().getValue(AmoebaLegBlock.FACING));
+      level.setBlock(blocked, BioshipTissue.body().defaultBlockState(), 3);
+      BioshipAnatomy.invalidate(core);
+      var relocation = BioshipAnatomy.proposal(core);
+      helper.assertTrue(
+          relocation != null && relocation.action() == BioshipBrain.Action.REPOSITION_ANATOMY,
+          "A leg buried by new flesh did not enter the anatomy repair queue");
+      helper.assertTrue(
+          BioshipAnatomy.protection(core) == null,
+          "More armor was proposed before correcting the blocked leg");
+      helper.succeed();
+    } finally {
+      cleanup(helper, ship);
+    }
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "leg_transport_mass")
+  public static void detached_amoeba_leg_keeps_physics_mass_in_water(GameTestHelper helper) {
+    var level = helper.getLevel();
+    var pos = location();
+    ground(helper, pos);
+    level.setBlock(pos, Create_bioships.AMOEBA_LEG.get().defaultBlockState(), 3);
+    helper.assertTrue(
+        !level.getBlockState(pos).getCollisionShape(level, pos).isEmpty(),
+        "Leg socket has no physical root volume");
+    var cargo =
+        SubLevelAssemblyHelper.assembleBlocks(
+            level, pos, List.of(pos), new BoundingBox3i(pos, pos));
+    level.setBlock(pos, Blocks.WATER.defaultBlockState(), 3);
+    helper.runAfterDelay(
+        10,
+        () -> {
+          try {
+            helper.assertTrue(
+                cargo.getMassTracker().getMass() > 0,
+                "Detached leg became a massless physics body");
+            helper.succeed();
+          } finally {
+            level.removeBlock(pos, false);
+            cleanup(helper, cargo);
+          }
+        });
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "paid_leg_specialization")
+  public static void paddle_legs_evolve_from_sustained_need_and_pay_both_directions(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    try {
+      var core = core(ship);
+      var stomach = digestive(helper, core, false);
+      core.adaptation().salvageStarterLegs();
+      for (int i = 0; i < 4; i++) {
+        var quote = BioshipLegGrowth.proposal(core);
+        helper.assertTrue(
+            quote != null && BioshipLegGrowth.develop(core, quote.pos(), quote.state()),
+            "Fixture did not grow legs");
+      }
+      stomach.retainFlesh(100);
+      stomach.credit(MaterialCost.FIBER, 100);
+      stomach.credit(MaterialCost.BONE, 32);
+      core.aquatic().legUsage().restore(100, 900);
+      var quote = BioshipLegEvolution.proposal(core);
+      helper.assertTrue(
+          quote != null && quote.state().is(Create_bioships.SWIMMING_LEG.get()),
+          "Sustained water use did not propose a paddle");
+      var face = core.getLevel().getBlockState(quote.pos()).getValue(AmoebaLegBlock.FACING);
+      helper.assertTrue(
+          BioshipLegEvolution.evolve(core, quote.pos(), quote.state()),
+          "Funded paddle evolution failed");
+      helper.assertTrue(
+          BioshipStorage.amount(core, MaterialCost.FLESH) == 96
+              && BioshipStorage.amount(core, MaterialCost.FIBER) == 96,
+          "Paddle evolution did not pay its price");
+      helper.assertTrue(
+          BioshipLegGrowth.missing(core) == 0 && BioshipLegEvolution.swimmingFraction(core) == .25,
+          "Paddle stopped counting as a support leg");
+      helper.assertTrue(
+          core.getLevel().getBlockState(quote.pos()).getValue(AmoebaLegBlock.FACING) == face,
+          "Evolution changed the attachment face");
+      helper.assertTrue(
+          BioshipLegEvolution.proposal(core) == null,
+          "Legs evolved repeatedly without the cooldown");
+      core.aquatic().legEvolved(0);
+      core.aquatic().legUsage().restore(100, 500);
+      helper.assertTrue(
+          BioshipLegEvolution.proposal(core) == null, "Mixed use caused unnecessary switching");
+      core.aquatic().legUsage().restore(200, 50);
+      quote = BioshipLegEvolution.proposal(core);
+      helper.assertTrue(
+          quote != null
+              && quote.state().is(Create_bioships.AMOEBA_LEG.get())
+              && BioshipLegEvolution.evolve(core, quote.pos(), quote.state()),
+          "Sustained land use did not restore a walking leg");
+      helper.assertTrue(
+          BioshipStorage.amount(core, MaterialCost.FLESH) == 94
+              && BioshipStorage.amount(core, MaterialCost.FIBER) == 94,
+          "Returning to land refunded resources or failed to pay");
+      helper.succeed();
+    } finally {
+      cleanup(helper, ship);
+    }
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "respiratory_organs")
+  public static void large_bodies_need_lungs_and_only_exposed_wet_gills_supply_water_breathing(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    try {
+      var core = core(ship);
+      var level = helper.getLevel();
+      helper.assertTrue(BioshipAquatic.canBreathe(core), "Bare core lost passive breathing");
+      for (var dir : Direction.Plane.HORIZONTAL)
+        level.setBlock(
+            core.getBlockPos().relative(dir), BioshipTissue.body().defaultBlockState(), 3);
+      helper.assertTrue(
+          BioshipRespiration.bodySize(core) == 5 && !BioshipAquatic.canBreathe(core),
+          "A body larger than four blocks breathed on land without lungs");
+      var lung = core.getBlockPos().above();
+      level.setBlock(lung, Create_bioships.LUNGS.get().defaultBlockState(), 3);
+      helper.assertTrue(BioshipAquatic.canBreathe(core), "Lungs did not enable land breathing");
+      var gill = core.getBlockPos().east(2);
+      var state =
+          Create_bioships.GILLS
+              .get()
+              .defaultBlockState()
+              .setValue(RespiratoryOrganBlock.FACING, Direction.EAST);
+      level.setBlock(gill, state, 3);
+      var world = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO));
+      for (var pos : BlockPos.betweenClosed(world.offset(-4, -2, -4), world.offset(4, 2, 4)))
+        level.setBlock(pos, Blocks.WATER.defaultBlockState(), 3);
+      helper.assertTrue(
+          BioshipRespiration.has(core, false) && BioshipRespiration.has(core, true),
+          "The body could not retain both respiratory organs");
+      helper.assertTrue(
+          BioshipAquatic.canBreathe(core), "Exposed submerged gills did not supply air");
+      helper.assertTrue(
+          !DigestiveSystem.permitsPlacement(core, gill.east()),
+          "Automatic growth could bury the gill opening");
+      level.setBlock(gill.east(), BioshipTissue.body().defaultBlockState(), 3);
+      helper.assertTrue(
+          !BioshipAquatic.canBreathe(core), "Covered gills continued breathing underwater");
+      level.removeBlock(gill.east(), false);
+      helper.assertTrue(
+          BioshipAquatic.canBreathe(core), "Uncovering gills did not restore water breathing");
+      for (var pos : BlockPos.betweenClosed(world.offset(-4, -2, -4), world.offset(4, 2, 4)))
+        level.removeBlock(pos, false);
+      helper.succeed();
+    } finally {
+      cleanup(helper, ship);
+    }
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "gill_usage_and_cost")
+  public static void gills_require_sustained_need_and_paid_exposed_growth(GameTestHelper helper) {
+    var ship = assemble(helper);
+    try {
+      var core = core(ship);
+      var stomach = digestive(helper, core, false);
+      var level = helper.getLevel();
+      stomach.retainFlesh(64);
+      stomach.credit(MaterialCost.FIBER, 64);
+      // Discretionary adaptation must leave the normal emergency bone reserve intact.
+      stomach.credit(MaterialCost.BONE, EmergencyReserve.TARGET.bone());
+      core.aquatic().gillUsage().restore(10, 900);
+      helper.assertTrue(!BioshipRespiration.wantsGills(core), "A brief dive caused gill growth");
+      var world = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO));
+      for (var pos : BlockPos.betweenClosed(world.offset(-4, -2, -4), world.offset(4, 2, 4)))
+        level.setBlock(pos, Blocks.WATER.defaultBlockState(), 3);
+      core.aquatic().gillUsage().restore(100, 900);
+      var quote = BioshipRespiration.proposal(core);
+      helper.assertTrue(
+          quote != null && quote.state().is(Create_bioships.GILLS.get()),
+          "Frequent submersion did not propose exposed gills");
+      helper.assertTrue(
+          BioshipRespiration.grow(core, quote.pos(), quote.state()), "Paid gills did not grow");
+      helper.assertTrue(
+          stomach.material(MaterialCost.FLESH) == 58 && stomach.material(MaterialCost.FIBER) == 58,
+          "Gill growth did not pay the resource cost");
+      helper.assertTrue(
+          BioshipRespiration.activeGills(core),
+          "New gills were placed where they could not operate");
+      for (var pos : BlockPos.betweenClosed(world.offset(-4, -2, -4), world.offset(4, 2, 4)))
+        level.removeBlock(pos, false);
+      helper.succeed();
+    } finally {
+      cleanup(helper, ship);
+    }
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "hunting_grasper_evolution")
+  public static void swimming_hunting_graspers_share_costs_priorities_and_preserve_mouth_state(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    try {
+      var core = core(ship);
+      var stomach = digestive(helper, core, false);
+      var level = helper.getLevel();
+      stomach.retainFlesh(100);
+      stomach.credit(MaterialCost.FIBER, 100);
+      stomach.credit(MaterialCost.BONE, 32);
+      core.aquatic().legUsage().restore(100, 900);
+      var quote = BioshipGrasperEvolution.proposal(core);
+      helper.assertTrue(
+          quote != null
+              && quote.urgency() == 1030
+              && quote.flesh() == BioshipLegEvolution.SWIM_COST.flesh()
+              && quote.fiber() == BioshipLegEvolution.SWIM_COST.fiber(),
+          "Hunting arms used different specialization rules");
+      helper.assertTrue(
+          BioshipGrasperEvolution.evolve(core, quote.pos()),
+          "Funded swimming grasper did not evolve");
+      var mouth = (FeedingMouthBlockEntity) level.getBlockEntity(quote.pos());
+      helper.assertTrue(
+          mouth.swimmingGrasper(0)
+              && BioshipGraspers.slots(core).stream().anyMatch(BioshipGraspers.Slot::swimming),
+          "Adapted mouth did not expose its swimming grasper");
+      var saved = mouth.saveWithFullMetadata(level.registryAccess());
+      mouth.loadAdditional(saved, level.registryAccess());
+      helper.assertTrue(
+          mouth.swimmingGrasper(0)
+              && stomach.material(MaterialCost.FLESH) == 96
+              && stomach.material(MaterialCost.FIBER) == 96,
+          "Grasper adaptation lost state or its cost");
+      helper.assertTrue(
+          BioshipGrasperEvolution.proposal(core) == null,
+          "Hunting arm specialization ignored its cooldown");
+      helper.succeed();
+    } finally {
+      cleanup(helper, ship);
+    }
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "aquatic_fixture_geometry")
+  public static void aquatic_test_zone_has_real_water_air_containment_and_fish_spawners(
+      GameTestHelper helper) {
+    var level = helper.getLevel();
+    AquaticLab.build(level, new BlockPos(1000000, 80, 1000000));
+    var center = AquaticLab.center(level);
+    helper.assertTrue(
+        level.getBlockState(center.above(AquaticLab.AIR_HEIGHT)).is(Blocks.GLASS),
+        "Swimming test has no containment roof");
+    helper.assertTrue(
+        level.getFluidState(center.below(3)).is(net.minecraft.tags.FluidTags.WATER)
+            && level.getFluidState(center.above()).isEmpty(),
+        "Swimming test omitted either water or breathable air");
+    helper.assertTrue(
+        level.getBlockState(center.east(AquaticLab.RADIUS)).is(Blocks.GLASS),
+        "Swimming test has an open containment wall");
+    int spawners = 0;
+    for (int dx : new int[] {-12, 12})
+      for (int dz : new int[] {-12, 12})
+        if (level.getBlockEntity(center.offset(dx, -AquaticLab.DEPTH + 1, dz))
+            instanceof net.minecraft.world.level.block.entity.SpawnerBlockEntity) spawners++;
+    helper.assertTrue(spawners == 4, "Aquatic test spawners were outside valid build height");
+    helper.succeed();
+  }
 }

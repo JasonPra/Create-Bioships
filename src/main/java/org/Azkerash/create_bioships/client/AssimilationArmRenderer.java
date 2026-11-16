@@ -172,7 +172,10 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
                   new Vector3f(0, -1, 0),
                   new Vector3f((float) delta.x, (float) delta.y, (float) delta.z).normalize()));
       float width = (float) (.55 - t * .25);
-      pose.scale(width, (float) delta.length(), width);
+      pose.scale(
+          width * (nearest != null && nearest.swimming() && t > .5 ? 1.8f : 1),
+          (float) delta.length(),
+          width * (nearest != null && nearest.swimming() && t > .5 ? .6f : 1));
       TentacleSuckers.renderSegment(
           segment,
           pose,
@@ -184,18 +187,6 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
       pose.popPose();
       previous = point;
     }
-    if (core.attackSweeping()
-        && net.minecraft.client.Minecraft.getInstance()
-            .getEntityRenderDispatcher()
-            .shouldRenderHitBoxes())
-      LevelRenderer.renderLineBox(
-          pose,
-          buffers.getBuffer(RenderType.lines()),
-          new net.minecraft.world.phys.AABB(reach, reach).inflate(TentacleStrike.TIP_HALF_SIZE),
-          1f,
-          .2f,
-          .2f,
-          1f);
   }
 
   private void renderBatch(
@@ -222,6 +213,7 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
               .transformPositionInverse(
                   cargo.logicalPose().transformPosition(Vec3.atCenterOf(move.cargoBlock())))
               .subtract(Vec3.atLowerCornerOf(core.getBlockPos()));
+      boolean paddle = BioshipGraspers.swimming(core, core.assimilation().grasper(move.cargo()));
       var previous = root;
       for (int i = 1; i <= 14; i++) {
         double t = i / 14.0;
@@ -236,7 +228,10 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
                     new Vector3f(0, -1, 0),
                     new Vector3f((float) delta.x, (float) delta.y, (float) delta.z).normalize()));
         float width = (float) (.5 - t * .25);
-        pose.scale(width, (float) delta.length(), width);
+        pose.scale(
+            width * (paddle && t > .5 ? 1.8f : 1),
+            (float) delta.length(),
+            width * (paddle && t > .5 ? .6f : 1));
         TentacleSuckers.renderSegment(
             segment,
             pose,
@@ -278,11 +273,7 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
         phase = (core.getLevel().getGameTime() + partial) * .45 + leg * Math.PI / 2;
       Vec3 root = support.legs().get(leg).root();
       Vec3 base = support.legs().get(leg).foot();
-      Vec3 foot =
-          base.add(
-              0,
-              moving ? Math.max(0, Math.sin(phase)) * (scuttling ? .16 : .45) : 0,
-              moving ? Math.cos(phase) * (scuttling ? .25 : .45) : 0);
+      Vec3 foot = core.aquatic().swimming() ? support.legs().get(leg).swimmingFoot(phase) : base;
       if (!core.aquatic().swimming()) {
         var planted = core.crawl().legAnchors().foot(leg, core.getLevel().getGameTime() + partial);
         var container = SubLevelContainer.getContainer(core.getLevel());
@@ -327,7 +318,10 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
                     new Vector3f((float) delta.x, (float) delta.y, (float) delta.z).normalize()));
         float width =
             (float) ((.5 - t * .25) * core.crawl().legThickness() * (scuttling ? 1 : 1.7));
-        pose.scale(width, (float) delta.length(), width);
+        pose.scale(
+            width * (support.legs().get(leg).swimming() && t > .5 ? 1.8f : 1),
+            (float) delta.length(),
+            width * (support.legs().get(leg).swimming() && t > .5 ? .6f : 1));
         TentacleSuckers.renderSegment(
             segment,
             pose,
@@ -338,18 +332,6 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
             i);
         pose.popPose();
         previous = point;
-      }
-      if (net.minecraft.client.Minecraft.getInstance()
-          .getEntityRenderDispatcher()
-          .shouldRenderHitBoxes()) {
-        LevelRenderer.renderLineBox(
-            pose,
-            buffers.getBuffer(RenderType.lines()),
-            new net.minecraft.world.phys.AABB(foot, foot).inflate(BioshipLegAnchors.TIP_RADIUS),
-            .2f,
-            1f,
-            .4f,
-            1f);
       }
     }
     pose.popPose();

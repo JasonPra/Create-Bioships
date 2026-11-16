@@ -19,7 +19,11 @@ final class BioshipFoodCollection {
             : core.ship().logicalPose().transformPosition(grasper.root());
     if (!BioshipReach.clear(core, point, false)) return point;
     core.crawl().reach(item.position());
-    item.setDeltaMovement(intake.subtract(item.position()).normalize().scale(.3));
+    item.setDeltaMovement(
+        intake
+            .subtract(item.position())
+            .normalize()
+            .scale(grasper.swimming() && core.aquatic().wet() ? .45 : .3));
     var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
     if (here.distanceToSqr(point) <= 4
         || core.mouthPosition(core.ship()).distanceToSqr(point) <= 2.25

@@ -100,11 +100,6 @@ final class BioshipLarynx {
         .orElse(null);
   }
 
-  static void bite(LivingCoreBlockEntity core) {
-    var mouths = mouths(core);
-    if (!mouths.isEmpty()) mouths.get(0).animate(10, false);
-  }
-
   static void growl(LivingCoreBlockEntity core) {
     vocalize(core, false);
   }

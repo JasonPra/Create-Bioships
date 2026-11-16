@@ -77,6 +77,16 @@ public final class BioshipChunks {
   }
 
   @SubscribeEvent
+  public static void keepLivingSimulation(
+      net.neoforged.neoforge.event.tick.LevelTickEvent.Pre event) {
+    if (!(event.getLevel() instanceof ServerLevel level)) return;
+    // Region tickets alone do not reset vanilla's 300-tick playerless-dimension timeout.
+    // A living creature is an active simulation owner, like a player; no global forceload is added.
+    if (ACTIVE.stream().anyMatch(loader -> loader.lease != null && loader.lease.level() == level))
+      level.resetEmptyTime();
+  }
+
+  @SubscribeEvent
   public static void stopping(ServerStoppingEvent event) {
     for (var loader : List.copyOf(ACTIVE)) {
       var current = loader.lease;

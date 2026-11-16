@@ -140,6 +140,7 @@ public final class OrganMotion {
         || core.ship() == null) return false;
     var ship = core.ship();
     var level = ship.getLevel();
+    if (!stash && !consuming && !DigestiveSystem.permitsPlacement(core, target)) return false;
     var host = level.getBlockState(target);
     if (!stash && !host.isAir() && !BioshipTissue.isTissue(host)) return false;
     var state = level.getBlockState(source);
@@ -354,6 +355,13 @@ public final class OrganMotion {
       level.setBlock(
           move.target(),
           level.getBlockState(move.target()).setValue(SurfaceEyeBlock.AUTOMATIC, false),
+          3);
+    if (BioshipLegEvolution.leg(level.getBlockState(move.target())))
+      level.setBlock(
+          move.target(),
+          level
+              .getBlockState(move.target())
+              .setValue(AmoebaLegBlock.FACING, AmoebaLegBlock.outward(core, move.target())),
           3);
     if (moved instanceof FeedingMouthBlockEntity mouth) {
       mouth.embeddedInHull(BioshipTissue.isTissue(host));

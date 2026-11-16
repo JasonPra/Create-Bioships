@@ -11,6 +11,9 @@
     "biomancy:nutrient_paste",
     "biomancy:bone_fragments",
     "biomancy:elastic_fibers",
-    "create_bioships:amoeba_leg"
+    "create_bioships:amoeba_leg",
+    "create_bioships:swimming_amoeba_leg",
+    "create_bioships:lungs",
+    "create_bioships:gills"
   ]
 }

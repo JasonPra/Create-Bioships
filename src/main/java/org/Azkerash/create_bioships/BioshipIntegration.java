@@ -144,6 +144,13 @@ public final class BioshipIntegration {
     return state.isAir() || state.canBeReplaced() && level.getFluidState(pos).isEmpty();
   }
 
+  /** Organic growth can displace water, but never lava or solid terrain. */
+  static boolean aquaticGrowthSpace(Level level, BlockPos pos) {
+    return growthSpace(level, pos)
+        || level.getFluidState(pos).is(net.minecraft.tags.FluidTags.WATER)
+            && level.getBlockState(pos).canBeReplaced();
+  }
+
   static void clearGrowthPlant(Level level, BlockPos pos) {
     if (!level.getBlockState(pos).isAir() && growthSpace(level, pos))
       level.destroyBlock(pos, false);

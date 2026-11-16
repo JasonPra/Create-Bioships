@@ -57,6 +57,27 @@ final class HatchlingFront {
     return seen.size() == cells.size();
   }
 
+  static boolean canArrange(LivingCoreBlockEntity core) {
+    var source = core.mouthBlock();
+    if (source == null || OrganMotion.busy(core) || core.coreMotion().active()) return false;
+    var state = core.getLevel().getBlockState(source);
+    if (!state.is(Create_bioships.FEEDING_MOUTH.get())) return false;
+    var target = port(core, source);
+    var facing =
+        source.equals(target) && FeedingMouthBlock.openFace(core, source, Direction.NORTH)
+            ? Direction.NORTH
+            : FeedingMouthBlock.outward(core, source);
+    if (state.getValue(FeedingMouthBlock.FACING) != facing) return true;
+    if (target == null || target.equals(source) || !DigestiveSystem.permitsPlacement(core, target))
+      return false;
+    return BioshipSupport.safeMove(
+            core,
+            source,
+            target,
+            !BioshipTissue.host(core.getLevel().getBlockEntity(source)).isAir())
+        && DigestiveSystem.reserveOrganRoute(core, source, target, false);
+  }
+
   static void arrangeMouth(LivingCoreBlockEntity core) {
     var source = core.mouthBlock();
     if (!core.hatchling() || source == null || OrganMotion.busy(core) || core.coreMotion().active())

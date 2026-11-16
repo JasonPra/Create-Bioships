@@ -29,8 +29,13 @@ public final class BioshipBrain {
     CONFIGURE,
     REGROW_MOUTH,
     REGROW_STOMACH,
+    REPAIR_DIGESTION,
+    REPOSITION_ANATOMY,
     GROW_LARYNX,
     GROW_LEG,
+    EVOLVE_LEGS,
+    EVOLVE_GRASPERS,
+    GROW_RESPIRATION,
     GROW_STORAGE,
     GROW_DIGESTION,
     GROW_ENGINE_ROOM,
@@ -171,17 +176,23 @@ public final class BioshipBrain {
                             .count())
             : 0;
     int legs = digestive ? BioshipLegGrowth.missing(core) : 0;
+    int lungs = BioshipRespiration.missingLungs(core) ? 1 : 0;
+    int gills = BioshipRespiration.wantsGills(core) && !BioshipRespiration.has(core, true) ? 1 : 0;
+    int gutRepair = BioshipDigestiveRepair.purchases(core);
     int repair = (int) Math.ceil(Math.max(0, core.body().capacity() - core.body().health()) / 4);
     int flesh =
         (AirshipPrototype.available() ? core.missingBiomass() : 0)
             + 8 * upgrades
             + repair
+            + gutRepair
             + (room == null ? 0 : room.cost().flesh())
             + EmergencyReserve.TARGET.flesh()
             + 8 * extraMouths
             + 16 * extraStomachs
             + 8 * voice
-            + 4 * legs;
+            + 4 * legs
+            + 6 * lungs
+            + 6 * gills;
     int bone =
         (core.frameFunded() ? 0 : 8)
             + 2 * upgrades
@@ -199,7 +210,10 @@ public final class BioshipBrain {
             + 4 * extraMouths
             + 8 * extraStomachs
             + 4 * voice
-            + 2 * legs;
+            + 2 * legs
+            + gutRepair
+            + 3 * lungs
+            + 6 * gills;
     if (stomach != null) {
       flesh -= stomach.material("biomancy:flesh_bits");
       bone -= stomach.material("biomancy:bone_fragments");
@@ -434,11 +448,12 @@ public final class BioshipBrain {
       if (entity != null && !entity.getPersistentData().getBoolean("BioshipManualPlacement")) {
         urgent |=
             !core.buildingHull()
+                && (!core.hatchling() || HatchlingFront.canArrange(core))
                 && !FeedingMouthBlock.openFace(
                     core,
                     mouth,
                     core.getLevel().getBlockState(mouth).getValue(FeedingMouthBlock.FACING));
-        if (core.hatchling()) optional |= !mouth.equals(HatchlingFront.port(core, mouth));
+        if (core.hatchling()) optional |= HatchlingFront.canArrange(core);
         else urgent |= core.huntingAllowed() && EngineRoom.inside(core, mouth);
       }
     }
@@ -643,8 +658,13 @@ public final class BioshipBrain {
           MOVE_COMPONENT,
           REGROW_MOUTH,
           REGROW_STOMACH,
+          REPAIR_DIGESTION,
+          REPOSITION_ANATOMY,
           GROW_LARYNX,
           GROW_LEG,
+          EVOLVE_LEGS,
+          EVOLVE_GRASPERS,
+          GROW_RESPIRATION,
           GROW_STORAGE,
           GROW_DIGESTION,
           GROW_ENGINE_ROOM,
@@ -737,6 +757,10 @@ public final class BioshipBrain {
     debugOfferCount = 0;
     previous = tag.getString("Previous");
     reason = tag.getString("Reason");
-    action = Action.IDLE;
+    try {
+      action = Action.valueOf(tag.getString("Action"));
+    } catch (IllegalArgumentException ignored) {
+      action = Action.IDLE;
+    }
   }
 }

@@ -169,6 +169,10 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
 
   private final BioshipDefense defense = new BioshipDefense();
 
+  public Vec3 attackTip() {
+    return defense.collisionTip();
+  }
+
   public boolean attackSweeping() {
     return level != null && defense.sweeping(level.getGameTime());
   }
@@ -314,6 +318,10 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
                 crawl.measuredLoad(),
                 crawl.loadCapacity(),
                 crawl.extraLift())));
+    if (aquatic.legUsage().samples() > 0)
+      lines.add(
+          Component.literal(
+              "Recent water use: " + aquatic.legUsage().water() / 10 + "% (leg adaptation)"));
     lines.add(Component.literal("Behavior: " + brain.action() + " · " + brain.reason()));
     if (AirshipPrototype.available())
       lines.add(Component.literal("Growth biomass: " + needs.biomass() + " / 64"));
@@ -689,6 +697,8 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
   public static void tick(Level level, BlockPos pos, BlockState state, LivingCoreBlockEntity core) {
     if (level.isClientSide) return;
     core.chunkLoading.update(core);
+    if (core.ship() != null && !core.body().dead() && level.getGameTime() % 20 == 0)
+      BioshipAnatomy.observe(core);
     if (core.ship() != null) {
       BioshipTargetEntity.ensure(core);
       core.scavenging.deliver(core);

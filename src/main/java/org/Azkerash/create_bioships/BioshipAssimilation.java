@@ -301,6 +301,7 @@ public final class BioshipAssimilation {
               .getKey(state.getBlock())
               .toString()
               .equals("biomancy:bio_forge")) port = HatchlingFront.port(core, null);
+      if (port != null && !DigestiveSystem.permitsPlacement(core, port)) port = null;
       if (port == null) {
         var candidates = new HashSet<BlockPos>();
         for (var cell : BioshipDecay.blocks(core.ship()))
@@ -313,7 +314,8 @@ public final class BioshipAssimilation {
                         p -> Math.abs(p.getY() - home.getY()) * 8 + p.distSqr(home)))
                 .toList()) {
           if (!core.ship().getPlot().contains(new net.minecraft.world.level.ChunkPos(p))
-              || !core.getLevel().getBlockState(p).isAir()) continue;
+              || !core.getLevel().getBlockState(p).isAir()
+              || !DigestiveSystem.permitsPlacement(core, p)) continue;
           var world = core.ship().logicalPose().transformPosition(Vec3.atCenterOf(p));
           if (BioshipIntegration.growthSpace(core.getLevel(), BlockPos.containing(world))
               && BioshipSupport.safeAddition(core, p, state)) {

@@ -7,6 +7,7 @@ final class BlockEnergyTable {
   static final Map<String, Integer> COSTS =
       Map.ofEntries(
           Map.entry("create_bioships:living_core", 0),
+          Map.entry("create_bioships:swimming_amoeba_leg", 2),
           Map.entry("create_bioships:feeding_mouth", 0),
           Map.entry("create_bioships:stomach", 0),
           Map.entry("create_bioships:fleshy_intestine", 0),

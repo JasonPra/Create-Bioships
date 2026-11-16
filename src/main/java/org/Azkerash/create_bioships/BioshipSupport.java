@@ -13,13 +13,26 @@ import net.minecraft.world.phys.Vec3;
  */
 public final class BioshipSupport {
   /** Attachment and resting tip are relative to the structural origin, never world-grid axes. */
-  public record Leg(Vec3 root, Vec3 foot, Direction face, boolean bootstrap) {
+  public record Leg(Vec3 root, Vec3 foot, Direction face, boolean bootstrap, boolean swimming) {
+    public Leg(Vec3 root, Vec3 foot, Direction face, boolean bootstrap) {
+      this(root, foot, face, bootstrap, false);
+    }
+
     public Leg(Vec3 root, Vec3 foot, Direction face) {
       this(root, foot, face, false);
     }
 
     public Vec3 outward() {
       return Vec3.atLowerCornerOf(face.getNormal());
+    }
+
+    public Vec3 swimmingFoot(double phase) {
+      var normal = outward();
+      var forward = new Vec3(0, 0, -1);
+      var stroke = forward.subtract(normal.scale(forward.dot(normal)));
+      if (stroke.lengthSqr() < .01) stroke = new Vec3(0, -1, 0);
+      return foot.add(stroke.normalize().scale(Math.cos(phase) * (swimming ? .6 : .45)))
+          .add(normal.scale(Math.sin(phase) * .2));
     }
 
     public Vec3 curve(Vec3 tip, Vec3 tipUp, double t) {
@@ -88,7 +101,7 @@ public final class BioshipSupport {
       }
       if (!cells.containsKey(e.getKey().below())
           && !e.getValue().is(Create_bioships.SURFACE_EYE.get())
-          && !e.getValue().is(Create_bioships.AMOEBA_LEG.get())) roots.add(e.getKey());
+          && !BioshipLegEvolution.leg(e.getValue())) roots.add(e.getKey());
     }
     double storedMass =
         core.assimilation().load(core)
@@ -214,6 +227,8 @@ public final class BioshipSupport {
     if (restoreFlesh) cells.put(source, BioshipTissue.body().defaultBlockState());
     else if (moved.is(Create_bioships.CORE.get()) && host != null && CoreMotion.tissue(host))
       cells.put(source, host);
+    if (BioshipLegEvolution.leg(moved))
+      moved = moved.setValue(AmoebaLegBlock.FACING, AmoebaLegBlock.outward(cells, target));
     cells.put(target, moved);
     boolean attached = false;
     for (var face : net.minecraft.core.Direction.values())

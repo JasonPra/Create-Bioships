@@ -104,6 +104,16 @@ final class BioshipAdaptation {
                     4));
           }
           DigestiveSystem.connect(core, core.ship());
+        } else if (p.action == BioshipBrain.Action.REPOSITION_ANATOMY) {
+          if (!BioshipAnatomy.execute(core, p.pos)) return;
+        } else if (p.action == BioshipBrain.Action.REPAIR_DIGESTION) {
+          if (!BioshipDigestiveRepair.execute(core, p.pos)) return;
+        } else if (p.action == BioshipBrain.Action.EVOLVE_GRASPERS) {
+          if (!BioshipGrasperEvolution.evolve(core, p.pos)) return;
+        } else if (p.action == BioshipBrain.Action.GROW_RESPIRATION) {
+          if (!BioshipRespiration.grow(core, p.pos, p.state)) return;
+        } else if (p.action == BioshipBrain.Action.EVOLVE_LEGS) {
+          if (!BioshipLegEvolution.evolve(core, p.pos, p.state)) return;
         } else if (p.action == BioshipBrain.Action.GROW_LEG) {
           if (!BioshipLegGrowth.develop(core, p.pos, p.state)) return;
         } else if (p.action == BioshipBrain.Action.GROW_LARYNX) {
@@ -172,7 +182,8 @@ final class BioshipAdaptation {
           var stomach = DigestiveSystem.stomach(core);
           if (stomach == null || !new MaterialCost(p.flesh, p.fiber, p.bone).funded(stomach))
             return;
-          if (p.action == BioshipBrain.Action.GROW_STORAGE
+          if ((p.action == BioshipBrain.Action.GROW_STORAGE
+                  || p.action == BioshipBrain.Action.FORTIFY)
               && !EmergencyReserve.after(core, new MaterialCost(p.flesh, p.fiber, p.bone))) return;
           if (!new MaterialCost(p.flesh, p.fiber, p.bone).pay(stomach)) return;
           if (!core.getLevel().setBlock(p.pos, p.state, 3)) {

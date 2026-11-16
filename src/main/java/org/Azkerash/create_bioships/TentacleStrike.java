@@ -15,6 +15,12 @@ public final class TentacleStrike {
   private UUID victim;
   private long started;
   private boolean hit;
+  private Vec3 previousTip;
+  private long previousTick = Long.MIN_VALUE;
+
+  public Vec3 collisionTip() {
+    return previousTip;
+  }
 
   public boolean active() {
     return aim != null;
@@ -29,12 +35,16 @@ public final class TentacleStrike {
     victim = target.getUUID();
     started = now;
     hit = false;
+    previousTip = null;
+    previousTick = Long.MIN_VALUE;
   }
 
   void clear() {
     aim = null;
     victim = null;
     hit = false;
+    previousTip = null;
+    previousTick = Long.MIN_VALUE;
   }
 
   public boolean finished(long now) {
@@ -59,19 +69,26 @@ public final class TentacleStrike {
   boolean tick(
       LivingCoreBlockEntity core, Vec3 root, LivingEntity target, double reach, float damage) {
     long now = core.getLevel().getGameTime();
-    if (!active()
-        || now - started > WINDUP + SWEEP
-        || now - started < WINDUP
-        || hit
-        || target == null
-        || !target.isAlive()) return false;
+    if (!active()) return false;
     var end = tip(root, now, reach);
-    var previous = tip(root, Math.max(started + WINDUP, now - 1), reach);
+    var previous =
+        previousTip != null && previousTick == now - 1
+            ? previousTip
+            : tip(root, Math.max(started + WINDUP, now - 1), reach);
+    previousTip = end;
+    previousTick = now;
+    if (!sweeping(now) || target == null || !target.isAlive()) return false;
     if (tipCollision(target.getBoundingBox(), previous, end)
         && BioshipReach.clear(core, target.getBoundingBox().getCenter(), false, reach)) {
       hit = true;
       var attacker = BioshipTargetEntity.attackSource(core, target);
-      return target.hurt(core.getLevel().damageSources().mobAttack(attacker), damage);
+      var motion = core.ship().latestLinearVelocity;
+      var direction = target.getBoundingBox().getCenter().subtract(previous).normalize();
+      double closing = motion.x * direction.x + motion.y * direction.y + motion.z * direction.z;
+      float impact = ImpactDamage.resolve(damage, closing);
+      boolean damaged = target.hurt(core.getLevel().damageSources().mobAttack(attacker), impact);
+      if (damaged) FeedingMouthBlockEntity.bite(core, target.getBoundingBox().getCenter());
+      return damaged;
     }
     return false;
   }
@@ -90,6 +107,8 @@ public final class TentacleStrike {
     if (victim != null) tag.putUUID("Victim", victim);
     tag.putLong("Started", started);
     tag.putBoolean("Hit", hit);
+    if (previousTip != null) tag.put("Tip", VisionDebug.vector(previousTip));
+    tag.putLong("TipAt", previousTick);
     return tag;
   }
 
@@ -98,5 +117,7 @@ public final class TentacleStrike {
     victim = tag.hasUUID("Victim") ? tag.getUUID("Victim") : null;
     started = tag.getLong("Started");
     hit = tag.getBoolean("Hit");
+    previousTip = tag.contains("Tip") ? VisionDebug.vector(tag.getCompound("Tip")) : null;
+    previousTick = tag.getLong("TipAt");
   }
 }

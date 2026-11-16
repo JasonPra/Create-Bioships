@@ -15,7 +15,7 @@ final class BioshipLegGrowth {
         4
             - (int)
                 BioshipStructure.cells(core.ship()).values().stream()
-                    .filter(s -> s.is(Create_bioships.AMOEBA_LEG.get()))
+                    .filter(s -> BioshipLegEvolution.leg(s))
                     .count());
   }
 
@@ -33,11 +33,13 @@ final class BioshipLegGrowth {
         Vec3.atLowerCornerOf(core.structuralOrigin()).add(BioshipSupport.layout(core).center());
     var candidates = new ArrayList<Map.Entry<BlockPos, BlockState>>();
     for (var e : cells.entrySet()) {
-      if (e.getValue().is(Create_bioships.AMOEBA_LEG.get())
+      if (BioshipLegEvolution.leg(e.getValue())
           || e.getValue().is(Create_bioships.SURFACE_EYE.get())) continue;
       for (var face : Direction.Plane.HORIZONTAL) {
         var pos = e.getKey().relative(face);
-        if (cells.containsKey(pos) || !core.getLevel().getBlockState(pos).isAir()) continue;
+        if (cells.containsKey(pos)
+            || !core.getLevel().getBlockState(pos).isAir()
+            || !DigestiveSystem.permitsPlacement(core, pos)) continue;
         boolean mouthFace =
             cells.entrySet().stream()
                 .anyMatch(
@@ -64,7 +66,7 @@ final class BioshipLegGrowth {
               var p = Vec3.atCenterOf(e.getKey());
               double spacing =
                   cells.entrySet().stream()
-                      .filter(c -> c.getValue().is(Create_bioships.AMOEBA_LEG.get()))
+                      .filter(c -> BioshipLegEvolution.leg(c.getValue()))
                       .mapToDouble(c -> Vec3.atCenterOf(c.getKey()).distanceToSqr(p))
                       .min()
                       .orElse(0);
@@ -102,7 +104,7 @@ final class BioshipLegGrowth {
     var origin = Vec3.atLowerCornerOf(core.structuralOrigin());
     var result = new ArrayList<BioshipSupport.Leg>();
     cells.entrySet().stream()
-        .filter(e -> e.getValue().is(Create_bioships.AMOEBA_LEG.get()))
+        .filter(e -> BioshipLegEvolution.leg(e.getValue()))
         .sorted(Map.Entry.comparingByKey())
         .limit(32)
         .forEach(
@@ -111,7 +113,9 @@ final class BioshipLegGrowth {
               var normal = Vec3.atLowerCornerOf(face.getNormal());
               var root = Vec3.atCenterOf(e.getKey()).subtract(origin).subtract(normal.scale(.48));
               var foot = root.add(normal.scale(1.3)).add(0, -1, 0);
-              result.add(new BioshipSupport.Leg(root, foot, face));
+              result.add(
+                  new BioshipSupport.Leg(
+                      root, foot, face, false, BioshipLegEvolution.swimming(e.getValue())));
             });
     return result;
   }

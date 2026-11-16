@@ -17,6 +17,20 @@ public final class AmoebaLegBlock extends DirectionalBlock {
     registerDefaultState(stateDefinition.any().setValue(FACING, Direction.DOWN));
   }
 
+  static Direction outward(LivingCoreBlockEntity core, BlockPos target) {
+    return outward(BioshipStructure.cells(core.ship()), target);
+  }
+
+  static Direction outward(java.util.Map<BlockPos, BlockState> cells, BlockPos target) {
+    for (var face : Direction.values()) {
+      var host = cells.get(target.relative(face.getOpposite()));
+      if (host != null
+          && !BioshipLegEvolution.leg(host)
+          && !host.is(Create_bioships.SURFACE_EYE.get())) return face;
+    }
+    return Direction.DOWN;
+  }
+
   @Override
   protected MapCodec<? extends DirectionalBlock> codec() {
     return CODEC;

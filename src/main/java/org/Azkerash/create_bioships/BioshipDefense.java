@@ -11,6 +11,11 @@ final class BioshipDefense {
   private int cooldown;
   private boolean extending;
   private final TentacleStrike strike = new TentacleStrike();
+  private double strikeReach = 4;
+
+  public net.minecraft.world.phys.Vec3 collisionTip() {
+    return strike.collisionTip();
+  }
 
   public boolean sweeping(long now) {
     return strike.sweeping(now);
@@ -69,6 +74,7 @@ final class BioshipDefense {
     tag.putLong("ThreatenedUntil", threatenedUntil);
     tag.putInt("Cooldown", cooldown);
     tag.put("Strike", strike.save());
+    tag.putDouble("StrikeReach", strikeReach);
     if (lastThreat != null) tag.put("LastThreat", VisionDebug.vector(lastThreat));
     return tag;
   }
@@ -80,6 +86,10 @@ final class BioshipDefense {
     threatenedUntil = tag.getLong("ThreatenedUntil");
     cooldown = Math.clamp(tag.getInt("Cooldown"), 0, 40);
     strike.load(tag.getCompound("Strike"));
+    strikeReach =
+        tag.contains("StrikeReach") && Double.isFinite(tag.getDouble("StrikeReach"))
+            ? Math.clamp(tag.getDouble("StrikeReach"), 4, 5.5)
+            : 4;
   }
 
   static LivingEntity target(LivingCoreBlockEntity core) {
@@ -205,9 +215,9 @@ final class BioshipDefense {
               prey == null
                   ? BioshipBlueprint.physical(core, BlockPos.ZERO)
                   : prey.getBoundingBox().getCenter());
-      core.crawl().reach(strike.tip(root, level.getGameTime(), 4));
+      core.crawl().reach(strike.tip(root, level.getGameTime(), strikeReach));
       extending = true;
-      strike.tick(core, root, prey, 4, 4);
+      strike.tick(core, root, prey, strikeReach, 4);
       if (strike.finished(level.getGameTime())) {
         strike.clear();
         cooldown = 28;
@@ -225,11 +235,13 @@ final class BioshipDefense {
       return;
     }
     var point = prey.getBoundingBox().getCenter();
-    if (BioshipReach.anchor(core, point).distanceToSqr(point) > 16
+    strikeReach = BioshipGraspers.attackReach(core, point);
+    if (BioshipReach.anchor(core, point).distanceToSqr(point) > strikeReach * strikeReach
         || !BioshipReach.clear(core, point, false)) return;
     strike.begin(prey, level.getGameTime());
     extending = true;
-    core.crawl().reach(strike.tip(BioshipReach.anchor(core, point), level.getGameTime(), 4));
+    core.crawl()
+        .reach(strike.tip(BioshipReach.anchor(core, point), level.getGameTime(), strikeReach));
     level.sendBlockUpdated(core.getBlockPos(), core.getBlockState(), core.getBlockState(), 2);
   }
 }

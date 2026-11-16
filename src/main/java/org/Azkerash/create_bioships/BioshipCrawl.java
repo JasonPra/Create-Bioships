@@ -455,7 +455,7 @@ public final class BioshipCrawl {
     var level = (ServerLevel) core.getLevel();
     Vec3 here = BioshipBlueprint.physical(core, BlockPos.ZERO);
     boolean clinging = wallFacing != null;
-    var grip = walking || clinging ? GroundRoute.grip(core, here) : null;
+    var grip = walking || reach != null ? GroundRoute.grip(core, here) : null;
     wallFacing = null;
     if (clinging && grip != null) {
       braceGrip(core, here, grip);

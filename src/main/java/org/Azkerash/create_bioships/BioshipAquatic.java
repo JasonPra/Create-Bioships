@@ -14,8 +14,33 @@ public final class BioshipAquatic {
   private int air = 300;
   private long lastTick = Long.MIN_VALUE;
   private volatile boolean wet, swimming;
-  private boolean breathing = true;
+  private boolean breathing = true, airAccess = true, seekingAir;
+  private final ExposureHistory gillUsage = new ExposureHistory();
+
+  ExposureHistory gillUsage() {
+    return gillUsage;
+  }
+
   private volatile Vec3 velocity = Vec3.ZERO;
+
+  private final LegUsageHistory legUsage = new LegUsageHistory();
+  private long nextLegEvolution;
+
+  LegUsageHistory legUsage() {
+    return legUsage;
+  }
+
+  long nextLegEvolution() {
+    return nextLegEvolution;
+  }
+
+  void legEvolved(long next) {
+    nextLegEvolution = next;
+  }
+
+  public boolean wet() {
+    return wet;
+  }
 
   public boolean swimming() {
     return swimming;
@@ -26,7 +51,7 @@ public final class BioshipAquatic {
   }
 
   boolean needsAir() {
-    return !breathing && air < 200;
+    return seekingAir && (breathing || !airAccess);
   }
 
   void tick(LivingCoreBlockEntity core) {
@@ -42,17 +67,27 @@ public final class BioshipAquatic {
           && !aboveFluid(core, point)) immersed++;
     }
     wet = immersed > 0 && immersed * 4 >= total;
+    if (level.getGameTime() % 20 == 0) legUsage.observe(wet);
+    airAccess = BioshipRespiration.airAccess(core);
+    if (level.getGameTime() % 20 == 0) gillUsage.observe(!airAccess);
     breathing = canBreathe(core);
     if (!breathing) {
       air = Math.max(0, air - 1);
       if (air == 0 && level.getGameTime() % 20 == 0) core.body().drown(core);
     } else air = Math.min(300, air + 4);
+    if (!airAccess && !breathing && air < 200) seekingAir = true;
+    if (air == 300) seekingAir = false;
     swimming =
-        wet
+        (wet || seekingAir && breathing && waterWithinReach(core, here))
             && !core.body().dead()
             && (core.canFly() || core.crawl().carriedLoad(core) <= core.crawl().loadCapacity());
     velocity = Vec3.ZERO;
     if (swimming) {
+      if (seekingAir && breathing) {
+        // Stay braced at the waterline until air is replenished instead of diving after one breath.
+        if (level.getGameTime() % 20 == 0) core.setChanged();
+        return;
+      }
       var selected = core.brain().lastDecision();
       Vec3 direction =
           selected != null && selected.point() != null && !needsAir()
@@ -68,7 +103,7 @@ public final class BioshipAquatic {
               new Vec3(0, .5, -1).normalize());
       for (var candidate : options)
         if (clear(core, candidate.scale(.65))) {
-          velocity = candidate.scale(1.5);
+          velocity = candidate.scale(1.5 * (1 + .6 * BioshipLegEvolution.swimmingFraction(core)));
           break;
         }
     }
@@ -79,20 +114,21 @@ public final class BioshipAquatic {
   }
 
   static boolean canBreathe(LivingCoreBlockEntity core) {
-    boolean mouth = false;
-    for (var entry : BioshipStructure.cells(core.ship()).entrySet())
-      if (BioshipIntegration.isMaw(entry.getValue())) {
-        mouth = true;
-        var point = core.ship().logicalPose().transformPosition(Vec3.atCenterOf(entry.getKey()));
-        if (aboveFluid(core, point)) return true;
-      }
-    return !mouth && aboveFluid(core, BioshipBlueprint.physical(core, BlockPos.ZERO));
+    return BioshipRespiration.canBreathe(core);
   }
 
-  private static boolean aboveFluid(LivingCoreBlockEntity core, Vec3 point) {
+  static boolean aboveFluid(LivingCoreBlockEntity core, Vec3 point) {
     var pos = BlockPos.containing(point);
     var fluid = core.getLevel().getFluidState(pos);
     return fluid.isEmpty() || point.y >= pos.getY() + fluid.getHeight(core.getLevel(), pos);
+  }
+
+  private static boolean waterWithinReach(LivingCoreBlockEntity core, Vec3 here) {
+    for (int depth = 1; depth <= core.crawl().footingReach(); depth++)
+      if (core.getLevel()
+          .getFluidState(BlockPos.containing(here.add(0, -depth, 0)))
+          .is(FluidTags.WATER)) return true;
+    return false;
   }
 
   private boolean clear(LivingCoreBlockEntity core, Vec3 offset) {
@@ -122,6 +158,13 @@ public final class BioshipAquatic {
   CompoundTag save() {
     var t = new CompoundTag();
     t.putInt("Air", air);
+    t.putInt("GillSamples", gillUsage.samples());
+    t.putInt("GillUse", gillUsage.score());
+    t.putBoolean("AirAccess", airAccess);
+    t.putBoolean("SeekingAir", seekingAir);
+    t.putInt("WaterUse", legUsage.water());
+    t.putInt("UseSamples", legUsage.samples());
+    t.putLong("LegEvolutionAfter", nextLegEvolution);
     t.putBoolean("Wet", wet);
     t.putBoolean("Breathing", breathing);
     t.putBoolean("Swimming", swimming);
@@ -129,6 +172,11 @@ public final class BioshipAquatic {
   }
 
   void load(CompoundTag t) {
+    gillUsage.restore(t.getInt("GillSamples"), t.getInt("GillUse"));
+    airAccess = !t.contains("AirAccess") || t.getBoolean("AirAccess");
+    seekingAir = t.getBoolean("SeekingAir");
+    legUsage.restore(t.getInt("UseSamples"), t.getInt("WaterUse"));
+    nextLegEvolution = t.getLong("LegEvolutionAfter");
     air = t.contains("Air") ? Math.clamp(t.getInt("Air"), 0, 300) : 300;
     wet = t.getBoolean("Wet");
     breathing = !t.contains("Breathing") || t.getBoolean("Breathing");

@@ -105,8 +105,22 @@ public final class DigestiveSystem {
       BlockPos end,
       BlockPos blocked,
       BlockPos freed) {
+    var preferred = findPath(core, ship, start, end, blocked, freed, false);
+    return preferred != null ? preferred : findPath(core, ship, start, end, blocked, freed, true);
+  }
+
+  private static List<BlockPos> findPath(
+      LivingCoreBlockEntity core,
+      ServerSubLevel ship,
+      BlockPos start,
+      BlockPos end,
+      BlockPos blocked,
+      BlockPos freed,
+      boolean spatial) {
     var level = ship.getLevel();
     var origin = core.structuralOrigin();
+    int low = spatial ? Math.min(-2, Math.min(start.getY(), end.getY()) - origin.getY() - 1) : 0;
+    int high = spatial ? Math.max(6, Math.max(start.getY(), end.getY()) - origin.getY() + 2) : 6;
     Map<BlockPos, BlockPos> parent = new HashMap<>();
     ArrayDeque<BlockPos> queue = new ArrayDeque<>();
     queue.add(start);
@@ -133,15 +147,18 @@ public final class DigestiveSystem {
         var offset = next.subtract(origin);
         if (parent.containsKey(next)
             || Math.abs(offset.getX()) > 24
-            || offset.getY() < 0
-            || offset.getY() > 6
+            || offset.getY() < low
+            || offset.getY() > high
             || Math.abs(offset.getZ()) > 24) continue;
-        if (!next.equals(end)
+        if (!spatial
+            && !next.equals(end)
             && offset.getY() != 1
             && !next.equals(origin)
             && !next.equals(freed)
             && !level.getBlockState(next).is(Create_bioships.INTESTINE.get())) continue;
         if (!ship.getPlot().contains(new net.minecraft.world.level.ChunkPos(next))) continue;
+        if (core.organMove() != null && next.equals(core.organMove().target()) && !next.equals(end))
+          continue;
         var state =
             next.equals(blocked)
                 ? Create_bioships.CORE.get().defaultBlockState()
@@ -154,13 +171,41 @@ public final class DigestiveSystem {
             && !state.is(Create_bioships.INTESTINE.get())) continue;
         if (!next.equals(end)) {
           Vec3 physical = ship.logicalPose().transformPosition(Vec3.atCenterOf(next));
-          if (!level.getBlockState(BlockPos.containing(physical)).isAir()) continue;
+          if (!BioshipIntegration.aquaticGrowthSpace(level, BlockPos.containing(physical)))
+            continue;
         }
         parent.put(next, point);
         queue.addLast(next);
       }
     }
     return null;
+  }
+
+  static boolean permitsPlacement(LivingCoreBlockEntity core, BlockPos pos) {
+    return !BioshipRespiration.blocksOpening(core, pos)
+        && stomachs(core).stream()
+            .noneMatch(
+                s ->
+                    s.gutPath.contains(pos)
+                        || s.sacPaths.values().stream().anyMatch(path -> path.contains(pos)));
+  }
+
+  static List<BlockPos> repairPath(
+      LivingCoreBlockEntity core, StomachBlockEntity stomach, BlockPos freed) {
+    if (stomach.connectedMouth == null) return null;
+    return findPath(core, core.ship(), stomach.connectedMouth, stomach.getBlockPos(), null, freed);
+  }
+
+  static int repairPurchases(
+      LivingCoreBlockEntity core, StomachBlockEntity stomach, List<BlockPos> route) {
+    if (route == null) return 0;
+    return plan(
+            core,
+            stomach,
+            new LinkedHashSet<>(route),
+            stomach.tubeBootstrapped ? Set.of() : new HashSet<>(route),
+            tubes(core))
+        .purchases;
   }
 
   private record Plan(Set<BlockPos> wanted, List<BlockPos> retired, int purchases) {}
@@ -216,6 +261,11 @@ public final class DigestiveSystem {
   }
 
   static boolean reserveOrganRoute(LivingCoreBlockEntity core, BlockPos source, BlockPos target) {
+    return reserveOrganRoute(core, source, target, true);
+  }
+
+  static boolean reserveOrganRoute(
+      LivingCoreBlockEntity core, BlockPos source, BlockPos target, boolean reserve) {
     var stomach =
         stomachs(core).stream()
             .filter(
@@ -238,22 +288,29 @@ public final class DigestiveSystem {
     if (!movesMouth && !movesStomach && !movesStore) return true;
     var end = movesStomach ? target : stomach.getBlockPos();
     var start = movesMouth ? target : mouth;
-    var main = findPath(core, core.ship(), start, end);
+    var main = findPath(core, core.ship(), start, end, target, source);
     if (main == null) return false;
     var wanted = new LinkedHashSet<>(main);
     for (var sac : stomach.sacPaths.keySet()) {
-      var path = findPath(core, core.ship(), end, movesStore && sac.equals(source) ? target : sac);
+      var path =
+          findPath(
+              core,
+              core.ship(),
+              end,
+              movesStore && sac.equals(source) ? target : sac,
+              target,
+              source);
       if (path == null) return false;
       wanted.addAll(path);
     }
     if (movesStore && !stomach.sacPaths.containsKey(source)) {
-      var path = findPath(core, core.ship(), end, target);
+      var path = findPath(core, core.ship(), end, target, target, source);
       if (path == null) return false;
       wanted.addAll(path);
     }
     var result = plan(core, stomach, wanted, Set.of(), tubes(core));
     if (!affordable(stomach, result)) return false;
-    if (result.purchases > 0) {
+    if (reserve && result.purchases > 0) {
       new MaterialCost(result.purchases, result.purchases, 0).pay(stomach);
       stomach.paidTubeStock += result.purchases;
       stomach.setChanged();
@@ -350,8 +407,9 @@ public final class DigestiveSystem {
     wanted = new LinkedHashSet<>(wanted);
     for (var other : stomachs(core))
       if (other != stomach) {
-        wanted.addAll(other.gutPath);
-        other.sacPaths.values().forEach(wanted::addAll);
+        other.gutPath.stream().filter(existing::containsKey).forEach(wanted::add);
+        for (var path : other.sacPaths.values())
+          for (var point : path) if (existing.containsKey(point)) wanted.add(point);
       }
     Set<BlockPos> cells = new HashSet<>(BioshipDecay.blocks(core.ship()));
     cells.addAll(wanted);
@@ -449,6 +507,8 @@ public final class DigestiveSystem {
       }
     for (var assignment : assignments.entrySet())
       connectPair(core, ship, assignment.getKey(), assignment.getValue());
+    BioshipDigestiveRepair.invalidate(core);
+    BioshipAnatomy.invalidate(core);
   }
 
   private static void connectPair(
@@ -487,6 +547,14 @@ public final class DigestiveSystem {
       }
     }
     var level = ship.getLevel();
+    for (var next : wanted) {
+      var state = level.getBlockState(next);
+      if (!state.isAir()
+          && !BioshipTissue.isTissue(state)
+          && !state.is(Create_bioships.INTESTINE.get())) return;
+    }
+    if (!new MaterialCost(selected.purchases, selected.purchases, 0).pay(stomach)) return;
+    stomach.paidTubeStock += selected.purchases;
     for (var old : selected.retired) {
       var state = existing.get(old);
       if (state.getValue(IntestineBlock.PAID)) stomach.paidTubeStock++;
@@ -510,8 +578,7 @@ public final class DigestiveSystem {
         stomach.paidTubeStock--;
         paid = true;
       } else {
-        stomach.spend("biomancy:flesh_bits", 1);
-        stomach.spend("biomancy:elastic_fibers", 1);
+        if (!new MaterialCost(1, 1, 0).pay(stomach)) return;
         paid = true;
       }
       level.setBlock(

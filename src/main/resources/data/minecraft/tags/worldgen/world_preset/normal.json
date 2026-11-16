@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "create_bioships:navigation_lab"
+    "create_bioships:navigation_lab",
+    "create_bioships:ecosystem_lab"
   ]
 }

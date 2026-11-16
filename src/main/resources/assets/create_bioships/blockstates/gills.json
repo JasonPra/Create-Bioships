@@ -1,0 +1,27 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "create_bioships:block/gills"
+    },
+    "facing=south": {
+      "model": "create_bioships:block/gills",
+      "y": 180
+    },
+    "facing=east": {
+      "model": "create_bioships:block/gills",
+      "y": 90
+    },
+    "facing=west": {
+      "model": "create_bioships:block/gills",
+      "y": 270
+    },
+    "facing=up": {
+      "model": "create_bioships:block/gills",
+      "x": 270
+    },
+    "facing=down": {
+      "model": "create_bioships:block/gills",
+      "x": 90
+    }
+  }
+}

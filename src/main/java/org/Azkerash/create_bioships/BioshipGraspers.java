@@ -18,7 +18,11 @@ public final class BioshipGraspers {
     providers.add(java.util.Objects.requireNonNull(provider));
   }
 
-  public record Slot(String key, BlockPos mouth, int ordinal, Vec3 root) {}
+  public record Slot(String key, BlockPos mouth, int ordinal, Vec3 root, boolean swimming) {
+    public Slot(String key, BlockPos mouth, int ordinal, Vec3 root) {
+      this(key, mouth, ordinal, root, false);
+    }
+  }
 
   public static List<Slot> slots(LivingCoreBlockEntity core) {
     var level = core.getLevel();
@@ -44,7 +48,13 @@ public final class BioshipGraspers {
                 .add(normal.scale(.48))
                 .add(side.scale(tier == 1 ? 0 : i == 0 ? -.23 : .23))
                 .add(0, -.2, 0);
-        slots.add(new Slot(mouth.getBlockPos().asLong() + ":" + i, mouth.getBlockPos(), i, root));
+        slots.add(
+            new Slot(
+                mouth.getBlockPos().asLong() + ":" + i,
+                mouth.getBlockPos(),
+                i,
+                root,
+                mouth.swimmingGrasper(i)));
       }
     }
     for (var provider : providers)
@@ -62,6 +72,15 @@ public final class BioshipGraspers {
             Comparator.comparingDouble(
                 s -> core.ship().logicalPose().transformPosition(s.root()).distanceToSqr(target)))
         .orElse(null);
+  }
+
+  public static boolean swimming(LivingCoreBlockEntity core, String key) {
+    return slots(core).stream().anyMatch(s -> s.key().equals(key) && s.swimming());
+  }
+
+  static double attackReach(LivingCoreBlockEntity core, Vec3 target) {
+    var slot = available(core, target, java.util.List.of());
+    return core.aquatic().wet() && slot != null && slot.swimming() ? 5.5 : 4;
   }
 
   public static Vec3 root(LivingCoreBlockEntity core, String key) {

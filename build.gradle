@@ -203,3 +203,16 @@ var resetGameTestWorld = tasks.register('resetGameTestWorld', Delete) {
     delete layout.buildDirectory.dir('gametest-run/world')
 }
 tasks.named('prepareGameTestServerRun') { dependsOn resetGameTestWorld }
+
+// Opt-in normal-world soak instrumentation is a separate source set, never part of the mod JAR.
+sourceSets {
+    soakTest {
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
+    }
+}
+tasks.named('check') { dependsOn tasks.named('soakTestClasses') }
+if (providers.gradleProperty('bioshipSoak').isPresent()) {
+    neoForge.mods."${mod_id}".sourceSet(sourceSets.soakTest)
+    neoForge.runs.server.systemProperty 'bioships.wildProbe', 'true'
+}

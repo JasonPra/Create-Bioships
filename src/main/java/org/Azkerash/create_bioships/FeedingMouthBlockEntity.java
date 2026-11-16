@@ -16,9 +16,31 @@ public class FeedingMouthBlockEntity extends BaseContainerBlockEntity {
   private NonNullList<ItemStack> items = NonNullList.withSize(9, ItemStack.EMPTY);
   private int inheritedBiomass;
   private CompoundTag larynx = new CompoundTag();
+  private int swimmingGraspers;
+
+  public boolean swimmingGrasper(int ordinal) {
+    return ordinal >= 0 && ordinal < 2 && (swimmingGraspers & (1 << ordinal)) != 0;
+  }
+
+  void swimmingGrasper(int ordinal, boolean swimming) {
+    if (ordinal < 0 || ordinal >= (voiced() ? 2 : 1))
+      throw new IllegalArgumentException("Inactive grasper slot");
+    if (swimming) swimmingGraspers |= 1 << ordinal;
+    else swimmingGraspers &= ~(1 << ordinal);
+    setChanged();
+    if (level != null) level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 2);
+  }
+
   private long motionStart;
   private int motionTicks;
   private boolean vocalMotion;
+
+  static void bite(LivingCoreBlockEntity core, Vec3 point) {
+    var slot = BioshipGraspers.available(core, point, java.util.List.of());
+    if (slot != null
+        && core.getLevel().getBlockEntity(slot.mouth()) instanceof FeedingMouthBlockEntity mouth)
+      mouth.animate(10, false);
+  }
 
   public boolean voiced() {
     return !larynx.isEmpty();
@@ -202,6 +224,7 @@ public class FeedingMouthBlockEntity extends BaseContainerBlockEntity {
     tag.putBoolean("InheritedSlot", inheritedSlot);
     tag.putBoolean("EmbeddedInHull", embeddedInHull);
     tag.put("Larynx", larynx);
+    tag.putInt("SwimmingGraspers", swimmingGraspers);
     tag.putLong("MotionStart", motionStart);
     tag.putInt("MotionTicks", motionTicks);
     tag.putBoolean("VocalMotion", vocalMotion);
@@ -216,6 +239,7 @@ public class FeedingMouthBlockEntity extends BaseContainerBlockEntity {
     inheritedSlot = tag.getBoolean("InheritedSlot");
     embeddedInHull = tag.getBoolean("EmbeddedInHull");
     larynx = tag.getCompound("Larynx").copy();
+    swimmingGraspers = tag.getInt("SwimmingGraspers") & 3;
     motionStart = tag.getLong("MotionStart");
     motionTicks = Math.clamp(tag.getInt("MotionTicks"), 0, 100);
     vocalMotion = tag.getBoolean("VocalMotion");

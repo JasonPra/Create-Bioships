@@ -258,8 +258,34 @@ public class Create_bioships {
                   BlockBehaviour.Properties.of()
                       .strength(1)
                       .sound(SoundType.SLIME_BLOCK)
-                      .noOcclusion()
-                      .noCollission()));
+                      .noOcclusion()));
+  public static final DeferredBlock<AmoebaLegBlock> SWIMMING_LEG =
+      BLOCKS.register(
+          "swimming_amoeba_leg",
+          () ->
+              new AmoebaLegBlock(
+                  BlockBehaviour.Properties.of()
+                      .strength(1)
+                      .sound(SoundType.SLIME_BLOCK)
+                      .noOcclusion()));
+  public static final DeferredBlock<RespiratoryOrganBlock> LUNGS =
+      BLOCKS.register(
+          "lungs",
+          () ->
+              new RespiratoryOrganBlock(
+                  BlockBehaviour.Properties.of()
+                      .strength(1)
+                      .sound(SoundType.SLIME_BLOCK)
+                      .noOcclusion()));
+  public static final DeferredBlock<RespiratoryOrganBlock> GILLS =
+      BLOCKS.register(
+          "gills",
+          () ->
+              new RespiratoryOrganBlock(
+                  BlockBehaviour.Properties.of()
+                      .strength(1)
+                      .sound(SoundType.SLIME_BLOCK)
+                      .noOcclusion()));
   public static final DeferredBlock<TentacleBlock> TENTACLE =
       BLOCKS.register(
           "tentacle",
@@ -349,6 +375,9 @@ public class Create_bioships {
                     (parameters, output) -> {
                       output.accept(CORE_ITEM.get());
                       output.accept(AMOEBA_LEG.get());
+                      output.accept(SWIMMING_LEG.get());
+                      output.accept(LUNGS.get());
+                      output.accept(GILLS.get());
                       if (AirshipPrototype.available()) output.accept(DOOR_ITEM.get());
                       output.accept(BIOSHIP_WRENCH.get());
                       output.accept(BIOSHIP_GOGGLES.get());
