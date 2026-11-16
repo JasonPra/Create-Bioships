@@ -397,13 +397,33 @@ public final class BioshipCrawl {
   }
 
   private BlockPos ground(ServerLevel level, BlockPos point) {
-    for (int i = 1; i <= footingReach(); i++) {
+    return ground(level, point, point.getY());
+  }
+
+  private BlockPos ground(ServerLevel level, BlockPos point, double highestTop) {
+    for (int i = -extraLift(); i <= footingReach(); i++) {
       var p = point.below(i);
-      if (level.getBlockState(p).isFaceSturdy(level, p, Direction.UP)
+      if (p.getY() + 1 <= highestTop
+          && level.getBlockState(p).isFaceSturdy(level, p, Direction.UP)
           && level.getFluidState(p).isEmpty()
           && level.getBlockState(p.above()).getCollisionShape(level, p.above()).isEmpty()) return p;
     }
     return null;
+  }
+
+  private void braceGrip(LivingCoreBlockEntity core, Vec3 here, GroundRoute.Grip grip) {
+    if (grip != null) {
+      var root =
+          core.ship()
+              .logicalPose()
+              .transformPositionInverse(
+                  here.add(Vec3.atLowerCornerOf(grip.direction().getNormal())))
+              .subtract(core.ship().logicalPose().transformPositionInverse(here));
+      wallFacing = Direction.getNearest(root.x, root.y, root.z);
+      wallDistance = grip.distance();
+      supportHeight = here.y;
+      return;
+    }
   }
 
   private void brace(LivingCoreBlockEntity core) {
@@ -418,45 +438,56 @@ public final class BioshipCrawl {
     Vec3 here = BioshipBlueprint.physical(core, BlockPos.ZERO);
     var grip = walking || wallFacing != null ? GroundRoute.grip(core, here) : null;
     wallFacing = null;
-    if (grip != null) {
-      var root =
-          core.ship()
-              .logicalPose()
-              .transformPositionInverse(
-                  here.add(Vec3.atLowerCornerOf(grip.direction().getNormal())))
-              .subtract(core.ship().logicalPose().transformPositionInverse(here));
-      wallFacing = Direction.getNearest(root.x, root.y, root.z);
-      wallDistance = grip.distance();
-      supportHeight = here.y;
-      return;
-    }
-    double[] heights = new double[4];
+    var anchor =
+        core.ship().logicalPose().transformPosition(Vec3.atCenterOf(core.structuralOrigin()));
+    Vec3[] contacts = new Vec3[4];
     int count = 0;
     double highest = -Double.MAX_VALUE;
+    double sum = 0;
+    double legHeight = core.hatchling() ? .85 : 1.25;
     for (int i = 0; i < 4; i++) {
-      Vec3 point =
-          here.add(
-              (i % 2 == 0 ? -1 : 1) * (core.isMature() ? 3.8 : 1.4),
-              -core.coreHeightOffset(),
-              (i < 2 ? -1 : 1) * (core.isMature() ? 6 : 1.4));
-      var floor = ground(level, BlockPos.containing(point));
+      var offset =
+          core.ship()
+              .logicalPose()
+              .transformNormal(
+                  new Vec3(
+                      (i % 2 == 0 ? -1 : 1) * (core.isMature() ? 3.8 : 1.4),
+                      0,
+                      (i < 2 ? -1 : 1) * (core.isMature() ? 6 : 1.4)));
+      Vec3 point = new Vec3(anchor.x + offset.x, anchor.y, anchor.z + offset.z);
+      var floor = ground(level, BlockPos.containing(point), anchor.y + extraLift() + .25);
       if (floor == null) continue;
-      heights[i] = floor.getY() + 1;
-      highest = Math.max(highest, heights[i]);
+      double top = floor.getY() + 1;
+      contacts[i] = new Vec3(point.x, top, point.z);
+      highest = Math.max(highest, top);
+      sum += top;
       count++;
     }
-    if (count < 3) return;
-    double wanted = highest + (core.hatchling() ? .85 : 1.25) + core.coreHeightOffset();
-    if (wanted - here.y > 2 + legTier
-        || here.y - core.coreHeightOffset() - highest > 2.75 + legTier) return;
+    if (count < 3) {
+      braceGrip(core, here, grip);
+      return;
+    }
+    double lowest =
+        Arrays.stream(contacts)
+            .filter(Objects::nonNull)
+            .mapToDouble(p -> p.y)
+            .min()
+            .orElse(highest);
+    if (grip != null && highest - lowest < .1 && goal != null && goal.y > here.y + .5) {
+      braceGrip(core, here, grip);
+      return;
+    }
+    double center = sum / count;
+    double wanted = center + legHeight + here.y - anchor.y;
+    if (highest - anchor.y > extraLift() + .25 || anchor.y - highest > 2.75 + legTier) return;
     supportHeight = wanted;
-    if (count == 4)
-      stanceUp =
-          new Vec3(
-                  Math.clamp((heights[0] + heights[2] - heights[1] - heights[3]) * .025, -.08, .08),
-                  1,
-                  Math.clamp((heights[0] + heights[1] - heights[2] - heights[3]) * .025, -.08, .08))
-              .normalize();
+    if (count == 4) {
+      var right = contacts[1].add(contacts[3]).subtract(contacts[0]).subtract(contacts[2]);
+      var forward = contacts[0].add(contacts[1]).subtract(contacts[2]).subtract(contacts[3]);
+      var normal = right.cross(forward).normalize();
+      if (normal.y < 0) normal = normal.scale(-1);
+      if (normal.y > .65) stanceUp = normal;
+    }
   }
 
   CompoundTag save() {

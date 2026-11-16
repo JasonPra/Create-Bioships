@@ -119,8 +119,12 @@ public final class CoreMotion {
   }
 
   private boolean clearWorld(LivingCoreBlockEntity core, BlockPos pos) {
+    return clearWorld(core, Vec3.atCenterOf(pos));
+  }
+
+  private boolean clearWorld(LivingCoreBlockEntity core, Vec3 local) {
     var level = (ServerLevel) core.getLevel();
-    var point = core.ship().logicalPose().transformPosition(Vec3.atCenterOf(pos));
+    var point = core.ship().logicalPose().transformPosition(local);
     for (var cell :
         BlockPos.betweenClosed(
             BlockPos.containing(point.add(-.45, -.45, -.45)),
@@ -246,6 +250,108 @@ public final class CoreMotion {
     return best;
   }
 
+  private static boolean connectedAfter(Set<BlockPos> body, BlockPos from, BlockPos to) {
+    var cells = new HashSet<>(body);
+    cells.remove(from);
+    cells.add(to);
+    var seen = new HashSet<BlockPos>();
+    var queue = new ArrayDeque<BlockPos>();
+    queue.add(to);
+    seen.add(to);
+    while (!queue.isEmpty()) {
+      var cell = queue.removeFirst();
+      for (var face : Direction.values()) {
+        var next = cell.relative(face);
+        if (cells.contains(next) && seen.add(next)) queue.add(next);
+      }
+    }
+    return seen.size() == cells.size();
+  }
+
+  private boolean clearPerchTravel(LivingCoreBlockEntity core, BlockPos pos) {
+    var from = Vec3.atCenterOf(core.getBlockPos());
+    var to = Vec3.atCenterOf(pos);
+    int steps = Math.max(1, (int) Math.ceil(from.distanceTo(to) * 4));
+    for (int step = 0; step <= steps; step++)
+      if (!clearWorld(core, from.lerp(to, step / (double) steps))) return false;
+    return true;
+  }
+
+  private boolean supportedPerch(LivingCoreBlockEntity core, BlockPos pos) {
+    if (!core.hatchling()
+        || !core.getLevel().getBlockState(pos).isAir()
+        || !core.ship().getPlot().contains(new net.minecraft.world.level.ChunkPos(pos)))
+      return false;
+    var body = new HashSet<>(BioshipDecay.blocks(core.ship()));
+    boolean supported =
+        pos.equals(home(core))
+            || body.contains(pos.below()) && !pos.below().equals(core.getBlockPos());
+    return supported
+        && connectedAfter(body, core.getBlockPos(), pos)
+        && clearPerchTravel(core, pos)
+        && DigestiveSystem.reserveCoreRoute(core, pos, false);
+  }
+
+  private boolean stableSupport(LivingCoreBlockEntity core, BlockPos pos) {
+    if (core.getLevel().getBlockEntity(pos) == null) return false;
+    var id =
+        net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(
+            core.getLevel().getBlockState(pos).getBlock());
+    // The first digester disappears during stomach fusion; it cannot support the core.
+    return !id.toString().equals("biomancy:digester") || DigestiveSystem.stomach(core) != null;
+  }
+
+  private BlockPos perch(LivingCoreBlockEntity core, boolean returning) {
+    if (returning) return supportedPerch(core, home(core)) ? home(core) : null;
+    BlockPos best = null;
+    int current = score(core, core.getBlockPos());
+    for (var host : BioshipDecay.blocks(core.ship())) {
+      if (!stableSupport(core, host)) continue;
+      var pos = host.above();
+      if (host.equals(core.getBlockPos())
+          || pos.getY() <= core.getBlockPos().getY()
+          || pos.distManhattan(home(core)) > 6
+          || !supportedPerch(core, pos)) continue;
+      int value = score(core, pos);
+      if (value < current) continue;
+      if (best == null
+          || pos.getY() > best.getY()
+          || pos.getY() == best.getY() && value > score(core, best)) best = pos;
+    }
+    return best;
+  }
+
+  private boolean preparePerch(LivingCoreBlockEntity core) {
+    // Reuse a machine as the bridge beside the mouth. No stalk or filler block is created.
+    var level = core.getLevel();
+    var support = home(core).above();
+    var mouth = core.mouthBlock();
+    if (mouth == null
+        || !level.getBlockState(support).isAir()
+        || !core.getBlockPos().equals(home(core))) return false;
+    var body = new HashSet<>(BioshipDecay.blocks(core.ship()));
+    var destination = mouth.above();
+    if (!level.getBlockState(destination).isAir() || destination.equals(support)) return false;
+    for (var source : body) {
+      var entity = level.getBlockEntity(source);
+      if (entity == null
+          || !stableSupport(core, source)
+          || source.equals(mouth)
+          || source.equals(core.getBlockPos())
+          || source.getY() > home(core).getY()
+          || entity.getPersistentData().getBoolean("BioshipManualPlacement")
+          || !BioshipIntegration.isIntegratedMachine(level, source)) continue;
+      var rearranged = new HashSet<>(body);
+      rearranged.remove(source);
+      rearranged.add(support);
+      if (!connectedAfter(body, source, support)
+          || !connectedAfter(rearranged, core.getBlockPos(), destination)
+          || !clearWorld(core, destination)) continue;
+      if (OrganMotion.begin(core, source, support, false)) return true;
+    }
+    return false;
+  }
+
   /** Returning true retires this block tick, since a commit replaces its block entity. */
   boolean tick(LivingCoreBlockEntity core) {
     var creeper = BioshipDefense.creeperThreat(core);
@@ -258,7 +364,7 @@ public final class CoreMotion {
     }
     var level = (ServerLevel) core.getLevel();
     if (active()) {
-      if (!tissue(level.getBlockState(target))
+      if (!tissue(level.getBlockState(target)) && !supportedPerch(core, target)
           || !clearWorld(core, target)
           || !core.hatchling() && !protectedInside(core, target)) {
         cancel(core);
@@ -297,6 +403,8 @@ public final class CoreMotion {
     nextScan = level.getGameTime() + 40;
     boolean changed = layoutDirty;
     layoutDirty = false;
+    var elevated = perch(core, returning);
+    if (elevated != null) return begin(core, elevated, false);
     if (!returning
         && !changed
         && (BioshipDefense.target(core) != null
@@ -312,7 +420,10 @@ public final class CoreMotion {
             < 25
         && blockedSupply(core) == null) return false;
     var next = choose(core, returning);
-    if (next == null) return false;
+    if (next == null) {
+      if (!returning) preparePerch(core);
+      return false;
+    }
     return begin(core, next, false);
   }
 
@@ -394,7 +505,7 @@ public final class CoreMotion {
   }
 
   String scoutingHint(LivingCoreBlockEntity core) {
-    if (active()) return "moving through connected tissue";
+    if (active()) return "moving to a supported vantage";
     if (!core.hatchling()) return "core concealed inside grown body";
     if (coverage(core, core.getBlockPos()) == FULL_COVERAGE) return "nearby survey is clear";
     boolean above = false;
@@ -414,7 +525,9 @@ public final class CoreMotion {
         }
       }
     }
-    return above ? "checking connected higher tissue" : "no connected higher tissue to move into";
+    return above
+        ? "checking connected higher tissue"
+        : "no higher connected tissue; checking supported component perches";
   }
 
   void scoutNow(LivingCoreBlockEntity core) {

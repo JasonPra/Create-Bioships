@@ -1678,7 +1678,12 @@ public class BioshipGameTests {
                   var stomach = DigestiveSystem.stomach(core);
                   helper.assertTrue(
                       stomach != null && stomach.material("biomancy:nutrients") == 7,
-                      "Fusion lost the digester output");
+                      "Fusion lost the digester output: "
+                          + (stomach == null ? "missing" : stomach.material("biomancy:nutrients"))
+                          + " core="
+                          + core(ship).getBlockPos()
+                          + " move="
+                          + core(ship).organMove());
                   helper.assertTrue(
                       BioshipIntegration.blockEntities(ship).stream()
                           .noneMatch(
@@ -5433,6 +5438,90 @@ public class BioshipGameTests {
       helper.succeed();
     } finally {
       level.removeBlock(source, false);
+      cleanup(helper, ship);
+    }
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 240, batch = "component_perch")
+  public static void core_perches_above_existing_organs_without_free_filler_or_lost_component_data(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var level = helper.getLevel();
+    var original = core(ship);
+    var home = original.getBlockPos();
+    level.setBlock(
+        home.north(),
+        Create_bioships.FEEDING_MOUTH
+            .get()
+            .defaultBlockState()
+            .setValue(FeedingMouthBlock.FACING, Direction.NORTH),
+        3);
+    level.setBlock(home.west(), block("biomancy:decomposer").defaultBlockState(), 3);
+    var organ = level.getBlockEntity(home.west());
+    organ.getPersistentData().putString("PerchSentinel", "preserved");
+    int before = original.coreMotion().coverage(original, home);
+    original.coreMotion().scoutNow(original);
+    helper.runAfterDelay(
+        160,
+        () ->
+            finish(
+                helper,
+                ship,
+                () -> {
+                  var current = core(ship);
+                  helper.assertTrue(
+                      current.getBlockPos().getY() > home.getY(),
+                      "Core did not perch above its organs: " + current.coreMotion().save());
+                  helper.assertTrue(
+                      current.coreMotion().coverage(current, current.getBlockPos()) >= before,
+                      "Higher perch made surrounding sight worse");
+                  var cells = BioshipDecay.blocks(ship);
+                  helper.assertTrue(
+                      cells.size() == 3 && level.getBlockState(home).isAir(),
+                      "Perching created free tissue or lost a component");
+                  helper.assertTrue(
+                      cells.stream()
+                          .anyMatch(
+                              p ->
+                                  level.getBlockEntity(p) != null
+                                      && level
+                                          .getBlockEntity(p)
+                                          .getPersistentData()
+                                          .getString("PerchSentinel")
+                                          .equals("preserved")),
+                      "Organ relocation lost its block entity data");
+                  helper.assertTrue(
+                      current.coreMotion().home(current).equals(home),
+                      "Perching moved the structural anchor");
+                  helper.assertTrue(
+                      current.body().health() == current.body().capacity(),
+                      "Perching damaged the creature");
+                }));
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "terrain_stance")
+  public static void higher_front_footings_pitch_body_up_instead_of_shortening_front_legs(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var here = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO));
+    for (int x = -3; x <= 3; x++)
+      for (int z = -3; z <= -1; z++)
+        level.setBlock(here.offset(x, 0, z), Blocks.STONE.defaultBlockState(), 3);
+    var crawl = core.crawl().save();
+    crawl.putBoolean("Walking", true);
+    core.crawl().load(crawl);
+    try {
+      core.crawl().tick(core, false);
+      var up = core.crawl().stanceUp();
+      helper.assertTrue(
+          core.crawl().bracing() && up.z > .2 && up.y < .99,
+          "Higher front feet failed to lift and pitch the front: " + up);
+      helper.assertTrue(
+          core.crawl().wallFacing() == null, "One-block step was misclassified as wall climbing");
+      helper.succeed();
+    } finally {
       cleanup(helper, ship);
     }
   }

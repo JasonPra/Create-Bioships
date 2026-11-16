@@ -97,6 +97,7 @@ public final class DigestiveSystem {
             || Math.abs(offset.getZ()) > 24) continue;
         if (!next.equals(end)
             && offset.getY() != 1
+            && !next.equals(origin)
             && !next.equals(freed)
             && !level.getBlockState(next).is(Create_bioships.INTESTINE.get())) continue;
         if (!ship.getPlot().contains(new net.minecraft.world.level.ChunkPos(next))) continue;
