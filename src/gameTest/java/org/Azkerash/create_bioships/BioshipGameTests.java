@@ -8265,7 +8265,8 @@ public class BioshipGameTests {
   @GameTest(template = "test_empty", timeoutTicks = 100, batch = "solid_leg_mounts")
   public static void legs_require_full_face_support_and_reject_edges_pipes_and_orphaning_moves(
       GameTestHelper helper) {
-    var body = Map.of(BlockPos.ZERO, Create_bioships.CORE.get().defaultBlockState());
+    var body =
+        Map.of(BlockPos.ZERO, net.minecraft.world.level.block.Blocks.STONE.defaultBlockState());
     for (var face : Direction.values()) {
       var leg =
           Create_bioships.AMOEBA_LEG
@@ -8274,6 +8275,29 @@ public class BioshipGameTests {
               .setValue(AmoebaLegBlock.FACING, face);
       var pos = BlockPos.ZERO.relative(face);
       helper.assertTrue(AmoebaLegBlock.mounted(body, pos, leg), "Full face rejected: " + face);
+      for (var forbidden : List.of(Create_bioships.CORE.get(), Create_bioships.LUNGS.get())) {
+        helper.assertTrue(
+            !AmoebaLegBlock.mounted(Map.of(BlockPos.ZERO, forbidden.defaultBlockState()), pos, leg),
+            "Leg mounted on protected organ: " + forbidden);
+      }
+      helper.assertTrue(
+          !AmoebaLegBlock.canHostLeg(
+              Create_bioships.FEEDING_MOUTH
+                  .get()
+                  .defaultBlockState()
+                  .setValue(FeedingMouthBlock.FACING, face),
+              BlockPos.ZERO,
+              face),
+          "Leg covered mouth opening");
+      helper.assertTrue(
+          !AmoebaLegBlock.canHostLeg(
+              Create_bioships.GILLS
+                  .get()
+                  .defaultBlockState()
+                  .setValue(RespiratoryOrganBlock.FACING, face),
+              BlockPos.ZERO,
+              face),
+          "Leg covered gill intake");
       var diagonal =
           pos.relative(face.getAxis() == Direction.Axis.Y ? Direction.EAST : Direction.UP);
       helper.assertTrue(
@@ -8286,7 +8310,11 @@ public class BioshipGameTests {
     var ship = assemble(helper);
     try {
       var core = core(ship);
-      var pos = core.getBlockPos().east();
+      var host = core.getBlockPos().east();
+      helper
+          .getLevel()
+          .setBlock(host, net.minecraft.world.level.block.Blocks.STONE.defaultBlockState(), 3);
+      var pos = host.east();
       var leg =
           Create_bioships.AMOEBA_LEG
               .get()
@@ -8297,7 +8325,7 @@ public class BioshipGameTests {
           !OrganMotion.begin(core, pos, pos.north(), false),
           "Relocation accepted a corner-only leg mount");
       helper.assertTrue(
-          !BioshipSupport.safeMove(core, core.getBlockPos(), core.getBlockPos().above(), false),
+          !BioshipSupport.safeMove(core, host, host.above(), false),
           "Body relocation orphaned an existing leg mount");
       helper.succeed();
     } finally {
@@ -8343,6 +8371,9 @@ public class BioshipGameTests {
       GameTestHelper helper) {
     var ship = assemble(helper);
     var core = core(ship);
+    helper
+        .getLevel()
+        .setBlock(core.getBlockPos().south(), BioshipTissue.body().defaultBlockState(), 3);
     var bad = core.getBlockPos().east().north();
     helper
         .getLevel()

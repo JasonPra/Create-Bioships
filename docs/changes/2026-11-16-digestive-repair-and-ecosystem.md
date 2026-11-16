@@ -118,3 +118,10 @@ Post-patch normal and accelerated-target replays sampled one structural body sec
 No new commands were added in this checkpoint. The loading failure reported during this batch could not be reproduced on retry by the user or in a fresh graphical client at published `fef1689`; its excerpt shows a registry-rollback swim-speed error without the preceding launch context. It is recorded as intermittent/unreproduced, not fixed, and no speculative startup patch was published.
 
 Further queued requirements: prohibit leg mounts on lungs as well as the core and functional intakes; add paid support-face growth and conserved temporary component stashing/redeployment; permit survival-beneficial adaptation during danger using separate coordinated action and body-management trees.
+
+### Leg socket attachment restrictions
+
+- Paid Amoeba/Swimming Leg sockets require direct full-face support and reject the living core, lungs, mouth teeth faces, and gill intake faces. The same policy governs manual placement, automatic growth, and relocation validation.
+- The separate transitional procedural supports retain their existing full-face policy. Extending all organ exclusions to those supports immediately prevented early component collection in regression tests; replacing that transition requires the queued paid support-growth/remodeling work. This checkpoint does not claim that milestone complete.
+- Expanded the attachment regression across all six directions. Orphaning and legacy relocation fixtures now include a valid structural host rather than relying on a now-forbidden core socket.
+- Validation after the transition correction: 51 unit tests and all 129 required GameTests passed (`build runGameTestServer`). Earlier broader procedural-support exclusions failed collection/pathfinding regressions and were removed before this checkpoint. Graphical animation QA and the larger survival/convergence milestones remain open.

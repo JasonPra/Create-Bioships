@@ -36,7 +36,7 @@ final class BioshipLegGrowth {
       if (BioshipLegEvolution.leg(e.getValue())
           || e.getValue().is(Create_bioships.SURFACE_EYE.get())) continue;
       for (var face : Direction.Plane.HORIZONTAL) {
-        if (!AmoebaLegBlock.supportsFace(e.getValue(), e.getKey(), face)) continue;
+        if (!AmoebaLegBlock.canHostLeg(e.getValue(), e.getKey(), face)) continue;
         var pos = e.getKey().relative(face);
         if (cells.containsKey(pos)
             || !core.getLevel().getBlockState(pos).isAir()

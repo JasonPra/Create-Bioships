@@ -29,16 +29,27 @@ public final class AmoebaLegBlock extends DirectionalBlock {
         && host.isFaceSturdy(EmptyBlockGetter.INSTANCE, hostPos, face);
   }
 
+  /** Full structural faces only; sensory and respiratory openings remain unobstructed. */
+  static boolean canHostLeg(BlockState host, BlockPos hostPos, Direction face) {
+    return supportsFace(host, hostPos, face)
+        && !host.is(Create_bioships.CORE.get())
+        && !host.is(Create_bioships.LUNGS.get())
+        && !(host.is(Create_bioships.FEEDING_MOUTH.get())
+            && host.getValue(FeedingMouthBlock.FACING) == face)
+        && !(host.is(Create_bioships.GILLS.get())
+            && host.getValue(RespiratoryOrganBlock.FACING) == face);
+  }
+
   static boolean mounted(java.util.Map<BlockPos, BlockState> cells, BlockPos pos, BlockState leg) {
     var face = leg.getValue(FACING);
     var hostPos = pos.relative(face.getOpposite());
-    return supportsFace(cells.get(hostPos), hostPos, face);
+    return canHostLeg(cells.get(hostPos), hostPos, face);
   }
 
   static Direction outward(java.util.Map<BlockPos, BlockState> cells, BlockPos target) {
     for (var face : Direction.values()) {
       var hostPos = target.relative(face.getOpposite());
-      if (supportsFace(cells.get(hostPos), hostPos, face)) return face;
+      if (canHostLeg(cells.get(hostPos), hostPos, face)) return face;
     }
     return Direction.DOWN; // Callers must still validate mounted(); never fabricates support.
   }
@@ -63,7 +74,7 @@ public final class AmoebaLegBlock extends DirectionalBlock {
   protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
     var face = state.getValue(FACING);
     var hostPos = pos.relative(face.getOpposite());
-    return supportsFace(level.getBlockState(hostPos), hostPos, face);
+    return canHostLeg(level.getBlockState(hostPos), hostPos, face);
   }
 
   @Override
