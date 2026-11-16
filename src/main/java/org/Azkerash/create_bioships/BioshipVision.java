@@ -115,6 +115,16 @@ public final class BioshipVision {
     return java.util.Set.copyOf(remembered.keySet());
   }
 
+  net.minecraft.world.level.block.state.BlockState rememberedState(BlockPos pos) {
+    var seen = remembered.get(pos);
+    return seen == null ? null : seen.state;
+  }
+
+  long lastSeen(BlockPos pos) {
+    var seen = remembered.get(pos);
+    return seen == null ? Long.MIN_VALUE : seen.seen;
+  }
+
   boolean rememberedFull(BlockPos pos) {
     return remembered.containsKey(pos) && remembered.get(pos).full;
   }

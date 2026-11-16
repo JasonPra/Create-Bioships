@@ -42,11 +42,19 @@ public final class NavigationDebug {
           decision.item() != null
               ? decision.item().getItem().getHoverName().getString()
               : decision.entity() != null ? decision.entity().getName().getString() : "location";
-      if (decision.block() != null
-          && level
-              .getChunkSource()
-              .hasChunk(decision.block().getX() >> 4, decision.block().getZ() >> 4))
-        label = level.getBlockState(decision.block()).getBlock().getName().getString();
+      if (decision.block() != null) {
+        var remembered = core.vision().rememberedState(decision.block());
+        if (decision.action() == BioshipBrain.Action.ASSIMILATE && remembered != null) {
+          // Report the observation the behavior is pursuing, not unseen world changes.
+          label = remembered.getBlock().getName().getString();
+          data.putLong(
+              "TargetSeenAge",
+              Math.max(0, level.getGameTime() - core.vision().lastSeen(decision.block())));
+        } else if (level
+            .getChunkSource()
+            .hasChunk(decision.block().getX() >> 4, decision.block().getZ() >> 4))
+          label = level.getBlockState(decision.block()).getBlock().getName().getString();
+      }
       data.putString("TargetLabel", label);
     }
     var route = new ListTag();

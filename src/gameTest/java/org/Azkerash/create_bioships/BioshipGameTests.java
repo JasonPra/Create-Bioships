@@ -214,6 +214,110 @@ public class BioshipGameTests {
     return detail;
   }
 
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "remembered_target_debug")
+  public static void debug_names_the_remembered_machine_until_it_is_visually_rechecked(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var origin = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO));
+    var source = origin.east(4);
+    var machine = block("biomancy:bio_forge");
+    level.setBlock(source, machine.defaultBlockState(), 3);
+    helper.assertTrue(
+        core.vision().sourceState(core, source) != null,
+        "Visible fixture machine was not observed");
+    var wall = new ArrayList<BlockPos>();
+    for (var p : BlockPos.betweenClosed(origin.offset(2, 0, -2), origin.offset(2, 2, 2))) {
+      wall.add(p.immutable());
+      level.setBlock(p, Blocks.STONE.defaultBlockState(), 3);
+    }
+    level.removeBlock(source, false);
+    core.supplyTarget = source;
+    try {
+      helper.assertTrue(
+          !core.vision().visible(core, Vec3.atCenterOf(source)),
+          "Fixture did not hide the changed target");
+      helper.assertTrue(
+          core.vision().sourceState(core, source) != null,
+          "Pursuit forgot a target without seeing its disappearance");
+      var decision = core.brain().choose(core);
+      helper.assertTrue(source.equals(decision.block()), "Remembered target was not selected");
+      var before = core.saveWithFullMetadata(level.registryAccess());
+      var debug = NavigationDebug.inspect(core);
+      helper.assertTrue(
+          debug.getString("TargetLabel").equals(machine.getName().getString()),
+          "Debugger mislabeled the remembered machine as air: " + debug);
+      // NBT DoubleTag equality treats the unchanged NaN idle stance as unequal to itself.
+      helper.assertTrue(
+          before.toString().equals(core.saveWithFullMetadata(level.registryAccess()).toString()),
+          "Debugger modified target memory");
+      wall.forEach(p -> level.removeBlock(p, false));
+      helper.assertTrue(
+          core.vision().sourceState(core, source) == null,
+          "Seeing the empty location did not invalidate the target");
+      helper.assertTrue(
+          !source.equals(core.brain().choose(core).block()),
+          "Confirmed-gone machine remained selected");
+      helper.succeed();
+    } finally {
+      wall.forEach(p -> level.removeBlock(p, false));
+      level.removeBlock(source, false);
+      cleanup(helper, ship);
+    }
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "off_center_goal_reach")
+  public static void route_cannot_finish_at_a_snapped_position_when_real_grasp_is_blocked(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var initial = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var origin = BlockPos.containing(initial);
+    // A legal starting stance between block centers, as produced by ordinary physics movement.
+    ship.logicalPose().position().add(-.49, .35, -.49);
+    var actual = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var snapped = new Vec3(origin.getX() + .5, origin.getY() + .85, origin.getZ() + .5);
+    var goal = new Vec3(origin.getX() + 3.5, origin.getY() + .325, origin.getZ() + 1.9);
+    var corner = origin.east(2);
+    level.setBlock(corner, Blocks.GLASS.defaultBlockState(), 3);
+    var state = core.crawl().save();
+    state.putBoolean("Gathering", true);
+    core.crawl().load(state);
+    try {
+      helper.assertTrue(
+          BioshipReach.at(core, snapped, goal, true),
+          "Fixture's hypothetical tile center cannot reach the item");
+      helper.assertTrue(
+          !BioshipReach.clear(core, goal, true),
+          "Fixture's actual grasp is not blocked by the glass corner");
+      var route = new GroundRoute();
+      helper.assertTrue(route.plan(core, goal), "No route around the glass corner was found");
+      helper.assertTrue(
+          !route.points().isEmpty(),
+          "Route falsely completed with zero waypoints by testing a hypothetical grid center"
+              + " instead of the actual body: "
+              + actual);
+      helper.assertTrue(
+          BioshipReach.at(core, route.points().getLast(), goal, true),
+          "Final waypoint does not provide a real grasp");
+      var reachable = actual.add(0, 0, 2);
+      helper.assertTrue(
+          BioshipReach.clear(core, reachable, true),
+          "Nearby control target is not physically reachable");
+      helper.assertTrue(
+          route.plan(core, reachable)
+              && route.points().isEmpty()
+              && route.debug(level.getGameTime()).getString("Status").equals("in_action_range"),
+          "A genuinely reachable target should need no movement and report action range");
+      helper.succeed();
+    } finally {
+      level.removeBlock(corner, false);
+      cleanup(helper, ship);
+    }
+  }
+
   @GameTest(template = "test_empty", timeoutTicks = 100, batch = "path_debug_snapshot")
   public static void path_debug_exposes_actual_route_priorities_and_round_trips_without_replanning(
       GameTestHelper helper) {

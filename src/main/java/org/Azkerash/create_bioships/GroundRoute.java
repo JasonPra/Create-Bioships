@@ -209,13 +209,16 @@ final class GroundRoute {
       if (node.cost() > costs.getOrDefault(node.pos(), Double.MAX_VALUE)) continue;
       Vec3 nodePoint =
           new Vec3(node.pos().getX() + .5, node.pos().getY() + stance, node.pos().getZ() + .5);
-      double remaining = nodePoint.distanceTo(goal);
+      // Search edges still use grid centers, but only the actual body can satisfy the start goal.
+      // A hypothetical center can have a clear grasp while the real ship is blocked by a corner.
+      var reachPoint = node.pos().equals(start) ? here : nodePoint;
+      double remaining = reachPoint.distanceTo(goal);
       if (remaining < closest) {
         closest = remaining;
         progress = node.pos();
       }
       if (remaining < (core.crawl().gathering() ? 3.5 : .8)
-          && (!core.crawl().gathering() || BioshipReach.at(core, nodePoint, goal, true))) {
+          && (!core.crawl().gathering() || BioshipReach.at(core, reachPoint, goal, true))) {
         end = node.pos();
         break;
       }
@@ -263,7 +266,14 @@ final class GroundRoute {
     complete = end != null;
     if (end == null && closest < here.distanceTo(goal) - 3) end = progress;
     failed = end == null;
-    debugStatus = failed ? "no_route" : complete ? "route_ready" : "partial_route";
+    debugStatus =
+        failed
+            ? "no_route"
+            : !complete
+                ? "partial_route"
+                : end.equals(start)
+                    ? core.crawl().gathering() ? "in_action_range" : "at_goal"
+                    : "route_ready";
     if (end == null) {
       path = List.of();
       return false;

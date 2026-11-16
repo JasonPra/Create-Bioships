@@ -20,3 +20,5 @@ Priorities show the controller's real band, action and score from its latest eva
 The hologram faces the camera and route geometry remains visible through terrain for diagnosis. Floating text wraps into a bounded Minecraft-font hologram. Server observations refresh every five ticks while enabled. Stale observations disappear after one second; toggling off stops requests, and leaving a world/dimension resets the toggle. A snapshot contains at most 256 route points and eight ranked proposals.
 
 The integration checks exercise actual route snapshots, candidate rankings, packet round trips, no-goggles access, request throttling, observation without state changes, and the distinction between an unreachable sealed-glass target and a real route.
+
+Zero-waypoint plans now report `in_action_range` or `at_goal` only when the actual physics position satisfies completion; snapping to a hypothetical tile center cannot complete a blocked grasp. Remembered assimilation targets retain their observed machine name, with a last-seen age when old, rather than revealing unseen changes as “Air.” Darkness and the requirement to visually recheck a changed source remain unchanged.

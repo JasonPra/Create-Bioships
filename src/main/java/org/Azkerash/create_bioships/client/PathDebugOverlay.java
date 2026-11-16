@@ -163,6 +163,9 @@ public final class PathDebugOverlay {
     words.add("Movement goal: " + position(data, "Goal"));
     words.add(data.getString("Reason"));
     words.add("Target: " + data.getString("TargetLabel") + " · " + position(data, "Target"));
+    if (data.getLong("TargetSeenAge") > 20)
+      words.add(
+          "Last seen " + data.getLong("TargetSeenAge") / 20 + "s ago · awaiting visual recheck");
     words.add(
         String.format(
             Locale.ROOT,
