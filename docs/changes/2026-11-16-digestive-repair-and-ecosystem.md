@@ -181,3 +181,9 @@ Further queued requirements: prohibit leg mounts on lungs as well as the core an
 - This is the paid-host preparation step. Temporarily stashing/redeploying an occupied component, removing remaining temporary-support exceptions, and a universal movable-gill exposure policy are still queued. No new commands; body debug labels the work `GROW_SUPPORT` and reports its material needs through the existing inspection/hologram tools.
 - Validation: 51 unit tests and all 143 required GameTests passed. New cases cover paid gut-preserving encasement, compact new flesh hosts, exact debits/no tube refunds, resource revalidation, pressing-food deferral, material-seeking for unaffordable mounting work, and protecting mobility funds from vocal upgrades. The first 143-case run passed before the material-needs integration; the updated suite passed after that addition as well.
 - Seven broader work groups remain. This checkpoint adds the paid-host prerequisite within the attachment/remodeling work; it does not complete stashing/redeployment or the temporary-support transition. A fresh ecosystem replay follows.
+
+### Paid-mount ecosystem follow-up
+
+- The fresh 3,600-tick run failed biologically: 3 digestive/repeatedly fed/resource-producing, 2 alive at the end; 1,911 pork offered; one failure. The death log identified a land creature killed by EXPLOSION at game tick 934 with food 827 and air 300. This was not starvation or breathing failure.
+- The aquatic creature retained connected digestion and four legs; no healthy-core/dead-grid failures occurred. This preserves the retired-owner fix but does not qualify broader combat survival. Report: `docs/development/qa/2026-11-16-paid-mount-ecosystem.json`.
+- The next investigation checks creeper hazard sizing and the fatal encounter's movement evidence. No causal attribution to the mounting change is made from this single stochastic run. Seven broader groups remain.

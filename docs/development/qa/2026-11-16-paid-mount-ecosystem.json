@@ -1,0 +1,17 @@
+{
+  "date": "2026-11-16",
+  "runtimeCommit": "4fba10d",
+  "result": "FAILED",
+  "scenario": "Fresh ecosystem_lab seed 8675309, normal difficulty, view 12/simulation 10, ordinary terrain and spawning; 3600 ticks; mouth feeding up to four cycles.",
+  "summary": "WILDPROBE COMPLETE ticks=3600 observed=3 digestive=3 repeatedlyFed=3 alive=2 resourceProducing=3 expected=3 porkOffered=1911 failures=1",
+  "actualDeaths": [
+    "BIOSHIP_DEATH cause=EXPLOSION tick=934 ship=f1acd423-6089-4287-a544-0b838f5e0038 core=20481032, 129, 20481033 food=827 air=300 gills=false activeGills=false lungs=false"
+  ],
+  "falseCorpseFailures": [],
+  "aquaticFinalSample": "WILDPROBE tick=3600 ship=af91bd6c-796e-4ab2-aa35-ec5767b71b4d position=(154.3072519646091, 65.98603874268369, 80.56739645602202) health=100.0 air=300 wet=false aquatic={Air:300,AirAccess:1b,Breathing:1b,GillSamples:180,GillUse:118,LegEvolutionAfter:0L,SeekingAir:0b,Swimming:0b,UseSamples:180,WaterUse:256,Wet:0b} organMove=null action=WANDER reason=No reachable urgent need or funded goal bodyWork={Action:\"IDLE\",Priorities:[],QueuedGoals:0,Reason:\"No feasible funded body work\"} cells=10 stomachs=1 connected=1 coreMotion=false coreRemoved=false primary=true digestion=[acid=969, queued=153, progress=70/185] mouthFood=[0] waterUse=256 swimmingLegs=0.0 legsMissing=0 materials={biomancy:bone_fragments=45, biomancy:nutrient_paste=11, biomancy:elastic_fibers=16, biomancy:flesh_bits=52} feeds=4",
+  "conclusion": "One land creature died to a real explosion with food 827 and air 300; the aquatic creature retained connected digestion and four legs. No false corpse flag was reported. The 51-unit/143-GameTest checkpoint remains passed, but this ecosystem replay is not a survival pass.",
+  "limitations": [
+    "One stochastic seeded scenario cannot establish whether paid mounting changes caused a later encounter outcome.",
+    "The fatal encounter needs hazard/route evidence; death labels correctly distinguish it from starvation or breathing failure."
+  ]
+}
