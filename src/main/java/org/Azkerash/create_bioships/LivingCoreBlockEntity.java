@@ -42,9 +42,18 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
   }
 
   private OrganMotion.Move organMove;
+  private final BioshipAssimilation assimilation = new BioshipAssimilation();
+
+  public BioshipAssimilation assimilation() {
+    return assimilation;
+  }
 
   public OrganMotion.Move organMove() {
     return organMove;
+  }
+
+  void workingOrganMove(OrganMotion.Move move) {
+    organMove = move;
   }
 
   public void organMove(OrganMotion.Move move) {
@@ -393,6 +402,12 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     return crawl;
   }
 
+  private final BioshipAdaptation adaptation = new BioshipAdaptation();
+
+  BioshipAdaptation adaptation() {
+    return adaptation;
+  }
+
   private final BioshipBody body = new BioshipBody();
   private final BioshipBlueprint blueprint = new BioshipBlueprint();
 
@@ -561,8 +576,54 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     return true;
   }
 
+  private net.minecraft.server.level.ServerLevel transferLevel;
+  private BlockPos transferTarget;
+
+  void recordTransfer(net.minecraft.server.level.ServerLevel destination, BlockPos pos) {
+    transferLevel = destination;
+    transferTarget = pos.immutable();
+  }
+
+  private boolean transferred() {
+    return transferLevel != null
+        && transferTarget != null
+        && transferLevel.getBlockEntity(transferTarget) instanceof LivingCoreBlockEntity replacement
+        && replacement != this
+        && !replacement.body().dead();
+  }
+
+  void coreRemoved() {
+    if (!(level instanceof net.minecraft.server.level.ServerLevel) || body.dead() || transferred())
+      return;
+    if (ship() != null) body.die(this);
+  }
+
   @Override
   public void setRemoved() {
+    if (level instanceof net.minecraft.server.level.ServerLevel server) {
+      var owner = ship();
+      if (owner != null)
+        server
+            .getServer()
+            .tell(
+                new net.minecraft.server.TickTask(
+                    server.getServer().getTickCount(),
+                    () -> {
+                      if (!transferred()
+                          && owner
+                                  .getPlot()
+                                  .getChunkHolder(
+                                      owner.getPlot().toLocal(new ChunkPos(worldPosition)))
+                              != null
+                          && !server.getBlockState(worldPosition).is(Create_bioships.CORE.get()))
+                        BioshipDecay.mark(owner);
+                    }));
+    }
+    if (level instanceof net.minecraft.server.level.ServerLevel
+        && ship() != null
+        && ship().getPlot().getChunkHolder(ship().getPlot().toLocal(new ChunkPos(worldPosition)))
+            != null
+        && !level.getBlockState(worldPosition).is(Create_bioships.CORE.get())) coreRemoved();
     chunkLoading.release();
     super.setRemoved();
   }
@@ -586,6 +647,13 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
         BioshipDecay.mark(core.ship());
       BioshipAccess.tick(core);
       return;
+    }
+    if (core.ship() != null
+        && core.coreMotion.active()
+        && BioshipNutrition.critical(core)
+        && !core.coreMotion.feeding()) {
+      core.brain.choose(core);
+      if (core.brain.interruptsForFood(core)) core.coreMotion.cancel(core);
     }
     if (core.ship() != null && core.coreMotion.tick(core)) {
       if (!core.isRemoved()) core.defense.tick(core);
@@ -618,6 +686,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
       return;
     }
     var before = BioshipBody.actual(core);
+    core.assimilation.tick(core);
     OrganMotion.tick(core);
     core.serverTick();
     var ship = core.ship();
@@ -629,6 +698,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     if (ship != null && level.getGameTime() % 20 == 0) DigestiveSystem.connect(core, ship);
     if (ship != null && level.getGameTime() % 20 == 0 && core.brain.allowsConfiguration(core))
       DigestiveSystem.arrangeStorage(core);
+    if (ship != null) core.adaptation.tick(core);
     core.growBody();
     if (core.ship() != null) core.vision.tick(core);
     if (ship != null
@@ -778,6 +848,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
         int energy = 0, demand = BioshipNeeds.foodDemand(bodyBlocks);
         while (energy < demand) {
           int next = stomach == null ? blueprint.burnBufferedReserve() : stomach.burnReserve();
+          if (next == 0) next = adaptation.burnEmergency();
           if (next == 0) break;
           energy += next;
         }
@@ -923,6 +994,10 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
         && state.getValue(NerveControlBlock.ACTIVE);
   }
 
+  public int foodLevel() {
+    return needs.satiety();
+  }
+
   public boolean starving() {
     return needs.satiety() == 0;
   }
@@ -1020,6 +1095,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
   static boolean droppedSupply(ItemStack stack) {
     if (stack.is(Create_bioships.CORE.get().asItem())) return false;
     return stack.is(MEAT)
+        || BioshipNutrition.fuelValue(stack) > 0
         || stack.is(BioshipIntegration.constructionMaterial())
         || BioshipScavenging.droppedBlock(stack);
   }
@@ -1032,16 +1108,18 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     double mass = ship.getMassTracker().getMass();
     if (!Double.isFinite(mass) || mass <= 0 || !Double.isFinite(dt) || dt <= 0) return;
     Vector3d up = ship.logicalPose().transformNormal(new Vector3d(0, 1, 0), new Vector3d());
+    boolean supported = intent.lift() || Double.isFinite(intent.supportHeight());
     Vector3d correction =
         up.cross(
                 new Vector3d(intent.stanceUp().x, intent.stanceUp().y, intent.stanceUp().z),
                 new Vector3d())
-            .mul(intent.lift() ? 3 : 30);
+            .mul(intent.lift() ? 3 : supported ? 30 : 0);
     correction
         .add(0, intent.turn() * 1.2, 0)
-        .sub(body.getAngularVelocity(new Vector3d()).mul(intent.lift() ? 1.8 : 8));
+        .sub(body.getAngularVelocity(new Vector3d()).mul(intent.lift() ? 1.8 : supported ? 8 : 0));
     // Grounded muscles push and brace only within reach of a solid footing; no flight buoyancy.
     if (!intent.lift()) {
+      if (!supported) return;
       var current = body.getLinearVelocity(new Vector3d());
       var grounded =
           new Vector3d(intent.velocity().x - current.x, 0, intent.velocity().z - current.z)
@@ -1070,9 +1148,11 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     if (preferredMouth != null) tag.putLong("PreferredMouth", preferredMouth.asLong());
     if (organMove != null) tag.put("OrganMove", organMove.save());
     tag.put("Scavenging", scavenging.save());
+    tag.put("Assimilation", assimilation.save());
     tag.put("Crawl", crawl.save());
     tag.put("Brain", brain.save());
     tag.put("CoreMotion", coreMotion.save());
+    tag.put("Adaptation", adaptation.save());
     tag.put("Defense", defense.save());
     tag.put("Autonomy", autonomy.save());
     tag.put("Rescue", rescue.save());
@@ -1115,9 +1195,11 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     organMove =
         tag.contains("OrganMove") ? OrganMotion.Move.load(tag.getCompound("OrganMove")) : null;
     scavenging.load(tag.getCompound("Scavenging"));
+    assimilation.load(tag.getCompound("Assimilation"));
     crawl.load(tag.getCompound("Crawl"));
     brain.load(tag.getCompound("Brain"));
     coreMotion.load(tag.getCompound("CoreMotion"));
+    adaptation.load(tag.getCompound("Adaptation"));
     defense.load(tag.getCompound("Defense"));
     autonomy.load(tag.getCompound("Autonomy"));
     rescue.load(tag.getCompound("Rescue"), registries);

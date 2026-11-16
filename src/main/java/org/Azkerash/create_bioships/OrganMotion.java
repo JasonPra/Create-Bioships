@@ -84,7 +84,7 @@ public final class OrganMotion {
   }
 
   public static boolean busy(LivingCoreBlockEntity core) {
-    return core.organMove() != null;
+    return core.organMove() != null || core.assimilation().active();
   }
 
   public static boolean begin(
@@ -98,11 +98,42 @@ public final class OrganMotion {
       BlockPos target,
       boolean external,
       boolean manual) {
-    if (busy(core) || source.equals(target) || core.ship() == null) return false;
+    return begin(core, source, target, external, manual, false);
+  }
+
+  static boolean reabsorb(LivingCoreBlockEntity core, BlockPos source, BlockPos target) {
+    return begin(core, source, target, false, false, true);
+  }
+
+  static boolean swallow(LivingCoreBlockEntity core, BlockPos source) {
+    return begin(core, source, core.getBlockPos(), true, false, false, true);
+  }
+
+  private static boolean begin(
+      LivingCoreBlockEntity core,
+      BlockPos source,
+      BlockPos target,
+      boolean external,
+      boolean manual,
+      boolean consuming) {
+    return begin(core, source, target, external, manual, consuming, false);
+  }
+
+  private static boolean begin(
+      LivingCoreBlockEntity core,
+      BlockPos source,
+      BlockPos target,
+      boolean external,
+      boolean manual,
+      boolean consuming,
+      boolean stash) {
+    if ((stash ? core.organMove() != null : busy(core))
+        || source.equals(target)
+        || core.ship() == null) return false;
     var ship = core.ship();
     var level = ship.getLevel();
     var host = level.getBlockState(target);
-    if (!host.isAir() && !host.is(Create_bioships.FLESH.get())) return false;
+    if (!stash && !host.isAir() && !host.is(Create_bioships.FLESH.get())) return false;
     var state = level.getBlockState(source);
     if (state.isAir() || state.is(Create_bioships.CORE.get())) return false;
     var sourceShip = BioshipIntegration.containing(level, source);
@@ -114,7 +145,10 @@ public final class OrganMotion {
             ? sourceShip.logicalPose().transformPosition(Vec3.atCenterOf(source))
             : Vec3.atCenterOf(source);
     Vec3 destination = ship.logicalPose().transformPosition(Vec3.atCenterOf(target));
-    if (!BioshipIntegration.growthSpace(level, BlockPos.containing(destination))) return false;
+    var destinationCell = BlockPos.containing(destination);
+    boolean vacatedSource = external && sourceShip == null && destinationCell.equals(source);
+    if (!stash && !vacatedSource && !BioshipIntegration.growthSpace(level, destinationCell))
+      return false;
     String id =
         net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
     boolean mouth =
@@ -126,12 +160,18 @@ public final class OrganMotion {
     boolean restore = false;
     var entity = level.getBlockEntity(source);
     if (entity != null) restore = entity.getPersistentData().getBoolean("BioshipHostFlesh");
+    if (!consuming
+        && !external
+        && !manual
+        && !BioshipSupport.safeMove(core, source, target, restore)) return false;
     List<BlockPos> tissuePath = external ? List.of() : findTissuePath(core, source, target);
     if (!external)
       for (var player : level.players())
         if (player.containerMenu instanceof net.minecraft.world.inventory.ChestMenu menu
             && menu.getContainer() == entity) return false;
-    if ((!external || entity != null && EngineRoom.storage(entity))
+    if (!stash
+        && !consuming
+        && (!external || entity != null && EngineRoom.storage(entity))
         && !DigestiveSystem.reserveOrganRoute(core, source, target)) return false;
     BioshipIntegration.clearGrowthPlant(level, BlockPos.containing(destination));
     var cargo =
@@ -144,8 +184,17 @@ public final class OrganMotion {
     var data = new CompoundTag();
     data.putUUID("BioshipCargoOwner", ship.getUniqueId());
     data.putBoolean("BioshipBound", true);
+    data.putBoolean("BioshipStash", stash);
     data.putBoolean("BioshipScavenged", scavenged);
     data.putBoolean("ScavengeHostFlesh", host.is(Create_bioships.FLESH.get()));
+    var selected = core.brain().lastDecision();
+    data.putBoolean(
+        "BioshipEmergencyRecycle",
+        consuming
+            || external
+                && selected != null
+                && selected.recycle()
+                && source.equals(selected.block()));
     cargo.setUserDataTag(data);
     if (restore && !external)
       level.setBlock(source, Create_bioships.FLESH.get().defaultBlockState(), 3);
@@ -260,6 +309,18 @@ public final class OrganMotion {
         cargo, new Vector3d(location.x, location.y, location.z).add(offset), orientation);
     pipeline.resetVelocity(cargo);
     if (age < 36) return;
+    if (cargo.getUserDataTag() != null && cargo.getUserDataTag().getBoolean("BioshipStash")) {
+      core.assimilation().receive(core, cargo, move.cargoBlock());
+      container.removeForceLoadTicket(
+          cargo, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
+      container.removeSubLevel(cargo, SubLevelRemovalReason.REMOVED);
+      if (move.ownerForced())
+        container.removeForceLoadTicket(
+            owner, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
+      core.organMove(null);
+      core.vision().invalidate();
+      return;
+    }
     var host = level.getBlockState(move.target());
     if (!host.isAir() && !host.is(Create_bioships.FLESH.get())) {
       release(core, cargo);
@@ -304,6 +365,9 @@ public final class OrganMotion {
     }
     boolean scavenged =
         cargo.getUserDataTag() != null && cargo.getUserDataTag().getBoolean("BioshipScavenged");
+    boolean recycle =
+        cargo.getUserDataTag() != null
+            && cargo.getUserDataTag().getBoolean("BioshipEmergencyRecycle");
     boolean hostFlesh =
         cargo.getUserDataTag() != null && cargo.getUserDataTag().getBoolean("ScavengeHostFlesh");
     container.removeSubLevel(cargo, SubLevelRemovalReason.REMOVED);
@@ -312,7 +376,7 @@ public final class OrganMotion {
           owner, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
     core.organMove(null);
     core.vision().invalidate();
-    if (scavenged) core.scavenging().finish(core, move.target(), hostFlesh);
+    if (scavenged || recycle) core.scavenging().finish(core, move.target(), hostFlesh, recycle);
     else if (move.external()) BioshipIntegration.finishAssimilation(core, move.target());
     DigestiveSystem.connect(core, owner);
     core.coreMotion().layoutChanged(core);

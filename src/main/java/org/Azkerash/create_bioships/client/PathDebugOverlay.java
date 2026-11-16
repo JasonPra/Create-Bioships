@@ -176,6 +176,13 @@ public final class PathDebugOverlay {
             "Speed %.2f · %d waypoints",
             data.getDouble("Speed"),
             data.getInt("Waypoints")));
+    words.add(
+        data.getInt("CollectingArms")
+            + " collecting arms · "
+            + data.getInt("StoredComponents")
+            + " stored parts · "
+            + data.getInt("QueuedGoals")
+            + " queued goals");
     words.add("Priorities (needs before goals):");
     var priorities = data.getList("Priorities", Tag.TAG_COMPOUND);
     for (int i = 0; i < Math.min(5, priorities.size()); i++)

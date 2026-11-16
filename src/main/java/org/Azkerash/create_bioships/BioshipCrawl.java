@@ -98,16 +98,29 @@ public final class BioshipCrawl {
     return 4;
   }
 
+  double blockLoad(
+      LivingCoreBlockEntity core,
+      BlockPos pos,
+      net.minecraft.world.level.block.state.BlockState state) {
+    double unit =
+        dev.ryanhcode.sable.physics.config.block_properties.PhysicsBlockPropertyHelper.getMass(
+            core.getLevel(), core.getBlockPos(), Create_bioships.FLESH.get().defaultBlockState());
+    return dev.ryanhcode.sable.physics.config.block_properties.PhysicsBlockPropertyHelper.getMass(
+            core.getLevel(), pos, state)
+        / Math.max(.001, unit);
+  }
+
   public double carriedLoad(LivingCoreBlockEntity core) {
     double tissue =
         dev.ryanhcode.sable.physics.config.block_properties.PhysicsBlockPropertyHelper.getMass(
             core.getLevel(), core.getBlockPos(), Create_bioships.FLESH.get().defaultBlockState());
     return core.ship() == null
         ? 0
-        : core.ship().getMassTracker().getMass() / Math.max(.001, tissue);
+        : core.ship().getMassTracker().getMass() / Math.max(.001, tissue)
+            + core.assimilation().load(core);
   }
 
-  private boolean canEnhance(LivingCoreBlockEntity core) {
+  boolean canEnhance(LivingCoreBlockEntity core) {
     var stomach = DigestiveSystem.stomach(core);
     return legTier < 3
         && stomach != null
@@ -432,30 +445,32 @@ public final class BioshipCrawl {
     if (core.isMature() && core.canFly()
         || carriedLoad(core) > loadCapacity()
         || core.body().health() <= 0
-        || core.blueprint().busy()
-        || core.hatchling() && !walking && wallFacing == null && !core.growthStockReady()) return;
+        || core.blueprint().busy()) return;
     var level = (ServerLevel) core.getLevel();
     Vec3 here = BioshipBlueprint.physical(core, BlockPos.ZERO);
-    var grip = walking || wallFacing != null ? GroundRoute.grip(core, here) : null;
+    boolean clinging = wallFacing != null;
+    var grip = walking || clinging ? GroundRoute.grip(core, here) : null;
     wallFacing = null;
+    if (clinging && !walking && grip != null) {
+      braceGrip(core, here, grip);
+      return;
+    }
     var anchor =
         core.ship().logicalPose().transformPosition(Vec3.atCenterOf(core.structuralOrigin()));
+    var layout = BioshipSupport.layout(core);
+    if (!layout.stable()) return;
     Vec3[] contacts = new Vec3[4];
     int count = 0;
     double highest = -Double.MAX_VALUE;
     double sum = 0;
     double legHeight = core.hatchling() ? .85 : 1.25;
     for (int i = 0; i < 4; i++) {
-      var offset =
-          core.ship()
-              .logicalPose()
-              .transformNormal(
-                  new Vec3(
-                      (i % 2 == 0 ? -1 : 1) * (core.isMature() ? 3.8 : 1.4),
-                      0,
-                      (i < 2 ? -1 : 1) * (core.isMature() ? 6 : 1.4)));
-      Vec3 point = new Vec3(anchor.x + offset.x, anchor.y, anchor.z + offset.z);
-      var floor = ground(level, BlockPos.containing(point), anchor.y + extraLift() + .25);
+      var foot = layout.legs().get(i).foot();
+      var local =
+          Vec3.atLowerCornerOf(core.structuralOrigin()).add(foot.x, foot.y + legHeight, foot.z);
+      var world = core.ship().logicalPose().transformPosition(local);
+      Vec3 point = world;
+      var floor = ground(level, BlockPos.containing(point), point.y - legHeight + extraLift() + .5);
       if (floor == null) continue;
       double top = floor.getY() + 1;
       contacts[i] = new Vec3(point.x, top, point.z);
@@ -477,16 +492,30 @@ public final class BioshipCrawl {
       braceGrip(core, here, grip);
       return;
     }
+    var massCenter =
+        core.ship()
+            .logicalPose()
+            .transformPosition(Vec3.atLowerCornerOf(core.structuralOrigin()).add(layout.center()));
+    if (!BioshipSupport.containsProjection(massCenter, contacts)) return;
     double center = sum / count;
-    double wanted = center + legHeight + here.y - anchor.y;
-    if (highest - anchor.y > extraLift() + .25 || anchor.y - highest > 2.75 + legTier) return;
+    double underside = layout.legs().getFirst().foot().y + (core.hatchling() ? .35 : .75);
+    double wanted = center + legHeight - underside + here.y - anchor.y;
+    if (highest - (anchor.y + underside) > extraLift() + .25
+        || anchor.y + underside - highest > 2.75 + legTier) return;
     supportHeight = wanted;
     if (count == 4) {
       var right = contacts[1].add(contacts[3]).subtract(contacts[0]).subtract(contacts[2]);
       var forward = contacts[0].add(contacts[1]).subtract(contacts[2]).subtract(contacts[3]);
       var normal = right.cross(forward).normalize();
       if (normal.y < 0) normal = normal.scale(-1);
-      if (normal.y > .65) stanceUp = normal;
+      if (normal.y > .65) {
+        stanceUp = normal;
+        double cx = Arrays.stream(contacts).mapToDouble(p -> p.x).average().orElseThrow();
+        double cz = Arrays.stream(contacts).mapToDouble(p -> p.z).average().orElseThrow();
+        double plane =
+            center - (normal.x * (anchor.x - cx) + normal.z * (anchor.z - cz)) / normal.y;
+        supportHeight = plane + legHeight - underside + here.y - anchor.y;
+      }
     }
   }
 
@@ -521,6 +550,9 @@ public final class BioshipCrawl {
   }
 
   void load(CompoundTag t) {
+    // Routes and selection identity are transient; a restored goal must be replanned together.
+    selection = "";
+    route.clear();
     wallFacing =
         t.contains("Wall") && t.getInt("Wall") >= 0
             ? Direction.values()[Math.min(5, t.getInt("Wall"))]

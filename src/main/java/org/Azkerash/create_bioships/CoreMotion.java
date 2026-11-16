@@ -428,11 +428,13 @@ public final class CoreMotion {
   }
 
   private boolean begin(LivingCoreBlockEntity core, BlockPos next, boolean emergency) {
-    if (!DigestiveSystem.reserveCoreRoute(core, next, true)) return false;
+    if (!BioshipSupport.safeMove(core, core.getBlockPos(), next, false)
+        || !DigestiveSystem.reserveCoreRoute(core, next, true)) return false;
     if (home == null) home = core.getBlockPos();
     target = next;
     evasive = emergency;
     started = core.getLevel().getGameTime();
+    feeding = BioshipNutrition.foodRelated(core, core.brain().lastDecision());
     core.getLevel()
         .setBlock(
             core.getBlockPos(), core.getBlockState().setValue(LivingCoreBlock.RELOCATING, true), 2);
@@ -450,6 +452,7 @@ public final class CoreMotion {
     target = safe;
     evasive = true;
     started = core.getLevel().getGameTime();
+    feeding = BioshipNutrition.foodRelated(core, core.brain().lastDecision());
     core.getLevel()
         .setBlock(
             core.getBlockPos(), core.getBlockState().setValue(LivingCoreBlock.RELOCATING, true), 2);
@@ -535,6 +538,12 @@ public final class CoreMotion {
     tick(core);
   }
 
+  private boolean feeding;
+
+  boolean feeding() {
+    return feeding;
+  }
+
   void cancel(LivingCoreBlockEntity core) {
     target = null;
     core.getLevel()
@@ -582,6 +591,7 @@ public final class CoreMotion {
     if (target != null) tag.putLong("Target", target.asLong());
     tag.putBoolean("Evasive", evasive);
     tag.putLong("Started", started);
+    tag.putBoolean("Feeding", feeding);
     tag.putLong("NextScan", nextScan);
     tag.putBoolean("LayoutDirty", layoutDirty);
     return tag;
@@ -592,6 +602,7 @@ public final class CoreMotion {
     target = tag.contains("Target") ? BlockPos.of(tag.getLong("Target")) : null;
     evasive = tag.getBoolean("Evasive");
     started = tag.getLong("Started");
+    feeding = tag.getBoolean("Feeding");
     nextScan = tag.getLong("NextScan");
     layoutDirty = tag.getBoolean("LayoutDirty");
   }

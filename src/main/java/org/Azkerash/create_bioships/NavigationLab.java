@@ -14,7 +14,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
@@ -154,8 +153,6 @@ public final class NavigationLab {
     }
     level.setDefaultSpawnPos(new BlockPos(8, 80, -12), 0);
     level.setDayTime(1000);
-    level.getGameRules().getRule(GameRules.RULE_DAYLIGHT).set(false, level.getServer());
-    level.getGameRules().getRule(GameRules.RULE_DOMOBSPAWNING).set(false, level.getServer());
     var state = State.get(level);
     state.built = true;
     state.seeded = false;

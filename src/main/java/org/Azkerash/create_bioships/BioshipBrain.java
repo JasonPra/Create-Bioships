@@ -26,6 +26,12 @@ public final class BioshipBrain {
     REST,
     PILOT,
     CONFIGURE,
+    REGROW_MOUTH,
+    REGROW_STOMACH,
+    GROW_STORAGE,
+    RECLAIM_COMPONENT,
+    STRENGTHEN_LEGS,
+    FORTIFY,
     COLLECT_ITEM,
     ASSIMILATE,
     SCAVENGE,
@@ -43,10 +49,33 @@ public final class BioshipBrain {
       LivingEntity entity,
       ItemEntity item,
       BehaviorPriority.Offer offer,
-      String reason) {}
+      String reason,
+      boolean recycle) {
+    public Decision(
+        Action action,
+        Vec3 point,
+        BlockPos block,
+        LivingEntity entity,
+        ItemEntity item,
+        BehaviorPriority.Offer offer,
+        String reason) {
+      this(action, point, block, entity, item, offer, reason, false);
+    }
+
+    Decision recycling() {
+      return new Decision(action, point, block, entity, item, offer, reason, true);
+    }
+  }
 
   private record Needs(
-      boolean digestive, boolean hungry, int food, int flesh, int bone, int fiber, boolean growth) {
+      boolean digestive,
+      boolean hungry,
+      int food,
+      int flesh,
+      int bone,
+      int fiber,
+      boolean growth,
+      boolean criticalFood) {
     boolean materials() {
       return flesh > 0 || bone > 0 || fiber > 0;
     }
@@ -56,6 +85,16 @@ public final class BioshipBrain {
   private Action action = Action.IDLE;
   private boolean growthBlocked;
   private Decision lastDecision;
+  private final GoalQueue<Decision> goals = new GoalQueue<>();
+
+  java.util.List<Decision> queuedGoals() {
+    return goals.pending();
+  }
+
+  private void refreshGoals(List<Decision> proposals) {
+    goals.refresh(proposals, Decision::offer, previous);
+  }
+
   private net.minecraft.nbt.ListTag debugPriorities = new net.minecraft.nbt.ListTag();
   private int debugOfferCount;
 
@@ -123,7 +162,8 @@ public final class BioshipBrain {
         Math.max(0, flesh),
         Math.max(0, bone),
         Math.max(0, fiber),
-        !core.isMature());
+        !core.isMature(),
+        BioshipNutrition.critical(core));
   }
 
   boolean shouldHunt(LivingCoreBlockEntity core) {
@@ -152,7 +192,12 @@ public final class BioshipBrain {
   }
 
   private Decision remember(Decision selected) {
-    if (debugPriorities.isEmpty()) rankForDebug(List.of(selected));
+    if (debugPriorities.isEmpty())
+      rankForDebug(
+          java.util.stream.Stream.concat(
+                  java.util.stream.Stream.of(selected), queuedGoals().stream())
+              .distinct()
+              .toList());
     lastDecision = selected;
     action = selected.action;
     reason = selected.reason;
@@ -196,9 +241,16 @@ public final class BioshipBrain {
     return point.distanceTo(BioshipBlueprint.physical(core, BlockPos.ZERO));
   }
 
+  boolean interruptsForFood(LivingCoreBlockEntity core) {
+    return BioshipNutrition.critical(core) && BioshipNutrition.foodRelated(core, lastDecision);
+  }
+
   private int materialUrgency(Needs n, BlockState state, boolean wreck) {
-    if (wreck && n.digestive && n.hungry && n.food == 0)
-      return 930; // carrion/reserves before live hunting
+    if (wreck && n.digestive && n.criticalFood) return 990; // carrion/reserves before live hunting
+    if (n.criticalFood
+        && n.digestive
+        && !BioshipScavenging.component(state)
+        && BioshipNutrition.fuelValue(new ItemStack(state.getBlock().asItem())) > 0) return 1000;
     if (wreck && n.materials()) return 820;
     String id =
         net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
@@ -206,8 +258,12 @@ public final class BioshipBrain {
   }
 
   private int itemUrgency(Needs n, ItemStack stack) {
+    if (n.criticalFood && BioshipNutrition.fuelValue(stack) > 0)
+      return 990 + Math.min(60, BioshipNutrition.fuelValue(stack));
     if (LivingCoreBlockEntity.isMeat(stack))
-      return n.food == 0 && n.hungry ? 980 : n.materials() ? 850 : 0;
+      return n.food == 0 && n.criticalFood
+          ? 980
+          : n.food == 0 && n.hungry ? 900 : n.materials() ? 850 : 0;
     String id =
         net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
     if (n.bone > 0 && id.equals("biomancy:bone_fragments")
@@ -224,36 +280,59 @@ public final class BioshipBrain {
       BlockState state,
       int rank,
       boolean wreck) {
-    int urgency = rank == 0 ? 1000 : materialUrgency(n, state, wreck);
+    boolean component = BioshipScavenging.component(state);
+    boolean emergency =
+        rank != 0
+            && component
+            && n.digestive
+            && n.criticalFood
+            && BioshipScavenging.emptyComponent(core, pos);
+    int urgency =
+        rank == 0
+            ? 1000
+            : component && !n.criticalFood
+                ? 950
+                : emergency ? 600 : materialUrgency(n, state, wreck);
     boolean observed = wreck || core.vision().exposed(core, pos);
     var inventory =
         observed ? core.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, pos, null) : null;
     if (inventory != null)
-      for (int slot = 0; slot < inventory.getSlots(); slot++)
-        urgency = Math.max(urgency, itemUrgency(n, inventory.getStackInSlot(slot)));
+      for (int slot = 0; slot < inventory.getSlots(); slot++) {
+        var stack = inventory.getStackInSlot(slot);
+        urgency = Math.max(urgency, itemUrgency(n, stack));
+        if (component && !n.criticalFood && LivingCoreBlockEntity.isMeat(stack))
+          urgency = Math.max(urgency, 960);
+      }
+    if (wreck && core.assimilation().committed()) urgency = Math.max(urgency, 940);
     var band = urgency > 0 ? BehaviorPriority.Band.NEED : BehaviorPriority.Band.GOAL;
     if (urgency == 0)
       urgency = wreck ? 350 : rank == 1 ? 360 : rank == 2 ? 300 : rank == 3 ? 220 : 100;
-    return offer(
-        wreck ? Action.SCAVENGE : Action.ASSIMILATE,
-        point,
-        pos,
-        null,
-        null,
-        band,
-        urgency,
-        wreck
-            ? (n.bone > 0 && BioshipScavenging.frameMaterial(state)
-                    || n.fiber > 0 && BioshipScavenging.fiberMaterial(state)
-                ? 130
-                : 30)
-            : 0,
-        effort(core, point),
-        rank == 0
-            ? "Acquire a missing digestive organ"
-            : wreck
-                ? "Reclaim useful wreck tissue before hunting"
-                : "Collect a needed component or reserve");
+    var decision =
+        offer(
+            wreck ? Action.SCAVENGE : Action.ASSIMILATE,
+            point,
+            pos,
+            null,
+            null,
+            band,
+            urgency,
+            wreck
+                ? (n.bone > 0 && BioshipScavenging.frameMaterial(state)
+                        || n.fiber > 0 && BioshipScavenging.fiberMaterial(state)
+                    ? 130
+                    : 30)
+                : 0,
+            effort(core, point),
+            rank == 0
+                ? "Acquire a missing digestive organ"
+                : wreck
+                    ? "Reclaim useful wreck tissue before hunting"
+                    : emergency
+                        ? "Emergency reclamation of a spare component"
+                        : component
+                            ? "Assimilate a useful component before routine growth"
+                            : "Collect a needed component or reserve");
+    return emergency ? decision.recycling() : decision;
   }
 
   BioshipPriorities.Objective bestWorld(LivingCoreBlockEntity core) {
@@ -356,13 +435,28 @@ public final class BioshipBrain {
               0,
               effort(core, threat.position()),
               "Defend against an immediate threat"));
-    if (OrganMotion.busy(core) || core.coreMotion().active())
-      return fixed(Action.MOVE_COMPONENT, "Finish a conserved component move");
+    boolean committed =
+        OrganMotion.busy(core) || core.coreMotion().active() || core.assimilation().finishing();
+    if (committed && (!BioshipNutrition.critical(core) || BioshipNutrition.movingFood(core)))
+      return fixed(Action.MOVE_COMPONENT, "Finish a conserved component or food-recovery move");
     if (core.resting()) return fixed(Action.REST, "Rest command");
     if (core.canFly() && core.autonomy().trustedPilot(core))
       return fixed(Action.PILOT, "Follow the authorized trusted pilot");
     var n = needs(core);
     var offers = new ArrayList<Decision>();
+    for (var p : core.adaptation().proposals(core))
+      offers.add(
+          offer(
+              p.action(),
+              null,
+              p.pos(),
+              null,
+              null,
+              p.urgency() > 500 ? BehaviorPriority.Band.NEED : BehaviorPriority.Band.GOAL,
+              p.urgency(),
+              0,
+              0,
+              p.reason()));
     var config = configuration(core);
     if (config != null) offers.add(config);
     for (var o : BioshipPriorities.worldObjectives(core)) {
@@ -417,7 +511,7 @@ public final class BioshipBrain {
               prey,
               null,
               BehaviorPriority.Band.NEED,
-              n.hungry ? 880 : 650,
+              n.criticalFood ? 980 : n.hungry ? 880 : 650,
               -30,
               effort(core, prey.position()),
               "Hunt only after easier resources for the same need"));
@@ -449,15 +543,33 @@ public final class BioshipBrain {
             0,
             0,
             "No reachable urgent need or funded goal"));
-    rankForDebug(offers);
-    var selected = remember(chooseOffers(offers));
+    refreshGoals(offers);
+    rankForDebug(queuedGoals());
+    var best = chooseOffers(queuedGoals());
+    if (committed && !BioshipNutrition.foodRelated(core, best))
+      return fixed(
+          Action.MOVE_COMPONENT, "Conserve collected components while evaluating urgent needs");
+    var selected = remember(best);
     core.supplyTarget = selected.action == Action.ASSIMILATE ? selected.block : null;
     return selected;
   }
 
   boolean allowsConfiguration(LivingCoreBlockEntity core) {
     return switch (choose(core).action) {
-      case FLEE, DEFEND, HUNT, RECONFIGURE, RESCUE, MOVE_COMPONENT -> false;
+      case FLEE,
+          DEFEND,
+          HUNT,
+          COLLECT_ITEM,
+          RECONFIGURE,
+          RESCUE,
+          MOVE_COMPONENT,
+          REGROW_MOUTH,
+          REGROW_STOMACH,
+          GROW_STORAGE,
+          RECLAIM_COMPONENT,
+          STRENGTHEN_LEGS,
+          FORTIFY ->
+          false;
       default -> true;
     };
   }
@@ -482,11 +594,14 @@ public final class BioshipBrain {
       case WANDER:
         return core.autonomy().groundWander(core);
       case ASSIMILATE:
-        return d.point;
+        return core.assimilation().gatheringPoint(core, d.point);
       case SCAVENGE:
-        return d.point.distanceToSqr(BioshipBlueprint.physical(core, BlockPos.ZERO)) > 121
-            ? d.point
-            : null;
+        var wreck = BioshipIntegration.containing(core.getLevel(), d.block);
+        return wreck != null
+                && BioshipReach.clear(core, d.point, true, 14)
+                && BioshipScavenging.physicallyReachable(core, wreck, d.block, d.point)
+            ? null
+            : d.point;
       case DEFEND:
         return d.point.distanceToSqr(BioshipBlueprint.physical(core, BlockPos.ZERO)) > 6.25
             ? d.point
@@ -520,7 +635,8 @@ public final class BioshipBrain {
       boolean accepted;
       if (BioshipScavenging.droppedBlock(one))
         accepted = core.scavenging().consumeDroppedBlock(core, one);
-      else if (one.is(BioshipIntegration.constructionMaterial())
+      else if ((one.is(BioshipIntegration.constructionMaterial())
+              || BioshipNutrition.fuelValue(one) > 0)
           && !LivingCoreBlockEntity.isMeat(one)) {
         stomach.retain(one);
         accepted = true;

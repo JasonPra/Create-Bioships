@@ -43,8 +43,7 @@ public final class BioshipScavenging {
             .equals("simulated:steering_wheel");
   }
 
-  private static boolean keepComponent(
-      LivingCoreBlockEntity core, BlockState state, BlockPos exclude) {
+  static boolean keepComponent(LivingCoreBlockEntity core, BlockState state, BlockPos exclude) {
     String id = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
     var others =
         BioshipIntegration.blockEntities(core.ship()).stream()
@@ -66,6 +65,24 @@ public final class BioshipScavenging {
       return core.isMature()
           && others.stream().noneMatch(e -> e.getBlockState().is(state.getBlock()));
     return false;
+  }
+
+  static boolean component(BlockState state) {
+    return state.hasBlockEntity() && !state.is(Create_bioships.CORE.get());
+  }
+
+  static boolean emptyComponent(LivingCoreBlockEntity core, BlockPos pos) {
+    var entity = core.getLevel().getBlockEntity(pos);
+    if (entity != null && BioshipStores.total(entity) > 0) return false;
+    if (entity instanceof net.minecraft.world.Container c && !c.isEmpty()) return false;
+    var inventory =
+        core.getLevel()
+            .getCapability(
+                net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK, pos, null);
+    if (inventory != null)
+      for (int slot = 0; slot < inventory.getSlots(); slot++)
+        if (!inventory.getStackInSlot(slot).isEmpty()) return false;
+    return true;
   }
 
   static boolean needed(LivingCoreBlockEntity core, BlockState state) {
@@ -97,6 +114,8 @@ public final class BioshipScavenging {
   record Source(BlockPos pos, Vec3 point, BlockState state) {}
 
   static java.util.List<Source> visibleSources(LivingCoreBlockEntity core) {
+    var committed = core.assimilation().remaining(core);
+    if (!committed.isEmpty()) return committed;
     var container = SubLevelContainer.getContainer(core.getLevel());
     if (container == null) return java.util.List.of();
     var eye = BioshipBlueprint.physical(core, BlockPos.ZERO);
@@ -121,49 +140,26 @@ public final class BioshipScavenging {
 
   static boolean collect(LivingCoreBlockEntity core, ServerSubLevel own) {
     core.scavenging().deliver(core);
-    var level = own.getLevel();
-    var container = SubLevelContainer.getContainer(level);
-    if (container == null) return false;
     var decision = core.brain().choose(core);
-    if (decision.action() != BioshipBrain.Action.SCAVENGE) return false;
-    Vec3 eye = BioshipBlueprint.physical(core, BlockPos.ZERO);
-    for (var body : List.copyOf(container.getAllSubLevels()))
-      if (body instanceof ServerSubLevel wreck
-          && wreck != own
-          && !wreck.isRemoved()
-          && BioshipDecay.dead(wreck)) {
-        Vec3 center =
-            wreck
-                .logicalPose()
-                .transformPosition(Vec3.atCenterOf(wreck.getPlot().getCenterBlock()));
-        if (center.distanceToSqr(eye) > 32 * 32) continue;
-        var cells = BioshipDecay.blocks(wreck);
-        cells.sort(
-            Comparator.<BlockPos>comparingInt(
-                    p -> BioshipPriorities.rank(core, level.getBlockState(p), p))
-                .thenComparingDouble(
-                    p ->
-                        wreck
-                            .logicalPose()
-                            .transformPosition(Vec3.atCenterOf(p))
-                            .distanceToSqr(eye)));
-        for (var source : cells) {
-          var state = level.getBlockState(source);
-          if (!source.equals(decision.block()) || !needed(core, state)) continue;
-          Vec3 point = wreck.logicalPose().transformPosition(Vec3.atCenterOf(source));
-          if (point.distanceToSqr(eye) > 14 * 14 || !visible(core, wreck, source, eye, point))
-            continue;
-          for (var dir :
-              List.of(
-                  Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST, Direction.UP)) {
-            var target = core.getBlockPos().relative(dir);
-            var host = level.getBlockState(target);
-            if (!host.isAir() && !host.is(Create_bioships.FLESH.get())) continue;
-            if (OrganMotion.begin(core, source, target, true)) return true;
-          }
-        }
-      }
-    return false;
+    return decision.action() == BioshipBrain.Action.SCAVENGE
+        && core.assimilation().start(core, decision);
+  }
+
+  static boolean physicallyReachable(
+      LivingCoreBlockEntity core, ServerSubLevel wreck, BlockPos source, Vec3 point) {
+    var from = BioshipReach.anchor(core, point);
+    int steps = Math.max(1, (int) Math.ceil(from.distanceTo(point) * 5));
+    for (int i = 1; i < steps; i++) {
+      var local =
+          BlockPos.containing(
+              wreck.logicalPose().transformPositionInverse(from.lerp(point, i / (double) steps)));
+      if (!local.equals(source)
+          && !core.getLevel()
+              .getBlockState(local)
+              .getCollisionShape(core.getLevel(), local)
+              .isEmpty()) return false;
+    }
+    return true;
   }
 
   private static boolean visible(
@@ -199,13 +195,30 @@ public final class BioshipScavenging {
   }
 
   void finish(LivingCoreBlockEntity core, BlockPos target, boolean restoreHost) {
+    finish(core, target, restoreHost, false);
+  }
+
+  void finish(LivingCoreBlockEntity core, BlockPos target, boolean restoreHost, boolean forced) {
     var state = core.getLevel().getBlockState(target);
-    if (keepComponent(core, state, target)) {
+    String id = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
+    boolean essential =
+        keepComponent(core, state, target)
+            && (BioshipIntegration.isMaw(state)
+                || state.is(Create_bioships.STOMACH.get())
+                || id.equals("biomancy:bio_forge")
+                || id.equals("biomancy:decomposer")
+                || id.equals("biomancy:digester"));
+    if (keepComponent(core, state, target) && (!forced || essential)) {
       BioshipIntegration.finishAssimilation(core, target);
       return;
     }
     recycle(state);
-    var storage = DigestiveSystem.stomach(core);
+    var storage =
+        BioshipIntegration.blockEntities(core.ship()).stream()
+            .filter(e -> e instanceof StomachBlockEntity && !e.getBlockPos().equals(target))
+            .map(e -> (StomachBlockEntity) e)
+            .findFirst()
+            .orElse(null);
     if (storage != null
         && core.getLevel().getBlockEntity(target)
             instanceof net.minecraft.world.Container inventory)
@@ -213,6 +226,30 @@ public final class BioshipScavenging {
         ItemStack content = inventory.removeItemNoUpdate(slot);
         if (!content.isEmpty()) storage.inheritInput(content);
       }
+    if (storage != null) {
+      var be = core.getLevel().getBlockEntity(target);
+      if (be != null) {
+        if (be instanceof StomachBlockEntity donor) donor.transferTo(storage);
+        var materials = be.getPersistentData().getCompound(BioshipStores.MATERIALS);
+        for (var key : materials.getAllKeys())
+          storage.retain(
+              new ItemStack(
+                  BuiltInRegistries.ITEM.get(ResourceLocation.parse(key)), materials.getInt(key)));
+        if (!(be instanceof net.minecraft.world.Container)) {
+          var inventory =
+              core.getLevel()
+                  .getCapability(
+                      net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
+                      target,
+                      null);
+          if (inventory != null)
+            for (int slot = 0; slot < inventory.getSlots(); slot++) {
+              var content = inventory.extractItem(slot, Integer.MAX_VALUE, false);
+              if (!content.isEmpty()) storage.inheritInput(content);
+            }
+        }
+      }
+    }
     core.getLevel().removeBlockEntity(target);
     core.getLevel()
         .setBlock(
@@ -238,6 +275,8 @@ public final class BioshipScavenging {
     if (!core.hasMouth() || stomach == null || !stomach.connected(core)) return false;
     var state =
         ((net.minecraft.world.item.BlockItem) stack.getItem()).getBlock().defaultBlockState();
+    if (component(state) && (!BioshipNutrition.critical(core) || keepComponent(core, state, null)))
+      return core.assimilation().acceptItem(core, stack);
     if (state.is(Create_bioships.INTESTINE.get()))
       state = state.setValue(IntestineBlock.PAID, true);
     recycle(state);
@@ -246,7 +285,7 @@ public final class BioshipScavenging {
     return true;
   }
 
-  private void recycle(BlockState state) {
+  void recycle(BlockState state) {
     if (state.is(Create_bioships.INTESTINE.get()) && !state.getValue(IntestineBlock.PAID)) {
       pendingFreeTubes++;
       return;
@@ -267,7 +306,7 @@ public final class BioshipScavenging {
   }
 
   void deliver(LivingCoreBlockEntity core) {
-    int growth = core.incorporateBiomass(pendingFlesh);
+    int growth = BioshipNutrition.critical(core) ? 0 : core.incorporateBiomass(pendingFlesh);
     pendingFlesh -= growth;
     var stomach = DigestiveSystem.stomach(core);
     if (stomach == null) return;

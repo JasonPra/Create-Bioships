@@ -92,6 +92,7 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
     boolean gathering =
         (core.rescue().carriedPosition() != null || core.crawl().reach() != null)
             && !core.body().dead();
+    renderBatch(core, partial, pose, buffers, light);
     var move = core.organMove();
     boolean carrying = core.blueprint().carried() != null && core.blueprint().carryStart() != null;
     if (core.getLevel() == null || !gathering && !carrying && (move == null || !move.usesArm()))
@@ -163,6 +164,55 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
     }
   }
 
+  private void renderBatch(
+      LivingCoreBlockEntity core,
+      float partial,
+      PoseStack pose,
+      MultiBufferSource buffers,
+      int light) {
+    if (core.getLevel() == null || core.body().dead()) return;
+    var container = SubLevelContainer.getContainer(core.getLevel());
+    if (container == null) return;
+    var plot = container.getPlot(new ChunkPos(core.getBlockPos()));
+    if (plot == null) return;
+    var transform =
+        plot.getSubLevel() instanceof ClientSubLevel client
+            ? client.renderPose(partial)
+            : plot.getSubLevel().logicalPose();
+    int arm = 0;
+    for (var move : core.assimilation().arms()) {
+      var cargo = container.getSubLevel(move.cargo());
+      if (cargo == null) continue;
+      var root = new Vec3(arm % 2 == 0 ? .15 : .85, .5, arm < 2 ? .15 : .85);
+      arm++;
+      var target =
+          transform
+              .transformPositionInverse(
+                  cargo.logicalPose().transformPosition(Vec3.atCenterOf(move.cargoBlock())))
+              .subtract(Vec3.atLowerCornerOf(core.getBlockPos()));
+      var previous = root;
+      var consumer = buffers.getBuffer(RenderType.entityCutoutNoCull(SKIN));
+      for (int i = 1; i <= 14; i++) {
+        double t = i / 14.0;
+        var point = root.lerp(target, t).add(0, -Math.sin(Math.PI * t) * .35, 0);
+        var delta = point.subtract(previous);
+        if (delta.lengthSqr() < .00001) continue;
+        pose.pushPose();
+        pose.translate(previous.x, previous.y, previous.z);
+        pose.mulPose(
+            new Quaternionf()
+                .rotationTo(
+                    new Vector3f(0, -1, 0),
+                    new Vector3f((float) delta.x, (float) delta.y, (float) delta.z).normalize()));
+        float width = (float) (.5 - t * .25);
+        pose.scale(width, (float) delta.length(), width);
+        segment.render(pose, consumer, light, OverlayTexture.NO_OVERLAY);
+        pose.popPose();
+        previous = point;
+      }
+    }
+  }
+
   private void renderLegs(
       LivingCoreBlockEntity core,
       float partial,
@@ -174,7 +224,8 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
     pose.translate(anchor.getX(), anchor.getY(), anchor.getZ());
     var consumer = buffers.getBuffer(RenderType.entityCutoutNoCull(SKIN));
     boolean scuttling = core.hatchling();
-    int legs = 4;
+    var support = BioshipSupport.layout(core);
+    int legs = support.legs().size();
     for (int leg = 0; leg < legs; leg++) {
       double side = leg % 2 == 0 ? -1 : 1;
       double front = leg < 2 ? -1 : 1;
@@ -186,16 +237,13 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
                   / 20
                   * (scuttling ? 7 : 2)
               + ((leg / 2 + leg % 2) % 2 == 0 ? 0 : Math.PI);
-      Vec3 root =
-          new Vec3(.5 + side * (scuttling ? .4 : 2.5), .4, .5 + front * (scuttling ? .4 : 4.5));
+      Vec3 root = support.legs().get(leg).root();
+      Vec3 base = support.legs().get(leg).foot();
       Vec3 foot =
-          new Vec3(
-              .5 + side * (scuttling ? 1.65 : 4.2),
-              (scuttling ? -.35 : -1.25)
-                  + (moving ? Math.max(0, Math.sin(phase)) * (scuttling ? .16 : .45) : 0),
-              .5
-                  + front * (scuttling ? 1.2 : 6.5)
-                  + (moving ? Math.cos(phase) * (scuttling ? .25 : .45) : 0));
+          base.add(
+              0,
+              moving ? Math.max(0, Math.sin(phase)) * (scuttling ? .16 : .45) : 0,
+              moving ? Math.cos(phase) * (scuttling ? .25 : .45) : 0);
       if (scuttling && core.crawl().wallFacing() != null) {
         var normal = Vec3.atLowerCornerOf(core.crawl().wallFacing().getNormal());
         var tangent = new Vec3(-normal.z, 0, normal.x);
@@ -218,7 +266,8 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
                   : plot.getSubLevel().logicalPose();
           var world =
               transform.transformPosition(
-                  Vec3.atLowerCornerOf(core.structuralOrigin()).add(foot.x, .5, foot.z));
+                  Vec3.atLowerCornerOf(core.structuralOrigin())
+                      .add(foot.x, base.y + (scuttling ? .85 : 1.25), foot.z));
           for (int reach = 0; reach <= core.crawl().footingReach(); reach++) {
             var floor = net.minecraft.core.BlockPos.containing(world).below(reach);
             if (core.getLevel()

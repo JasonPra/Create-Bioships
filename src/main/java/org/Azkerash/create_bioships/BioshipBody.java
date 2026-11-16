@@ -45,6 +45,7 @@ public final class BioshipBody {
     health = 0;
     if (core.ship() != null) {
       BioshipDecay.mark(core.ship());
+      core.assimilation().abandon(core);
       var move = core.organMove();
       if (move != null) {
         var cargo =
@@ -69,26 +70,8 @@ public final class BioshipBody {
   static Map<BlockPos, BlockState> actual(LivingCoreBlockEntity core) {
     Map<BlockPos, BlockState> out = new LinkedHashMap<>();
     if (core.ship() == null) return out;
-    for (var chunk : core.ship().getPlot().getLoadedChunks()) {
-      var c = chunk.getChunk();
-      for (var section : c.getSections()) {
-        if (section.hasOnlyAir()) continue;
-        int sy =
-            c.getSectionYFromSectionIndex(java.util.Arrays.asList(c.getSections()).indexOf(section))
-                * 16;
-        for (int y = 0; y < 16; y++)
-          for (int z = 0; z < 16; z++)
-            for (int x = 0; x < 16; x++) {
-              var state = section.getBlockState(x, y, z);
-              if (!state.isAir())
-                out.put(
-                    new BlockPos(
-                            c.getPos().getMinBlockX() + x, sy + y, c.getPos().getMinBlockZ() + z)
-                        .subtract(core.getBlockPos()),
-                    state);
-            }
-      }
-    }
+    BioshipStructure.visit(
+        core.ship(), (pos, state) -> out.put(pos.subtract(core.getBlockPos()), state));
     return out;
   }
 

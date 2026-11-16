@@ -18,7 +18,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 /** Outputs are tissue reserves, never an extractable inventory or capability. */
-public class StomachBlockEntity extends BlockEntity implements MenuProvider {
+public class StomachBlockEntity extends BlockEntity implements MenuProvider, MaterialCost.Account {
   public static final int MAX_ACID = 1000;
   private final NonNullList<ItemStack> input = NonNullList.withSize(9, ItemStack.EMPTY);
   private final boolean[] inherited = new boolean[9];
@@ -53,13 +53,18 @@ public class StomachBlockEntity extends BlockEntity implements MenuProvider {
       return 20;
     }
     var data = new CompoundTag();
-    reserves.forEach((id, count) -> data.putInt(id.toString(), count));
+    for (var key : reserves.keySet()) data.putInt(key.toString(), material(key.toString()));
+    for (var sac : BioshipStores.connected(this))
+      for (var key : sac.getPersistentData().getCompound(BioshipStores.MATERIALS).getAllKeys())
+        data.putInt(key, material(key));
+    var before = data.copy();
     int nutrition = burnStored(data);
-    if (nutrition > 0) {
-      reserves.clear();
-      for (var key : data.getAllKeys()) reserves.put(ResourceLocation.parse(key), data.getInt(key));
-      setChanged();
-    }
+    if (nutrition > 0)
+      for (var key : before.getAllKeys())
+        if (before.getInt(key) > data.getInt(key)) {
+          spend(key, 1);
+          break;
+        }
     return nutrition;
   }
 
@@ -86,7 +91,7 @@ public class StomachBlockEntity extends BlockEntity implements MenuProvider {
   }
 
   public int material(String id) {
-    return reserves.getOrDefault(ResourceLocation.parse(id), 0);
+    return localMaterial(id) + BioshipStores.material(this, id);
   }
 
   public void retain(ItemStack stack) {
@@ -98,6 +103,13 @@ public class StomachBlockEntity extends BlockEntity implements MenuProvider {
     setChanged();
   }
 
+  @Override
+  public void credit(String id, int count) {
+    if (count < 0) throw new IllegalArgumentException("Negative material credit");
+    if (count > 0)
+      retain(new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.parse(id)), count));
+  }
+
   public void retainFlesh(int count) {
     if (count > 0)
       reserves.merge(
@@ -105,13 +117,32 @@ public class StomachBlockEntity extends BlockEntity implements MenuProvider {
     setChanged();
   }
 
-  public boolean spend(String item, int count) {
+  int localMaterial(String id) {
+    return reserves.getOrDefault(ResourceLocation.parse(id), 0);
+  }
+
+  int localMaterialTotal() {
+    return reserves.values().stream().mapToInt(Integer::intValue).sum();
+  }
+
+  java.util.List<String> localMaterialIds() {
+    return reserves.keySet().stream().map(Object::toString).sorted().toList();
+  }
+
+  boolean spendLocal(String item, int count) {
     var id = ResourceLocation.parse(item);
-    int stored = reserves.getOrDefault(id, 0);
-    if (stored < count) return false;
-    reserves.put(id, stored - count);
+    int available = reserves.getOrDefault(id, 0);
+    if (count < 0 || available < count) return false;
+    reserves.put(id, available - count);
     setChanged();
     return true;
+  }
+
+  public boolean spend(String item, int count) {
+    if (count < 0 || material(item) < count) return false;
+    int local = Math.min(count, localMaterial(item));
+    if (count > local && !BioshipStores.spend(this, item, count - local)) return false;
+    return spendLocal(item, local);
   }
 
   public int acid() {
@@ -123,6 +154,7 @@ public class StomachBlockEntity extends BlockEntity implements MenuProvider {
   }
 
   public void continueGrowth(LivingCoreBlockEntity core) {
+    if (BioshipNutrition.critical(core)) return;
     int amount = Math.min(core.missingBiomass(), material("biomancy:flesh_bits"));
     if (amount > 0) {
       spend("biomancy:flesh_bits", amount);
@@ -140,6 +172,27 @@ public class StomachBlockEntity extends BlockEntity implements MenuProvider {
         return;
       }
     retain(stack);
+  }
+
+  /** Salvage private products and queued inputs before a duplicate organ is reclaimed. */
+  void transferTo(StomachBlockEntity target) {
+    if (target == this) return;
+    for (var entry : Map.copyOf(reserves).entrySet())
+      target.credit(entry.getKey().toString(), entry.getValue());
+    reserves.clear();
+    for (int slot = 0; slot < input.size(); slot++) {
+      if (!input.get(slot).isEmpty()) target.inheritInput(input.get(slot));
+      input.set(slot, ItemStack.EMPTY);
+      inherited[slot] = false;
+    }
+    target.nutrientReserve = Math.min(1000000, target.nutrientReserve + nutrientReserve);
+    nutrientReserve = 0;
+    target.freeTubeStock += freeTubeStock;
+    target.paidTubeStock += paidTubeStock;
+    freeTubeStock = 0;
+    paidTubeStock = 0;
+    target.setChanged();
+    setChanged();
   }
 
   int queuedNutrition() {

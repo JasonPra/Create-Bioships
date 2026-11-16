@@ -11,7 +11,8 @@ import net.minecraft.world.level.block.entity.*;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 
-public class LivingCoreBlock extends BaseEntityBlock {
+public class LivingCoreBlock extends BaseEntityBlock
+    implements dev.ryanhcode.sable.api.block.BlockSubLevelAssemblyListener {
   public static final net.minecraft.world.level.block.state.properties.BooleanProperty ACTIVE =
       net.minecraft.world.level.block.state.properties.BooleanProperty.create("active");
   public static final net.minecraft.world.level.block.state.properties.BooleanProperty BLINK =
@@ -93,6 +94,37 @@ public class LivingCoreBlock extends BaseEntityBlock {
       BlockPos pos,
       net.minecraft.util.RandomSource random) {
     BioshipIntegration.awaken(level, pos);
+  }
+
+  @Override
+  protected void onRemove(
+      BlockState state, Level level, BlockPos pos, BlockState next, boolean moved) {
+    if (!next.is(this)
+        && !level.isClientSide
+        && level.getBlockEntity(pos) instanceof LivingCoreBlockEntity core) core.coreRemoved();
+    super.onRemove(state, level, pos, next, moved);
+  }
+
+  @Override
+  public void beforeMove(
+      net.minecraft.server.level.ServerLevel source,
+      net.minecraft.server.level.ServerLevel destination,
+      BlockState state,
+      BlockPos from,
+      BlockPos to) {
+    if (source.getBlockEntity(from) instanceof LivingCoreBlockEntity core)
+      core.recordTransfer(destination, to);
+  }
+
+  @Override
+  public void afterMove(
+      net.minecraft.server.level.ServerLevel source,
+      net.minecraft.server.level.ServerLevel destination,
+      BlockState state,
+      BlockPos from,
+      BlockPos to) {
+    // The source keeps its transfer receipt until removal; it is never serialized onto the new
+    // core.
   }
 
   @Override

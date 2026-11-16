@@ -229,7 +229,9 @@ final class GroundRoute {
         progress = node.pos();
       }
       if (remaining < (core.crawl().gathering() ? 3.5 : .8)
-          && (!core.crawl().gathering() || BioshipReach.at(core, reachPoint, goal, true))) {
+          && (!core.crawl().gathering()
+              || BioshipReach.at(core, reachPoint, goal, true)
+                  && core.assimilation().clusterReachable(core, reachPoint))) {
         end = node.pos();
         break;
       }

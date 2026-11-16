@@ -80,6 +80,7 @@ public final class BioshipDecay {
 
   public static void link(ServerSubLevel child, ServerSubLevel original) {
     var tag = child.getUserDataTag() == null ? new CompoundTag() : child.getUserDataTag().copy();
+    tag.putBoolean("BioshipBound", true);
     tag.putUUID("BioshipLineage", lineage(original));
     child.setUserDataTag(tag);
     inherit(child, original);
@@ -93,6 +94,7 @@ public final class BioshipDecay {
     tag.putLong("BioshipDecayAfter", ship.getLevel().getGameTime() + GRACE_TICKS);
     ship.setUserDataTag(tag);
     Deaths.get(ship.getLevel()).remember(lineage(ship), tag.getLong("BioshipDecayAfter"));
+    Deaths.get(ship.getLevel()).remember(ship.getUniqueId(), tag.getLong("BioshipDecayAfter"));
     var container = SubLevelContainer.getContainer(ship.getLevel());
     if (container != null)
       for (var body : List.copyOf(container.getAllSubLevels()))
@@ -114,26 +116,38 @@ public final class BioshipDecay {
   }
 
   static List<BlockPos> blocks(ServerSubLevel ship) {
-    List<BlockPos> result = new ArrayList<>();
-    for (var holder : ship.getPlot().getLoadedChunks()) {
-      var chunk = holder.getChunk();
-      var sections = chunk.getSections();
-      for (int index = 0; index < sections.length; index++) {
-        var section = sections[index];
-        if (section.hasOnlyAir()) continue;
-        int sy = chunk.getSectionYFromSectionIndex(index) * 16;
-        for (int y = 0; y < 16; y++)
-          for (int z = 0; z < 16; z++)
-            for (int x = 0; x < 16; x++)
-              if (!section.getBlockState(x, y, z).isAir())
-                result.add(
-                    new BlockPos(
-                        chunk.getPos().getMinBlockX() + x,
-                        sy + y,
-                        chunk.getPos().getMinBlockZ() + z));
+    return BioshipStructure.positions(ship);
+  }
+
+  static boolean recoverLegacyHull(ServerSubLevel part) {
+    if (BioshipIntegration.bound(part)
+        || part.isRemoved()
+        || part.getSplitFromSubLevel() != null
+        || part.getUserDataTag() != null && part.getUserDataTag().hasUUID("BioshipCargoOwner"))
+      return false;
+    int hull = 0;
+    boolean machinery = false;
+    Set<net.minecraft.world.level.block.Block> tissues = new HashSet<>();
+    for (var p : blocks(part)) {
+      var state = part.getLevel().getBlockState(p);
+      if (state.is(Create_bioships.CORE.get())) return false;
+      if (state.is(Create_bioships.FLESH.get())
+          || state.is(Create_bioships.CARAPACE.get())
+          || state.is(Create_bioships.ONE_WAY_WINDOW.get())) {
+        hull++;
+        tissues.add(state.getBlock());
       }
+      machinery |=
+          state.is(Create_bioships.TENTACLE.get())
+              || state.is(Create_bioships.BUOYANCY_ORGAN.get());
     }
-    return result;
+    if (hull < 8 || tissues.size() < 2 || !machinery) return false;
+    BioshipIntegration.bind(part);
+    mark(part);
+    var data = part.getUserDataTag().copy();
+    data.putBoolean("BioshipRecoveredLegacyHull", true);
+    part.setUserDataTag(data);
+    return true;
   }
 
   @SubscribeEvent
@@ -143,13 +157,13 @@ public final class BioshipDecay {
     if (container == null) return;
     var deaths = Deaths.get(level);
     for (var body : List.copyOf(container.getAllSubLevels()))
+      if (body instanceof ServerSubLevel part) recoverLegacyHull(part);
+    for (var body : List.copyOf(container.getAllSubLevels()))
       if (body instanceof ServerSubLevel corpse && dead(corpse))
         deaths.remember(lineage(corpse), corpse.getUserDataTag().getLong("BioshipDecayAfter"));
     // Upgrade older saved fragments and movement cargo before applying the shared decay schedule.
     for (var body : List.copyOf(container.getAllSubLevels())) {
-      if (!(body instanceof ServerSubLevel part)
-          || part.isRemoved()
-          || !BioshipIntegration.bound(part)) continue;
+      if (!(body instanceof ServerSubLevel part) || part.isRemoved()) continue;
       var data = part.getUserDataTag();
       if (data != null && data.hasUUID("BioshipLineage")) continue;
       UUID parentId =
@@ -157,10 +171,19 @@ public final class BioshipDecay {
               ? data.getUUID("BioshipCargoOwner")
               : part.getSplitFromSubLevel();
       var parent = parentId == null ? null : container.getSubLevel(parentId);
-      if (parent instanceof ServerSubLevel original) link(part, original);
-      else if (BioshipIntegration.blockEntities(part).stream()
+      if (parent instanceof ServerSubLevel original && BioshipIntegration.bound(original))
+        link(part, original);
+      else if (parentId != null && deaths.deadlines.containsKey(parentId)) {
+        var inherited = data == null ? new CompoundTag() : data.copy();
+        inherited.putBoolean("BioshipBound", true);
+        inherited.putBoolean("BioshipDead", true);
+        inherited.putUUID("BioshipLineage", parentId);
+        inherited.putUUID("BioshipCorpseRoot", parentId);
+        inherited.putLong("BioshipDecayAfter", deaths.deadlines.get(parentId));
+        part.setUserDataTag(inherited);
+      } else if (BioshipIntegration.blockEntities(part).stream()
           .anyMatch(e -> e instanceof LivingCoreBlockEntity)) BioshipIntegration.bind(part);
-      else if (parentId == null) mark(part);
+      else if (parentId == null && BioshipIntegration.bound(part)) mark(part);
     }
     for (var body : List.copyOf(container.getAllSubLevels())) {
       if (!(body instanceof ServerSubLevel part)

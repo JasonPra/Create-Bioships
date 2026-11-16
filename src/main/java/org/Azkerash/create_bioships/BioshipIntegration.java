@@ -98,15 +98,7 @@ public final class BioshipIntegration {
   }
 
   public static int countBlocks(ServerSubLevel ship) {
-    int count = 0;
-    for (var chunk : ship.getPlot().getLoadedChunks())
-      for (var section : chunk.getChunk().getSections()) {
-        if (section.hasOnlyAir()) continue;
-        for (int y = 0; y < 16; y++)
-          for (int z = 0; z < 16; z++)
-            for (int x = 0; x < 16; x++) if (!section.getBlockState(x, y, z).isAir()) count++;
-      }
-    return count;
+    return BioshipStructure.count(ship);
   }
 
   static boolean knownReachableSource(LivingCoreBlockEntity core, BlockPos source) {
@@ -126,85 +118,11 @@ public final class BioshipIntegration {
 
   public static void assimilate(LivingCoreBlockEntity core, ServerSubLevel ship) {
     if (OrganMotion.busy(core) || !core.brain().allowsConfiguration(core)) return;
-    ServerLevel level = ship.getLevel();
-    // Bounded three-block neighborhood of core, then one-block neighborhood of each existing
-    // organ/machine.
-    Set<BlockPos> candidates = new LinkedHashSet<>();
-    BlockPos physical =
-        BlockPos.containing(
-            ship.logicalPose().transformPosition(Vec3.atCenterOf(core.getBlockPos())));
-    BlockPos.betweenClosed(physical.offset(-5, -4, -5), physical.offset(5, 5, 5))
-        .forEach(p -> candidates.add(p.immutable()));
     for (var actor : blockEntities(ship)) {
-      BlockPos point =
-          BlockPos.containing(
-              ship.logicalPose().transformPosition(Vec3.atCenterOf(actor.getBlockPos())));
-      for (Direction direction : Direction.values()) candidates.add(point.relative(direction));
       convertFirstStomach(core, actor.getBlockPos());
       convertFirstBioForge(core, actor.getBlockPos());
     }
-    if (BioshipScavenging.collect(core, ship)) return;
-    var decision = core.brain().choose(core);
-    if (decision.action() != BioshipBrain.Action.ASSIMILATE) return;
-    var ordered = new ArrayList<>(candidates);
-    ordered.sort(
-        Comparator.<BlockPos>comparingInt(
-                p -> BioshipPriorities.rank(core, level.getBlockState(p), p))
-            .thenComparingDouble(p -> p.distSqr(physical)));
-    int moved = 0;
-    for (BlockPos source : ordered) {
-      if (moved >= 16
-          || !level.getChunkSource().hasChunk(source.getX() >> 4, source.getZ() >> 4)
-          || containing(level, source) != null) continue;
-      BlockState state = level.getBlockState(source);
-      if (!source.equals(decision.block())) continue;
-      if (!knownReachableSource(core, source)) continue;
-      if (!BuiltInRegistries.BLOCK.getKey(state.getBlock()).getNamespace().equals("biomancy")
-          || state.getBlock() instanceof net.minecraft.world.level.block.LiquidBlock) continue;
-      BlockPos target =
-          BlockPos.containing(ship.logicalPose().transformPositionInverse(Vec3.atCenterOf(source)));
-      if (!ship.getPlot().contains(new net.minecraft.world.level.ChunkPos(target))
-          || !level.isInWorldBounds(target)
-          || !level.getBlockState(target).isAir()) continue;
-      boolean attached = false;
-      for (Direction direction : Direction.values())
-        if (!level.getBlockState(target.relative(direction)).isAir()) attached = true;
-      if (!attached) {
-        target = null;
-        for (Direction direction :
-            new Direction[] {
-              Direction.NORTH, Direction.SOUTH, Direction.WEST, Direction.EAST, Direction.UP
-            }) {
-          BlockPos port = core.getBlockPos().relative(direction);
-          if (level.getBlockState(port).isAir()) {
-            target = port;
-            break;
-          }
-        }
-        if (target == null) continue;
-      }
-      if (core.hatchling()
-          && state.is(
-              net.minecraft.core.registries.BuiltInRegistries.BLOCK.get(
-                  ResourceLocation.parse("biomancy:bio_forge")))
-          && !core.hasMouth()) {
-        var front = HatchlingFront.port(core, null);
-        if (front != null) target = front;
-      }
-      var store = level.getBlockEntity(source);
-      if (store != null
-          && EngineRoom.storage(store)
-          && DigestiveSystem.stomach(core) != null
-          && core.hasMouth()) {
-        var connectedPort = DigestiveSystem.storagePort(core, source);
-        if (connectedPort == null) continue;
-        target = connectedPort;
-      }
-      if (OrganMotion.begin(core, source, target, true)) {
-        moved++;
-        break;
-      }
-    }
+    core.assimilation().start(core, core.brain().choose(core));
   }
 
   public static boolean exposedAndVisible(ServerLevel level, BlockPos eye, BlockPos source) {

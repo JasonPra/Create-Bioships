@@ -17,13 +17,14 @@ final class BehaviorPriority {
     }
   }
 
+  static Comparator<Offer> order(String previous) {
+    return Comparator.<Offer>comparingInt(o -> o.band().ordinal())
+        .thenComparingDouble(o -> o.weight(previous))
+        .thenComparing(Offer::key);
+  }
+
   static Offer choose(Collection<Offer> offers, String previous) {
-    return offers.stream()
-        .max(
-            Comparator.<Offer>comparingInt(o -> o.band().ordinal())
-                .thenComparingDouble(o -> o.weight(previous))
-                .thenComparing(Offer::key))
-        .orElse(null);
+    return offers.stream().max(order(previous)).orElse(null);
   }
 
   private BehaviorPriority() {}

@@ -202,12 +202,23 @@ public final class DigestiveSystem {
     var result = plan(core, stomach, wanted, Set.of(), tubes(core));
     if (!affordable(stomach, result)) return false;
     if (result.purchases > 0) {
-      stomach.spend("biomancy:flesh_bits", result.purchases);
-      stomach.spend("biomancy:elastic_fibers", result.purchases);
+      new MaterialCost(result.purchases, result.purchases, 0).pay(stomach);
       stomach.paidTubeStock += result.purchases;
       stomach.setChanged();
     }
     return true;
+  }
+
+  static int storageCost(LivingCoreBlockEntity core, BlockPos target) {
+    var stomach = stomach(core);
+    if (stomach == null || core.mouthBlock() == null) return -1;
+    var main = findPath(core, core.ship(), core.mouthBlock(), stomach.getBlockPos());
+    var branch = findPath(core, core.ship(), stomach.getBlockPos(), target);
+    if (main == null || branch == null) return -1;
+    var wanted = new LinkedHashSet<BlockPos>(main);
+    wanted.addAll(branch);
+    stomach.sacPaths.values().forEach(wanted::addAll);
+    return plan(core, stomach, wanted, Set.of(), tubes(core)).purchases;
   }
 
   /** Prefer a real connection to the digestive network over an arbitrary attachment to the core. */
@@ -241,7 +252,9 @@ public final class DigestiveSystem {
       var state = core.getLevel().getBlockState(candidate);
       if (!state.isAir() && !state.is(Create_bioships.FLESH.get())) continue;
       var physical = core.ship().logicalPose().transformPosition(Vec3.atCenterOf(candidate));
-      if (!BioshipIntegration.growthSpace(core.getLevel(), BlockPos.containing(physical))) continue;
+      if (!BlockPos.containing(physical).equals(source)
+          && !BioshipIntegration.growthSpace(core.getLevel(), BlockPos.containing(physical)))
+        continue;
       var path = findPath(core, core.ship(), stomach.getBlockPos(), candidate);
       if (path == null) continue;
       var trial = new LinkedHashSet<>(wanted);
@@ -299,8 +312,7 @@ public final class DigestiveSystem {
   }
 
   private static boolean affordable(StomachBlockEntity stomach, Plan plan) {
-    return stomach.material("biomancy:flesh_bits") >= plan.purchases
-        && stomach.material("biomancy:elastic_fibers") >= plan.purchases;
+    return new MaterialCost(plan.purchases, plan.purchases, 0).funded(stomach);
   }
 
   static boolean reserveCoreRoute(LivingCoreBlockEntity core, BlockPos target, boolean reserve) {
@@ -332,8 +344,7 @@ public final class DigestiveSystem {
     var plan = plan(core, stomach, wanted, Set.of(), existing);
     if (!affordable(stomach, plan)) return false;
     if (reserve && plan.purchases > 0) {
-      stomach.spend("biomancy:flesh_bits", plan.purchases);
-      stomach.spend("biomancy:elastic_fibers", plan.purchases);
+      new MaterialCost(plan.purchases, plan.purchases, 0).pay(stomach);
       stomach.paidTubeStock += plan.purchases;
       stomach.setChanged();
     }
@@ -442,6 +453,12 @@ public final class DigestiveSystem {
               total += inventory.getStackInSlot(slot).getCount();
       }
     return total;
+  }
+
+  static boolean storeConnected(
+      LivingCoreBlockEntity core, StomachBlockEntity stomach, BlockPos pos) {
+    var path = stomach.sacPaths.get(pos);
+    return path != null && connectedStore(core, stomach, pos, path);
   }
 
   public static boolean offerFood(LivingCoreBlockEntity core, ItemStack stack, boolean inherited) {

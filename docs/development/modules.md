@@ -1,0 +1,54 @@
+# Behavior and body module boundaries
+
+The controller selects work, planners propose it, and actuators execute it. Reading a sensor or debug snapshot must not execute a new behavior.
+
+```mermaid
+flowchart TD
+  V[Vision and target memory] --> B[Brain: select an action]
+  N[Nutrition policy] --> B
+  A[Adaptation planner: immutable proposals] --> B
+  Q[Generic goal queue] <--> B
+  B --> R[Ground route and crawling]
+  B --> T[Batch assimilation]
+  B --> E[Adaptation actuator]
+  T --> O[OrganMotion: physical cargo]
+  E --> M[Material costs and accounts]
+  S[Sable geometry reader] --> A
+  S --> P[Support layout]
+  P --> R
+  P --> E
+  S --> H[Repair and decay]
+  B --> D[Read-only debug snapshots]
+  R --> D
+  T --> D
+```
+
+| Module | Owns | Does not own |
+| --- | --- | --- |
+| `BioshipBrain` | Combining eligible proposals, action selection and action reason | Material debits, block copying or route search |
+| `GoalQueue` | Bounded ordering, stable tie rules and target deduplication | World eligibility checks or task execution |
+| `BioshipNutrition` | Pressing-food threshold, known fuel value and food-related task classification | Navigation, cargo mutation or independently selecting prey |
+| `MaterialCost` | Affordability, atomic multi-material payment with rollback, refund and transfer | Where accounts live or which goal should spend them |
+| `MaterialLedger` | Plain inventory quantities and immutable snapshots | Minecraft block entities, recipes or behavior |
+| `BioshipAdaptationPlanner` | Read-only candidate generation and feasibility from a copied adaptive-state snapshot | Spending resources or placing/moving blocks |
+| `BioshipAdaptation` | Adaptive state, emergency reserve and executing the selected funded proposal | Its own competing target selector |
+| `BioshipStructure` | Reading loaded Sable cells through one shared adapter | Deciding whether a block should be eaten, repaired or moved |
+| `BioshipSupport` | Common mass-weighted attachments, support footprint and hypothetical relocation checks | Moving the core or paying for stronger legs |
+| `BioshipVision` / `TargetMemory` | Visibility and observation lifetime | Choosing a goal or moving toward it |
+| `GroundRoute` / `BioshipCrawl` | Collision-aware routes, movement progress/failure and supported gait | A second independent supply target selector |
+| `BioshipAssimilation` | Batch progress, conserved swallowed stock and wreck-job continuation | Hunger thresholds or a second resource accounting policy |
+| `OrganMotion` | One conserved Sable block transport and its complete block entity | Choosing which component is valuable |
+| `NavigationDebug` | Snapshots of the actual controller and route state | Replanning just because the overlay is visible |
+
+## Rules for adding behavior
+
+1. Propose work using current facts and needs; do not add another nearest-target loop to an actuator.
+2. Keep visibility, physical reach and route feasibility distinct. Seeing through glass does not permit grabbing or walking through it.
+3. Give every goal a stable key. Omit it when it is completed, expired, unreachable or no longer useful; the queue refresh removes it.
+4. Put food urgency and task-purpose rules in `BioshipNutrition`, so storage, hunting, scavenging and interruption use the same definition.
+5. Express new multi-material prices with `MaterialCost` and debit the source account once. A transfer is not a newly generated resource. Refund a failed placement explicitly.
+6. Keep planner snapshots immutable. Revalidate immediately before execution because observations and placement clearance may have changed.
+7. Reuse support geometry in rendering and movement. Do not assume that the core remains the body's center or that the structural anchor is its underside.
+8. Save job ownership and carried stock before removing originals. Safety interruption must preserve conservation; it must not duplicate or discard cargo.
+
+`GoalQueueTest` and `MaterialCostTest` exercise the reusable parts without a running game. GameTests cover the Minecraft/Sable adapters, inventories, mass, organ regeneration, native hostile AI, both glass mazes and nutritional interruption. The supplied-world reproduction checks the same code against an existing save rather than replacing its terrain, light or resources with a special fixture.

@@ -24,6 +24,9 @@ public final class NavigationDebug {
     data.putBoolean("Flying", core.canFly());
     data.put("Priorities", core.brain().priorities());
     data.putInt("OfferCount", core.brain().offerCount());
+    data.putInt("QueuedGoals", core.brain().queuedGoals().size());
+    data.putInt("StoredComponents", core.assimilation().stored());
+    data.putInt("CollectingArms", core.assimilation().arms().size());
     var origin = BioshipBlueprint.physical(core, BlockPos.ZERO);
     data.put(
         "Hologram",
