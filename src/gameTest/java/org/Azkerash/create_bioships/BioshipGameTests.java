@@ -885,7 +885,11 @@ public class BioshipGameTests {
                         total
                                 + 4
                                     * BioshipStructure.cells(core.ship()).values().stream()
-                                        .filter(state -> state.is(Create_bioships.AMOEBA_LEG.get()))
+                                        .filter(BioshipLegEvolution::leg)
+                                        .count()
+                                + BioshipRespiration.LUNG_COST.flesh()
+                                    * BioshipStructure.cells(core.ship()).values().stream()
+                                        .filter(state -> state.is(Create_bioships.LUNGS.get()))
                                         .count()
                             == 96,
                         "Stored Bio-Forge biomass or one-time leg salvage was lost: " + total);
@@ -6688,6 +6692,8 @@ public class BioshipGameTests {
             .setValue(FeedingMouthBlock.FACING, Direction.SOUTH),
         3);
     level.setBlock(pos, Create_bioships.STOMACH.get().defaultBlockState(), 3);
+    // This six-block fixture needs land respiration while the recipes run.
+    level.setBlock(core.getBlockPos().above(), Create_bioships.LUNGS.get().defaultBlockState(), 3);
     DigestiveSystem.connect(core, ship);
     var second = (StomachBlockEntity) level.getBlockEntity(pos);
     var saved = core.saveWithFullMetadata(level.registryAccess());
@@ -6697,36 +6703,41 @@ public class BioshipGameTests {
         first.enqueue(new ItemStack(Items.BEEF), false)
             && second.enqueue(new ItemStack(Items.CHICKEN), false),
         "Parallel food was rejected");
-    helper.runAfterDelay(
-        1000,
-        () ->
-            finish(
-                helper,
-                ship,
-                () -> {
-                  helper.assertTrue(
-                      first.queuedFood() == 0 && second.queuedFood() == 0,
-                      "Both stomachs did not process their own meals");
-                  helper.assertTrue(
-                      first.localMaterial("biomancy:nutrient_paste") == 1
-                          && second.localMaterial("biomancy:nutrient_paste") == 1,
-                      "Paste was not retained independently in both stomachs");
-                  helper.assertTrue(
-                      core(ship).adaptation().material(MaterialCost.FLESH) > 0
-                          && first.localMaterial(MaterialCost.FLESH) == 0
-                          && second.localMaterial(MaterialCost.FLESH) == 0,
-                      "Native products were not sent into core storage");
-                  int trust =
-                      core(ship).saveWithFullMetadata(level.registryAccess()).getInt("Trust");
-                  int paste = first.burnPaste();
-                  helper.assertTrue(
-                      paste == 20
-                          && first.localMaterial("biomancy:nutrient_paste") == 0
-                          && second.localMaterial("biomancy:nutrient_paste") == 1
-                          && core(ship).saveWithFullMetadata(level.registryAccess()).getInt("Trust")
-                              == trust,
-                      "Energy conversion duplicated paste or rewarded trust");
-                }));
+    helper
+        .startSequence()
+        .thenWaitUntil(
+            () -> {
+              var organs = DigestiveSystem.stomachs(core(ship));
+              helper.assertTrue(
+                  organs.size() == 2 && organs.stream().allMatch(s -> s.queuedFood() == 0),
+                  "Waiting for both independent stomach recipes to finish");
+            })
+        .thenExecute(
+            () -> {
+              try {
+                var current = core(ship);
+                var organs = DigestiveSystem.stomachs(current);
+                helper.assertTrue(
+                    organs.stream().allMatch(s -> s.localMaterial("biomancy:nutrient_paste") == 1),
+                    "Paste was not retained independently in both stomachs");
+                helper.assertTrue(
+                    current.adaptation().material(MaterialCost.FLESH) > 0
+                        && organs.stream().allMatch(s -> s.localMaterial(MaterialCost.FLESH) == 0),
+                    "Native products were not sent into core storage");
+                int trust = current.saveWithFullMetadata(level.registryAccess()).getInt("Trust");
+                int paste = organs.get(0).burnPaste();
+                helper.assertTrue(
+                    paste == 20
+                        && organs.get(0).localMaterial("biomancy:nutrient_paste") == 0
+                        && organs.get(1).localMaterial("biomancy:nutrient_paste") == 1
+                        && current.saveWithFullMetadata(level.registryAccess()).getInt("Trust")
+                            == trust,
+                    "Energy conversion duplicated paste or rewarded trust");
+              } finally {
+                cleanup(helper, ship);
+              }
+            })
+        .thenSucceed();
   }
 
   @GameTest(template = "test_empty", timeoutTicks = 700, batch = "automatic_storage_investment")

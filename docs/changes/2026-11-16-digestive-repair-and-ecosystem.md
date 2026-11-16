@@ -50,3 +50,9 @@ This work is being published in small batches. A checkpoint is not a final relea
 No new command was added specifically for the gill fix. The checkpoint's new appendage collision visualization uses the existing F3+B toggle and remains hidden otherwise.
 
 Batch 1 verification: 51/51 unit tests passed; 117/120 required GameTests passed. Both respiratory checks passed (exposed/covered gills and sustained-use paid growth). Remaining failures are organ material accounting, parallel stomach product retention, and wall climbing. The elevation maze passed this run, but its earlier intermittent failure remains under investigation. The build's overall integration task remains red because of those three failures. Runtime JAR inspection found no GameTest or wild-probe classes. Graphical animation QA remains pending.
+
+### Batch 2 — digestive regression fixtures
+
+The organ-conversion conservation test now includes flesh invested in lungs, alongside paid legs. The parallel-stomach test supplies the lungs required by its larger body, resolves live stomach block entities after relocation, and checks outputs as soon as both native recipes finish instead of assuming products remain unspent after a 1,000-tick wait. It still asserts separate paste storage, core transfer of non-fuel outputs, and a single paste burn without cross-stomach depletion or trust rewards. This batch changes test fixtures and assertions, not digestion recipes, material prices, or metabolism.
+
+Batch 2 verification: 51/51 unit tests passed; 119/120 required GameTests passed. Both digestive checks and both respiratory checks passed. Wall climbing remains the single integration failure in this run; intermittent maze navigation is still being investigated. Visual animation QA is still pending.
