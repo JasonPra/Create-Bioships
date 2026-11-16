@@ -124,6 +124,8 @@ final class BioshipAdaptation {
         if (!BioshipLegEvolution.evolve(core, p.pos, p.state)) return;
       } else if (p.action == BioshipBrain.Action.GROW_LEG) {
         if (!BioshipLegGrowth.develop(core, p.pos, p.state)) return;
+      } else if (p.action == BioshipBrain.Action.GROW_SUPPORT) {
+        if (!BioshipMountGrowth.grow(core, p.pos, p.state)) return;
       } else if (p.action == BioshipBrain.Action.GROW_LARYNX) {
         if (!BioshipLarynx.develop(core, p.pos)) return;
       } else if (p.action == BioshipBrain.Action.GROW_ENGINE_ROOM) {

@@ -13,8 +13,12 @@ final class BioshipRespiration {
       GILL_COST = new MaterialCost(6, 6, 0);
 
   static int bodySize(LivingCoreBlockEntity core) {
+    return bodySize(BioshipStructure.cells(core.ship()));
+  }
+
+  static int bodySize(Map<BlockPos, BlockState> cells) {
     return (int)
-        BioshipStructure.cells(core.ship()).values().stream()
+        cells.values().stream()
             .filter(
                 s ->
                     !BioshipLegEvolution.leg(s)

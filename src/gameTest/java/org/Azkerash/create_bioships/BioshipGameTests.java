@@ -8976,4 +8976,154 @@ public class BioshipGameTests {
           }
         });
   }
+
+  private static StomachBlockEntity crowdedMounts(
+      GameTestHelper helper, LivingCoreBlockEntity core, boolean tube) {
+    var level = helper.getLevel();
+    var stomach = digestive(helper, core, false);
+    if (!tube) {
+      var mouth = core.mouthBlock();
+      level.removeBlock(mouth, false);
+      level.setBlock(
+          stomach.getBlockPos().north(),
+          Create_bioships.FEEDING_MOUTH.get().defaultBlockState(),
+          3);
+      DigestiveSystem.connect(core, core.ship());
+    }
+    var sites = BioshipLegGrowth.sites(core, BioshipStructure.cells(core.ship()));
+    for (var site : sites)
+      level.setBlock(site.getKey(), Create_bioships.LUNGS.get().defaultBlockState(), 3);
+    helper.assertTrue(
+        BioshipLegGrowth.sites(core, BioshipStructure.cells(core.ship())).isEmpty(),
+        "Crowded fixture still has a legal mount");
+    helper.assertTrue(
+        DigestiveSystem.functional(core), "Crowded fixture has no connected digestion");
+    core.adaptation().creditRecovery(MaterialCost.FLESH, 300);
+    core.adaptation().creditRecovery(MaterialCost.FIBER, 200);
+    core.adaptation().creditRecovery(MaterialCost.BONE, 100);
+    return stomach;
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "paid_mount_encasement")
+  public static void missing_leg_faces_encase_a_paid_intestine_without_breaking_digestion(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    try {
+      var core = core(ship);
+      var stomach = crowdedMounts(helper, core, true);
+      var plan = BioshipMountGrowth.plan(core);
+      helper.assertTrue(
+          plan != null
+              && plan.state().is(Create_bioships.INTESTINE.get())
+              && plan.state().getValue(IntestineBlock.ENCASED),
+          "Did not prefer encasing an existing intestine for a mounting face");
+      var original = helper.getLevel().getBlockState(plan.pos());
+      var account = BioshipStorage.account(core);
+      int flesh = account.material(MaterialCost.FLESH),
+          fiber = account.material(MaterialCost.FIBER);
+      int paidStock = stomach.paidTubeStock, freeStock = stomach.freeTubeStock;
+      helper.assertTrue(
+          BioshipMountGrowth.grow(core, plan.pos(), plan.state()), "Paid tube encasement failed");
+      var actual = helper.getLevel().getBlockState(plan.pos());
+      helper.assertTrue(
+          actual.is(Create_bioships.INTESTINE.get())
+              && actual.getValue(IntestineBlock.ENCASED)
+              && actual.getValue(IntestineBlock.PAID).equals(original.getValue(IntestineBlock.PAID))
+              && actual
+                  .getValue(IntestineBlock.MANUAL)
+                  .equals(original.getValue(IntestineBlock.MANUAL))
+              && DigestiveSystem.functional(core),
+          "Encasing lost tube ownership or digestive connectivity");
+      helper.assertTrue(
+          account.material(MaterialCost.FLESH) == flesh - 8
+              && account.material(MaterialCost.FIBER) == fiber - 4
+              && stomach.paidTubeStock == paidStock
+              && stomach.freeTubeStock == freeStock,
+          "Encasing refunded tube materials or failed to pay for tissue");
+      var leg = BioshipLegGrowth.proposal(core);
+      helper.assertTrue(
+          leg != null && BioshipLegGrowth.develop(core, leg.pos(), leg.state()),
+          "New support did not enable paid leg growth");
+      helper.assertTrue(
+          AmoebaLegBlock.mounted(BioshipStructure.cells(ship), leg.pos(), leg.state()),
+          "New leg has no eligible full supporting face");
+      helper.succeed();
+    } finally {
+      cleanup(helper, ship);
+    }
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "paid_mount_flesh")
+  public static void crowded_organs_grow_compact_flesh_hosts_and_preserve_openings(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    try {
+      var core = core(ship);
+      crowdedMounts(helper, core, false);
+      var mouth = core.mouthBlock();
+      var facing = helper.getLevel().getBlockState(mouth).getValue(FeedingMouthBlock.FACING);
+      var plan = BioshipMountGrowth.plan(core);
+      helper.assertTrue(
+          plan != null && plan.state().is(BioshipTissue.body()),
+          "No paid flesh support was proposed when all mount faces were occupied");
+      helper.assertTrue(
+          !plan.pos().equals(mouth.relative(facing))
+              && !BioshipRespiration.blocksOpening(core, plan.pos()),
+          "Support covers an intake");
+      var account = BioshipStorage.account(core);
+      int flesh = account.material(MaterialCost.FLESH);
+      helper.assertTrue(
+          BioshipMountGrowth.grow(core, plan.pos(), plan.state()), "Paid flesh support failed");
+      helper.assertTrue(
+          account.material(MaterialCost.FLESH) == flesh - 8
+              && BioshipLegGrowth.proposal(core) != null
+              && DigestiveSystem.functional(core),
+          "New flesh was free, blocked digestion, or provided no legal leg site");
+      helper.succeed();
+    } finally {
+      cleanup(helper, ship);
+    }
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "mount_budget_revalidation")
+  public static void support_growth_keeps_future_leg_budget_and_rejects_stale_or_hungry_work(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    try {
+      var core = core(ship);
+      crowdedMounts(helper, core, true);
+      var plan = BioshipMountGrowth.plan(core);
+      helper.assertTrue(
+          plan != null && plan.completeCost().flesh() >= 24,
+          "Quote omitted future support/leg construction");
+      var account = BioshipStorage.account(core);
+      int before = account.material(MaterialCost.FLESH);
+      account.spend(MaterialCost.FLESH, before - 8);
+      var source = helper.getLevel().getBlockState(plan.pos());
+      helper.assertTrue(
+          !BioshipMountGrowth.grow(core, plan.pos(), plan.state())
+              && account.material(MaterialCost.FLESH) == 8
+              && helper.getLevel().getBlockState(plan.pos()).equals(source),
+          "A tissue-only budget consumed the remaining-leg/emergency reserve");
+      int investment = EmergencyReserve.TARGET.flesh() + plan.completeCost().flesh();
+      account.credit(MaterialCost.FLESH, investment - 1 - 8);
+      helper.assertTrue(
+          core.brain().materialNeeds(core).flesh() > 0,
+          "Foraging forgot the extra mounting investment before it was affordable");
+      helper.assertTrue(
+          core.adaptation().proposals(core).stream()
+              .noneMatch(p -> p.action() == BioshipBrain.Action.GROW_LARYNX),
+          "A lower-priority vocal upgrade spent the pending mobility budget");
+      account.credit(MaterialCost.FLESH, before - (investment - 1));
+      var saved = core.saveWithFullMetadata(helper.getLevel().registryAccess());
+      saved.putInt("Satiety", 49);
+      core.loadAdditional(saved, helper.getLevel().registryAccess());
+      helper.assertTrue(
+          BioshipMountGrowth.proposal(core) == null,
+          "Pressing food need did not defer support investment");
+      helper.succeed();
+    } finally {
+      cleanup(helper, ship);
+    }
+  }
 }

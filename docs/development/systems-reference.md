@@ -1258,90 +1258,90 @@ Safety branches, committed work, NEED before GOAL, weighted ranking, one selecte
 
 #### BioshipBrain
 
-Source: `src/main/java/org/Azkerash/create_bioships/BioshipBrain.java` (668 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipBrain.java` (673 lines).
 
 ```java
 public final class BioshipBrain
 
   public enum Action; // line 18
 
-  public record Decision( Action action, Vec3 point, BlockPos block, LivingEntity entity, ItemEntity item, BehaviorPriority.Offer offer, String reason, boolean recycle); // line 53
+  public record Decision( Action action, Vec3 point, BlockPos block, LivingEntity entity, ItemEntity item, BehaviorPriority.Offer offer, String reason, boolean recycle); // line 54
 
-  private record Needs( boolean digestive, boolean hungry, int food, int flesh, int bone, int fiber, boolean growth, boolean criticalFood); // line 78
+  private record Needs( boolean digestive, boolean hungry, int food, int flesh, int bone, int fiber, boolean growth, boolean criticalFood); // line 79
 
-  private String previous, reason; // line 92
+  private String previous, reason; // line 93
 
-  private Action action; // line 94
+  private Action action; // line 95
 
-  private boolean growthBlocked; // line 95
+  private boolean growthBlocked; // line 96
 
-  private Decision lastDecision; // line 96
+  private Decision lastDecision; // line 97
 
-  private final GoalQueue<Decision> goals; // line 97
+  private final GoalQueue<Decision> goals; // line 98
 
-  java.util.List<Decision> queuedGoals(); // line 98
+  java.util.List<Decision> queuedGoals(); // line 99
 
-  private void refreshGoals(List<Decision> proposals); // line 102
+  private void refreshGoals(List<Decision> proposals); // line 103
 
-  private net.minecraft.nbt.ListTag debugPriorities; // line 106
+  private net.minecraft.nbt.ListTag debugPriorities; // line 107
 
-  private int debugOfferCount; // line 108
+  private int debugOfferCount; // line 109
 
-  net.minecraft.nbt.ListTag priorities(); // line 109
+  net.minecraft.nbt.ListTag priorities(); // line 110
 
-  int offerCount(); // line 113
+  int offerCount(); // line 114
 
-  private void rankForDebug(List<Decision> offers); // line 117
+  private void rankForDebug(List<Decision> offers); // line 118
 
-  Decision lastDecision(); // line 136
+  Decision lastDecision(); // line 137
 
-  public Action action(); // line 140
+  public Action action(); // line 141
 
-  public String reason(); // line 144
+  public String reason(); // line 145
 
-  void growthBlocked(boolean blocked); // line 148
+  void growthBlocked(boolean blocked); // line 149
 
-  private Needs needs(LivingCoreBlockEntity core); // line 152
+  private Needs needs(LivingCoreBlockEntity core); // line 153
 
-  boolean shouldHunt(LivingCoreBlockEntity core); // line 231
+  boolean shouldHunt(LivingCoreBlockEntity core); // line 236
 
-  private Decision fixed(Action next, String why); // line 247
+  private Decision fixed(Action next, String why); // line 252
 
-  private Decision remember(Decision selected); // line 259
+  private Decision remember(Decision selected); // line 264
 
-  private Decision offer( Action next, Vec3 point, BlockPos block, LivingEntity entity, ItemEntity item, BehaviorPriority.Band band, int urgency, int value, double effort, String why); // line 273
+  private Decision offer( Action next, Vec3 point, BlockPos block, LivingEntity entity, ItemEntity item, BehaviorPriority.Band band, int urgency, int value, double effort, String why); // line 278
 
-  private Decision chooseOffers(List<Decision> offers); // line 300
+  private Decision chooseOffers(List<Decision> offers); // line 305
 
-  private double effort(LivingCoreBlockEntity core, Vec3 point); // line 305
+  private double effort(LivingCoreBlockEntity core, Vec3 point); // line 310
 
-  boolean interruptsForFood(LivingCoreBlockEntity core); // line 309
+  boolean interruptsForFood(LivingCoreBlockEntity core); // line 314
 
-  private int materialUrgency(Needs n, BlockState state, boolean wreck); // line 313
+  private int materialUrgency(Needs n, BlockState state, boolean wreck); // line 318
 
-  private int itemUrgency(Needs n, ItemStack stack); // line 325
+  private int itemUrgency(Needs n, ItemStack stack); // line 330
 
-  private Decision source( LivingCoreBlockEntity core, Needs n, BlockPos pos, Vec3 point, BlockState state, int rank, boolean wreck); // line 340
+  private Decision source( LivingCoreBlockEntity core, Needs n, BlockPos pos, Vec3 point, BlockState state, int rank, boolean wreck); // line 345
 
-  BioshipPriorities.Objective bestWorld(LivingCoreBlockEntity core); // line 405
+  BioshipPriorities.Objective bestWorld(LivingCoreBlockEntity core); // line 410
 
-  Decision choose(LivingCoreBlockEntity core); // line 424
+  Decision choose(LivingCoreBlockEntity core); // line 429
 
-  boolean allowsConfiguration(LivingCoreBlockEntity core); // line 575
+  boolean allowsConfiguration(LivingCoreBlockEntity core); // line 580
 
-  MaterialCost materialNeeds(LivingCoreBlockEntity core); // line 579
+  MaterialCost materialNeeds(LivingCoreBlockEntity core); // line 584
 
-  boolean needsMaterials(LivingCoreBlockEntity core); // line 584
+  boolean needsMaterials(LivingCoreBlockEntity core); // line 589
 
-  LivingEntity attackTarget(LivingCoreBlockEntity core); // line 588
+  LivingEntity attackTarget(LivingCoreBlockEntity core); // line 593
 
-  Vec3 groundGoal(LivingCoreBlockEntity core); // line 595
+  Vec3 groundGoal(LivingCoreBlockEntity core); // line 600
 
-  Vec3 flightVelocity(LivingCoreBlockEntity core); // line 631
+  Vec3 flightVelocity(LivingCoreBlockEntity core); // line 636
 
-  CompoundTag save(); // line 646
+  CompoundTag save(); // line 651
 
-  void load(CompoundTag tag); // line 654
+  void load(CompoundTag tag); // line 659
 
 ```
 
@@ -1698,6 +1698,7 @@ Mass-weighted COM, leg attachments, support polygon, reachable contacts and inve
   BioshipRighting
   BioshipLegAnchors
   BioshipLegGrowth
+  BioshipMountGrowth
   AmoebaLegBlock
   BioshipAnatomy
   BioshipLegEvolution
@@ -1728,7 +1729,7 @@ public final class BioshipSupport
 
   public static Layout layout(LivingCoreBlockEntity core); // line 80
 
-  private static Layout layout(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells); // line 89
+  static Layout layout(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells); // line 89
 
   static boolean safeAddition(LivingCoreBlockEntity core, BlockPos pos, BlockState state); // line 225
 
@@ -1795,7 +1796,7 @@ public final class BioshipLegAnchors
 
 #### BioshipLegGrowth
 
-Source: `src/main/java/org/Azkerash/create_bioships/BioshipLegGrowth.java` (126 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipLegGrowth.java` (141 lines).
 
 ```java
 final class BioshipLegGrowth
@@ -1806,9 +1807,45 @@ final class BioshipLegGrowth
 
   static BioshipAdaptation.Proposal proposal(LivingCoreBlockEntity core); // line 20
 
-  static boolean develop(LivingCoreBlockEntity core, BlockPos pos, BlockState state); // line 87
+  static List<Map.Entry<BlockPos, BlockState>> sites( LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells); // line 50
 
-  static List<BioshipSupport.Leg> attachments( LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells); // line 101
+  static boolean develop(LivingCoreBlockEntity core, BlockPos pos, BlockState state); // line 102
+
+  static List<BioshipSupport.Leg> attachments( LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells); // line 116
+
+```
+
+
+#### BioshipMountGrowth
+
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipMountGrowth.java` (199 lines).
+
+```java
+final class BioshipMountGrowth
+
+  static final int URGENCY; // line 9
+
+  record Plan(BlockPos pos, BlockState state, int legUpgrades, MaterialCost completeCost); // line 10
+
+  private record Demand(long at, MaterialCost cost); // line 12
+
+  private static final Map<LivingCoreBlockEntity, Demand> DEMAND; // line 14
+
+  static MaterialCost demand(LivingCoreBlockEntity core); // line 16
+
+  private record Step(BlockPos pos, BlockState state, double score); // line 27
+
+  static Plan plan(LivingCoreBlockEntity core); // line 29
+
+  private static int siteCount(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells); // line 148
+
+  static BioshipAdaptation.Proposal proposal(LivingCoreBlockEntity core); // line 153
+
+  static BioshipAdaptation.Proposal proposal(LivingCoreBlockEntity core, Plan plan); // line 157
+
+  static boolean grow(LivingCoreBlockEntity core, BlockPos pos, BlockState state); // line 175
+
+  private BioshipMountGrowth(); // line 196
 
 ```
 
@@ -2010,7 +2047,7 @@ public final class BioshipAquatic
 
 #### BioshipRespiration
 
-Source: `src/main/java/org/Azkerash/create_bioships/BioshipRespiration.java` (153 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipRespiration.java` (157 lines).
 
 ```java
 final class BioshipRespiration
@@ -2019,29 +2056,31 @@ final class BioshipRespiration
 
   static int bodySize(LivingCoreBlockEntity core); // line 13
 
-  static boolean has(LivingCoreBlockEntity core, boolean gills); // line 25
+  static int bodySize(Map<BlockPos, BlockState> cells); // line 17
 
-  static boolean airAccess(LivingCoreBlockEntity core); // line 30
+  static boolean has(LivingCoreBlockEntity core, boolean gills); // line 29
 
-  static boolean exposedGill(LivingCoreBlockEntity core, BlockPos pos, BlockState state); // line 41
+  static boolean airAccess(LivingCoreBlockEntity core); // line 34
 
-  static boolean activeGills(LivingCoreBlockEntity core); // line 54
+  static boolean exposedGill(LivingCoreBlockEntity core, BlockPos pos, BlockState state); // line 45
 
-  static boolean canBreathe(LivingCoreBlockEntity core); // line 62
+  static boolean activeGills(LivingCoreBlockEntity core); // line 58
 
-  static boolean wantsGills(LivingCoreBlockEntity core); // line 66
+  static boolean canBreathe(LivingCoreBlockEntity core); // line 66
 
-  static boolean missingLungs(LivingCoreBlockEntity core); // line 70
+  static boolean wantsGills(LivingCoreBlockEntity core); // line 70
 
-  static boolean blocksOpening(LivingCoreBlockEntity core, BlockPos target); // line 74
+  static boolean missingLungs(LivingCoreBlockEntity core); // line 74
 
-  record Growth(BlockPos pos, BlockState state, MaterialCost cost, boolean gills); // line 84
+  static boolean blocksOpening(LivingCoreBlockEntity core, BlockPos target); // line 78
 
-  static Growth plan(LivingCoreBlockEntity core); // line 86
+  record Growth(BlockPos pos, BlockState state, MaterialCost cost, boolean gills); // line 88
 
-  static BioshipAdaptation.Proposal proposal(LivingCoreBlockEntity core); // line 118
+  static Growth plan(LivingCoreBlockEntity core); // line 90
 
-  static boolean grow(LivingCoreBlockEntity core, BlockPos pos, BlockState state); // line 137
+  static BioshipAdaptation.Proposal proposal(LivingCoreBlockEntity core); // line 122
+
+  static boolean grow(LivingCoreBlockEntity core, BlockPos pos, BlockState state); // line 141
 
 ```
 
@@ -2985,7 +3024,7 @@ Propose funded organ recovery, digestion, storage, reinforcement or safe reclama
 
 #### BioshipAdaptationPlanner
 
-Source: `src/main/java/org/Azkerash/create_bioships/BioshipAdaptationPlanner.java` (287 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipAdaptationPlanner.java` (309 lines).
 
 ```java
 final class BioshipAdaptationPlanner
@@ -2998,11 +3037,13 @@ final class BioshipAdaptationPlanner
 
   static List<Proposal> plan(LivingCoreBlockEntity core, State memory); // line 44
 
-  private static boolean funded(StomachBlockEntity stomach, int flesh, int fiber, int bone); // line 226
+  private static List<Proposal> offers( LivingCoreBlockEntity core, State memory, BioshipMountGrowth.Plan mounting); // line 63
 
-  private static BlockPos shedCandidate( LivingCoreBlockEntity core, StomachBlockEntity stomach, boolean sacsOnly, Set<BlockPos> armor); // line 230
+  private static boolean funded(StomachBlockEntity stomach, int flesh, int fiber, int bone); // line 248
 
-  private static boolean connectedWithout(Set<BlockPos> body, BlockPos removed, BlockPos root); // line 269
+  private static BlockPos shedCandidate( LivingCoreBlockEntity core, StomachBlockEntity stomach, boolean sacsOnly, Set<BlockPos> armor); // line 252
+
+  private static boolean connectedWithout(Set<BlockPos> body, BlockPos removed, BlockPos root); // line 291
 
 ```
 
@@ -3065,7 +3106,7 @@ Rank body work independently of actions, share layout transaction locks, and exe
 
 #### BioshipAdaptation
 
-Source: `src/main/java/org/Azkerash/create_bioships/BioshipAdaptation.java` (249 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipAdaptation.java` (251 lines).
 
 ```java
 final class BioshipAdaptation
@@ -3108,11 +3149,11 @@ final class BioshipAdaptation
 
   void tick(LivingCoreBlockEntity core); // line 81
 
-  int burnEmergency(LivingCoreBlockEntity core); // line 211
+  int burnEmergency(LivingCoreBlockEntity core); // line 213
 
-  CompoundTag save(); // line 224
+  CompoundTag save(); // line 226
 
-  void load(CompoundTag t); // line 236
+  void load(CompoundTag t); // line 238
 
 ```
 

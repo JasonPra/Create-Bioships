@@ -49,3 +49,10 @@ F3+B displays green 0.24-block foot/contact volumes. Attacking graspers display 
 A leg socket requires a directly adjacent host with a full supporting face opposite its outward `facing`. Edge/corner contacts, thin exposed intestines, other leg sockets and unsupported air do not qualify. Growth, player placement, hypothetical body moves and organ transport share this check. Transport revalidates the host at commit; if it disappeared, the real leg cargo is released rather than attached to empty space or converted into free materials.
 
 Transitional procedural legs also choose exposed full body faces; they cannot use a thin pipe as a root. Invalid sockets are excluded from the mounted-leg support set. The anatomy audit can propose conserved relocation of legacy invalid sockets even before digestion exists and with fewer than four sockets. Moving a supporting body block may not introduce additional invalid mounts. These rules do not replace the pending reconfiguration-stability work or graphical animation QA.
+
+Paid mounting tissue is proposed by `BioshipMountGrowth` when there are no free
+legal leg sites. It preserves existing gut tubes while encasing them, or grows
+Packed Flesh beside the structural body. Its quote includes remaining supports,
+legs, strength upgrades and future lung materials, plus the emergency reserve.
+The body queue uses `GROW_SUPPORT`; lower-priority paid upgrades preserve that
+budget. Occupied-slot stashing and the temporary-support transition remain open.

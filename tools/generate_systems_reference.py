@@ -17,7 +17,7 @@ GROUPS=[
 ('brain','Behavior selection and goal queue','active',['BioshipBrain','BehaviorPriority','GoalQueue'],'Safety branches, committed work, NEED before GOAL, weighted ranking, one selected Decision per call.'),
 ('autonomy','Escape and exploration','active',['BioshipAutonomy'],'Threat assessment, retreat and idle wandering. Pilot authority is currently disabled.'),
 ('route','Ground navigation and gait','active',['BioshipCrawl','GroundRoute','HatchlingFront'],'Full-body routes, stuck handling, paid legs, footing, speed and accessible front-mouth configuration.'),
-('support','Balance and self-righting','active',['BioshipSupport','BioshipRighting','BioshipLegAnchors','BioshipLegGrowth','AmoebaLegBlock','BioshipAnatomy','BioshipLegEvolution','LegUsageHistory'],'Mass-weighted COM, leg attachments, support polygon, reachable contacts and inverted recovery torque.'),
+('support','Balance and self-righting','active',['BioshipSupport','BioshipRighting','BioshipLegAnchors','BioshipLegGrowth','BioshipMountGrowth','AmoebaLegBlock','BioshipAnatomy','BioshipLegEvolution','LegUsageHistory'],'Mass-weighted COM, leg attachments, support polygon, reachable contacts and inverted recovery torque.'),
 ('water','Swimming and breathing','active',['BioshipAquatic','BioshipRespiration','RespiratoryOrganBlock','ExposureHistory'],'Saved air supply, all-mouth fluid checks, surfacing need and non-flight propulsion intent.'),
 ('scout','Move the existing core','active',['CoreMotion'],'Reposition through connected anatomy for sight or defense; preserve state and inventory.'),
 ('collect','Batch assimilation','active',['BioshipAssimilation','BioshipFoodCollection'],'Mouth-bound collection slots, persistent swallowed stock, batch settlement and committed wreck ownership.'),

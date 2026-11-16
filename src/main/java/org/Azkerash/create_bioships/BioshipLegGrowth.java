@@ -28,7 +28,30 @@ final class BioshipLegGrowth {
     if (!completeCost.funded(BioshipStorage.account(core))
         || core.adaptation().starterLegBudget() == 0 && !EmergencyReserve.after(core, completeCost))
       return null;
-    var cells = BioshipStructure.cells(core.ship());
+    var candidates =
+        sites(core, BioshipStructure.cells(core.ship())).stream()
+            .filter(
+                e ->
+                    core.crawl().carriedLoad(core)
+                            + core.crawl().blockLoad(core, e.getKey(), e.getValue())
+                        <= core.crawl().loadCapacity())
+            .toList();
+    if (candidates.isEmpty()) return null;
+    var next = candidates.getFirst();
+    return new BioshipAdaptation.Proposal(
+        BioshipBrain.Action.GROW_LEG,
+        next.getKey(),
+        next.getValue(),
+        COST.flesh(),
+        COST.fiber(),
+        COST.bone(),
+        985,
+        "Grow four paid locomotion legs before vocal upgrades");
+  }
+
+  /** Geometric sites, independent of construction funding and future leg-strength choices. */
+  static List<Map.Entry<BlockPos, BlockState>> sites(
+      LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells) {
     var center =
         Vec3.atLowerCornerOf(core.structuralOrigin()).add(BioshipSupport.layout(core).center());
     var candidates = new ArrayList<Map.Entry<BlockPos, BlockState>>();
@@ -50,13 +73,15 @@ final class BioshipLegGrowth {
                                 .relative(m.getValue().getValue(FeedingMouthBlock.FACING))
                                 .equals(pos));
         if (mouthFace) continue;
+        if (!core.ship().getPlot().contains(new net.minecraft.world.level.ChunkPos(pos))) continue;
+        var world =
+            BlockPos.containing(core.ship().logicalPose().transformPosition(Vec3.atCenterOf(pos)));
+        if (!BioshipIntegration.aquaticGrowthSpace(core.getLevel(), world)) continue;
         var state =
             Create_bioships.AMOEBA_LEG
                 .get()
                 .defaultBlockState()
                 .setValue(AmoebaLegBlock.FACING, face);
-        if (core.crawl().carriedLoad(core) + core.crawl().blockLoad(core, pos, state)
-            > core.crawl().loadCapacity()) continue;
         candidates.add(Map.entry(pos, state));
       }
     }
@@ -73,17 +98,7 @@ final class BioshipLegGrowth {
                       .orElse(0);
               return p.distanceToSqr(center) - spacing * 2;
             }));
-    if (candidates.isEmpty()) return null;
-    var next = candidates.getFirst();
-    return new BioshipAdaptation.Proposal(
-        BioshipBrain.Action.GROW_LEG,
-        next.getKey(),
-        next.getValue(),
-        COST.flesh(),
-        COST.fiber(),
-        COST.bone(),
-        985,
-        "Grow four paid locomotion legs before vocal upgrades");
+    return candidates;
   }
 
   static boolean develop(LivingCoreBlockEntity core, BlockPos pos, BlockState state) {

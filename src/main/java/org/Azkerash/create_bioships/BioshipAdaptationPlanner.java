@@ -44,6 +44,26 @@ final class BioshipAdaptationPlanner {
   }
 
   static List<Proposal> plan(LivingCoreBlockEntity core, State memory) {
+    var mounting = BioshipMountGrowth.plan(core);
+    var result = offers(core, memory, mounting);
+    if (mounting != null) {
+      var held = mounting.completeCost();
+      result.removeIf(
+          p ->
+              p.urgency() < BioshipMountGrowth.URGENCY
+                  && p.flesh() + p.fiber() + p.bone() > 0
+                  && !EmergencyReserve.after(
+                      core,
+                      new MaterialCost(
+                          held.flesh() + p.flesh(),
+                          held.fiber() + p.fiber(),
+                          held.bone() + p.bone())));
+    }
+    return result;
+  }
+
+  private static List<Proposal> offers(
+      LivingCoreBlockEntity core, State memory, BioshipMountGrowth.Plan mounting) {
     var result = new ArrayList<Proposal>();
     if (!BioshipBodyBehavior.blocker(core).isEmpty()) return result;
     var stomach = DigestiveSystem.stomach(core);
@@ -107,6 +127,8 @@ final class BioshipAdaptationPlanner {
     if (stomach == null || !core.hasMouth() || !stomach.connected(core)) return result;
     var legs = BioshipLegGrowth.proposal(core);
     if (legs != null) result.add(legs);
+    var mounts = BioshipMountGrowth.proposal(core, mounting);
+    if (mounts != null) result.add(mounts);
     var grasperEvolution = BioshipGrasperEvolution.proposal(core);
     if (grasperEvolution != null) result.add(grasperEvolution);
     var evolution = BioshipLegEvolution.proposal(core);

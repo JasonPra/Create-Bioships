@@ -33,6 +33,7 @@ public final class BioshipBrain {
     REPOSITION_ANATOMY,
     GROW_LARYNX,
     GROW_LEG,
+    GROW_SUPPORT,
     EVOLVE_LEGS,
     EVOLVE_GRASPERS,
     GROW_RESPIRATION,
@@ -214,6 +215,10 @@ public final class BioshipBrain {
             + gutRepair
             + 3 * lungs
             + 6 * gills;
+    var mounting = BioshipMountGrowth.demand(core);
+    flesh = Math.max(flesh, EmergencyReserve.TARGET.flesh() + mounting.flesh());
+    fiber = Math.max(fiber, EmergencyReserve.TARGET.fiber() + mounting.fiber());
+    bone = Math.max(bone, EmergencyReserve.TARGET.bone() + mounting.bone());
     if (stomach != null) {
       flesh -= stomach.material("biomancy:flesh_bits");
       bone -= stomach.material("biomancy:bone_fragments");

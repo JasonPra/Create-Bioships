@@ -88,7 +88,7 @@ public final class BioshipSupport {
     return value;
   }
 
-  private static Layout layout(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells) {
+  static Layout layout(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells) {
     var origin = Vec3.atLowerCornerOf(core.structuralOrigin());
     double total = 0;
     Vec3 center = Vec3.ZERO;
