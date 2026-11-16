@@ -165,3 +165,9 @@ Further queued requirements: prohibit leg mounts on lungs as well as the core an
 - A focused startup trace showed the old Sable owner already `isRemoved()`, its retained plot containing a core, and the world lookup returning `void_air`. This was retirement/unloading of the old body object, not loss of the living replacement's core.
 - Removal validation now ignores retired owners and uses the owner's actual plot chunk state. An intact core block is not a core-removal death. `setRemoved()` queues validation rather than treating a disappearing BE lookup as immediate death; real block removal still has its explicit death callback.
 - Validation: full build, 51 unit tests and all 140 required GameTests passed. Added a retired-physics-owner regression; actual and failed core removal, handoff, starvation, gilled starvation, drowning and asphyxiation tests still pass. Startup evidence: `docs/development/qa/2026-11-16-retired-owner-lifecycle.json`. A fresh normal-world soak is next; seven broader groups remain.
+
+### Fresh ecosystem replay after retired-owner correction
+
+- Passed the strengthened 3,600-tick normal-world soak: all three survived, digested, received repeated feeds and produced resources; 1,971 pork offered; zero failures. No healthy-core/dead-grid flags, decay registrations or actual death logs occurred. The formerly failing retired-owner callback was observed and ignored correctly.
+- The aquatic creature retained connected digestion and four legs through the final periodic sample. Its recorded health stayed at 100; gills were not developed in this waterline-breathing scenario. Dedicated tests separately cover effective gills and correctly classified underwater starvation.
+- Report: `docs/development/qa/2026-11-16-retired-owner-fixed-soak.json`. Full build/51 unit/140 GameTests remain passed. This is one successful seeded run, not long-duration/high-tick-rate or graphical QA sign-off. Seven broader groups remain.

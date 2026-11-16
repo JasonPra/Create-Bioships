@@ -1,0 +1,81 @@
+{
+  "date": "2026-11-16",
+  "runtimeCommit": "68096af",
+  "result": "PASSED",
+  "scenario": "Fresh ecosystem_lab seed 8675309, normal difficulty, ordinary world terrain and spawning, view 12 and simulation 10, requested tick rate 20. Observer feeds real mouths up to four times without overriding decisions.",
+  "summary": {
+    "ticks": 3600,
+    "observed": 3,
+    "digestive": 3,
+    "repeatedlyFed": 3,
+    "alive": 3,
+    "resourceProducing": 3,
+    "expected": 3,
+    "porkOffered": 1971,
+    "failures": 0
+  },
+  "aliveCoreMarkedDeadFailures": [],
+  "deathLogs": [],
+  "decayMarks": [],
+  "retiredCallbacks": [
+    "BIOSHIP_LIFECYCLE event=validate_removal tick=1 ship=c10e5832-383b-4929-8127-3c598b327b07 core=20481032, 128, 20485128 receipt=false transferred=false ownerRemoved=true coreRemoved=true globalState=Block{minecraft:void_air} plotState=Block{create_bioships:living_core}[active=false,blink=false,concealed=false,facing=north,relocating=false] plotBEisSource=false globalBEisSource=false"
+  ],
+  "creatures": [
+    {
+      "ship": "c10e5832-383b-4929-8127-3c598b327b07",
+      "lastPeriodicSample": "WILDPROBE tick=3600 ship=c10e5832-383b-4929-8127-3c598b327b07 position=(154.75620561427024, 65.92583850367495, 79.5079740179348) health=100.0 air=300 wet=false aquatic={Air:300,AirAccess:1b,Breathing:1b,GillSamples:180,GillUse:227,LegEvolutionAfter:0L,SeekingAir:0b,Swimming:0b,UseSamples:180,WaterUse:297,Wet:0b} organMove=null action=WANDER reason=No reachable urgent need or funded goal bodyWork={Action:\"IDLE\",Priorities:[],QueuedGoals:0,Reason:\"No feasible funded body work\"} cells=11 stomachs=1 connected=1 coreMotion=false coreRemoved=false primary=true digestion=[acid=969, queued=153, progress=70/185] mouthFood=[0] waterUse=297 swimmingLegs=0.0 legsMissing=0 materials={biomancy:elastic_fibers=19, biomancy:nutrient_paste=11, biomancy:bone_fragments=40, biomancy:flesh_bits=47} feeds=4",
+      "healthRange": [
+        100.0,
+        100.0
+      ],
+      "maximumSampledHeight": 2.0,
+      "sampledActions": {
+        "MOVE_COMPONENT": 1,
+        "ASSIMILATE": 1,
+        "WANDER": 39
+      },
+      "gillsObserved": false,
+      "maximumSampledGillUse": 196.0,
+      "falseCorpseObserved": false
+    },
+    {
+      "ship": "69d814b6-0d76-412e-91b8-95ec2cf144ba",
+      "lastPeriodicSample": "WILDPROBE tick=3600 ship=69d814b6-0d76-412e-91b8-95ec2cf144ba position=(-23.55695921840007, 69.4299186974377, 114.2116790045709) health=100.0 air=300 wet=false aquatic={Air:300,AirAccess:1b,Breathing:1b,GillSamples:180,GillUse:0,LegEvolutionAfter:0L,SeekingAir:0b,Swimming:0b,UseSamples:180,WaterUse:0,Wet:0b} organMove=null action=WANDER reason=No reachable urgent need or funded goal bodyWork={Action:\"IDLE\",Priorities:[],QueuedGoals:0,Reason:\"No feasible funded body work\"} cells=24 stomachs=1 connected=1 coreMotion=false coreRemoved=false primary=true digestion=[acid=969, queued=280, progress=70/185] mouthFood=[0] waterUse=0 swimmingLegs=0.0 legsMissing=0 materials={biomancy:elastic_fibers=33, biomancy:nutrient_paste=11, biomancy:bone_fragments=100, biomancy:flesh_bits=35} feeds=4",
+      "healthRange": [
+        100.0,
+        100.0
+      ],
+      "maximumSampledHeight": 4.0,
+      "sampledActions": {
+        "ASSIMILATE": 4,
+        "WANDER": 14
+      },
+      "gillsObserved": false,
+      "maximumSampledGillUse": 0.0,
+      "falseCorpseObserved": false
+    },
+    {
+      "ship": "dc7affdb-990c-40e1-b3a6-fa54aabac8f7",
+      "lastPeriodicSample": "WILDPROBE tick=3600 ship=dc7affdb-990c-40e1-b3a6-fa54aabac8f7 position=(11.598275748816949, 64.18662264488331, 57.50868378614325) health=100.0 air=300 wet=false aquatic={Air:300,AirAccess:1b,Breathing:1b,GillSamples:180,GillUse:0,LegEvolutionAfter:0L,SeekingAir:0b,Swimming:0b,UseSamples:180,WaterUse:0,Wet:0b} organMove=null action=WANDER reason=No reachable urgent need or funded goal bodyWork={Action:\"IDLE\",Priorities:[],QueuedGoals:0,Reason:\"No feasible funded body work\"} cells=7 stomachs=1 connected=1 coreMotion=false coreRemoved=false primary=true digestion=[acid=969, queued=153, progress=70/185] mouthFood=[0] waterUse=0 swimmingLegs=0.0 legsMissing=0 materials={biomancy:elastic_fibers=18, biomancy:nutrient_paste=11, biomancy:bone_fragments=45, biomancy:flesh_bits=68} feeds=4",
+      "healthRange": [
+        100.0,
+        100.0
+      ],
+      "maximumSampledHeight": 2.0,
+      "sampledActions": {
+        "ASSIMILATE": 1,
+        "WANDER": 17
+      },
+      "gillsObserved": false,
+      "maximumSampledGillUse": 0.0,
+      "falseCorpseObserved": false
+    }
+  ],
+  "automatedRegression": "51 unit tests and all 140 required GameTests passed.",
+  "limits": [
+    "One seed/run; broad long-duration and accelerated-tick qualification remains open.",
+    "This run did not qualify gill evolution: the creature breathed at the waterline and its sampled gill-use score stayed below the development threshold. Dedicated GameTests cover gills, drowning, asphyxiation and gilled starvation.",
+    "No graphical animation/collision QA sign-off.",
+    "Existing saved death records are preserved; the correction prevents new false records."
+  ]
+}
