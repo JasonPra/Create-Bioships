@@ -43,7 +43,15 @@ public final class SubLevelCombatTests {
     CoreAssemblyRules.mark(level, body.getPlot().getCenterBlock());
     var target = CombatAdapter.target(body);
     helper.assertTrue(target != null, "No combat adapter");
-    var player = helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL);
+    var profile = new com.mojang.authlib.GameProfile(java.util.UUID.randomUUID(), "combat-test");
+    var player =
+        new net.minecraft.server.level.ServerPlayer(
+            level.getServer(),
+            level,
+            profile,
+            net.minecraft.server.level.ClientInformation.createDefault());
+    player.connection =
+        new net.neoforged.neoforge.common.util.FakePlayer(level, profile).connection;
     player.setPos(target.position().add(1, 0, 0));
     player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, ItemStack.EMPTY);
     player.attack(target);
@@ -53,21 +61,21 @@ public final class SubLevelCombatTests {
     player.setItemInHand(
         net.minecraft.world.InteractionHand.MAIN_HAND, new ItemStack(Items.DIAMOND_SWORD));
     // Attribute modifiers are updated by the vanilla living-entity equipment tick.
-    player.tick();
+    player.doTick();
     player.resetAttackStrengthTicker();
     helper.runAfterDelay(
         25,
         () -> {
           target.invulnerableTime = 0;
           double before = SubLevelHealth.status(body).current();
-          for (int i = 0; i < 25; i++) player.tick();
+          for (int i = 0; i < 25; i++) player.doTick();
           player.attack(target);
           double sword = before - SubLevelHealth.status(body).current();
           helper.assertTrue(
               sword > fist, "Sword did not use weapon damage: " + sword + " versus fist " + fist);
           target.invulnerableTime = 0;
           var zombie = EntityType.ZOMBIE.create(level);
-          zombie.setPos(target.position().add(1, 0, 0));
+          zombie.setPos(origin.getX() + .5, origin.getY() - 1, origin.getZ() - 3);
           zombie.setItemSlot(EquipmentSlot.HEAD, new ItemStack(Items.IRON_HELMET));
           level.addFreshEntity(zombie);
           helper.assertTrue(
@@ -122,6 +130,7 @@ public final class SubLevelCombatTests {
           helper.assertTrue(
               !target.canBeHitByProjectile(),
               "Empty space can hit adapter rather than Sable geometry");
+          player.discard();
           helper.succeed();
         });
   }

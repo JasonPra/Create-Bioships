@@ -1,0 +1,15 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "org.Azkerash.create_bioships.compat.epicfight.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "EpicFightColliderAccess",
+    "EpicFightColliderMixin",
+    "EpicFightTargetMixin",
+    "EpicFightMultiColliderMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

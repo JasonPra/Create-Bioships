@@ -157,3 +157,18 @@ are provided. Reset restores the sleeping, unassembled fixture and refills the d
 
 Symbiotic Goggles use their own tooltip icon with room above the text. Both their inventory sprite
 and dedicated worn-model texture are **16×16**, matching Create's original goggles textures.
+
+### Optional Epic Fight bridge
+
+`compat.epicfight` owns all optional hooks, with its mixins in a separate subpackage. Epic Fight
+is not a compile or runtime requirement. When installed, its weapon colliders test each intersected
+block's collision boxes and select the ordinary, core, or eye hurtbox. Empty space inside a grid
+does not count as tissue. Multiple collider samples from one swing are consolidated to one target
+per grid, favoring a struck weak point. Damage, wounds, and projectile behavior remain shared
+with the vanilla combat adapter.
+
+The compatibility regression runs its additional checks only when Epic Fight is actually loaded.
+The supplied `epic-fight-21.17.3.1-mc1.21.1-neoforge.jar` is kept in an isolated testing `mods` folder,
+not added to the project's dependency list or included in the mod JAR. A final in-game visual
+check of attack animations, wound overlays, and the revised goggles remains separate from the
+headless collision/damage checks.
