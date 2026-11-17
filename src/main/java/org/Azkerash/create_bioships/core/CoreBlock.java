@@ -1,4 +1,4 @@
-package org.Azkerash.create_bioships;
+package org.Azkerash.create_bioships.core;
 
 import com.mojang.serialization.MapCodec;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
@@ -15,16 +15,29 @@ import net.minecraft.world.level.block.state.properties.IntegerProperty;
 
 /** A blinking core with player-only assembly; no block entity, limbs or creature behavior. */
 public final class CoreBlock extends Block
-    implements dev.ryanhcode.sable.api.block.BlockSubLevelAssemblyListener {
+    implements dev.ryanhcode.sable.api.block.BlockSubLevelAssemblyListener,
+        com.simibubi.create.content.equipment.wrench.IWrenchable {
   public static final MapCodec<CoreBlock> CODEC = simpleCodec(CoreBlock::new);
   public static final BooleanProperty BLINK = BooleanProperty.create("blink");
-  public static final IntegerProperty WAKE = IntegerProperty.create("wake", 0, 4);
+  public static final IntegerProperty WAKE = IntegerProperty.create("wake", 0, 9);
   private static final IntegerProperty STAGE = IntegerProperty.create("blink_stage", 0, 3);
 
   public CoreBlock(Properties properties) {
     super(properties);
     registerDefaultState(
         stateDefinition.any().setValue(BLINK, true).setValue(STAGE, 0).setValue(WAKE, 0));
+  }
+
+  @Override
+  public net.minecraft.world.InteractionResult onWrenched(
+      BlockState state, net.minecraft.world.item.context.UseOnContext context) {
+    return net.minecraft.world.InteractionResult.FAIL;
+  }
+
+  @Override
+  public net.minecraft.world.InteractionResult onSneakWrenched(
+      BlockState state, net.minecraft.world.item.context.UseOnContext context) {
+    return net.minecraft.world.InteractionResult.FAIL;
   }
 
   @Override
@@ -80,9 +93,9 @@ public final class CoreBlock extends Block
     if (!level.getBlockState(pos).is(this)) return;
     int wake = state.getValue(WAKE);
     if (wake > 0) {
-      int nextWake = wake == 4 ? 0 : wake + 1;
+      int nextWake = wake == 9 ? 0 : wake + 1;
       level.setBlock(pos, state.setValue(WAKE, nextWake).setValue(BLINK, nextWake != 0), 2);
-      level.scheduleTick(pos, this, nextWake == 0 ? 109 : 6);
+      level.scheduleTick(pos, this, nextWake == 0 ? 109 : 3);
       return;
     }
     int stage = state.getValue(STAGE);

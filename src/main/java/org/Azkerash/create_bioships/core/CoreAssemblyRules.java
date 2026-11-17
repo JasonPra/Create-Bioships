@@ -1,4 +1,4 @@
-package org.Azkerash.create_bioships;
+package org.Azkerash.create_bioships.core;
 
 import dev.ryanhcode.sable.api.SubLevelAssemblyHelper;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
@@ -14,6 +14,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.level.BlockEvent;
+import org.Azkerash.create_bioships.Create_bioships;
 
 /** Persistent grid identity and player assembler restrictions; no creature behavior. */
 @EventBusSubscriber(modid = Create_bioships.MODID)

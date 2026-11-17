@@ -1,4 +1,4 @@
-package org.Azkerash.create_bioships;
+package org.Azkerash.create_bioships.core;
 
 import java.util.*;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -7,6 +7,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import org.Azkerash.create_bioships.Create_bioships;
 
 /** All loaded Biomancy/own IDs, plus data-pack IDs or block groups explicitly whitelisted. */
 public final class BlockPlacementRules {

@@ -5,6 +5,7 @@ import dev.simulated_team.simulated.util.SimAssemblyHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Rotation;
+import org.Azkerash.create_bioships.core.*;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -21,6 +22,6 @@ public abstract class CoreDisassemblyMixin {
       Rotation rotation,
       boolean sound,
       CallbackInfo callback) {
-    if (org.Azkerash.create_bioships.CoreAssemblyRules.isCreature(body)) callback.cancel();
+    if (org.Azkerash.create_bioships.core.CoreAssemblyRules.isCreature(body)) callback.cancel();
   }
 }

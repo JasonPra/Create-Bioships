@@ -21,6 +21,7 @@ import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import org.Azkerash.create_bioships.*;
+import org.Azkerash.create_bioships.core.*;
 
 /** Native test execution and repeatable cleanup; no alternate creature behavior. */
 @EventBusSubscriber(modid = Create_bioships.MODID)

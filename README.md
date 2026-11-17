@@ -4,8 +4,9 @@ Minecraft 1.21.1 / NeoForge 21.1.266, Java 21. Dependencies are pinned in `gradl
 
 The only registered gameplay block is `create_bioships:living_core`, using its original texture
 and open/closed models. It is closed-eyed as a normal world block or inventory item. When
-assembled into a Sable structure it opens, then repeats the original double blink: 4 ticks closed,
-4 open, 3 closed, and 109 open. Creature grids cannot be disassembled.
+assembled into a Sable structure it slowly wakes once, then repeats the original double blink: 4 ticks closed,
+4 open, 3 closed, and 109 open. Raised eyelid rims remain visible while awake.
+Creature grids cannot be disassembled.
 
 Direct placement by a real player automatically assembles the core through Sable after placement
 finishes. Commands, automation and fixture construction leave cores unassembled. There is no block
@@ -60,3 +61,15 @@ Validation for this batch: build and all eight live tests passed, including two 
 command-block Start/Reset cycles, all 84 loaded Biomancy block IDs, player-only assembly and early
 placement denial. A fresh preset startup also passed with bedrock terrain, roof and 49 unassembled
 cores. Visual inspection is left to the user.
+
+## Equipment and source packages
+
+Symbiotic Goggles (`bioship_goggles`) use Create's wearable goggles integration. The Ossified
+Wrench (`bioship_wrench`) uses Create's wrench interactions with the restored equipment models.
+Both are available in the creative tab and through their Biomancy Bio-Forge recipes. Neither
+this wrench nor Create's own wrench can rotate or collect the core, including while sneaking.
+
+Production packages are organized by responsibility: `core` contains the core and grid rules,
+`equipment` contains the two item classes, `equipment.client` binds their display models,
+`development` owns the test fixture and commands, and `mixin` holds the native disassembly guard.
+The root mod class only registers content and wires lifecycle hooks.

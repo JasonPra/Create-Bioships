@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "create_bioships:item/symbiotic_goggles_icon"
+  }
+}

@@ -5,6 +5,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import org.Azkerash.create_bioships.core.*;
 import org.Azkerash.create_bioships.development.*;
 
 /** Opt-in fresh-world startup check, excluded from the shipped JAR. */

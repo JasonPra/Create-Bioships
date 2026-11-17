@@ -7,6 +7,7 @@ import net.minecraft.gametest.framework.*;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.CommandBlockEntity;
 import net.neoforged.neoforge.gametest.*;
+import org.Azkerash.create_bioships.core.*;
 import org.Azkerash.create_bioships.development.*;
 
 @GameTestHolder(Create_bioships.MODID)

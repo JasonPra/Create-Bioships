@@ -1,4 +1,4 @@
-package org.Azkerash.create_bioships;
+package org.Azkerash.create_bioships.core;
 
 import dev.ryanhcode.sable.api.SubLevelAssemblyHelper;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
@@ -19,6 +19,7 @@ import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.gametest.*;
+import org.Azkerash.create_bioships.Create_bioships;
 
 @GameTestHolder(Create_bioships.MODID)
 @PrefixGameTestTemplate(false)

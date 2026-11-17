@@ -17,6 +17,21 @@
     },
     "wake=4": {
       "model": "create_bioships:block/core_waking_4"
+    },
+    "wake=5": {
+      "model": "create_bioships:block/core_waking_5"
+    },
+    "wake=6": {
+      "model": "create_bioships:block/core_waking_6"
+    },
+    "wake=7": {
+      "model": "create_bioships:block/core_waking_7"
+    },
+    "wake=8": {
+      "model": "create_bioships:block/core_waking_8"
+    },
+    "wake=9": {
+      "model": "create_bioships:block/core_waking_9"
     }
   }
 }

@@ -1,4 +1,4 @@
-package org.Azkerash.create_bioships;
+package org.Azkerash.create_bioships.core;
 
 import dev.ryanhcode.sable.api.SubLevelAssemblyHelper;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
@@ -11,6 +11,7 @@ import net.minecraft.gametest.framework.*;
 import net.minecraft.util.Unit;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.gametest.*;
+import org.Azkerash.create_bioships.Create_bioships;
 
 @GameTestHolder(Create_bioships.MODID)
 @PrefixGameTestTemplate(false)
@@ -29,6 +30,33 @@ public final class CoreBlinkTests {
     helper.assertTrue(
         level.getBlockState(pos).getValue(CoreBlock.BLINK), "Unassembled core is not closed-eyed");
     helper.assertTrue(level.getBlockEntity(pos) == null, "Core acquired an unwanted block entity");
+    var player = helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL);
+    for (var wrench :
+        java.util.List.of(
+            Create_bioships.BIOSHIP_WRENCH.get(), com.simibubi.create.AllItems.WRENCH.get())) {
+      player.setItemInHand(
+          net.minecraft.world.InteractionHand.MAIN_HAND, wrench.getDefaultInstance());
+      for (boolean sneaking : new boolean[] {false, true}) {
+        player.setShiftKeyDown(sneaking);
+        var before = level.getBlockState(pos);
+        var context =
+            new net.minecraft.world.item.context.UseOnContext(
+                level,
+                player,
+                net.minecraft.world.InteractionHand.MAIN_HAND,
+                player.getMainHandItem(),
+                new net.minecraft.world.phys.BlockHitResult(
+                    net.minecraft.world.phys.Vec3.atCenterOf(pos),
+                    net.minecraft.core.Direction.UP,
+                    pos,
+                    false));
+        helper.assertTrue(
+            wrench.useOn(context) == net.minecraft.world.InteractionResult.FAIL,
+            "Wrench did not reject the core");
+        helper.assertTrue(
+            level.getBlockState(pos).equals(before), "Wrench changed or collected core");
+      }
+    }
     var body =
         SubLevelAssemblyHelper.assembleBlocks(
             level, pos, java.util.List.of(pos), new BoundingBox3i(pos, pos));
