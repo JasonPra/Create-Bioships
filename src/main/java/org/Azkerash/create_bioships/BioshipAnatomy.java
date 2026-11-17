@@ -91,7 +91,10 @@ final class BioshipAnatomy {
     for (var e : original.entrySet()) {
       var state = e.getValue();
       boolean organ =
-          (mouthOpening(core, e.getKey())
+          BioshipTissue.isTissue(state)
+                  && DigestiveSystem.mouths(core).stream()
+                      .anyMatch(p -> p.distManhattan(e.getKey()) == 1)
+              || (mouthOpening(core, e.getKey())
                   && !state.is(Create_bioships.CORE.get())
                   && !state.is(Create_bioships.GILLS.get())
                   && !state.is(Create_bioships.LUNGS.get())
@@ -105,7 +108,10 @@ final class BioshipAnatomy {
               || core.getLevel().getBlockEntity(e.getKey()) != null
                   && org.Azkerash.create_bioships.integration.biomancy.NativeStorage.isStorage(
                       core.getLevel().getBlockEntity(e.getKey()));
-      if (organ) selected.add(e.getKey());
+      boolean grouped =
+          state.is(Create_bioships.STOMACH.get())
+              && StomachMultiblock.containing(core, e.getKey()) != null;
+      if (organ && !grouped) selected.add(e.getKey());
     }
     if (selected.isEmpty() || selected.size() > 64) return List.of();
     // Respiration organs remain deployed. A breath-limited submerged body cannot begin a long
@@ -160,12 +166,14 @@ final class BioshipAnatomy {
         if (++attempts > 2048) return List.of();
         if (openings.contains(target)
             || planned.containsKey(target)
+                && !(target.equals(source) && BioshipTissue.isTissue(planned.get(target)))
             || !core.ship().getPlot().contains(new net.minecraft.world.level.ChunkPos(target)))
           continue;
         if (target.distManhattan(core.structuralOrigin()) > 24) continue;
         if (java.util.Arrays.stream(Direction.values())
             .noneMatch(d -> planned.containsKey(target.relative(d)))) continue;
         var occupied = core.getLevel().getBlockState(target);
+        if (selected.contains(target) && !target.equals(source)) continue;
         if (!selected.contains(target) && !occupied.isAir()) continue;
         var world =
             BlockPos.containing(

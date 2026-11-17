@@ -661,7 +661,11 @@ public class BioshipGameTests {
     var mouth = core.getBlockPos().north();
     ((FeedingMouthBlockEntity) level.getBlockEntity(mouth))
         .setItem(0, new ItemStack(Items.DIAMOND, 7));
+    BioshipTissue.remember(level.getBlockEntity(mouth), BioshipTissue.body().defaultBlockState());
     level.setBlock(mouth.north(), BioshipTissue.body().defaultBlockState(), 3);
+    helper.assertTrue(
+        core.assimilation().acceptItem(core, new ItemStack(Create_bioships.CARAPACE.get())),
+        "Could not seed ordinary stored cargo");
     var plan = BioshipAnatomy.repairPlan(core);
     helper.assertTrue(
         core.assimilation().beginRepair(core, plan), "Could not begin validated batch");
@@ -711,10 +715,22 @@ public class BioshipGameTests {
                 e.getValue().canSurvive(level, e.getKey()), "Batch redeployed an unsupported eye");
         }
         helper.assertTrue(diamonds == 7, "Batch lost/duplicated recalled inventory: " + diamonds);
-        helper.succeed();
-      } finally {
+      } catch (Throwable failure) {
         cleanup(helper, ship);
+        throw failure;
       }
+      helper.runAfterDelay(
+          40,
+          () -> {
+            try {
+              helper.assertTrue(
+                  !core.assimilation().repairing() && !BioshipAnatomy.blockedMouths(core),
+                  "Completed layout restarted repair or blocked its mouths again");
+              helper.succeed();
+            } finally {
+              cleanup(helper, ship);
+            }
+          });
       return;
     }
     helper.runAfterDelay(5, () -> pollLayoutRepair(helper, ship, observed));
@@ -808,6 +824,69 @@ public class BioshipGameTests {
     helper.assertTrue(
         core.assimilation().beginRepair(core, plan), "Could not begin multi-mouth batch");
     pollLayoutRepair(helper, ship, new boolean[2]);
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "enclosed_mouth_plan")
+  public static void fully_enclosed_mouth_has_a_connected_batch_plan_without_destroying_its_shell(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    try {
+      digestive(helper, core, false);
+      var mouth = core.getBlockPos().north();
+      var floor =
+          BlockPos.containing(ship.logicalPose().transformPosition(Vec3.atCenterOf(mouth.below())));
+      level.removeBlock(floor, false);
+      for (var face : Direction.values()) {
+        var p = mouth.relative(face);
+        var state = level.getBlockState(p);
+        if (state.isAir()) level.setBlock(p, BioshipTissue.body().defaultBlockState(), 3);
+        else if (state.is(Create_bioships.INTESTINE.get()))
+          level.setBlock(p, state.setValue(IntestineBlock.ENCASED, true), 3);
+      }
+      var original = new HashMap<>(BioshipStructure.cells(ship));
+      var plan = BioshipAnatomy.repairPlan(core);
+      helper.assertTrue(
+          !plan.isEmpty(), "Enclosed mouth could not plan a coordinated shell/organ recall");
+      helper.assertTrue(
+          original.equals(BioshipStructure.cells(ship)),
+          "Enclosed-mouth planning destroyed anatomy");
+      helper.succeed();
+    } finally {
+      cleanup(helper, ship);
+    }
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "batch_grouped_stomach_safety")
+  public static void batch_plan_never_recalls_a_member_of_a_geometrically_formed_stomach(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    try {
+      digestive(helper, core, false);
+      var mouth = core.getBlockPos().north();
+      level.setBlock(mouth.north(), BioshipTissue.body().defaultBlockState(), 3);
+      var origin = core.getBlockPos().west(3);
+      var members = new HashSet<BlockPos>();
+      for (int x = 0; x < 3; x++)
+        for (int y = 0; y < 3; y++)
+          for (int z = 0; z < 3; z++) {
+            var p = origin.offset(x, y, z);
+            members.add(p);
+            level.setBlock(p, Create_bioships.STOMACH.get().defaultBlockState(), 3);
+          }
+      var plan = BioshipAnatomy.repairPlan(core);
+      helper.assertTrue(
+          !plan.isEmpty(), "Formed stomach unnecessarily prevented a mouth repair plan");
+      helper.assertTrue(
+          plan.stream().noneMatch(p -> members.contains(p.source())),
+          "Batch tried to recall one member of a formed stomach");
+      helper.succeed();
+    } finally {
+      cleanup(helper, ship);
+    }
   }
 
   @GameTest(template = "test_empty", timeoutTicks = 200, batch = "end_fixture_geometry")

@@ -315,7 +315,11 @@ public final class BioshipAssimilation {
   }
 
   boolean beginRepair(LivingCoreBlockEntity core, List<BioshipAnatomy.RepairPart> plan) {
-    if (plan.isEmpty() || pending() || core.organMove() != null || repairing()) return false;
+    if (plan.isEmpty()
+        || active()
+        || wreck != null && !settling
+        || core.organMove() != null
+        || repairing()) return false;
     var order = BioshipAnatomy.deploymentOrder(core, plan);
     if (order.length != plan.size()) return false;
     var entries = new ListTag();

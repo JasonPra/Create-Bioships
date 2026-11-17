@@ -216,7 +216,7 @@ public final class ComponentTransport {
       return false;
     var level = core.body().getLevel();
     var host = level.getBlockState(target);
-    if (!host.isAir()
+    if ((!host.isAir() && !BioshipTissue.isTissue(host))
         || !BioshipIntegration.aquaticGrowthSpace(
             level,
             BlockPos.containing(
@@ -228,11 +228,14 @@ public final class ComponentTransport {
         SubLevelAssemblyHelper.assembleBlocks(
             level, target, List.of(target), new BoundingBox3i(target, target));
     if (cargo == null) {
-      level.removeBlock(target, false);
+      level.setBlock(target, host, 3);
       return false;
     }
+    if (!host.isAir()) level.setBlock(target, host, 3);
     core.restore(cargo, cargo.getPlot().getCenterBlock(), capsule);
-    core.rememberHost(core.component(cargo, cargo.getPlot().getCenterBlock()), host);
+    core.rememberHost(
+        core.component(cargo, cargo.getPlot().getCenterBlock()),
+        net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
     var tags = new CompoundTag();
     tags.putUUID("BioshipCargoOwner", core.body().getUniqueId());
     tags.putBoolean("BioshipBound", true);

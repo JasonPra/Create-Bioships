@@ -90,3 +90,12 @@ follow-ups. All seven are complete, with 99 unit tests and 203 live GameTests pa
 The user chose targeted fixes in existing classes rather than a new attachment policy/tag system.
 No global block mass changes were needed. Zero tasks remain; graphical animation QA is unperformed.
 The previously cancelled historical backlog remains cancelled.
+
+## Completed coordinated layout repair
+
+The user approved the six-checkpoint batch repair and the existing responsibility split: anatomy
+plans, assimilation owns recalled stock/progress, and component transport owns moves/animations.
+All six checkpoints are complete and pushed. Final clean checks passed 100 unit tests and 210 live
+GameTests, all source sets and package/Mixin checks. See `docs/development/batch-layout-repair.md`.
+Zero tasks remain; graphical QA is unperformed. The uploaded clip showed a paused menu.
+The cancelled historical backlog remains cancelled.
