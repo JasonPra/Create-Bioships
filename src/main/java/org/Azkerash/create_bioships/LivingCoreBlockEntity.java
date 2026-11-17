@@ -187,6 +187,12 @@ public class LivingCoreBlockEntity extends BlockEntity
   }
 
   private final BioshipAutonomy autonomy = new BioshipAutonomy();
+  private final org.Azkerash.create_bioships.creature.memory.PlaceMemory places =
+      new org.Azkerash.create_bioships.creature.memory.PlaceMemory();
+
+  public org.Azkerash.create_bioships.creature.memory.PlaceMemory placeMemory() {
+    return places;
+  }
 
   public BioshipAutonomy autonomy() {
     return autonomy;
@@ -1235,6 +1241,8 @@ public class LivingCoreBlockEntity extends BlockEntity
     tag.put("SurvivalAdaptations", survival.save());
     tag.put("Defense", defense.save());
     tag.put("Autonomy", autonomy.save());
+    tag.put(
+        "PlaceMemory", org.Azkerash.create_bioships.creature.memory.PlaceMemoryCodec.save(places));
     tag.put("Rescue", rescue.save());
     tag.put("Vision", vision.save());
     if (supplyTarget != null) tag.putLong("SupplyTarget", supplyTarget.asLong());
@@ -1289,6 +1297,8 @@ public class LivingCoreBlockEntity extends BlockEntity
     survival.load(tag.getCompound("SurvivalAdaptations"));
     defense.load(tag.getCompound("Defense"));
     autonomy.load(tag.getCompound("Autonomy"));
+    org.Azkerash.create_bioships.creature.memory.PlaceMemoryCodec.load(
+        places, tag.getCompound("PlaceMemory"));
     rescue.load(tag.getCompound("Rescue"), registries);
     vision.load(tag.getCompound("Vision"), registries);
     supplyTarget = tag.contains("SupplyTarget") ? BlockPos.of(tag.getLong("SupplyTarget")) : null;

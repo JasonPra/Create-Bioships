@@ -318,7 +318,7 @@ Owns subsystem instances and saved state; schedules game ticks and publishes phy
 
 #### LivingCoreBlockEntity
 
-Source: `src/main/java/org/Azkerash/create_bioships/LivingCoreBlockEntity.java` (1326 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/LivingCoreBlockEntity.java` (1336 lines).
 
 ```java
 public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySubLevelActor, org.Azkerash.create_bioships.amoeba.components.AmoebaComponentProvider
@@ -403,199 +403,203 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
 
   private final BioshipAutonomy autonomy; // line 187
 
-  public BioshipAutonomy autonomy(); // line 189
+  private final org.Azkerash.create_bioships.creature.memory.PlaceMemory places; // line 189
 
-  int trustLevel(); // line 193
+  public org.Azkerash.create_bioships.creature.memory.PlaceMemory placeMemory(); // line 191
 
-  private final BioshipDefense defense; // line 197
+  public BioshipAutonomy autonomy(); // line 195
 
-  public Vec3 attackTip(); // line 199
+  int trustLevel(); // line 199
 
-  public boolean attackSweeping(); // line 203
+  private final BioshipDefense defense; // line 203
 
-  BioshipDefense defense(); // line 207
+  public Vec3 attackTip(); // line 205
 
-  public boolean hatchling(); // line 211
+  public boolean attackSweeping(); // line 209
 
-  private int bodyLayoutVersion; // line 215
+  BioshipDefense defense(); // line 213
 
-  public int layoutVersion(); // line 217
+  public boolean hatchling(); // line 217
 
-  public java.util.List<DinghyGrowth.Part> plannedBody(); // line 221
+  private int bodyLayoutVersion; // line 221
 
-  private String growthObstacle; // line 225
+  public int layoutVersion(); // line 223
 
-  private long lastServerTick; // line 227
+  public java.util.List<DinghyGrowth.Part> plannedBody(); // line 227
 
-  private final BioshipAquatic aquatic; // line 228
+  private String growthObstacle; // line 231
 
-  private final BioshipEngineRoom engineRoom; // line 229
+  private long lastServerTick; // line 233
 
-  public BioshipEngineRoom engineRoom(); // line 230
+  private final BioshipAquatic aquatic; // line 234
 
-  public BioshipAquatic aquatic(); // line 234
+  private final BioshipEngineRoom engineRoom; // line 235
 
-  private double hoverHeight; // line 238
+  public BioshipEngineRoom engineRoom(); // line 236
 
-  private volatile FlightIntent flight; // line 240
+  public BioshipAquatic aquatic(); // line 240
 
-  void inheritFlight(LivingCoreBlockEntity previous); // line 241
+  private double hoverHeight; // line 244
 
-  private record FlightIntent( boolean lift, Vec3 velocity, double turn, double supportHeight, Vec3 stanceUp); // line 245
+  private volatile FlightIntent flight; // line 246
 
-  public LivingCoreBlockEntity(BlockPos pos, BlockState state); // line 252
+  void inheritFlight(LivingCoreBlockEntity previous); // line 247
 
-  public ServerSubLevel ship(); // line 256
+  private record FlightIntent( boolean lift, Vec3 velocity, double turn, double supportHeight, Vec3 stanceUp); // line 251
 
-  boolean primary(ServerSubLevel ship); // line 264
+  public LivingCoreBlockEntity(BlockPos pos, BlockState state); // line 258
 
-  public void interact(Player player, ItemStack stack); // line 272
+  public ServerSubLevel ship(); // line 262
 
-  private int goggleFlesh, goggleBone, goggleFiber; // line 310
+  boolean primary(ServerSubLevel ship); // line 270
 
-  public java.util.List<Component> goggleTooltip(); // line 312
+  public void interact(Player player, ItemStack stack); // line 278
 
-  public boolean feedAtMouth(Player player, ItemStack stack); // line 408
+  private int goggleFlesh, goggleBone, goggleFiber; // line 316
 
-  public boolean feedAtMouth(BlockPos mouth, Player player, ItemStack stack); // line 412
+  public java.util.List<Component> goggleTooltip(); // line 318
 
-  public static boolean isMeat(ItemStack stack); // line 444
+  public boolean feedAtMouth(Player player, ItemStack stack); // line 414
 
-  final BioshipTrustFeedback trustFeedback; // line 448
+  public boolean feedAtMouth(BlockPos mouth, Player player, ItemStack stack); // line 418
 
-  int poisonSeconds(); // line 450
+  public static boolean isMeat(ItemStack stack); // line 450
 
-  public void digestMeal(ItemStack stack); // line 454
+  final BioshipTrustFeedback trustFeedback; // line 454
 
-  public boolean acceptAmalgam(ItemStack stack); // line 473
+  int poisonSeconds(); // line 456
 
-  private final BioshipScavenging scavenging; // line 481
+  public void digestMeal(ItemStack stack); // line 460
 
-  public BioshipScavenging scavenging(); // line 483
+  public boolean acceptAmalgam(ItemStack stack); // line 479
 
-  private final BioshipCrawl crawl; // line 487
+  private final BioshipScavenging scavenging; // line 487
 
-  public BioshipCrawl crawl(); // line 489
+  public BioshipScavenging scavenging(); // line 489
 
-  private final BioshipSurvivalAdaptations survival; // line 493
+  private final BioshipCrawl crawl; // line 493
 
-  public BioshipSurvivalAdaptations survival(); // line 495
+  public BioshipCrawl crawl(); // line 495
 
-  private final BioshipAdaptation adaptation; // line 499
+  private final BioshipSurvivalAdaptations survival; // line 499
 
-  public BioshipAdaptation adaptation(); // line 501
+  public BioshipSurvivalAdaptations survival(); // line 501
 
-  private final BioshipBody body; // line 505
+  private final BioshipAdaptation adaptation; // line 505
 
-  private final BioshipBlueprint blueprint; // line 507
+  public BioshipAdaptation adaptation(); // line 507
 
-  public BioshipBody body(); // line 508
+  private final BioshipBody body; // line 511
 
-  public BioshipBlueprint blueprint(); // line 512
+  private final BioshipBlueprint blueprint; // line 513
 
-  public BlockPos layoutPos(BlockPos offset); // line 516
+  public BioshipBody body(); // line 514
 
-  final BioshipChunks chunkLoading; // line 521
+  public BioshipBlueprint blueprint(); // line 518
 
-  private final BioshipBrain brain; // line 523
+  public BlockPos layoutPos(BlockPos offset); // line 522
 
-  public BioshipBrain brain(); // line 524
+  final BioshipChunks chunkLoading; // line 527
 
-  int satiety(); // line 528
+  private final BioshipBrain brain; // line 529
 
-  boolean frameFunded(); // line 532
+  public BioshipBrain brain(); // line 530
 
-  boolean buildingHull(); // line 536
+  int satiety(); // line 534
 
-  private boolean framePaid, larynxDeveloped; // line 540
+  boolean frameFunded(); // line 538
 
-  public boolean wantsStoredFood(); // line 542
+  boolean buildingHull(); // line 542
 
-  private boolean prepareFrame(); // line 551
+  private boolean framePaid, larynxDeveloped; // line 546
 
-  private void developLarynx(ServerSubLevel ship); // line 584
+  public boolean wantsStoredFood(); // line 548
 
-  public int incorporateBiomass(int amount); // line 608
+  private boolean prepareFrame(); // line 557
 
-  public int missingBiomass(); // line 614
+  private void developLarynx(ServerSubLevel ship); // line 590
 
-  private static void message(Player player, String key, Object... args); // line 618
+  public int incorporateBiomass(int amount); // line 614
 
-  public void mistreat(); // line 622
+  public int missingBiomass(); // line 620
 
-  private boolean clearForGrowth(ServerSubLevel ship, BlockPos pos); // line 630
+  private static void message(Player player, String key, Object... args); // line 624
 
-  private void recordGrowthObstacle(ServerSubLevel ship, BlockPos offset); // line 639
+  public void mistreat(); // line 628
 
-  private boolean roomToGrow(ServerSubLevel ship); // line 657
+  private boolean clearForGrowth(ServerSubLevel ship, BlockPos pos); // line 636
 
-  private net.minecraft.server.level.ServerLevel transferLevel; // line 678
+  private void recordGrowthObstacle(ServerSubLevel ship, BlockPos offset); // line 645
 
-  private BlockPos transferTarget; // line 680
+  private boolean roomToGrow(ServerSubLevel ship); // line 663
 
-  void recordTransfer(net.minecraft.server.level.ServerLevel destination, BlockPos pos); // line 681
+  private net.minecraft.server.level.ServerLevel transferLevel; // line 684
 
-  public boolean hasTransferReceipt(); // line 686
+  private BlockPos transferTarget; // line 686
 
-  public boolean transferred(); // line 690
+  void recordTransfer(net.minecraft.server.level.ServerLevel destination, BlockPos pos); // line 687
 
-  void coreRemoved(); // line 698
+  public boolean hasTransferReceipt(); // line 692
 
-  public void setRemoved(); // line 708
+  public boolean transferred(); // line 696
 
-  public static void tick(Level level, BlockPos pos, BlockState state, LivingCoreBlockEntity core); // line 715
+  void coreRemoved(); // line 704
 
-  private void updateCabinLights(); // line 831
+  public void setRemoved(); // line 714
 
-  private void growBody(); // line 842
+  public static void tick(Level level, BlockPos pos, BlockState state, LivingCoreBlockEntity core); // line 721
 
-  public void sable$tick(ServerSubLevel ship); // line 918
+  private void updateCabinLights(); // line 837
 
-  private void serverTick(); // line 923
+  private void growBody(); // line 848
 
-  private void incorporateAmalgam(); // line 1030
+  public void sable$tick(ServerSubLevel ship); // line 924
 
-  public boolean canFly(); // line 1039
+  private void serverTick(); // line 929
 
-  private void updateEye(boolean active); // line 1048
+  private void incorporateAmalgam(); // line 1036
 
-  public boolean isMature(); // line 1061
+  public boolean canFly(); // line 1045
 
-  public boolean resting(); // line 1065
+  private void updateEye(boolean active); // line 1054
 
-  public boolean aggressive(); // line 1069
+  public boolean isMature(); // line 1067
 
-  public boolean isCaptain(net.minecraft.world.entity.Entity entity); // line 1073
+  public boolean resting(); // line 1071
 
-  public boolean huntingAllowed(); // line 1077
+  public boolean aggressive(); // line 1075
 
-  public int foodLevel(); // line 1085
+  public boolean isCaptain(net.minecraft.world.entity.Entity entity); // line 1079
 
-  public boolean starving(); // line 1089
+  public boolean huntingAllowed(); // line 1083
 
-  public void adoptLarynx(); // line 1093
+  public int foodLevel(); // line 1091
 
-  public boolean wantsToHunt(); // line 1098
+  public boolean starving(); // line 1095
 
-  public boolean hungry(); // line 1102
+  public void adoptLarynx(); // line 1099
 
-  public boolean hasMouth(); // line 1106
+  public boolean wantsToHunt(); // line 1104
 
-  public BlockPos mouthBlock(); // line 1110
+  public boolean hungry(); // line 1108
 
-  public Vec3 mouthPosition(ServerSubLevel ship); // line 1132
+  public boolean hasMouth(); // line 1112
 
-  public int swimmingFlagella(); // line 1144
+  public BlockPos mouthBlock(); // line 1116
 
-  Vec3 gatheringGoal(); // line 1152
+  public Vec3 mouthPosition(ServerSubLevel ship); // line 1138
 
-  static boolean droppedSupply(ItemStack stack); // line 1157
+  public int swimmingFlagella(); // line 1150
 
-  public void sable$physicsTick(ServerSubLevel ship, RigidBodyHandle body, double dt); // line 1165
+  Vec3 gatheringGoal(); // line 1158
 
-  protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries); // line 1219
+  static boolean droppedSupply(ItemStack stack); // line 1163
 
-  protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries); // line 1269
+  public void sable$physicsTick(ServerSubLevel ship, RigidBodyHandle body, double dt); // line 1171
+
+  protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries); // line 1225
+
+  protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries); // line 1277
 
 ```
 
@@ -1405,6 +1409,8 @@ Threat assessment, retreat and idle wandering. Pilot authority is currently disa
 ```text
 [autonomy]
   BioshipAutonomy
+  creature.memory.PlaceMemory
+  creature.memory.PlaceMemoryCodec
 ```
 
 
@@ -1450,6 +1456,78 @@ public final class BioshipAutonomy
   CompoundTag save(); // line 198
 
   void load(CompoundTag tag); // line 212
+
+```
+
+
+#### creature.memory.PlaceMemory
+
+Source: `src/main/java/org/Azkerash/create_bioships/creature/memory/PlaceMemory.java` (189 lines).
+
+```java
+public final class PlaceMemory
+
+  public static final int DEFAULT_CAPACITY; // line 6
+
+  public static final long PREY_FRESH_TICKS, DANGER_FRESH_TICKS; // line 7
+
+  public enum Feature; // line 8
+
+  public record Point(double x, double y, double z); // line 19
+
+  private record Key(String dimension, int x, int y, int z); // line 30
+
+  public record Entry( String dimension, Point point, String biome, Set<Feature> features, long terrainSeen, long updatedAt, Map<String, Long> prey, Map<String, Long> danger); // line 40
+
+  private final int capacity; // line 79
+
+  private final Map<Key, Entry> places; // line 81
+
+  public PlaceMemory(); // line 82
+
+  public PlaceMemory(int capacity); // line 86
+
+  public int size(); // line 92
+
+  public List<Entry> snapshot(); // line 96
+
+  public List<Entry> inDimension(String dimension); // line 100
+
+  public void terrain( String dimension, Point point, String biome, Set<Feature> features, long now); // line 104
+
+  public void prey(String dimension, Point point, String biome, String species, long now); // line 121
+
+  public void danger(String dimension, Point point, String biome, String kind, long now); // line 125
+
+  private void evidence( String dimension, Point point, String biome, String id, long now, boolean prey); // line 129
+
+  public void restore(Collection<Entry> entries); // line 150
+
+  private void put(Key key, Entry entry); // line 155
+
+  private static Map<String, Long> bounded(Map<String, Long> source, int limit); // line 166
+
+  private static double freshness(long now, long seen, long lifetime); // line 184
+
+```
+
+
+#### creature.memory.PlaceMemoryCodec
+
+Source: `src/main/java/org/Azkerash/create_bioships/creature/memory/PlaceMemoryCodec.java` (86 lines).
+
+```java
+public final class PlaceMemoryCodec
+
+  public static CompoundTag save(PlaceMemory memory); // line 9
+
+  private static ListTag evidence(Map<String, Long> sightings); // line 31
+
+  private static Map<String, Long> evidence(ListTag list, int limit); // line 43
+
+  public static void load(PlaceMemory memory, CompoundTag tag); // line 52
+
+  private PlaceMemoryCodec(); // line 83
 
 ```
 

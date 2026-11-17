@@ -32,3 +32,8 @@ Checkpoint 1 complete: current retreat tries five grounded directions away from 
 It remembers no terrain and rejects all attacks while FLEE is selected. Existing strikes already
 apply damage through moving tip hitboxes. Underwater routing and climbing can be reused. Existing
 panic/trust/health gates remain the decision for entering retreat; TNT adds an explosive hazard.
+
+Checkpoint 2 complete: up to 128 dimension-specific observed places persist with the core.
+Terrain knowledge survives while prey and danger confidence age independently. Species lists and
+loaded NBT records are bounded; malformed entries are discarded. Six new unit tests pass; all
+93 unit tests and GameTest source compilation passed.
