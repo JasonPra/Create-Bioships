@@ -22,11 +22,12 @@ public final class BioshipAquatic {
     return navigation.debug(now);
   }
 
-  private int air = 300;
+  private final org.Azkerash.create_bioships.creature.respiration.AirSupply air =
+      new org.Azkerash.create_bioships.creature.respiration.AirSupply();
   private long lastTick = Long.MIN_VALUE;
   private volatile boolean wet, swimming;
   private boolean waterContact;
-  private boolean breathing = true, airAccess = true, seekingAir;
+  private boolean breathing = true, airAccess = true;
   private final ExposureHistory gillUsage = new ExposureHistory();
 
   ExposureHistory gillUsage() {
@@ -63,11 +64,11 @@ public final class BioshipAquatic {
   }
 
   public int air() {
-    return air;
+    return air.remaining();
   }
 
   boolean needsAir() {
-    return seekingAir && (breathing || !airAccess);
+    return air.needsAir(breathing, airAccess);
   }
 
   void tick(LivingCoreBlockEntity core) {
@@ -90,52 +91,28 @@ public final class BioshipAquatic {
     }
     airAccess = BioshipRespiration.airAccess(core);
     breathing = canBreathe(core);
-    if (!breathing) {
-      air = Math.max(0, air - 1);
-      if (air == 0 && level.getGameTime() % 20 == 0) {
-        if (airAccess) core.body().asphyxiate(core);
-        else core.body().drown(core);
-      }
-    } else air = Math.min(300, air + 4);
-    if (!airAccess && !breathing && air < 200) seekingAir = true;
-    if (air == 300) seekingAir = false;
+    air.tick(breathing, airAccess, BioshipRespiration.activeGills(core));
+    if (!breathing && air.remaining() == 0 && level.getGameTime() % 20 == 0) {
+      if (airAccess) core.body().asphyxiate(core);
+      else core.body().drown(core);
+    }
     swimming =
-        (wet || seekingAir && breathing && waterWithinReach(core, here))
+        (wet || air.seeking() && breathing && waterWithinReach(core, here))
             && !core.body().dead()
             && (core.canFly() || core.crawl().carriedLoad(core) <= core.crawl().loadCapacity());
     velocity = Vec3.ZERO;
     if (swimming) {
-      if (seekingAir && breathing) {
+      if (air.seeking() && breathing) {
         // Stay braced at the waterline until air is replenished instead of diving after one breath.
         if (level.getGameTime() % 20 == 0) core.setChanged();
         return;
       }
       var selected = core.brain().lastDecision();
-      if (!needsAir() && selected != null && selected.point() != null) {
-        velocity =
-            navigation
-                .toward(core, selected.point())
-                .scale(1.5 * (1 + .6 * BioshipLegEvolution.swimmingFraction(core)));
-        return;
-      }
-      navigation.clear();
-      Vec3 direction =
-          selected != null && selected.point() != null && !needsAir()
-              ? selected.point().subtract(here).normalize()
-              : new Vec3(0, 1, 0);
-      var options =
-          List.of(
-              direction,
-              new Vec3(0, 1, 0),
-              new Vec3(1, .5, 0).normalize(),
-              new Vec3(-1, .5, 0).normalize(),
-              new Vec3(0, .5, 1).normalize(),
-              new Vec3(0, .5, -1).normalize());
-      for (var candidate : options)
-        if (clear(core, candidate.scale(.65))) {
-          velocity = candidate.scale(1.5 * (1 + .6 * BioshipLegEvolution.swimmingFraction(core)));
-          break;
-        }
+      if (needsAir()) velocity = navigation.towardAir(core);
+      else if (selected != null && selected.point() != null)
+        velocity = navigation.toward(core, selected.point());
+      else navigation.clear();
+      velocity = velocity.scale(1.5 * (1 + .6 * BioshipLegEvolution.swimmingFraction(core)));
     }
     if (!swimming) navigation.clear();
     if (level.getGameTime() % 20 == 0) {
@@ -198,18 +175,6 @@ public final class BioshipAquatic {
     return false;
   }
 
-  private boolean clear(LivingCoreBlockEntity core, Vec3 offset) {
-    var ship = core.ship();
-    for (var cell : BioshipDecay.blocks(ship)) {
-      var point =
-          BlockPos.containing(
-              ship.logicalPose().transformPosition(Vec3.atCenterOf(cell)).add(offset));
-      if (!core.getLevel().getBlockState(point).getCollisionShape(core.getLevel(), point).isEmpty())
-        return false;
-    }
-    return true;
-  }
-
   void propel(ServerSubLevel ship, RigidBodyHandle body, double dt) {
     var current = body.getLinearVelocity(new Vector3d());
     var goal = velocity;
@@ -224,12 +189,12 @@ public final class BioshipAquatic {
 
   public CompoundTag save() {
     var t = new CompoundTag();
-    t.putInt("Air", air);
+    t.putInt("Air", air.remaining());
     t.putInt("GillSamples", gillUsage.samples());
     t.putInt("GillUse", gillUsage.score());
     t.putDouble("GillUsePrecise", gillUsage.preciseScore());
     t.putBoolean("AirAccess", airAccess);
-    t.putBoolean("SeekingAir", seekingAir);
+    t.putBoolean("SeekingAir", air.seeking());
     t.putInt("WaterUse", legUsage.water());
     t.putDouble("WaterUsePrecise", legUsage.preciseWater());
     t.putInt("UseSamples", legUsage.samples());
@@ -246,12 +211,12 @@ public final class BioshipAquatic {
         t.getInt("GillSamples"),
         t.contains("GillUsePrecise") ? t.getDouble("GillUsePrecise") : t.getDouble("GillUse"));
     airAccess = !t.contains("AirAccess") || t.getBoolean("AirAccess");
-    seekingAir = t.getBoolean("SeekingAir");
+
     legUsage.restore(
         t.getInt("UseSamples"),
         t.contains("WaterUsePrecise") ? t.getDouble("WaterUsePrecise") : t.getDouble("WaterUse"));
     nextLegEvolution = t.getLong("LegEvolutionAfter");
-    air = t.contains("Air") ? Math.clamp(t.getInt("Air"), 0, 300) : 300;
+    air.restore(t.contains("Air") ? t.getInt("Air") : 300, t.getBoolean("SeekingAir"));
     wet = t.getBoolean("Wet");
     waterContact = t.getBoolean("WaterContact");
     breathing = !t.contains("Breathing") || t.getBoolean("Breathing");

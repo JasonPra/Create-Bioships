@@ -37,15 +37,22 @@ public final class BioshipRespiration {
   }
 
   static boolean airAccess(LivingCoreBlockEntity core) {
+    return airAccessAt(core, BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO));
+  }
+
+  static boolean airAccessAt(LivingCoreBlockEntity core, Vec3 root) {
     var mouths = DigestiveSystem.mouths(core);
-    return mouths.isEmpty()
-        ? BioshipAquatic.aboveFluid(
-            core, BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO))
-        : mouths.stream()
-            .anyMatch(
-                p ->
-                    BioshipAquatic.aboveFluid(
-                        core, core.ship().logicalPose().transformPosition(Vec3.atCenterOf(p))));
+    if (mouths.isEmpty()) return BioshipAquatic.aboveFluid(core, root);
+    return mouths.stream()
+        .anyMatch(
+            p ->
+                BioshipAquatic.aboveFluid(
+                    core,
+                    root.add(
+                        core.ship()
+                            .logicalPose()
+                            .transformNormal(
+                                Vec3.atLowerCornerOf(p.subtract(core.getBlockPos()))))));
   }
 
   static boolean exposedGill(LivingCoreBlockEntity core, BlockPos pos, BlockState state) {
