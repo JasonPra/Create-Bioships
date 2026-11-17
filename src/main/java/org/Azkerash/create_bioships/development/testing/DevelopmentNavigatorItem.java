@@ -65,21 +65,25 @@ public final class DevelopmentNavigatorItem extends Item {
     var entries = new SimpleContainer(9);
     entries.setItem(0, icon(Items.GLASS, "Regression: Core separation"));
     entries.setItem(1, icon(Items.DIAMOND_SWORD, "Regression: Hostile combat arena"));
+    entries.setItem(2, icon(Items.DISPENSER, "Regression: Core arrow wound"));
     player.openMenu(
         new SimpleMenuProvider(
             (id, inventory, viewer) ->
                 new ChestMenu(MenuType.GENERIC_9x1, id, inventory, entries, 1) {
                   @Override
                   public void clicked(int slot, int button, ClickType type, Player clicking) {
-                    if (slot != 0 && slot != 1) return;
-                    var base = slot == 0 ? state.layout().base() : state.combatOrigin;
+                    if (slot < 0 || slot > 2) return;
+                    var base =
+                        slot == 0
+                            ? state.layout().base()
+                            : slot == 1 ? state.combatOrigin : state.arrowOrigin;
                     clicking.closeContainer();
                     if (clicking instanceof ServerPlayer server) {
                       server.teleportTo(
                           level,
                           base.getX() + .5,
                           base.getY() + 1,
-                          base.getZ() + (slot == 0 ? -15 : -18),
+                          base.getZ() + (slot == 0 ? -15 : slot == 1 ? -18 : -10),
                           0,
                           0);
                       server.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);

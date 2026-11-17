@@ -1,0 +1,77 @@
+{
+  "textures": {
+    "skin": "create_bioships:block/living_core",
+    "eye": "create_bioships:block/living_core",
+    "particle": "create_bioships:block/living_core"
+  },
+  "elements": [
+    {
+      "from": [
+        5,
+        5,
+        13
+      ],
+      "to": [
+        11,
+        11,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#eye",
+          "uv": [
+            2,
+            4,
+            14,
+            12
+          ]
+        },
+        "south": {
+          "texture": "#skin",
+          "uv": [
+            0,
+            0,
+            4,
+            4
+          ]
+        },
+        "east": {
+          "texture": "#skin",
+          "uv": [
+            0,
+            0,
+            4,
+            4
+          ]
+        },
+        "west": {
+          "texture": "#skin",
+          "uv": [
+            0,
+            0,
+            4,
+            4
+          ]
+        },
+        "up": {
+          "texture": "#skin",
+          "uv": [
+            0,
+            0,
+            4,
+            4
+          ]
+        },
+        "down": {
+          "texture": "#skin",
+          "uv": [
+            0,
+            0,
+            4,
+            4
+          ]
+        }
+      }
+    }
+  ]
+}

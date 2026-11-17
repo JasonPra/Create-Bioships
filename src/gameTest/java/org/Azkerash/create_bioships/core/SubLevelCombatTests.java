@@ -18,7 +18,7 @@ public final class SubLevelCombatTests {
   @GameTest(template = "test_empty", timeoutTicks = 200, batch = "native_combat_integration")
   public static void native_melee_projectile_and_hostile_targeting(GameTestHelper helper) {
     var level = helper.getLevel();
-    var origin = helper.absolutePos(new BlockPos(3, 4, 3));
+    var origin = new BlockPos(128, 80, 128);
     for (int x = -5; x <= 5; x++)
       for (int z = -5; z <= 5; z++)
         level.setBlock(origin.offset(x, -2, z), Blocks.BEDROCK.defaultBlockState(), 3);
@@ -82,7 +82,8 @@ public final class SubLevelCombatTests {
           target.tick();
           for (int i = 0; i < 100 && zombie.getTarget() == null; i++) zombie.targetSelector.tick();
           helper.assertTrue(
-              zombie.getTarget() == target,
+              zombie.getTarget() instanceof SubLevelCombatTarget acquired
+                  && acquired.body() == body,
               "Hostile AI failed to acquire the sublevel target; canAttack="
                   + zombie.canAttack(target)
                   + " visible="
@@ -99,7 +100,7 @@ public final class SubLevelCombatTests {
                   + " goals="
                   + zombie.targetSelector.getAvailableGoals().size());
           before = SubLevelHealth.status(body).current();
-          zombie.doHurtTarget(target);
+          zombie.doHurtTarget(zombie.getTarget());
           helper.assertTrue(
               SubLevelHealth.status(body).current() < before, "Zombie attack did not damage grid");
           zombie.discard();

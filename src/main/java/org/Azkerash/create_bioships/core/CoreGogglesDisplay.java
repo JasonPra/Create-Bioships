@@ -37,7 +37,14 @@ public final class CoreGogglesDisplay extends BlockEntity implements IHaveGoggle
   }
 
   @Override
+  public net.minecraft.world.item.ItemStack getIcon(boolean sneaking) {
+    return Create_bioships.BIOSHIP_GOGGLES.get().getDefaultInstance();
+  }
+
+  @Override
   public boolean addToGoggleTooltip(List<Component> tooltip, boolean sneaking) {
+    tooltip.add(Component.empty());
+    tooltip.add(Component.empty());
     tooltip.add(Component.literal("Amoeba · Sublevel"));
     if (!inspection.contains("maximum")) tooltip.add(Component.literal("Unassembled"));
     else {

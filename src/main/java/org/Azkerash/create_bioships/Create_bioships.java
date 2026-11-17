@@ -36,6 +36,38 @@ public final class Create_bioships {
                       .clientTrackingRange(10)
                       .updateInterval(1)
                       .build("create_bioships:sublevel_combat_target"));
+  public static final DeferredHolder<
+          net.minecraft.world.entity.EntityType<?>,
+          net.minecraft.world.entity.EntityType<
+              org.Azkerash.create_bioships.combat.CoreCombatHurtbox>>
+      CORE_HURTBOX =
+          ENTITIES.register(
+              "core_hurtbox",
+              () ->
+                  net.minecraft.world.entity.EntityType.Builder
+                      .<org.Azkerash.create_bioships.combat.CoreCombatHurtbox>of(
+                          org.Azkerash.create_bioships.combat.CoreCombatHurtbox::new,
+                          net.minecraft.world.entity.MobCategory.MISC)
+                      .sized(1, 1)
+                      .clientTrackingRange(10)
+                      .updateInterval(1)
+                      .build("create_bioships:core_hurtbox"));
+  public static final DeferredHolder<
+          net.minecraft.world.entity.EntityType<?>,
+          net.minecraft.world.entity.EntityType<
+              org.Azkerash.create_bioships.combat.EyeCombatHurtbox>>
+      EYE_HURTBOX =
+          ENTITIES.register(
+              "eye_hurtbox",
+              () ->
+                  net.minecraft.world.entity.EntityType.Builder
+                      .<org.Azkerash.create_bioships.combat.EyeCombatHurtbox>of(
+                          org.Azkerash.create_bioships.combat.EyeCombatHurtbox::new,
+                          net.minecraft.world.entity.MobCategory.MISC)
+                      .sized(.4f, .4f)
+                      .clientTrackingRange(10)
+                      .updateInterval(1)
+                      .build("create_bioships:eye_hurtbox"));
   private static final DeferredRegister<CreativeModeTab> TABS =
       DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
   private static final DeferredRegister<net.minecraft.world.level.block.entity.BlockEntityType<?>>
@@ -54,6 +86,22 @@ public final class Create_bioships {
                   net.minecraft.world.level.block.entity.BlockEntityType.Builder.of(
                           CoreGogglesDisplay::new, CORE.get())
                       .build(null));
+  public static final DeferredBlock<org.Azkerash.create_bioships.components.eye.EyeBlock> LAND_EYE =
+      BLOCKS.register(
+          "land_eye",
+          () ->
+              new org.Azkerash.create_bioships.components.eye.EyeBlock(
+                  BlockBehaviour.Properties.of().strength(1).noOcclusion()));
+  public static final DeferredBlock<org.Azkerash.create_bioships.components.eye.EyeBlock>
+      AQUATIC_EYE =
+          BLOCKS.register(
+              "aquatic_eye",
+              () ->
+                  new org.Azkerash.create_bioships.components.eye.EyeBlock(
+                      BlockBehaviour.Properties.of().strength(1).noOcclusion()));
+  public static final DeferredItem<BlockItem>
+      LAND_EYE_ITEM = ITEMS.registerSimpleBlockItem(LAND_EYE),
+      AQUATIC_EYE_ITEM = ITEMS.registerSimpleBlockItem(AQUATIC_EYE);
   public static final DeferredItem<BlockItem> CORE_ITEM = ITEMS.registerSimpleBlockItem(CORE);
 
   public static final DeferredItem<BioshipGogglesItem> BIOSHIP_GOGGLES =
@@ -73,6 +121,8 @@ public final class Create_bioships {
                 .displayItems(
                     (parameters, output) -> {
                       output.accept(CORE_ITEM.get());
+                      output.accept(LAND_EYE_ITEM.get());
+                      output.accept(AQUATIC_EYE_ITEM.get());
                       output.accept(BIOSHIP_GOGGLES.get());
                       output.accept(BIOSHIP_WRENCH.get());
                     })
@@ -96,6 +146,16 @@ public final class Create_bioships {
         (net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent event) ->
             event.put(
                 COMBAT_TARGET.get(),
+                org.Azkerash.create_bioships.combat.SubLevelCombatTarget.attributes().build()));
+    bus.addListener(
+        (net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent event) ->
+            event.put(
+                CORE_HURTBOX.get(),
+                org.Azkerash.create_bioships.combat.SubLevelCombatTarget.attributes().build()));
+    bus.addListener(
+        (net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent event) ->
+            event.put(
+                EYE_HURTBOX.get(),
                 org.Azkerash.create_bioships.combat.SubLevelCombatTarget.attributes().build()));
     ENTITIES.register(bus);
     BLOCKS.register(bus);

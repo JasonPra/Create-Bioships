@@ -19,9 +19,12 @@ public final class CoreBlock extends Block
         com.simibubi.create.content.equipment.wrench.IWrenchable,
         net.minecraft.world.level.block.EntityBlock {
   public static final MapCodec<CoreBlock> CODEC = simpleCodec(CoreBlock::new);
-  public static final BooleanProperty BLINK = BooleanProperty.create("blink");
-  public static final IntegerProperty WAKE = IntegerProperty.create("wake", 0, 9);
-  private static final IntegerProperty STAGE = IntegerProperty.create("blink_stage", 0, 3);
+  public static final BooleanProperty BLINK =
+      org.Azkerash.create_bioships.components.eye.EyeBlink.BLINK;
+  public static final IntegerProperty WAKE =
+      org.Azkerash.create_bioships.components.eye.EyeBlink.WAKE;
+  private static final IntegerProperty STAGE =
+      org.Azkerash.create_bioships.components.eye.EyeBlink.STAGE;
 
   public CoreBlock(Properties properties) {
     super(properties);
@@ -117,20 +120,7 @@ public final class CoreBlock extends Block
       level.setBlock(pos, state.setValue(BLINK, true).setValue(WAKE, 0).setValue(STAGE, 0), 2);
       return;
     }
-    int wake = state.getValue(WAKE);
-    if (wake > 0) {
-      int nextWake = wake == 9 ? 0 : wake + 1;
-      level.setBlock(pos, state.setValue(WAKE, nextWake).setValue(BLINK, nextWake != 0), 2);
-      level.scheduleTick(pos, this, nextWake == 0 ? 109 : 3);
-      return;
-    }
-    int stage = state.getValue(STAGE);
-    // Newly assembled cores open first. The old four/four/three-tick double blink follows.
-    boolean opening = stage == 3 || stage == 0 && state.getValue(BLINK);
-    int next = opening ? 0 : stage + 1;
-    boolean closed = next == 1 || next == 3;
-    level.setBlock(pos, state.setValue(BLINK, closed).setValue(STAGE, next), 2);
-    level.scheduleTick(pos, this, next == 0 ? 109 : next == 3 ? 3 : 4);
+    org.Azkerash.create_bioships.components.eye.EyeBlink.advance(this, state, level, pos);
   }
 
   @Override

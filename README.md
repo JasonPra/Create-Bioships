@@ -136,3 +136,24 @@ Dangerous Mobs file 6093131 was temporarily loaded in an isolated test environme
 use the AXOLOTLS spawn category; they are outside the deliberately selected MONSTER registry
 scope. Cheat Killer acquired a target but missed the trial deadline; its global procedures later
 exhausted the isolated server's heap. The temporary dependency, JARs, and test world were removed.
+
+### Tissue wounds and eye weak points
+
+The core and the exposed front of Land/Aquatic Eyes take **1.5×** incoming damage. Damage still
+uses the grid's shared health pool. Core and eye hurtboxes have additional F3+B outlines. Eye
+components share blink and wound behavior under `components.eye`; the aquatic variant changes
+only the eyeball palette and shape.
+
+Weapon and projectile hits leave a per-block, per-face wound. The struck eye remains visually
+closed until its wound expires; other eyes keep blinking. Wounds fade over 1,200 simulation ticks
+(one minute at normal tick rate). Original arrows and tridents remain embedded and follow the
+moving grid, retaining their item data. Attachment data survives entity saves and is sent to new
+observers. Tridents eligible for pickup are returned as their original item when the attachment expires.
+
+The navigator now includes the **Core Arrow Regression** enclosure at x=128, z=0. Its native
+dispenser fires at an assembled core. `/arrow_test start`, `/arrow_test reset`, and
+`/arrow_test status` control it; START/RESET command-block buttons and an explanation hologram
+are provided. Reset restores the sleeping, unassembled fixture and refills the dispenser.
+
+Symbiotic Goggles use their own tooltip icon with room above the text. Both their inventory sprite
+and dedicated worn-model texture are **16×16**, matching Create's original goggles textures.

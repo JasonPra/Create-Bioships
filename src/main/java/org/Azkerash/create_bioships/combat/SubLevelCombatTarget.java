@@ -14,8 +14,10 @@ import net.minecraft.world.phys.Vec3;
 import org.Azkerash.create_bioships.core.SubLevelHealth;
 
 /** Vanilla attack calculations enter here; persistent health belongs exclusively to the grid. */
-public final class SubLevelCombatTarget extends LivingEntity {
+public class SubLevelCombatTarget extends LivingEntity {
   private UUID bodyId, anchorThreat;
+  protected net.minecraft.core.BlockPos impactCell;
+  protected net.minecraft.core.Direction impactFace = net.minecraft.core.Direction.NORTH;
   private Vec3 anchor;
   private int anchorTick;
 
@@ -43,7 +45,7 @@ public final class SubLevelCombatTarget extends LivingEntity {
     return body instanceof ServerSubLevel serverBody && !body.isRemoved() ? serverBody : null;
   }
 
-  private void position(ServerSubLevel body) {
+  protected void position(ServerSubLevel body) {
     Vec3 center =
         body.logicalPose().transformPosition(Vec3.atCenterOf(body.getPlot().getCenterBlock()));
     var threat =
@@ -69,12 +71,22 @@ public final class SubLevelCombatTarget extends LivingEntity {
           if (cells.contains(cell.relative(face))) continue;
           var candidate =
               body.logicalPose().transformPosition(Vec3.atCenterOf(cell).relative(face, .55));
-          double distance =
-              candidate.distanceToSqr(
-                  threat.position().add(0, Math.min(.5, threat.getBbHeight() / 2), 0));
+          if (level()
+                  .clip(
+                      new net.minecraft.world.level.ClipContext(
+                          threat.getEyePosition(),
+                          candidate,
+                          net.minecraft.world.level.ClipContext.Block.COLLIDER,
+                          net.minecraft.world.level.ClipContext.Fluid.NONE,
+                          threat))
+                  .getType()
+              != net.minecraft.world.phys.HitResult.Type.MISS) continue;
+          double distance = candidate.distanceToSqr(threat.getEyePosition());
           if (distance < best) {
             best = distance;
             point = candidate;
+            impactCell = cell;
+            impactFace = face;
           }
         }
     }
@@ -113,14 +125,32 @@ public final class SubLevelCombatTarget extends LivingEntity {
   @Override
   protected void actuallyHurt(DamageSource source, float amount) {
     super.actuallyHurt(source, amount);
-    float damage = damageContainers.peek().getNewDamage();
+    double damage = damageContainers.peek().getNewDamage() * damageMultiplier();
     var body = body();
     if (body != null && damage > 0) {
       SubLevelHealth.damage(body, damage, source);
       CombatAdapter.hurtFlash(body);
+      if (impactCell != null
+          && (source.getDirectEntity() instanceof LivingEntity
+              || source.getDirectEntity()
+                  instanceof net.minecraft.world.entity.projectile.Projectile))
+        SubLevelWounds.hit(body, impactCell, impactFace);
     }
     // This entity is an adapter, never a second health pool or loot-bearing creature.
     setHealth(getMaxHealth());
+  }
+
+  protected double damageMultiplier() {
+    return 1;
+  }
+
+  public void impact(net.minecraft.core.BlockPos cell, net.minecraft.core.Direction face) {
+    impactCell = cell;
+    impactFace = face;
+  }
+
+  public void focusForAttack(Vec3 eye) {
+    setPos(eye.x, eye.y - getEyeHeight(), eye.z);
   }
 
   @Override

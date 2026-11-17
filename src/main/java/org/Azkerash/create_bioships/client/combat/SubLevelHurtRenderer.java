@@ -164,6 +164,8 @@ public final class SubLevelHurtRenderer {
 
     @SubscribeEvent
     public static void entity(EntityRenderersEvent.RegisterRenderers event) {
+      registerInvisible(event, Create_bioships.CORE_HURTBOX.get());
+      registerInvisible(event, Create_bioships.EYE_HURTBOX.get());
       event.registerEntityRenderer(
           Create_bioships.COMBAT_TARGET.get(),
           context ->
@@ -172,6 +174,20 @@ public final class SubLevelHurtRenderer {
                 @Override
                 public ResourceLocation getTextureLocation(
                     org.Azkerash.create_bioships.combat.SubLevelCombatTarget entity) {
+                  return net.minecraft.world.inventory.InventoryMenu.BLOCK_ATLAS;
+                }
+              });
+    }
+
+    private static <T extends net.minecraft.world.entity.Entity> void registerInvisible(
+        EntityRenderersEvent.RegisterRenderers event,
+        net.minecraft.world.entity.EntityType<T> type) {
+      event.registerEntityRenderer(
+          type,
+          context ->
+              new net.minecraft.client.renderer.entity.EntityRenderer<T>(context) {
+                @Override
+                public ResourceLocation getTextureLocation(T entity) {
                   return net.minecraft.world.inventory.InventoryMenu.BLOCK_ATLAS;
                 }
               });

@@ -1,3 +1,13 @@
+import net.neoforged.moddevgradle.dsl.RunModel
+import net.neoforged.moddevgradle.dsl.ModModel
+import org.gradle.api.Task
+import org.gradle.api.file.FileCopyDetails
+import org.gradle.api.tasks.TaskProvider
+import org.gradle.api.tasks.Sync
+import org.gradle.api.tasks.Delete
+import org.gradle.language.jvm.tasks.ProcessResources
+import org.gradle.api.publish.maven.MavenPublication
+
 plugins {
     id 'java-library'
     id 'maven-publish'
@@ -38,35 +48,35 @@ neoForge {
     // Default run configurations.
     // These can be tweaked, removed, or duplicated as needed.
     runs {
-        client {
-            client()
+        client { RunModel run ->
+            run.client()
 
             // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            run.systemProperty('neoforge.enabledGameTestNamespaces', providers.gradleProperty('mod_id').get())
         }
 
-        server {
-            server()
-            programArgument '--nogui'
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        server { RunModel run ->
+            run.server()
+            run.programArgument '--nogui'
+            run.systemProperty('neoforge.enabledGameTestNamespaces', providers.gradleProperty('mod_id').get())
         }
 
         // This run config launches GameTestServer and runs all registered gametests, then exits.
         // By default, the server will crash when no gametests are provided.
         // The gametest system is also enabled by default for other run configs under the /test command.
-        gameTestServer {
-            type = "gameTestServer"
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        gameTestServer { RunModel run ->
+            run.type = "gameTestServer"
+            run.systemProperty('neoforge.enabledGameTestNamespaces', providers.gradleProperty('mod_id').get())
         }
 
-        data {
-            data()
+        data { RunModel run ->
+            run.data()
 
             // example of overriding the workingDirectory set in configureEach above, uncomment if you want to use it
             // gameDirectory = project.file('run-data')
 
             // Specify the modid for data generation, where to output the resulting resource, and where to look for existing resources.
-            programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
+            run.programArguments.addAll(['--mod', providers.gradleProperty('mod_id').get(), '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()])
         }
 
         // applies to all the run configs above
@@ -90,8 +100,8 @@ neoForge {
         // these are used to tell the game which sources are for which mod
         // mostly optional in a single mod project
         // but multi mod projects should define one per mod
-        "${mod_id}" {
-            sourceSet(sourceSets.main)
+        register(mod_id.toString()) { ModModel model ->
+            model.sourceSet(sourceSets.getByName('main'))
         }
     }
 }
@@ -117,10 +127,10 @@ dependencies {
 
 // CurseMaven has no transitive metadata. Expose bundled libraries to javac;
 // NeoForge loads them from the original mod JARs at runtime.
-var extractBundledApis = tasks.register('extractBundledApis', Sync) {
-    from({ configurations.dependencyMods.collect { zipTree(it) } }) {
+TaskProvider<Sync> extractBundledApis = tasks.register('extractBundledApis', Sync) {
+    from({ configurations.dependencyMods.collect { File modFile -> zipTree(modFile) } }) {
         include 'META-INF/jarjar/*.jar'
-        eachFile { path = name }
+        eachFile { FileCopyDetails details -> details.path = details.name }
         includeEmptyDirs = false
     }
     into layout.buildDirectory.dir('bundled-apis')
@@ -134,7 +144,7 @@ dependencies {
 
 // This block of code expands all declared replace properties in the specified resource targets.
 // A missing property will result in an error. Properties are expanded using ${} Groovy notation.
-var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
+TaskProvider<ProcessResources> generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
     var replaceProperties = [minecraft_version      : minecraft_version,
                              minecraft_version_range: minecraft_version_range,
                              neo_version            : neo_version,
@@ -161,8 +171,8 @@ neoForge.ideSyncTask generateModMetadata
 // Example configuration to allow publishing using the maven-publish plugin
 publishing {
     publications {
-        register('mavenJava', MavenPublication) {
-            from components.java
+        register('mavenJava', MavenPublication) { MavenPublication publication ->
+            publication.from(project.components.getByName('java'))
         }
     }
     repositories {
@@ -185,8 +195,8 @@ sourceSets { gameTest {
     compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
     runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
 } }
-neoForge.mods."${mod_id}".sourceSet(sourceSets.gameTest)
-tasks.named('check') { dependsOn tasks.named('gameTestClasses') }
+neoForge.mods.named(mod_id.toString()).configure { ModModel model -> model.sourceSet(sourceSets.getByName('gameTest')) }
+tasks.named('check', Task) { Task checkTask -> checkTask.dependsOn tasks.named('gameTestClasses') }
 neoForge.runs.gameTestServer.gameDirectory = layout.buildDirectory.dir('gametest-run').get().asFile
-tasks.register('resetGameTestWorld', Delete) { delete layout.buildDirectory.dir('gametest-run/world') }
-tasks.named('prepareGameTestServerRun') { dependsOn 'resetGameTestWorld' }
+tasks.register('resetGameTestWorld', Delete) { Delete resetTask -> resetTask.delete layout.buildDirectory.dir('gametest-run/world') }
+tasks.named('prepareGameTestServerRun', Task) { Task prepareTask -> prepareTask.dependsOn 'resetGameTestWorld' }

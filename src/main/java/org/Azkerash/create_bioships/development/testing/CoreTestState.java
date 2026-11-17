@@ -16,6 +16,9 @@ public final class CoreTestState extends SavedData {
   long combatDeadline;
   UUID combatBody, combatEnemy;
   boolean combatAcquired;
+  boolean arrowBuilt, arrowRunning;
+  BlockPos arrowOrigin = new BlockPos(128, -63, 0);
+  UUID arrowBody;
   final List<String> combatEnemies = new ArrayList<>(), combatResults = new ArrayList<>();
   BlockPos origin = new BlockPos(0, -63, 0);
   final Set<UUID> owned = new HashSet<>();
@@ -38,6 +41,11 @@ public final class CoreTestState extends SavedData {
                   var state = new CoreTestState();
                   state.combatFailuresExpanded = tag.getBoolean("CombatFailuresExpanded");
                   state.combatFailurePage = tag.getInt("CombatFailurePage");
+                  state.arrowBuilt = tag.getBoolean("ArrowBuilt");
+                  state.arrowRunning = tag.getBoolean("ArrowRunning");
+                  if (tag.contains("ArrowOrigin"))
+                    state.arrowOrigin = BlockPos.of(tag.getLong("ArrowOrigin"));
+                  if (tag.hasUUID("ArrowBody")) state.arrowBody = tag.getUUID("ArrowBody");
                   state.combatBuilt = tag.getBoolean("CombatBuilt");
                   state.combatRunning = tag.getBoolean("CombatRunning");
                   state.combatIndex = tag.getInt("CombatIndex");
@@ -64,6 +72,10 @@ public final class CoreTestState extends SavedData {
   public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
     tag.putBoolean("CombatFailuresExpanded", combatFailuresExpanded);
     tag.putInt("CombatFailurePage", combatFailurePage);
+    tag.putBoolean("ArrowBuilt", arrowBuilt);
+    tag.putBoolean("ArrowRunning", arrowRunning);
+    tag.putLong("ArrowOrigin", arrowOrigin.asLong());
+    if (arrowBody != null) tag.putUUID("ArrowBody", arrowBody);
     tag.putBoolean("CombatBuilt", combatBuilt);
     tag.putBoolean("CombatRunning", combatRunning);
     tag.putLong("CombatOrigin", combatOrigin.asLong());

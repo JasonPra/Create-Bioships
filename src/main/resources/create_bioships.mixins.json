@@ -9,7 +9,9 @@
     "ProjectileImpactInvoker",
     "BrainCombatTargetMixin",
     "BreezeCombatTargetMixin",
-    "SlimeCombatTargetMixin"
+    "SlimeCombatTargetMixin",
+    "EmbeddedArrowAccess",
+    "EmbeddedProjectileRetentionMixin"
   ],
   "client": [],
   "injectors": {

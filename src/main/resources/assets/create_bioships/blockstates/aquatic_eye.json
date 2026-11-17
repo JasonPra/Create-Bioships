@@ -1,0 +1,76 @@
+{
+  "variants": {
+    "facing=north,blink=false": {
+      "model": "create_bioships:block/aquatic_eye",
+      "x": 0,
+      "y": 0,
+      "uvlock": true
+    },
+    "facing=north,blink=true": {
+      "model": "create_bioships:block/aquatic_eye_closed",
+      "x": 0,
+      "y": 0,
+      "uvlock": true
+    },
+    "facing=south,blink=false": {
+      "model": "create_bioships:block/aquatic_eye",
+      "x": 0,
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=south,blink=true": {
+      "model": "create_bioships:block/aquatic_eye_closed",
+      "x": 0,
+      "y": 180,
+      "uvlock": true
+    },
+    "facing=east,blink=false": {
+      "model": "create_bioships:block/aquatic_eye",
+      "x": 0,
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=east,blink=true": {
+      "model": "create_bioships:block/aquatic_eye_closed",
+      "x": 0,
+      "y": 90,
+      "uvlock": true
+    },
+    "facing=west,blink=false": {
+      "model": "create_bioships:block/aquatic_eye",
+      "x": 0,
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=west,blink=true": {
+      "model": "create_bioships:block/aquatic_eye_closed",
+      "x": 0,
+      "y": 270,
+      "uvlock": true
+    },
+    "facing=up,blink=false": {
+      "model": "create_bioships:block/aquatic_eye",
+      "x": 270,
+      "y": 0,
+      "uvlock": true
+    },
+    "facing=up,blink=true": {
+      "model": "create_bioships:block/aquatic_eye_closed",
+      "x": 270,
+      "y": 0,
+      "uvlock": true
+    },
+    "facing=down,blink=false": {
+      "model": "create_bioships:block/aquatic_eye",
+      "x": 90,
+      "y": 0,
+      "uvlock": true
+    },
+    "facing=down,blink=true": {
+      "model": "create_bioships:block/aquatic_eye_closed",
+      "x": 90,
+      "y": 0,
+      "uvlock": true
+    }
+  }
+}

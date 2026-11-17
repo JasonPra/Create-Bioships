@@ -199,5 +199,26 @@ public final class CoreTestCommands {
                     return 1;
                   }));
     event.getDispatcher().register(combat);
+    var arrow = Commands.literal("arrow_test").requires(source -> source.hasPermission(2));
+    for (var action : List.of("start", "reset", "status"))
+      arrow.then(
+          Commands.literal(action)
+              .executes(
+                  ctx -> {
+                    var level = ctx.getSource().getLevel();
+                    var state = CoreTestState.get(level);
+                    if (!state.arrowBuilt) return 0;
+                    if (action.equals("start")) return CoreArrowFixture.start(level);
+                    if (action.equals("reset")) CoreArrowFixture.reset(level);
+                    ctx.getSource()
+                        .sendSuccess(
+                            () ->
+                                Component.literal(
+                                    "Core arrow test: "
+                                        + (state.arrowRunning ? "running" : "ready")),
+                            false);
+                    return 1;
+                  }));
+    event.getDispatcher().register(arrow);
   }
 }

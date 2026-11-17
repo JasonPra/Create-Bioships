@@ -19,6 +19,50 @@ import org.Azkerash.create_bioships.mixin.ProjectileImpactInvoker;
 public final class CombatAdapter {
   private static final Map<ServerSubLevel, SubLevelCombatTarget> TARGETS = new WeakHashMap<>();
 
+  private static final Map<ServerSubLevel, CoreCombatHurtbox> CORES = new WeakHashMap<>();
+
+  public static CoreCombatHurtbox coreTarget(ServerSubLevel body) {
+    if (SubLevelHealth.status(body).dead()) return null;
+    var current = CORES.get(body);
+    if (current != null && !current.isRemoved()) return current;
+    var cell =
+        SubLevelHealth.blocks(body).stream()
+            .filter(p -> body.getLevel().getBlockState(p).is(Create_bioships.CORE.get()))
+            .findFirst()
+            .orElse(null);
+    if (cell == null) return null;
+    var target = Create_bioships.CORE_HURTBOX.get().create(body.getLevel());
+    if (target == null) return null;
+    target.bindCore(body, cell);
+    body.getLevel().addFreshEntity(target);
+    CORES.put(body, target);
+    return target;
+  }
+
+  private static final Map<ServerSubLevel, Map<net.minecraft.core.BlockPos, EyeCombatHurtbox>>
+      EYES = new WeakHashMap<>();
+
+  public static EyeCombatHurtbox eyeTarget(ServerSubLevel body, net.minecraft.core.BlockPos cell) {
+    if (SubLevelHealth.status(body).dead()) return null;
+    var eyes = EYES.computeIfAbsent(body, b -> new HashMap<>());
+    var old = eyes.get(cell);
+    if (old != null && !old.isRemoved()) return old;
+    var eye = Create_bioships.EYE_HURTBOX.get().create(body.getLevel());
+    if (eye == null) return null;
+    eye.bindEye(body, cell);
+    body.getLevel().addFreshEntity(eye);
+    eyes.put(cell.immutable(), eye);
+    return eye;
+  }
+
+  public static SubLevelCombatTarget hitTarget(
+      ServerSubLevel body, net.minecraft.core.BlockPos cell, net.minecraft.core.Direction face) {
+    var state = body.getLevel().getBlockState(cell);
+    if (org.Azkerash.create_bioships.components.eye.EyeWoundBehavior.isWeakPoint(state, face))
+      return state.is(Create_bioships.CORE.get()) ? coreTarget(body) : eyeTarget(body, cell);
+    return target(body);
+  }
+
   private CombatAdapter() {}
 
   public static SubLevelCombatTarget target(ServerSubLevel body) {
@@ -43,7 +87,13 @@ public final class CombatAdapter {
       for (var body : container.getAllSubLevels())
         if (body instanceof ServerSubLevel server
             && !body.isRemoved()
-            && CoreAssemblyRules.isCreature(body)) target(server);
+            && CoreAssemblyRules.isCreature(body)) {
+          target(server);
+          coreTarget(server);
+          for (var cell : SubLevelHealth.blocks(server))
+            if (org.Azkerash.create_bioships.components.eye.EyeWoundBehavior.isEye(
+                level.getBlockState(cell))) eyeTarget(server, cell);
+        }
     }
     TARGETS.entrySet().removeIf(e -> e.getKey().isRemoved() || e.getValue().isRemoved());
   }
@@ -55,8 +105,11 @@ public final class CombatAdapter {
     if (body == null || !CoreAssemblyRules.isCreature(body)) return;
     event.setCanceled(true);
     if (event.getAction() != PlayerInteractEvent.LeftClickBlock.Action.START) return;
-    var target = target(body);
-    if (target != null) event.getEntity().attack(target);
+    var target = hitTarget(body, event.getPos(), event.getFace());
+    if (target != null) {
+      target.impact(event.getPos(), event.getFace());
+      event.getEntity().attack(target);
+    }
   }
 
   @SubscribeEvent
@@ -65,12 +118,25 @@ public final class CombatAdapter {
         || !(event.getRayTraceResult() instanceof BlockHitResult hit)) return;
     var body = CoreAssemblyRules.containing(level, hit.getBlockPos());
     if (body == null || !CoreAssemblyRules.isCreature(body)) return;
-    var target = target(body);
+    var target = hitTarget(body, hit.getBlockPos(), hit.getDirection());
     if (target == null) return;
+    target.impact(hit.getBlockPos(), hit.getDirection());
     // Collision has already been resolved against Sable's actual block shapes. Never use an
     // enclosing AABB as a substitute, which would count arrows passing through empty grid space.
-    ((ProjectileImpactInvoker) event.getProjectile())
-        .core$hitEntity(new EntityHitResult(target, hit.getLocation()));
+    var projectile = event.getProjectile();
+    var incoming = projectile.getDeltaMovement();
+    boolean embedded = projectile instanceof net.minecraft.world.entity.projectile.AbstractArrow;
+    if (embedded)
+      ProjectileAttachment.begin((net.minecraft.world.entity.projectile.AbstractArrow) projectile);
+    try {
+      ((ProjectileImpactInvoker) projectile)
+          .core$hitEntity(new EntityHitResult(target, hit.getLocation()));
+    } finally {
+      if (embedded) ProjectileAttachment.end();
+    }
+    if (embedded && !projectile.isRemoved())
+      ProjectileAttachment.attach(
+          (net.minecraft.world.entity.projectile.AbstractArrow) projectile, body, hit, incoming);
     event.setCanceled(true);
   }
 

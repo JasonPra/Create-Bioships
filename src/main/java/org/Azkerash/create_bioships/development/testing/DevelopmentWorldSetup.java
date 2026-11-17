@@ -39,6 +39,10 @@ public final class DevelopmentWorldSetup {
     if (state.combatBuilt
         && (state.combatOrigin.getX() != 1024 || state.combatOrigin.getZ() != 1024))
       CombatFixture.relocate(level, new BlockPos(1024, state.layout().base().getY(), 1024));
+    if (!state.arrowBuilt) {
+      state.arrowOrigin = new BlockPos(128, state.layout().base().getY(), 0);
+      CoreArrowFixture.reset(level);
+    }
     if (!state.combatBuilt) {
       state.combatOrigin = new BlockPos(1024, state.layout().base().getY(), 1024);
       CombatFixture.reset(level);
