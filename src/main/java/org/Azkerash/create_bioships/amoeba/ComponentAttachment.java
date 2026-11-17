@@ -1,9 +1,11 @@
-package org.Azkerash.create_bioships;
+package org.Azkerash.create_bioships.amoeba;
+
+import org.Azkerash.create_bioships.*;
 
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.state.BlockState;
-import org.Azkerash.create_bioships.amoeba.AmoebaComponentHost;
+
 
 /** Restores component data and mount orientation after transport, without moving cargo. */
 final class ComponentAttachment {

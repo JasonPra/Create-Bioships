@@ -1,5 +1,8 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.amoeba.ComponentMerging;
+import org.Azkerash.create_bioships.amoeba.ComponentTransport;
+
 /** Native organ conversion and accessibility, independent of movement and combat selection. */
 final class BioshipConfiguration {
   static BioshipAdaptation.Proposal proposal(LivingCoreBlockEntity core) {

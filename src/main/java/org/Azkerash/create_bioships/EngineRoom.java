@@ -1,5 +1,7 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.amoeba.ComponentTransport;
+
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import java.util.*;
 import net.minecraft.core.*;

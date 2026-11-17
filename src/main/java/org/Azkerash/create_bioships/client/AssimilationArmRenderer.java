@@ -1,5 +1,7 @@
 package org.Azkerash.create_bioships.client;
 
+import org.Azkerash.create_bioships.amoeba.ComponentMerging;
+
 import com.mojang.blaze3d.vertex.PoseStack;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.sublevel.ClientSubLevel;

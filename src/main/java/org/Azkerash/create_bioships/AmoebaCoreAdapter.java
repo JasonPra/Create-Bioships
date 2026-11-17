@@ -1,5 +1,8 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.amoeba.ComponentMerging;
+import org.Azkerash.create_bioships.amoeba.ComponentTransport;
+
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import java.util.*;
 import net.minecraft.core.*;
@@ -43,6 +46,9 @@ final class AmoebaCoreAdapter implements AmoebaComponentHost {
     core.organMove(move);
   }
 
+  public boolean alive() { return !core.body().dead(); }
+  public List<ComponentTransport.Move> absorptions() { return core.assimilation().arms(); }
+  public BlockState hostTissue(BlockEntity entity) { return BioshipTissue.host(entity); }
   public boolean absorptionActive() {
     return core.assimilation().active();
   }

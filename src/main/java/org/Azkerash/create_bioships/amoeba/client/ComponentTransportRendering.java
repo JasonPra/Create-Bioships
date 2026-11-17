@@ -1,4 +1,6 @@
-package org.Azkerash.create_bioships.client;
+package org.Azkerash.create_bioships.amoeba.client;
+
+import org.Azkerash.create_bioships.amoeba.*;
 
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.companion.math.Pose3d;
@@ -30,10 +32,11 @@ public final class ComponentTransportRendering {
       if (container != null)
         for (var ship : container.getAllSubLevels())
           for (var actor : ship.getPlot().getBlockEntityActors())
-            if (actor instanceof LivingCoreBlockEntity core && !core.body().dead()) {
-              var moving = core.organMove();
+            if (actor instanceof AmoebaComponentProvider provider && provider.amoebaComponents().alive()) {
+              var core=provider.amoebaComponents();
+              var moving = core.movement();
               if (moving != null) ACTIVE.put(moving.cargo(), new Active(moving, false));
-              for (var move : core.assimilation().arms())
+              for (var move : core.absorptions())
                 ACTIVE.put(move.cargo(), new Active(move, true));
             }
     }

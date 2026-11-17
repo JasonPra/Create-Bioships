@@ -1,5 +1,7 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.amoeba.ComponentTransport;
+
 import dev.ryanhcode.sable.api.block.BlockEntitySubLevelActor;
 import dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
@@ -21,7 +23,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.*;
 import org.joml.Vector3d;
 
-public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySubLevelActor {
+public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySubLevelActor, org.Azkerash.create_bioships.amoeba.AmoebaComponentProvider {
   private final org.Azkerash.create_bioships.amoeba.AmoebaComponentHost componentHost =
       new AmoebaCoreAdapter(this);
 

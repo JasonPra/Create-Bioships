@@ -46,7 +46,7 @@ public class FeedingMouthBlockEntity extends BaseContainerBlockEntity {
     return !larynx.isEmpty();
   }
 
-  void absorbLarynx(CompoundTag capsule) {
+  public void absorbLarynx(CompoundTag capsule) {
     if (voiced()) throw new IllegalStateException("Mouth already has a larynx");
     larynx = capsule.copy();
     larynx.putBoolean("Combined", true);

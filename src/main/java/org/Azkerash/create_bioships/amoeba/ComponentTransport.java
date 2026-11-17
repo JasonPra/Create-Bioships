@@ -1,4 +1,6 @@
-package org.Azkerash.create_bioships;
+package org.Azkerash.create_bioships.amoeba;
+
+import org.Azkerash.create_bioships.*;
 
 import dev.ryanhcode.sable.api.SubLevelAssemblyHelper;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
@@ -13,7 +15,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Unit;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.phys.Vec3;
-import org.Azkerash.create_bioships.amoeba.AmoebaComponentHost;
+
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
 
@@ -102,19 +104,19 @@ public final class ComponentTransport {
     return begin(core, source, target, external, manual, false);
   }
 
-  static boolean reabsorb(AmoebaComponentHost core, BlockPos source, BlockPos target) {
+  public static boolean reabsorb(AmoebaComponentHost core, BlockPos source, BlockPos target) {
     return begin(core, source, target, false, false, true);
   }
 
-  static boolean reclaimToCore(AmoebaComponentHost core, BlockPos source) {
+  public static boolean reclaimToCore(AmoebaComponentHost core, BlockPos source) {
     return begin(core, source, core.controllerPosition(), false, false, true, true);
   }
 
-  static boolean storeComponent(AmoebaComponentHost core, BlockPos source) {
+  public static boolean storeComponent(AmoebaComponentHost core, BlockPos source) {
     return begin(core, source, core.controllerPosition(), false, false, false, true);
   }
 
-  static boolean swallow(AmoebaComponentHost core, BlockPos source) {
+  public static boolean swallow(AmoebaComponentHost core, BlockPos source) {
     return begin(core, source, core.controllerPosition(), true, false, false, true);
   }
 
@@ -139,7 +141,7 @@ public final class ComponentTransport {
     return begin(core, source, target, external, manual, consuming, stash, null);
   }
 
-  static boolean merge(AmoebaComponentHost core, BlockPos source, BlockPos target, String recipe) {
+  public static boolean merge(AmoebaComponentHost core, BlockPos source, BlockPos target, String recipe) {
     return begin(core, source, target, false, false, false, false, recipe);
   }
 
@@ -196,7 +198,7 @@ public final class ComponentTransport {
     return true;
   }
 
-  static List<BlockPos> findTissuePath(AmoebaComponentHost core, BlockPos source, BlockPos target) {
+  public static List<BlockPos> findTissuePath(AmoebaComponentHost core, BlockPos source, BlockPos target) {
     var level = core.level();
     var ship = core.body();
     Map<BlockPos, BlockPos> parents = new HashMap<>();
@@ -312,7 +314,7 @@ public final class ComponentTransport {
     core.placed(move, scavenged, recycle, hostFlesh);
   }
 
-  static void finishCargo(AmoebaComponentHost core, ServerSubLevel cargo) {
+  public static void finishCargo(AmoebaComponentHost core, ServerSubLevel cargo) {
     var move = core.movement();
     var container = SubLevelContainer.getContainer(cargo.getLevel());
     container.removeForceLoadTicket(cargo, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
@@ -324,7 +326,7 @@ public final class ComponentTransport {
     core.changed();
   }
 
-  static void release(AmoebaComponentHost core, ServerSubLevel cargo) {
+  public static void release(AmoebaComponentHost core, ServerSubLevel cargo) {
     var move = core.movement();
     if (move != null && move.ownerForced() && core.body() != null)
       SubLevelContainer.getContainer(cargo.getLevel())

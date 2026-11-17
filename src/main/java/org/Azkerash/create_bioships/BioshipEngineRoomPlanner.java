@@ -1,5 +1,7 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.amoeba.ComponentTransport;
+
 import static org.Azkerash.create_bioships.EngineRoomLayout.*;
 
 import java.util.*;

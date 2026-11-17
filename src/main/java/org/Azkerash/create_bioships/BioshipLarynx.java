@@ -1,5 +1,8 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.amoeba.ComponentMerging;
+import org.Azkerash.create_bioships.amoeba.ComponentTransport;
+
 import com.github.elenterius.biomancy.block.modularlarynx.ModularLarynxBlockEntity;
 import java.util.*;
 import net.minecraft.core.*;

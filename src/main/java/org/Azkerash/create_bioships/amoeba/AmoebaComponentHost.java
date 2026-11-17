@@ -43,6 +43,8 @@ public interface AmoebaComponentHost extends CreatureBodyAccess {
   void movement(ComponentTransport.Move move);
 
   boolean absorptionActive();
+  boolean alive();
+  List<ComponentTransport.Move> absorptions();
 
   /** Validates existing anatomy rules and reserves their costs; null means rejected. */
   Prepared prepare(Request request);
@@ -70,6 +72,7 @@ public interface AmoebaComponentHost extends CreatureBodyAccess {
   void restore(ServerSubLevel owner, BlockPos pos, CompoundTag capsule);
 
   void rememberHost(BlockEntity entity, BlockState host);
+  BlockState hostTissue(BlockEntity entity);
 
   void changed();
 

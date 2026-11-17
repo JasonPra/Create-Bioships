@@ -1,4 +1,6 @@
-package org.Azkerash.create_bioships;
+package org.Azkerash.create_bioships.amoeba;
+
+import org.Azkerash.create_bioships.*;
 
 import com.github.elenterius.biomancy.block.decomposer.DecomposerBlockEntity;
 import com.github.elenterius.biomancy.block.digester.DigesterBlockEntity;
@@ -8,7 +10,7 @@ import java.util.function.Supplier;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import org.Azkerash.create_bioships.amoeba.AmoebaComponentHost;
+
 
 /** Recipes and commit validation for directional-independent amoeba component fusion. */
 public final class ComponentMerging {
@@ -63,21 +65,21 @@ public final class ComponentMerging {
     }
   }
 
-  static void register(Recipe recipe) {
+  public static void register(Recipe recipe) {
     if (Registry.RECIPES.putIfAbsent(recipe.id(), recipe) != null)
       throw new IllegalArgumentException("Duplicate component merge recipe: " + recipe.id());
   }
 
-  static boolean matches(String id, BlockEntity source, BlockEntity destination) {
+  public static boolean matches(String id, BlockEntity source, BlockEntity destination) {
     var recipe = Registry.RECIPES.get(id);
     return recipe != null && recipe.matches(source, destination);
   }
 
-  static BlockState result(String id) {
+  public static BlockState result(String id) {
     return Registry.RECIPES.get(id).result().get();
   }
 
-  static boolean commit(
+  public static boolean commit(
       String id, AmoebaComponentHost core, BlockEntity source, BlockEntity destination) {
     var recipe = Registry.RECIPES.get(id);
     if (recipe == null || !recipe.matches(source, destination)) return false;
@@ -85,7 +87,7 @@ public final class ComponentMerging {
     return true;
   }
 
-  static void tryAvailable(AmoebaComponentHost core) {
+  public static void tryAvailable(AmoebaComponentHost core) {
     if (core.body() == null || ComponentTransport.busy(core)) return;
     var entities = core.components();
     for (var recipe : Registry.RECIPES.values()) {
@@ -101,7 +103,7 @@ public final class ComponentMerging {
     }
   }
 
-  static boolean absorbLarynx(AmoebaComponentHost core, CompoundTag capsule) {
+  public static boolean absorbLarynx(AmoebaComponentHost core, CompoundTag capsule) {
     if (!core.digestionReady()) return false;
     var mouth = core.mouths().stream().filter(m -> !m.voiced()).findFirst().orElse(null);
     if (mouth == null) return false;
@@ -109,7 +111,7 @@ public final class ComponentMerging {
     return true;
   }
 
-  static void attachLarynx(
+  public static void attachLarynx(
       AmoebaComponentHost core, FeedingMouthBlockEntity mouth, CompoundTag capsule) {
     mouth.absorbLarynx(capsule);
     core.changed();
@@ -117,12 +119,12 @@ public final class ComponentMerging {
 
   private static final String RECIPE_TAG = "BioshipMergeRecipe";
 
-  static void tag(CompoundTag data, String recipe) {
+  public static void tag(CompoundTag data, String recipe) {
     data.putString(RECIPE_TAG, recipe);
   }
 
   /** Returns false only for cargo which is not a fusion transaction. */
-  static boolean finish(
+  public static boolean finish(
       AmoebaComponentHost core,
       dev.ryanhcode.sable.sublevel.ServerSubLevel cargo,
       ComponentTransport.Move move) {
@@ -162,7 +164,7 @@ public final class ComponentMerging {
     int nutrients =
         decomposer.getStateData().fuelHandler.getFuelAmount()
             + digester.getStateData().fuelHandler.getFuelAmount();
-    var stomachHost = BioshipTissue.host(decomposer);
+    var stomachHost = core.hostTissue(decomposer);
     core.level().removeBlockEntity(destination);
     core.level().setBlock(destination, Create_bioships.STOMACH.get().defaultBlockState(), 3);
     if (core.component(core.body(), destination) instanceof StomachBlockEntity stomach) {

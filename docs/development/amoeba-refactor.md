@@ -40,3 +40,9 @@ Checkpoint 3: merging, transport and attachment accept `AmoebaComponentHost`, no
 state, shared resource account, placement rules and lifecycle notifications. No second inventory
 or movement state is introduced. All production and fixture callers migrated; Java and GameTest
 compilation passed. The next checkpoint changes package ownership, not behavior.
+
+Checkpoint 4: engines now live in `amoeba`; the client pose adapter lives in `amoeba.client`.
+`AmoebaComponentProvider` lets rendering discover the capability without identifying a concrete
+core class. The concrete-core bridge remains beside the legacy core and its package-private
+policies. Both production and GameTest sources compile. Save keys and movement records retain
+exactly the same serialized fields; no old-package forwarding classes were introduced.
