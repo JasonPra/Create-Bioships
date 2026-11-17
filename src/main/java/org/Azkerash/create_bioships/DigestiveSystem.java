@@ -726,7 +726,8 @@ public final class DigestiveSystem {
           }
       }
     for (var mouth : mouths(core))
-      if (core.getLevel().getBlockEntity(mouth) instanceof FeedingMouthBlockEntity intake)
+      if (forMouth(core, mouth) != null
+          && core.getLevel().getBlockEntity(mouth) instanceof FeedingMouthBlockEntity intake)
         for (int slot = 0; slot < intake.getContainerSize(); slot++)
           if (LivingCoreBlockEntity.isMeat(intake.getItem(slot)))
             total += intake.getItem(slot).getCount();

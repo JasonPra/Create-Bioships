@@ -377,6 +377,16 @@ public class BioshipGameTests {
       helper.assertTrue(!core.wantsToHunt(), "Buffered mouth food did not pause hunting");
       mouth.setItem(0, ItemStack.EMPTY);
       helper.assertTrue(core.wantsToHunt(), "Hunting did not resume after buffered food was used");
+      var stranded = core.getBlockPos().east(2);
+      helper
+          .getLevel()
+          .setBlock(stranded, Create_bioships.FEEDING_MOUTH.get().defaultBlockState(), 3);
+      ((FeedingMouthBlockEntity) helper.getLevel().getBlockEntity(stranded))
+          .setItem(0, new ItemStack(Items.PORKCHOP, 13));
+      helper.assertTrue(
+          DigestiveSystem.forMouth(core, stranded) == null && core.wantsToHunt(),
+          "Unconnected mouth food suppressed hunting as though it could be digested");
+      helper.getLevel().removeBlock(stranded, false);
       for (int i = 0; i < 9; i++)
         helper.assertTrue(
             stomach.receiveMeal(new ItemStack(Items.PORKCHOP, 64), true),

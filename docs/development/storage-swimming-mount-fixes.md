@@ -1,5 +1,21 @@
 # Storage, swimming and gill-mount fixes
 
+All seven checkpoints are complete. Final validation: **99 unit tests and 203 live GameTests
+passed**, all source sets compile, and package/Mixin/whitespace checks pass. No graphical client
+animation review is claimed.
+
+Final behavior:
+- Hunting pauses for usable buffered food or full delivery queues; disconnected-mouth food is
+  excluded. Defensive attacks remain independent.
+- Growing beyond land-leg capacity reduces swim speed instead of disabling propulsion.
+- All gill faces and storage sacs reject mounted legs/flippers; eyes reject partial/sac hosts.
+- Sacs align their opposite-facing connector with adjacent intestines without replacing inventory.
+- Valid mounted flippers take priority over intrinsic starter limbs during swimming, including
+  partially deployed sets. Intrinsic core support remains available for early organ assembly.
+- All 115 registered biological blocks and 9093 states were audited. Packed flesh and hull use
+  ordinary mass/displacement; no global buoyancy/mass overrides were introduced.
+- Existing classes were retained as requested; no attachment-policy class or tags were added.
+
 Five checkpoints: hunting capacity (10–15 min), all-face gill mount exclusion (5–10 min),
 registered block physics audit (10–15 min), grown-body diving fix (10–20 min), final regressions
 (10–15 min). Continue automatically and push each completed checkpoint.
@@ -43,3 +59,11 @@ Final regression follow-up: the initial strict fallback rule excluded intrinsic 
 the first component was collected, preventing support validation and deployment. Restored that
 early-assembly fallback while retaining sac/gill/lung exclusions and mounted-flipper priority. All
 six focused pickup, starter-support and reconnection checks passed after the correction.
+
+Final food-accounting review: only mouths with a functional intake route contribute buffered food.
+A disconnected-mouth assertion verifies that inaccessible meat does not suppress hunting. The
+fixture uses an in-plot placement; an earlier eight-block offset lay outside its Sable test plot.
+
+Checkpoint 7 complete: final clean `check runGameTestServer` passed all 99 unit tests and all 203
+live GameTests after the support and connected-mouth corrections. Package/Mixin checks and
+whitespace checks passed. Updated architecture references and PR #2. Zero tasks remain.

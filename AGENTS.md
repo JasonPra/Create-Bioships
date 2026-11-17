@@ -81,3 +81,12 @@ passed, plus source-set compilation and package/Mixin checks. See
 `docs/development/place-memory-retreat-changelog.md` and `place-memory-retreat-plan.md`.
 Zero tasks remain in this scope. Graphical animation QA is unperformed. The cancelled historical
 backlog remains cancelled unless explicitly reopened by the user.
+
+## Completed storage, swimming and attachment repairs
+
+The user authorized the five repair checkpoints plus sac-orientation/attachment and mounted-flipper
+follow-ups. All seven are complete, with 99 unit tests and 203 live GameTests passing. See
+`docs/development/storage-swimming-mount-fixes.md` and `biological-block-physics-audit.txt`.
+The user chose targeted fixes in existing classes rather than a new attachment policy/tag system.
+No global block mass changes were needed. Zero tasks remain; graphical animation QA is unperformed.
+The previously cancelled historical backlog remains cancelled.

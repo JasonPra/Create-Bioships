@@ -1,3 +1,6 @@
+# Effective Sable mass ranges and maximum configured volume, all registered biological states.
+# 115 blocks; 9093 states. Non-solid/open/fluid states can have zero effective mass.
+# Packed flesh and hull use ordinary mass=1 and volume=1. No global mass overrides added.
 biomancy:primordial_cradle mass=1.0..1.0 volumeMax=1.0
 biomancy:bio_forge mass=1.0..1.0 volumeMax=1.0
 biomancy:decomposer mass=1.0..1.0 volumeMax=1.0
