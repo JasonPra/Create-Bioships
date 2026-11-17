@@ -1,25 +1,94 @@
 {
   "variants": {
-    "facing=north": {
+    "facing=north,role=normal": {
       "model": "create_bioships:block/stomach"
     },
-    "facing=east": {
+    "facing=north,role=member": {
+      "model": "create_bioships:block/stomach_member"
+    },
+    "facing=north,role=intake": {
+      "model": "create_bioships:block/stomach_intake"
+    },
+    "facing=north,role=panel": {
+      "model": "create_bioships:block/stomach"
+    },
+    "facing=east,role=normal": {
       "model": "create_bioships:block/stomach",
       "y": 90
     },
-    "facing=south": {
+    "facing=east,role=member": {
+      "model": "create_bioships:block/stomach_member",
+      "y": 90
+    },
+    "facing=east,role=intake": {
+      "model": "create_bioships:block/stomach_intake",
+      "y": 90
+    },
+    "facing=east,role=panel": {
+      "model": "create_bioships:block/stomach",
+      "y": 90
+    },
+    "facing=south,role=normal": {
       "model": "create_bioships:block/stomach",
       "y": 180
     },
-    "facing=west": {
+    "facing=south,role=member": {
+      "model": "create_bioships:block/stomach_member",
+      "y": 180
+    },
+    "facing=south,role=intake": {
+      "model": "create_bioships:block/stomach_intake",
+      "y": 180
+    },
+    "facing=south,role=panel": {
+      "model": "create_bioships:block/stomach",
+      "y": 180
+    },
+    "facing=west,role=normal": {
       "model": "create_bioships:block/stomach",
       "y": 270
     },
-    "facing=down": {
+    "facing=west,role=member": {
+      "model": "create_bioships:block/stomach_member",
+      "y": 270
+    },
+    "facing=west,role=intake": {
+      "model": "create_bioships:block/stomach_intake",
+      "y": 270
+    },
+    "facing=west,role=panel": {
+      "model": "create_bioships:block/stomach",
+      "y": 270
+    },
+    "facing=down,role=normal": {
       "model": "create_bioships:block/stomach",
       "x": 90
     },
-    "facing=up": {
+    "facing=down,role=member": {
+      "model": "create_bioships:block/stomach_member",
+      "x": 90
+    },
+    "facing=down,role=intake": {
+      "model": "create_bioships:block/stomach_intake",
+      "x": 90
+    },
+    "facing=down,role=panel": {
+      "model": "create_bioships:block/stomach",
+      "x": 90
+    },
+    "facing=up,role=normal": {
+      "model": "create_bioships:block/stomach",
+      "x": 270
+    },
+    "facing=up,role=member": {
+      "model": "create_bioships:block/stomach_member",
+      "x": 270
+    },
+    "facing=up,role=intake": {
+      "model": "create_bioships:block/stomach_intake",
+      "x": 270
+    },
+    "facing=up,role=panel": {
       "model": "create_bioships:block/stomach",
       "x": 270
     }

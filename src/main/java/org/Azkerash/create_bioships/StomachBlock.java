@@ -14,18 +14,35 @@ import org.Azkerash.create_bioships.registry.Create_bioships;
 public class StomachBlock extends BaseEntityBlock {
   public static final net.minecraft.world.level.block.state.properties.DirectionProperty FACING =
       net.minecraft.world.level.block.state.properties.BlockStateProperties.FACING;
+
+  public enum Role implements net.minecraft.util.StringRepresentable {
+    NORMAL,
+    MEMBER,
+    INTAKE,
+    PANEL;
+
+    public String getSerializedName() {
+      return name().toLowerCase(java.util.Locale.ROOT);
+    }
+  }
+
+  public static final net.minecraft.world.level.block.state.properties.EnumProperty<Role> ROLE =
+      net.minecraft.world.level.block.state.properties.EnumProperty.create("role", Role.class);
   public static final MapCodec<StomachBlock> CODEC = simpleCodec(StomachBlock::new);
 
   public StomachBlock(Properties properties) {
     super(properties);
     registerDefaultState(
-        stateDefinition.any().setValue(FACING, net.minecraft.core.Direction.NORTH));
+        stateDefinition
+            .any()
+            .setValue(FACING, net.minecraft.core.Direction.NORTH)
+            .setValue(ROLE, Role.NORMAL));
   }
 
   @Override
   protected void createBlockStateDefinition(
       net.minecraft.world.level.block.state.StateDefinition.Builder<Block, BlockState> builder) {
-    builder.add(FACING);
+    builder.add(FACING, ROLE);
   }
 
   @Override

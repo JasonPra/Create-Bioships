@@ -469,6 +469,62 @@ public class BioshipGameTests {
     }
   }
 
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "stomach_ports")
+  public static void formed_stomach_exposes_one_intake_and_panel_and_resets_roles_on_breakage(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    try {
+      var core = core(ship);
+      var level = helper.getLevel();
+      digestive(helper, core, false);
+      var origin = core.getBlockPos().west(3);
+      for (int x = 0; x < 3; x++)
+        for (int y = 0; y < 3; y++)
+          for (int z = 0; z < 3; z++) {
+            var p = origin.offset(x, y, z);
+            if (!level.getBlockState(p).is(Create_bioships.STOMACH.get()))
+              level.setBlock(p, Create_bioships.STOMACH.get().defaultBlockState(), 3);
+          }
+      StomachPorts.refresh(core);
+      var organs = DigestiveSystem.stomachs(core);
+      helper.assertTrue(
+          organs.stream()
+                      .filter(
+                          s ->
+                              s.getBlockState().getValue(StomachBlock.ROLE)
+                                  == StomachBlock.Role.INTAKE)
+                      .count()
+                  == 1
+              && organs.stream()
+                      .filter(
+                          s ->
+                              s.getBlockState().getValue(StomachBlock.ROLE)
+                                  == StomachBlock.Role.PANEL)
+                      .count()
+                  == 1,
+          "Formation did not expose exactly one intake and one player panel");
+      for (var organ : organs) {
+        var state = organ.getBlockState();
+        if (state.getValue(StomachBlock.ROLE) == StomachBlock.Role.MEMBER) continue;
+        var outside = organ.getBlockPos().relative(state.getValue(StomachBlock.FACING));
+        helper.assertTrue(
+            !StomachMultiblock.containing(core, organ.getBlockPos())
+                .contains(StomachMultiblock.cell(outside)),
+            "A port faced inward into another stomach member");
+      }
+      level.removeBlock(origin.offset(1, 1, 1), false);
+      StomachPorts.refresh(core);
+      helper.assertTrue(
+          DigestiveSystem.stomachs(core).stream()
+              .allMatch(
+                  s -> s.getBlockState().getValue(StomachBlock.ROLE) == StomachBlock.Role.NORMAL),
+          "Dismantled structure retained stale intake/panel roles");
+      helper.succeed();
+    } finally {
+      cleanup(helper, ship);
+    }
+  }
+
   private static int fixture;
 
   private static BlockPos location() {

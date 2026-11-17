@@ -793,6 +793,7 @@ public class LivingCoreBlockEntity extends BlockEntity
       BioshipIntegration.collect(core);
     core.updateCabinLights();
     if (ship != null && level.getGameTime() % 20 == 0) {
+      StomachPorts.refresh(core);
       DigestiveSystem.connect(core, ship);
       org.Azkerash.create_bioships.amoeba.digestion.DigestiveLayoutPlanner.arrange(core);
     }

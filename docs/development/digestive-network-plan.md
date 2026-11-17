@@ -116,3 +116,8 @@ reservation. Current cargo inventories are captured at commit. An obstructed des
 the entire organ back; if both footprints are obstructed, real cargo is retained until restoration
 is possible. The move and group offsets persist in existing movement/cargo NBT. Three live tests
 passed, including all 27 queues/progress surviving relocation and obstructed-destination rollback.
+
+Revised checkpoint 8 complete: formed cubes display a distinct raised intake ring, a separate
+outward player panel, and plain member faces. Roles are derived and reset after breakage, without
+changing block IDs or inventories. An existing suitable intake endpoint is preferred for the port.
+Three focused live tests passed, including outward-facing roles and reset after center removal.
