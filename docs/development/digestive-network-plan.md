@@ -165,3 +165,5 @@ of the new panel/models remains unperformed and is documented in the changelog.
 Mini-checkpoint 2 complete: `defensive_action_and_owned_digestive_conversion_run_independently` passed in the full 184-test run at the established regression coordinates. No further gameplay change was needed. Four checkpoints remain.
 
 Mini-checkpoint 3 complete: `needs_tree_prefers_wreck_over_hunting_and_interrupts_for_escape` and wreck-organ recovery passed in the full run. Eligibility and priority assertions were retained; no priority-weight change was needed. Three checkpoints remain.
+
+Mini-checkpoint 4 complete: `hatchling_legs_climb_a_real_wall_and_fall_when_the_grip_is_removed` passed in the full run. Both climbing and grip-loss behavior assertions remain intact. No locomotion change was needed after restoring the established physics coordinates. Two checkpoints remain.
