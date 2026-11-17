@@ -7901,6 +7901,34 @@ public class BioshipGameTests {
     helper.succeed();
   }
 
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "socket_anchor_identity")
+  public static void socket_contact_identity_survives_filtered_and_reordered_layouts(
+      GameTestHelper helper) {
+    var origin = new BlockPos(100, 80, 200);
+    var westRoot = new Vec3(-.02, .5, .5);
+    var eastRoot = new Vec3(1.02, .5, .5);
+    var west = new BioshipSupport.Leg(westRoot, westRoot.add(0, -1, 0), Direction.WEST, false);
+    var east = new BioshipSupport.Leg(eastRoot, eastRoot.add(0, -1, 0), Direction.EAST, false);
+    var layout = new BioshipSupport.Layout(Vec3.ZERO, List.of(east, west), .15);
+    helper.assertTrue(
+        BioshipAnatomy.anchorIndex(origin, origin.west(), Direction.WEST, layout) == 1
+            && BioshipAnatomy.anchorIndex(origin, origin.east(), Direction.EAST, layout) == 0,
+        "Socket contact followed cell order instead of its actual root");
+    helper.assertTrue(
+        BioshipAnatomy.anchorIndex(origin, origin.north(), Direction.NORTH, layout) == -1
+            && BioshipAnatomy.anchorIndex(origin, origin.west(), Direction.EAST, layout) == -1,
+        "A missing or differently facing socket borrowed another contact");
+    var bootstrap =
+        new BioshipSupport.Layout(
+            Vec3.ZERO,
+            List.of(new BioshipSupport.Leg(eastRoot, eastRoot, Direction.EAST, true)),
+            .15);
+    helper.assertTrue(
+        BioshipAnatomy.anchorIndex(origin, origin.east(), Direction.EAST, bootstrap) == -1,
+        "A bootstrap foot was mistaken for a mounted socket");
+    helper.succeed();
+  }
+
   @GameTest(template = "test_empty", timeoutTicks = 100, batch = "compact_chamber_progress")
   public static void compaction_does_not_shuffle_cover_for_an_immovable_organ(
       GameTestHelper helper) {
@@ -9837,6 +9865,11 @@ public class BioshipGameTests {
                     !core.body().dead() && core.survival().blastPoints() == 3,
                     "A damaging explosion was not credited once after survival: "
                         + core.survival().blastPoints());
+                var diagnostics = BioshipDiagnostics.snapshot(core);
+                helper.assertTrue(
+                    diagnostics.getInt("BlastAdaptationPoints") == 3
+                        && diagnostics.getInt("MaxHealth") == core.body().capacity(),
+                    "Developer snapshot omitted mutation points or current health capacity");
                 var query = new net.minecraft.world.level.ExplosionDamageCalculator();
                 var root = core.getBlockPos();
                 var coreState = core.getBlockState();

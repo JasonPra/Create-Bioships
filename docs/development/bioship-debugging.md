@@ -60,3 +60,5 @@ No new command is required for death logging.
 ### Container handoff tracing
 
 Optional JVM argument `-Dbioships.traceContainers=true` logs mouth capture/load records and missing destination block entities during physical handoffs. Pair it with `/bioship_debug inspect <id>` and F3+P. It is disabled by default. `Water.WaterContact` in inspection data describes habitat contact; `Water.Wet` remains the stricter swimming-physics classification. No new in-game commands. See [container persistence](container-persistence.md) for native item-component restoration and resource ownership.
+
+The existing `/bioship_debug inspect <id>` snapshot also includes `MaxHealth` (cached component capacity) and `BlastAdaptationPoints` (persistent 0–100 blast trait). These distinguish wounds from structural health changes without forcing another health audit. No additional command or permission level is introduced.

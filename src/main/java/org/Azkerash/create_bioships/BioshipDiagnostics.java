@@ -120,6 +120,8 @@ public final class BioshipDiagnostics {
     data.putString("Reason", core.brain().reason());
     data.put("Navigation", core.crawl().navigationDebug(core.getLevel().getGameTime()));
     data.putDouble("Health", core.body().health());
+    data.putInt("MaxHealth", core.body().capacity());
+    data.putInt("BlastAdaptationPoints", core.survival().blastPoints());
     data.putBoolean("BodyDead", core.body().dead());
     data.putString("DeathCause", core.body().deathCause().name());
     data.putLong("DeathAt", core.body().deathAt());

@@ -2626,16 +2626,21 @@
         },
         {
           "kind": "method",
+          "signature": "static int anchorIndex( BlockPos origin, BlockPos socket, Direction face, BioshipSupport.Layout layout)",
+          "line": 177
+        },
+        {
+          "kind": "method",
           "signature": "static Move compact(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells)",
-          "line": 172
+          "line": 191
         },
         {
           "kind": "method",
           "signature": "static BioshipAdaptation.Proposal protection(LivingCoreBlockEntity core)",
-          "line": 214
+          "line": 233
         }
       ],
-      "lines": 297
+      "lines": 316
     },
     "BioshipWrenchItem": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipWrenchItem.java",
@@ -9185,10 +9190,10 @@
         {
           "kind": "method",
           "signature": "public static void commands(RegisterCommandsEvent event)",
-          "line": 189
+          "line": 191
         }
       ],
-      "lines": 248
+      "lines": 250
     },
     "BioshipMountGrowth": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipMountGrowth.java",

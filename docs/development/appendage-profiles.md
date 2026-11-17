@@ -56,3 +56,5 @@ Packed Flesh beside the structural body. Its quote includes remaining supports,
 legs, strength upgrades and future lung materials, plus the emergency reserve.
 The body queue uses `GROW_SUPPORT`; lower-priority paid upgrades preserve that
 budget. Occupied-slot stashing and the temporary-support transition remain open.
+
+Anatomy audits resolve a socket's planted contact by its attachment root and outward face. Invalid sockets omitted from the support layout cannot shift the contact indices of valid sockets; bootstrap contacts are excluded from this association. This preserves the distinction between core-only locomotion and physical leg blocks.

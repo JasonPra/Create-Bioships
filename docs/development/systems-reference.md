@@ -1894,7 +1894,7 @@ public final class AmoebaLegBlock extends DirectionalBlock
 
 #### BioshipAnatomy
 
-Source: `src/main/java/org/Azkerash/create_bioships/BioshipAnatomy.java` (297 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipAnatomy.java` (316 lines).
 
 ```java
 final class BioshipAnatomy
@@ -1929,9 +1929,11 @@ final class BioshipAnatomy
 
   private static Move legs(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells); // line 131
 
-  static Move compact(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells); // line 172
+  static int anchorIndex( BlockPos origin, BlockPos socket, Direction face, BioshipSupport.Layout layout); // line 177
 
-  static BioshipAdaptation.Proposal protection(LivingCoreBlockEntity core); // line 214
+  static Move compact(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells); // line 191
+
+  static BioshipAdaptation.Proposal protection(LivingCoreBlockEntity core); // line 233
 
 ```
 
@@ -4087,7 +4089,7 @@ F3+B sight; F3+P native floating route/priority display; goggles status above ho
 
 #### BioshipDiagnostics
 
-Source: `src/main/java/org/Azkerash/create_bioships/BioshipDiagnostics.java` (248 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipDiagnostics.java` (250 lines).
 
 ```java
 public final class BioshipDiagnostics
@@ -4102,7 +4104,7 @@ public final class BioshipDiagnostics
 
   static CompoundTag snapshot(LivingCoreBlockEntity core); // line 104
 
-  public static void commands(RegisterCommandsEvent event); // line 189
+  public static void commands(RegisterCommandsEvent event); // line 191
 
 ```
 

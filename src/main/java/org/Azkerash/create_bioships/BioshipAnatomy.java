@@ -142,8 +142,13 @@ final class BioshipAnatomy {
       var socket = sockets.get(i);
       var face = socket.getValue().getValue(AmoebaLegBlock.FACING);
       boolean buried = cells.containsKey(socket.getKey().relative(face));
-      var foot = core.crawl().legAnchors().foot(i, core.getLevel().getGameTime());
-      boolean unsupported = foot != null && core.crawl().legAnchors().normal(i).lengthSqr() < .5;
+      // Invalid sockets are omitted from the support layout. Their sorted cell index is
+      // therefore not the index of a planted foot (nor are bootstrap feet real sockets).
+      int anchor = anchorIndex(core.structuralOrigin(), socket.getKey(), face, layout);
+      var foot =
+          anchor < 0 ? null : core.crawl().legAnchors().foot(anchor, core.getLevel().getGameTime());
+      boolean unsupported =
+          foot != null && core.crawl().legAnchors().normal(anchor).lengthSqr() < .5;
       boolean mounted = AmoebaLegBlock.mounted(cells, socket.getKey(), socket.getValue());
       if (mounted && !buried && !unsupported && layout.stable()) continue;
       for (var target : ports(core, cells)) {
@@ -169,6 +174,20 @@ final class BioshipAnatomy {
       }
     }
     return null;
+  }
+
+  static int anchorIndex(
+      BlockPos origin, BlockPos socket, Direction face, BioshipSupport.Layout layout) {
+    var root =
+        Vec3.atCenterOf(socket)
+            .subtract(Vec3.atLowerCornerOf(origin))
+            .subtract(Vec3.atLowerCornerOf(face.getNormal()).scale(.48));
+    for (int index = 0; index < layout.legs().size(); index++) {
+      var leg = layout.legs().get(index);
+      if (!leg.bootstrap() && leg.face() == face && leg.root().distanceToSqr(root) < 1.0e-8)
+        return index;
+    }
+    return -1;
   }
 
   static Move compact(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells) {

@@ -270,3 +270,10 @@ Further queued requirements: prohibit leg mounts on lungs as well as the core an
 - Runtime `fa7c5f3` passed a fresh 3,600-tick normal-world ecosystem replay: 3/3 alive, digestive, repeatedly fed and resource-producing; 1,971 pork offered through real mouths; no probe failures or recorded deaths. Land and water creatures retained the new component-derived health totals.
 - Report: `docs/development/qa/2026-11-16-health-layout-ecosystem.json`, including per-creature layout samples, peak height/sections/mount faults and final samples. This short run does not close convergence, endurance or graphical qualification.
 - Seven broader groups remain. Next focused batch corrects socket-to-foot association in anatomy audits and adds health capacity/mutation points to existing developer snapshots. No additional command is needed.
+
+### Socket contact identity and survival diagnostics
+
+- Anatomy audits now associate a socket with its actual support root and outward face, rather than the socket's index among all cells. Invalid sockets removed from the support layout cannot make the audit read another leg's contact. Bootstrap feet remain distinct from mounted sockets.
+- Existing `/bioship_debug inspect <id>` adds `MaxHealth` and `BlastAdaptationPoints`, read from cached health and persistent traits. No new command, periodic audit or gameplay override.
+- Validation: build, all 58 unit tests and all 163 required GameTests passed, including reordered/missing/wrong-face/bootstrap contact cases and actual mutation/health fields after a survived blast. The contact check runs in-engine because the isolated unit source set does not include Minecraft classes.
+- Seven broader groups remain; an accelerated saved-world continuation follows.
