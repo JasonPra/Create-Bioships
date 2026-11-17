@@ -1,0 +1,26 @@
+{
+  "runtimeCommit": "1ba50c9",
+  "result": "FAILED_WATCHDOG",
+  "scenario": "Saved normal ecosystem continued, requested 10000 TPS via vanilla tick rate command, target 6000 additional ticks. Watchdog retained.",
+  "rateCommand": {
+    "command": "tick rate 10000",
+    "response": "Set the target tick rate to 10000.0 per second\n",
+    "issuedAtMonotonic": 180251.208290957
+  },
+  "lastSamples": [
+    "WILDPROBE tick=4400 ship=5517fece-2e37-4b96-bd7d-8e99399b95fc position=(156.9645057793381, 66.00262430941886, 80.48275008511247) health=152.0 air=300 wet=false aquatic={Air:300,AirAccess:1b,Breathing:1b,GillSamples:374,GillUse:991,GillUsePrecise:990.7703160213847d,LegEvolutionAfter:6480L,SeekingAir:0b,Swimming:0b,UseSamples:374,WaterContact:1b,WaterUse:991,WaterUsePrecise:990.7703160213847d,Wet:0b} organMove=null action=WANDER reason=No reachable urgent need or funded goal bodyWork={Action:\"IDLE\",Priorities:[],QueuedGoals:0,Reason:\"No feasible funded body work\"} cells=13 stomachs=1 connected=1 coreMotion=false coreRemoved=false primary=true digestion=[acid=964, queued=326, progress=65/185] mouthFood=[0] waterUse=991 swimmingLegs=1.0 legsMissing=0 materials={biomancy:elastic_fibers=16, biomancy:nutrient_paste=32, biomancy:bone_fragments=96, biomancy:flesh_bits=101} feeds=4",
+    "WILDPROBE tick=4440 ship=5517fece-2e37-4b96-bd7d-8e99399b95fc position=(156.9464574698405, 65.8097577850381, 80.4777019252661) health=156.0 air=297 wet=true aquatic={Air:297,AirAccess:0b,Breathing:0b,GillSamples:376,GillUse:991,GillUsePrecise:991.2260316678288d,LegEvolutionAfter:6480L,SeekingAir:0b,Swimming:1b,UseSamples:376,WaterContact:1b,WaterUse:991,WaterUsePrecise:991.2260316678288d,Wet:1b} organMove=null action=WANDER reason=No reachable urgent need or funded goal bodyWork={Action:\"IDLE\",Priorities:[],QueuedGoals:0,Reason:\"No feasible funded body work\"} cells=13 stomachs=1 connected=1 coreMotion=false coreRemoved=false primary=true digestion=[acid=1000, queued=328, progress=105/185] mouthFood=[0] waterUse=991 swimmingLegs=1.0 legsMissing=0 materials={biomancy:elastic_fibers=16, biomancy:nutrient_paste=32, biomancy:bone_fragments=96, biomancy:flesh_bits=101} feeds=4",
+    "WILDPROBE tick=4560 ship=5517fece-2e37-4b96-bd7d-8e99399b95fc position=(156.94614824829836, 65.80985764626315, 80.47940731076196) health=156.0 air=298 wet=true aquatic={Air:298,AirAccess:0b,Breathing:0b,GillSamples:382,GillUse:992,GillUsePrecise:992.4625619316311d,LegEvolutionAfter:6480L,SeekingAir:0b,Swimming:1b,UseSamples:382,WaterContact:1b,WaterUse:992,WaterUsePrecise:992.4625619316311d,Wet:1b} organMove=null action=WANDER reason=No reachable urgent need or funded goal bodyWork={Action:\"IDLE\",Priorities:[],QueuedGoals:0,Reason:\"No feasible funded body work\"} cells=13 stomachs=1 connected=1 coreMotion=false coreRemoved=false primary=true digestion=[acid=939, queued=333, progress=40/185] mouthFood=[0] waterUse=992 swimmingLegs=1.0 legsMissing=0 materials={biomancy:elastic_fibers=17, biomancy:nutrient_paste=33, biomancy:bone_fragments=98, biomancy:flesh_bits=104} feeds=4"
+  ],
+  "completion": null,
+  "watchdog": [
+    "[19:39:52] [Server Watchdog/ERROR] [minecraft/ServerWatchdog]: A single server tick took 60.00 seconds (should be max 0.00)",
+    "[19:39:52] [Server Watchdog/ERROR] [minecraft/ServerWatchdog]: Considering it to be crashed, server will forcibly shutdown.",
+    "\tat TRANSFORMER/minecraft@1.21.1/net.minecraft.server.dedicated.ServerWatchdog.run(ServerWatchdog.java:50)",
+    "\tat TRANSFORMER/minecraft@1.21.1/net.minecraft.server.dedicated.ServerWatchdog.run(ServerWatchdog.java:65) ~[neoforge-21.1.266.jar%23125!/:?] {re:classloading}",
+    "[19:39:52] [Server Watchdog/ERROR] [minecraft/ServerWatchdog]: This crash report has been saved to: /workspace/work/health-layout-ecosystem/crash-reports/crash-2026-11-16_19.39.52-server.txt"
+  ],
+  "recordedDeaths": [],
+  "probeFailures": [],
+  "conclusion": "Server watchdog terminated replay before completion. Captured server stack is in BioshipPriorities.sources section-palette scanning; this does not establish the duration or cause of a single stalled tick. No accelerated survival/convergence sign-off. Normal-rate 3600-tick result remains separate."
+}

@@ -277,3 +277,9 @@ Further queued requirements: prohibit leg mounts on lungs as well as the core an
 - Existing `/bioship_debug inspect <id>` adds `MaxHealth` and `BlastAdaptationPoints`, read from cached health and persistent traits. No new command, periodic audit or gameplay override.
 - Validation: build, all 58 unit tests and all 163 required GameTests passed, including reordered/missing/wrong-face/bootstrap contact cases and actual mutation/health fields after a survived blast. The contact check runs in-engine because the isolated unit source set does not include Minecraft classes.
 - Seven broader groups remain; an accelerated saved-world continuation follows.
+
+### Accelerated continuation failure
+
+- Runtime `1ba50c9` resumed the saved ecosystem with vanilla `/tick rate 10000`, targeting 6,000 additional ticks. Minecraft's watchdog terminated the server before completion. The captured server stack was inside `BioshipPriorities.sources` section-palette scanning; the stack alone does not prove a continuous 60-second mod tick. The watchdog remains enabled and this run is not passed.
+- Report: `docs/development/qa/2026-11-16-health-layout-accelerated.json`. No recorded creature death or probe failure preceded termination. The normal-rate result remains separate. Local test RCON is disabled again after the run.
+- User's next priority correction is queued in the existing structural/habitat groups: protected core with movable surface eyes once affordable; water-adapted respiration before lungs. Seven broader groups remain.
