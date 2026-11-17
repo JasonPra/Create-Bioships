@@ -1,11 +1,10 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.registry.Create_bioships;
-
 import java.util.*;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.state.BlockState;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** Audits physical parts plus owned parts temporarily carried, retracted or stashed. */
 final class BioshipHealthPool {

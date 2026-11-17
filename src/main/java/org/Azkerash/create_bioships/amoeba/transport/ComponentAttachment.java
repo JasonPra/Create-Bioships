@@ -1,20 +1,18 @@
 package org.Azkerash.create_bioships.amoeba.transport;
 
-import org.Azkerash.create_bioships.amoeba.components.AmoebaComponentHost;
-
-import org.Azkerash.create_bioships.StomachBlock;
-import org.Azkerash.create_bioships.registry.Create_bioships;
-import org.Azkerash.create_bioships.FeedingMouthBlockEntity;
-import org.Azkerash.create_bioships.FeedingMouthBlock;
-import org.Azkerash.create_bioships.StomachBlockEntity;
-import org.Azkerash.create_bioships.AmoebaLegBlock;
-import org.Azkerash.create_bioships.SurfaceEyeBlock;
-import org.Azkerash.create_bioships.BioshipTissue;
-
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.state.BlockState;
 import org.Azkerash.create_bioships.*;
+import org.Azkerash.create_bioships.AmoebaLegBlock;
+import org.Azkerash.create_bioships.BioshipTissue;
+import org.Azkerash.create_bioships.FeedingMouthBlock;
+import org.Azkerash.create_bioships.FeedingMouthBlockEntity;
+import org.Azkerash.create_bioships.StomachBlock;
+import org.Azkerash.create_bioships.StomachBlockEntity;
+import org.Azkerash.create_bioships.SurfaceEyeBlock;
+import org.Azkerash.create_bioships.amoeba.components.AmoebaComponentHost;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** Restores component data and mount orientation after transport, without moving cargo. */
 final class ComponentAttachment {

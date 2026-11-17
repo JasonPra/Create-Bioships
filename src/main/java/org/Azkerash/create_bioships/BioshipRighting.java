@@ -1,10 +1,9 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
-
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.world.phys.Vec3;
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
 
 /** Grounded recovery uses reachable footholds, including a shallow submerged seabed. */
 final class BioshipRighting {

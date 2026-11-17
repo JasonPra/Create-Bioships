@@ -1,7 +1,5 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.registry.Create_bioships;
-
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionResult;
@@ -11,6 +9,7 @@ import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.*;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 public class StomachBlock extends BaseEntityBlock {
   public static final net.minecraft.world.level.block.state.properties.DirectionProperty FACING =

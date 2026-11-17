@@ -1,7 +1,5 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.registry.Create_bioships;
-
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import java.util.*;
@@ -13,6 +11,7 @@ import net.minecraft.world.entity.ai.attributes.*;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.*;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** A living attack surface for vanilla mob AI; health belongs to the block-based organism. */
 public final class BioshipTargetEntity extends LivingEntity {

@@ -1,11 +1,5 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.registry.Create_bioships;
-import org.Azkerash.create_bioships.creature.resources.MaterialCost;
-
-import org.Azkerash.create_bioships.integration.biomancy.NativeStorage;
-import org.Azkerash.create_bioships.disabled.wip.EngineRoom;
-
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import java.util.*;
 import net.minecraft.core.*;
@@ -14,6 +8,10 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
 import org.Azkerash.create_bioships.amoeba.transport.ComponentTransport;
+import org.Azkerash.create_bioships.creature.resources.MaterialCost;
+import org.Azkerash.create_bioships.disabled.wip.EngineRoom;
+import org.Azkerash.create_bioships.integration.biomancy.NativeStorage;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /**
  * Food crosses assigned physical intestine networks; construction products enter shared storage.
@@ -267,7 +265,8 @@ public final class DigestiveSystem {
     return false;
   }
 
-  public static boolean reserveOrganRoute(LivingCoreBlockEntity core, BlockPos source, BlockPos target) {
+  public static boolean reserveOrganRoute(
+      LivingCoreBlockEntity core, BlockPos source, BlockPos target) {
     return reserveOrganRoute(core, source, target, true);
   }
 

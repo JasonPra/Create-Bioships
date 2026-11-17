@@ -5,8 +5,8 @@ features or growth/behavior changes are included. The earlier feature backlog st
 
 ## Boundaries
 
-- `creature.CreatureBodyAccess`: world, physical body and controller position. No growth or AI rules.
-- `creature.ResourceAccount`: material counts, spending and credits. No inventory layout assumptions.
+- `creature.api.CreatureBodyAccess`: world, physical body and controller position. No growth or AI rules.
+- `creature.resources.ResourceAccount`: material counts, spending and credits. No inventory layout assumptions.
 - Amoeba component mechanics: moving actual cargo, merging, absorption and attachment remain
   amoeba-specific. They operate through an amoeba component-host contract, not a concrete core.
 - `AmoebaCoreAdapter`: the only component-module adapter that knows `LivingCoreBlockEntity`;

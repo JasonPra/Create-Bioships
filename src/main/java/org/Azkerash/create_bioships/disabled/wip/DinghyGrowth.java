@@ -1,10 +1,5 @@
 package org.Azkerash.create_bioships.disabled.wip;
 
-import org.Azkerash.create_bioships.CarapaceBlock;
-import org.Azkerash.create_bioships.registry.Create_bioships;
-import org.Azkerash.create_bioships.OneWayWindowBlock;
-import org.Azkerash.create_bioships.BioshipTissue;
-
 import dev.simulated_team.simulated.content.blocks.steering_wheel.SteeringWheelBlock;
 import java.util.*;
 import net.minecraft.core.*;
@@ -12,6 +7,10 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
+import org.Azkerash.create_bioships.BioshipTissue;
+import org.Azkerash.create_bioships.CarapaceBlock;
+import org.Azkerash.create_bioships.OneWayWindowBlock;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** An oval shell with a forward cockpit and a separate aft engine/workshop room. */
 public final class DinghyGrowth {

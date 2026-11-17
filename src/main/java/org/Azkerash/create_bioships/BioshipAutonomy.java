@@ -1,16 +1,14 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.network.VisionDebug;
-
-import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
-import org.Azkerash.create_bioships.disabled.wip.PilotAuthority;
-import org.Azkerash.create_bioships.disabled.wip.AirshipPrototype;
-import org.Azkerash.create_bioships.disabled.wip.DinghyGrowth;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.phys.Vec3;
 import org.Azkerash.create_bioships.amoeba.transport.ComponentTransport;
+import org.Azkerash.create_bioships.disabled.wip.AirshipPrototype;
+import org.Azkerash.create_bioships.disabled.wip.DinghyGrowth;
+import org.Azkerash.create_bioships.disabled.wip.PilotAuthority;
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
+import org.Azkerash.create_bioships.network.VisionDebug;
 
 /** Idle exploration and injured escape share the same collision checks as ordinary travel. */
 public final class BioshipAutonomy {

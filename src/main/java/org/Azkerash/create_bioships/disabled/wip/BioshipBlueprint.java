@@ -1,18 +1,5 @@
 package org.Azkerash.create_bioships.disabled.wip;
 
-import org.Azkerash.create_bioships.DigestiveSystem;
-import org.Azkerash.create_bioships.registry.Create_bioships;
-import org.Azkerash.create_bioships.BioshipHealthChanges;
-import org.Azkerash.create_bioships.BioshipAccess;
-import org.Azkerash.create_bioships.BioshipBody;
-import org.Azkerash.create_bioships.BioshipTargetEntity;
-import org.Azkerash.create_bioships.StomachBlockEntity;
-import org.Azkerash.create_bioships.LivingCoreBlockEntity;
-import org.Azkerash.create_bioships.IntestineBlock;
-import org.Azkerash.create_bioships.BioshipIntegration;
-import org.Azkerash.create_bioships.BioshipTissue;
-import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
-
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -25,7 +12,19 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.*;
+import org.Azkerash.create_bioships.BioshipAccess;
+import org.Azkerash.create_bioships.BioshipBody;
+import org.Azkerash.create_bioships.BioshipHealthChanges;
+import org.Azkerash.create_bioships.BioshipIntegration;
+import org.Azkerash.create_bioships.BioshipTargetEntity;
+import org.Azkerash.create_bioships.BioshipTissue;
+import org.Azkerash.create_bioships.DigestiveSystem;
+import org.Azkerash.create_bioships.IntestineBlock;
+import org.Azkerash.create_bioships.LivingCoreBlockEntity;
+import org.Azkerash.create_bioships.StomachBlockEntity;
 import org.Azkerash.create_bioships.amoeba.transport.ComponentTransport;
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /**
  * Server-owned blueprint and resumable landing/evacuation/build job. Coordinates are core-relative.
@@ -253,7 +252,8 @@ public final class BioshipBlueprint {
   public int cost(LivingCoreBlockEntity core, Draft draft) {
     var plan = proposal(core, draft);
     int n = 0;
-    for (var e : plan.entrySet()) if (!e.getValue().equals(core.body().intendedCells().get(e.getKey()))) n++;
+    for (var e : plan.entrySet())
+      if (!e.getValue().equals(core.body().intendedCells().get(e.getKey()))) n++;
     return n;
   }
 
@@ -458,7 +458,8 @@ public final class BioshipBlueprint {
     var level = (ServerLevel) core.getLevel();
     Set<BlockPos> footprint = new HashSet<>();
     for (var p : target.keySet()) footprint.add(new BlockPos(p.getX(), 0, p.getZ()));
-    for (var p : core.body().intendedCells().keySet()) footprint.add(new BlockPos(p.getX(), 0, p.getZ()));
+    for (var p : core.body().intendedCells().keySet())
+      footprint.add(new BlockPos(p.getX(), 0, p.getZ()));
     int y = Integer.MIN_VALUE;
     for (var p : footprint) {
       Vec3 d = core.ship().logicalPose().transformNormal(new Vec3(p.getX(), 0, p.getZ()));
@@ -489,7 +490,9 @@ public final class BioshipBlueprint {
     if (phase.equals("evacuating") || phase.equals("building"))
       return landing == null
           ? Vec3.ZERO
-          : landing.subtract(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO)).scale(1.3);
+          : landing
+              .subtract(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO))
+              .scale(1.3);
     Vec3 goal = landing != null ? landing : searchGoal;
     if (goal == null) return Vec3.ZERO;
     Vec3 here = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
@@ -524,7 +527,6 @@ public final class BioshipBlueprint {
     }
     return true;
   }
-
 
   public boolean aboard(LivingCoreBlockEntity core, Entity entity) {
     Vec3 p =
@@ -585,7 +587,8 @@ public final class BioshipBlueprint {
                 BlockPos.containing(local.add(-.45, 0, -.45)),
                 BlockPos.containing(local.add(.45, 1.85, .45)))) {
           var state = level.getBlockState(cell);
-          if (editable(state) && core.body().intendedCells().containsKey(cell.subtract(core.getBlockPos())))
+          if (editable(state)
+              && core.body().intendedCells().containsKey(cell.subtract(core.getBlockPos())))
             clear(core, cell.subtract(core.getBlockPos()));
         }
         if (!level.noCollision(

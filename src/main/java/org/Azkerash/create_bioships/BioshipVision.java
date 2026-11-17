@@ -1,16 +1,14 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.registry.Create_bioships;
-import org.Azkerash.create_bioships.creature.resources.MaterialCost;
-
-import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
-import org.Azkerash.create_bioships.disabled.wip.AirshipPrototype;
-
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.Vec3;
 import org.Azkerash.create_bioships.amoeba.transport.ComponentTransport;
+import org.Azkerash.create_bioships.creature.resources.MaterialCost;
+import org.Azkerash.create_bioships.disabled.wip.AirshipPrototype;
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** Connected surface eyes extend sight; they do not reveal buried world machines. */
 public final class BioshipVision {

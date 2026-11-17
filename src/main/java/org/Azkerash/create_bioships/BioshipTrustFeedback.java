@@ -1,12 +1,10 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.network.BioshipNetwork;
-
-import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
-
 import net.minecraft.nbt.*;
 import net.minecraft.server.level.ServerLevel;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
+import org.Azkerash.create_bioships.network.BioshipNetwork;
 
 /** Player-care feedback is independent of passive metabolism and behavior selection. */
 public final class BioshipTrustFeedback {

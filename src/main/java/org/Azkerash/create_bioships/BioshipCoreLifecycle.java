@@ -1,8 +1,5 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.development.BioshipDiagnostics;
-import org.Azkerash.create_bioships.registry.Create_bioships;
-
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import java.util.*;
 import net.minecraft.core.BlockPos;
@@ -11,6 +8,8 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import org.Azkerash.create_bioships.development.BioshipDiagnostics;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** Validate source-core removal only after synchronous assembly and its chunk loads complete. */
 @EventBusSubscriber(modid = Create_bioships.MOD_ID)

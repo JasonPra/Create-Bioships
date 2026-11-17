@@ -1,7 +1,6 @@
 package org.Azkerash.create_bioships.creature.resources;
 
 import java.util.*;
-import org.Azkerash.create_bioships.creature.resources.ResourceAccount;
 
 /** Resource transactions shared by storage, emergency reserves, growth and routing. */
 public record MaterialCost(int flesh, int fiber, int bone) {

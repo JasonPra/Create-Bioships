@@ -1,13 +1,12 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.registry.Create_bioships;
-
 import java.util.regex.Pattern;
 import net.minecraft.gametest.framework.GameTestRegistry;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.event.lifecycle.FMLLoadCompleteEvent;
 import net.neoforged.neoforge.gametest.GameTestHooks;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** Optional development-only selection; absent from the distributed mod and default full runs. */
 @EventBusSubscriber(modid = Create_bioships.MOD_ID)

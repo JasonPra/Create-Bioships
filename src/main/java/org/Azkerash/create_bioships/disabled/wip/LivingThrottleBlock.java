@@ -1,6 +1,5 @@
 package org.Azkerash.create_bioships.disabled.wip;
 
-import org.Azkerash.create_bioships.client.BioshipClient;
 
 import dev.simulated_team.simulated.util.QuietUse;
 import net.minecraft.core.BlockPos;

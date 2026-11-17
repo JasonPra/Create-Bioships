@@ -41,7 +41,7 @@ For the complete class structure beneath each subsystem, see the
 | `BioshipVision` / `TargetMemory` | Visibility and observation lifetime | Choosing a goal or moving toward it |
 | `GroundRoute` / `BioshipCrawl` | Collision-aware routes, movement progress/failure and supported gait | A second independent supply target selector |
 | `BioshipAssimilation` | Batch progress, conserved swallowed stock and wreck-job continuation | Hunger thresholds or a second resource accounting policy |
-| `amoeba.ComponentTransport` | One conserved Sable block transport and its complete block entity | Choosing which component is valuable |
+| `amoeba.transport.ComponentTransport` | One conserved Sable block transport and its complete block entity | Choosing which component is valuable |
 | `NavigationDebug` | Snapshots of the actual controller and route state | Replanning just because the overlay is visible |
 
 ## Rules for adding behavior
@@ -92,17 +92,17 @@ The [architecture checkpoint review](architecture-review.md) records remaining o
 
 ## Component lifecycle responsibilities
 
-- `amoeba.ComponentMerging`: recipe registration, compatibility and result descriptions, fusion commit,
+- `amoeba.merging.ComponentMerging`: recipe registration, compatibility and result descriptions, fusion commit,
   inventory/fuel conversion, larynx absorption, saved merge-tag compatibility and animation math.
-- `amoeba.ComponentTransport`: one cargo movement lifecycle, route/physical motion and conserved cleanup.
-- `amoeba.ComponentAttachment`: restored component data and face orientation after movement.
+- `amoeba.transport.ComponentTransport`: one cargo movement lifecycle, route/physical motion and conserved cleanup.
+- `amoeba.transport.ComponentAttachment`: restored component data and face orientation after movement.
 - `amoeba.client.ComponentTransportRendering`: client-only cargo pose deformation; no gameplay mutation.
 - `BioshipSupport`: support/connectivity checks, including the actual result of a merge recipe.
 
 The obsolete animation helper and former transport/render class names have no forwarding aliases.
 Before adding new features, discuss their responsibility boundaries with the user (AGENTS.md).
 
-The component engines use `amoeba.AmoebaComponentHost`; only `AmoebaCoreAdapter` translates
-that capability to the current living-core policies. `amoeba.AmoebaComponentProvider` is the
-actor discovery boundary, including on the client. `creature.CreatureBodyAccess` and
-`creature.ResourceAccount` can be used without enabling amoeba remodeling.
+The component engines use `amoeba.components.AmoebaComponentHost`; only `AmoebaCoreAdapter` translates
+that capability to the current living-core policies. `amoeba.components.AmoebaComponentProvider` is the
+actor discovery boundary, including on the client. `creature.api.CreatureBodyAccess` and
+`creature.resources.ResourceAccount` can be used without enabling amoeba remodeling.

@@ -1,12 +1,10 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.registry.Create_bioships;
-
-import org.Azkerash.create_bioships.integration.biomancy.NativeStorage;
-import org.Azkerash.create_bioships.disabled.wip.EngineRoom;
-
 import org.Azkerash.create_bioships.amoeba.merging.ComponentMerging;
 import org.Azkerash.create_bioships.amoeba.transport.ComponentTransport;
+import org.Azkerash.create_bioships.disabled.wip.EngineRoom;
+import org.Azkerash.create_bioships.integration.biomancy.NativeStorage;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** Native organ conversion and accessibility, independent of movement and combat selection. */
 final class BioshipConfiguration {

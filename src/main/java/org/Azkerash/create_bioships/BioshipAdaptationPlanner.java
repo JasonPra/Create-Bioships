@@ -1,10 +1,5 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.registry.Create_bioships;
-import org.Azkerash.create_bioships.creature.resources.MaterialCost;
-
-import org.Azkerash.create_bioships.integration.biomancy.NativeStorage;
-
 import static org.Azkerash.create_bioships.creature.resources.MaterialCost.*;
 
 import java.util.*;
@@ -12,6 +7,9 @@ import net.minecraft.core.*;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.phys.*;
 import org.Azkerash.create_bioships.BioshipAdaptation.Proposal;
+import org.Azkerash.create_bioships.creature.resources.MaterialCost;
+import org.Azkerash.create_bioships.integration.biomancy.NativeStorage;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** Read-only proposal generation; payment and body mutation belong to the adaptation actuator. */
 final class BioshipAdaptationPlanner {

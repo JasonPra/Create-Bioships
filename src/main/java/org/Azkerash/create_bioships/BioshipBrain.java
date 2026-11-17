@@ -1,10 +1,5 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.creature.resources.MaterialCost;
-
-import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
-import org.Azkerash.create_bioships.disabled.wip.AirshipPrototype;
-
 import java.util.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -15,6 +10,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import org.Azkerash.create_bioships.amoeba.transport.ComponentTransport;
+import org.Azkerash.create_bioships.creature.resources.MaterialCost;
+import org.Azkerash.create_bioships.disabled.wip.AirshipPrototype;
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
 
 /**
  * The behavior tree owns goal selection. Sensors propose work; actuators may execute only the
@@ -627,7 +625,9 @@ public final class BioshipBrain {
             ? null
             : d.point;
       case DEFEND:
-        return d.point.distanceToSqr(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO)) > 6.25
+        return d.point.distanceToSqr(
+                    BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO))
+                > 6.25
             ? d.point
             : null;
       case HUNT:

@@ -1,10 +1,5 @@
 package org.Azkerash.create_bioships.client;
 
-import org.Azkerash.create_bioships.registry.Create_bioships;
-import org.Azkerash.create_bioships.LivingCoreBlockEntity;
-import org.Azkerash.create_bioships.IntestineBlock;
-import org.Azkerash.create_bioships.disabled.wip.AirshipPrototype;
-
 import java.util.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
@@ -16,6 +11,10 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderGuiEvent;
 import org.Azkerash.create_bioships.*;
+import org.Azkerash.create_bioships.IntestineBlock;
+import org.Azkerash.create_bioships.LivingCoreBlockEntity;
+import org.Azkerash.create_bioships.disabled.wip.AirshipPrototype;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 @EventBusSubscriber(modid = Create_bioships.MOD_ID, value = Dist.CLIENT)
 public final class SymbioticTooltip {

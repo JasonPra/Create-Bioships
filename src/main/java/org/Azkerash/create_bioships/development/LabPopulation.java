@@ -1,10 +1,5 @@
 package org.Azkerash.create_bioships.development;
 
-import org.Azkerash.create_bioships.LivingCoreBlockEntity;
-import org.Azkerash.create_bioships.BioshipIntegration;
-
-import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
-
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.server.level.ServerLevel;
@@ -15,6 +10,9 @@ import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.CommandBlockEntity;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.AABB;
+import org.Azkerash.create_bioships.BioshipIntegration;
+import org.Azkerash.create_bioships.LivingCoreBlockEntity;
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
 
 /** Explicit scenario populations, independent of natural spawning's light/player requirements. */
 public final class LabPopulation {

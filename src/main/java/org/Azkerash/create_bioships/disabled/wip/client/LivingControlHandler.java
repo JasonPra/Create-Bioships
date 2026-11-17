@@ -1,9 +1,5 @@
 package org.Azkerash.create_bioships.disabled.wip.client;
 
-import org.Azkerash.create_bioships.registry.Create_bioships;
-import org.Azkerash.create_bioships.network.BioshipNetwork;
-import org.Azkerash.create_bioships.disabled.wip.LivingThrottleBlock;
-
 import dev.simulated_team.simulated.util.hold_interaction.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -15,6 +11,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.Azkerash.create_bioships.*;
+import org.Azkerash.create_bioships.disabled.wip.LivingThrottleBlock;
+import org.Azkerash.create_bioships.network.BioshipNetwork;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** Captures vertical mouse movement through the same manager as Aeronautics' helm. */
 public final class LivingControlHandler extends BlockHoldInteraction {

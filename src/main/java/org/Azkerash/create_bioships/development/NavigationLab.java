@@ -1,9 +1,5 @@
 package org.Azkerash.create_bioships.development;
 
-import org.Azkerash.create_bioships.DigestiveSystem;
-import org.Azkerash.create_bioships.LivingCoreBlockEntity;
-import org.Azkerash.create_bioships.registry.Create_bioships;
-
 import dev.ryanhcode.sable.api.SubLevelAssemblyHelper;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.companion.math.BoundingBox3i;
@@ -28,6 +24,9 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
+import org.Azkerash.create_bioships.DigestiveSystem;
+import org.Azkerash.create_bioships.LivingCoreBlockEntity;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** Shared deterministic course geometry for the shipped developer world and real-physics tests. */
 @EventBusSubscriber(modid = Create_bioships.MOD_ID)

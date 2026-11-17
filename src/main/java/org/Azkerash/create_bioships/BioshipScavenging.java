@@ -1,18 +1,5 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.registry.Create_bioships;
-import org.Azkerash.create_bioships.creature.resources.MaterialCost;
-
-import org.Azkerash.create_bioships.integration.biomancy.NativeStorage;
-
-import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
-import org.Azkerash.create_bioships.disabled.wip.LivingThrottleBlock;
-import org.Azkerash.create_bioships.disabled.wip.BlueprintPanelBlock;
-import org.Azkerash.create_bioships.disabled.wip.AccessPanelBlock;
-import org.Azkerash.create_bioships.disabled.wip.AirshipPrototype;
-import org.Azkerash.create_bioships.disabled.wip.EngineRoom;
-import org.Azkerash.create_bioships.disabled.wip.NerveControlBlock;
-
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import java.util.*;
@@ -24,6 +11,15 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import org.Azkerash.create_bioships.creature.resources.MaterialCost;
+import org.Azkerash.create_bioships.disabled.wip.AccessPanelBlock;
+import org.Azkerash.create_bioships.disabled.wip.AirshipPrototype;
+import org.Azkerash.create_bioships.disabled.wip.BlueprintPanelBlock;
+import org.Azkerash.create_bioships.disabled.wip.LivingThrottleBlock;
+import org.Azkerash.create_bioships.disabled.wip.NerveControlBlock;
+import org.Azkerash.create_bioships.integration.biomancy.NativeStorage;
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /**
  * Wreck tissue is construction stock, never a meal. Fractions persist, preventing reload farming.
@@ -221,7 +217,8 @@ public final class BioshipScavenging {
     finish(core, target, restoreHost, false);
   }
 
-  public void finish(LivingCoreBlockEntity core, BlockPos target, boolean restoreHost, boolean forced) {
+  public void finish(
+      LivingCoreBlockEntity core, BlockPos target, boolean restoreHost, boolean forced) {
     var state = core.getLevel().getBlockState(target);
     String id = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
     boolean essential =

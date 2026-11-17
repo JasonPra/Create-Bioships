@@ -1,10 +1,5 @@
 package org.Azkerash.create_bioships.development.client;
 
-import org.Azkerash.create_bioships.registry.Create_bioships;
-import org.Azkerash.create_bioships.network.BioshipNetwork;
-import org.Azkerash.create_bioships.network.VisionDebug;
-import org.Azkerash.create_bioships.network.NavigationDebug;
-
 import com.mojang.blaze3d.vertex.*;
 import java.util.*;
 import net.minecraft.client.Minecraft;
@@ -18,6 +13,10 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.*;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.Azkerash.create_bioships.*;
+import org.Azkerash.create_bioships.network.BioshipNetwork;
+import org.Azkerash.create_bioships.network.NavigationDebug;
+import org.Azkerash.create_bioships.network.VisionDebug;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /**
  * F3+P is independent of hitboxes, sight cones and equipment. Snapshots are server observations.

@@ -1,20 +1,18 @@
 package org.Azkerash.create_bioships.network;
 
-import org.Azkerash.create_bioships.DigestiveSystem;
-import org.Azkerash.create_bioships.TargetMemory;
-import org.Azkerash.create_bioships.LivingCoreBlockEntity;
-import org.Azkerash.create_bioships.BioshipBrain;
-import org.Azkerash.create_bioships.BioshipIntegration;
-
-import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
-import org.Azkerash.create_bioships.disabled.wip.AirshipPrototype;
-
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.*;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
+import org.Azkerash.create_bioships.BioshipBrain;
+import org.Azkerash.create_bioships.BioshipIntegration;
+import org.Azkerash.create_bioships.DigestiveSystem;
+import org.Azkerash.create_bioships.LivingCoreBlockEntity;
+import org.Azkerash.create_bioships.TargetMemory;
+import org.Azkerash.create_bioships.disabled.wip.AirshipPrototype;
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
 
 /**
  * Read-only observations of the selected behavior and actual route; never asks the brain to replan.
@@ -47,7 +45,9 @@ public final class NavigationDebug {
     data.put(
         "Hologram",
         VisionDebug.vector(new Vec3(origin.x, ship.boundingBox().maxY() + .8, origin.z)));
-    data.put("Position", VisionDebug.vector(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO)));
+    data.put(
+        "Position",
+        VisionDebug.vector(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO)));
     var decision = core.brain().lastDecision();
     if (decision != null) {
       Vec3 target =
@@ -104,7 +104,8 @@ public final class NavigationDebug {
           for (var entity : BioshipIntegration.blockEntities(ship))
             if (entity instanceof LivingCoreBlockEntity core && !core.body().dead()) {
               double distance =
-                  BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO).distanceToSqr(player.position());
+                  BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO)
+                      .distanceToSqr(player.position());
               if (distance < best) {
                 selected = core;
                 best = distance;

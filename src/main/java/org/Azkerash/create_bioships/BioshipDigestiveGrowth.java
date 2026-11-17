@@ -1,11 +1,10 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.registry.Create_bioships;
-import org.Azkerash.create_bioships.creature.resources.MaterialCost;
-
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.world.phys.Vec3;
+import org.Azkerash.create_bioships.creature.resources.MaterialCost;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** Read-only capacity planning for separately connected mouth/stomach pairs. */
 public final class BioshipDigestiveGrowth {

@@ -1,9 +1,5 @@
 package org.Azkerash.create_bioships.development;
 
-import org.Azkerash.create_bioships.FeedingMouthBlockEntity;
-import org.Azkerash.create_bioships.BioshipVoicePalette;
-import org.Azkerash.create_bioships.registry.Create_bioships;
-
 import com.mojang.brigadier.arguments.StringArgumentType;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import net.minecraft.commands.Commands;
@@ -12,6 +8,9 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import org.Azkerash.create_bioships.BioshipVoicePalette;
+import org.Azkerash.create_bioships.FeedingMouthBlockEntity;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** Operator audition tool for the closest already upgraded mouth; never grants a free larynx. */
 @EventBusSubscriber(modid = Create_bioships.MOD_ID)

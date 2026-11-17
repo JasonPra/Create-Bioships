@@ -1,9 +1,5 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.registry.Create_bioships;
-
-import org.Azkerash.create_bioships.disabled.wip.EngineRoom;
-
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.*;
 import net.minecraft.world.InteractionResult;
@@ -13,6 +9,8 @@ import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.*;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
+import org.Azkerash.create_bioships.disabled.wip.EngineRoom;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** The ship's food inventory, distinct from Biomancy's crafting machines. */
 public class FeedingMouthBlock extends BaseEntityBlock {

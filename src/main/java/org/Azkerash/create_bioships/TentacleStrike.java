@@ -1,13 +1,12 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.network.VisionDebug;
-
 import java.util.UUID;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import org.Azkerash.create_bioships.network.VisionDebug;
 
 /** A telegraphed, world-locked swipe. It never changes its victim's velocity or position. */
 public final class TentacleStrike {

@@ -1,10 +1,9 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.registry.Create_bioships;
-import org.Azkerash.create_bioships.creature.resources.MaterialCost;
-
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import org.Azkerash.create_bioships.creature.resources.MaterialCost;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** Ordinary tissue is native Packed Flesh; registered hull blocks remain future armor. */
 public final class BioshipTissue {

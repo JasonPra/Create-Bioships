@@ -1,8 +1,5 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.development.BioshipDiagnostics;
-import org.Azkerash.create_bioships.registry.Create_bioships;
-
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.nbt.*;
@@ -14,12 +11,16 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.level.BlockEvent;
 import org.Azkerash.create_bioships.amoeba.transport.ComponentTransport;
+import org.Azkerash.create_bioships.development.BioshipDiagnostics;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** Persistent intended tissue, independent of current holes. Never exposes a health HUD. */
 @EventBusSubscriber(modid = Create_bioships.MOD_ID)
 public final class BioshipBody {
   /** Mutable intended-cell model used by preserved reconstruction and repair routines. */
-  public Map<BlockPos, BlockState> intendedCells() { return memory; }
+  public Map<BlockPos, BlockState> intendedCells() {
+    return memory;
+  }
 
   final Map<BlockPos, BlockState> memory = new LinkedHashMap<>();
   private final Set<BlockPos> injured = new HashSet<>();
@@ -386,7 +387,8 @@ public final class BioshipBody {
     return list;
   }
 
-  public static Map<BlockPos, BlockState> loadCells(ListTag list, HolderLookup.Provider registries) {
+  public static Map<BlockPos, BlockState> loadCells(
+      ListTag list, HolderLookup.Provider registries) {
     Map<BlockPos, BlockState> out = new LinkedHashMap<>();
     var blocks = registries.lookupOrThrow(net.minecraft.core.registries.Registries.BLOCK);
     for (int i = 0; i < Math.min(list.size(), 12000); i++) {

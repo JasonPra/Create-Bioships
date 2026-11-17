@@ -1,12 +1,5 @@
 package org.Azkerash.create_bioships.development;
 
-import org.Azkerash.create_bioships.LivingCoreBlockEntity;
-import org.Azkerash.create_bioships.BioshipStructure;
-import org.Azkerash.create_bioships.BioshipIntegration;
-import org.Azkerash.create_bioships.registry.Create_bioships;
-
-import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
-
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import java.util.*;
@@ -16,6 +9,11 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
+import org.Azkerash.create_bioships.BioshipIntegration;
+import org.Azkerash.create_bioships.BioshipStructure;
+import org.Azkerash.create_bioships.LivingCoreBlockEntity;
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** Preset-owned starters and bounded cleanup; independent of the optional test observer. */
 public final class LabStarters {
@@ -68,7 +66,8 @@ public final class LabStarters {
       if (entry instanceof ServerSubLevel ship && !ship.isRemoved())
         for (var actor : BioshipIntegration.blockEntities(ship))
           if (actor instanceof LivingCoreBlockEntity core
-              && BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO).distanceToSqr(Vec3.atCenterOf(pos))
+              && BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO)
+                      .distanceToSqr(Vec3.atCenterOf(pos))
                   < 1) {
             var tag = ship.getUserDataTag().copy();
             tag.putBoolean(MARKER, true);

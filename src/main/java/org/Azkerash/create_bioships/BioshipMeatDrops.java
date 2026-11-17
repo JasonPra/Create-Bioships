@@ -1,7 +1,5 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.registry.Create_bioships;
-
 import java.util.*;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -9,6 +7,7 @@ import net.minecraft.world.item.*;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** Fill missing meat drops, preserving all ordinary loot and normal item physics. */
 @EventBusSubscriber(modid = Create_bioships.MOD_ID)

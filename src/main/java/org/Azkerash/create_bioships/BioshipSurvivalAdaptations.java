@@ -1,7 +1,5 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.registry.Create_bioships;
-
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import java.util.*;
 import net.minecraft.nbt.CompoundTag;
@@ -11,6 +9,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** Persistent learned survival traits; each damaging explosion is credited only after survival. */
 @EventBusSubscriber(modid = Create_bioships.MOD_ID)

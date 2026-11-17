@@ -1,15 +1,13 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.network.VisionDebug;
-
-import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
-import org.Azkerash.create_bioships.disabled.wip.TentacleBlockEntity;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import org.Azkerash.create_bioships.disabled.wip.TentacleBlockEntity;
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
+import org.Azkerash.create_bioships.network.VisionDebug;
 
 /** Small tissue arms can lash out before the organism has grown its propulsion flagella. */
 final class BioshipDefense {

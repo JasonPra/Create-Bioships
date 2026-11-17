@@ -1,10 +1,9 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.phys.Vec3;
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
 
 /** Executes selected item intake through an available mouth-bound grasper; never selects a goal. */
 final class BioshipFoodCollection {

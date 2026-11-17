@@ -1,9 +1,8 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.integration.biomancy.NativeStorage;
-
 import java.util.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import org.Azkerash.create_bioships.integration.biomancy.NativeStorage;
 
 /** Private construction stock in connected native sacs; food slots remain player-accessible. */
 final class BioshipStores {

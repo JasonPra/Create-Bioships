@@ -1,12 +1,5 @@
 package org.Azkerash.create_bioships.amoeba.merging;
 
-import org.Azkerash.create_bioships.amoeba.transport.ComponentTransport;
-import org.Azkerash.create_bioships.amoeba.components.AmoebaComponentHost;
-
-import org.Azkerash.create_bioships.registry.Create_bioships;
-import org.Azkerash.create_bioships.FeedingMouthBlockEntity;
-import org.Azkerash.create_bioships.StomachBlockEntity;
-
 import com.github.elenterius.biomancy.block.decomposer.DecomposerBlockEntity;
 import com.github.elenterius.biomancy.block.digester.DigesterBlockEntity;
 import java.util.*;
@@ -16,6 +9,11 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.Azkerash.create_bioships.*;
+import org.Azkerash.create_bioships.FeedingMouthBlockEntity;
+import org.Azkerash.create_bioships.StomachBlockEntity;
+import org.Azkerash.create_bioships.amoeba.components.AmoebaComponentHost;
+import org.Azkerash.create_bioships.amoeba.transport.ComponentTransport;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** Recipes and commit validation for directional-independent amoeba component fusion. */
 public final class ComponentMerging {

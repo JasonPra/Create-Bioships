@@ -1,12 +1,11 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.registry.Create_bioships;
-import org.Azkerash.create_bioships.creature.resources.MaterialCost;
-
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.world.phys.Vec3;
 import org.Azkerash.create_bioships.amoeba.transport.ComponentTransport;
+import org.Azkerash.create_bioships.creature.resources.MaterialCost;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /**
  * Detects broken gut graphs and proposes conserved obstruction moves to the existing goal queue.

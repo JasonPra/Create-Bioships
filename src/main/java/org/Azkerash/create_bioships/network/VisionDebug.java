@@ -1,12 +1,5 @@
 package org.Azkerash.create_bioships.network;
 
-import org.Azkerash.create_bioships.BioshipVision;
-import org.Azkerash.create_bioships.LivingCoreBlockEntity;
-import org.Azkerash.create_bioships.BioshipIntegration;
-import org.Azkerash.create_bioships.registry.Create_bioships;
-
-import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
-
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import net.minecraft.core.BlockPos;
@@ -15,6 +8,11 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+import org.Azkerash.create_bioships.BioshipIntegration;
+import org.Azkerash.create_bioships.BioshipVision;
+import org.Azkerash.create_bioships.LivingCoreBlockEntity;
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** On-demand server observations, shared by the overlay and in-engine regression tests. */
 public final class VisionDebug {
@@ -31,7 +29,9 @@ public final class VisionDebug {
     result.putString("Behavior", core.brain().action().name());
     result.putString("BehaviorReason", core.brain().reason());
     result.putInt("SearchRange", core.vision().maximumDistance(core));
-    result.putDouble("Distance", BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO).distanceTo(target));
+    result.putDouble(
+        "Distance",
+        BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO).distanceTo(target));
     result.putString("Core", core.getBlockPos().toShortString());
     result.putBoolean("Scouting", core.coreMotion().active());
     result.putString("ScoutStatus", core.coreMotion().scoutingHint(core));
@@ -89,7 +89,8 @@ public final class VisionDebug {
           for (var entity : BioshipIntegration.blockEntities(ship))
             if (entity instanceof LivingCoreBlockEntity core && !core.body().dead()) {
               double distance =
-                  BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO).distanceToSqr(player.position());
+                  BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO)
+                      .distanceToSqr(player.position());
               if (distance < best) {
                 nearest = core;
                 best = distance;

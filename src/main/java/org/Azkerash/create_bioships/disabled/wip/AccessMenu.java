@@ -1,9 +1,5 @@
 package org.Azkerash.create_bioships.disabled.wip;
 
-import org.Azkerash.create_bioships.registry.Create_bioships;
-import org.Azkerash.create_bioships.BioshipAccess;
-import org.Azkerash.create_bioships.LivingCoreBlockEntity;
-
 import java.util.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -12,6 +8,9 @@ import net.minecraft.world.entity.player.*;
 import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.*;
+import org.Azkerash.create_bioships.BioshipAccess;
+import org.Azkerash.create_bioships.LivingCoreBlockEntity;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 public class AccessMenu extends AbstractContainerMenu {
   public record Choice(UUID id, String label, boolean animal) {}

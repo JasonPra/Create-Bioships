@@ -1,22 +1,5 @@
 package org.Azkerash.create_bioships.development;
 
-import org.Azkerash.create_bioships.DigestiveSystem;
-import org.Azkerash.create_bioships.BioshipDeathCause;
-import org.Azkerash.create_bioships.BioshipLegEvolution;
-import org.Azkerash.create_bioships.LivingCoreBlockEntity;
-import org.Azkerash.create_bioships.BioshipRespiration;
-import org.Azkerash.create_bioships.BodyTopology;
-import org.Azkerash.create_bioships.AmoebaLegBlock;
-import org.Azkerash.create_bioships.BioshipDecay;
-import org.Azkerash.create_bioships.BioshipStructure;
-import org.Azkerash.create_bioships.BioshipCreeperHazard;
-import org.Azkerash.create_bioships.BioshipSupport;
-import org.Azkerash.create_bioships.BioshipIntegration;
-import org.Azkerash.create_bioships.registry.Create_bioships;
-import org.Azkerash.create_bioships.network.VisionDebug;
-
-import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
-
 import com.mojang.brigadier.arguments.StringArgumentType;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
@@ -29,6 +12,21 @@ import net.minecraft.server.level.ServerLevel;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import org.Azkerash.create_bioships.AmoebaLegBlock;
+import org.Azkerash.create_bioships.BioshipCreeperHazard;
+import org.Azkerash.create_bioships.BioshipDeathCause;
+import org.Azkerash.create_bioships.BioshipDecay;
+import org.Azkerash.create_bioships.BioshipIntegration;
+import org.Azkerash.create_bioships.BioshipLegEvolution;
+import org.Azkerash.create_bioships.BioshipRespiration;
+import org.Azkerash.create_bioships.BioshipStructure;
+import org.Azkerash.create_bioships.BioshipSupport;
+import org.Azkerash.create_bioships.BodyTopology;
+import org.Azkerash.create_bioships.DigestiveSystem;
+import org.Azkerash.create_bioships.LivingCoreBlockEntity;
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
+import org.Azkerash.create_bioships.network.VisionDebug;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** Operator-readable real simulation snapshots, without a GUI panel or behavior overrides. */
 @EventBusSubscriber(modid = Create_bioships.MOD_ID)
@@ -124,7 +122,9 @@ public final class BioshipDiagnostics {
     var data = new CompoundTag();
     var cells = BioshipStructure.cells(core.ship());
     data.putUUID("Ship", core.ship().getUniqueId());
-    data.put("Position", VisionDebug.vector(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO)));
+    data.put(
+        "Position",
+        VisionDebug.vector(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO)));
     data.putString("LogicalCore", core.getBlockPos().toShortString());
     data.putString("LogicalMouths", DigestiveSystem.mouths(core).toString());
     data.putBoolean("ChunkLease", core.chunkLoading().active());
@@ -226,7 +226,8 @@ public final class BioshipDiagnostics {
                                             Component.literal(
                                                 core.ship().getUniqueId()
                                                     + " "
-                                                    + BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO)
+                                                    + BodyCoordinates.physical(
+                                                        core.amoebaComponents(), BlockPos.ZERO)
                                                     + " "
                                                     + core.brain().action()),
                                         false);

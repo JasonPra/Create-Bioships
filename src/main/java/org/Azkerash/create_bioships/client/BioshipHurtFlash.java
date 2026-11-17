@@ -1,8 +1,5 @@
 package org.Azkerash.create_bioships.client;
 
-import org.Azkerash.create_bioships.LivingCoreBlockEntity;
-import org.Azkerash.create_bioships.BioshipStructure;
-
 import com.mojang.blaze3d.vertex.PoseStack;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import net.minecraft.client.Minecraft;
@@ -10,6 +7,8 @@ import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.level.ChunkPos;
 import org.Azkerash.create_bioships.*;
+import org.Azkerash.create_bioships.BioshipStructure;
+import org.Azkerash.create_bioships.LivingCoreBlockEntity;
 
 /** The vanilla red hurt overlay follows each actual body model in the core's local render frame. */
 final class BioshipHurtFlash {

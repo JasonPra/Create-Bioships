@@ -1,10 +1,5 @@
 package org.Azkerash.create_bioships.development.client;
 
-import org.Azkerash.create_bioships.registry.Create_bioships;
-import org.Azkerash.create_bioships.BioshipLegAnchors;
-import org.Azkerash.create_bioships.LivingCoreBlockEntity;
-import org.Azkerash.create_bioships.TentacleStrike;
-
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.*;
@@ -14,6 +9,10 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import org.Azkerash.create_bioships.*;
+import org.Azkerash.create_bioships.BioshipLegAnchors;
+import org.Azkerash.create_bioships.LivingCoreBlockEntity;
+import org.Azkerash.create_bioships.TentacleStrike;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** F3+B shows the world-axis collision volumes, independent of the rendered body's rotation. */
 @EventBusSubscriber(modid = Create_bioships.MOD_ID, value = Dist.CLIENT)

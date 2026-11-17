@@ -1,10 +1,5 @@
 package org.Azkerash.create_bioships.amoeba.transport;
 
-import org.Azkerash.create_bioships.amoeba.merging.ComponentMerging;
-import org.Azkerash.create_bioships.amoeba.components.AmoebaComponentHost;
-
-import org.Azkerash.create_bioships.BioshipTissue;
-
 import dev.ryanhcode.sable.api.SubLevelAssemblyHelper;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.api.sublevel.ticket.SubLevelLoadingTicketType;
@@ -19,6 +14,9 @@ import net.minecraft.util.Unit;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.phys.Vec3;
 import org.Azkerash.create_bioships.*;
+import org.Azkerash.create_bioships.BioshipTissue;
+import org.Azkerash.create_bioships.amoeba.components.AmoebaComponentHost;
+import org.Azkerash.create_bioships.amoeba.merging.ComponentMerging;
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
 

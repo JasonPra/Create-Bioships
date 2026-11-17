@@ -1,8 +1,7 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.creature.resources.MaterialCost;
-
 import java.util.*;
+import org.Azkerash.create_bioships.creature.resources.MaterialCost;
 
 /**
  * Shared reserve targets and discretionary-investment budget, separate from inventory mechanics.

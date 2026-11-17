@@ -1,15 +1,13 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.network.VisionDebug;
-
-import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
-import org.Azkerash.create_bioships.disabled.wip.DinghyGrowth;
-
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.*;
+import org.Azkerash.create_bioships.disabled.wip.DinghyGrowth;
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
+import org.Azkerash.create_bioships.network.VisionDebug;
 
 /** Small arms push against dry ground; this never supplies flight or consumes levitite. */
 public final class BioshipCrawl {
@@ -36,7 +34,8 @@ public final class BioshipCrawl {
 
   private void measureGait(LivingCoreBlockEntity core) {
     var point =
-        BodyCoordinates.physical(core.amoebaComponents(), core.structuralOrigin().subtract(core.getBlockPos()));
+        BodyCoordinates.physical(
+            core.amoebaComponents(), core.structuralOrigin().subtract(core.getBlockPos()));
     long now = core.getLevel().getGameTime();
     if (lastStepPosition != null && now > gaitAt) {
       double distance = Math.sqrt(point.subtract(lastStepPosition).horizontalDistanceSqr());

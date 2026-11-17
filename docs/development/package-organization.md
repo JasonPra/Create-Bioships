@@ -48,3 +48,33 @@ remain behind accessors; developer scenario state exposes read-only accessors.
 Mixin configs are split by their actual Mixin packages, preserving all previous hooks without
 making the mod root a protected Mixin package. Production, unit-test, GameTest and optional
 soak-test sources compile. Command names, packet IDs, registry IDs and saved keys are unchanged.
+
+Task 5 complete: stale imports/references were cleaned, package Javadocs and the generated
+architecture reference were updated, and `tools/check_package_layout.py` now validates source
+paths and all Mixin metadata. It verifies 178 Java types and 13 hooks across four configs,
+including that no ordinary classes fall under a protected Mixin package. All source sets compile.
+A baseline comparison confirms registry string literals are unchanged; the WIP gate remains false.
+
+## Current layout
+
+```text
+creature/api                 physical body contract
+creature/resources           resource account, costs and ledger
+amoeba/components            optional component host/provider contracts
+amoeba/core                  concrete-core adapter
+amoeba/merging               recipes, conversions and merge animation timing
+amoeba/transport             cargo lifecycle and attachment
+amoeba/client                client-only cargo pose adaptation
+registry                     mod bootstrap and declarations
+network                      packets and diagnostic snapshots
+development                  worlds, habitats, commands and fixture controllers
+development/client           debug overlays and key hook
+integration/sable             coordinate helper and assembly hooks
+integration/biomancy          native storage recognition
+disabled/wip                 preserved disabled airship/prototype code
+disabled/wip/client          preserved prototype rendering/UI
+disabled/wip/mixin           preserved rescue hook
+```
+
+The lifecycle coordinator and remaining coupled gameplay systems stay in the root package.
+Shared perception/anatomy extraction and gameplay redesign are not part of this pass.

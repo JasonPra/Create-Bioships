@@ -1,9 +1,8 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
-
 import net.minecraft.core.*;
 import net.minecraft.world.phys.Vec3;
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
 
 /** Grasping obeys solid collision even when an eye can see through glass. */
 final class BioshipReach {
@@ -30,7 +29,8 @@ final class BioshipReach {
 
   static boolean at(
       LivingCoreBlockEntity core, Vec3 candidate, Vec3 target, boolean blockTarget, double reach) {
-    var shift = candidate.subtract(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO));
+    var shift =
+        candidate.subtract(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO));
     var from = anchor(core, target.subtract(shift)).add(shift);
     if (from.distanceToSqr(target) > reach * reach) return false;
     int steps = Math.max(1, (int) Math.ceil(from.distanceTo(target) * 5));
@@ -56,10 +56,19 @@ final class BioshipReach {
   }
 
   static boolean clear(LivingCoreBlockEntity core, Vec3 target, boolean blockTarget, double reach) {
-    return at(core, BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO), target, blockTarget, reach);
+    return at(
+        core,
+        BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO),
+        target,
+        blockTarget,
+        reach);
   }
 
   static boolean clear(LivingCoreBlockEntity core, Vec3 target, boolean blockTarget) {
-    return at(core, BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO), target, blockTarget);
+    return at(
+        core,
+        BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO),
+        target,
+        blockTarget);
   }
 }

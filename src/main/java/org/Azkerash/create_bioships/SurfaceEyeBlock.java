@@ -1,7 +1,5 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.registry.Create_bioships;
-
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.*;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -9,6 +7,7 @@ import net.minecraft.world.level.*;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.*;
 import net.minecraft.world.phys.shapes.*;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** A small sensory organ attached to a face of the organism's tissue. */
 public final class SurfaceEyeBlock extends DirectionalBlock {

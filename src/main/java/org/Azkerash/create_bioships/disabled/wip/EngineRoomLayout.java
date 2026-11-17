@@ -1,13 +1,12 @@
 package org.Azkerash.create_bioships.disabled.wip;
 
-import org.Azkerash.create_bioships.registry.Create_bioships;
-import org.Azkerash.create_bioships.LivingCoreBlockEntity;
-import org.Azkerash.create_bioships.BioshipTissue;
-
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.*;
+import org.Azkerash.create_bioships.BioshipTissue;
+import org.Azkerash.create_bioships.LivingCoreBlockEntity;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** Shared shell geometry and layout-coordinate mapping; no mutations or spending. */
 public final class EngineRoomLayout {

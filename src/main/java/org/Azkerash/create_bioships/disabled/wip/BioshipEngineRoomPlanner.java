@@ -1,17 +1,5 @@
 package org.Azkerash.create_bioships.disabled.wip;
 
-import org.Azkerash.create_bioships.DigestiveSystem;
-import org.Azkerash.create_bioships.registry.Create_bioships;
-import org.Azkerash.create_bioships.BioshipEnergy;
-import org.Azkerash.create_bioships.BlockEnergyTable;
-import org.Azkerash.create_bioships.BioshipTargetEntity;
-import org.Azkerash.create_bioships.LivingCoreBlockEntity;
-import org.Azkerash.create_bioships.IntestineBlock;
-import org.Azkerash.create_bioships.BioshipIntegration;
-import org.Azkerash.create_bioships.BioshipCrawl;
-import org.Azkerash.create_bioships.creature.resources.MaterialCost;
-import org.Azkerash.create_bioships.SurfaceEyeBlock;
-
 import static org.Azkerash.create_bioships.disabled.wip.EngineRoomLayout.*;
 
 import java.util.*;
@@ -19,7 +7,18 @@ import net.minecraft.core.*;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.*;
+import org.Azkerash.create_bioships.BioshipCrawl;
+import org.Azkerash.create_bioships.BioshipEnergy;
+import org.Azkerash.create_bioships.BioshipIntegration;
+import org.Azkerash.create_bioships.BioshipTargetEntity;
+import org.Azkerash.create_bioships.BlockEnergyTable;
+import org.Azkerash.create_bioships.DigestiveSystem;
+import org.Azkerash.create_bioships.IntestineBlock;
+import org.Azkerash.create_bioships.LivingCoreBlockEntity;
+import org.Azkerash.create_bioships.SurfaceEyeBlock;
 import org.Azkerash.create_bioships.amoeba.transport.ComponentTransport;
+import org.Azkerash.create_bioships.creature.resources.MaterialCost;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** Read-only engine-room clearance, load, capacity and complete-investment quotes. */
 public final class BioshipEngineRoomPlanner {

@@ -1,7 +1,5 @@
 package org.Azkerash.create_bioships.development;
 
-import org.Azkerash.create_bioships.registry.Create_bioships;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
@@ -12,10 +10,10 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.EntityTeleportEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** Remote suspended End habitat. Construction is explicit through the developer navigator. */
-public @EventBusSubscriber(modid = Create_bioships.MOD_ID)
-final class EndHabitatLab {
+public @EventBusSubscriber(modid = Create_bioships.MOD_ID) final class EndHabitatLab {
   public static final BlockPos CENTER = new BlockPos(8192, 112, 0);
   static final int RADIUS = 64;
 

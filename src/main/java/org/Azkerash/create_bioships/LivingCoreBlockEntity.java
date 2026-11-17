@@ -1,25 +1,5 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.registry.Create_bioships;
-import org.Azkerash.create_bioships.creature.resources.MaterialCost;
-
-import org.Azkerash.create_bioships.amoeba.core.AmoebaCoreAdapter;
-
-import org.Azkerash.create_bioships.amoeba.components.AmoebaComponentHost;
-import org.Azkerash.create_bioships.amoeba.components.AmoebaComponentProvider;
-import org.Azkerash.create_bioships.disabled.wip.BioshipBlueprint;
-import org.Azkerash.create_bioships.disabled.wip.LivingThrottleBlock;
-import org.Azkerash.create_bioships.disabled.wip.FlagellumMotion;
-import org.Azkerash.create_bioships.disabled.wip.LivingDoorBlock;
-import org.Azkerash.create_bioships.disabled.wip.AirshipPrototype;
-import org.Azkerash.create_bioships.disabled.wip.DinghyGrowth;
-import org.Azkerash.create_bioships.disabled.wip.EngineRoom;
-import org.Azkerash.create_bioships.disabled.wip.NerveControlBlock;
-import org.Azkerash.create_bioships.disabled.wip.EngineRoomLayout;
-import org.Azkerash.create_bioships.disabled.wip.BioshipRescue;
-import org.Azkerash.create_bioships.disabled.wip.TentacleBlockEntity;
-import org.Azkerash.create_bioships.disabled.wip.BioshipEngineRoom;
-
 import dev.ryanhcode.sable.api.block.BlockEntitySubLevelActor;
 import dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
@@ -39,7 +19,22 @@ import net.minecraft.world.level.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.*;
+import org.Azkerash.create_bioships.amoeba.core.AmoebaCoreAdapter;
 import org.Azkerash.create_bioships.amoeba.transport.ComponentTransport;
+import org.Azkerash.create_bioships.creature.resources.MaterialCost;
+import org.Azkerash.create_bioships.disabled.wip.AirshipPrototype;
+import org.Azkerash.create_bioships.disabled.wip.BioshipBlueprint;
+import org.Azkerash.create_bioships.disabled.wip.BioshipEngineRoom;
+import org.Azkerash.create_bioships.disabled.wip.BioshipRescue;
+import org.Azkerash.create_bioships.disabled.wip.DinghyGrowth;
+import org.Azkerash.create_bioships.disabled.wip.EngineRoom;
+import org.Azkerash.create_bioships.disabled.wip.EngineRoomLayout;
+import org.Azkerash.create_bioships.disabled.wip.FlagellumMotion;
+import org.Azkerash.create_bioships.disabled.wip.LivingDoorBlock;
+import org.Azkerash.create_bioships.disabled.wip.LivingThrottleBlock;
+import org.Azkerash.create_bioships.disabled.wip.NerveControlBlock;
+import org.Azkerash.create_bioships.disabled.wip.TentacleBlockEntity;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 import org.joml.Vector3d;
 
 public class LivingCoreBlockEntity extends BlockEntity
@@ -48,7 +43,9 @@ public class LivingCoreBlockEntity extends BlockEntity
   private final org.Azkerash.create_bioships.amoeba.components.AmoebaComponentHost componentHost =
       new AmoebaCoreAdapter(this);
 
-  public BioshipChunks chunkLoading() { return chunkLoading; }
+  public BioshipChunks chunkLoading() {
+    return chunkLoading;
+  }
 
   public org.Azkerash.create_bioships.amoeba.components.AmoebaComponentHost amoebaComponents() {
     return componentHost;

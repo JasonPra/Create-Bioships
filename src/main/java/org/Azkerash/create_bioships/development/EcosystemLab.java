@@ -1,7 +1,5 @@
 package org.Azkerash.create_bioships.development;
 
-import org.Azkerash.create_bioships.registry.Create_bioships;
-
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.core.registries.*;
@@ -18,6 +16,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /**
  * Bounded normal-terrain test ecosystem; leaves interior terrain and ordinary world rules intact.
@@ -38,9 +37,17 @@ public final class EcosystemLab {
     BlockPos center = BlockPos.ZERO;
     final List<BlockPos> caches = new ArrayList<>();
 
-    public BlockPos center() { return center; }
-    public List<BlockPos> starters() { return List.copyOf(starters); }
-    public long nextRefill() { return nextRefill; }
+    public BlockPos center() {
+      return center;
+    }
+
+    public List<BlockPos> starters() {
+      return List.copyOf(starters);
+    }
+
+    public long nextRefill() {
+      return nextRefill;
+    }
 
     public static State get(ServerLevel level) {
       return level

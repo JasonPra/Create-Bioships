@@ -1,13 +1,11 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.network.VisionDebug;
-
-import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
-
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.Vec3;
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
+import org.Azkerash.create_bioships.network.VisionDebug;
 
 /** Bounded ground navigation checks the whole current body, not just the center of its core. */
 final class GroundRoute {
@@ -160,7 +158,9 @@ final class GroundRoute {
     var route = new GroundRoute();
     var parts = route.offsets(core);
     double stance = (core.hatchling() ? .85 : 1.25) + core.coreHeightOffset();
-    int floor = (int) Math.round(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO).y - stance);
+    int floor =
+        (int)
+            Math.round(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO).y - stance);
     for (int delta : new int[] {0, 1, -1, 2, -2, -3}) {
       var p =
           new BlockPos(

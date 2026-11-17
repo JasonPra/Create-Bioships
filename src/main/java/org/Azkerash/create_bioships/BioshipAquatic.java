@@ -1,7 +1,5 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
-
 import dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import java.util.*;
@@ -9,6 +7,7 @@ import net.minecraft.core.*;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.phys.Vec3;
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
 import org.joml.Vector3d;
 
 /** Water propulsion is separate from flight; breathing remains a finite survival resource. */

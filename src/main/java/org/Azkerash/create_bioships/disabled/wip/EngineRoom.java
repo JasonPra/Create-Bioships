@@ -1,18 +1,15 @@
 package org.Azkerash.create_bioships.disabled.wip;
 
-import org.Azkerash.create_bioships.integration.biomancy.NativeStorage;
-
-import org.Azkerash.create_bioships.FeedingMouthBlockEntity;
-import org.Azkerash.create_bioships.StomachBlockEntity;
-import org.Azkerash.create_bioships.LivingCoreBlockEntity;
-import org.Azkerash.create_bioships.BioshipIntegration;
-
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.world.level.block.entity.BlockEntity;
+import org.Azkerash.create_bioships.BioshipIntegration;
+import org.Azkerash.create_bioships.FeedingMouthBlockEntity;
+import org.Azkerash.create_bioships.LivingCoreBlockEntity;
+import org.Azkerash.create_bioships.StomachBlockEntity;
 import org.Azkerash.create_bioships.amoeba.transport.ComponentTransport;
+import org.Azkerash.create_bioships.integration.biomancy.NativeStorage;
 
 public final class EngineRoom {
   public static boolean inside(LivingCoreBlockEntity core, BlockPos pos) {
@@ -23,7 +20,6 @@ public final class EngineRoom {
         && d.getZ() >= 1
         && d.getZ() <= 5;
   }
-
 
   public static List<BlockPos> stomachBays(LivingCoreBlockEntity core) {
     var bays = new ArrayList<BlockPos>();
@@ -39,7 +35,10 @@ public final class EngineRoom {
     var components = BioshipIntegration.blockEntities(ship);
     components.sort(
         java.util.Comparator.comparingInt(
-            entity -> entity instanceof StomachBlockEntity ? 0 : NativeStorage.isStorage(entity) ? 1 : 2));
+            entity ->
+                entity instanceof StomachBlockEntity
+                    ? 0
+                    : NativeStorage.isStorage(entity) ? 1 : 2));
     for (var entity : components) {
       if (entity instanceof FeedingMouthBlockEntity) continue;
       String id = BuiltInRegistries.BLOCK.getKey(entity.getBlockState().getBlock()).toString();

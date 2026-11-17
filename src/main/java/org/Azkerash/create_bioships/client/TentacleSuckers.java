@@ -1,6 +1,5 @@
 package org.Azkerash.create_bioships.client;
 
-import org.Azkerash.create_bioships.MaterialRenderPass;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.model.geom.*;

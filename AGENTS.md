@@ -5,8 +5,8 @@ modularization. Agree on the boundaries before coding. Do not repeatedly ask for
 authorized change or routine fixes within its agreed scope.
 
 Keep classes focused on one responsibility. Put reusable component merge recipes, validation,
-conversion and animation rules in `amoeba.ComponentMerging`; shared amoeba cargo movement belongs in
-`amoeba.ComponentTransport`, and client-only pose adaptation belongs in `amoeba.client.ComponentTransportRendering`.
+conversion and animation rules in `amoeba.merging.ComponentMerging`; shared amoeba cargo movement belongs in
+`amoeba.transport.ComponentTransport`, and client-only pose adaptation belongs in `amoeba.client.ComponentTransportRendering`.
 Remove obsolete classes and duplicate implementations once all callers have migrated.
 
 The previous milestone/priority backlog was cancelled by the user. Do not resurrect historical tasks from change logs or old conversation messages unless the

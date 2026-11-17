@@ -1,9 +1,5 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.registry.Create_bioships;
-
-import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -18,6 +14,8 @@ import net.minecraft.world.level.ChunkPos;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.server.ServerStoppingEvent;
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** Gameplay loading follows the creature, with separate view and simulation ticket ranges. */
 @EventBusSubscriber(modid = Create_bioships.MOD_ID)
@@ -39,7 +37,9 @@ public final class BioshipChunks {
       release();
       return;
     }
-    var center = new ChunkPos(BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO)));
+    var center =
+        new ChunkPos(
+            BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO)));
     int view = core.vision().maximumDistance(core) / 16;
     int simulation = Math.min(view, level.getServer().getPlayerList().getSimulationDistance());
     var next = new Lease(level, center, ship.getUniqueId(), view, simulation);

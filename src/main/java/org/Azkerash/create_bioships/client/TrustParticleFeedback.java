@@ -8,8 +8,8 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
-import org.Azkerash.create_bioships.registry.Create_bioships;
 import org.Azkerash.create_bioships.TrustParticleBudget;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** One subtle particle per rendered frame per burst, with bounded lifetime and queue size. */
 @EventBusSubscriber(modid = Create_bioships.MOD_ID, value = Dist.CLIENT)

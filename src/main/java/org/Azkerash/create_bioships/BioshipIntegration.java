@@ -1,10 +1,5 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.registry.Create_bioships;
-
-import org.Azkerash.create_bioships.disabled.wip.AirshipPrototype;
-import org.Azkerash.create_bioships.disabled.wip.DinghyGrowth;
-
 import dev.ryanhcode.sable.api.SubLevelAssemblyHelper;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.companion.math.BoundingBox3i;
@@ -24,6 +19,9 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import org.Azkerash.create_bioships.amoeba.merging.ComponentMerging;
 import org.Azkerash.create_bioships.amoeba.transport.ComponentTransport;
+import org.Azkerash.create_bioships.disabled.wip.AirshipPrototype;
+import org.Azkerash.create_bioships.disabled.wip.DinghyGrowth;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** World mutation happens in ordinary block ticks, outside Sable's actor iteration. */
 @EventBusSubscriber(modid = Create_bioships.MOD_ID)

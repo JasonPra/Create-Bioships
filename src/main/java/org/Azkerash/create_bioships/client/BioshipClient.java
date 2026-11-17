@@ -1,12 +1,5 @@
 package org.Azkerash.create_bioships.client;
 
-import org.Azkerash.create_bioships.registry.Create_bioships;
-import org.Azkerash.create_bioships.disabled.wip.AirshipPrototype;
-import org.Azkerash.create_bioships.disabled.wip.client.LivingControlHandler;
-import org.Azkerash.create_bioships.disabled.wip.client.AccessScreen;
-import org.Azkerash.create_bioships.disabled.wip.client.BlueprintScreen;
-import org.Azkerash.create_bioships.disabled.wip.client.FlagellumRenderer;
-
 import dev.simulated_team.simulated.index.SimClickInteractions;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
@@ -17,6 +10,12 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import org.Azkerash.create_bioships.*;
+import org.Azkerash.create_bioships.disabled.wip.AirshipPrototype;
+import org.Azkerash.create_bioships.disabled.wip.client.AccessScreen;
+import org.Azkerash.create_bioships.disabled.wip.client.BlueprintScreen;
+import org.Azkerash.create_bioships.disabled.wip.client.FlagellumRenderer;
+import org.Azkerash.create_bioships.disabled.wip.client.LivingControlHandler;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 @EventBusSubscriber(modid = Create_bioships.MOD_ID, value = Dist.CLIENT)
 public final class BioshipClient {

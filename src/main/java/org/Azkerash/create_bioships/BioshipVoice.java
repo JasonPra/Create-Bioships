@@ -1,7 +1,5 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.network.BioshipNetwork;
-
 import com.github.elenterius.biomancy.block.modularlarynx.ModularLarynxBlockEntity;
 import com.github.elenterius.biomancy.init.ModSoundEvents;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -9,6 +7,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.Azkerash.create_bioships.network.BioshipNetwork;
 
 /** Native larynx samples, spatialized at a mouth and modulated by the client voice envelope. */
 final class BioshipVoice {

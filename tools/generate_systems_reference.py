@@ -91,7 +91,7 @@ def members(src):
         elif depth==1 and c==';':start=i+1
     return out
 
-ALL={str(p.relative_to(BASE).with_suffix('')).replace('/','.'):p for p in BASE.rglob('*.java')}
+ALL={str(p.relative_to(BASE).with_suffix('')).replace('/','.'):p for p in BASE.rglob('*.java') if p.name != 'package-info.java'}
 assigned=[c for _,_,_,cs,_ in GROUPS for c in cs]
 assert len(assigned)==len(set(assigned)), 'Duplicate class assignment'
 assert set(assigned)==set(ALL), ('Unmapped',set(ALL)-set(assigned),'Unknown',set(assigned)-set(ALL))

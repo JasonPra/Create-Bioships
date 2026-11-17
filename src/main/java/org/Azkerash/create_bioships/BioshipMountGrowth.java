@@ -1,12 +1,11 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.registry.Create_bioships;
-import org.Azkerash.create_bioships.creature.resources.MaterialCost;
-
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.*;
+import org.Azkerash.create_bioships.creature.resources.MaterialCost;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** Paid mounting tissue; quotes the remaining support, leg, strength and breathing investment. */
 final class BioshipMountGrowth {

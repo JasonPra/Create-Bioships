@@ -1,7 +1,5 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.registry.Create_bioships;
-
 import com.google.gson.*;
 import java.util.*;
 import net.minecraft.resources.ResourceLocation;
@@ -10,6 +8,7 @@ import net.minecraft.util.profiling.ProfilerFiller;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.AddReloadListenerEvent;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** Reloadable tuning; future appendage adapters select a profile without replacing navigation. */
 @EventBusSubscriber(modid = Create_bioships.MOD_ID)

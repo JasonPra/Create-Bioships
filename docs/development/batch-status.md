@@ -1,7 +1,7 @@
 # Current work scope
 
-All six tasks in the approved [amoeba component refactor](amoeba-refactor.md) are complete.
-Validation: 61 unit tests and 18 focused GameTests passed. Each checkpoint was pushed separately.
-No tasks remain in this scope. The earlier creature-feature backlog remains cancelled.
+Tasks 1–5 of the approved [package organization](package-organization.md) pass are complete
+and pushed individually. One task remains: focused runtime regression testing and any resulting
+fixes. The earlier feature backlog remains cancelled.
 
-Future new features require discussion with the user about responsibility boundaries first.
+Future features require discussion of class responsibilities and modularization with the user.

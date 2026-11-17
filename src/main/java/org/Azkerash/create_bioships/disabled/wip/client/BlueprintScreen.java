@@ -1,8 +1,5 @@
 package org.Azkerash.create_bioships.disabled.wip.client;
 
-import org.Azkerash.create_bioships.registry.Create_bioships;
-import org.Azkerash.create_bioships.disabled.wip.BlueprintMenu;
-
 import net.minecraft.client.gui.*;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -10,6 +7,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import org.Azkerash.create_bioships.*;
 import org.Azkerash.create_bioships.BioshipTissue;
+import org.Azkerash.create_bioships.disabled.wip.BlueprintMenu;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 public class BlueprintScreen extends AbstractContainerScreen<BlueprintMenu> {
   private int mode = 1, roomPage;

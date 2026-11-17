@@ -1,12 +1,5 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.development.EcosystemLab;
-import org.Azkerash.create_bioships.development.BioshipDiagnostics;
-import org.Azkerash.create_bioships.registry.Create_bioships;
-import org.Azkerash.create_bioships.creature.resources.MaterialCost;
-
-import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
-
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import java.util.*;
 import net.minecraft.core.*;
@@ -14,6 +7,11 @@ import net.minecraft.world.item.*;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import org.Azkerash.create_bioships.creature.resources.MaterialCost;
+import org.Azkerash.create_bioships.development.BioshipDiagnostics;
+import org.Azkerash.create_bioships.development.EcosystemLab;
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /**
  * Opt-in normal-world soak observer. Never selects goals or changes interior terrain, weather or
@@ -41,7 +39,9 @@ public final class BioshipWildProbe {
     if (tick == 1) {
       var spawn = level.getSharedSpawnPos();
       var center =
-          EcosystemLab.lab(level) ? EcosystemLab.State.get(level).center() : spawn.offset(80, 0, 40);
+          EcosystemLab.lab(level)
+              ? EcosystemLab.State.get(level).center()
+              : spawn.offset(80, 0, 40);
       EcosystemLab.prepare(level, center);
     }
     if (tick % 20 != 0) return;
@@ -126,7 +126,8 @@ public final class BioshipWildProbe {
                 + ":"
                 + cells.hashCode()
                 + ":"
-                + BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO))
+                + BlockPos.containing(
+                    BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO))
                 + ":"
                 + BioshipStorage.snapshot(core).hashCode();
         state.unchanged = signature.equals(state.signature) ? state.unchanged + 20 : 0;

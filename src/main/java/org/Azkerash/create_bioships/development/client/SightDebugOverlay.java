@@ -1,9 +1,5 @@
 package org.Azkerash.create_bioships.development.client;
 
-import org.Azkerash.create_bioships.registry.Create_bioships;
-import org.Azkerash.create_bioships.network.BioshipNetwork;
-import org.Azkerash.create_bioships.network.VisionDebug;
-
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import java.util.*;
 import net.minecraft.client.*;
@@ -18,6 +14,9 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.*;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.Azkerash.create_bioships.*;
+import org.Azkerash.create_bioships.network.BioshipNetwork;
+import org.Azkerash.create_bioships.network.VisionDebug;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** Diagnostic geometry comes from the server's actual vision code, not a client approximation. */
 @EventBusSubscriber(modid = Create_bioships.MOD_ID, value = Dist.CLIENT)

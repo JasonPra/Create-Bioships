@@ -1,9 +1,8 @@
 package org.Azkerash.create_bioships.disabled.wip;
 
-import org.Azkerash.create_bioships.registry.Create_bioships;
-
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.Block;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** Preserved prototype assets and APIs are not an implemented gameplay stage. */
 public final class AirshipPrototype {

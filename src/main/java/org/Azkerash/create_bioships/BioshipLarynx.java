@@ -1,7 +1,5 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.creature.resources.MaterialCost;
-
 import com.github.elenterius.biomancy.block.modularlarynx.ModularLarynxBlockEntity;
 import java.util.*;
 import net.minecraft.core.*;
@@ -11,6 +9,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.Azkerash.create_bioships.amoeba.merging.ComponentMerging;
 import org.Azkerash.create_bioships.amoeba.transport.ComponentTransport;
+import org.Azkerash.create_bioships.creature.resources.MaterialCost;
 
 /** One conserved larynx capsule per upgraded mouth, acquired only after functional digestion. */
 public final class BioshipLarynx {

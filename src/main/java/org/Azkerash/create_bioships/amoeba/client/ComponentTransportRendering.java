@@ -1,9 +1,5 @@
 package org.Azkerash.create_bioships.amoeba.client;
 
-import org.Azkerash.create_bioships.amoeba.components.AmoebaComponentProvider;
-import org.Azkerash.create_bioships.amoeba.transport.ComponentTransport;
-import org.Azkerash.create_bioships.amoeba.merging.ComponentMerging;
-
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.companion.math.Pose3d;
 import dev.ryanhcode.sable.companion.math.Pose3dc;
@@ -13,7 +9,9 @@ import java.util.*;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.world.phys.Vec3;
 import org.Azkerash.create_bioships.*;
-
+import org.Azkerash.create_bioships.amoeba.components.AmoebaComponentProvider;
+import org.Azkerash.create_bioships.amoeba.merging.ComponentMerging;
+import org.Azkerash.create_bioships.amoeba.transport.ComponentTransport;
 
 /** Client-only cargo deformation; logical poses, collisions and inventories stay authoritative. */
 public final class ComponentTransportRendering {

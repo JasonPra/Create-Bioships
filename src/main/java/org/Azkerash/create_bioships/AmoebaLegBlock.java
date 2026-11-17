@@ -1,7 +1,5 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.registry.Create_bioships;
-
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.*;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -11,6 +9,7 @@ import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.*;
 import net.minecraft.world.phys.shapes.*;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** A retractile locomotion socket. Facing points away from its supporting body face. */
 public final class AmoebaLegBlock extends DirectionalBlock {
@@ -42,7 +41,8 @@ public final class AmoebaLegBlock extends DirectionalBlock {
             && host.getValue(RespiratoryOrganBlock.FACING) == face);
   }
 
-  public static boolean mounted(java.util.Map<BlockPos, BlockState> cells, BlockPos pos, BlockState leg) {
+  public static boolean mounted(
+      java.util.Map<BlockPos, BlockState> cells, BlockPos pos, BlockState leg) {
     var face = leg.getValue(FACING);
     var hostPos = pos.relative(face.getOpposite());
     return canHostLeg(cells.get(hostPos), hostPos, face);

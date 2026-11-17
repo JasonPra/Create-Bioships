@@ -1,12 +1,11 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.network.VisionDebug;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import org.Azkerash.create_bioships.network.VisionDebug;
 
 /** World-space planted tips and collision-driven steps, independent of the feeding graspers. */
 public final class BioshipLegAnchors {

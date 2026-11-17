@@ -1,12 +1,5 @@
 package org.Azkerash.create_bioships.disabled.wip;
 
-import org.Azkerash.create_bioships.registry.Create_bioships;
-import org.Azkerash.create_bioships.BioshipVision;
-import org.Azkerash.create_bioships.BioshipPrey;
-import org.Azkerash.create_bioships.BioshipTargetEntity;
-import org.Azkerash.create_bioships.LivingCoreBlockEntity;
-import org.Azkerash.create_bioships.TentacleStrike;
-
 import dev.ryanhcode.sable.api.block.BlockEntitySubLevelActor;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
@@ -23,6 +16,12 @@ import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.*;
+import org.Azkerash.create_bioships.BioshipPrey;
+import org.Azkerash.create_bioships.BioshipTargetEntity;
+import org.Azkerash.create_bioships.BioshipVision;
+import org.Azkerash.create_bioships.LivingCoreBlockEntity;
+import org.Azkerash.create_bioships.TentacleStrike;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** Preserved flagellum: swimming muscles and the same bounded swipe used by active hatchlings. */
 public class TentacleBlockEntity extends BlockEntity implements BlockEntitySubLevelActor {

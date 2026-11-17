@@ -1,8 +1,5 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.development.BioshipDiagnostics;
-import org.Azkerash.create_bioships.registry.Create_bioships;
-
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import java.util.*;
@@ -12,6 +9,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import org.Azkerash.create_bioships.development.BioshipDiagnostics;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** Decay belongs to the physics body so fragments continue to rot without a core. */
 @EventBusSubscriber(modid = Create_bioships.MOD_ID)

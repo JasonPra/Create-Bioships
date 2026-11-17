@@ -1,26 +1,5 @@
 package org.Azkerash.create_bioships.amoeba.core;
 
-import org.Azkerash.create_bioships.DigestiveSystem;
-import org.Azkerash.create_bioships.BioshipLarynx;
-import org.Azkerash.create_bioships.BioshipStorage;
-import org.Azkerash.create_bioships.registry.Create_bioships;
-import org.Azkerash.create_bioships.BioshipHealthChanges;
-import org.Azkerash.create_bioships.FeedingMouthBlockEntity;
-import org.Azkerash.create_bioships.BioshipLegEvolution;
-import org.Azkerash.create_bioships.FeedingMouthBlock;
-import org.Azkerash.create_bioships.BioshipAccess;
-import org.Azkerash.create_bioships.LivingCoreBlockEntity;
-import org.Azkerash.create_bioships.BioshipContainerState;
-import org.Azkerash.create_bioships.AmoebaLegBlock;
-import org.Azkerash.create_bioships.BioshipDecay;
-import org.Azkerash.create_bioships.BioshipStructure;
-import org.Azkerash.create_bioships.BioshipSupport;
-import org.Azkerash.create_bioships.BioshipIntegration;
-import org.Azkerash.create_bioships.BioshipTissue;
-import org.Azkerash.create_bioships.BioshipDigestiveGrowth;
-
-import org.Azkerash.create_bioships.integration.biomancy.NativeStorage;
-
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import java.util.*;
 import net.minecraft.core.*;
@@ -29,10 +8,29 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import org.Azkerash.create_bioships.AmoebaLegBlock;
+import org.Azkerash.create_bioships.BioshipAccess;
+import org.Azkerash.create_bioships.BioshipContainerState;
+import org.Azkerash.create_bioships.BioshipDecay;
+import org.Azkerash.create_bioships.BioshipDigestiveGrowth;
+import org.Azkerash.create_bioships.BioshipHealthChanges;
+import org.Azkerash.create_bioships.BioshipIntegration;
+import org.Azkerash.create_bioships.BioshipLarynx;
+import org.Azkerash.create_bioships.BioshipLegEvolution;
+import org.Azkerash.create_bioships.BioshipStorage;
+import org.Azkerash.create_bioships.BioshipStructure;
+import org.Azkerash.create_bioships.BioshipSupport;
+import org.Azkerash.create_bioships.BioshipTissue;
+import org.Azkerash.create_bioships.DigestiveSystem;
+import org.Azkerash.create_bioships.FeedingMouthBlock;
+import org.Azkerash.create_bioships.FeedingMouthBlockEntity;
+import org.Azkerash.create_bioships.LivingCoreBlockEntity;
 import org.Azkerash.create_bioships.amoeba.components.AmoebaComponentHost;
 import org.Azkerash.create_bioships.amoeba.merging.ComponentMerging;
 import org.Azkerash.create_bioships.amoeba.transport.ComponentTransport;
 import org.Azkerash.create_bioships.creature.resources.ResourceAccount;
+import org.Azkerash.create_bioships.integration.biomancy.NativeStorage;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** Bridges the current amoeba core's policies to component mechanics; owns no cargo. */
 public final class AmoebaCoreAdapter implements AmoebaComponentHost {

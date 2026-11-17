@@ -1,10 +1,9 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.registry.Create_bioships;
-
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.world.level.block.state.BlockState;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** Face-connected anatomy, independent of Sable's more permissive physical grouping. */
 public final class BodyTopology {

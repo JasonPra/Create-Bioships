@@ -1,7 +1,5 @@
 package org.Azkerash.create_bioships.development;
 
-import org.Azkerash.create_bioships.registry.Create_bioships;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
@@ -14,6 +12,7 @@ import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** Server-authoritative test destination picker using the vanilla inventory screen. */
 @EventBusSubscriber(modid = Create_bioships.MOD_ID)

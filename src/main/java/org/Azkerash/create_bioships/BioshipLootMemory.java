@@ -1,13 +1,12 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.network.VisionDebug;
-
 import java.util.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.*;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.phys.Vec3;
+import org.Azkerash.create_bioships.network.VisionDebug;
 
 /** Known kill drops outlive visual memory; unloaded drops retain a navigable last position. */
 final class BioshipLootMemory {

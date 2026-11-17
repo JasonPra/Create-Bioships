@@ -1,9 +1,5 @@
 package org.Azkerash.create_bioships.client;
 
-import org.Azkerash.create_bioships.registry.Create_bioships;
-import org.Azkerash.create_bioships.FeedingMouthBlockEntity;
-import org.Azkerash.create_bioships.FeedingMouthBlock;
-
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
@@ -17,6 +13,9 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ModelEvent;
 import net.neoforged.neoforge.client.model.data.ModelData;
 import org.Azkerash.create_bioships.*;
+import org.Azkerash.create_bioships.FeedingMouthBlock;
+import org.Azkerash.create_bioships.FeedingMouthBlockEntity;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** Separate baked jaws articulate without moving the mouth block or its inventory. */
 @EventBusSubscriber(modid = Create_bioships.MOD_ID, value = Dist.CLIENT)
