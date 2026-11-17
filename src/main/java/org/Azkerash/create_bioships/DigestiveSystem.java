@@ -198,7 +198,8 @@ public final class DigestiveSystem {
   }
 
   public static boolean permitsPlacement(LivingCoreBlockEntity core, BlockPos pos) {
-    return !BioshipAnatomy.mouthOpening(core, pos)
+    return !core.assimilation().reservesRepairCell(pos)
+        && !BioshipAnatomy.mouthOpening(core, pos)
         && !BioshipRespiration.blocksOpening(core, pos)
         && stomachs(core).stream()
             .noneMatch(

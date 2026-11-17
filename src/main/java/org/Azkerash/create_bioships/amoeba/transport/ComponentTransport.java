@@ -206,6 +206,62 @@ public final class ComponentTransport {
     return true;
   }
 
+  /** Materialize preserved stock as owned cargo, then grow it out from the controller. */
+  public static boolean deployStored(
+      AmoebaComponentHost core,
+      BlockPos target,
+      net.minecraft.world.level.block.state.BlockState state,
+      CompoundTag capsule) {
+    if (core.movement() != null || core.body() == null || !core.validAttachment(state, target))
+      return false;
+    var level = core.body().getLevel();
+    var host = level.getBlockState(target);
+    if (!host.isAir()
+        || !BioshipIntegration.aquaticGrowthSpace(
+            level,
+            BlockPos.containing(
+                core.body().logicalPose().transformPosition(Vec3.atCenterOf(target)))))
+      return false;
+    if (!level.setBlock(target, state, 3)) return false;
+    core.restore(core.body(), target, capsule);
+    var cargo =
+        SubLevelAssemblyHelper.assembleBlocks(
+            level, target, List.of(target), new BoundingBox3i(target, target));
+    if (cargo == null) {
+      level.removeBlock(target, false);
+      return false;
+    }
+    core.restore(cargo, cargo.getPlot().getCenterBlock(), capsule);
+    var tags = new CompoundTag();
+    tags.putUUID("BioshipCargoOwner", core.body().getUniqueId());
+    tags.putBoolean("BioshipBound", true);
+    tags.putBoolean("RepairDeploy", true);
+    tags.put("RepairState", net.minecraft.nbt.NbtUtils.writeBlockState(state));
+    cargo.setUserDataTag(tags);
+    var container = SubLevelContainer.getContainer(level);
+    container.addForceLoadTicket(cargo, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
+    var start =
+        core.body().logicalPose().transformPosition(Vec3.atCenterOf(core.controllerPosition()));
+    core.movement(
+        new Move(
+            cargo.getUniqueId(),
+            cargo.getPlot().getCenterBlock(),
+            target,
+            target,
+            start,
+            level.getGameTime(),
+            false,
+            false,
+            false,
+            false,
+            false,
+            container.addForceLoadTicket(
+                core.body(), SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE),
+            List.of()));
+    core.changed();
+    return true;
+  }
+
   private static boolean movementIsGrouped(AmoebaComponentHost core, BlockPos source) {
     return core.movementGroup(source).size() > 1;
   }
@@ -298,11 +354,15 @@ public final class ComponentTransport {
     }
     var host = level.getBlockState(move.target());
     if (!host.isAir() && !BioshipTissue.isTissue(host)) {
+      if (cargo.getUserDataTag() != null && cargo.getUserDataTag().getBoolean("RepairDeploy"))
+        return;
       release(core, cargo);
       return;
     }
     var original = level.getBlockState(move.cargoBlock());
     if (!core.validAttachment(original, move.target())) {
+      if (cargo.getUserDataTag() != null && cargo.getUserDataTag().getBoolean("RepairDeploy"))
+        return;
       release(core, cargo);
       return;
     }
@@ -315,6 +375,17 @@ public final class ComponentTransport {
             move.cargoBlock(), move.target(), 0, Rotation.NONE, level),
         List.of(move.cargoBlock()));
     ComponentAttachment.restore(core, move, host, capsule);
+    if (cargo.getUserDataTag() != null && cargo.getUserDataTag().getBoolean("RepairDeploy")) {
+      var planned =
+          net.minecraft.nbt.NbtUtils.readBlockState(
+              level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.BLOCK),
+              cargo.getUserDataTag().getCompound("RepairState"));
+      level.setBlock(move.target(), planned, 3);
+      finishCargo(core, cargo);
+      core.invalidateVision();
+      core.changed();
+      return;
+    }
     boolean scavenged =
         cargo.getUserDataTag() != null && cargo.getUserDataTag().getBoolean("BioshipScavenged");
     boolean recycle =

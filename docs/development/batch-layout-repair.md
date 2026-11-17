@@ -22,3 +22,9 @@ Checkpoint 3: anatomy plans all recalled slots and final orientations before mut
 mouth/gill faces, checks final support/connectivity and chooses a recall sequence that leaves the
 body connected at every step. Grouped stomachs and respiratory organs remain deployed. The live
 blocked-mouth planning/inventory non-mutation test passed.
+
+Checkpoint 4: assimilation persists one recall/deploy cursor and slot-linked stock; inventories
+exist only in the live organ, its cargo, or stock, never in the saved layout plan. Participating
+organs pause inventory processing. Ordinary body edits and harvesting cannot compete with the
+repair. The full recall/redeployment test passed, including core-state reload and inventory
+conservation. Deployment hardening and obstruction tests are the next checkpoint.

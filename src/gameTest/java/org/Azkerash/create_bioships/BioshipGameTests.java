@@ -651,6 +651,66 @@ public class BioshipGameTests {
     }
   }
 
+  @GameTest(template = "test_empty", timeoutTicks = 500, batch = "batch_layout_transaction")
+  public static void recalled_layout_redeploys_preserved_organs_and_survives_reload(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    digestive(helper, core, false);
+    var mouth = core.getBlockPos().north();
+    ((FeedingMouthBlockEntity) level.getBlockEntity(mouth))
+        .setItem(0, new ItemStack(Items.DIAMOND, 7));
+    level.setBlock(mouth.north(), BioshipTissue.body().defaultBlockState(), 3);
+    var plan = BioshipAnatomy.repairPlan(core);
+    helper.assertTrue(
+        core.assimilation().beginRepair(core, plan), "Could not begin validated batch");
+    pollLayoutRepair(helper, ship, new boolean[2]);
+  }
+
+  private static void pollLayoutRepair(
+      GameTestHelper helper, ServerSubLevel ship, boolean[] observed) {
+    var core = core(ship);
+    var level = helper.getLevel();
+    var state = core.assimilation().save().getCompound("LayoutRepair");
+    if (state.getString("Phase").equals("deploy")) {
+      observed[0] = true;
+      if (!observed[1]) {
+        var saved = core.saveWithFullMetadata(level.registryAccess());
+        core.loadAdditional(saved, level.registryAccess());
+        observed[1] = true;
+      }
+    }
+    if (!core.assimilation().repairing()) {
+      try {
+        helper.assertTrue(
+            observed[0] && observed[1], "Batch never completed recall before deployment/reload");
+        helper.assertTrue(
+            DigestiveSystem.functional(core), "Batch did not restore digestive connections");
+        int diamonds = 0;
+        for (var p : DigestiveSystem.mouths(core)) {
+          var mouth = (FeedingMouthBlockEntity) level.getBlockEntity(p);
+          helper.assertTrue(
+              FeedingMouthBlock.openFace(
+                  core, p, mouth.getBlockState().getValue(FeedingMouthBlock.FACING)),
+              "Redeployed tooth face blocked");
+          for (int slot = 0; slot < mouth.getContainerSize(); slot++)
+            if (mouth.getItem(slot).is(Items.DIAMOND)) diamonds += mouth.getItem(slot).getCount();
+        }
+        for (var stomach : DigestiveSystem.stomachs(core))
+          for (int slot = 0; slot < 9; slot++)
+            if (stomach.foodStack(slot).is(Items.DIAMOND))
+              diamonds += stomach.foodStack(slot).getCount();
+        helper.assertTrue(diamonds == 7, "Batch lost/duplicated recalled inventory: " + diamonds);
+        helper.succeed();
+      } finally {
+        cleanup(helper, ship);
+      }
+      return;
+    }
+    helper.runAfterDelay(5, () -> pollLayoutRepair(helper, ship, observed));
+  }
+
   @GameTest(template = "test_empty", timeoutTicks = 200, batch = "end_fixture_geometry")
   public static void developer_end_habitat_has_remote_islands_biome_and_void_gap(
       GameTestHelper helper) {

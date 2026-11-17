@@ -34,6 +34,27 @@ public final class BioshipAssimilation {
   }
 
   private long retry;
+  private CompoundTag repair = new CompoundTag();
+
+  public boolean repairing() {
+    return !repair.isEmpty();
+  }
+
+  boolean reservesRepairCell(BlockPos pos) {
+    if (!repairing()) return false;
+    for (var entry : repair.getList("Parts", 10)) {
+      var part = (CompoundTag) entry;
+      if (BlockPos.of(part.getLong("Source")).equals(pos)
+          || BlockPos.of(part.getLong("Target")).equals(pos)) return true;
+      var state = part.getCompound("State");
+      if (state.getString("Name").equals("create_bioships:feeding_mouth")) {
+        var face = Direction.byName(state.getCompound("Properties").getString("facing"));
+        if (face != null && BlockPos.of(part.getLong("Target")).relative(face).equals(pos))
+          return true;
+      }
+    }
+    return false;
+  }
 
   public List<ComponentTransport.Move> arms() {
     return List.copyOf(arms);
@@ -52,7 +73,7 @@ public final class BioshipAssimilation {
   }
 
   boolean finishing() {
-    return !deploymentBlocked && !stock.isEmpty() && (wreck == null || settling);
+    return repairing() || !deploymentBlocked && !stock.isEmpty() && (wreck == null || settling);
   }
 
   public int stored() {
@@ -120,10 +141,12 @@ public final class BioshipAssimilation {
       tag.putBoolean("Wreck", cargo.getUserDataTag().getBoolean("BioshipScavenged"));
       tag.putBoolean("Recycle", cargo.getUserDataTag().getBoolean("BioshipEmergencyRecycle"));
     }
+    if (cargo.getUserDataTag() != null && cargo.getUserDataTag().contains("RepairSlot"))
+      tag.putInt("RepairSlot", cargo.getUserDataTag().getInt("RepairSlot"));
     var entity = core.getLevel().getBlockEntity(pos);
     if (entity != null)
       tag.put("Entity", entity.saveWithFullMetadata(core.getLevel().registryAccess()));
-    if (entity == null)
+    if (entity == null && !tag.contains("RepairSlot"))
       for (var existing : stock)
         if (!existing.contains("Entity")
             && existing.getBoolean("Wreck") == tag.getBoolean("Wreck")
@@ -190,8 +213,11 @@ public final class BioshipAssimilation {
   }
 
   boolean start(LivingCoreBlockEntity core, BioshipBrain.Decision chosen) {
-    if (active() || core.organMove() != null || core.coreMotion().active() || settling)
-      return false;
+    if (repairing()
+        || active()
+        || core.organMove() != null
+        || core.coreMotion().active()
+        || settling) return false;
     if (chosen.action() != BioshipBrain.Action.SCAVENGE
         && chosen.action() != BioshipBrain.Action.ASSIMILATE) return false;
     if (chosen.block() == null) return false;
@@ -266,6 +292,10 @@ public final class BioshipAssimilation {
     }
     if (beforeArms != arms.size()) core.organMove(null);
     if (active() || core.organMove() != null || core.coreMotion().active()) return;
+    if (repairing()) {
+      tickRepair(core);
+      return;
+    }
     if (wreck != null && !settling) {
       var remaining = remaining(core);
       if (!remaining.isEmpty()
@@ -280,6 +310,95 @@ public final class BioshipAssimilation {
       if (!resumeWreck) wreck = null;
       settling = false;
       resumeWreck = false;
+      core.setChanged();
+    }
+  }
+
+  boolean beginRepair(LivingCoreBlockEntity core, List<BioshipAnatomy.RepairPart> plan) {
+    if (plan.isEmpty() || pending() || core.organMove() != null || repairing()) return false;
+    var entries = new ListTag();
+    for (var part : plan) {
+      var entry = new CompoundTag();
+      entry.putLong("Source", part.source().asLong());
+      entry.putLong("Target", part.target().asLong());
+      entry.put("State", NbtUtils.writeBlockState(part.state()));
+      entry.put(
+          "OriginalState", NbtUtils.writeBlockState(core.getLevel().getBlockState(part.source())));
+      entries.add(entry);
+    }
+    repair.put("Parts", entries);
+    repair.putString("Phase", "recall");
+    core.setChanged();
+    return true;
+  }
+
+  private void tickRepair(LivingCoreBlockEntity core) {
+    if (core.body().dead()) return;
+    var parts = repair.getList("Parts", 10);
+    int index = repair.getInt("Cursor");
+    if (repair.getString("Phase").equals("recall")) {
+      if (index >= parts.size()) {
+        repair.putString("Phase", "deploy");
+        repair.putInt("Cursor", 0);
+        core.setChanged();
+        return;
+      }
+      final int slot = index;
+      if (stock.stream()
+          .anyMatch(t -> t.contains("RepairSlot") && t.getInt("RepairSlot") == slot)) {
+        repair.putInt("Cursor", index + 1);
+        core.setChanged();
+        return;
+      }
+      var source = BlockPos.of(parts.getCompound(index).getLong("Source"));
+      var expected =
+          NbtUtils.readBlockState(
+              core.getLevel()
+                  .registryAccess()
+                  .lookupOrThrow(net.minecraft.core.registries.Registries.BLOCK),
+              parts.getCompound(index).getCompound("OriginalState"));
+      if (core.getLevel().getBlockState(source).getBlock() != expected.getBlock())
+        return; // Interrupted/missing cargo: never clone the saved state.
+      if (ComponentTransport.storeComponent(core.amoebaComponents(), source)) {
+        var cargo =
+            SubLevelContainer.getContainer(core.getLevel()).getSubLevel(core.organMove().cargo());
+        ((ServerSubLevel) cargo).getUserDataTag().putInt("RepairSlot", index);
+        core.setChanged();
+      }
+      return;
+    }
+    if (index >= parts.size()) {
+      repair = new CompoundTag();
+      DigestiveSystem.connect(core, core.ship());
+      BioshipAnatomy.invalidate(core);
+      core.setChanged();
+      return;
+    }
+    var part = parts.getCompound(index);
+    final int slot = index;
+    var saved =
+        stock.stream()
+            .filter(t -> t.contains("RepairSlot") && t.getInt("RepairSlot") == slot)
+            .findFirst()
+            .orElse(null);
+    var target = BlockPos.of(part.getLong("Target"));
+    var state =
+        NbtUtils.readBlockState(
+            core.getLevel()
+                .registryAccess()
+                .lookupOrThrow(net.minecraft.core.registries.Registries.BLOCK),
+            part.getCompound("State"));
+    if (saved == null) {
+      if (core.getLevel().getBlockState(target).equals(state)) {
+        repair.putInt("Cursor", index + 1);
+        core.setChanged();
+      }
+      return;
+    }
+    if (ComponentTransport.deployStored(
+        core.amoebaComponents(), target, state, saved.getCompound("Entity"))) {
+      stock.remove(saved);
+      BioshipHealthChanges.changed(core);
       core.setChanged();
     }
   }
@@ -413,6 +532,7 @@ public final class BioshipAssimilation {
       }
     }
     stock.clear();
+    repair = new CompoundTag();
     wreck = null;
     settling = false;
     core.setChanged();
@@ -433,6 +553,7 @@ public final class BioshipAssimilation {
     tag.putBoolean("Settling", settling);
     tag.putBoolean("Resume", resumeWreck);
     tag.putBoolean("Feeding", feedingJob);
+    tag.put("LayoutRepair", repair.copy());
     return tag;
   }
 
@@ -458,5 +579,6 @@ public final class BioshipAssimilation {
     settling = tag.getBoolean("Settling");
     resumeWreck = tag.getBoolean("Resume");
     feedingJob = tag.getBoolean("Feeding");
+    repair = tag.getCompound("LayoutRepair").copy();
   }
 }

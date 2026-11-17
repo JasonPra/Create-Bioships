@@ -78,7 +78,7 @@ public final class AmoebaCoreAdapter implements AmoebaComponentHost {
   }
 
   public boolean absorptionActive() {
-    return core.assimilation().active();
+    return core.assimilation().active() || core.assimilation().repairing();
   }
 
   public List<BlockPos> movementGroup(BlockPos source) {

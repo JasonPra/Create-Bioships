@@ -341,8 +341,11 @@ public class StomachBlockEntity extends BlockEntity
         core = living;
         break;
       }
-    if (core == null || core.body().dead() || core.blueprint().busy() || !stomach.connected(core))
-      return;
+    if (core == null
+        || core.body().dead()
+        || core.blueprint().busy()
+        || core.assimilation().repairing() && core.assimilation().reservesRepairCell(pos)
+        || !stomach.connected(core)) return;
     stomach.continueGrowth(core);
     if (level.getGameTime() % 20 == 0) DigestiveSystem.pullStoredFood(core, stomach);
     java.util.List<Integer> order = new java.util.ArrayList<>();

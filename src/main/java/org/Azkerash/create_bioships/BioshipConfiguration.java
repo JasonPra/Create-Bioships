@@ -9,6 +9,18 @@ import org.Azkerash.create_bioships.registry.Create_bioships;
 /** Native organ conversion and accessibility, independent of movement and combat selection. */
 final class BioshipConfiguration {
   static BioshipAdaptation.Proposal proposal(LivingCoreBlockEntity core) {
+    if (BioshipAnatomy.blockedMouths(core)) {
+      if (BioshipAnatomy.repairPlan(core).isEmpty()) return null;
+      return new BioshipAdaptation.Proposal(
+          BioshipBrain.Action.CONFIGURE,
+          core.getBlockPos(),
+          core.getBlockState(),
+          0,
+          0,
+          0,
+          1150,
+          "Recall and redeploy a validated organ layout with clear mouth apertures");
+    }
     var entities = BioshipIntegration.blockEntities(core.ship());
     boolean forge = false, decomposer = false, digester = false;
     for (var entity : entities) {
@@ -65,6 +77,10 @@ final class BioshipConfiguration {
 
   static void execute(LivingCoreBlockEntity core) {
     if (!BioshipBodyBehavior.blocker(core).isEmpty()) return;
+    if (BioshipAnatomy.blockedMouths(core)) {
+      core.assimilation().beginRepair(core, BioshipAnatomy.repairPlan(core));
+      return;
+    }
     ComponentMerging.tryAvailable(core.amoebaComponents());
     if (ComponentTransport.busy(core.amoebaComponents())) return;
     for (var actor : BioshipIntegration.blockEntities(core.ship())) {
