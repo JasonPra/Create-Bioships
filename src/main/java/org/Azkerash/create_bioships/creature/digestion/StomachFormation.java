@@ -49,5 +49,10 @@ public final class StomachFormation {
     return List.copyOf(result);
   }
 
+  /** Five units in four ticks: 25% faster, with no extra recipe yield or ingredient changes. */
+  public static int workUnits(long tick, boolean formed) {
+    return formed && (tick & 3L) == 0 ? 2 : 1;
+  }
+
   private StomachFormation() {}
 }

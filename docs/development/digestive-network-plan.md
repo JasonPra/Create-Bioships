@@ -121,3 +121,11 @@ Revised checkpoint 8 complete: formed cubes display a distinct raised intake rin
 outward player panel, and plain member faces. Roles are derived and reset after breakage, without
 changing block IDs or inventories. An existing suitable intake endpoint is preferred for the port.
 Three focused live tests passed, including outward-facing roles and reset after center removal.
+
+Revised checkpoint 9 complete: the panel shows 27 real inventories as nine read-only pages of
+27 slots (243 total), aggregate food/acid/progress and non-duplicated shared product totals.
+32-bit menu values avoid short-packet truncation. Formed members perform five work units every
+four ticks: 25% faster with unchanged recipe costs/yields. Live tests filled all 15,552 food item
+capacity, inspected all nine pages, checked display isolation/shared resource totals and exercised
+the work bonus. Three focused live tests and all unit tests passed. Graphical layout QA is not yet
+performed; server behavior and all client source compilation passed.

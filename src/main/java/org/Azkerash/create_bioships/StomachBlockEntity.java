@@ -232,6 +232,11 @@ public class StomachBlockEntity extends BlockEntity
     return total;
   }
 
+  /** A display copy; inventory mutations stay with the queue owner. */
+  public ItemStack foodStack(int slot) {
+    return input.get(slot).copy();
+  }
+
   public int queuedFood() {
     int count = 0;
     for (var stack : input) count += stack.getCount();
@@ -373,7 +378,9 @@ public class StomachBlockEntity extends BlockEntity
         stomach.activeRecipe = key;
         stomach.duration = Math.max(1, value.getCraftingTimeTicks());
       }
-      stomach.progress++;
+      stomach.progress +=
+          org.Azkerash.create_bioships.creature.digestion.StomachFormation.workUnits(
+              level.getGameTime(), StomachMultiblock.containing(core, pos) != null);
       if (stomach.progress >= stomach.duration) {
         for (var output : value.getOutputs()) stomach.retain(output.getItemStack(level.random));
         if (LivingCoreBlockEntity.isMeat(stack)) stomach.creditLocal("biomancy:nutrient_paste", 1);

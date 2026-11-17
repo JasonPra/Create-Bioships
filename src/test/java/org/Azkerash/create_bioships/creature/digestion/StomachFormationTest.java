@@ -8,6 +8,17 @@ import org.junit.jupiter.api.Test;
 
 class StomachFormationTest {
   @Test
+  void formedEfficiencyAddsWorkWithoutChangingRecipesOrStackingBonuses() {
+    int ordinary = 0, formed = 0;
+    for (int tick = 1; tick <= 80; tick++) {
+      ordinary += StomachFormation.workUnits(tick, false);
+      formed += StomachFormation.workUnits(tick, true);
+    }
+    assertEquals(80, ordinary);
+    assertEquals(100, formed);
+  }
+
+  @Test
   void solidCubeFormsButMissingCenterDoesNotAndRebuildRestoresMembership() {
     var origin = new Cell(-3, 7, 2);
     var nodes = new HashMap<Cell, Object>();

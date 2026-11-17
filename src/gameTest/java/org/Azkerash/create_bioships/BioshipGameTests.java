@@ -525,6 +525,66 @@ public class BioshipGameTests {
     }
   }
 
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "large_stomach_capacity_ui")
+  public static void large_stomach_keeps_all_243_slots_and_pages_without_duplicate_shared_resources(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    try {
+      var core = core(ship);
+      var level = helper.getLevel();
+      var anchor = digestive(helper, core, false);
+      var origin = core.getBlockPos().west(3);
+      for (int x = 0; x < 3; x++)
+        for (int y = 0; y < 3; y++)
+          for (int z = 0; z < 3; z++) {
+            var p = origin.offset(x, y, z);
+            if (!level.getBlockState(p).is(Create_bioships.STOMACH.get()))
+              level.setBlock(p, Create_bioships.STOMACH.get().defaultBlockState(), 3);
+            var organ = (StomachBlockEntity) level.getBlockEntity(p);
+            for (int slot = 0; slot < 9; slot++)
+              helper.assertTrue(
+                  organ.receiveMeal(new ItemStack(Items.BEEF, 64), false),
+                  "A member lost queue capacity when forming");
+          }
+      anchor.creditLocal("biomancy:flesh_bits", 10);
+      var view = new StomachInventoryView(anchor);
+      var data = view.data();
+      java.util.function.IntUnaryOperator value =
+          i -> data.get(i * 2) & 65535 | (data.get(i * 2 + 1) & 65535) << 16;
+      helper.assertTrue(
+          value.applyAsInt(6) == 15552
+              && value.applyAsInt(9) == 15552
+              && value.applyAsInt(10) == 27
+              && value.applyAsInt(11) == 1
+              && view.pages() == 9,
+          "Aggregate inventory did not retain 27 ordinary stomachs of capacity");
+      helper.assertTrue(value.applyAsInt(3) == 10, "Shared products were counted once per stomach");
+      for (int page = 0; page < 9; page++) {
+        for (int slot = 0; slot < 27; slot++)
+          helper.assertTrue(
+              view.getItem(slot).getCount() == 64,
+              "An aggregate inventory page did not expose a real member queue");
+        if (page < 8) helper.assertTrue(view.turn(1), "Could not reach every inventory page");
+      }
+      helper.assertTrue(
+          !view.turn(1) && view.removeItem(0, 64).isEmpty(),
+          "Read-only view allowed extraction or exceeded its page bounds");
+      var copy = view.getItem(0);
+      copy.setCount(1);
+      helper.assertTrue(
+          view.getItem(0).getCount() == 64, "Display copies mutated authoritative food");
+      StomachBlockEntity.tick(level, anchor.getBlockPos(), anchor.getBlockState(), anchor);
+      int expected =
+          org.Azkerash.create_bioships.creature.digestion.StomachFormation.workUnits(
+              level.getGameTime(), true);
+      helper.assertTrue(
+          anchor.menuData().get(1) == expected, "Formed stomach did not apply its work-rate bonus");
+      helper.succeed();
+    } finally {
+      cleanup(helper, ship);
+    }
+  }
+
   private static int fixture;
 
   private static BlockPos location() {
