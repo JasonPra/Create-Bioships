@@ -72,3 +72,8 @@ profiles, remembered shore preference, submerged retreat/low-air rejection, TNT 
 FLEE swipe selection. The existing player-dodge collision test also passed. The TNT fixture exposed
 that reloading autonomy retained its old observation cooldown; reload now clears transient tactical
 and route caches. Existing F3+P holograms display the remembered-place count. No commands were added.
+
+Checkpoint 9 complete: all 99 unit tests and 198 live GameTests passed. Review added hazard
+sampling between smoothed waypoints and shared water-clearance caching per checked path. The
+explosive-retreat debug reason now includes TNT. All source sets and package/Mixin checks pass.
+All nine checkpoints are complete; zero tasks remain. Graphical review was not performed.

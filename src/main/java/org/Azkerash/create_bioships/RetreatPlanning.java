@@ -99,8 +99,8 @@ final class RetreatPlanning {
       if (!water) {
         if (!core.crawl().reachableGoal(BlockPos.containing(candidate.point))) continue;
         var route = new GroundRoute();
-        if (!route.plan(core, candidate.point)
-            || route.points().stream().anyMatch(p -> !safe(core, p, false))) continue;
+        if (!route.plan(core, candidate.point) || !safePath(core, here, route.points(), false))
+          continue;
       } else {
         var route =
             WaterRoutePlanner.toTarget(
@@ -111,8 +111,11 @@ final class RetreatPlanning {
                 2048,
                 32);
         if (route.points().size() < 2
-            || route.points().stream()
-                .anyMatch(p -> !safe(core, WaterNavigationSpace.vector(p), true))) continue;
+            || !safePath(
+                core,
+                here,
+                route.points().stream().map(WaterNavigationSpace::vector).toList(),
+                true)) continue;
       }
       return goal = candidate.point;
     }
@@ -173,7 +176,28 @@ final class RetreatPlanning {
     return false;
   }
 
+  static boolean safePath(LivingCoreBlockEntity core, Vec3 from, List<Vec3> path, boolean water) {
+    var space = water ? new WaterNavigationSpace(core, false) : null;
+    for (var to : path) {
+      int samples = Math.max(1, (int) Math.ceil(from.distanceTo(to) * 2));
+      for (int i = 1; i <= samples; i++) {
+        var point = from.lerp(to, (double) i / samples);
+        if (!hazardFree(core, point) || water && !space.fits(WaterNavigationSpace.point(point)))
+          return false;
+      }
+      from = to;
+    }
+    return true;
+  }
+
   static boolean safe(LivingCoreBlockEntity core, Vec3 point, boolean water) {
+    if (!hazardFree(core, point)) return false;
+    return !water
+        || new WaterNavigationSpace(core, false).fits(WaterNavigationSpace.point(point))
+            && (BioshipRespiration.activeGills(core) || core.aquatic().air() > 200);
+  }
+
+  private static boolean hazardFree(LivingCoreBlockEntity core, Vec3 point) {
     var level = core.getLevel();
     var center = BlockPos.containing(point);
     // Check the terrain under and around the root; body clearance belongs to the route adapter.
@@ -188,9 +212,6 @@ final class RetreatPlanning {
           || state.is(Blocks.SOUL_CAMPFIRE)
           || state.is(Blocks.POWDER_SNOW)) return false;
     }
-    if (water)
-      return new WaterNavigationSpace(core, false).fits(WaterNavigationSpace.point(point))
-          && (BioshipRespiration.activeGills(core) || core.aquatic().air() > 200);
     return true; // GroundRoute verifies support and the height changes along the route.
   }
 

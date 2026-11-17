@@ -2668,25 +2668,35 @@
         {
           "kind": "method",
           "signature": "private static void add( LivingCoreBlockEntity core, Vec3 here, Vec3 requested, PlaceMemory.Entry memory, List<Threat> threats, List<PlaceMemory.Entry> places, boolean water, Map<BlockPos, Ranked> results)",
-          "line": 120
+          "line": 123
         },
         {
           "kind": "method",
           "signature": "static boolean blocked(LivingCoreBlockEntity core, Vec3 from, Vec3 to)",
-          "line": 161
+          "line": 164
+        },
+        {
+          "kind": "method",
+          "signature": "static boolean safePath(LivingCoreBlockEntity core, Vec3 from, List<Vec3> path, boolean water)",
+          "line": 177
         },
         {
           "kind": "method",
           "signature": "static boolean safe(LivingCoreBlockEntity core, Vec3 point, boolean water)",
-          "line": 174
+          "line": 191
+        },
+        {
+          "kind": "method",
+          "signature": "private static boolean hazardFree(LivingCoreBlockEntity core, Vec3 point)",
+          "line": 198
         },
         {
           "kind": "method",
           "signature": "static Vec3 vector(PlaceMemory.Point p)",
-          "line": 195
+          "line": 216
         }
       ],
-      "lines": 200
+      "lines": 221
     },
     "BioshipGogglesItem": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipGogglesItem.java",

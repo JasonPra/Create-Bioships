@@ -340,6 +340,30 @@ public class BioshipGameTests {
     }
   }
 
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "place_retreat_route_hazards")
+  public static void place_retreat_checks_hazards_between_smoothed_waypoints(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var here = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
+    var hazard = BlockPos.containing(here.add(4, -1, 0));
+    var original = level.getBlockState(hazard);
+    try {
+      level.setBlock(hazard, Blocks.MAGMA_BLOCK.defaultBlockState(), 3);
+      var end = here.add(8, 0, 0);
+      helper.assertTrue(
+          RetreatPlanning.safe(core, end, false), "Endpoint should be clear of the hazard");
+      helper.assertTrue(
+          !RetreatPlanning.safePath(core, here, List.of(end), false),
+          "Smoothed escape route skipped a hazard between its waypoints");
+      helper.succeed();
+    } finally {
+      level.setBlock(hazard, original, 3);
+      cleanup(helper, ship);
+    }
+  }
+
   @GameTest(template = "test_empty", timeoutTicks = 200, batch = "end_fixture_geometry")
   public static void developer_end_habitat_has_remote_islands_biome_and_void_gap(
       GameTestHelper helper) {

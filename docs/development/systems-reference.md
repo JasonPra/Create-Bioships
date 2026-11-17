@@ -1617,7 +1617,7 @@ final class ThreatObservations
 
 #### RetreatPlanning
 
-Source: `src/main/java/org/Azkerash/create_bioships/RetreatPlanning.java` (200 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/RetreatPlanning.java` (221 lines).
 
 ```java
 final class RetreatPlanning
@@ -1636,13 +1636,17 @@ final class RetreatPlanning
 
   Vec3 choose(LivingCoreBlockEntity core, Vec3 danger, List<Threat> observed, boolean water); // line 29
 
-  private static void add( LivingCoreBlockEntity core, Vec3 here, Vec3 requested, PlaceMemory.Entry memory, List<Threat> threats, List<PlaceMemory.Entry> places, boolean water, Map<BlockPos, Ranked> results); // line 120
+  private static void add( LivingCoreBlockEntity core, Vec3 here, Vec3 requested, PlaceMemory.Entry memory, List<Threat> threats, List<PlaceMemory.Entry> places, boolean water, Map<BlockPos, Ranked> results); // line 123
 
-  static boolean blocked(LivingCoreBlockEntity core, Vec3 from, Vec3 to); // line 161
+  static boolean blocked(LivingCoreBlockEntity core, Vec3 from, Vec3 to); // line 164
 
-  static boolean safe(LivingCoreBlockEntity core, Vec3 point, boolean water); // line 174
+  static boolean safePath(LivingCoreBlockEntity core, Vec3 from, List<Vec3> path, boolean water); // line 177
 
-  static Vec3 vector(PlaceMemory.Point p); // line 195
+  static boolean safe(LivingCoreBlockEntity core, Vec3 point, boolean water); // line 191
+
+  private static boolean hazardFree(LivingCoreBlockEntity core, Vec3 point); // line 198
+
+  static Vec3 vector(PlaceMemory.Point p); // line 216
 
 ```
 

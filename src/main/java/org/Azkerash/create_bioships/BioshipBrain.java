@@ -446,7 +446,7 @@ public final class BioshipBrain {
     core.autonomy().assess(core);
     if (core.autonomy().fleeing()
         && (core.autonomy().creeperPanic() || !core.autonomy().trustedPilot(core)))
-      return fixed(Action.FLEE, "Escape an unsafe creeper or a critical injury");
+      return fixed(Action.FLEE, "Escape an explosive hazard or a critical injury");
     if (core.rescue().active())
       return fixed(Action.RESCUE, "Finish carrying an ally through the aperture");
     var threat = BioshipDefense.target(core);

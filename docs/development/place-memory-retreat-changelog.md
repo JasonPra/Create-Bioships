@@ -23,7 +23,8 @@
   evidence. Up to four actual routes are checked per 20 ticks. Ground creatures approach supported
   shores; submerged creatures use the existing 3D water planner. Air-seeking still takes precedence.
 - Lava, fire, magma, cactus, campfires, powder snow and unloaded/out-of-border destinations are
-  rejected. Existing whole-body clearance/support checks remain in the navigators. Retreat does
+  rejected. Smoothed route segments are sampled between waypoints so hazards cannot hide between
+  otherwise safe endpoints. Existing whole-body clearance/support checks remain in the navigators. Retreat does
   not introduce flight, teleportation, unlimited sight or new chunk loading.
 - Close pursuers can receive defensive swipes during FLEE. Movement remains FLEE. Existing windup,
   world-locked aim, swept tip collision, dodge behavior and velocity-based impact damage are reused.
@@ -47,5 +48,9 @@ Existing developer world types, lab reset commands and test tools are preserved.
 
 ## Validation
 
-Pending final checkpoint. No graphical animation QA is claimed; live tests use the headless Sable
-server and existing actual collision/movement code.
+All **99 unit tests and 198 live GameTests passed**, including the new smoothed-path hazard
+check. `check` compiled all source sets; package/Mixin checks and whitespace checks passed. The
+final review also fixed transient tactical caches on reload. No graphical animation QA is claimed;
+live tests use the headless Sable server and existing actual collision/movement code.
+
+All nine checkpoints are complete. The previously cancelled historical backlog remains cancelled.

@@ -73,3 +73,11 @@ retreat swipes, including generic ranged handling (pillagers and skeletons) and 
 families recorded in `docs/development/place-memory-retreat-plan.md`. The nine prioritized tasks
 and class responsibilities were discussed. Proceed automatically, push each completed checkpoint,
 and report how many remain. This supersedes prior completion notes for this scope only.
+
+## Completed place-memory and retreat scope
+
+All nine approved checkpoints are complete and pushed. All 99 unit tests and 198 live GameTests
+passed, plus source-set compilation and package/Mixin checks. See
+`docs/development/place-memory-retreat-changelog.md` and `place-memory-retreat-plan.md`.
+Zero tasks remain in this scope. Graphical animation QA is unperformed. The cancelled historical
+backlog remains cancelled unless explicitly reopened by the user.
