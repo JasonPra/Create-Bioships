@@ -1,6 +1,12 @@
 {
   "replace": false,
   "values": [
-    "create_bioships:development_glass"
+    "create_bioships:development_glass",
+    "create_bioships:development_stone_button",
+    "create_bioships:development_stone_bricks",
+    "create_bioships:development_mossy_stone_bricks",
+    "create_bioships:development_cracked_stone_bricks",
+    "create_bioships:development_cobblestone",
+    "create_bioships:development_mossy_cobblestone"
   ]
 }

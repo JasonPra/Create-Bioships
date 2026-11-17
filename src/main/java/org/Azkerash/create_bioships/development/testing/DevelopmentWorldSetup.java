@@ -36,29 +36,29 @@ public final class DevelopmentWorldSetup {
       CoreTestCommands.reset(level, layout);
       level.setDefaultSpawnPos(layout.base().offset(0, 0, -15), 0);
     }
+    if (state.combatBuilt
+        && (state.combatOrigin.getX() != 1024 || state.combatOrigin.getZ() != 1024))
+      CombatFixture.relocate(level, new BlockPos(1024, state.layout().base().getY(), 1024));
     if (!state.combatBuilt) {
-      state.combatOrigin = new BlockPos(48, state.layout().base().getY(), 0);
+      state.combatOrigin = new BlockPos(1024, state.layout().base().getY(), 1024);
       CombatFixture.reset(level);
     }
   }
 
   private static void decorateNewWorld(ServerLevel level) {
     var palette =
-        new net.minecraft.world.level.block.Block[] {
-          net.minecraft.world.level.block.Blocks.STONE_BRICKS,
-          net.minecraft.world.level.block.Blocks.MOSSY_STONE_BRICKS,
-          net.minecraft.world.level.block.Blocks.CRACKED_STONE_BRICKS,
-          net.minecraft.world.level.block.Blocks.COBBLESTONE,
-          net.minecraft.world.level.block.Blocks.MOSSY_COBBLESTONE
-        };
+        DevelopmentTestBlocks.FLOOR.values().stream()
+            .map(h -> h.get())
+            .toArray(net.minecraft.world.level.block.Block[]::new);
     var random = net.minecraft.util.RandomSource.create(level.getSeed());
-    for (int x = -16; x <= 64; x++)
-      for (int z = -21; z <= 17; z++) {
-        var bottom = new BlockPos(x, level.getMinBuildHeight(), z);
-        level.setBlock(
-            bottom, net.minecraft.world.level.block.Blocks.BEDROCK.defaultBlockState(), 2);
-        level.setBlock(
-            bottom.above(), palette[random.nextInt(palette.length)].defaultBlockState(), 2);
-      }
+    for (int center : new int[] {0, 1024})
+      for (int x = center - 16; x <= center + 16; x++)
+        for (int z = center - 21; z <= center + 17; z++) {
+          var bottom = new BlockPos(x, level.getMinBuildHeight(), z);
+          level.setBlock(
+              bottom, net.minecraft.world.level.block.Blocks.BEDROCK.defaultBlockState(), 2);
+          level.setBlock(
+              bottom.above(), palette[random.nextInt(palette.length)].defaultBlockState(), 2);
+        }
   }
 }

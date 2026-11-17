@@ -2,5 +2,6 @@
   "block.create_bioships.living_core": "Bioship Core",
   "generator.create_bioships.core_development": "Core Development (Bedrock Superflat)",
   "item.create_bioships.bioship_goggles": "Symbiotic Goggles",
-  "item.create_bioships.bioship_wrench": "Ossified Wrench"
+  "item.create_bioships.bioship_wrench": "Ossified Wrench",
+  "item.create_bioships.development_navigator": "Development Test Navigator"
 }

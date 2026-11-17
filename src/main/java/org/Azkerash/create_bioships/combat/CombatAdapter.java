@@ -4,13 +4,9 @@ import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import java.util.*;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
-import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.phys.*;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.ProjectileImpactEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
@@ -41,6 +37,7 @@ public final class CombatAdapter {
   public static void tick(ServerTickEvent.Post event) {
     for (var level : event.getServer().getAllLevels()) {
       if (level.getGameTime() % 10 != 0) continue;
+      HostileCombatIntegration.tickBosses(level);
       var container = SubLevelContainer.getContainer(level);
       if (container == null) continue;
       for (var body : container.getAllSubLevels())
@@ -49,17 +46,6 @@ public final class CombatAdapter {
             && CoreAssemblyRules.isCreature(body)) target(server);
     }
     TARGETS.entrySet().removeIf(e -> e.getKey().isRemoved() || e.getValue().isRemoved());
-  }
-
-  @SubscribeEvent
-  public static void join(EntityJoinLevelEvent event) {
-    if (!event.getLevel().isClientSide
-        && event.getEntity() instanceof Mob mob
-        && mob instanceof Enemy)
-      mob.targetSelector.addGoal(
-          3,
-          new NearestAttackableTargetGoal<>(
-              mob, SubLevelCombatTarget.class, 10, true, false, null));
   }
 
   @SubscribeEvent

@@ -128,7 +128,8 @@ public final class CoreSplitFixture {
     entity.setChanged();
     level.setBlock(
         button,
-        Blocks.STONE_BUTTON
+        DevelopmentTestBlocks.BUTTON
+            .get()
             .defaultBlockState()
             .setValue(BlockStateProperties.ATTACH_FACE, AttachFace.FLOOR),
         3);

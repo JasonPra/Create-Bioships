@@ -9,10 +9,13 @@ import net.minecraft.world.level.saveddata.SavedData;
 /** Persistent fixture state and exact Sable identities, independent of rendering/geometry. */
 public final class CoreTestState extends SavedData {
   boolean built, running, combatBuilt, combatRunning;
-  BlockPos combatOrigin = new BlockPos(48, -63, 0);
+  BlockPos combatOrigin = new BlockPos(1024, -63, 1024);
+  boolean combatFailuresExpanded;
+  int combatFailurePage;
   int combatIndex;
   long combatDeadline;
-  UUID combatBody;
+  UUID combatBody, combatEnemy;
+  boolean combatAcquired;
   final List<String> combatEnemies = new ArrayList<>(), combatResults = new ArrayList<>();
   BlockPos origin = new BlockPos(0, -63, 0);
   final Set<UUID> owned = new HashSet<>();
@@ -33,12 +36,16 @@ public final class CoreTestState extends SavedData {
                 CoreTestState::new,
                 (tag, registries) -> {
                   var state = new CoreTestState();
+                  state.combatFailuresExpanded = tag.getBoolean("CombatFailuresExpanded");
+                  state.combatFailurePage = tag.getInt("CombatFailurePage");
                   state.combatBuilt = tag.getBoolean("CombatBuilt");
                   state.combatRunning = tag.getBoolean("CombatRunning");
                   state.combatIndex = tag.getInt("CombatIndex");
                   state.combatDeadline = tag.getLong("CombatDeadline");
                   if (tag.contains("CombatOrigin"))
                     state.combatOrigin = BlockPos.of(tag.getLong("CombatOrigin"));
+                  state.combatAcquired = tag.getBoolean("CombatAcquired");
+                  if (tag.hasUUID("CombatEnemy")) state.combatEnemy = tag.getUUID("CombatEnemy");
                   if (tag.hasUUID("CombatBody")) state.combatBody = tag.getUUID("CombatBody");
                   tag.getList("CombatEnemies", 8)
                       .forEach(e -> state.combatEnemies.add(e.getAsString()));
@@ -55,11 +62,15 @@ public final class CoreTestState extends SavedData {
   }
 
   public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
+    tag.putBoolean("CombatFailuresExpanded", combatFailuresExpanded);
+    tag.putInt("CombatFailurePage", combatFailurePage);
     tag.putBoolean("CombatBuilt", combatBuilt);
     tag.putBoolean("CombatRunning", combatRunning);
     tag.putLong("CombatOrigin", combatOrigin.asLong());
     tag.putInt("CombatIndex", combatIndex);
     tag.putLong("CombatDeadline", combatDeadline);
+    tag.putBoolean("CombatAcquired", combatAcquired);
+    if (combatEnemy != null) tag.putUUID("CombatEnemy", combatEnemy);
     if (combatBody != null) tag.putUUID("CombatBody", combatBody);
     var enemies = new ListTag();
     combatEnemies.forEach(e -> enemies.add(StringTag.valueOf(e)));

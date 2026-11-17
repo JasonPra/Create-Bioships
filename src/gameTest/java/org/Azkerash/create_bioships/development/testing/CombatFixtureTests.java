@@ -64,7 +64,7 @@ public final class CombatFixtureTests {
           helper.assertTrue(
               state.combatIndex == 1 && !first.equals(state.combatBody),
               "Death did not advance to a fresh subject");
-          // Finish the suite without waiting for every enemy's 60-second observation window.
+          // Finish the suite without waiting for every enemy's 10-second observation window.
           state.combatIndex = state.combatEnemies.size() - 1;
           body =
               (ServerSubLevel) SubLevelContainer.getContainer(level).getSubLevel(state.combatBody);
@@ -85,6 +85,58 @@ public final class CombatFixtureTests {
           helper.assertTrue(
               !state.combatRunning && state.combatResults.size() == 2,
               "Manual reset lost saved results");
+          helper.assertTrue(CombatFixture.TRIAL_TICKS == 200, "Combat timeout is not ten seconds");
+          state.combatResults.add("minecraft:breeze: FAIL (regression)");
+          state.combatResults.add("minecraft:vex: FAIL (regression)");
+          state.combatResults.add("minecraft:slime: FAIL (regression)");
+          state.combatResults.add("minecraft:phantom: FAIL (regression)");
+          state.combatResults.add("minecraft:shulker: FAIL (regression)");
+          CombatFixture.toggleFailures(level, false);
+          helper.assertTrue(state.combatFailuresExpanded, "Failure dropdown did not open");
+          CombatFixture.toggleFailures(level, true);
+          helper.assertTrue(state.combatFailurePage == 1, "Failure dropdown did not page");
+          var labels = new java.util.ArrayList<net.minecraft.world.entity.Display.TextDisplay>();
+          for (var entity : level.getAllEntities())
+            if (entity instanceof net.minecraft.world.entity.Display.TextDisplay display
+                && display.getTags().contains("create_bioships.combat_fixture.failure_label"))
+              labels.add(display);
+          helper.assertTrue(
+              labels.stream()
+                  .anyMatch(
+                      d ->
+                          d.saveWithoutId(new net.minecraft.nbt.CompoundTag())
+                              .getString("text")
+                              .contains("Shulker")),
+              "Dropdown did not show failed entity name");
+          CombatFixture.toggleFailures(level, false);
+          helper.assertTrue(!state.combatFailuresExpanded, "Failure dropdown did not close");
+          helper.assertTrue(
+              level
+                  .getBlockState(state.combatOrigin.offset(-3, 1, -16))
+                  .is(DevelopmentTestBlocks.BUTTON.get()),
+              "Protected START button missing");
+          for (var holder : DevelopmentTestBlocks.FLOOR.values()) {
+            helper.assertTrue(
+                holder.get().asItem() == net.minecraft.world.item.Items.AIR
+                    && holder.get().defaultBlockState().getDestroySpeed(level, core) < 0,
+                "Development floor block is obtainable or mineable");
+          }
+          var dragon = net.minecraft.world.entity.EntityType.ENDER_DRAGON.create(level);
+          dragon.setPos(
+              net.minecraft.world.phys.Vec3.atLowerCornerOf(state.combatOrigin).add(22, 5, 0));
+          dragon.aiStep();
+          CombatFixture.contain(level, dragon);
+          var box = dragon.getBoundingBox();
+          for (var part : dragon.getSubEntities()) box = box.minmax(part.getBoundingBox());
+          helper.assertTrue(
+              box.minX >= state.combatOrigin.getX() - 12
+                  && box.maxX <= state.combatOrigin.getX() + 13
+                  && box.minY >= state.combatOrigin.getY()
+                  && box.maxY <= state.combatOrigin.getY() + CombatFixture.HEIGHT
+                  && box.minZ >= state.combatOrigin.getZ() - 12
+                  && box.maxZ <= state.combatOrigin.getZ() + 13,
+              "Dragon parts escaped containment: " + box);
+          dragon.discard();
           helper.succeed();
         });
   }

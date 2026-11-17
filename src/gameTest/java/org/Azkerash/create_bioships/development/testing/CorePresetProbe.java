@@ -48,12 +48,48 @@ public final class CorePresetProbe {
         .is(DevelopmentTestBlocks.GLASS.get()))
       throw new IllegalStateException("Combat glass missing");
     var decoration = new java.util.HashSet<net.minecraft.world.level.block.Block>();
-    for (int x = 15; x < 30; x++)
+    for (int x = 11; x < 15; x++)
       for (int z = -5; z <= 5; z++)
         decoration.add(
             level.getBlockState(new BlockPos(x, level.getMinBuildHeight() + 1, z)).getBlock());
-    if (decoration.size() < 5)
+    if (decoration.size() < 5
+        || !decoration.containsAll(
+            DevelopmentTestBlocks.FLOOR.values().stream().map(h -> h.get()).toList()))
       throw new IllegalStateException("New-world decorative palette missing: " + decoration);
+    var navigatorPlayer =
+        new net.neoforged.neoforge.common.util.FakePlayer(
+            level,
+            new com.mojang.authlib.GameProfile(java.util.UUID.randomUUID(), "DevNavigatorProbe")) {
+          @Override
+          public void teleportTo(
+              net.minecraft.server.level.ServerLevel destination,
+              double x,
+              double y,
+              double z,
+              float yaw,
+              float pitch) {
+            setPos(x, y, z);
+          }
+
+          @Override
+          public java.util.OptionalInt openMenu(
+              net.minecraft.world.MenuProvider provider,
+              java.util.function.Consumer<net.minecraft.network.RegistryFriendlyByteBuf> extra) {
+            containerMenu = provider.createMenu(1, getInventory(), this);
+            return java.util.OptionalInt.of(1);
+          }
+        };
+    DevelopmentNavigatorItem.open(navigatorPlayer);
+    if (!(navigatorPlayer.containerMenu instanceof net.minecraft.world.inventory.ChestMenu))
+      throw new IllegalStateException("Navigator menu failed");
+    navigatorPlayer.containerMenu.clicked(
+        1, 0, net.minecraft.world.inventory.ClickType.PICKUP, navigatorPlayer);
+    if (Math.abs(navigatorPlayer.getX() - state.combatOrigin.getX()) > 1
+        || Math.abs(navigatorPlayer.getZ() - (state.combatOrigin.getZ() - 18)) > 1)
+      throw new IllegalStateException("Navigator did not teleport to combat arena");
+    if (state.combatOrigin.getX() != 1024 || state.combatOrigin.getZ() != 1024)
+      throw new IllegalStateException("Combat arena not isolated");
+    System.out.println("NAVIGATOR_PRESET_PASS menu=true teleport=true isolated=true");
     System.out.println(
         "COMBAT_PRESET_PASS unassembled=true glass=true decoration=" + decoration.size());
     System.out.println(

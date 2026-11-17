@@ -109,6 +109,27 @@ public final class CoreTestCommands {
 
   @SubscribeEvent
   public static void commands(RegisterCommandsEvent event) {
+    event
+        .getDispatcher()
+        .register(
+            Commands.literal("dev_tests")
+                .requires(source -> source.hasPermission(2))
+                .executes(
+                    ctx -> {
+                      DevelopmentNavigatorItem.open(ctx.getSource().getPlayerOrException());
+                      return 1;
+                    })
+                .then(
+                    Commands.literal("give")
+                        .executes(
+                            ctx -> {
+                              ctx.getSource()
+                                  .getPlayerOrException()
+                                  .addItem(
+                                      new net.minecraft.world.item.ItemStack(
+                                          DevelopmentNavigatorItem.ITEM.get()));
+                              return 1;
+                            })));
     var root = Commands.literal("core_test").requires(source -> source.hasPermission(2));
     for (var action : List.of("start", "reset", "status"))
       root.then(

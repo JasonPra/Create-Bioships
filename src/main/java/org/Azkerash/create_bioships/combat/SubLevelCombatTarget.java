@@ -15,7 +15,9 @@ import org.Azkerash.create_bioships.core.SubLevelHealth;
 
 /** Vanilla attack calculations enter here; persistent health belongs exclusively to the grid. */
 public final class SubLevelCombatTarget extends LivingEntity {
-  private UUID bodyId;
+  private UUID bodyId, anchorThreat;
+  private Vec3 anchor;
+  private int anchorTick;
 
   public SubLevelCombatTarget(EntityType<? extends SubLevelCombatTarget> type, Level level) {
     super(type, level);
@@ -49,12 +51,17 @@ public final class SubLevelCombatTarget extends LivingEntity {
             .getEntitiesOfClass(
                 Mob.class,
                 new net.minecraft.world.phys.AABB(center, center).inflate(48),
-                m -> m instanceof net.minecraft.world.entity.monster.Enemy)
+                HostileCombatIntegration::isHostile)
             .stream()
             .min(Comparator.comparingDouble(m -> m.position().distanceToSqr(center)))
             .orElse(null);
     Vec3 point = center;
-    if (threat != null) {
+    if (threat != null
+        && anchor != null
+        && threat.getUUID().equals(anchorThreat)
+        && tickCount - anchorTick < 40) {
+      point = body.logicalPose().transformPosition(anchor);
+    } else if (threat != null) {
       var cells = new java.util.HashSet<>(SubLevelHealth.blocks(body));
       double best = Double.POSITIVE_INFINITY;
       for (var cell : cells)
@@ -62,12 +69,22 @@ public final class SubLevelCombatTarget extends LivingEntity {
           if (cells.contains(cell.relative(face))) continue;
           var candidate =
               body.logicalPose().transformPosition(Vec3.atCenterOf(cell).relative(face, .55));
-          double distance = candidate.distanceToSqr(threat.getEyePosition());
+          double distance =
+              candidate.distanceToSqr(
+                  threat.position().add(0, Math.min(.5, threat.getBbHeight() / 2), 0));
           if (distance < best) {
             best = distance;
             point = candidate;
           }
         }
+    }
+    if (threat != null
+        && (anchor == null
+            || !threat.getUUID().equals(anchorThreat)
+            || tickCount - anchorTick >= 40)) {
+      anchor = body.logicalPose().transformPositionInverse(point);
+      anchorThreat = threat.getUUID();
+      anchorTick = tickCount;
     }
     setPos(point.x, point.y - getEyeHeight(), point.z);
   }
@@ -128,7 +145,7 @@ public final class SubLevelCombatTarget extends LivingEntity {
 
   @Override
   public boolean isPushable() {
-    return false;
+    return true;
   }
 
   @Override

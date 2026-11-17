@@ -6,7 +6,10 @@
   "mixins": [
     "CoreDisassemblyMixin",
     "SubLevelHealthMixin",
-    "ProjectileImpactInvoker"
+    "ProjectileImpactInvoker",
+    "BrainCombatTargetMixin",
+    "BreezeCombatTargetMixin",
+    "SlimeCombatTargetMixin"
   ],
   "client": [],
   "injectors": {

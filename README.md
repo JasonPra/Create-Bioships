@@ -89,14 +89,14 @@ compiles in headless EGL; its final appearance still needs an in-game client che
 
 ## Sequential combat regression enclosure
 
-The development preset also contains a glass enclosure centered at x=48. The fixture-only glass
+The development preset also contains a glass enclosure centered at x=1024, z=1024. The fixture-only glass
 uses the vanilla glass model/texture, has no item or creative entry, and resists mining, explosions,
 and boss block destruction. New dev worlds have a seeded mixed-stone walkway over bedrock;
 the test arenas themselves have bedrock floors. Existing worlds retain their floor layout.
 
 The combat fixture starts as an unassembled packed-flesh pillar with its core nine blocks above
 its base. Its START button assembles a fresh subject at **1 HP**, then spawns each registered
-monster-category `Enemy` type one at a time. Death advances to a fresh subject. A sixty-second
+`MONSTER`-category mob type one at a time. Death advances to a fresh subject. A ten-second
 simulation-time timeout records failure and advances instead of stalling the suite. This is a
 regression runner, not a claim that every specialized vanilla/modded hostile AI has passed.
 Each enemy's outcome remains saved after the suite automatically restores the sleeping fixture.
@@ -109,3 +109,30 @@ Each enemy's outcome remains saved after the suite automatically restores the sl
 The explanation hologram sits between START and RESET. `/tick rate` accelerates these simulation
 windows as usual. An existing dev world receives the combat fixture when next opened; the
 new decorative terrain applies only when a dev world is first set up.
+
+### Updated development tools
+
+`HostileCombatIntegration` attaches native targeting from the `MONSTER` registry category.
+Breeze type restrictions and brain-memory attacks, Warden anger, slime contact damage, and the
+Giant's missing native melee goal have dedicated compatibility handling. Dragon phase targeting
+uses its native controller. This is automatic integration, not a guarantee for arbitrary mod AI.
+
+Combat trials now last **200 ticks (10 seconds)**. Results distinguish target acquisition from
+failure to land a lethal hit. The failure hologram next to the buttons is right-clickable to
+expand/collapse and page through failed entity names. Summons and lingering effect clouds are
+cleaned between trials. Piglin/Hoglin test subjects cannot convert into different mob types.
+
+The combat arena is relocated to `(1024, 1024)`. Its marked Ender Dragon is constrained by the
+complete root-and-part bounding volume; ordinary dragons outside the test are unaffected.
+Development buttons and the five decorative floor blocks now use protected, itemless variants
+with vanilla models/textures. Arena floors stay bedrock. New-world decorative generation uses
+the protected variants. Existing nearby combat fixtures are relocated on startup.
+
+The **Development Test Navigator** is supplied on joining a dev world and appears in the creative
+tab. Right-click it for the read-only inventory menu, or use `/dev_tests` to open that menu and
+`/dev_tests give` to obtain the tool. It teleports to the core-separation or isolated combat test.
+
+Dangerous Mobs file 6093131 was temporarily loaded in an isolated test environment. Its enemies
+use the AXOLOTLS spawn category; they are outside the deliberately selected MONSTER registry
+scope. Cheat Killer acquired a target but missed the trial deadline; its global procedures later
+exhausted the isolated server's heap. The temporary dependency, JARs, and test world were removed.

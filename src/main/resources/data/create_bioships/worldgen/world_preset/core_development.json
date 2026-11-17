@@ -15,7 +15,7 @@
             },
             {
               "height": 1,
-              "block": "minecraft:stone_bricks"
+              "block": "create_bioships:development_stone_bricks"
             }
           ],
           "structure_overrides": []

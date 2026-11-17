@@ -15,13 +15,21 @@ import org.Azkerash.create_bioships.combat.*;
 @GameTestHolder(Create_bioships.MODID)
 @PrefixGameTestTemplate(false)
 public final class SubLevelCombatTests {
-  @GameTest(template = "test_empty", timeoutTicks = 200)
+  @GameTest(template = "test_empty", timeoutTicks = 200, batch = "native_combat_integration")
   public static void native_melee_projectile_and_hostile_targeting(GameTestHelper helper) {
     var level = helper.getLevel();
     var origin = helper.absolutePos(new BlockPos(3, 4, 3));
     for (int x = -5; x <= 5; x++)
       for (int z = -5; z <= 5; z++)
         level.setBlock(origin.offset(x, -2, z), Blocks.BEDROCK.defaultBlockState(), 3);
+    for (int x = (origin.getX() - 6) >> 4; x <= (origin.getX() + 6) >> 4; x++)
+      for (int z = (origin.getZ() - 6) >> 4; z <= (origin.getZ() + 6) >> 4; z++)
+        level.setChunkForced(x, z, true);
+    helper.runAfterDelay(10, () -> exercise(helper, origin));
+  }
+
+  private static void exercise(GameTestHelper helper, BlockPos origin) {
+    var level = helper.getLevel();
     level.setBlock(origin, Create_bioships.CORE.get().defaultBlockState(), 3);
     level.setBlock(origin.east(), Blocks.STONE.defaultBlockState(), 3);
     level.setBlock(origin.west(), Blocks.STONE.defaultBlockState(), 3);
