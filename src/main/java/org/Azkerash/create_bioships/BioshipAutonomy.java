@@ -12,7 +12,11 @@ import org.Azkerash.create_bioships.network.VisionDebug;
 
 /** Idle exploration and injured escape share the same collision checks as ordinary travel. */
 public final class BioshipAutonomy {
-  private Vec3 wander, retreat, danger;
+  private Vec3 wander, danger;
+  private final ThreatObservations threats = new ThreatObservations();
+  private final RetreatPlanning escape = new RetreatPlanning();
+  private java.util.List<org.Azkerash.create_bioships.creature.survival.EscapeScoring.Threat>
+      observed = java.util.List.of();
   private long nextWander, panicUntil, evaluated = Long.MIN_VALUE;
   private boolean fleeing;
   private long creeperUntil;
@@ -79,6 +83,11 @@ public final class BioshipAutonomy {
     evaluated = now;
     coreTime = now;
     var here = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
+    observed = threats.update(core, here);
+    if (threats.explosive() != null) {
+      danger = threats.explosive();
+      creeperUntil = now + 100;
+    }
     var creeper =
         core
             .getLevel()
@@ -105,7 +114,9 @@ public final class BioshipAutonomy {
         !core.body().dead()
             && danger != null
             && (creeperPanic() || ratio < .5 && (known != null && ratio < .3 || now < panicUntil));
-    if (!fleeing) retreat = null;
+    if (!fleeing) {
+      escape.clear();
+    }
   }
 
   void activity(LivingCoreBlockEntity core) {
@@ -116,21 +127,13 @@ public final class BioshipAutonomy {
   Vec3 groundEscape(LivingCoreBlockEntity core) {
     assess(core);
     if (!fleeing || trustedPilot(core) && !creeperPanic()) return null;
-    var here = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
-    if (retreat != null
-        && here.distanceToSqr(retreat) > 1
-        && core.crawl().reachableGoal(BlockPos.containing(retreat))) return retreat;
-    var away = here.subtract(danger).multiply(1, 0, 1).normalize();
-    if (away.lengthSqr() < .1) away = new Vec3(1, 0, 0);
-    for (double turn : new double[] {0, .6, -.6, 1.2, -1.2}) {
-      var request = here.add(away.yRot((float) turn).scale(10));
-      var point = GroundRoute.groundedDestination(core, request);
-      if (point != null
-          && point.distanceToSqr(danger) > here.distanceToSqr(danger)
-          && core.crawl().reachableGoal(BlockPos.containing(point))
-          && new GroundRoute().plan(core, point)) return retreat = point;
-    }
-    return null;
+    return escape.choose(core, danger, observed, false);
+  }
+
+  Vec3 waterEscape(LivingCoreBlockEntity core) {
+    assess(core);
+    if (!fleeing || trustedPilot(core) && !creeperPanic()) return null;
+    return escape.choose(core, danger, observed, true);
   }
 
   Vec3 groundWander(LivingCoreBlockEntity core) {
@@ -206,7 +209,6 @@ public final class BioshipAutonomy {
     tag.putLong("PanicUntil", panicUntil);
     tag.putBoolean("Fleeing", fleeing);
     if (wander != null) tag.put("Wander", VisionDebug.vector(wander));
-    if (retreat != null) tag.put("Retreat", VisionDebug.vector(retreat));
     if (danger != null) tag.put("Danger", VisionDebug.vector(danger));
     return tag;
   }
@@ -221,7 +223,6 @@ public final class BioshipAutonomy {
     fleeing = tag.getBoolean("Fleeing");
     evaluated = Long.MIN_VALUE;
     wander = tag.contains("Wander") ? VisionDebug.vector(tag.getCompound("Wander")) : null;
-    retreat = tag.contains("Retreat") ? VisionDebug.vector(tag.getCompound("Retreat")) : null;
     danger = tag.contains("Danger") ? VisionDebug.vector(tag.getCompound("Danger")) : null;
   }
 }

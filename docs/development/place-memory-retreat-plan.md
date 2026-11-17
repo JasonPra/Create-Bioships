@@ -53,3 +53,10 @@ flying, aquatic pursuit and jumping. Weighted scoring considers mixed-threat sep
 cover, height, water, recent danger and prey evidence. Explosive retreat rejects destinations that
 approach the blast. Tactical sightings expire after three seconds and are bounded to eight.
 All 99 unit tests pass, including six scoring tests.
+
+Checkpoint 6 complete: retreat ranks local directions and remembered places, then validates at most
+four routes every 20 ticks using existing ground/climbing or 3D water navigation. Surface breathing
+remains a higher-priority need. Ground routes approach water from safe support rather than assuming
+walking can enter deep water; submerged creatures can choose underwater escape routes. Nearby TNT
+triggers explosive panic. Fire, lava and other hazardous destinations/routes are rejected. All 99
+unit tests and three existing live navigation/escape checks passed. F3+P data includes KnownPlaces.

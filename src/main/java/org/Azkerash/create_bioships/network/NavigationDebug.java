@@ -36,6 +36,7 @@ public final class NavigationDebug {
     data.put("BodyWork", core.adaptation().behavior().debug());
     data.putInt("OfferCount", core.brain().offerCount());
     data.putInt("QueuedGoals", core.brain().queuedGoals().size());
+    data.putInt("KnownPlaces", core.placeMemory().size());
     data.putInt("StoredComponents", core.assimilation().stored());
     data.putInt("CollectingArms", core.assimilation().arms().size());
     var missing = core.brain().materialNeeds(core);

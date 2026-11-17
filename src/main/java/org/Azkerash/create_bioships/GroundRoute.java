@@ -174,6 +174,27 @@ final class GroundRoute {
     return null;
   }
 
+  /**
+   * Escape may choose an observed ledge above the current floor; normal goals keep their policy.
+   */
+  static Vec3 escapeDestination(LivingCoreBlockEntity core, Vec3 requested) {
+    var base = groundedDestination(core, requested);
+    if (base != null) return base;
+    var level = core.getLevel();
+    var route = new GroundRoute();
+    var parts = route.offsets(core);
+    double stance = (core.hatchling() ? .85 : 1.25) + core.coreHeightOffset();
+    var here = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
+    for (int rise = 3; rise <= 8; rise++) {
+      var floor = BlockPos.containing(requested.x, here.y - stance + rise - 1, requested.z);
+      if (!level.hasChunkAt(floor)) continue;
+      if (!level.getBlockState(floor).isFaceSturdy(level, floor, Direction.UP)) continue;
+      var point = new Vec3(floor.getX() + .5, floor.getY() + 1 + stance, floor.getZ() + .5);
+      if (route.fits(core, point, parts)) return point;
+    }
+    return null;
+  }
+
   static boolean flightClear(LivingCoreBlockEntity core, Vec3 target) {
     var route = new GroundRoute();
     var parts = route.offsets(core);

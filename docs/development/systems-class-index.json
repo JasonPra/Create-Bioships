@@ -107,6 +107,7 @@
         "PlaceObservations",
         "EncounterObservations",
         "ThreatObservations",
+        "RetreatPlanning",
         "creature.survival.ThreatProfile",
         "creature.survival.EscapeScoring"
       ],
@@ -1008,36 +1009,41 @@
         },
         {
           "kind": "method",
-          "signature": "static boolean flightClear(LivingCoreBlockEntity core, Vec3 target)",
+          "signature": "static Vec3 escapeDestination(LivingCoreBlockEntity core, Vec3 requested)",
           "line": 175
         },
         {
           "kind": "method",
+          "signature": "static boolean flightClear(LivingCoreBlockEntity core, Vec3 target)",
+          "line": 196
+        },
+        {
+          "kind": "method",
           "signature": "private boolean supportedAt(LivingCoreBlockEntity core, Vec3 point)",
-          "line": 185
+          "line": 206
         },
         {
           "kind": "method",
           "signature": "private boolean lineClear( LivingCoreBlockEntity core, Vec3 from, Vec3 to, List<Vec3> parts, double clearance)",
-          "line": 200
+          "line": 221
         },
         {
           "kind": "method",
           "signature": "private List<Vec3> simplify( LivingCoreBlockEntity core, Vec3 from, List<Vec3> original, List<Vec3> parts)",
-          "line": 211
+          "line": 232
         },
         {
           "kind": "method",
           "signature": "boolean plan(LivingCoreBlockEntity core, Vec3 goal)",
-          "line": 241
+          "line": 262
         },
         {
           "kind": "method",
           "signature": "Vec3 next(LivingCoreBlockEntity core, Vec3 goal)",
-          "line": 397
+          "line": 418
         }
       ],
-      "lines": 469
+      "lines": 490
     },
     "BioshipLootMemory": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipLootMemory.java",
@@ -2614,6 +2620,68 @@
       ],
       "lines": 122
     },
+    "RetreatPlanning": {
+      "path": "src/main/java/org/Azkerash/create_bioships/RetreatPlanning.java",
+      "declaration": "final class RetreatPlanning",
+      "members": [
+        {
+          "kind": "field",
+          "signature": "private Vec3 goal",
+          "line": 18
+        },
+        {
+          "kind": "field",
+          "signature": "private long retry",
+          "line": 19
+        },
+        {
+          "kind": "field",
+          "signature": "private boolean waterMode",
+          "line": 20
+        },
+        {
+          "kind": "field",
+          "signature": "private Vec3 lastDanger",
+          "line": 21
+        },
+        {
+          "kind": "nested type",
+          "signature": "private record Ranked(Vec3 point, double score)",
+          "line": 22
+        },
+        {
+          "kind": "method",
+          "signature": "void clear()",
+          "line": 24
+        },
+        {
+          "kind": "method",
+          "signature": "Vec3 choose(LivingCoreBlockEntity core, Vec3 danger, List<Threat> observed, boolean water)",
+          "line": 29
+        },
+        {
+          "kind": "method",
+          "signature": "private static void add( LivingCoreBlockEntity core, Vec3 here, Vec3 requested, PlaceMemory.Entry memory, List<Threat> threats, List<PlaceMemory.Entry> places, boolean water, Map<BlockPos, Ranked> results)",
+          "line": 120
+        },
+        {
+          "kind": "method",
+          "signature": "static boolean blocked(LivingCoreBlockEntity core, Vec3 from, Vec3 to)",
+          "line": 161
+        },
+        {
+          "kind": "method",
+          "signature": "static boolean safe(LivingCoreBlockEntity core, Vec3 point, boolean water)",
+          "line": 174
+        },
+        {
+          "kind": "method",
+          "signature": "static Vec3 vector(PlaceMemory.Point p)",
+          "line": 195
+        }
+      ],
+      "lines": 200
+    },
     "BioshipGogglesItem": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipGogglesItem.java",
       "declaration": "public class BioshipGogglesItem extends GogglesItem",
@@ -3805,45 +3873,45 @@
         {
           "kind": "method",
           "signature": "static boolean touchesWater(LivingCoreBlockEntity core)",
-          "line": 129
+          "line": 133
         },
         {
           "kind": "method",
           "signature": "private static boolean waterAt(LivingCoreBlockEntity core, Vec3 point)",
-          "line": 160
+          "line": 164
         },
         {
           "kind": "method",
           "signature": "static boolean canBreathe(LivingCoreBlockEntity core)",
-          "line": 165
-        },
-        {
-          "kind": "method",
-          "signature": "static boolean aboveFluid(LivingCoreBlockEntity core, Vec3 point)",
           "line": 169
         },
         {
           "kind": "method",
+          "signature": "static boolean aboveFluid(LivingCoreBlockEntity core, Vec3 point)",
+          "line": 173
+        },
+        {
+          "kind": "method",
           "signature": "private static boolean waterWithinReach(LivingCoreBlockEntity core, Vec3 here)",
-          "line": 175
+          "line": 179
         },
         {
           "kind": "method",
           "signature": "void propel(ServerSubLevel ship, RigidBodyHandle body, double dt)",
-          "line": 183
+          "line": 187
         },
         {
           "kind": "method",
           "signature": "public CompoundTag save()",
-          "line": 195
+          "line": 199
         },
         {
           "kind": "method",
           "signature": "void load(CompoundTag t)",
-          "line": 214
+          "line": 218
         }
       ],
-      "lines": 232
+      "lines": 236
     },
     "BioshipTargetEntity": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipTargetEntity.java",
@@ -5181,96 +5249,116 @@
       "members": [
         {
           "kind": "field",
-          "signature": "private Vec3 wander, retreat, danger",
+          "signature": "private Vec3 wander, danger",
           "line": 14
         },
         {
           "kind": "field",
-          "signature": "private long nextWander, panicUntil, evaluated, evaluated",
+          "signature": "private final ThreatObservations threats",
           "line": 15
         },
         {
           "kind": "field",
-          "signature": "private boolean fleeing",
+          "signature": "private final RetreatPlanning escape",
           "line": 16
         },
         {
           "kind": "field",
-          "signature": "private long creeperUntil",
+          "signature": "private java.util.List<org.Azkerash.create_bioships.creature.survival.EscapeScoring.Threat> observed",
           "line": 17
+        },
+        {
+          "kind": "field",
+          "signature": "private long nextWander, panicUntil, evaluated, evaluated",
+          "line": 19
+        },
+        {
+          "kind": "field",
+          "signature": "private boolean fleeing",
+          "line": 20
+        },
+        {
+          "kind": "field",
+          "signature": "private long creeperUntil",
+          "line": 21
         },
         {
           "kind": "method",
           "signature": "public boolean creeperPanic()",
-          "line": 18
-        },
-        {
-          "kind": "field",
-          "signature": "private long coreTime",
           "line": 22
         },
         {
           "kind": "field",
+          "signature": "private long coreTime",
+          "line": 26
+        },
+        {
+          "kind": "field",
           "signature": "private java.util.UUID pilot",
-          "line": 24
+          "line": 28
         },
         {
           "kind": "field",
           "signature": "private long commandUntil",
-          "line": 25
+          "line": 29
         },
         {
           "kind": "method",
           "signature": "public void command(LivingCoreBlockEntity core, net.minecraft.server.level.ServerPlayer player)",
-          "line": 26
+          "line": 30
         },
         {
           "kind": "method",
           "signature": "public boolean trustedPilot(LivingCoreBlockEntity core)",
-          "line": 33
+          "line": 37
         },
         {
           "kind": "method",
           "signature": "public boolean fleeing()",
-          "line": 70
-        },
-        {
-          "kind": "method",
-          "signature": "void assess(LivingCoreBlockEntity core)",
           "line": 74
         },
         {
           "kind": "method",
+          "signature": "void assess(LivingCoreBlockEntity core)",
+          "line": 78
+        },
+        {
+          "kind": "method",
           "signature": "void activity(LivingCoreBlockEntity core)",
-          "line": 109
+          "line": 120
         },
         {
           "kind": "method",
           "signature": "Vec3 groundEscape(LivingCoreBlockEntity core)",
-          "line": 114
+          "line": 125
+        },
+        {
+          "kind": "method",
+          "signature": "Vec3 waterEscape(LivingCoreBlockEntity core)",
+          "line": 131
         },
         {
           "kind": "method",
           "signature": "Vec3 groundWander(LivingCoreBlockEntity core)",
-          "line": 134
+          "line": 137
         },
         {
           "kind": "method",
           "signature": "Vec3 flight(LivingCoreBlockEntity core, boolean escape)",
-          "line": 162
+          "line": 165
         },
         {
           "kind": "method",
           "signature": "CompoundTag save()",
-          "line": 198
+          "line": 201
         },
         {
           "kind": "method",
           "signature": "void load(CompoundTag tag)",
-          "line": 212
+          "line": 214
         }
       ],
-      "lines": 227
+      "lines": 228
     },
     "BioshipPoisonFeedback": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipPoisonFeedback.java",
@@ -9549,15 +9637,15 @@
         {
           "kind": "method",
           "signature": "public static CompoundTag request(ServerPlayer player)",
-          "line": 94
+          "line": 95
         },
         {
           "kind": "method",
           "signature": "private NavigationDebug()",
-          "line": 118
+          "line": 119
         }
       ],
-      "lines": 121
+      "lines": 122
     },
     "development.client.AppendageDebugOverlay": {
       "path": "src/main/java/org/Azkerash/create_bioships/development/client/AppendageDebugOverlay.java",

@@ -1416,6 +1416,7 @@ Threat assessment, retreat and idle wandering. Pilot authority is currently disa
   PlaceObservations
   EncounterObservations
   ThreatObservations
+  RetreatPlanning
   creature.survival.ThreatProfile
   creature.survival.EscapeScoring
 ```
@@ -1423,46 +1424,54 @@ Threat assessment, retreat and idle wandering. Pilot authority is currently disa
 
 #### BioshipAutonomy
 
-Source: `src/main/java/org/Azkerash/create_bioships/BioshipAutonomy.java` (227 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipAutonomy.java` (228 lines).
 
 ```java
 public final class BioshipAutonomy
 
-  private Vec3 wander, retreat, danger; // line 14
+  private Vec3 wander, danger; // line 14
 
-  private long nextWander, panicUntil, evaluated, evaluated; // line 15
+  private final ThreatObservations threats; // line 15
 
-  private boolean fleeing; // line 16
+  private final RetreatPlanning escape; // line 16
 
-  private long creeperUntil; // line 17
+  private java.util.List<org.Azkerash.create_bioships.creature.survival.EscapeScoring.Threat> observed; // line 17
 
-  public boolean creeperPanic(); // line 18
+  private long nextWander, panicUntil, evaluated, evaluated; // line 19
 
-  private long coreTime; // line 22
+  private boolean fleeing; // line 20
 
-  private java.util.UUID pilot; // line 24
+  private long creeperUntil; // line 21
 
-  private long commandUntil; // line 25
+  public boolean creeperPanic(); // line 22
 
-  public void command(LivingCoreBlockEntity core, net.minecraft.server.level.ServerPlayer player); // line 26
+  private long coreTime; // line 26
 
-  public boolean trustedPilot(LivingCoreBlockEntity core); // line 33
+  private java.util.UUID pilot; // line 28
 
-  public boolean fleeing(); // line 70
+  private long commandUntil; // line 29
 
-  void assess(LivingCoreBlockEntity core); // line 74
+  public void command(LivingCoreBlockEntity core, net.minecraft.server.level.ServerPlayer player); // line 30
 
-  void activity(LivingCoreBlockEntity core); // line 109
+  public boolean trustedPilot(LivingCoreBlockEntity core); // line 37
 
-  Vec3 groundEscape(LivingCoreBlockEntity core); // line 114
+  public boolean fleeing(); // line 74
 
-  Vec3 groundWander(LivingCoreBlockEntity core); // line 134
+  void assess(LivingCoreBlockEntity core); // line 78
 
-  Vec3 flight(LivingCoreBlockEntity core, boolean escape); // line 162
+  void activity(LivingCoreBlockEntity core); // line 120
 
-  CompoundTag save(); // line 198
+  Vec3 groundEscape(LivingCoreBlockEntity core); // line 125
 
-  void load(CompoundTag tag); // line 212
+  Vec3 waterEscape(LivingCoreBlockEntity core); // line 131
+
+  Vec3 groundWander(LivingCoreBlockEntity core); // line 137
+
+  Vec3 flight(LivingCoreBlockEntity core, boolean escape); // line 165
+
+  CompoundTag save(); // line 201
+
+  void load(CompoundTag tag); // line 214
 
 ```
 
@@ -1599,6 +1608,38 @@ final class ThreatObservations
   List<Threat> update(LivingCoreBlockEntity core, Vec3 here); // line 44
 
   Vec3 explosive(); // line 77
+
+```
+
+
+#### RetreatPlanning
+
+Source: `src/main/java/org/Azkerash/create_bioships/RetreatPlanning.java` (200 lines).
+
+```java
+final class RetreatPlanning
+
+  private Vec3 goal; // line 18
+
+  private long retry; // line 19
+
+  private boolean waterMode; // line 20
+
+  private Vec3 lastDanger; // line 21
+
+  private record Ranked(Vec3 point, double score); // line 22
+
+  void clear(); // line 24
+
+  Vec3 choose(LivingCoreBlockEntity core, Vec3 danger, List<Threat> observed, boolean water); // line 29
+
+  private static void add( LivingCoreBlockEntity core, Vec3 here, Vec3 requested, PlaceMemory.Entry memory, List<Threat> threats, List<PlaceMemory.Entry> places, boolean water, Map<BlockPos, Ranked> results); // line 120
+
+  static boolean blocked(LivingCoreBlockEntity core, Vec3 from, Vec3 to); // line 161
+
+  static boolean safe(LivingCoreBlockEntity core, Vec3 point, boolean water); // line 174
+
+  static Vec3 vector(PlaceMemory.Point p); // line 195
 
 ```
 
@@ -1797,7 +1838,7 @@ public final class BioshipCrawl
 
 #### GroundRoute
 
-Source: `src/main/java/org/Azkerash/create_bioships/GroundRoute.java` (469 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/GroundRoute.java` (490 lines).
 
 ```java
 final class GroundRoute
@@ -1848,17 +1889,19 @@ final class GroundRoute
 
   static Vec3 groundedDestination(LivingCoreBlockEntity core, Vec3 requested); // line 154
 
-  static boolean flightClear(LivingCoreBlockEntity core, Vec3 target); // line 175
+  static Vec3 escapeDestination(LivingCoreBlockEntity core, Vec3 requested); // line 175
 
-  private boolean supportedAt(LivingCoreBlockEntity core, Vec3 point); // line 185
+  static boolean flightClear(LivingCoreBlockEntity core, Vec3 target); // line 196
 
-  private boolean lineClear( LivingCoreBlockEntity core, Vec3 from, Vec3 to, List<Vec3> parts, double clearance); // line 200
+  private boolean supportedAt(LivingCoreBlockEntity core, Vec3 point); // line 206
 
-  private List<Vec3> simplify( LivingCoreBlockEntity core, Vec3 from, List<Vec3> original, List<Vec3> parts); // line 211
+  private boolean lineClear( LivingCoreBlockEntity core, Vec3 from, Vec3 to, List<Vec3> parts, double clearance); // line 221
 
-  boolean plan(LivingCoreBlockEntity core, Vec3 goal); // line 241
+  private List<Vec3> simplify( LivingCoreBlockEntity core, Vec3 from, List<Vec3> original, List<Vec3> parts); // line 232
 
-  Vec3 next(LivingCoreBlockEntity core, Vec3 goal); // line 397
+  boolean plan(LivingCoreBlockEntity core, Vec3 goal); // line 262
+
+  Vec3 next(LivingCoreBlockEntity core, Vec3 goal); // line 418
 
 ```
 
@@ -2345,7 +2388,7 @@ final class WaterNavigationSpace implements Space
 
 #### BioshipAquatic
 
-Source: `src/main/java/org/Azkerash/create_bioships/BioshipAquatic.java` (232 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipAquatic.java` (236 lines).
 
 ```java
 public final class BioshipAquatic
@@ -2396,21 +2439,21 @@ public final class BioshipAquatic
 
   void tick(LivingCoreBlockEntity core); // line 79
 
-  static boolean touchesWater(LivingCoreBlockEntity core); // line 129
+  static boolean touchesWater(LivingCoreBlockEntity core); // line 133
 
-  private static boolean waterAt(LivingCoreBlockEntity core, Vec3 point); // line 160
+  private static boolean waterAt(LivingCoreBlockEntity core, Vec3 point); // line 164
 
-  static boolean canBreathe(LivingCoreBlockEntity core); // line 165
+  static boolean canBreathe(LivingCoreBlockEntity core); // line 169
 
-  static boolean aboveFluid(LivingCoreBlockEntity core, Vec3 point); // line 169
+  static boolean aboveFluid(LivingCoreBlockEntity core, Vec3 point); // line 173
 
-  private static boolean waterWithinReach(LivingCoreBlockEntity core, Vec3 here); // line 175
+  private static boolean waterWithinReach(LivingCoreBlockEntity core, Vec3 here); // line 179
 
-  void propel(ServerSubLevel ship, RigidBodyHandle body, double dt); // line 183
+  void propel(ServerSubLevel ship, RigidBodyHandle body, double dt); // line 187
 
-  public CompoundTag save(); // line 195
+  public CompoundTag save(); // line 199
 
-  void load(CompoundTag t); // line 214
+  void load(CompoundTag t); // line 218
 
 ```
 
@@ -4960,7 +5003,7 @@ public final class BioshipNetwork
 
 #### network.NavigationDebug
 
-Source: `src/main/java/org/Azkerash/create_bioships/network/NavigationDebug.java` (121 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/network/NavigationDebug.java` (122 lines).
 
 ```java
 public final class NavigationDebug
@@ -4969,9 +5012,9 @@ public final class NavigationDebug
 
   public static CompoundTag inspect(LivingCoreBlockEntity core); // line 21
 
-  public static CompoundTag request(ServerPlayer player); // line 94
+  public static CompoundTag request(ServerPlayer player); // line 95
 
-  private NavigationDebug(); // line 118
+  private NavigationDebug(); // line 119
 
 ```
 

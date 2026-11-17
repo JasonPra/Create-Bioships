@@ -116,7 +116,11 @@ public final class BioshipAquatic {
       }
       var selected = core.brain().lastDecision();
       if (needsAir()) velocity = navigation.towardAir(core);
-      else if (selected != null && selected.point() != null)
+      else if (selected != null && selected.action() == BioshipBrain.Action.FLEE) {
+        var escape = core.autonomy().waterEscape(core);
+        if (escape != null) velocity = navigation.toward(core, escape);
+        else navigation.clear();
+      } else if (selected != null && selected.point() != null)
         velocity = navigation.toward(core, selected.point());
       else navigation.clear();
       velocity = velocity.scale(1.5 * (1 + .6 * BioshipLegEvolution.swimmingFraction(core)));
