@@ -169,3 +169,11 @@ Mini-checkpoint 3 complete: `needs_tree_prefers_wreck_over_hunting_and_interrupt
 Mini-checkpoint 4 complete: `hatchling_legs_climb_a_real_wall_and_fall_when_the_grip_is_removed` passed in the full run. Both climbing and grip-loss behavior assertions remain intact. No locomotion change was needed after restoring the established physics coordinates. Two checkpoints remain.
 
 Mini-checkpoint 5 complete: `wide_hatchling_navigates_enclosed_glass_maze_with_steps_and_tall_grass` passed in the full run. The enclosed course, elevation changes, tall grass, target and timeout were preserved; no navigation workaround was added. One checkpoint remains.
+
+Mini-checkpoint 6 complete: `check runGameTestServer` passed all 74 unit tests and all 184 live
+GameTests. Main/client, GameTest and soak-test source sets compile. All 190 source types, four
+Mixin configs/13 hooks, and 24 stomach face/role model variants validate. Detailed non-refactor
+changes are in `digestive-network-changelog.md`; the systems reference has been regenerated.
+All ten feature checkpoints and all six final regression checkpoints are complete. Zero remain
+on this approved automated implementation/validation list. Graphical panel/model review remains
+explicitly unperformed; no visual approval is claimed. The cancelled older backlog stays cancelled.

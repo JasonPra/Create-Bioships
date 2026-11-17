@@ -41,3 +41,11 @@ many-mouth intake, resource-saving stomach grouping, natural cube arrangement, a
 whole-structure amoeba transport. This supersedes the earlier remaining nine-task sequence.
 The class responsibility split was explicitly discussed and accepted. Proceed automatically,
 pushing each completed checkpoint and reporting the remaining count.
+
+## Completed digestive-network scope
+
+The revised ten feature checkpoints and six final regression checkpoints are complete and pushed.
+See `docs/development/digestive-network-plan.md` and `digestive-network-changelog.md` for results.
+All 74 unit tests and 184 live GameTests passed. Graphical model/panel review is explicitly
+unperformed; do not imply visual QA passed. The approved automated task list has zero remaining
+items. The historical creature backlog remains cancelled unless the user reopens it.
