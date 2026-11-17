@@ -17,3 +17,8 @@ recall, and no plan may duplicate inventories as both saved snapshots and active
 
 Checkpoint 2: shared placement now protects every mouth tooth-facing cell, and intestinal route
 search avoids those openings. All 99 unit tests and two focused live aperture/water checks passed.
+
+Checkpoint 3: anatomy plans all recalled slots and final orientations before mutation, reserves
+mouth/gill faces, checks final support/connectivity and chooses a recall sequence that leaves the
+body connected at every step. Grouped stomachs and respiratory organs remain deployed. The live
+blocked-mouth planning/inventory non-mutation test passed.

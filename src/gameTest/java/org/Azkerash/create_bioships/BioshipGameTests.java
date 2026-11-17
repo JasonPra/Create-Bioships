@@ -617,6 +617,40 @@ public class BioshipGameTests {
     }
   }
 
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "batch_layout_plan")
+  public static void blocked_mouth_gets_a_complete_non_mutating_repair_plan(GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    try {
+      var stomach = digestive(helper, core, false);
+      var mouth = core.getBlockPos().north();
+      ((FeedingMouthBlockEntity) level.getBlockEntity(mouth))
+          .setItem(0, new ItemStack(Items.PORKCHOP, 13));
+      level.setBlock(mouth.north(), BioshipTissue.body().defaultBlockState(), 3);
+      var before = new HashMap<>(BioshipStructure.cells(ship));
+      var plan = BioshipAnatomy.repairPlan(core);
+      helper.assertTrue(!plan.isEmpty(), "No coordinated plan for blocked mouth");
+      var future = new HashMap<>(before);
+      plan.forEach(p -> future.remove(p.source()));
+      plan.forEach(p -> future.put(p.target(), p.state()));
+      for (var p : plan)
+        if (p.state().is(Create_bioships.FEEDING_MOUTH.get()))
+          helper.assertTrue(
+              !future.containsKey(
+                  p.target().relative(p.state().getValue(FeedingMouthBlock.FACING))),
+              "Planned teeth face remained blocked");
+      helper.assertTrue(
+          before.equals(BioshipStructure.cells(ship))
+              && ((FeedingMouthBlockEntity) level.getBlockEntity(mouth)).getItem(0).getCount() == 13
+              && level.getBlockEntity(stomach.getBlockPos()) == stomach,
+          "Planning mutated anatomy or inventories");
+      helper.succeed();
+    } finally {
+      cleanup(helper, ship);
+    }
+  }
+
   @GameTest(template = "test_empty", timeoutTicks = 200, batch = "end_fixture_geometry")
   public static void developer_end_habitat_has_remote_islands_biome_and_void_gap(
       GameTestHelper helper) {
