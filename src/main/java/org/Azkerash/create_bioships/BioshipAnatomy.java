@@ -112,7 +112,7 @@ final class BioshipAnatomy {
   private static Move opening(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells) {
     if (core.hasMouth()
         && !DigestiveSystem.stomachs(core).isEmpty()
-        && !BioshipRespiration.missingLungs(core)) return null;
+        && !BioshipRespiration.needsLungs(core)) return null;
     for (var face : Direction.values())
       if (free(core, core.getBlockPos().relative(face))) return null;
     for (var face : Direction.values()) {

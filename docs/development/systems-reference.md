@@ -813,98 +813,102 @@ Directional cones, light, occlusion, observations and three-real-second target m
 
 #### BioshipVision
 
-Source: `src/main/java/org/Azkerash/create_bioships/BioshipVision.java` (616 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipVision.java` (634 lines).
 
 ```java
 public final class BioshipVision
 
-  private List<BlockPos> eyes; // line 9
+  static final MaterialCost EYE_COST; // line 9
 
-  private long scanned; // line 10
+  private List<BlockPos> eyes; // line 10
 
-  private void scan(LivingCoreBlockEntity core); // line 11
+  private long scanned; // line 11
 
-  public record View(Vec3 origin, Vec3 forward, double range); // line 35
+  private void scan(LivingCoreBlockEntity core); // line 12
 
-  public int maximumDistance(LivingCoreBlockEntity core); // line 43
+  public record View(Vec3 origin, Vec3 forward, double range); // line 36
 
-  static int distanceLimit(int serverChunks, net.minecraft.server.level.ServerPlayer observer); // line 59
+  public int maximumDistance(LivingCoreBlockEntity core); // line 44
 
-  boolean inView(LivingCoreBlockEntity core, View view, Vec3 point); // line 65
+  static int distanceLimit(int serverChunks, net.minecraft.server.level.ServerPlayer observer); // line 60
 
-  static boolean clearMaterial( net.minecraft.world.level.block.state.BlockState state, Vec3 direction); // line 80
+  boolean inView(LivingCoreBlockEntity core, View view, Vec3 point); // line 66
 
-  void invalidate(); // line 102
+  static boolean clearMaterial( net.minecraft.world.level.block.state.BlockState state, Vec3 direction); // line 81
 
-  private record Sighting( net.minecraft.world.level.block.state.BlockState state, long seen, boolean full); // line 106
+  void invalidate(); // line 103
 
-  private final Map<BlockPos, Sighting> remembered; // line 109
+  private record Sighting( net.minecraft.world.level.block.state.BlockState state, long seen, boolean full); // line 107
 
-  private final TargetMemory<java.util.UUID> entityFreshness; // line 111
+  private final Map<BlockPos, Sighting> remembered; // line 110
 
-  private net.minecraft.world.entity.LivingEntity trackedEntity; // line 112
+  private final TargetMemory<java.util.UUID> entityFreshness; // line 112
 
-  private Vec3 trackedPoint; // line 113
+  private net.minecraft.world.entity.LivingEntity trackedEntity; // line 113
 
-  void rememberEntity(net.minecraft.world.entity.LivingEntity entity); // line 114
+  private Vec3 trackedPoint; // line 114
 
-  net.minecraft.world.entity.LivingEntity rememberedEntity(LivingCoreBlockEntity core); // line 121
+  void rememberEntity(net.minecraft.world.entity.LivingEntity entity); // line 115
 
-  Vec3 knownPosition(net.minecraft.world.entity.LivingEntity entity); // line 133
+  net.minecraft.world.entity.LivingEntity rememberedEntity(LivingCoreBlockEntity core); // line 122
 
-  Vec3 focus(LivingCoreBlockEntity core); // line 139
+  Vec3 knownPosition(net.minecraft.world.entity.LivingEntity entity); // line 134
 
-  private final TargetMemory<BlockPos> sourceFreshness; // line 151
+  Vec3 focus(LivingCoreBlockEntity core); // line 140
 
-  long unseenNanos(BlockPos pos); // line 153
+  private final TargetMemory<BlockPos> sourceFreshness; // line 152
 
-  void forget(LivingCoreBlockEntity core, BlockPos pos); // line 157
+  long unseenNanos(BlockPos pos); // line 154
 
-  java.util.Set<BlockPos> rememberedSources(); // line 163
+  void forget(LivingCoreBlockEntity core, BlockPos pos); // line 158
 
-  net.minecraft.world.level.block.state.BlockState rememberedState(BlockPos pos); // line 167
+  java.util.Set<BlockPos> rememberedSources(); // line 164
 
-  boolean rememberedFull(BlockPos pos); // line 172
+  net.minecraft.world.level.block.state.BlockState rememberedState(BlockPos pos); // line 168
 
-  net.minecraft.world.level.block.state.BlockState sourceState( LivingCoreBlockEntity core, BlockPos source); // line 176
+  boolean rememberedFull(BlockPos pos); // line 173
 
-  private int surveyed; // line 210
+  net.minecraft.world.level.block.state.BlockState sourceState( LivingCoreBlockEntity core, BlockPos source); // line 177
 
-  public List<View> views(LivingCoreBlockEntity core); // line 212
+  private int surveyed; // line 211
 
-  boolean knows(LivingCoreBlockEntity core, BlockPos source); // line 241
+  public List<View> views(LivingCoreBlockEntity core); // line 213
 
-  boolean surveyed(LivingCoreBlockEntity core); // line 245
+  boolean knows(LivingCoreBlockEntity core, BlockPos source); // line 242
 
-  void look(LivingCoreBlockEntity core, Direction face); // line 249
+  boolean surveyed(LivingCoreBlockEntity core); // line 246
 
-  private void turn(LivingCoreBlockEntity core); // line 257
+  void look(LivingCoreBlockEntity core, Direction face); // line 250
 
-  static boolean exposedTube(net.minecraft.world.level.block.state.BlockState state); // line 274
+  private void turn(LivingCoreBlockEntity core); // line 258
 
-  static boolean ray(LivingCoreBlockEntity core, Vec3 from, Vec3 to); // line 278
+  static boolean exposedTube(net.minecraft.world.level.block.state.BlockState state); // line 275
 
-  static boolean rayAtCore(LivingCoreBlockEntity core, Vec3 from, Vec3 to, BlockPos origin); // line 282
+  static boolean ray(LivingCoreBlockEntity core, Vec3 from, Vec3 to); // line 279
 
-  public boolean visible(LivingCoreBlockEntity core, Vec3 point); // line 319
+  static boolean rayAtCore(LivingCoreBlockEntity core, Vec3 from, Vec3 to, BlockPos origin); // line 283
 
-  static boolean openToNature(net.minecraft.world.level.Level level, BlockPos source); // line 326
+  public boolean visible(LivingCoreBlockEntity core, Vec3 point); // line 320
 
-  boolean exposed(LivingCoreBlockEntity core, BlockPos source); // line 342
+  static boolean openToNature(net.minecraft.world.level.Level level, BlockPos source); // line 327
 
-  void observe(LivingCoreBlockEntity core); // line 346
+  boolean exposed(LivingCoreBlockEntity core, BlockPos source); // line 343
 
-  void tick(LivingCoreBlockEntity core); // line 350
+  void observe(LivingCoreBlockEntity core); // line 347
 
-  net.minecraft.nbt.CompoundTag save(); // line 355
+  boolean externalEyesPreferred(LivingCoreBlockEntity core); // line 351
 
-  void load( net.minecraft.nbt.CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries); // line 373
+  void tick(LivingCoreBlockEntity core); // line 363
 
-  boolean reabsorb(LivingCoreBlockEntity core); // line 400
+  net.minecraft.nbt.CompoundTag save(); // line 373
 
-  boolean trackFocus(LivingCoreBlockEntity core); // line 454
+  void load( net.minecraft.nbt.CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries); // line 391
 
-  void growEyes(LivingCoreBlockEntity core); // line 530
+  boolean reabsorb(LivingCoreBlockEntity core); // line 418
+
+  boolean trackFocus(LivingCoreBlockEntity core); // line 472
+
+  void growEyes(LivingCoreBlockEntity core); // line 548
 
 ```
 
@@ -1716,7 +1720,7 @@ Mass-weighted COM, leg attachments, support polygon, reachable contacts and inve
 
 #### BioshipSupport
 
-Source: `src/main/java/org/Azkerash/create_bioships/BioshipSupport.java` (300 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipSupport.java` (318 lines).
 
 ```java
 public final class BioshipSupport
@@ -1745,9 +1749,13 @@ public final class BioshipSupport
 
   static Layout movedLayout( LivingCoreBlockEntity core, BlockPos source, BlockPos target, boolean restoreFlesh); // line 236
 
-  private static long invalidMounts(Map<BlockPos, BlockState> cells); // line 272
+  static boolean safeCoreEntry(LivingCoreBlockEntity core, BlockPos target); // line 241
 
-  static boolean containsProjection(Vec3 point, Vec3[] contacts); // line 281
+  private static Layout movedLayout( LivingCoreBlockEntity core, BlockPos source, BlockPos target, boolean restoreFlesh, boolean swapCoreHost); // line 245
+
+  private static long invalidMounts(Map<BlockPos, BlockState> cells); // line 290
+
+  static boolean containsProjection(Vec3 point, Vec3[] contacts); // line 299
 
 ```
 
@@ -1826,7 +1834,7 @@ final class BioshipLegGrowth
 
 #### BioshipMountGrowth
 
-Source: `src/main/java/org/Azkerash/create_bioships/BioshipMountGrowth.java` (199 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipMountGrowth.java` (212 lines).
 
 ```java
 final class BioshipMountGrowth
@@ -1845,15 +1853,15 @@ final class BioshipMountGrowth
 
   static Plan plan(LivingCoreBlockEntity core); // line 29
 
-  private static int siteCount(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells); // line 148
+  private static int siteCount(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells); // line 161
 
-  static BioshipAdaptation.Proposal proposal(LivingCoreBlockEntity core); // line 153
+  static BioshipAdaptation.Proposal proposal(LivingCoreBlockEntity core); // line 166
 
-  static BioshipAdaptation.Proposal proposal(LivingCoreBlockEntity core, Plan plan); // line 157
+  static BioshipAdaptation.Proposal proposal(LivingCoreBlockEntity core, Plan plan); // line 170
 
-  static boolean grow(LivingCoreBlockEntity core, BlockPos pos, BlockState state); // line 175
+  static boolean grow(LivingCoreBlockEntity core, BlockPos pos, BlockState state); // line 188
 
-  private BioshipMountGrowth(); // line 196
+  private BioshipMountGrowth(); // line 209
 
 ```
 
@@ -2003,7 +2011,7 @@ Saved air supply, all-mouth fluid checks, surfacing need and non-flight propulsi
 
 #### BioshipAquatic
 
-Source: `src/main/java/org/Azkerash/create_bioships/BioshipAquatic.java` (236 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipAquatic.java` (240 lines).
 
 ```java
 public final class BioshipAquatic
@@ -2036,38 +2044,40 @@ public final class BioshipAquatic
 
   public boolean wet(); // line 40
 
-  public boolean swimming(); // line 44
+  boolean waterContact(); // line 44
 
-  public int air(); // line 48
+  public boolean swimming(); // line 48
 
-  boolean needsAir(); // line 52
+  public int air(); // line 52
 
-  void tick(LivingCoreBlockEntity core); // line 56
+  boolean needsAir(); // line 56
 
-  static boolean touchesWater(LivingCoreBlockEntity core); // line 121
+  void tick(LivingCoreBlockEntity core); // line 60
 
-  private static boolean waterAt(LivingCoreBlockEntity core, Vec3 point); // line 152
+  static boolean touchesWater(LivingCoreBlockEntity core); // line 125
 
-  static boolean canBreathe(LivingCoreBlockEntity core); // line 157
+  private static boolean waterAt(LivingCoreBlockEntity core, Vec3 point); // line 156
 
-  static boolean aboveFluid(LivingCoreBlockEntity core, Vec3 point); // line 161
+  static boolean canBreathe(LivingCoreBlockEntity core); // line 161
 
-  private static boolean waterWithinReach(LivingCoreBlockEntity core, Vec3 here); // line 167
+  static boolean aboveFluid(LivingCoreBlockEntity core, Vec3 point); // line 165
 
-  private boolean clear(LivingCoreBlockEntity core, Vec3 offset); // line 175
+  private static boolean waterWithinReach(LivingCoreBlockEntity core, Vec3 here); // line 171
 
-  void propel(ServerSubLevel ship, RigidBodyHandle body, double dt); // line 187
+  private boolean clear(LivingCoreBlockEntity core, Vec3 offset); // line 179
 
-  CompoundTag save(); // line 199
+  void propel(ServerSubLevel ship, RigidBodyHandle body, double dt); // line 191
 
-  void load(CompoundTag t); // line 218
+  CompoundTag save(); // line 203
+
+  void load(CompoundTag t); // line 222
 
 ```
 
 
 #### BioshipRespiration
 
-Source: `src/main/java/org/Azkerash/create_bioships/BioshipRespiration.java` (157 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipRespiration.java` (166 lines).
 
 ```java
 final class BioshipRespiration
@@ -2090,17 +2100,21 @@ final class BioshipRespiration
 
   static boolean wantsGills(LivingCoreBlockEntity core); // line 70
 
-  static boolean missingLungs(LivingCoreBlockEntity core); // line 74
+  static boolean prefersGills(LivingCoreBlockEntity core); // line 75
 
-  static boolean blocksOpening(LivingCoreBlockEntity core, BlockPos target); // line 78
+  static boolean missingLungs(LivingCoreBlockEntity core); // line 79
 
-  record Growth(BlockPos pos, BlockState state, MaterialCost cost, boolean gills); // line 88
+  static boolean needsLungs(LivingCoreBlockEntity core); // line 83
 
-  static Growth plan(LivingCoreBlockEntity core); // line 90
+  static boolean blocksOpening(LivingCoreBlockEntity core, BlockPos target); // line 87
 
-  static BioshipAdaptation.Proposal proposal(LivingCoreBlockEntity core); // line 122
+  record Growth(BlockPos pos, BlockState state, MaterialCost cost, boolean gills); // line 97
 
-  static boolean grow(LivingCoreBlockEntity core, BlockPos pos, BlockState state); // line 141
+  static Growth plan(LivingCoreBlockEntity core); // line 99
+
+  static BioshipAdaptation.Proposal proposal(LivingCoreBlockEntity core); // line 131
+
+  static boolean grow(LivingCoreBlockEntity core, BlockPos pos, BlockState state); // line 150
 
 ```
 
@@ -2163,7 +2177,7 @@ Reposition through connected anatomy for sight or defense; preserve state and in
 
 #### CoreMotion
 
-Source: `src/main/java/org/Azkerash/create_bioships/CoreMotion.java` (685 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/CoreMotion.java` (741 lines).
 
 ```java
 public final class CoreMotion
@@ -2174,7 +2188,7 @@ public final class CoreMotion
 
   private long started, nextScan; // line 15
 
-  private boolean evasive; // line 16
+  private boolean evasive, sheltered, reclaimEntry; // line 16
 
   private boolean layoutDirty; // line 17
 
@@ -2188,75 +2202,77 @@ public final class CoreMotion
 
   private double shelterScore( LivingCoreBlockEntity core, BlockPos pos, net.minecraft.world.entity.LivingEntity threat); // line 85
 
-  public int duration(); // line 93
+  private BlockPos entry(LivingCoreBlockEntity core); // line 93
 
-  public BlockPos home(LivingCoreBlockEntity core); // line 97
+  public int duration(); // line 110
 
-  public BlockPos target(); // line 101
+  public BlockPos home(LivingCoreBlockEntity core); // line 114
 
-  public long started(); // line 105
+  public BlockPos target(); // line 118
 
-  public boolean active(); // line 109
+  public long started(); // line 122
 
-  static boolean tissue(BlockState state); // line 113
+  public boolean active(); // line 126
 
-  private boolean clearWorld(LivingCoreBlockEntity core, BlockPos pos); // line 119
+  static boolean tissue(BlockState state); // line 130
 
-  private boolean clearWorld(LivingCoreBlockEntity core, Vec3 local); // line 123
+  private boolean clearWorld(LivingCoreBlockEntity core, BlockPos pos); // line 136
 
-  int coverage(LivingCoreBlockEntity core, BlockPos vantage); // line 146
+  private boolean clearWorld(LivingCoreBlockEntity core, Vec3 local); // line 140
 
-  private Vec3 blockedSupply(LivingCoreBlockEntity core); // line 159
+  int coverage(LivingCoreBlockEntity core, BlockPos vantage); // line 163
 
-  private int score(LivingCoreBlockEntity core, BlockPos vantage); // line 165
+  private Vec3 blockedSupply(LivingCoreBlockEntity core); // line 176
 
-  boolean canAvoidBlast( LivingCoreBlockEntity core, net.minecraft.world.entity.monster.Creeper creeper); // line 178
+  private int score(LivingCoreBlockEntity core, BlockPos vantage); // line 182
 
-  private record BlastStep(BlockPos pos, BlockPos first, int ticks); // line 183
+  boolean canAvoidBlast( LivingCoreBlockEntity core, net.minecraft.world.entity.monster.Creeper creeper); // line 195
 
-  private BlockPos blastExit( LivingCoreBlockEntity core, net.minecraft.world.entity.monster.Creeper creeper); // line 185
+  private record BlastStep(BlockPos pos, BlockPos first, int ticks); // line 200
 
-  private BlockPos choose(LivingCoreBlockEntity core, boolean returning); // line 224
+  private BlockPos blastExit( LivingCoreBlockEntity core, net.minecraft.world.entity.monster.Creeper creeper); // line 202
 
-  private static boolean connectedAfter(Set<BlockPos> body, BlockPos from, BlockPos to); // line 266
+  private BlockPos choose(LivingCoreBlockEntity core, boolean returning); // line 242
 
-  private boolean clearPerchTravel(LivingCoreBlockEntity core, BlockPos pos); // line 284
+  private static boolean connectedAfter(Set<BlockPos> body, BlockPos from, BlockPos to); // line 284
 
-  private boolean supportedPerch(LivingCoreBlockEntity core, BlockPos pos); // line 293
+  private boolean clearPerchTravel(LivingCoreBlockEntity core, BlockPos pos); // line 302
 
-  private boolean stableSupport(LivingCoreBlockEntity core, BlockPos pos); // line 311
+  private boolean supportedPerch(LivingCoreBlockEntity core, BlockPos pos); // line 311
 
-  private BlockPos perch(LivingCoreBlockEntity core, boolean returning); // line 320
+  private boolean stableSupport(LivingCoreBlockEntity core, BlockPos pos); // line 329
 
-  private BlockPos reconnect(LivingCoreBlockEntity core); // line 342
+  private BlockPos perch(LivingCoreBlockEntity core, boolean returning); // line 338
 
-  private boolean preparePerch(LivingCoreBlockEntity core); // line 377
+  private BlockPos reconnect(LivingCoreBlockEntity core); // line 360
 
-  boolean tick(LivingCoreBlockEntity core); // line 409
+  private boolean preparePerch(LivingCoreBlockEntity core); // line 395
 
-  private boolean begin(LivingCoreBlockEntity core, BlockPos next, boolean emergency); // line 502
+  boolean tick(LivingCoreBlockEntity core); // line 427
 
-  boolean evade(LivingCoreBlockEntity core, net.minecraft.world.entity.monster.Creeper creeper); // line 519
+  private boolean begin(LivingCoreBlockEntity core, BlockPos next, boolean emergency); // line 534
 
-  static double blastSafety( LivingCoreBlockEntity core, BlockPos point, net.minecraft.world.entity.monster.Creeper creeper); // line 535
+  boolean evade(LivingCoreBlockEntity core, net.minecraft.world.entity.monster.Creeper creeper); // line 553
 
-  private BlockPos safestStep( LivingCoreBlockEntity core, net.minecraft.world.entity.monster.Creeper creeper); // line 547
+  static double blastSafety( LivingCoreBlockEntity core, BlockPos point, net.minecraft.world.entity.monster.Creeper creeper); // line 569
 
-  String scoutingHint(LivingCoreBlockEntity core); // line 584
+  private BlockPos safestStep( LivingCoreBlockEntity core, net.minecraft.world.entity.monster.Creeper creeper); // line 581
 
-  void scoutNow(LivingCoreBlockEntity core); // line 610
+  String scoutingHint(LivingCoreBlockEntity core); // line 619
 
-  private boolean feeding; // line 615
+  void scoutNow(LivingCoreBlockEntity core); // line 650
 
-  boolean feeding(); // line 617
+  private boolean feeding; // line 655
 
-  void cancel(LivingCoreBlockEntity core); // line 621
+  boolean feeding(); // line 657
 
-  private void commit(LivingCoreBlockEntity core); // line 631
+  void cancel(LivingCoreBlockEntity core); // line 661
 
-  CompoundTag save(); // line 662
+  private void commit(LivingCoreBlockEntity core); // line 672
 
-  void load(CompoundTag tag); // line 674
+  CompoundTag save(); // line 714
+
+  void load(CompoundTag tag); // line 728
 
 ```
 

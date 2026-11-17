@@ -70,11 +70,20 @@ final class BioshipRespiration {
   }
 
   static boolean wantsGills(LivingCoreBlockEntity core) {
-    return core.aquatic().gillUsage().samples() >= 40 && core.aquatic().gillUsage().score() >= 650;
+    return core.aquatic().gillUsage().samples() >= 40 && core.aquatic().gillUsage().score() >= 650
+        || core.aquatic().waterContact() && core.aquatic().air() < 200 && !canBreathe(core);
+  }
+
+  static boolean prefersGills(LivingCoreBlockEntity core) {
+    return core.aquatic().waterContact() || wantsGills(core);
   }
 
   static boolean missingLungs(LivingCoreBlockEntity core) {
     return bodySize(core) > 4 && !has(core, false);
+  }
+
+  static boolean needsLungs(LivingCoreBlockEntity core) {
+    return missingLungs(core) && !prefersGills(core);
   }
 
   static boolean blocksOpening(LivingCoreBlockEntity core, BlockPos target) {
@@ -91,8 +100,8 @@ final class BioshipRespiration {
 
   static Growth plan(LivingCoreBlockEntity core) {
     if (core.ship() == null || core.body().dead()) return null;
-    boolean lung = missingLungs(core) && airAccess(core);
-    boolean gills = !lung && wantsGills(core) && !has(core, true);
+    boolean gills = wantsGills(core) && !has(core, true);
+    boolean lung = !gills && !prefersGills(core) && missingLungs(core) && airAccess(core);
     if (!lung && !gills) return null;
     var cells = BioshipStructure.cells(core.ship());
     var choices = new LinkedHashMap<BlockPos, BlockState>();
@@ -126,7 +135,7 @@ final class BioshipRespiration {
     if (plan == null || !plan.cost().funded(BioshipStorage.account(core))) return null;
     // Lungs are essential life support; gills are a sustained-use investment and retain the
     // reserve.
-    if (plan.gills() && !EmergencyReserve.after(core, plan.cost())) return null;
+    if (plan.gills() && canBreathe(core) && !EmergencyReserve.after(core, plan.cost())) return null;
     return new BioshipAdaptation.Proposal(
         BioshipBrain.Action.GROW_RESPIRATION,
         plan.pos(),
@@ -134,7 +143,7 @@ final class BioshipRespiration {
         plan.cost().flesh(),
         plan.cost().fiber(),
         0,
-        plan.gills() ? 1040 : 1160,
+        plan.gills() && canBreathe(core) ? 1040 : 1160,
         plan.gills()
             ? "Grow exposed gills after sustained submersion"
             : "Grow lungs to support a body larger than four blocks");

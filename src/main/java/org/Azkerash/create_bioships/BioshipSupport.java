@@ -237,20 +237,38 @@ public final class BioshipSupport {
 
   static Layout movedLayout(
       LivingCoreBlockEntity core, BlockPos source, BlockPos target, boolean restoreFlesh) {
+    return movedLayout(core, source, target, restoreFlesh, true);
+  }
+
+  static boolean safeCoreEntry(LivingCoreBlockEntity core, BlockPos target) {
+    return movedLayout(core, core.getBlockPos(), target, false, false).stable();
+  }
+
+  private static Layout movedLayout(
+      LivingCoreBlockEntity core,
+      BlockPos source,
+      BlockPos target,
+      boolean restoreFlesh,
+      boolean swapCoreHost) {
     var cells = cells(core);
     var beforeStructural = BodyTopology.structuralCells(cells);
     var moved = cells.remove(source);
     if (moved == null) return new Layout(Vec3.ZERO, List.of(), -1);
     var host = cells.remove(target);
     if (restoreFlesh) cells.put(source, BioshipTissue.body().defaultBlockState());
-    else if (moved.is(Create_bioships.CORE.get()) && host != null && CoreMotion.tissue(host))
-      cells.put(source, host);
+    else if (swapCoreHost
+        && moved.is(Create_bioships.CORE.get())
+        && host != null
+        && CoreMotion.tissue(host)) cells.put(source, host);
     if (BioshipLegEvolution.leg(moved))
       moved = moved.setValue(AmoebaLegBlock.FACING, AmoebaLegBlock.outward(cells, target));
     cells.put(target, moved);
     boolean retainsSource =
         restoreFlesh
-            || moved.is(Create_bioships.CORE.get()) && host != null && CoreMotion.tissue(host);
+            || swapCoreHost
+                && moved.is(Create_bioships.CORE.get())
+                && host != null
+                && CoreMotion.tissue(host);
     if (beforeStructural.contains(source)) {
       // A core stays in its source cell until its atomic commit; carried organs leave it
       // immediately and must also preserve support throughout transport.

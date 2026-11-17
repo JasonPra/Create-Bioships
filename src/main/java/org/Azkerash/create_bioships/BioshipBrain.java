@@ -177,7 +177,7 @@ public final class BioshipBrain {
                             .count())
             : 0;
     int legs = digestive ? BioshipLegGrowth.missing(core) : 0;
-    int lungs = BioshipRespiration.missingLungs(core) ? 1 : 0;
+    int lungs = BioshipRespiration.needsLungs(core) ? 1 : 0;
     int gills = BioshipRespiration.wantsGills(core) && !BioshipRespiration.has(core, true) ? 1 : 0;
     int gutRepair = BioshipDigestiveRepair.purchases(core);
     int repair = (int) Math.ceil(Math.max(0, core.body().capacity() - core.body().health()) / 4);

@@ -7,6 +7,7 @@ import net.minecraft.world.phys.Vec3;
 
 /** Connected surface eyes extend sight; they do not reveal buried world machines. */
 public final class BioshipVision {
+  static final MaterialCost EYE_COST = new MaterialCost(2, 1, 0);
   private List<BlockPos> eyes = List.of();
   private long scanned = Long.MIN_VALUE;
 
@@ -349,8 +350,25 @@ public final class BioshipVision {
     turn(core);
   }
 
+  boolean externalEyesPreferred(LivingCoreBlockEntity core) {
+    scan(core);
+    if (!eyes.isEmpty()) return true;
+    var stomach = DigestiveSystem.stomach(core);
+    return !core.hungry()
+        && core.hasMouth()
+        && stomach != null
+        && stomach.connected(core)
+        && EYE_COST.funded(stomach)
+        && EmergencyReserve.after(core, EYE_COST);
+  }
+
   void tick(LivingCoreBlockEntity core) {
-    if (core.getLevel().getGameTime() % 10 == 0 && !core.hatchling() && trackFocus(core)) return;
+    if (core.getLevel().getGameTime() % 10 == 0 && externalEyesPreferred(core) && eyes.isEmpty()) {
+      growEyes(core);
+      return;
+    }
+    if (core.getLevel().getGameTime() % 10 == 0 && externalEyesPreferred(core) && trackFocus(core))
+      return;
     if (core.getLevel().getGameTime() % 80 == 0 && !reabsorb(core)) growEyes(core);
   }
 
@@ -537,9 +555,9 @@ public final class BioshipVision {
         || !core.hasMouth()) return;
     var stomach = DigestiveSystem.stomach(core);
     if (stomach == null || !stomach.connected(core)) return;
-    var objective = BioshipPriorities.bestWorld(core);
-    if (objective != null && objective.rank() <= 2) return;
     scan(core);
+    var objective = BioshipPriorities.bestWorld(core);
+    if (!eyes.isEmpty() && objective != null && objective.rank() <= 2) return;
     var level = (ServerLevel) core.getLevel();
     var cells = BioshipDecay.blocks(core.ship());
     for (var direction : Direction.values()) {
@@ -556,14 +574,14 @@ public final class BioshipVision {
               : core.ship()
                   .logicalPose()
                   .transformPosition(Vec3.atCenterOf(existing).relative(direction, -.22));
-      if ((existing != null || visible(core, root.add(forward.scale(8))))
+      if (!eyes.isEmpty()
+          && (existing != null || visible(core, root.add(forward.scale(8))))
           && ray(core, root, root.add(forward.scale(8)))) continue;
       if (existing == null
           && (!EmergencyReserve.after(core, new MaterialCost(2, 1, 0))
               || eyes.size() >= 6
               || stomach.material("biomancy:flesh_bits") < 2
-              || stomach.material("biomancy:elastic_fibers") < (core.isMature() ? 1 : 13)))
-        continue;
+              || stomach.material("biomancy:elastic_fibers") < 1)) continue;
       var candidates = new ArrayList<>(cells);
       candidates.sort(
           Comparator.<BlockPos>comparingInt(

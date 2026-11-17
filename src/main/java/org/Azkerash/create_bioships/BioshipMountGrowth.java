@@ -47,7 +47,9 @@ final class BioshipMountGrowth {
         Vec3.atLowerCornerOf(core.structuralOrigin()).add(BioshipSupport.layout(core).center());
     boolean lungs;
     while (true) {
-      lungs = BioshipRespiration.bodySize(future) > 4 && !BioshipRespiration.has(core, false);
+      lungs =
+          BioshipRespiration.bodySize(future) > 4
+              && !BioshipRespiration.has(core, BioshipRespiration.prefersGills(core));
       int required = Math.max(missing, invalid ? 1 : 0) + (lungs ? 1 : 0);
       int available = siteCount(core, future);
       if (available >= required) break;
@@ -130,14 +132,25 @@ final class BioshipMountGrowth {
     if (lungs)
       load +=
           core.crawl()
-              .blockLoad(core, core.getBlockPos(), Create_bioships.LUNGS.get().defaultBlockState());
+              .blockLoad(
+                  core,
+                  core.getBlockPos(),
+                  (BioshipRespiration.prefersGills(core)
+                          ? Create_bioships.GILLS.get()
+                          : Create_bioships.LUNGS.get())
+                      .defaultBlockState());
     int upgrades = 0;
     while (core.crawl().legTier() + upgrades < 3
         && load > BioshipCrawl.capacityFor(core.crawl().legTier() + upgrades)) upgrades++;
     if (load > BioshipCrawl.capacityFor(core.crawl().legTier() + upgrades)) return null;
     var support = BioshipTissue.GROWTH_COST;
     var leg = BioshipLegGrowth.COST;
-    var breath = lungs ? BioshipRespiration.LUNG_COST : new MaterialCost(0, 0, 0);
+    var breath =
+        lungs
+            ? (BioshipRespiration.prefersGills(core)
+                ? BioshipRespiration.GILL_COST
+                : BioshipRespiration.LUNG_COST)
+            : new MaterialCost(0, 0, 0);
     var complete =
         new MaterialCost(
             support.flesh() * steps.size() + leg.flesh() * missing + 8 * upgrades + breath.flesh(),

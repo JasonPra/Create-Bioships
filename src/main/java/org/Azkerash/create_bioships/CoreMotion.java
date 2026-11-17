@@ -14,7 +14,7 @@ public final class CoreMotion {
   private static final int FULL_COVERAGE = 48, EVADE_TICKS = 4;
   private BlockPos home, target;
   private long started, nextScan;
-  private boolean evasive;
+  private boolean evasive, sheltered, reclaimEntry;
   private boolean layoutDirty;
 
   void layoutChanged(LivingCoreBlockEntity core) {
@@ -90,6 +90,23 @@ public final class CoreMotion {
     var world = core.ship().logicalPose().transformPosition(Vec3.atCenterOf(pos));
     return Math.min(16, world.distanceTo(threat.position()))
         + (BioshipVision.rayAtCore(core, threat.getEyePosition(), world, pos) ? 0 : 50);
+  }
+
+  private BlockPos entry(LivingCoreBlockEntity core) {
+    var cells = new HashSet<>(BioshipDecay.blocks(core.ship()));
+    cells.remove(core.getBlockPos());
+    return cells.stream()
+        .filter(p -> core.getLevel().getBlockState(p).is(BioshipTissue.body()))
+        .filter(p -> p.distManhattan(core.getBlockPos()) <= 6 && protectedInside(core, p, cells))
+        .filter(
+            p ->
+                clearWorld(core, p)
+                    && BioshipSupport.safeCoreEntry(core, p)
+                    && DigestiveSystem.reserveCoreRoute(core, p, false))
+        .min(
+            Comparator.<BlockPos>comparingDouble(p -> p.distSqr(core.structuralOrigin()))
+                .thenComparing(Comparator.naturalOrder()))
+        .orElse(null);
   }
 
   public int duration() {
@@ -205,7 +222,8 @@ public final class CoreMotion {
         var next = step.pos().relative(face);
         if (next.distManhattan(source) > 6
             || !tissue(core.getLevel().getBlockState(next))
-            || !core.hatchling() && !protectedInside(core, next)
+            || (!core.hatchling() || core.vision().externalEyesPreferred(core))
+                && !protectedInside(core, next)
             || !clearWorld(core, next)
             || !BioshipSupport.safeMove(core, source, next, false)
             || !DigestiveSystem.reserveCoreRoute(core, next, false)) continue;
@@ -435,7 +453,8 @@ public final class CoreMotion {
     if (active()) {
       if (!tissue(level.getBlockState(target)) && !supportedPerch(core, target)
           || !clearWorld(core, target)
-          || !core.hatchling() && !protectedInside(core, target)) {
+          || (!core.hatchling() || core.vision().externalEyesPreferred(core))
+              && !protectedInside(core, target)) {
         cancel(core);
         return false;
       }
@@ -445,9 +464,22 @@ public final class CoreMotion {
     if (core.autonomy().creeperPanic()) return false;
     var rejoin = creeper == null ? reconnect(core) : null;
     if (rejoin != null) return begin(core, rejoin, false);
-    if (!core.hatchling()) {
+    if (!core.hatchling() || core.vision().externalEyesPreferred(core)) {
       if (creeper != null) return evade(core, creeper);
       var threat = BioshipDefense.target(core);
+      if (!sheltered && core.vision().externalEyesPreferred(core)) {
+        if (protectedInside(core, core.getBlockPos())) {
+          sheltered = true;
+          core.setChanged();
+        } else if (level.getGameTime() >= nextScan) {
+          var inside = entry(core);
+          if (inside != null) {
+            reclaimEntry = true;
+            if (begin(core, inside, false)) return true;
+            reclaimEntry = false;
+          }
+        }
+      }
       boolean exposed =
           threat != null
               && BioshipVision.rayAtCore(
@@ -502,7 +534,9 @@ public final class CoreMotion {
   }
 
   private boolean begin(LivingCoreBlockEntity core, BlockPos next, boolean emergency) {
-    if (!BioshipSupport.safeMove(core, core.getBlockPos(), next, false)
+    if (!(reclaimEntry
+            ? BioshipSupport.safeCoreEntry(core, next)
+            : BioshipSupport.safeMove(core, core.getBlockPos(), next, false))
         || !DigestiveSystem.reserveCoreRoute(core, next, true)) return false;
     if (home == null) home = core.getBlockPos();
     target = next;
@@ -565,7 +599,8 @@ public final class CoreMotion {
         if (previous.containsKey(next)
             || next.distManhattan(source) > 6
             || !tissue(core.getLevel().getBlockState(next))
-            || !core.hatchling() && !protectedInside(core, next)
+            || (!core.hatchling() || core.vision().externalEyesPreferred(core))
+                && !protectedInside(core, next)
             || !clearWorld(core, next)
             || !DigestiveSystem.reserveCoreRoute(core, next, false)) continue;
         double value = blastSafety(core, next, creeper);
@@ -584,8 +619,13 @@ public final class CoreMotion {
   }
 
   String scoutingHint(LivingCoreBlockEntity core) {
-    if (active()) return "moving to a supported vantage";
-    if (!core.hatchling()) return "core concealed inside grown body";
+    boolean external = !core.hatchling() || core.vision().externalEyesPreferred(core);
+    if (active())
+      return external ? "moving core to protected tissue" : "moving to a supported vantage";
+    if (external)
+      return protectedInside(core, core.getBlockPos())
+          ? "protected core; surface eyes handle sight"
+          : "seeking protected core space; surface eyes handle sight";
     if (coverage(core, core.getBlockPos()) == FULL_COVERAGE) return "nearby survey is clear";
     boolean above = false;
     var queue = new ArrayDeque<BlockPos>();
@@ -622,6 +662,7 @@ public final class CoreMotion {
 
   void cancel(LivingCoreBlockEntity core) {
     target = null;
+    reclaimEntry = false;
     core.getLevel()
         .setBlock(
             core.getBlockPos(),
@@ -637,23 +678,34 @@ public final class CoreMotion {
     var to = target;
     var skin = level.getBlockState(to);
     var before = BioshipBody.actual(core);
+    boolean refund = reclaimEntry && skin.is(BioshipTissue.body());
+    if (refund && !BioshipSupport.safeCoreEntry(core, to)) {
+      cancel(core);
+      return;
+    }
+    reclaimEntry = false;
+    sheltered |= refund;
     target = null;
     nextScan = level.getGameTime() + 40;
     level.setBlock(from, core.getBlockState().setValue(LivingCoreBlock.RELOCATING, false), 2);
     core.setChanged();
+    var capsule = BioshipContainerState.capture(level, core);
     level.removeBlock(to, false);
     SubLevelAssemblyHelper.moveBlocks(
         level,
         new SubLevelAssemblyHelper.AssemblyTransform(from, to, 0, Rotation.NONE, level),
         List.of(from));
-    level.setBlock(from, skin, 3);
-    if (!(level.getBlockEntity(to) instanceof LivingCoreBlockEntity moved))
+    level.setBlock(
+        from, refund ? net.minecraft.world.level.block.Blocks.AIR.defaultBlockState() : skin, 3);
+    BioshipContainerState.restore(level, ship, to, capsule);
+    if (!(BioshipContainerState.entity(level, ship, to) instanceof LivingCoreBlockEntity moved))
       throw new IllegalStateException("Lost relocating bioship core");
     var delta = from.subtract(to);
     moved.body().rebase(delta);
     Map<BlockPos, BlockState> shifted = new LinkedHashMap<>();
     before.forEach((p, s) -> shifted.put(p.offset(delta), s));
     moved.inheritFlight(core);
+    if (refund) BioshipTissue.GROWTH_COST.refund(BioshipStorage.account(moved));
     moved.crawl().stop();
     DigestiveSystem.connect(moved, ship);
     moved.body().reconcile(moved, shifted);
@@ -666,6 +718,8 @@ public final class CoreMotion {
     if (home != null) tag.putLong("Home", home.asLong());
     if (target != null) tag.putLong("Target", target.asLong());
     tag.putBoolean("Evasive", evasive);
+    tag.putBoolean("Sheltered", sheltered);
+    tag.putBoolean("ReclaimEntry", reclaimEntry);
     tag.putLong("Started", started);
     tag.putBoolean("Feeding", feeding);
     tag.putLong("NextScan", nextScan);
@@ -677,6 +731,8 @@ public final class CoreMotion {
     home = tag.contains("Home") ? BlockPos.of(tag.getLong("Home")) : null;
     target = tag.contains("Target") ? BlockPos.of(tag.getLong("Target")) : null;
     evasive = tag.getBoolean("Evasive");
+    sheltered = tag.getBoolean("Sheltered");
+    reclaimEntry = tag.getBoolean("ReclaimEntry");
     started = tag.getLong("Started");
     feeding = tag.getBoolean("Feeding");
     nextScan = tag.getLong("NextScan");

@@ -3550,226 +3550,236 @@
       "members": [
         {
           "kind": "field",
-          "signature": "private List<BlockPos> eyes",
+          "signature": "static final MaterialCost EYE_COST",
           "line": 9
         },
         {
           "kind": "field",
-          "signature": "private long scanned",
+          "signature": "private List<BlockPos> eyes",
           "line": 10
+        },
+        {
+          "kind": "field",
+          "signature": "private long scanned",
+          "line": 11
         },
         {
           "kind": "method",
           "signature": "private void scan(LivingCoreBlockEntity core)",
-          "line": 11
+          "line": 12
         },
         {
           "kind": "nested type",
           "signature": "public record View(Vec3 origin, Vec3 forward, double range)",
-          "line": 35
+          "line": 36
         },
         {
           "kind": "method",
           "signature": "public int maximumDistance(LivingCoreBlockEntity core)",
-          "line": 43
+          "line": 44
         },
         {
           "kind": "method",
           "signature": "static int distanceLimit(int serverChunks, net.minecraft.server.level.ServerPlayer observer)",
-          "line": 59
+          "line": 60
         },
         {
           "kind": "method",
           "signature": "boolean inView(LivingCoreBlockEntity core, View view, Vec3 point)",
-          "line": 65
+          "line": 66
         },
         {
           "kind": "method",
           "signature": "static boolean clearMaterial( net.minecraft.world.level.block.state.BlockState state, Vec3 direction)",
-          "line": 80
+          "line": 81
         },
         {
           "kind": "method",
           "signature": "void invalidate()",
-          "line": 102
+          "line": 103
         },
         {
           "kind": "nested type",
           "signature": "private record Sighting( net.minecraft.world.level.block.state.BlockState state, long seen, boolean full)",
-          "line": 106
+          "line": 107
         },
         {
           "kind": "field",
           "signature": "private final Map<BlockPos, Sighting> remembered",
-          "line": 109
+          "line": 110
         },
         {
           "kind": "field",
           "signature": "private final TargetMemory<java.util.UUID> entityFreshness",
-          "line": 111
-        },
-        {
-          "kind": "field",
-          "signature": "private net.minecraft.world.entity.LivingEntity trackedEntity",
           "line": 112
         },
         {
           "kind": "field",
-          "signature": "private Vec3 trackedPoint",
+          "signature": "private net.minecraft.world.entity.LivingEntity trackedEntity",
           "line": 113
         },
         {
-          "kind": "method",
-          "signature": "void rememberEntity(net.minecraft.world.entity.LivingEntity entity)",
+          "kind": "field",
+          "signature": "private Vec3 trackedPoint",
           "line": 114
         },
         {
           "kind": "method",
+          "signature": "void rememberEntity(net.minecraft.world.entity.LivingEntity entity)",
+          "line": 115
+        },
+        {
+          "kind": "method",
           "signature": "net.minecraft.world.entity.LivingEntity rememberedEntity(LivingCoreBlockEntity core)",
-          "line": 121
+          "line": 122
         },
         {
           "kind": "method",
           "signature": "Vec3 knownPosition(net.minecraft.world.entity.LivingEntity entity)",
-          "line": 133
+          "line": 134
         },
         {
           "kind": "method",
           "signature": "Vec3 focus(LivingCoreBlockEntity core)",
-          "line": 139
+          "line": 140
         },
         {
           "kind": "field",
           "signature": "private final TargetMemory<BlockPos> sourceFreshness",
-          "line": 151
+          "line": 152
         },
         {
           "kind": "method",
           "signature": "long unseenNanos(BlockPos pos)",
-          "line": 153
+          "line": 154
         },
         {
           "kind": "method",
           "signature": "void forget(LivingCoreBlockEntity core, BlockPos pos)",
-          "line": 157
+          "line": 158
         },
         {
           "kind": "method",
           "signature": "java.util.Set<BlockPos> rememberedSources()",
-          "line": 163
+          "line": 164
         },
         {
           "kind": "method",
           "signature": "net.minecraft.world.level.block.state.BlockState rememberedState(BlockPos pos)",
-          "line": 167
+          "line": 168
         },
         {
           "kind": "method",
           "signature": "boolean rememberedFull(BlockPos pos)",
-          "line": 172
+          "line": 173
         },
         {
           "kind": "method",
           "signature": "net.minecraft.world.level.block.state.BlockState sourceState( LivingCoreBlockEntity core, BlockPos source)",
-          "line": 176
+          "line": 177
         },
         {
           "kind": "field",
           "signature": "private int surveyed",
-          "line": 210
+          "line": 211
         },
         {
           "kind": "method",
           "signature": "public List<View> views(LivingCoreBlockEntity core)",
-          "line": 212
+          "line": 213
         },
         {
           "kind": "method",
           "signature": "boolean knows(LivingCoreBlockEntity core, BlockPos source)",
-          "line": 241
+          "line": 242
         },
         {
           "kind": "method",
           "signature": "boolean surveyed(LivingCoreBlockEntity core)",
-          "line": 245
+          "line": 246
         },
         {
           "kind": "method",
           "signature": "void look(LivingCoreBlockEntity core, Direction face)",
-          "line": 249
+          "line": 250
         },
         {
           "kind": "method",
           "signature": "private void turn(LivingCoreBlockEntity core)",
-          "line": 257
+          "line": 258
         },
         {
           "kind": "method",
           "signature": "static boolean exposedTube(net.minecraft.world.level.block.state.BlockState state)",
-          "line": 274
+          "line": 275
         },
         {
           "kind": "method",
           "signature": "static boolean ray(LivingCoreBlockEntity core, Vec3 from, Vec3 to)",
-          "line": 278
+          "line": 279
         },
         {
           "kind": "method",
           "signature": "static boolean rayAtCore(LivingCoreBlockEntity core, Vec3 from, Vec3 to, BlockPos origin)",
-          "line": 282
+          "line": 283
         },
         {
           "kind": "method",
           "signature": "public boolean visible(LivingCoreBlockEntity core, Vec3 point)",
-          "line": 319
+          "line": 320
         },
         {
           "kind": "method",
           "signature": "static boolean openToNature(net.minecraft.world.level.Level level, BlockPos source)",
-          "line": 326
+          "line": 327
         },
         {
           "kind": "method",
           "signature": "boolean exposed(LivingCoreBlockEntity core, BlockPos source)",
-          "line": 342
+          "line": 343
         },
         {
           "kind": "method",
           "signature": "void observe(LivingCoreBlockEntity core)",
-          "line": 346
+          "line": 347
+        },
+        {
+          "kind": "method",
+          "signature": "boolean externalEyesPreferred(LivingCoreBlockEntity core)",
+          "line": 351
         },
         {
           "kind": "method",
           "signature": "void tick(LivingCoreBlockEntity core)",
-          "line": 350
+          "line": 363
         },
         {
           "kind": "method",
           "signature": "net.minecraft.nbt.CompoundTag save()",
-          "line": 355
-        },
-        {
-          "kind": "method",
-          "signature": "void load( net.minecraft.nbt.CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries)",
           "line": 373
         },
         {
           "kind": "method",
+          "signature": "void load( net.minecraft.nbt.CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries)",
+          "line": 391
+        },
+        {
+          "kind": "method",
           "signature": "boolean reabsorb(LivingCoreBlockEntity core)",
-          "line": 400
+          "line": 418
         },
         {
           "kind": "method",
           "signature": "boolean trackFocus(LivingCoreBlockEntity core)",
-          "line": 454
+          "line": 472
         },
         {
           "kind": "method",
           "signature": "void growEyes(LivingCoreBlockEntity core)",
-          "line": 530
+          "line": 548
         }
       ],
-      "lines": 616
+      "lines": 634
     },
     "AccessPanelBlock": {
       "path": "src/main/java/org/Azkerash/create_bioships/AccessPanelBlock.java",
@@ -4896,71 +4906,76 @@
         },
         {
           "kind": "method",
-          "signature": "public boolean swimming()",
+          "signature": "boolean waterContact()",
           "line": 44
         },
         {
           "kind": "method",
-          "signature": "public int air()",
+          "signature": "public boolean swimming()",
           "line": 48
         },
         {
           "kind": "method",
-          "signature": "boolean needsAir()",
+          "signature": "public int air()",
           "line": 52
         },
         {
           "kind": "method",
-          "signature": "void tick(LivingCoreBlockEntity core)",
+          "signature": "boolean needsAir()",
           "line": 56
         },
         {
           "kind": "method",
+          "signature": "void tick(LivingCoreBlockEntity core)",
+          "line": 60
+        },
+        {
+          "kind": "method",
           "signature": "static boolean touchesWater(LivingCoreBlockEntity core)",
-          "line": 121
+          "line": 125
         },
         {
           "kind": "method",
           "signature": "private static boolean waterAt(LivingCoreBlockEntity core, Vec3 point)",
-          "line": 152
+          "line": 156
         },
         {
           "kind": "method",
           "signature": "static boolean canBreathe(LivingCoreBlockEntity core)",
-          "line": 157
-        },
-        {
-          "kind": "method",
-          "signature": "static boolean aboveFluid(LivingCoreBlockEntity core, Vec3 point)",
           "line": 161
         },
         {
           "kind": "method",
+          "signature": "static boolean aboveFluid(LivingCoreBlockEntity core, Vec3 point)",
+          "line": 165
+        },
+        {
+          "kind": "method",
           "signature": "private static boolean waterWithinReach(LivingCoreBlockEntity core, Vec3 here)",
-          "line": 167
+          "line": 171
         },
         {
           "kind": "method",
           "signature": "private boolean clear(LivingCoreBlockEntity core, Vec3 offset)",
-          "line": 175
+          "line": 179
         },
         {
           "kind": "method",
           "signature": "void propel(ServerSubLevel ship, RigidBodyHandle body, double dt)",
-          "line": 187
+          "line": 191
         },
         {
           "kind": "method",
           "signature": "CompoundTag save()",
-          "line": 199
+          "line": 203
         },
         {
           "kind": "method",
           "signature": "void load(CompoundTag t)",
-          "line": 218
+          "line": 222
         }
       ],
-      "lines": 236
+      "lines": 240
     },
     "BioshipTargetEntity": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipTargetEntity.java",
@@ -6630,7 +6645,7 @@
         },
         {
           "kind": "field",
-          "signature": "private boolean evasive",
+          "signature": "private boolean evasive, sheltered, reclaimEntry",
           "line": 16
         },
         {
@@ -6665,181 +6680,186 @@
         },
         {
           "kind": "method",
-          "signature": "public int duration()",
+          "signature": "private BlockPos entry(LivingCoreBlockEntity core)",
           "line": 93
         },
         {
           "kind": "method",
+          "signature": "public int duration()",
+          "line": 110
+        },
+        {
+          "kind": "method",
           "signature": "public BlockPos home(LivingCoreBlockEntity core)",
-          "line": 97
+          "line": 114
         },
         {
           "kind": "method",
           "signature": "public BlockPos target()",
-          "line": 101
+          "line": 118
         },
         {
           "kind": "method",
           "signature": "public long started()",
-          "line": 105
+          "line": 122
         },
         {
           "kind": "method",
           "signature": "public boolean active()",
-          "line": 109
+          "line": 126
         },
         {
           "kind": "method",
           "signature": "static boolean tissue(BlockState state)",
-          "line": 113
+          "line": 130
         },
         {
           "kind": "method",
           "signature": "private boolean clearWorld(LivingCoreBlockEntity core, BlockPos pos)",
-          "line": 119
+          "line": 136
         },
         {
           "kind": "method",
           "signature": "private boolean clearWorld(LivingCoreBlockEntity core, Vec3 local)",
-          "line": 123
+          "line": 140
         },
         {
           "kind": "method",
           "signature": "int coverage(LivingCoreBlockEntity core, BlockPos vantage)",
-          "line": 146
+          "line": 163
         },
         {
           "kind": "method",
           "signature": "private Vec3 blockedSupply(LivingCoreBlockEntity core)",
-          "line": 159
+          "line": 176
         },
         {
           "kind": "method",
           "signature": "private int score(LivingCoreBlockEntity core, BlockPos vantage)",
-          "line": 165
+          "line": 182
         },
         {
           "kind": "method",
           "signature": "boolean canAvoidBlast( LivingCoreBlockEntity core, net.minecraft.world.entity.monster.Creeper creeper)",
-          "line": 178
+          "line": 195
         },
         {
           "kind": "nested type",
           "signature": "private record BlastStep(BlockPos pos, BlockPos first, int ticks)",
-          "line": 183
+          "line": 200
         },
         {
           "kind": "method",
           "signature": "private BlockPos blastExit( LivingCoreBlockEntity core, net.minecraft.world.entity.monster.Creeper creeper)",
-          "line": 185
+          "line": 202
         },
         {
           "kind": "method",
           "signature": "private BlockPos choose(LivingCoreBlockEntity core, boolean returning)",
-          "line": 224
+          "line": 242
         },
         {
           "kind": "method",
           "signature": "private static boolean connectedAfter(Set<BlockPos> body, BlockPos from, BlockPos to)",
-          "line": 266
-        },
-        {
-          "kind": "method",
-          "signature": "private boolean clearPerchTravel(LivingCoreBlockEntity core, BlockPos pos)",
           "line": 284
         },
         {
           "kind": "method",
-          "signature": "private boolean supportedPerch(LivingCoreBlockEntity core, BlockPos pos)",
-          "line": 293
+          "signature": "private boolean clearPerchTravel(LivingCoreBlockEntity core, BlockPos pos)",
+          "line": 302
         },
         {
           "kind": "method",
-          "signature": "private boolean stableSupport(LivingCoreBlockEntity core, BlockPos pos)",
+          "signature": "private boolean supportedPerch(LivingCoreBlockEntity core, BlockPos pos)",
           "line": 311
         },
         {
           "kind": "method",
+          "signature": "private boolean stableSupport(LivingCoreBlockEntity core, BlockPos pos)",
+          "line": 329
+        },
+        {
+          "kind": "method",
           "signature": "private BlockPos perch(LivingCoreBlockEntity core, boolean returning)",
-          "line": 320
+          "line": 338
         },
         {
           "kind": "method",
           "signature": "private BlockPos reconnect(LivingCoreBlockEntity core)",
-          "line": 342
+          "line": 360
         },
         {
           "kind": "method",
           "signature": "private boolean preparePerch(LivingCoreBlockEntity core)",
-          "line": 377
+          "line": 395
         },
         {
           "kind": "method",
           "signature": "boolean tick(LivingCoreBlockEntity core)",
-          "line": 409
+          "line": 427
         },
         {
           "kind": "method",
           "signature": "private boolean begin(LivingCoreBlockEntity core, BlockPos next, boolean emergency)",
-          "line": 502
+          "line": 534
         },
         {
           "kind": "method",
           "signature": "boolean evade(LivingCoreBlockEntity core, net.minecraft.world.entity.monster.Creeper creeper)",
-          "line": 519
+          "line": 553
         },
         {
           "kind": "method",
           "signature": "static double blastSafety( LivingCoreBlockEntity core, BlockPos point, net.minecraft.world.entity.monster.Creeper creeper)",
-          "line": 535
+          "line": 569
         },
         {
           "kind": "method",
           "signature": "private BlockPos safestStep( LivingCoreBlockEntity core, net.minecraft.world.entity.monster.Creeper creeper)",
-          "line": 547
+          "line": 581
         },
         {
           "kind": "method",
           "signature": "String scoutingHint(LivingCoreBlockEntity core)",
-          "line": 584
+          "line": 619
         },
         {
           "kind": "method",
           "signature": "void scoutNow(LivingCoreBlockEntity core)",
-          "line": 610
+          "line": 650
         },
         {
           "kind": "field",
           "signature": "private boolean feeding",
-          "line": 615
+          "line": 655
         },
         {
           "kind": "method",
           "signature": "boolean feeding()",
-          "line": 617
+          "line": 657
         },
         {
           "kind": "method",
           "signature": "void cancel(LivingCoreBlockEntity core)",
-          "line": 621
+          "line": 661
         },
         {
           "kind": "method",
           "signature": "private void commit(LivingCoreBlockEntity core)",
-          "line": 631
+          "line": 672
         },
         {
           "kind": "method",
           "signature": "CompoundTag save()",
-          "line": 662
+          "line": 714
         },
         {
           "kind": "method",
           "signature": "void load(CompoundTag tag)",
-          "line": 674
+          "line": 728
         }
       ],
-      "lines": 685
+      "lines": 741
     },
     "BioshipRespiration": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipRespiration.java",
@@ -6892,36 +6912,46 @@
         },
         {
           "kind": "method",
+          "signature": "static boolean prefersGills(LivingCoreBlockEntity core)",
+          "line": 75
+        },
+        {
+          "kind": "method",
           "signature": "static boolean missingLungs(LivingCoreBlockEntity core)",
-          "line": 74
+          "line": 79
+        },
+        {
+          "kind": "method",
+          "signature": "static boolean needsLungs(LivingCoreBlockEntity core)",
+          "line": 83
         },
         {
           "kind": "method",
           "signature": "static boolean blocksOpening(LivingCoreBlockEntity core, BlockPos target)",
-          "line": 78
+          "line": 87
         },
         {
           "kind": "nested type",
           "signature": "record Growth(BlockPos pos, BlockState state, MaterialCost cost, boolean gills)",
-          "line": 88
+          "line": 97
         },
         {
           "kind": "method",
           "signature": "static Growth plan(LivingCoreBlockEntity core)",
-          "line": 90
+          "line": 99
         },
         {
           "kind": "method",
           "signature": "static BioshipAdaptation.Proposal proposal(LivingCoreBlockEntity core)",
-          "line": 122
+          "line": 131
         },
         {
           "kind": "method",
           "signature": "static boolean grow(LivingCoreBlockEntity core, BlockPos pos, BlockState state)",
-          "line": 141
+          "line": 150
         }
       ],
-      "lines": 157
+      "lines": 166
     },
     "BioshipCoreLifecycle": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipCoreLifecycle.java",
@@ -7793,16 +7823,26 @@
         },
         {
           "kind": "method",
+          "signature": "static boolean safeCoreEntry(LivingCoreBlockEntity core, BlockPos target)",
+          "line": 241
+        },
+        {
+          "kind": "method",
+          "signature": "private static Layout movedLayout( LivingCoreBlockEntity core, BlockPos source, BlockPos target, boolean restoreFlesh, boolean swapCoreHost)",
+          "line": 245
+        },
+        {
+          "kind": "method",
           "signature": "private static long invalidMounts(Map<BlockPos, BlockState> cells)",
-          "line": 272
+          "line": 290
         },
         {
           "kind": "method",
           "signature": "static boolean containsProjection(Vec3 point, Vec3[] contacts)",
-          "line": 281
+          "line": 299
         }
       ],
-      "lines": 300
+      "lines": 318
     },
     "BioshipConfiguration": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipConfiguration.java",
@@ -9237,30 +9277,30 @@
         {
           "kind": "method",
           "signature": "private static int siteCount(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells)",
-          "line": 148
+          "line": 161
         },
         {
           "kind": "method",
           "signature": "static BioshipAdaptation.Proposal proposal(LivingCoreBlockEntity core)",
-          "line": 153
+          "line": 166
         },
         {
           "kind": "method",
           "signature": "static BioshipAdaptation.Proposal proposal(LivingCoreBlockEntity core, Plan plan)",
-          "line": 157
+          "line": 170
         },
         {
           "kind": "method",
           "signature": "static boolean grow(LivingCoreBlockEntity core, BlockPos pos, BlockState state)",
-          "line": 175
+          "line": 188
         },
         {
           "kind": "method",
           "signature": "private BioshipMountGrowth()",
-          "line": 196
+          "line": 209
         }
       ],
-      "lines": 199
+      "lines": 212
     },
     "LegUsageHistory": {
       "path": "src/main/java/org/Azkerash/create_bioships/LegUsageHistory.java",

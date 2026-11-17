@@ -165,6 +165,25 @@ public class BioshipGameTests {
     } else helper.runAfterDelay(1, () -> afterIndexed(helper, entities, action));
   }
 
+  private static void afterAttackSurfaceIndexed(
+      GameTestHelper helper,
+      LivingCoreBlockEntity core,
+      java.util.function.Consumer<BioshipTargetEntity> action) {
+    var current =
+        BioshipTargetEntity.surfaces(core).stream()
+            .filter(
+                e ->
+                    helper
+                        .getLevel()
+                        .getEntitiesOfClass(
+                            BioshipTargetEntity.class, e.getBoundingBox().inflate(.1))
+                        .contains(e))
+            .max(java.util.Comparator.comparingDouble(e -> e.position().y))
+            .orElse(null);
+    if (current != null) action.accept(current);
+    else helper.runAfterDelay(1, () -> afterAttackSurfaceIndexed(helper, core, action));
+  }
+
   private static void enableFlight(GameTestHelper helper, LivingCoreBlockEntity core) {
     var mineral = new ItemStack(item("aeronautics:levitite_blend_bucket"), 8);
     for (int i = 0; i < 8; i++)
@@ -7901,6 +7920,148 @@ public class BioshipGameTests {
     helper.succeed();
   }
 
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "affordable_surface_eyes")
+  public static void affordable_surface_eyes_replace_core_sight_scouting(GameTestHelper helper) {
+    var ship = assemble(helper);
+    try {
+      var core = core(ship);
+      var stomach = digestive(helper, core, false);
+      stomach.retainFlesh(64);
+      stomach.credit(MaterialCost.FIBER, 64);
+      stomach.credit(MaterialCost.BONE, 8);
+      helper
+          .getLevel()
+          .setBlock(core.getBlockPos().above(), BioshipTissue.body().defaultBlockState(), 3);
+      DigestiveSystem.connect(core, ship);
+      helper.assertTrue(
+          core.vision().externalEyesPreferred(core),
+          "Funded eyes were not preferred: connected="
+              + stomach.connected(core)
+              + " materials="
+              + BioshipStorage.snapshot(core));
+      core.coreMotion().tick(core);
+      helper.assertTrue(
+          !core.coreMotion().active(), "Core climbed for sight despite affordable eyes");
+      core.vision().growEyes(core);
+      helper.assertTrue(
+          BioshipStructure.cells(ship).values().stream()
+              .anyMatch(state -> state.is(Create_bioships.SURFACE_EYE.get())),
+          "Core deferred sight scouting but did not actually grow a funded eye");
+      helper.succeed();
+    } finally {
+      cleanup(helper, ship);
+    }
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "protected_core_entry")
+  public static void external_eyes_bury_core_reclaim_one_flesh_and_do_not_refund_twice(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var origin = core.getBlockPos();
+    var level = helper.getLevel();
+    for (var p : BlockPos.betweenClosed(origin.offset(1, 0, -1), origin.offset(3, 2, 1)))
+      level.setBlock(p, BioshipTissue.body().defaultBlockState(), 3);
+    level.setBlock(
+        origin.east(4).above(),
+        Create_bioships.SURFACE_EYE
+            .get()
+            .defaultBlockState()
+            .setValue(SurfaceEyeBlock.FACING, Direction.EAST),
+        3);
+    helper.assertTrue(
+        core.vision().externalEyesPreferred(core), "Existing eyes did not protect core priority");
+    helper.assertTrue(
+        core.coreMotion().tick(core) && origin.east(2).above().equals(core.coreMotion().target()),
+        "Core did not select an existing sheltered flesh cell");
+    helper.runAfterDelay(
+        13,
+        () -> {
+          var current = core(ship);
+          helper.assertTrue(
+              current.getBlockPos().equals(origin.east(2).above())
+                  && level.getBlockState(origin).isAir()
+                  && CoreMotion.protectedInside(current, current.getBlockPos()),
+              "Initial burial failed: position="
+                  + current.getBlockPos()
+                  + " source="
+                  + level.getBlockState(origin)
+                  + " protected="
+                  + CoreMotion.protectedInside(current, current.getBlockPos())
+                  + " move="
+                  + current.coreMotion().save());
+          helper.assertTrue(
+              BioshipStorage.amount(current, MaterialCost.FLESH)
+                      == BioshipTissue.GROWTH_COST.flesh()
+                  && BioshipStorage.amount(current, MaterialCost.FIBER)
+                      == BioshipTissue.GROWTH_COST.fiber(),
+              "Replaced flesh material balance="
+                  + BioshipStorage.snapshot(current)
+                  + " work="
+                  + current.adaptation().behavior().debug());
+          var tag = current.saveWithFullMetadata(level.registryAccess());
+          current.loadAdditional(tag, level.registryAccess());
+          for (int i = 0; i < 10; i++) current.coreMotion().tick(current);
+          finish(
+              helper,
+              ship,
+              () ->
+                  helper.assertTrue(
+                      current.coreMotion().save().getBoolean("Sheltered")
+                          && !current.coreMotion().save().getBoolean("ReclaimEntry")
+                          && BioshipStorage.amount(current, MaterialCost.FLESH)
+                              == BioshipTissue.GROWTH_COST.flesh()
+                          && BioshipStorage.amount(current, MaterialCost.FIBER)
+                              == BioshipTissue.GROWTH_COST.fiber(),
+                      "Reload/repeated shelter evaluation duplicated or lost the committed"
+                          + " refund"));
+        });
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "water_respiration_priority")
+  public static void water_habitat_prefers_exposed_gills_even_with_a_mouth_above_water(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    try {
+      var core = core(ship);
+      var level = helper.getLevel();
+      var stomach = digestive(helper, core, false);
+      stomach.retainFlesh(64);
+      stomach.credit(MaterialCost.FIBER, 64);
+      stomach.credit(MaterialCost.BONE, 8);
+      level.setBlock(core.getBlockPos().east(), BioshipTissue.body().defaultBlockState(), 3);
+      level.setBlock(core.getBlockPos().south(), BioshipTissue.body().defaultBlockState(), 3);
+      var world = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO));
+      for (var p : BlockPos.betweenClosed(world.offset(-4, -3, -4), world.offset(4, -1, 4)))
+        level.setBlock(p, Blocks.WATER.defaultBlockState(), 3);
+      var water = core.aquatic().save();
+      water.putBoolean("WaterContact", true);
+      water.putInt("GillSamples", 100);
+      water.putInt("GillUse", 900);
+      water.putDouble("GillUsePrecise", 900);
+      core.aquatic().load(water);
+      helper.assertTrue(
+          BioshipRespiration.airAccess(core) && BioshipRespiration.missingLungs(core),
+          "Fixture does not offer competing land respiration");
+      var plan = BioshipRespiration.proposal(core);
+      helper.assertTrue(
+          plan != null
+              && plan.state().is(Create_bioships.GILLS.get())
+              && BioshipRespiration.exposedGill(core, plan.pos(), plan.state()),
+          "Water resident prioritized lungs over exposed gills");
+      helper.assertTrue(
+          BioshipRespiration.grow(core, plan.pos(), plan.state()), "Funded gills did not grow");
+      helper.assertTrue(
+          BioshipRespiration.plan(core) == null,
+          "Aquatic resident immediately added lungs after gills");
+      for (var p : BlockPos.betweenClosed(world.offset(-4, -3, -4), world.offset(4, -1, 4)))
+        level.removeBlock(p, false);
+      helper.succeed();
+    } finally {
+      cleanup(helper, ship);
+    }
+  }
+
   @GameTest(template = "test_empty", timeoutTicks = 100, batch = "socket_anchor_identity")
   public static void socket_contact_identity_survives_filtered_and_reordered_layouts(
       GameTestHelper helper) {
@@ -9838,11 +9999,10 @@ public class BioshipGameTests {
     var ship = assemble(helper);
     var core = core(ship);
     var level = helper.getLevel();
-    var proxy = BioshipTargetEntity.ensure(core);
-    afterIndexed(
+    afterAttackSurfaceIndexed(
         helper,
-        List.of(proxy),
-        () -> {
+        core,
+        proxy -> {
           var at = proxy.position().add(0, .4, 0);
           var calculator =
               new net.minecraft.world.level.ExplosionDamageCalculator() {

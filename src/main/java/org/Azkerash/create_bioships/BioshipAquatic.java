@@ -43,6 +43,10 @@ public final class BioshipAquatic {
     return wet;
   }
 
+  boolean waterContact() {
+    return waterContact || wet;
+  }
+
   public boolean swimming() {
     return swimming;
   }
