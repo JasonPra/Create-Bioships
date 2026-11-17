@@ -65,3 +65,11 @@ All six underwater-navigation checkpoints are complete and pushed. Final validat
 See `docs/development/underwater-navigation-plan.md` and `underwater-navigation-changelog.md`.
 Zero tasks remain in this approved scope. Do not revive the cancelled historical backlog.
 Headless Sable movement tests passed; no graphical animation review is claimed.
+
+## Authorized place-memory and retreat scope
+
+The user approved persistent observed place memory, threat-aware escape planning and defensive
+retreat swipes, including generic ranged handling (pillagers and skeletons) and additional threat
+families recorded in `docs/development/place-memory-retreat-plan.md`. The nine prioritized tasks
+and class responsibilities were discussed. Proceed automatically, push each completed checkpoint,
+and report how many remain. This supersedes prior completion notes for this scope only.
