@@ -59,9 +59,9 @@ final class BioshipConfiguration {
 
   static void execute(LivingCoreBlockEntity core) {
     if (!BioshipBodyBehavior.blocker(core).isEmpty()) return;
+    ComponentMerging.tryAvailable(core);
+    if (ComponentTransport.busy(core)) return;
     for (var actor : BioshipIntegration.blockEntities(core.ship())) {
-      BioshipIntegration.convertFirstStomach(core, actor.getBlockPos());
-      if (OrganMotion.busy(core)) return;
       BioshipIntegration.convertFirstBioForge(core, actor.getBlockPos());
     }
     BioshipIntegration.orientMouth(core);

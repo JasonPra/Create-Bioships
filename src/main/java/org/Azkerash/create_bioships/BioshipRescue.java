@@ -139,7 +139,7 @@ public final class BioshipRescue {
 
   boolean begin(LivingCoreBlockEntity core, Player player) {
     if (active()
-        || OrganMotion.busy(core)
+        || ComponentTransport.busy(core)
         || core.blueprint().busy()
         || !core.isMature()
         || !core.access().allows(core, player)

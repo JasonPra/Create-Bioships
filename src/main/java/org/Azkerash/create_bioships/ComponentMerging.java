@@ -1,0 +1,186 @@
+package org.Azkerash.create_bioships;
+
+import com.github.elenterius.biomancy.block.decomposer.DecomposerBlockEntity;
+import com.github.elenterius.biomancy.block.digester.DigesterBlockEntity;
+import java.util.*;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+
+/** Recipes and commit validation for directional-independent amoeba component fusion. */
+public final class ComponentMerging {
+  private ComponentMerging() {}
+
+  public static final int DURATION_TICKS = 36;
+
+  /** Pure animation math stays independently testable without loading Minecraft classes. */
+  public static final class Animation {
+    private Animation() {}
+
+    public static double scale(double progress, boolean swallowed) {
+      double t = Double.isFinite(progress) ? Math.clamp(progress, 0, 1) : 0;
+      double edge = swallowed ? (1 - t) / .25 : Math.min(t, 1 - t) / .2;
+      edge = Math.clamp(edge, 0, 1);
+      double smooth = edge * edge * (3 - 2 * edge);
+      return swallowed ? .025 + .975 * smooth : 1 - .975 * smooth;
+    }
+  }
+
+  @FunctionalInterface
+  interface Commit {
+    void apply(LivingCoreBlockEntity core, BlockEntity source, BlockEntity destination);
+  }
+
+  record Recipe(
+      String id,
+      Class<? extends BlockEntity> source,
+      Class<? extends BlockEntity> destination,
+      Supplier<BlockState> result,
+      Predicate<LivingCoreBlockEntity> needed,
+      Commit commit) {
+    boolean matches(BlockEntity from, BlockEntity to) {
+      return source.isInstance(from) && destination.isInstance(to);
+    }
+  }
+
+  private static final class Registry {
+    private static final Map<String, Recipe> RECIPES = new LinkedHashMap<>();
+
+    static {
+      register(
+          new Recipe(
+              "stomach",
+              DigesterBlockEntity.class,
+              DecomposerBlockEntity.class,
+              () -> Create_bioships.STOMACH.get().defaultBlockState(),
+              core -> DigestiveSystem.stomachs(core).size() < BioshipDigestiveGrowth.target(core),
+              (core, source, destination) ->
+                  finishStomach(
+                      core, (DecomposerBlockEntity) destination, (DigesterBlockEntity) source)));
+    }
+  }
+
+  static void register(Recipe recipe) {
+    if (Registry.RECIPES.putIfAbsent(recipe.id(), recipe) != null)
+      throw new IllegalArgumentException("Duplicate component merge recipe: " + recipe.id());
+  }
+
+  static boolean matches(String id, BlockEntity source, BlockEntity destination) {
+    var recipe = Registry.RECIPES.get(id);
+    return recipe != null && recipe.matches(source, destination);
+  }
+
+  static BlockState result(String id) {
+    return Registry.RECIPES.get(id).result().get();
+  }
+
+  static boolean commit(
+      String id, LivingCoreBlockEntity core, BlockEntity source, BlockEntity destination) {
+    var recipe = Registry.RECIPES.get(id);
+    if (recipe == null || !recipe.matches(source, destination)) return false;
+    recipe.commit().apply(core, source, destination);
+    return true;
+  }
+
+  static void tryAvailable(LivingCoreBlockEntity core) {
+    if (core.ship() == null || ComponentTransport.busy(core)) return;
+    var entities = BioshipIntegration.blockEntities(core.ship());
+    for (var recipe : Registry.RECIPES.values()) {
+      if (!recipe.needed().test(core)) continue;
+      for (var destination : entities)
+        for (var source : entities) {
+          if (source == destination || !recipe.matches(source, destination)) continue;
+          // Connected tissue conveys the parts: no empty staging cell above the destination is
+          // needed.
+          if (ComponentTransport.merge(
+              core, source.getBlockPos(), destination.getBlockPos(), recipe.id())) return;
+        }
+    }
+  }
+
+  static boolean absorbLarynx(LivingCoreBlockEntity core, CompoundTag capsule) {
+    if (!BioshipLarynx.ready(core)) return false;
+    var mouth =
+        BioshipLarynx.mouths(core).stream().filter(m -> !m.voiced()).findFirst().orElse(null);
+    if (mouth == null) return false;
+    attachLarynx(core, mouth, capsule);
+    return true;
+  }
+
+  static void attachLarynx(
+      LivingCoreBlockEntity core, FeedingMouthBlockEntity mouth, CompoundTag capsule) {
+    mouth.absorbLarynx(capsule);
+    BioshipHealthChanges.changed(core);
+  }
+
+  private static final String RECIPE_TAG = "BioshipMergeRecipe";
+
+  static void tag(CompoundTag data, String recipe) {
+    data.putString(RECIPE_TAG, recipe);
+  }
+
+  /** Returns false only for cargo which is not a fusion transaction. */
+  static boolean finish(
+      LivingCoreBlockEntity core,
+      dev.ryanhcode.sable.sublevel.ServerSubLevel cargo,
+      ComponentTransport.Move move) {
+    var tag = cargo.getUserDataTag();
+    String recipe = tag == null ? "" : tag.getString(RECIPE_TAG);
+    if (recipe.isEmpty() && tag != null && tag.getBoolean("BioshipCombineStomach"))
+      recipe = "stomach";
+    if (recipe.isEmpty()) return false;
+    var owner = core.ship();
+    var level = cargo.getLevel();
+    if (!commit(
+        recipe,
+        core,
+        BioshipContainerState.entity(level, cargo, move.cargoBlock()),
+        BioshipContainerState.entity(level, owner, move.target()))) {
+      ComponentTransport.release(core, cargo);
+      return true;
+    }
+    ComponentTransport.finishCargo(core, cargo);
+    DigestiveSystem.connect(core, owner);
+    core.coreMotion().layoutChanged(core);
+    return true;
+  }
+
+  private static void finishStomach(
+      LivingCoreBlockEntity core,
+      com.github.elenterius.biomancy.block.decomposer.DecomposerBlockEntity decomposer,
+      com.github.elenterius.biomancy.block.digester.DigesterBlockEntity digester) {
+    var destination = decomposer.getBlockPos();
+    var queued = new ArrayList<net.minecraft.world.item.ItemStack>();
+    var stores = new ArrayList<net.minecraft.world.item.ItemStack>();
+    copyItems(decomposer.getInputInventory(), queued);
+    copyItems(digester.getInputInventory(), queued);
+    copyItems(decomposer.getOutputInventory(), stores);
+    copyItems(digester.getOutputInventory(), stores);
+    stores.add(decomposer.getStackInFuelSlot().copy());
+    stores.add(digester.getStackInFuelSlot().copy());
+    int nutrients =
+        decomposer.getStateData().fuelHandler.getFuelAmount()
+            + digester.getStateData().fuelHandler.getFuelAmount();
+    var stomachHost = BioshipTissue.host(decomposer);
+    core.getLevel().removeBlockEntity(destination);
+    core.getLevel().setBlock(destination, Create_bioships.STOMACH.get().defaultBlockState(), 3);
+    if (BioshipContainerState.entity(core.getLevel(), core.ship(), destination)
+        instanceof StomachBlockEntity stomach) {
+      BioshipTissue.remember(stomach, stomachHost);
+      core.adaptation().salvageStarterLegs();
+      core.setChanged();
+      for (var stack : stores) stomach.retain(stack);
+      for (var stack : queued) stomach.inheritInput(stack);
+      stomach.addNutrients(nutrients);
+    }
+  }
+
+  private static void copyItems(
+      net.neoforged.neoforge.items.IItemHandler inventory,
+      List<net.minecraft.world.item.ItemStack> destination) {
+    for (int slot = 0; slot < inventory.getSlots(); slot++)
+      destination.add(inventory.getStackInSlot(slot).copy());
+  }
+}

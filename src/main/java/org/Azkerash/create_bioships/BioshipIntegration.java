@@ -171,71 +171,8 @@ public final class BioshipIntegration {
       core.incorporateBiomass(1);
       return;
     }
-    convertFirstStomach(core, target);
+    ComponentMerging.tryAvailable(core);
     convertFirstBioForge(core, target);
-  }
-
-  static void convertFirstStomach(LivingCoreBlockEntity core, BlockPos pos) {
-    if (DigestiveSystem.stomachs(core).size() >= BioshipDigestiveGrowth.target(core)
-        || OrganMotion.busy(core)) return;
-    com.github.elenterius.biomancy.block.decomposer.DecomposerBlockEntity decomposer = null;
-    com.github.elenterius.biomancy.block.digester.DigesterBlockEntity digester = null;
-    for (var entity : blockEntities(core.ship())) {
-      if (decomposer == null
-          && entity
-              instanceof com.github.elenterius.biomancy.block.decomposer.DecomposerBlockEntity d)
-        decomposer = d;
-      if (digester == null
-          && entity instanceof com.github.elenterius.biomancy.block.digester.DigesterBlockEntity d)
-        digester = d;
-    }
-    if (decomposer == null || digester == null) return;
-    var destination = decomposer.getBlockPos();
-    var source = digester.getBlockPos();
-    if (destination.distManhattan(source) != 1) {
-      for (var direction : Direction.values()) {
-        var adjacent = destination.relative(direction);
-        var state = core.getLevel().getBlockState(adjacent);
-        if ((state.isAir() || BioshipTissue.isTissue(state))
-            && OrganMotion.begin(core, source, adjacent, false)) return;
-      }
-      return;
-    }
-    OrganMotion.combineStomach(core, source, destination);
-  }
-
-  static void finishStomach(
-      LivingCoreBlockEntity core,
-      com.github.elenterius.biomancy.block.decomposer.DecomposerBlockEntity decomposer,
-      com.github.elenterius.biomancy.block.digester.DigesterBlockEntity digester) {
-    var destination = decomposer.getBlockPos();
-    var queued = new ArrayList<net.minecraft.world.item.ItemStack>();
-    var stores = new ArrayList<net.minecraft.world.item.ItemStack>();
-    for (int i = 0; i < decomposer.getInputInventory().getSlots(); i++)
-      queued.add(decomposer.getInputInventory().getStackInSlot(i).copy());
-    for (int i = 0; i < digester.getInputInventory().getSlots(); i++)
-      queued.add(digester.getInputInventory().getStackInSlot(i).copy());
-    for (int i = 0; i < decomposer.getOutputInventory().getSlots(); i++)
-      stores.add(decomposer.getOutputInventory().getStackInSlot(i).copy());
-    for (int i = 0; i < digester.getOutputInventory().getSlots(); i++)
-      stores.add(digester.getOutputInventory().getStackInSlot(i).copy());
-    stores.add(decomposer.getStackInFuelSlot().copy());
-    stores.add(digester.getStackInFuelSlot().copy());
-    int nutrients =
-        decomposer.getStateData().fuelHandler.getFuelAmount()
-            + digester.getStateData().fuelHandler.getFuelAmount();
-    var stomachHost = BioshipTissue.host(decomposer);
-    core.getLevel().removeBlockEntity(destination);
-    core.getLevel().setBlock(destination, Create_bioships.STOMACH.get().defaultBlockState(), 3);
-    if (BioshipContainerState.entity(core.getLevel(), core.ship(), destination)
-        instanceof StomachBlockEntity stomach) {
-      BioshipTissue.remember(stomach, stomachHost);
-      core.adaptation().salvageStarterLegs();
-      core.setChanged();
-      for (var stack : stores) stomach.retain(stack);
-      for (var stack : queued) stomach.inheritInput(stack);
-      stomach.addNutrients(nutrients);
-    }
   }
 
   static void convertFirstBioForge(LivingCoreBlockEntity core, BlockPos pos) {
@@ -269,7 +206,7 @@ public final class BioshipIntegration {
       return;
     }
     var pos = core.mouthBlock();
-    if (pos == null || OrganMotion.busy(core)) return;
+    if (pos == null || ComponentTransport.busy(core)) return;
     var state = core.getLevel().getBlockState(pos);
     if (!state.is(Create_bioships.FEEDING_MOUTH.get())) return;
     var entity = core.getLevel().getBlockEntity(pos);
@@ -285,7 +222,7 @@ public final class BioshipIntegration {
   }
 
   public static void relocateMouth(LivingCoreBlockEntity core, ServerSubLevel ship) {
-    if (OrganMotion.busy(core)) return;
+    if (ComponentTransport.busy(core)) return;
     boolean hunting = core.huntingAllowed();
     var destinations = new ArrayList<BlockPos>();
     if (hunting)
@@ -327,7 +264,7 @@ public final class BioshipIntegration {
           if ((!tissue.isAir() && !tissue.is(Create_bioships.INTESTINE.get()))
               || !level.getBlockState(inside.above()).isAir()) continue;
         }
-        if (OrganMotion.begin(core, source, target, false)) return;
+        if (ComponentTransport.begin(core, source, target, false)) return;
       }
     }
   }

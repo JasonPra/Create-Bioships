@@ -82,6 +82,6 @@ public final class EngineRoom {
   public static boolean move(
       LivingCoreBlockEntity core, ServerSubLevel ship, BlockPos source, BlockPos target) {
     if (source.equals(target)) return true;
-    return OrganMotion.begin(core, source, target, false);
+    return ComponentTransport.begin(core, source, target, false);
   }
 }

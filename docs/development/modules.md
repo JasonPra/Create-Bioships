@@ -11,7 +11,7 @@ The controller selects work, planners propose it, and actuators execute it. Read
        |                |               |
  [Crawl route]    [Assimilation]    [Adaptation]
        |                |               |
- [Support]         [OrganMotion]    [MaterialCost]
+ [Support]         [ComponentTransport]    [MaterialCost]
        |                |               |
  [Sable physics]   [Shared storage / digestion]
 
@@ -41,7 +41,7 @@ For the complete class structure beneath each subsystem, see the
 | `BioshipVision` / `TargetMemory` | Visibility and observation lifetime | Choosing a goal or moving toward it |
 | `GroundRoute` / `BioshipCrawl` | Collision-aware routes, movement progress/failure and supported gait | A second independent supply target selector |
 | `BioshipAssimilation` | Batch progress, conserved swallowed stock and wreck-job continuation | Hunger thresholds or a second resource accounting policy |
-| `OrganMotion` | One conserved Sable block transport and its complete block entity | Choosing which component is valuable |
+| `ComponentTransport` | One conserved Sable block transport and its complete block entity | Choosing which component is valuable |
 | `NavigationDebug` | Snapshots of the actual controller and route state | Replanning just because the overlay is visible |
 
 ## Rules for adding behavior
@@ -89,3 +89,15 @@ The [architecture checkpoint review](architecture-review.md) records remaining o
 `BioshipLarynx` owns voice eligibility and conserved per-mouth combination; `BioshipVoicePalette` is pure A-Z articulation policy; `BioshipVoice` dispatches mouth-position utterances. The client sound player owns envelopes, and `MouthRenderer` owns articulated jaw/lip rendering. `BioshipVoiceCommands` is an operator audition adapter, not a resource source.
 
 `BioshipParticleSurface` supplies exposed world-space points. Trust feedback owns its shared cooldown; `TrustParticleBudget` bounds render frames and spawn count; poison feedback follows poison status. Damage feedback belongs to accepted body injury and its synchronized flash state. Cosmetic consumers do not choose tasks or debit materials.
+
+## Component lifecycle responsibilities
+
+- `ComponentMerging`: recipe registration, compatibility and result descriptions, fusion commit,
+  inventory/fuel conversion, larynx absorption, saved merge-tag compatibility and animation math.
+- `ComponentTransport`: one cargo movement lifecycle, route/physical motion and conserved cleanup.
+- `ComponentAttachment`: restored component data and face orientation after movement.
+- `client.ComponentTransportRendering`: client-only cargo pose deformation; no gameplay mutation.
+- `BioshipSupport`: support/connectivity checks, including the actual result of a merge recipe.
+
+The obsolete animation helper and former transport/render class names have no forwarding aliases.
+Before adding new features, discuss their responsibility boundaries with the user (AGENTS.md).

@@ -110,7 +110,7 @@ public final class BioshipBody {
                 .getSubLevel(move.cargo());
         if (cargo instanceof dev.ryanhcode.sable.sublevel.ServerSubLevel child)
           BioshipDecay.mark(child, deathCause);
-        OrganMotion.abandon(core);
+        ComponentTransport.abandon(core);
       }
     }
     BioshipDiagnostics.death(core, deathCause, deathAt);
@@ -202,7 +202,7 @@ public final class BioshipBody {
     if (core.getLevel().getGameTime() % 20 != 0 || core.ship() == null || core.blueprint().busy())
       return;
     var stomach = DigestiveSystem.stomach(core);
-    if (stomach == null || OrganMotion.busy(core)) return;
+    if (stomach == null || ComponentTransport.busy(core)) return;
     for (var e : memory.entrySet()) {
       var pos = core.getBlockPos().offset(e.getKey());
       if (!core.getLevel().getBlockState(pos).isAir() || core.rescue().retracted(pos)) continue;

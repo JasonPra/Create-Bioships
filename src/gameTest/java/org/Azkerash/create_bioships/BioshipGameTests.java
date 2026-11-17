@@ -892,7 +892,7 @@ public class BioshipGameTests {
           level.getBlockState(digesterPos).isAir(),
           "Digester was not incorporated into the combined stomach");
       helper.assertTrue(
-          OrganMotion.busy(core) && !core.organMove().usesArm(),
+          ComponentTransport.busy(core) && !core.organMove().usesArm(),
           "Adjacent stomach parts skipped the amoeba merge transaction");
       helper.runAfterDelay(
           37,
@@ -920,7 +920,7 @@ public class BioshipGameTests {
                 stomach.material("biomancy:nutrients") == 3
                     && stomach.queuedFood() == 4
                     && stomach.nutrients() == 9,
-                "Digester contents were not preserved");
+                "Digester contents were not preserved: products=" + stomach.material("biomancy:nutrients") + " queued=" + stomach.queuedFood() + " fuel=" + stomach.nutrients());
             var extraDigester = extraDecomposer.east();
             level.setBlock(extraDigester, block("biomancy:digester").defaultBlockState(), 3);
             BioshipIntegration.finishAssimilation(core, extraDigester);
@@ -1812,6 +1812,83 @@ public class BioshipGameTests {
                 }));
   }
 
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "merge_below_core")
+  public static void stomach_merge_below_core_needs_no_top_staging_cell(GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var destination = core.getBlockPos().below();
+    var source = core.getBlockPos().east();
+    level.setBlock(destination, block("biomancy:decomposer").defaultBlockState(), 3);
+    level.setBlock(source, block("biomancy:digester").defaultBlockState(), 3);
+    var digester =
+        (com.github.elenterius.biomancy.block.digester.DigesterBlockEntity)
+            level.getBlockEntity(source);
+    digester.getOutputInventory().setStackInSlot(0, new ItemStack(item("biomancy:nutrients"), 7));
+    ComponentMerging.tryAvailable(core);
+    helper.assertTrue(
+        ComponentTransport.busy(core), "Core above decomposer prevented the merge from starting");
+    helper.runAfterDelay(
+        37,
+        () ->
+            finish(
+                helper,
+                ship,
+                () -> {
+                  var organ = BioshipContainerState.entity(level, ship, destination);
+                  helper.assertTrue(
+                      organ instanceof StomachBlockEntity stomach
+                          && stomach.material("biomancy:nutrients") == 7,
+                      "Under-core merge failed or lost resources");
+                }));
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "merge_faces")
+  public static void component_merge_accepts_every_face_and_preserves_inputs(
+      GameTestHelper helper) {
+    var ships = new ArrayList<ServerSubLevel>();
+    var targets = new ArrayList<BlockPos>();
+    for (var face : Direction.values()) {
+      var ship = assemble(helper);
+      ships.add(ship);
+      var core = core(ship);
+      var level = helper.getLevel();
+      var destination = core.getBlockPos().offset(2, 1, 0);
+      targets.add(destination);
+      level.setBlock(core.getBlockPos().above(), BioshipTissue.body().defaultBlockState(), 3);
+      level.setBlock(
+          core.getBlockPos().above().east(), BioshipTissue.body().defaultBlockState(), 3);
+      var source = destination.relative(face);
+      boolean encased = BioshipTissue.isTissue(level.getBlockState(source));
+      level.setBlock(destination, block("biomancy:decomposer").defaultBlockState(), 3);
+      level.setBlock(source, block("biomancy:digester").defaultBlockState(), 3);
+      var digester =
+          (com.github.elenterius.biomancy.block.digester.DigesterBlockEntity)
+              level.getBlockEntity(source);
+      if (encased) BioshipTissue.remember(digester, BioshipTissue.body().defaultBlockState());
+      digester.getOutputInventory().setStackInSlot(0, new ItemStack(item("biomancy:nutrients"), 7));
+      helper.assertTrue(
+          ComponentTransport.merge(core, source, destination, "stomach"), "Merge rejected face " + face);
+    }
+    helper.runAfterDelay(
+        37,
+        () -> {
+          try {
+            for (int i = 0; i < ships.size(); i++) {
+              var organ =
+                  BioshipContainerState.entity(helper.getLevel(), ships.get(i), targets.get(i));
+              helper.assertTrue(
+                  organ instanceof StomachBlockEntity stomach
+                      && stomach.material("biomancy:nutrients") == 7,
+                  "Merge lost destination or resources for " + Direction.values()[i]);
+            }
+            helper.succeed();
+          } finally {
+            for (var ship : ships) cleanup(helper, ship);
+          }
+        });
+  }
+
   @GameTest(template = "test_empty", timeoutTicks = 200, batch = "combined_stomach")
   public static void stomach_combines_separated_decomposer_and_digester(GameTestHelper helper) {
     var ship = assemble(helper);
@@ -1828,7 +1905,7 @@ public class BioshipGameTests {
     digester.getOutputInventory().setStackInSlot(0, new ItemStack(item("biomancy:nutrients"), 7));
     BioshipIntegration.finishAssimilation(core, g);
     helper.assertTrue(
-        OrganMotion.busy(core), "Separated organs did not move together through tissue");
+        ComponentTransport.busy(core), "Separated organs did not move together through tissue");
     helper.runAfterDelay(
         100,
         () ->
@@ -2029,12 +2106,12 @@ public class BioshipGameTests {
     var stomachPos = dead.getBlockPos().above();
     level.setBlock(stomachPos, Create_bioships.STOMACH.get().defaultBlockState(), 3);
     helper.assertTrue(
-        !OrganMotion.begin(core, mouth, core.getBlockPos().north(), true),
+        !ComponentTransport.begin(core, mouth, core.getBlockPos().north(), true),
         "Living neighbor was eligible for scavenging");
     dead.body().die(dead);
     helper.assertTrue(
         !BioshipScavenging.needed(core, dead.getBlockState())
-            && !OrganMotion.begin(core, dead.getBlockPos(), core.getBlockPos().north(), true),
+            && !ComponentTransport.begin(core, dead.getBlockPos(), core.getBlockPos().north(), true),
         "A dead bioship core was eligible for consumption");
     ItemStack[] recoveredStock = {ItemStack.EMPTY};
     // Batched organs can connect sooner; inspect the mouth immediately when it grows out,
@@ -2322,7 +2399,7 @@ public class BioshipGameTests {
                           == 5,
                       "Front placement lost mouth inventory");
                   helper.assertTrue(
-                      !OrganMotion.busy(core), "Front mouth continually repositions itself");
+                      !ComponentTransport.busy(core), "Front mouth continually repositions itself");
                 }));
   }
 
@@ -2486,7 +2563,7 @@ public class BioshipGameTests {
     var target = core.getBlockPos().north();
     level.setBlock(source, block("biomancy:digester").defaultBlockState(), 3);
     helper.assertTrue(
-        OrganMotion.begin(core, source, target, false), "Bare component did not start moving");
+        ComponentTransport.begin(core, source, target, false), "Bare component did not start moving");
     helper.assertTrue(
         level.getBlockState(source).isAir() && !core.organMove().usesArm(),
         "Internal merge created filler or used an external carrying arm");
@@ -2508,7 +2585,7 @@ public class BioshipGameTests {
           mouth.getPersistentData().putBoolean("BioshipManualPlacement", true);
           mouth.setItem(0, new ItemStack(Items.BEEF, 5));
           helper.assertTrue(
-              OrganMotion.begin(core, wallSource, wallTarget, false),
+              ComponentTransport.begin(core, wallSource, wallTarget, false),
               "Wall-embedded organ did not move");
           var move = core.organMove();
           helper.assertTrue(
@@ -2574,7 +2651,7 @@ public class BioshipGameTests {
                 .filter(p -> level.getBlockState(p).is(Create_bioships.INTESTINE.get()))
                 .count();
     DigestiveSystem.arrangeStorage(core);
-    helper.assertTrue(OrganMotion.busy(core), "Disconnected sac was not repositioned");
+    helper.assertTrue(ComponentTransport.busy(core), "Disconnected sac was not repositioned");
     helper.runAfterDelay(
         90,
         () ->
@@ -2625,7 +2702,7 @@ public class BioshipGameTests {
         .insertItem(0, new ItemStack(Items.BEEF, 4), false);
     survey(core);
     BioshipIntegration.assimilate(core, ship);
-    helper.assertTrue(OrganMotion.busy(core), "Visible food storage was not assimilated");
+    helper.assertTrue(ComponentTransport.busy(core), "Visible food storage was not assimilated");
     helper.runAfterDelay(
         90,
         () -> {
@@ -5939,7 +6016,7 @@ public class BioshipGameTests {
     survey(core);
     BioshipIntegration.assimilate(core, ship);
     helper.assertTrue(
-        OrganMotion.busy(core), "Adjacent source blocked its own assimilation destination");
+        ComponentTransport.busy(core), "Adjacent source blocked its own assimilation destination");
     helper.runAfterDelay(
         70,
         () ->
@@ -5987,7 +6064,7 @@ public class BioshipGameTests {
         "Fixture is outside appendage reach");
     BioshipIntegration.assimilate(core, ship);
     helper.assertTrue(
-        OrganMotion.busy(core),
+        ComponentTransport.busy(core),
         "Reachable selected supply was discarded by the core-centered search box");
     helper.runAfterDelay(
         70,
@@ -6322,7 +6399,7 @@ public class BioshipGameTests {
                 try {
                   var target = DigestiveSystem.storagePort(core, source);
                   helper.assertTrue(
-                      target != null && OrganMotion.begin(core, source, target, true),
+                      target != null && ComponentTransport.begin(core, source, target, true),
                       "Could not start unrelated component transport");
                   var moving = core.organMove();
                   var saved = core.saveWithFullMetadata(level.registryAccess());
@@ -6917,7 +6994,7 @@ public class BioshipGameTests {
                   var level = helper.getLevel();
                   helper.assertTrue(current.isMature(), "Engine fixture did not mature");
                   helper.assertTrue(
-                      !OrganMotion.busy(current), "Engine fixture is still moving an organ");
+                      !ComponentTransport.busy(current), "Engine fixture is still moving an organ");
                   for (int z : new int[] {3, 2, 4})
                     for (int side : new int[] {-1, 1}) {
                       if (DigestiveSystem.mouths(current).size() >= 3) break;
@@ -7268,13 +7345,13 @@ public class BioshipGameTests {
       nativeData.putString("SoundEvent", "biomancy:entity.flesh_blob.growl");
       nativeData.putString("PreservedEssence", "test");
       helper.assertTrue(
-          BioshipLarynx.absorb(core, nativeData) && BioshipLarynx.missingCount(core) == 1,
+          ComponentMerging.absorbLarynx(core, nativeData) && BioshipLarynx.missingCount(core) == 1,
           "One larynx upgraded more than one mouth");
       helper.assertTrue(
-          BioshipLarynx.absorb(core, nativeData) && !BioshipLarynx.missing(core),
+          ComponentMerging.absorbLarynx(core, nativeData) && !BioshipLarynx.missing(core),
           "Second mouth could not develop a voice");
       helper.assertTrue(
-          !BioshipLarynx.absorb(core, nativeData), "Extra larynx was silently consumed");
+          !ComponentMerging.absorbLarynx(core, nativeData), "Extra larynx was silently consumed");
       for (var mouth : BioshipLarynx.mouths(core))
         helper.assertTrue(
             mouth.larynxCapsule().getString("PreservedEssence").equals("test"),
@@ -7374,7 +7451,7 @@ public class BioshipGameTests {
         "Available native larynx charged a second growth cost or lacked working digestion: "
             + plan);
     helper.assertTrue(
-        BioshipLarynx.develop(core, plan.pos()) && OrganMotion.busy(core),
+        BioshipLarynx.develop(core, plan.pos()) && ComponentTransport.busy(core),
         "Native larynx did not enter conserved body transport");
     helper.runAfterDelay(
         70,
@@ -7557,10 +7634,10 @@ public class BioshipGameTests {
           core.getBlockPos().east(), Create_bioships.STOMACH.get().defaultBlockState(), 3);
       DigestiveSystem.connect(core, ship);
       helper.assertTrue(BioshipGraspers.slots(core).size() == 2, "Second mouth did not own a slot");
-      BioshipLarynx.absorb(core, new net.minecraft.nbt.CompoundTag());
+      ComponentMerging.absorbLarynx(core, new net.minecraft.nbt.CompoundTag());
       helper.assertTrue(
           BioshipGraspers.slots(core).size() == 3, "Level-two mouth did not gain its second slot");
-      BioshipLarynx.absorb(core, new net.minecraft.nbt.CompoundTag());
+      ComponentMerging.absorbLarynx(core, new net.minecraft.nbt.CompoundTag());
       var slots = BioshipGraspers.slots(core);
       helper.assertTrue(
           slots.size() == 4
@@ -8674,7 +8751,7 @@ public class BioshipGameTests {
               .setValue(AmoebaLegBlock.FACING, Direction.EAST);
       helper.getLevel().setBlock(pos, leg, 3);
       helper.assertTrue(
-          !OrganMotion.begin(core, pos, pos.north(), false),
+          !ComponentTransport.begin(core, pos, pos.north(), false),
           "Relocation accepted a corner-only leg mount");
       helper.assertTrue(
           !BioshipSupport.safeMove(core, host, host.above(), false),
@@ -8784,7 +8861,7 @@ public class BioshipGameTests {
             .setValue(AmoebaLegBlock.FACING, Direction.EAST),
         3);
     helper.assertTrue(
-        OrganMotion.begin(core, source, target, false), "Valid supported leg move did not begin");
+        ComponentTransport.begin(core, source, target, false), "Valid supported leg move did not begin");
     var move = core.organMove();
     level.removeBlock(host, false);
     helper.runAfterDelay(
@@ -8852,7 +8929,7 @@ public class BioshipGameTests {
       helper.getLevel().setBlock(source.east(), BioshipTissue.body().defaultBlockState(), 3);
       helper.assertTrue(
           !BioshipSupport.safeMove(core, source, target, false)
-              && !OrganMotion.begin(core, source, target, false),
+              && !ComponentTransport.begin(core, source, target, false),
           "A supporting stomach could leave body sections disconnected during transport");
       helper.assertTrue(
           helper.getLevel().getBlockState(source).is(Create_bioships.STOMACH.get())
@@ -8964,7 +9041,7 @@ public class BioshipGameTests {
                     + core.adaptation().behavior().debug().getString("Reason"));
             BioshipConfiguration.execute(core);
             helper.assertTrue(
-                OrganMotion.busy(core) && !core.organMove().usesArm(),
+                ComponentTransport.busy(core) && !core.organMove().usesArm(),
                 "Defense suppressed the timed digestive merge");
             helper.assertTrue(
                 core.brain().choose(core).action() == BioshipBrain.Action.DEFEND,
@@ -9047,7 +9124,7 @@ public class BioshipGameTests {
       core.adaptation().creditRecovery(MaterialCost.FIBER, 100);
       core.adaptation().creditRecovery(MaterialCost.BONE, 100);
       helper.assertTrue(
-          OrganMotion.begin(core, source, core.getBlockPos().east(), false),
+          ComponentTransport.begin(core, source, core.getBlockPos().east(), false),
           "Could not start conserved mouth movement");
       var before = core.adaptation().save().getCompound("Reserve");
       helper.assertTrue(
@@ -9983,7 +10060,7 @@ public class BioshipGameTests {
     ((FeedingMouthBlockEntity) level.getBlockEntity(source))
         .setItem(0, new ItemStack(Items.STRUCTURE_VOID, 7));
     helper.assertTrue(
-        OrganMotion.begin(core, source, target, false), "Mouth transfer did not start");
+        ComponentTransport.begin(core, source, target, false), "Mouth transfer did not start");
     var move = core.organMove();
     var cargo = (ServerSubLevel) SubLevelContainer.getContainer(level).getSubLevel(move.cargo());
     var mouth =
@@ -10148,7 +10225,7 @@ public class BioshipGameTests {
     int max = core.body().capacity();
     double health = core.body().health();
     helper.assertTrue(
-        OrganMotion.storeComponent(core, mouth), "Mouth did not enter temporary storage");
+        ComponentTransport.storeComponent(core, mouth), "Mouth did not enter temporary storage");
     for (int at = 1; at <= 80; at++) {
       int age = at;
       helper.runAfterDelay(

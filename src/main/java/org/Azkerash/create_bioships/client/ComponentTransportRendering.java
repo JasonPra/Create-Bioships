@@ -11,14 +11,14 @@ import net.minecraft.world.phys.Vec3;
 import org.Azkerash.create_bioships.*;
 
 /** Client-only cargo deformation; logical poses, collisions and inventories stay authoritative. */
-public final class ComponentMergeRendering {
-  private record Active(OrganMotion.Move move, boolean swallowed) {}
+public final class ComponentTransportRendering {
+  private record Active(ComponentTransport.Move move, boolean swallowed) {}
 
   private static final Map<UUID, Active> ACTIVE = new HashMap<>();
   private static WeakReference<ClientLevel> level = new WeakReference<>(null);
   private static long tick = Long.MIN_VALUE;
 
-  private ComponentMergeRendering() {}
+  private ComponentTransportRendering() {}
 
   public static Pose3dc pose(ClientSubLevel cargo, Pose3dc original, float partial) {
     var current = cargo.getLevel();
@@ -39,8 +39,8 @@ public final class ComponentMergeRendering {
     }
     var active = ACTIVE.get(cargo.getUniqueId());
     if (active == null) return original;
-    double progress = (current.getGameTime() + partial - active.move().started()) / 36.0;
-    double scale = ComponentMergeAnimation.scale(progress, active.swallowed());
+    double progress = (current.getGameTime() + partial - active.move().started()) / ComponentMerging.DURATION_TICKS;
+    double scale = ComponentMerging.Animation.scale(progress, active.swallowed());
     if (scale >= 1) return original;
     var pivot = Vec3.atCenterOf(active.move().cargoBlock());
     var before = original.transformPosition(pivot);

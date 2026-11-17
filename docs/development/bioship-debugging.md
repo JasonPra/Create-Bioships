@@ -70,8 +70,7 @@ Use `./gradlew runGameTestServer -PbioshipTests='(?i)resting_mouth|broken_core|r
 ### Combined developer lab navigator (current checkpoint)
 
 New developer worlds use a void superflat base. Navigation regression courses have a bedrock
-platform; ecosystem chambers carry their own generated terrain. The former ecosystem preset
-is retained as a compatibility alias for the combined developer preset.
+platform; ecosystem chambers carry their own generated terrain. The separate ecosystem world preset has been removed; select Bioship Developer Lab.
 
 The **Developer Test Navigator** is granted on login to a developer world. It can also be obtained
 with `/give @s create_bioships:developer_test_tool`. Right-click to open its vanilla inventory UI:

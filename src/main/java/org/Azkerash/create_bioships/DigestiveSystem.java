@@ -385,7 +385,7 @@ public final class DigestiveSystem {
     var stomach = stomach(core);
     if (stomach == null
         || !stomach.connected(core)
-        || OrganMotion.busy(core)
+        || ComponentTransport.busy(core)
         || core.rescue().active()) return;
     for (var store : BioshipIntegration.blockEntities(core.ship())) {
       var pos = store.getBlockPos();
@@ -394,7 +394,7 @@ public final class DigestiveSystem {
       var path = stomach.sacPaths.get(pos);
       if (path != null && connectedStore(core, stomach, pos, path)) continue;
       var target = storagePort(core, pos);
-      if (target != null && OrganMotion.begin(core, pos, target, false)) return;
+      if (target != null && ComponentTransport.begin(core, pos, target, false)) return;
     }
   }
 

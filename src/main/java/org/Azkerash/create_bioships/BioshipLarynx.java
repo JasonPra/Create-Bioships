@@ -61,21 +61,12 @@ final class BioshipLarynx {
         "Combine a larynx with a mouth after completing digestion");
   }
 
-  static boolean absorb(LivingCoreBlockEntity core, CompoundTag capsule) {
-    if (!ready(core)) return false;
-    var mouth = mouths(core).stream().filter(m -> !m.voiced()).findFirst().orElse(null);
-    if (mouth == null) return false;
-    mouth.absorbLarynx(capsule);
-    BioshipHealthChanges.changed(core);
-    return true;
-  }
-
   static boolean develop(LivingCoreBlockEntity core, BlockPos pos) {
     if (!ready(core)
         || !(core.getLevel().getBlockEntity(pos) instanceof FeedingMouthBlockEntity mouth)
         || mouth.voiced()) return false;
     var organ = nativeSource(core, mouth);
-    if (organ != null) return OrganMotion.storeComponent(core, organ.getBlockPos());
+    if (organ != null) return ComponentTransport.storeComponent(core, organ.getBlockPos());
     if (!EmergencyReserve.after(core, COST) || !COST.pay(BioshipStorage.account(core)))
       return false;
     var capsule = new CompoundTag();
@@ -84,8 +75,7 @@ final class BioshipLarynx {
         BuiltInRegistries.SOUND_EVENT
             .getKey(com.github.elenterius.biomancy.init.ModSoundEvents.FLESH_BLOB_GROWL.get())
             .toString());
-    mouth.absorbLarynx(capsule);
-    BioshipHealthChanges.changed(core);
+    ComponentMerging.attachLarynx(core, mouth, capsule);
     core.setChanged();
     return true;
   }

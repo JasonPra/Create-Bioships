@@ -59,7 +59,7 @@ final class HatchlingFront {
 
   static boolean canArrange(LivingCoreBlockEntity core) {
     var source = core.mouthBlock();
-    if (source == null || OrganMotion.busy(core) || core.coreMotion().active()) return false;
+    if (source == null || ComponentTransport.busy(core) || core.coreMotion().active()) return false;
     var state = core.getLevel().getBlockState(source);
     if (!state.is(Create_bioships.FEEDING_MOUTH.get())) return false;
     var target = port(core, source);
@@ -80,7 +80,7 @@ final class HatchlingFront {
 
   static void arrangeMouth(LivingCoreBlockEntity core) {
     var source = core.mouthBlock();
-    if (!core.hatchling() || source == null || OrganMotion.busy(core) || core.coreMotion().active())
+    if (!core.hatchling() || source == null || ComponentTransport.busy(core) || core.coreMotion().active())
       return;
     var mouth = core.getLevel().getBlockEntity(source);
     if (mouth != null && mouth.getPersistentData().getBoolean("BioshipManualPlacement")) return;
@@ -106,10 +106,10 @@ final class HatchlingFront {
         var host = core.getLevel().getBlockState(bay);
         if (!bay.equals(source)
             && (host.isAir() || BioshipTissue.isTissue(host))
-            && OrganMotion.begin(core, front, bay, false)) return;
+            && ComponentTransport.begin(core, front, bay, false)) return;
       }
     }
-    if (target != null && !target.equals(source)) OrganMotion.begin(core, source, target, false);
+    if (target != null && !target.equals(source)) ComponentTransport.begin(core, source, target, false);
   }
 
   static double turn(LivingCoreBlockEntity core, Vec3 goal) {

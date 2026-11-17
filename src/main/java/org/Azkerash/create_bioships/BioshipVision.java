@@ -422,7 +422,7 @@ public final class BioshipVision {
     if (stomach == null
         || core.body().dead()
         || core.blueprint().busy()
-        || OrganMotion.busy(core)
+        || ComponentTransport.busy(core)
         || core.coreMotion().active()) return false;
     var all = views(core);
     int first = core.getBlockState().getValue(LivingCoreBlock.CONCEALED) ? 0 : 6;
@@ -477,7 +477,7 @@ public final class BioshipVision {
         || visible(core, focus)
         || core.body().dead()
         || core.blueprint().busy()
-        || OrganMotion.busy(core)
+        || ComponentTransport.busy(core)
         || core.coreMotion().active()) return false;
     scan(core);
     var level = core.getLevel();
@@ -520,7 +520,7 @@ public final class BioshipVision {
         var original = level.getBlockState(eye);
         if (!original.getValue(SurfaceEyeBlock.AUTOMATIC)) continue;
         level.setBlock(eye, original.setValue(SurfaceEyeBlock.FACING, mount.direction), 2);
-        if (OrganMotion.begin(core, eye, mount.pos, false)) return true;
+        if (ComponentTransport.begin(core, eye, mount.pos, false)) return true;
         level.setBlock(eye, original, 2);
       }
       var stomach = DigestiveSystem.stomach(core);
@@ -550,7 +550,7 @@ public final class BioshipVision {
   void growEyes(LivingCoreBlockEntity core) {
     if (core.body().dead()
         || core.blueprint().busy()
-        || OrganMotion.busy(core)
+        || ComponentTransport.busy(core)
         || core.hungry()
         || !core.hasMouth()) return;
     var stomach = DigestiveSystem.stomach(core);
@@ -612,7 +612,7 @@ public final class BioshipVision {
                 .transformPosition(Vec3.atCenterOf(target).relative(direction, -.22));
         if (!ray(core, point, point.add(forward.scale(8)))) continue;
         if (existing != null) {
-          if (OrganMotion.begin(core, existing, target, false)) return;
+          if (ComponentTransport.begin(core, existing, target, false)) return;
         } else {
           level.setBlock(
               target,

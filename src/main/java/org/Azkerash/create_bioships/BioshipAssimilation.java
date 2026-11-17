@@ -10,7 +10,7 @@ import net.minecraft.world.phys.Vec3;
 
 /** Conserved cargo is swallowed first; fitting kept organs is a separate, subsequent job. */
 public final class BioshipAssimilation {
-  private final List<OrganMotion.Move> arms = new ArrayList<>();
+  private final List<ComponentTransport.Move> arms = new ArrayList<>();
   private final Map<UUID, String> grasperBindings = new HashMap<>();
 
   Collection<String> busyGraspers() {
@@ -31,7 +31,7 @@ public final class BioshipAssimilation {
 
   private long retry;
 
-  public List<OrganMotion.Move> arms() {
+  public List<ComponentTransport.Move> arms() {
     return List.copyOf(arms);
   }
 
@@ -235,7 +235,7 @@ public final class BioshipAssimilation {
         resumeWreck = !stock.isEmpty();
         break;
       }
-      if (OrganMotion.swallow(core, source.pos())) {
+      if (ComponentTransport.swallow(core, source.pos())) {
         arms.add(core.organMove());
         grasperBindings.put(core.organMove().cargo(), grasper.key());
         core.organMove(null);
@@ -254,7 +254,7 @@ public final class BioshipAssimilation {
     int beforeArms = arms.size();
     for (var move : List.copyOf(arms)) {
       core.workingOrganMove(move);
-      OrganMotion.tick(core);
+      ComponentTransport.tick(core);
       arms.remove(move);
       if (core.organMove() != null) arms.add(core.organMove());
       else grasperBindings.remove(move.cargo());
@@ -289,7 +289,7 @@ public final class BioshipAssimilation {
             t -> BioshipPriorities.rank(core, state(core, t), core.getBlockPos())));
     for (var tag : List.copyOf(stock)) {
       var state = state(core, tag);
-      if (BioshipLarynx.isLarynx(state) && BioshipLarynx.absorb(core, tag.getCompound("Entity"))) {
+      if (BioshipLarynx.isLarynx(state) && ComponentMerging.absorbLarynx(core, tag.getCompound("Entity"))) {
         take(core, tag);
         core.setChanged();
         continue;
@@ -386,7 +386,7 @@ public final class BioshipAssimilation {
   void abandon(LivingCoreBlockEntity core) {
     for (var move : List.copyOf(arms)) {
       core.organMove(move);
-      OrganMotion.abandon(core);
+      ComponentTransport.abandon(core);
     }
     arms.clear();
     var at = BioshipBlueprint.physical(core, BlockPos.ZERO);
@@ -444,7 +444,7 @@ public final class BioshipAssimilation {
     }
     var cargo = tag.getList("Arms", 10);
     for (int i = 0; i < Math.min(32, cargo.size()); i++) {
-      var m = OrganMotion.Move.load(cargo.getCompound(i));
+      var m = ComponentTransport.Move.load(cargo.getCompound(i));
       if (m != null) arms.add(m);
     }
     var items = tag.getList("Stock", 10);

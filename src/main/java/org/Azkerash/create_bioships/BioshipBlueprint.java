@@ -330,7 +330,7 @@ public final class BioshipBlueprint {
         || core.rescue().active()
         || revision != baseRevision
         || !core.isMature()
-        || OrganMotion.busy(core)) {
+        || ComponentTransport.busy(core)) {
       status = "Ship is busy or blueprint changed; reopen the panel";
       return false;
     }

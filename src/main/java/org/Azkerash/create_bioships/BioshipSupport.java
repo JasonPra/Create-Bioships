@@ -235,6 +235,22 @@ public final class BioshipSupport {
     return core.canFly() || movedLayout(core, source, target, restoreFlesh).stable();
   }
 
+  static boolean safeMerge(
+      LivingCoreBlockEntity core,
+      BlockPos source,
+      BlockPos target,
+      boolean restoreFlesh,
+      BlockState result) {
+    var before = cells(core);
+    var after = new LinkedHashMap<>(before);
+    after.remove(source);
+    if (restoreFlesh) after.put(source, BioshipTissue.body().defaultBlockState());
+    after.put(target, result);
+    if (!BodyTopology.canMove(BodyTopology.structuralCells(before), source, target, restoreFlesh)
+        || invalidMounts(after) > invalidMounts(before)) return false;
+    return core.canFly() || layout(core, after).stable();
+  }
+
   static Layout movedLayout(
       LivingCoreBlockEntity core, BlockPos source, BlockPos target, boolean restoreFlesh) {
     return movedLayout(core, source, target, restoreFlesh, true);

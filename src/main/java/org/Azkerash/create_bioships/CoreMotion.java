@@ -421,7 +421,7 @@ public final class CoreMotion {
       if (!connectedAfter(body, source, support)
           || !connectedAfter(rearranged, core.getBlockPos(), destination)
           || !clearWorld(core, destination)) continue;
-      if (OrganMotion.begin(core, source, support, false)) return true;
+      if (ComponentTransport.begin(core, source, support, false)) return true;
     }
     return false;
   }
@@ -432,7 +432,7 @@ public final class CoreMotion {
     if (core.body().dead()
         || !core.hatchling() && !core.isMature()
         || core.blueprint().busy()
-        || OrganMotion.busy(core)) {
+        || ComponentTransport.busy(core)) {
       if (active()) cancel(core);
       return false;
     }

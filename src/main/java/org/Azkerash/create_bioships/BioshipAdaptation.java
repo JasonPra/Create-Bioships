@@ -170,7 +170,7 @@ final class BioshipAdaptation {
         core.crawl().enhance(core);
       } else if (p.action == BioshipBrain.Action.RECLAIM_COMPONENT) {
         if (!core.hasMouth() || DigestiveSystem.stomach(core) == null) {
-          if (OrganMotion.reclaimToCore(core, p.pos)) {
+          if (ComponentTransport.reclaimToCore(core, p.pos)) {
             armor.remove(p.pos);
             core.setChanged();
           }
@@ -182,7 +182,7 @@ final class BioshipAdaptation {
           var host = core.getLevel().getBlockState(target);
           if (!target.equals(p.pos)
               && (host.isAir() || BioshipTissue.isTissue(host))
-              && OrganMotion.reabsorb(core, p.pos, target)) {
+              && ComponentTransport.reabsorb(core, p.pos, target)) {
             armor.remove(p.pos);
             return;
           }

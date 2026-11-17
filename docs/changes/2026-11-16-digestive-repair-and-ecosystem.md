@@ -326,3 +326,43 @@ Validation for this checkpoint: the focused aquatic and End geometry GameTests b
 (`combined-lab-focused-tests.log`, 2/2). The process exited successfully, but its shutdown logged
 Sable `RuntimeException: Body has been removed`; shutdown cleanup remains a tracked defect.
 Do not describe this run as error-free. Full regression and graphical UI/escape QA remain pending.
+
+### Reusable component fusion and cancelled backlog
+
+- Added `ComponentMerging`: named recipes describe compatible source/destination block entities,
+  need predicates and validated commit callbacks. Future recipes reuse the same organ transport
+  and amoeba animation transaction instead of adding stomach-specific branches to movement.
+- Stomach fusion no longer stages the digester in an empty adjacent cell before merging. It can
+  merge into the existing decomposer from any face or through the connected body. Fusion uses
+  the destination's existing space, preserving normal terrain checks for actual component moves.
+- Configuration attempts the recipe list once rather than rescanning it for every block entity.
+- Preserve legacy in-flight stomach merge save tags; unknown/invalid recipes release the actual
+  cargo rather than consuming it. Existing inventory/fuel transfer remains authoritative at commit.
+- Added all-six-face and under-core regression cases, checking retained digester resources.
+- Per the user's latest instruction, the prior milestone/priority backlog is cancelled. Finish this
+  change, push the current work and stop. No outstanding earlier feature is implicitly requeued.
+
+The under-core fixture additionally exposed support validation using the incoming digester's
+shape rather than the finished stomach. Merge recipes now declare their result block state;
+`BioshipSupport.safeMerge` checks the completed result, preserved tissue hosts, structural
+connectivity and existing leg mounts. It does not bypass support checks for ordinary movement.
+
+The separate ecosystem world-preset resource, world-creation tag entry and selection label
+were removed at the user's request. The unified Developer Lab is the only exposed lab preset.
+The old biome definition remains available to existing saves; it does not add a world type.
+
+Consolidation follow-up: merge recipes, legacy merge-tag migration, native stomach inventory/fuel
+conversion, larynx-to-mouth fusion, and pure animation envelopes now live in `ComponentMerging`.
+Removed the obsolete `ComponentMergeAnimation` class. Renamed `OrganMotion` to
+`ComponentTransport`, and its client pose adapter/mixin to `ComponentTransportRendering` and
+`ComponentTransportRenderMixin`. `ComponentAttachment` owns restored component state and
+mount orientation; transport no longer owns those component-specific placement cases. Successful
+cargo cleanup/ticket release has one shared implementation. All callers and Mixin metadata were
+migrated; no legacy forwarding classes remain. Repository AGENTS.md records the user's instruction
+to discuss responsibility boundaries before future new features.
+
+Final validation: 61 unit tests and 9 focused GameTests passed after consolidation, including
+all-six-face fusion, under-core fusion, separated parts, native inventory conversion, wrench
+movement, mouth relocation, scavenging and larynx absorption. Preset-resource/tag removal and
+absence of old compiled helper classes were also verified. Full 171-test regression and final
+client render QA were not run for this focused checkpoint. Earlier backlog remains cancelled.

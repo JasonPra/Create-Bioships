@@ -41,22 +41,22 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     setChanged();
   }
 
-  private OrganMotion.Move organMove;
+  private ComponentTransport.Move organMove;
   private final BioshipAssimilation assimilation = new BioshipAssimilation();
 
   public BioshipAssimilation assimilation() {
     return assimilation;
   }
 
-  public OrganMotion.Move organMove() {
+  public ComponentTransport.Move organMove() {
     return organMove;
   }
 
-  void workingOrganMove(OrganMotion.Move move) {
+  void workingOrganMove(ComponentTransport.Move move) {
     organMove = move;
   }
 
-  public void organMove(OrganMotion.Move move) {
+  public void organMove(ComponentTransport.Move move) {
     organMove = move;
     setChanged();
     if (level != null && !level.isClientSide)
@@ -756,7 +756,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     }
     var before = BioshipBody.actual(core);
     core.assimilation.tick(core);
-    OrganMotion.tick(core);
+    ComponentTransport.tick(core);
     core.serverTick();
     var ship = core.ship();
     if (ship != null) core.adaptation.tick(core);
@@ -1241,7 +1241,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     preferredMouth =
         tag.contains("PreferredMouth") ? BlockPos.of(tag.getLong("PreferredMouth")) : null;
     organMove =
-        tag.contains("OrganMove") ? OrganMotion.Move.load(tag.getCompound("OrganMove")) : null;
+        tag.contains("OrganMove") ? ComponentTransport.Move.load(tag.getCompound("OrganMove")) : null;
     scavenging.load(tag.getCompound("Scavenging"));
     aquatic.load(tag.getCompound("Aquatic"));
     engineRoom.restore(tag.getInt("EngineColumns"));

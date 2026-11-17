@@ -1,18 +1,21 @@
 # Ecosystem Lab
 
-Choose **Bioship Ecosystem Lab** when creating a world. It uses normal Overworld noise terrain with Savanna vegetation, caves, elevations, daylight and weather. A barrier perimeter encloses a 64-block-radius land arena. The separate glass swimming enclosure includes deep water, a breathable air section and an observation platform.
+Choose **Bioship Developer Lab** when creating a world. The separate Ecosystem Lab world type
+has been removed. The developer world has a void base, bedrock-backed regression platforms,
+a suspended generated forest habitat, a 161-block-wide planted ocean aquarium, and a distant
+End-island enclosure. Use the Developer Test Navigator to select and teleport between areas.
 
 The preset itself creates **two land cores and one aquatic core**, with a Bio-Forge, Decomposer and Digester near each. This works without the optional automated observer. On first joining, the player also receives essentials, goggles, a wrench and pork. Repeatedly fill the resulting mouths with pork to observe growth. Scattered Storage Sacs contain real inventories of pork, flesh, fibers and bone; candidate positions search real tree canopies, tall grass and sheltered cave features.
 
 ## Population controller
 
-An always-active repeating command block above the land center runs `/bioship_ecosystem pulse`. The shared controller attempts one fish every 200 ticks (cap 16), one land prey every 600 ticks (cap 12), and one hostile every 1,200 ticks (cap 4). Six prey, two hostiles and eight fish are initially offered, subject to safe placement. Counts include existing animals of the corresponding classes. Ordinary natural spawning remains enabled and may exceed these controller caps.
+An always-active repeating command block above the land center runs `/bioship_ecosystem pulse`. The shared controller attempts one fish every 200 ticks (cap 128), one land prey every 600 ticks (cap 12), and one hostile every 1,200 ticks (cap 4). Six prey, two hostiles and fish are initially offered, subject to safe placement. Counts include existing animals of the corresponding classes. Ordinary natural spawning remains enabled and may exceed these controller caps.
 
 These are explicit test-scenario spawns, so replenishment does not depend on darkness, natural spawn checks, or a nearby player. It still requires valid water for fish and collision-free, supported land positions for land mobs. Controller-spawned mobs persist; undead get a non-dropping leather helmet for sunlight protection. On dedicated servers with command blocks disabled, a server-tick fallback invokes the exact same capped controller. A per-tick gate prevents double execution. Independently, every 6,000 game ticks (five in-game minutes), the server attempts a full refill of fish, land prey and hostiles up to the same caps. The deadline persists across saves and does not depend on command blocks. `/bioship_ecosystem replenish` performs that full refill immediately; safe placement can leave fewer mobs than the cap.
 
 ## Commands
 
-All commands require operator permission and are restricted to the Ecosystem Lab preset.
+All commands require operator permission and are restricted to developer lab worlds.
 
 - `/bioship_ecosystem status` — actual living core, fish, prey and hostile counts; cache count and controller position.
 - `/bioship_ecosystem water` — visit the aquatic observation platform.
@@ -20,7 +23,7 @@ All commands require operator permission and are restricted to the Ecosystem Lab
 - `/bioship_ecosystem replenish` — immediately refill fish and both land populations up to their caps, subject to valid placement.
 - `/bioship_ecosystem pulse` — internal repeating-controller endpoint for the gradual 200/600/1,200-tick cadence. Full automatic refills use the separate five-minute server timer.
 
-Older worlds migrate their controller and aquatic isolation on load without resetting subjects or the tank. Use `reset` for a fresh fixture run; it restarts the five-minute refill timer. `/bioship_lab reset` belongs to the separate Navigation Lab preset.
+Older worlds migrate their controller and aquatic isolation on load without resetting subjects or the tank. Use `reset` for a fresh fixture run; it restarts the five-minute refill timer. `/bioship_lab reset` resets the navigation regression courses in the same Developer Lab world.
 
 F3+B toggles sight and contact-hitbox diagnostics. F3+P toggles navigation paths and behavior/target/priority holograms. Graphical animation QA remains separate from headless tests.
 
