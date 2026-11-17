@@ -1,5 +1,7 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.disabled.wip.AirshipPrototype;
+
 import com.github.elenterius.biomancy.block.decomposer.DecomposerBlockEntity;
 import com.github.elenterius.biomancy.crafting.recipe.DecomposingRecipe;
 import java.util.*;
@@ -85,7 +87,7 @@ public class StomachBlockEntity extends BlockEntity implements MenuProvider, Res
     return nutrition;
   }
 
-  static int burnStored(CompoundTag stores) {
+  public static int burnStored(CompoundTag stores) {
     String[] priorities = {
       "biomancy:nutrients",
       "biomancy:nutrient_paste",

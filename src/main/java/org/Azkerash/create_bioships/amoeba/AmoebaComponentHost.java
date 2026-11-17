@@ -1,5 +1,9 @@
 package org.Azkerash.create_bioships.amoeba;
 
+import org.Azkerash.create_bioships.FeedingMouthBlockEntity;
+import org.Azkerash.create_bioships.creature.ResourceAccount;
+import org.Azkerash.create_bioships.creature.CreatureBodyAccess;
+
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import java.util.List;
 import net.minecraft.core.BlockPos;

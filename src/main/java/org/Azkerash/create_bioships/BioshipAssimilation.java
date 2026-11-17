@@ -1,5 +1,7 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
+
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import java.util.*;
@@ -392,7 +394,7 @@ public final class BioshipAssimilation {
       ComponentTransport.abandon(core.amoebaComponents());
     }
     arms.clear();
-    var at = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var at = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     for (var tag : stock) {
       var item = state(core, tag).getBlock().asItem();
       int count = Math.max(1, tag.getInt("Count"));

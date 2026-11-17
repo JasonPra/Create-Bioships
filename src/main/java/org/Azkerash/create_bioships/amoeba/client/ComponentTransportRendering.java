@@ -1,5 +1,9 @@
 package org.Azkerash.create_bioships.amoeba.client;
 
+import org.Azkerash.create_bioships.amoeba.AmoebaComponentProvider;
+import org.Azkerash.create_bioships.amoeba.ComponentTransport;
+import org.Azkerash.create_bioships.amoeba.ComponentMerging;
+
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.companion.math.Pose3d;
 import dev.ryanhcode.sable.companion.math.Pose3dc;

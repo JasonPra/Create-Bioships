@@ -1,5 +1,7 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
+
 import net.minecraft.nbt.*;
 import net.minecraft.server.level.ServerLevel;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -40,7 +42,7 @@ final class BioshipTrustFeedback {
     var data = new CompoundTag();
     data.putBoolean("Positive", positive);
     data.put("Points", points);
-    var at = BioshipBlueprint.physical(core, net.minecraft.core.BlockPos.ZERO);
+    var at = BodyCoordinates.physical(core.amoebaComponents(), net.minecraft.core.BlockPos.ZERO);
     PacketDistributor.sendToPlayersNear(
         level, null, at.x, at.y, at.z, 96, new BioshipNetwork.TrustBurst(data));
     if (!positive && !core.body().flashing(core)) BioshipLarynx.growl(core);

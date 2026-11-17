@@ -1,5 +1,7 @@
 package org.Azkerash.create_bioships.mixin;
 
+import org.Azkerash.create_bioships.BioshipDecay;
+
 import dev.ryanhcode.sable.companion.math.Pose3d;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import org.Azkerash.create_bioships.BioshipIntegration;

@@ -1,5 +1,7 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
+
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import java.util.*;
@@ -61,7 +63,7 @@ final class LabStarters {
       if (entry instanceof ServerSubLevel ship && !ship.isRemoved())
         for (var actor : BioshipIntegration.blockEntities(ship))
           if (actor instanceof LivingCoreBlockEntity core
-              && BioshipBlueprint.physical(core, BlockPos.ZERO).distanceToSqr(Vec3.atCenterOf(pos))
+              && BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO).distanceToSqr(Vec3.atCenterOf(pos))
                   < 1) {
             var tag = ship.getUserDataTag().copy();
             tag.putBoolean(MARKER, true);

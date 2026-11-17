@@ -1,5 +1,7 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.integration.biomancy.NativeStorage;
+
 import java.util.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
@@ -24,7 +26,7 @@ final class BioshipStores {
     for (var pos : stomach.sacPaths.keySet()) {
       var be = stomach.getLevel().getBlockEntity(pos);
       if (be != null
-          && EngineRoom.storage(be)
+          && NativeStorage.isStorage(be)
           && DigestiveSystem.storeConnected(core, stomach, pos)) result.add(be);
     }
     return result;

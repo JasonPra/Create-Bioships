@@ -1,5 +1,15 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.integration.biomancy.NativeStorage;
+
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
+import org.Azkerash.create_bioships.disabled.wip.LivingThrottleBlock;
+import org.Azkerash.create_bioships.disabled.wip.BlueprintPanelBlock;
+import org.Azkerash.create_bioships.disabled.wip.AccessPanelBlock;
+import org.Azkerash.create_bioships.disabled.wip.AirshipPrototype;
+import org.Azkerash.create_bioships.disabled.wip.EngineRoom;
+import org.Azkerash.create_bioships.disabled.wip.NerveControlBlock;
+
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import java.util.*;
@@ -68,7 +78,7 @@ public final class BioshipScavenging {
               < BioshipDigestiveGrowth.target(core)
           && others.stream().noneMatch(e -> e.getBlockState().is(state.getBlock()));
     if (id.equals("biomancy:storage_sac"))
-      return others.stream().filter(EngineRoom::storage).count() < 8;
+      return others.stream().filter(NativeStorage::isStorage).count() < 8;
     if (id.equals("biomancy:modular_larynx"))
       return others.stream().filter(e -> e.getBlockState().is(state.getBlock())).count()
           < BioshipLarynx.missingCount(core);
@@ -128,7 +138,7 @@ public final class BioshipScavenging {
     if (!committed.isEmpty()) return committed;
     var container = SubLevelContainer.getContainer(core.getLevel());
     if (container == null) return java.util.List.of();
-    var eye = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var eye = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     var sources = new ArrayList<Source>();
     for (var body : container.getAllSubLevels())
       if (body instanceof ServerSubLevel wreck && !wreck.isRemoved() && BioshipDecay.dead(wreck)) {

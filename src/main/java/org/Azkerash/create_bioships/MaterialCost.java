@@ -4,12 +4,12 @@ import java.util.*;
 import org.Azkerash.create_bioships.creature.ResourceAccount;
 
 /** Resource transactions shared by storage, emergency reserves, growth and routing. */
-record MaterialCost(int flesh, int fiber, int bone) {
+public record MaterialCost(int flesh, int fiber, int bone) {
   static final String FLESH = "biomancy:flesh_bits",
       FIBER = "biomancy:elastic_fibers",
       BONE = "biomancy:bone_fragments";
 
-  MaterialCost {
+  public MaterialCost {
     if (flesh < 0 || fiber < 0 || bone < 0)
       throw new IllegalArgumentException("Material costs must be nonnegative");
   }
@@ -23,7 +23,7 @@ record MaterialCost(int flesh, int fiber, int bone) {
         .allMatch(e -> account.material(e.getKey()) >= e.getValue());
   }
 
-  boolean pay(ResourceAccount account) {
+  public boolean pay(ResourceAccount account) {
     if (!funded(account)) return false;
     var spent = new LinkedHashMap<String, Integer>();
     for (var entry : entries().entrySet())
@@ -37,7 +37,7 @@ record MaterialCost(int flesh, int fiber, int bone) {
     return true;
   }
 
-  void refund(ResourceAccount account) {
+  public void refund(ResourceAccount account) {
     entries()
         .forEach(
             (id, count) -> {

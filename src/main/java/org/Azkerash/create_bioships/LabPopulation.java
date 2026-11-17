@@ -1,5 +1,7 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
+
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.server.level.ServerLevel;
@@ -52,7 +54,7 @@ final class LabPopulation {
       if (entry instanceof dev.ryanhcode.sable.sublevel.ServerSubLevel ship && !ship.isRemoved())
         for (var actor : BioshipIntegration.blockEntities(ship))
           if (actor instanceof LivingCoreBlockEntity core && !core.body().dead()) {
-            var point = BioshipBlueprint.physical(core, BlockPos.ZERO);
+            var point = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
             if (landBounds(level, center).contains(point) || AquaticLab.contains(level, point))
               cores++;
           }

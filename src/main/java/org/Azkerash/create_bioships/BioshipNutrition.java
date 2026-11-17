@@ -4,10 +4,10 @@ import net.minecraft.world.item.*;
 import net.neoforged.neoforge.capabilities.Capabilities;
 
 /** Shared nutritional value and task purpose; no navigation or world mutations. */
-final class BioshipNutrition {
+public final class BioshipNutrition {
   static final int PRESSING_FOOD = 50;
 
-  static boolean critical(LivingCoreBlockEntity core) {
+  public static boolean critical(LivingCoreBlockEntity core) {
     return BioshipEnergy.demand(core) > 0 && core.foodLevel() < PRESSING_FOOD;
   }
 

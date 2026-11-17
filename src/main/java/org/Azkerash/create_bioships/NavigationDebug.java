@@ -1,5 +1,8 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
+import org.Azkerash.create_bioships.disabled.wip.AirshipPrototype;
+
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import net.minecraft.core.BlockPos;
@@ -34,11 +37,11 @@ public final class NavigationDebug {
     data.putInt("NeedBone", missing.bone());
     data.putInt("DigestiveDemand", DigestiveSystem.requiredPairs(core));
     if (AirshipPrototype.available()) data.putInt("EngineCapacity", core.engineRoom().capacity());
-    var origin = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var origin = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     data.put(
         "Hologram",
         VisionDebug.vector(new Vec3(origin.x, ship.boundingBox().maxY() + .8, origin.z)));
-    data.put("Position", VisionDebug.vector(BioshipBlueprint.physical(core, BlockPos.ZERO)));
+    data.put("Position", VisionDebug.vector(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO)));
     var decision = core.brain().lastDecision();
     if (decision != null) {
       Vec3 target =
@@ -95,7 +98,7 @@ public final class NavigationDebug {
           for (var entity : BioshipIntegration.blockEntities(ship))
             if (entity instanceof LivingCoreBlockEntity core && !core.body().dead()) {
               double distance =
-                  BioshipBlueprint.physical(core, BlockPos.ZERO).distanceToSqr(player.position());
+                  BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO).distanceToSqr(player.position());
               if (distance < best) {
                 selected = core;
                 best = distance;

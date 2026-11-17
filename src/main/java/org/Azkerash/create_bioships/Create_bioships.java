@@ -1,5 +1,19 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.disabled.wip.TentacleBlock;
+import org.Azkerash.create_bioships.disabled.wip.LivingThrottleBlock;
+import org.Azkerash.create_bioships.disabled.wip.BlueprintPanelBlock;
+import org.Azkerash.create_bioships.disabled.wip.CaptainSeatBlock;
+import org.Azkerash.create_bioships.disabled.wip.AccessPanelBlock;
+import org.Azkerash.create_bioships.disabled.wip.BuoyancyOrganBlock;
+import org.Azkerash.create_bioships.disabled.wip.LivingHelmBlock;
+import org.Azkerash.create_bioships.disabled.wip.LivingDoorBlock;
+import org.Azkerash.create_bioships.disabled.wip.BlueprintMenu;
+import org.Azkerash.create_bioships.disabled.wip.AccessMenu;
+import org.Azkerash.create_bioships.disabled.wip.AirshipPrototype;
+import org.Azkerash.create_bioships.disabled.wip.NerveControlBlock;
+import org.Azkerash.create_bioships.disabled.wip.TentacleBlockEntity;
+
 import com.mojang.datafixers.DSL;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;

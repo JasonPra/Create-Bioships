@@ -1,5 +1,9 @@
 package org.Azkerash.create_bioships.client;
 
+import org.Azkerash.create_bioships.Create_bioships;
+import org.Azkerash.create_bioships.FeedingMouthBlockEntity;
+import org.Azkerash.create_bioships.FeedingMouthBlock;
+
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;

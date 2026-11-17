@@ -15,6 +15,9 @@ import org.Azkerash.create_bioships.amoeba.ComponentTransport;
 /** Persistent intended tissue, independent of current holes. Never exposes a health HUD. */
 @EventBusSubscriber(modid = Create_bioships.MOD_ID)
 public final class BioshipBody {
+  /** Mutable intended-cell model used by preserved reconstruction and repair routines. */
+  public Map<BlockPos, BlockState> intendedCells() { return memory; }
+
   final Map<BlockPos, BlockState> memory = new LinkedHashMap<>();
   private final Set<BlockPos> injured = new HashSet<>();
   private double health = 100;
@@ -126,7 +129,7 @@ public final class BioshipBody {
     return capacity;
   }
 
-  static Map<BlockPos, BlockState> actual(LivingCoreBlockEntity core) {
+  public static Map<BlockPos, BlockState> actual(LivingCoreBlockEntity core) {
     Map<BlockPos, BlockState> out = new LinkedHashMap<>();
     if (core.ship() == null) return out;
     BioshipStructure.visit(
@@ -134,7 +137,7 @@ public final class BioshipBody {
     return out;
   }
 
-  void observe(LivingCoreBlockEntity core) {
+  public void observe(LivingCoreBlockEntity core) {
     if (dead || core.blueprint().busy()) return;
     healthAudits++;
     double before = health;
@@ -180,7 +183,7 @@ public final class BioshipBody {
   }
 
   /** Only changes made by the ship itself retire old schematic cells. */
-  void reconcile(LivingCoreBlockEntity core, Map<BlockPos, BlockState> before) {
+  public void reconcile(LivingCoreBlockEntity core, Map<BlockPos, BlockState> before) {
     var after = actual(core);
     before.forEach(
         (p, s) -> {
@@ -335,7 +338,7 @@ public final class BioshipBody {
     }
   }
 
-  CompoundTag save() {
+  public CompoundTag save() {
     var tag = new CompoundTag();
     tag.putBoolean("Dead", dead);
     tag.putString("DeathCause", deathCause.name());
@@ -351,7 +354,7 @@ public final class BioshipBody {
     return tag;
   }
 
-  void load(CompoundTag tag, HolderLookup.Provider registries) {
+  public void load(CompoundTag tag, HolderLookup.Provider registries) {
     lastCombatAt = tag.contains("CombatAt") ? tag.getLong("CombatAt") : Long.MIN_VALUE;
     lastCombatAmount = tag.getFloat("CombatAmount");
     flashUntil = tag.getLong("FlashUntil");
@@ -368,7 +371,7 @@ public final class BioshipBody {
     for (long p : tag.getLongArray("Injured")) injured.add(BlockPos.of(p));
   }
 
-  static ListTag saveCells(Map<BlockPos, BlockState> cells) {
+  public static ListTag saveCells(Map<BlockPos, BlockState> cells) {
     var list = new ListTag();
     cells.forEach(
         (p, s) -> {
@@ -380,7 +383,7 @@ public final class BioshipBody {
     return list;
   }
 
-  static Map<BlockPos, BlockState> loadCells(ListTag list, HolderLookup.Provider registries) {
+  public static Map<BlockPos, BlockState> loadCells(ListTag list, HolderLookup.Provider registries) {
     Map<BlockPos, BlockState> out = new LinkedHashMap<>();
     var blocks = registries.lookupOrThrow(net.minecraft.core.registries.Registries.BLOCK);
     for (int i = 0; i < Math.min(list.size(), 12000); i++) {

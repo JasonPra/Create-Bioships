@@ -1,5 +1,8 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
+import org.Azkerash.create_bioships.disabled.wip.DinghyGrowth;
+
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.nbt.CompoundTag;
@@ -31,7 +34,7 @@ public final class BioshipCrawl {
 
   private void measureGait(LivingCoreBlockEntity core) {
     var point =
-        BioshipBlueprint.physical(core, core.structuralOrigin().subtract(core.getBlockPos()));
+        BodyCoordinates.physical(core.amoebaComponents(), core.structuralOrigin().subtract(core.getBlockPos()));
     long now = core.getLevel().getGameTime();
     if (lastStepPosition != null && now > gaitAt) {
       double distance = Math.sqrt(point.subtract(lastStepPosition).horizontalDistanceSqr());
@@ -86,7 +89,7 @@ public final class BioshipCrawl {
     return capacityFor(legTier);
   }
 
-  static double capacityFor(int tier) {
+  public static double capacityFor(int tier) {
     return 32 + 128d * tier * tier;
   }
 
@@ -104,7 +107,7 @@ public final class BioshipCrawl {
     return 4;
   }
 
-  double blockLoad(
+  public double blockLoad(
       LivingCoreBlockEntity core,
       BlockPos pos,
       net.minecraft.world.level.block.state.BlockState state) {
@@ -282,7 +285,7 @@ public final class BioshipCrawl {
       return;
     }
     if (core.getLevel().getGameTime() % 10 != 0) return;
-    Vec3 here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    Vec3 here = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     core.brain().growthBlocked(blocked);
     var decision = core.brain().choose(core);
     if (decision.action() != BioshipBrain.Action.GROW_SITE) {
@@ -382,7 +385,7 @@ public final class BioshipCrawl {
     retireChangedSelection(core);
     if (!walking || goal == null) return Vec3.ZERO;
     var level = (ServerLevel) core.getLevel();
-    Vec3 here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    Vec3 here = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     var waypoint = route.next(core, goal);
     if (waypoint == null) {
       if (route.failed()) {
@@ -453,7 +456,7 @@ public final class BioshipCrawl {
         || core.body().health() <= 0
         || core.blueprint().busy()) return;
     var level = (ServerLevel) core.getLevel();
-    Vec3 here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    Vec3 here = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     boolean clinging = wallFacing != null;
     // A planted tentacle remains attached while resting or changing tasks. Only losing the
     // actual support surface should release an existing wall/ceiling stance.

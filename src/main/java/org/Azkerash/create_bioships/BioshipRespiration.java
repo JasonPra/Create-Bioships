@@ -1,5 +1,7 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
+
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.world.level.block.state.BlockState;
@@ -36,7 +38,7 @@ final class BioshipRespiration {
   static boolean airAccess(LivingCoreBlockEntity core) {
     var mouths = DigestiveSystem.mouths(core);
     return mouths.isEmpty()
-        ? BioshipAquatic.aboveFluid(core, BioshipBlueprint.physical(core, BlockPos.ZERO))
+        ? BioshipAquatic.aboveFluid(core, BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO))
         : mouths.stream()
             .anyMatch(
                 p ->

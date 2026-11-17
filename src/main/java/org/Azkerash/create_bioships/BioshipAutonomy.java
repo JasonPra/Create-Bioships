@@ -1,5 +1,10 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
+import org.Azkerash.create_bioships.disabled.wip.PilotAuthority;
+import org.Azkerash.create_bioships.disabled.wip.AirshipPrototype;
+import org.Azkerash.create_bioships.disabled.wip.DinghyGrowth;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.phys.Vec3;
@@ -27,7 +32,7 @@ public final class BioshipAutonomy {
     }
   }
 
-  boolean trustedPilot(LivingCoreBlockEntity core) {
+  public boolean trustedPilot(LivingCoreBlockEntity core) {
     if (!AirshipPrototype.available()) return false;
     if (core.trustLevel() < PilotAuthority.TRUST_THRESHOLD) return false;
     if (pilot != null) {
@@ -73,7 +78,7 @@ public final class BioshipAutonomy {
     if (evaluated == now) return;
     evaluated = now;
     coreTime = now;
-    var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var here = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     var creeper =
         core
             .getLevel()
@@ -111,7 +116,7 @@ public final class BioshipAutonomy {
   Vec3 groundEscape(LivingCoreBlockEntity core) {
     assess(core);
     if (!fleeing || trustedPilot(core) && !creeperPanic()) return null;
-    var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var here = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     if (retreat != null
         && here.distanceToSqr(retreat) > 1
         && core.crawl().reachableGoal(BlockPos.containing(retreat))) return retreat;
@@ -132,7 +137,7 @@ public final class BioshipAutonomy {
     if ((!core.hatchling() && !core.huntingAllowed())
         || core.resting()
         || ComponentTransport.busy(core.amoebaComponents())) return null;
-    var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var here = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     long now = core.getLevel().getGameTime();
     if (wander != null
         && here.distanceToSqr(wander) > 1
@@ -157,7 +162,7 @@ public final class BioshipAutonomy {
   }
 
   Vec3 flight(LivingCoreBlockEntity core, boolean escape) {
-    var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var here = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     assess(core);
     if (escape && fleeing) {
       var away = here.subtract(danger).normalize();

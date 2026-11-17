@@ -1,5 +1,7 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
+
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.server.level.ServerLevel;
@@ -141,7 +143,7 @@ final class GroundRoute {
     var center = Vec3.ZERO;
     for (var offset : offsets) center = center.add(offset);
     center = center.scale(1d / Math.max(1, offsets.size()));
-    var root = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var root = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     for (int step = 1; step <= 3; step++) {
       var rotated = new ArrayList<Vec3>();
       for (var offset : offsets)
@@ -156,7 +158,7 @@ final class GroundRoute {
     var route = new GroundRoute();
     var parts = route.offsets(core);
     double stance = (core.hatchling() ? .85 : 1.25) + core.coreHeightOffset();
-    int floor = (int) Math.round(BioshipBlueprint.physical(core, BlockPos.ZERO).y - stance);
+    int floor = (int) Math.round(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO).y - stance);
     for (int delta : new int[] {0, 1, -1, 2, -2, -3}) {
       var p =
           new BlockPos(
@@ -173,7 +175,7 @@ final class GroundRoute {
   static boolean flightClear(LivingCoreBlockEntity core, Vec3 target) {
     var route = new GroundRoute();
     var parts = route.offsets(core);
-    var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var here = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     for (double distance = 1; distance <= here.distanceTo(target); distance++)
       if (!route.fits(core, here.lerp(target, distance / here.distanceTo(target)), parts))
         return false;
@@ -237,7 +239,7 @@ final class GroundRoute {
   }
 
   boolean plan(LivingCoreBlockEntity core, Vec3 goal) {
-    var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var here = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     var parts = offsets(core);
     double stance = (core.hatchling() ? .85 : 1.25) + core.coreHeightOffset();
     var profile = LocomotionProfiles.forCreature(core);
@@ -396,7 +398,7 @@ final class GroundRoute {
     if (destination == null
         || destination.distanceToSqr(goal) > .25
         || path.isEmpty() && core.getLevel().getGameTime() >= retryAfter) plan(core, goal);
-    var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var here = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     while (cursor < path.size()
         && here.subtract(path.get(cursor)).horizontalDistanceSqr() < .09
         && Math.abs(here.y - path.get(cursor).y) < .3) cursor++;

@@ -1,5 +1,7 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
+
 import dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import java.util.*;
@@ -62,7 +64,7 @@ public final class BioshipAquatic {
   void tick(LivingCoreBlockEntity core) {
     if (core.getLevel().getGameTime() == lastTick) return;
     lastTick = core.getLevel().getGameTime();
-    var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var here = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     var level = core.getLevel();
     int immersed = 0, total = 0;
     for (var cell : BioshipDecay.blocks(core.ship())) {

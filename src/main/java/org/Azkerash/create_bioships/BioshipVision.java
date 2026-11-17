@@ -1,5 +1,8 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
+import org.Azkerash.create_bioships.disabled.wip.AirshipPrototype;
+
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.server.level.ServerLevel;
@@ -50,7 +53,7 @@ public final class BioshipVision {
     var player =
         core.creator() == null ? null : level.getServer().getPlayerList().getPlayer(core.creator());
     if (player == null) {
-      var root = BioshipBlueprint.physical(core, BlockPos.ZERO);
+      var root = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
       player =
           level.getServer().getPlayerList().getPlayers().stream()
               .filter(p -> p.serverLevel() == level)
@@ -220,7 +223,7 @@ public final class BioshipVision {
       for (var face : Direction.values())
         result.add(
             new View(
-                BioshipBlueprint.physical(core, BlockPos.ZERO),
+                BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO),
                 core.ship().logicalPose().transformNormal(Vec3.atLowerCornerOf(face.getNormal())),
                 maximumDistance(core)));
     }
@@ -275,11 +278,11 @@ public final class BioshipVision {
           || !sourceFreshness.retains(pos)) sourceState(core, pos);
   }
 
-  static boolean exposedTube(net.minecraft.world.level.block.state.BlockState state) {
+  public static boolean exposedTube(net.minecraft.world.level.block.state.BlockState state) {
     return state.is(Create_bioships.INTESTINE.get()) && !state.getValue(IntestineBlock.ENCASED);
   }
 
-  static boolean ray(LivingCoreBlockEntity core, Vec3 from, Vec3 to) {
+  public static boolean ray(LivingCoreBlockEntity core, Vec3 from, Vec3 to) {
     return rayAtCore(core, from, to, core.getBlockPos());
   }
 
@@ -571,7 +574,7 @@ public final class BioshipVision {
           core.ship().logicalPose().transformNormal(Vec3.atLowerCornerOf(direction.getNormal()));
       Vec3 root =
           existing == null
-              ? BioshipBlueprint.physical(core, BlockPos.ZERO)
+              ? BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO)
               : core.ship()
                   .logicalPose()
                   .transformPosition(Vec3.atCenterOf(existing).relative(direction, -.22));

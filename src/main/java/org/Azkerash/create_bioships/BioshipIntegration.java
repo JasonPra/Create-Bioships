@@ -1,5 +1,8 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.disabled.wip.AirshipPrototype;
+import org.Azkerash.create_bioships.disabled.wip.DinghyGrowth;
+
 import dev.ryanhcode.sable.api.SubLevelAssemblyHelper;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.companion.math.BoundingBox3i;
@@ -144,7 +147,7 @@ public final class BioshipIntegration {
     return true;
   }
 
-  static boolean growthSpace(Level level, BlockPos pos) {
+  public static boolean growthSpace(Level level, BlockPos pos) {
     var state = level.getBlockState(pos);
     return state.isAir() || state.canBeReplaced() && level.getFluidState(pos).isEmpty();
   }
@@ -156,7 +159,7 @@ public final class BioshipIntegration {
             && level.getBlockState(pos).canBeReplaced();
   }
 
-  static void clearGrowthPlant(Level level, BlockPos pos) {
+  public static void clearGrowthPlant(Level level, BlockPos pos) {
     if (!level.getBlockState(pos).isAir() && growthSpace(level, pos))
       level.destroyBlock(pos, false);
   }

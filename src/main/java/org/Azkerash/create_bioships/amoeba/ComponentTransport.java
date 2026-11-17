@@ -1,5 +1,7 @@
 package org.Azkerash.create_bioships.amoeba;
 
+import org.Azkerash.create_bioships.BioshipTissue;
+
 import dev.ryanhcode.sable.api.SubLevelAssemblyHelper;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.api.sublevel.ticket.SubLevelLoadingTicketType;

@@ -33,7 +33,7 @@ public final class BioshipHealthChanges {
     } else DIRTY.add(ship);
   }
 
-  static void changed(LivingCoreBlockEntity core) {
+  public static void changed(LivingCoreBlockEntity core) {
     if (core.ship() != null) DIRTY.add(core.ship());
   }
 

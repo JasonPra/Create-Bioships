@@ -1,5 +1,8 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
+import org.Azkerash.create_bioships.disabled.wip.TentacleBlockEntity;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
@@ -53,7 +56,7 @@ final class BioshipDefense {
 
   static net.minecraft.world.entity.monster.Creeper creeperThreat(LivingCoreBlockEntity core) {
     if (core.ship() == null || core.body().dead()) return null;
-    var root = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var root = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     return core
         .getLevel()
         .getEntitiesOfClass(
@@ -95,7 +98,7 @@ final class BioshipDefense {
 
   static LivingEntity target(LivingCoreBlockEntity core) {
     if (core.body().dead() || core.ship() == null) return null;
-    Vec3 root = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    Vec3 root = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     LivingEntity nearest = null;
     double distance = Double.MAX_VALUE;
     for (var entity :
@@ -146,7 +149,7 @@ final class BioshipDefense {
 
   static LivingEntity prey(LivingCoreBlockEntity core) {
     if (!core.wantsToHunt()) return null;
-    var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var here = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     var selected =
         core
             .getLevel()
@@ -214,7 +217,7 @@ final class BioshipDefense {
           BioshipReach.anchor(
               core,
               prey == null
-                  ? BioshipBlueprint.physical(core, BlockPos.ZERO)
+                  ? BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO)
                   : prey.getBoundingBox().getCenter());
       core.crawl().reach(strike.tip(root, level.getGameTime(), strikeReach));
       extending = true;

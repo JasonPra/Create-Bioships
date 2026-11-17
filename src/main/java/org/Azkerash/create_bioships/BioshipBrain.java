@@ -1,5 +1,8 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
+import org.Azkerash.create_bioships.disabled.wip.AirshipPrototype;
+
 import java.util.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -311,7 +314,7 @@ public final class BioshipBrain {
   }
 
   private double effort(LivingCoreBlockEntity core, Vec3 point) {
-    return point.distanceTo(BioshipBlueprint.physical(core, BlockPos.ZERO));
+    return point.distanceTo(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO));
   }
 
   boolean interruptsForFood(LivingCoreBlockEntity core) {
@@ -506,8 +509,8 @@ public final class BioshipBrain {
               .getEntitiesOfClass(
                   ItemEntity.class,
                   new AABB(
-                          BioshipBlueprint.physical(core, BlockPos.ZERO),
-                          BioshipBlueprint.physical(core, BlockPos.ZERO))
+                          BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO),
+                          BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO))
                       .inflate(core.vision().maximumDistance(core)),
                   e -> LivingCoreBlockEntity.droppedSupply(e.getItem()))) {
         var point = item.position().add(0, .2, 0);
@@ -595,7 +598,7 @@ public final class BioshipBrain {
     return needs(core).materials();
   }
 
-  LivingEntity attackTarget(LivingCoreBlockEntity core) {
+  public LivingEntity attackTarget(LivingCoreBlockEntity core) {
     var decision = choose(core);
     return decision.action == Action.HUNT || decision.action == Action.DEFEND
         ? decision.entity
@@ -622,7 +625,7 @@ public final class BioshipBrain {
             ? null
             : d.point;
       case DEFEND:
-        return d.point.distanceToSqr(BioshipBlueprint.physical(core, BlockPos.ZERO)) > 6.25
+        return d.point.distanceToSqr(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO)) > 6.25
             ? d.point
             : null;
       case HUNT:
@@ -645,7 +648,7 @@ public final class BioshipBrain {
     if (selected.action == Action.WANDER) return core.autonomy().flight(core, false);
     var point = groundGoal(core);
     if (point == null) return Vec3.ZERO;
-    var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var here = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     var delta = point.subtract(here);
     return GroundRoute.flightClear(
             core, here.add(delta.normalize().scale(Math.min(3, delta.length()))))

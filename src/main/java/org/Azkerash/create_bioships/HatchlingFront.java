@@ -1,5 +1,7 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
+
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.world.phys.Vec3;
@@ -120,7 +122,7 @@ final class HatchlingFront {
 
   static double turn(LivingCoreBlockEntity core, Vec3 goal) {
     if (!core.hatchling() || goal == null) return 0;
-    var root = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var root = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     var delta = goal.subtract(root).multiply(1, 0, 1);
     if (delta.lengthSqr() < .04) return 0;
     var forward =

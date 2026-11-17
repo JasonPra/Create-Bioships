@@ -1,5 +1,7 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.integration.biomancy.NativeStorage;
+
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import java.util.*;
 import net.minecraft.core.*;
@@ -130,7 +132,7 @@ final class AmoebaCoreAdapter implements AmoebaComponentHost {
             && menu.getContainer() == entity) return null;
     if (!stash
         && !consuming
-        && (!external || entity != null && EngineRoom.storage(entity))
+        && (!external || entity != null && NativeStorage.isStorage(entity))
         && !DigestiveSystem.reserveOrganRoute(core, source, target)) return null;
     BioshipIntegration.clearGrowthPlant(level, BlockPos.containing(destination));
     var capsule = BioshipContainerState.capture(level, entity);

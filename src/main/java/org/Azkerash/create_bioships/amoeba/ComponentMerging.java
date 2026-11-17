@@ -1,5 +1,9 @@
 package org.Azkerash.create_bioships.amoeba;
 
+import org.Azkerash.create_bioships.Create_bioships;
+import org.Azkerash.create_bioships.FeedingMouthBlockEntity;
+import org.Azkerash.create_bioships.StomachBlockEntity;
+
 import com.github.elenterius.biomancy.block.decomposer.DecomposerBlockEntity;
 import com.github.elenterius.biomancy.block.digester.DigesterBlockEntity;
 import java.util.*;

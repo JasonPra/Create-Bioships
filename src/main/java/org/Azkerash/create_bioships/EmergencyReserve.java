@@ -5,7 +5,7 @@ import java.util.*;
 /**
  * Shared reserve targets and discretionary-investment budget, separate from inventory mechanics.
  */
-final class EmergencyReserve {
+public final class EmergencyReserve {
   static final MaterialCost TARGET = new MaterialCost(32, 16, 8);
 
   static Map<String, Integer> targets() {
@@ -17,7 +17,7 @@ final class EmergencyReserve {
         .anyMatch(e -> core.adaptation().material(e.getKey()) < e.getValue());
   }
 
-  static boolean after(LivingCoreBlockEntity core, MaterialCost price) {
+  public static boolean after(LivingCoreBlockEntity core, MaterialCost price) {
     return new MaterialCost(32 + price.flesh(), 16 + price.fiber(), 8 + price.bone())
         .funded(BioshipStorage.account(core));
   }

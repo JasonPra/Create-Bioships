@@ -1,5 +1,22 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.amoeba.AmoebaComponentHost;
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
+import org.Azkerash.create_bioships.integration.biomancy.NativeStorage;
+import org.Azkerash.create_bioships.disabled.wip.BioshipBlueprint;
+import org.Azkerash.create_bioships.disabled.wip.LivingThrottleBlock;
+import org.Azkerash.create_bioships.disabled.wip.BlueprintPanelBlock;
+import org.Azkerash.create_bioships.disabled.wip.BlueprintMenu;
+import org.Azkerash.create_bioships.disabled.wip.AccessMenu;
+import org.Azkerash.create_bioships.disabled.wip.AirshipPrototype;
+import org.Azkerash.create_bioships.disabled.wip.DinghyGrowth;
+import org.Azkerash.create_bioships.disabled.wip.EngineRoom;
+import org.Azkerash.create_bioships.disabled.wip.NerveControlBlock;
+import org.Azkerash.create_bioships.disabled.wip.EngineRoomLayout;
+import org.Azkerash.create_bioships.disabled.wip.BioshipEngineRoomPlanner;
+import org.Azkerash.create_bioships.disabled.wip.TentacleBlockEntity;
+import org.Azkerash.create_bioships.disabled.wip.EngineRoomSizing;
+
 import com.github.elenterius.biomancy.block.bioforge.BioForgeBlockEntity;
 import com.github.elenterius.biomancy.block.decomposer.DecomposerBlockEntity;
 import com.github.elenterius.biomancy.block.membrane.BiometricMembraneBlockEntity;
@@ -367,7 +384,7 @@ public class BioshipGameTests {
     var ship = assemble(helper);
     var core = core(ship);
     var level = helper.getLevel();
-    var origin = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO));
+    var origin = BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO));
     var source = origin.east(4);
     var machine = block("biomancy:bio_forge");
     level.setBlock(source, machine.defaultBlockState(), 3);
@@ -420,11 +437,11 @@ public class BioshipGameTests {
     var ship = assemble(helper);
     var core = core(ship);
     var level = helper.getLevel();
-    var initial = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var initial = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     var origin = BlockPos.containing(initial);
     // A legal starting stance between block centers, as produced by ordinary physics movement.
     ship.logicalPose().position().add(-.49, .35, -.49);
-    var actual = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var actual = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     var snapped = new Vec3(origin.getX() + .5, origin.getY() + .85, origin.getZ() + .5);
     var goal = new Vec3(origin.getX() + 3.5, origin.getY() + .325, origin.getZ() + 1.9);
     var corner = origin.east(2);
@@ -475,7 +492,7 @@ public class BioshipGameTests {
         () -> {
           var core = core(ship);
           var level = helper.getLevel();
-          var root = BioshipBlueprint.physical(core, BlockPos.ZERO);
+          var root = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
           var source = BlockPos.containing(root).east(12);
           level.setBlock(source, block("biomancy:bio_forge").defaultBlockState(), 3);
           survey(core);
@@ -546,7 +563,7 @@ public class BioshipGameTests {
     var ship = assemble(helper);
     var core = core(ship);
     var level = helper.getLevel();
-    var root = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var root = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     var origin = BlockPos.containing(root);
     var walls = new ArrayList<BlockPos>();
     for (var p : BlockPos.betweenClosed(origin.offset(-2, 0, -2), origin.offset(2, 4, 2)))
@@ -589,7 +606,7 @@ public class BioshipGameTests {
     var ship = assemble(helper);
     var core = core(ship);
     core.chunkLoading.update(core);
-    var root = new ChunkPos(BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO)));
+    var root = new ChunkPos(BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO)));
     var near = new ChunkPos(root.x + 2, root.z);
     var far = new ChunkPos(root.x + 3, root.z);
     helper.succeedWhen(
@@ -676,7 +693,7 @@ public class BioshipGameTests {
                 EngineRoom.inside(core(ship), DigestiveSystem.stomach(core(ship)).getBlockPos()),
                 "Stomach did not move to engine room");
             for (var organ : BioshipIntegration.blockEntities(ship))
-              if (EngineRoom.storage(organ))
+              if (NativeStorage.isStorage(organ))
                 helper.assertTrue(
                     EngineRoom.inside(core(ship), organ.getBlockPos()),
                     "Storage sac stayed outside the engine room");
@@ -1098,7 +1115,7 @@ public class BioshipGameTests {
                       "Tentacle assembly duplicated inventory into dropped items");
                   BlockPos stored = null;
                   for (var entity : BioshipIntegration.blockEntities(ship))
-                    if (EngineRoom.storage(entity)) stored = entity.getBlockPos();
+                    if (NativeStorage.isStorage(entity)) stored = entity.getBlockPos();
                   helper.assertTrue(stored != null, "Pulled sac did not join the construct");
                   var moved =
                       helper.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, stored, null);
@@ -1756,7 +1773,7 @@ public class BioshipGameTests {
           tubeStock[0] = paidIntestinalMaterial(core(ship));
           health[0] = core(ship).body().health();
           capacity[0] = core(ship).body().capacity();
-          var point = BioshipBlueprint.physical(core(ship), new BlockPos(0, 2, 2));
+          var point = BodyCoordinates.physical(core(ship).amoebaComponents(), new BlockPos(0, 2, 2));
           occupant.moveTo(point.x, point.y - .5, point.z, 0, 0);
           level.addFreshEntity(occupant);
           helper.assertTrue(
@@ -1857,7 +1874,7 @@ public class BioshipGameTests {
     var ship = assemble(helper);
     var core = core(ship);
     var level = helper.getLevel();
-    Vec3 start = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    Vec3 start = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     var obstacle = BlockPos.containing(start).south();
     for (int y = 0; y < 4; y++)
       level.setBlock(obstacle.above(y), Blocks.OBSIDIAN.defaultBlockState(), 3);
@@ -1871,7 +1888,7 @@ public class BioshipGameTests {
                 helper,
                 ship,
                 () -> {
-                  Vec3 end = BioshipBlueprint.physical(core, BlockPos.ZERO);
+                  Vec3 end = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
 
                   helper.assertTrue(
                       end.subtract(start).horizontalDistanceSqr() > 9,
@@ -2113,7 +2130,7 @@ public class BioshipGameTests {
     helper.runAfterDelay(
         1150,
         () -> {
-          altitude[0] = BioshipBlueprint.physical(core(ship), BlockPos.ZERO).y;
+          altitude[0] = BodyCoordinates.physical(core(ship).amoebaComponents(), BlockPos.ZERO).y;
           helper.assertTrue(
               altitude[0] > 84,
               "Flight fixture did not rise: y="
@@ -2155,7 +2172,7 @@ public class BioshipGameTests {
                 ship,
                 () -> {
                   helper.assertTrue(
-                      BioshipBlueprint.physical(core(ship), BlockPos.ZERO).y < altitude[0] - 2,
+                      BodyCoordinates.physical(core(ship).amoebaComponents(), BlockPos.ZERO).y < altitude[0] - 2,
                       "Dead ship retained levitation");
                   helper.assertTrue(
                       BioshipDecay.blocks(ship).size() < before[0] - 1,
@@ -2176,7 +2193,7 @@ public class BioshipGameTests {
     var live = assemble(helper);
     var core = core(live);
     var level = helper.getLevel();
-    var point = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO)).east(5);
+    var point = BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO)).east(5);
     level.setBlock(point, Create_bioships.CORE.get().defaultBlockState(), 3);
     var wreck =
         SubLevelAssemblyHelper.assembleBlocks(
@@ -2295,7 +2312,7 @@ public class BioshipGameTests {
     var level = helper.getLevel();
     var captain = new InteractionPlayer(level, "TrustedInjuredCaptain");
     captain.setGameMode(GameType.SURVIVAL);
-    var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var here = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     captain.setPos(here.x + 2, here.y, here.z);
     level.addNewPlayer(captain);
     core.claimCreator(captain.getUUID());
@@ -2340,7 +2357,7 @@ public class BioshipGameTests {
     var target = new VulnerablePlayer(level, "SwipeDodger");
     target.setGameMode(GameType.SURVIVAL);
     target.setNoGravity(true);
-    var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var here = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     var position = here.add(3, -.5, 0);
     target.setPos(position.x, position.y, position.z);
     level.addNewPlayer(target);
@@ -2500,7 +2517,7 @@ public class BioshipGameTests {
     var ship = assemble(helper);
     var core = core(ship);
     var level = helper.getLevel();
-    var here = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO));
+    var here = BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO));
     var source = here.east(3);
     var state = block("biomancy:bio_forge").defaultBlockState();
     level.setBlock(source, state, 3);
@@ -2577,7 +2594,7 @@ public class BioshipGameTests {
     DigestiveSystem.connect(core, ship);
     var user = new InteractionPlayer(level, "MouthUser");
     var mouth = core.mouthBlock();
-    Vec3 point = BioshipBlueprint.physical(core, mouth.subtract(core.getBlockPos()));
+    Vec3 point = BodyCoordinates.physical(core.amoebaComponents(), mouth.subtract(core.getBlockPos()));
     user.setPos(point.x, point.y, point.z - 2);
     int[] sounds = {0};
     java.util.function.Consumer<net.neoforged.neoforge.event.PlayLevelSoundEvent.AtPosition> sound =
@@ -2789,7 +2806,7 @@ public class BioshipGameTests {
     var level = helper.getLevel();
     var stomach = digestive(helper, core, false);
     stomach.paidTubeStock = 0;
-    var source = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO)).south(3);
+    var source = BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO)).south(3);
     level.setBlock(source, block("biomancy:storage_sac").defaultBlockState(), 3);
     Objects.requireNonNull(level.getCapability(Capabilities.ItemHandler.BLOCK, source, null))
         .insertItem(0, new ItemStack(Items.BEEF, 4), false);
@@ -2840,7 +2857,7 @@ public class BioshipGameTests {
     var inventory = level.getCapability(Capabilities.ItemHandler.BLOCK, connected, null);
     Objects.requireNonNull(inventory).insertItem(0, new ItemStack(Items.BEEF), false);
     // A storage sac in ordinary world space is not part of this ship and must remain untouched.
-    var loose = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO)).south(16);
+    var loose = BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO)).south(16);
     level.setBlock(loose, block("biomancy:storage_sac").defaultBlockState(), 3);
     level.setBlock(loose.above(2), Blocks.STONE.defaultBlockState(), 3);
     var detached = level.getCapability(Capabilities.ItemHandler.BLOCK, loose, null);
@@ -2867,7 +2884,7 @@ public class BioshipGameTests {
                   helper.assertTrue(
                       DigestiveSystem.stomach(core).queuedFood() == 0
                           && BioshipIntegration.blockEntities(ship).stream()
-                              .filter(EngineRoom::storage)
+                              .filter(NativeStorage::isStorage)
                               .allMatch(
                                   entity -> {
                                     var store =
@@ -2911,7 +2928,7 @@ public class BioshipGameTests {
     saved.putBoolean("FramePaid", true);
     saved.putInt("GrowthIndex", index);
     core.loadAdditional(saved, level.registryAccess());
-    var physical = BlockPos.containing(BioshipBlueprint.physical(core, new BlockPos(2, 0, -2)));
+    var physical = BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), new BlockPos(2, 0, -2)));
     level.setBlock(physical, Blocks.SHORT_GRASS.defaultBlockState(), 3);
     helper.assertTrue(
         BioshipIntegration.growthSpace(level, physical), "Replaceable grass blocks construction");
@@ -3107,7 +3124,7 @@ public class BioshipGameTests {
     var live = assemble(helper);
     var core = core(live);
     var level = helper.getLevel();
-    var origin = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO)).east(6);
+    var origin = BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO)).east(6);
     level.setBlock(origin, Create_bioships.CORE.get().defaultBlockState(), 3);
     var wreck =
         SubLevelAssemblyHelper.assembleBlocks(
@@ -3165,7 +3182,7 @@ public class BioshipGameTests {
         () -> {
           var core = core(ship);
           var level = helper.getLevel();
-          Vec3 here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+          Vec3 here = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
           var component = BlockPos.containing(here).east(10);
           level.setBlock(component, block("biomancy:bio_forge").defaultBlockState(), 3);
           survey(core);
@@ -3222,7 +3239,7 @@ public class BioshipGameTests {
                                   new ItemStack(item("biomancy:bone_fragments")))
                               && LivingCoreBlockEntity.droppedSupply(new ItemStack(Items.BEEF)),
                           "Food or bone growth stock was excluded");
-                      var now = BioshipBlueprint.physical(core, BlockPos.ZERO);
+                      var now = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
                       var far =
                           ship.logicalPose()
                               .transformPosition(
@@ -3390,7 +3407,7 @@ public class BioshipGameTests {
                       .withParameter(
                           net.minecraft.world.level.storage.loot.parameters.LootContextParams
                               .ORIGIN,
-                          BioshipBlueprint.physical(core, BlockPos.ZERO))
+                          BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO))
                       .withParameter(
                           net.minecraft.world.level.storage.loot.parameters.LootContextParams.TOOL,
                           ItemStack.EMPTY));
@@ -3477,7 +3494,7 @@ public class BioshipGameTests {
     owner.setGameMode(GameType.SURVIVAL);
     owner.setHealth(20);
     owner.setNoGravity(true);
-    var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var here = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     owner.setPos(here.x + 2, here.y, here.z);
     level.addNewPlayer(owner);
     var creative = new VulnerablePlayer(level, "CreativeWitness");
@@ -3536,7 +3553,7 @@ public class BioshipGameTests {
                         "Aggressive hatchling never damaged the survival player");
                     level.removePlayerImmediately(owner, Entity.RemovalReason.DISCARDED);
                     var wall =
-                        BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO)).east();
+                        BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO)).east();
                     for (int y = 0; y < 4; y++)
                       level.setBlock(wall.above(y), Blocks.OBSIDIAN.defaultBlockState(), 3);
                     helper.runAfterDelay(
@@ -3580,7 +3597,7 @@ public class BioshipGameTests {
     helper.runAfterDelay(
         40,
         () -> {
-          var here = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO));
+          var here = BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO));
           var sack = here.south(2);
           var forge = here.north(10);
           var decomposer = here.west(11);
@@ -3656,7 +3673,7 @@ public class BioshipGameTests {
     core.loadAdditional(tag, level.registryAccess());
     var host = core.getBlockPos().north(2);
     level.setBlock(host, BioshipTissue.body().defaultBlockState(), 3);
-    var target = BioshipBlueprint.physical(core, new BlockPos(0, 0, -8));
+    var target = BodyCoordinates.physical(core.amoebaComponents(), new BlockPos(0, 0, -8));
     helper.assertTrue(
         !core.vision().visible(core, target), "Body tissue did not block the original eye");
     core.vision().growEyes(core);
@@ -3703,7 +3720,7 @@ public class BioshipGameTests {
         core.vision().visible(core, target), "Auxiliary eye did not extend line of sight");
     for (int x = 1; x <= 3; x++)
       level.setBlock(host.east(x), BioshipTissue.body().defaultBlockState(), 3);
-    var wall = BlockPos.containing(BioshipBlueprint.physical(core, new BlockPos(0, 0, -6)));
+    var wall = BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), new BlockPos(0, 0, -6)));
     for (int y = 0; y < 3; y++)
       level.setBlock(wall.above(y), Blocks.OBSIDIAN.defaultBlockState(), 3);
     core.vision().growEyes(core);
@@ -3789,7 +3806,7 @@ public class BioshipGameTests {
     helper.assertTrue(
         !result.consumesAction() && user.getMainHandItem().getCount() == 2,
         "Rejected grid placement consumed a core item");
-    var plain = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO)).east(12);
+    var plain = BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO)).east(12);
     level.setBlock(plain, Blocks.STONE.defaultBlockState(), 3);
     var grid =
         SubLevelAssemblyHelper.assembleBlocks(
@@ -3855,7 +3872,7 @@ public class BioshipGameTests {
             .setValue(IntestineBlock.MANUAL, true)
             .setValue(IntestineBlock.PAID, true),
         3);
-    var wall = BlockPos.containing(BioshipBlueprint.physical(original, BlockPos.ZERO)).north(3);
+    var wall = BlockPos.containing(BodyCoordinates.physical(original.amoebaComponents(), BlockPos.ZERO)).north(3);
     for (int x = -2; x <= 2; x++)
       for (int y = 0; y < 2; y++)
         level.setBlock(wall.offset(x, y, 0), Blocks.OBSIDIAN.defaultBlockState(), 3);
@@ -3951,7 +3968,7 @@ public class BioshipGameTests {
     var ship = assemble(helper);
     var core = core(ship);
     var level = helper.getLevel();
-    var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var here = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     level.setBlock(core.getBlockPos().north(), BioshipTissue.body().defaultBlockState(), 3);
     var wall = BlockPos.containing(here).east(3);
     for (int z = -3; z <= 3; z++)
@@ -4055,7 +4072,7 @@ public class BioshipGameTests {
             .setValue(SurfaceEyeBlock.WINDOW_INTERNAL, false),
         2);
     helper.assertTrue(
-        core.vision().visible(core, BioshipBlueprint.physical(core, new BlockPos(8, 0, 0))),
+        core.vision().visible(core, BodyCoordinates.physical(core.amoebaComponents(), new BlockPos(8, 0, 0))),
         "Concealed inner window eye no longer sees outward");
     helper.assertTrue(
         level.getBlockState(inside).getValue(SurfaceEyeBlock.WINDOW_INTERNAL),
@@ -4071,11 +4088,11 @@ public class BioshipGameTests {
     var level = helper.getLevel();
     core.vision().look(core, Direction.EAST);
     var pipe = core.getBlockPos().east();
-    var target = BioshipBlueprint.physical(core, new BlockPos(4, 0, 0));
+    var target = BodyCoordinates.physical(core.amoebaComponents(), new BlockPos(4, 0, 0));
     level.setBlock(pipe, Create_bioships.INTESTINE.get().defaultBlockState(), 3);
     helper.assertTrue(
         core.vision().visible(core, target), "Exposed intestine on the ship blocks sight");
-    var worldPipe = BlockPos.containing(BioshipBlueprint.physical(core, new BlockPos(2, 0, 0)));
+    var worldPipe = BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), new BlockPos(2, 0, 0)));
     level.setBlock(worldPipe, Create_bioships.INTESTINE.get().defaultBlockState(), 3);
     helper.assertTrue(
         core.vision().visible(core, target), "Exposed world-space intestine blocks sight");
@@ -4085,20 +4102,20 @@ public class BioshipGameTests {
     limb.setLevel(level);
     var prey = EntityType.COW.create(level);
     helper.assertTrue(
-        limb.visible(BioshipBlueprint.physical(core, BlockPos.ZERO), target, prey, core, ship),
+        limb.visible(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO), target, prey, core, ship),
         "Tentacle targeting is blocked by an exposed tube");
     level.setBlock(
         worldPipe, level.getBlockState(worldPipe).setValue(IntestineBlock.ENCASED, true), 3);
     helper.assertTrue(
-        !limb.visible(BioshipBlueprint.physical(core, BlockPos.ZERO), target, prey, core, ship),
+        !limb.visible(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO), target, prey, core, ship),
         "Tentacle targeting sees through a flesh-encased tube");
     level.setBlock(
         worldPipe, level.getBlockState(worldPipe).setValue(IntestineBlock.ENCASED, false), 3);
 
-    var wallBehind = BlockPos.containing(BioshipBlueprint.physical(core, new BlockPos(3, 0, 0)));
+    var wallBehind = BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), new BlockPos(3, 0, 0)));
     level.setBlock(wallBehind, Blocks.STONE.defaultBlockState(), 3);
     helper.assertTrue(
-        !limb.visible(BioshipBlueprint.physical(core, BlockPos.ZERO), target, prey, core, ship),
+        !limb.visible(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO), target, prey, core, ship),
         "Ignoring a tube also ignored a solid wall behind it");
     level.removeBlock(wallBehind, false);
     level.setBlock(pipe, level.getBlockState(pipe).setValue(IntestineBlock.ENCASED, true), 3);
@@ -4119,7 +4136,7 @@ public class BioshipGameTests {
     var ship = assemble(helper);
     var core = core(ship);
     var level = helper.getLevel();
-    var root = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var root = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     core.vision().look(core, Direction.EAST);
     helper.assertTrue(
         core.vision().visible(core, root.add(5, 0, 0)), "Core cannot see directly forward");
@@ -4286,8 +4303,8 @@ public class BioshipGameTests {
     var core = core(ship);
     var level = helper.getLevel();
     core.vision().look(core, Direction.EAST);
-    var obstacle = BlockPos.containing(BioshipBlueprint.physical(core, new BlockPos(2, 0, 0)));
-    var target = BioshipBlueprint.physical(core, new BlockPos(5, 0, 0));
+    var obstacle = BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), new BlockPos(2, 0, 0)));
+    var target = BodyCoordinates.physical(core.amoebaComponents(), new BlockPos(5, 0, 0));
     for (var block :
         List.of(
             Blocks.SHORT_GRASS,
@@ -4341,7 +4358,7 @@ public class BioshipGameTests {
     int previous = list.getViewDistance();
     list.setViewDistance(3);
     var client = new ViewPlayer(level);
-    var root = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var root = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     client.setPos(root.x, root.y, root.z);
     level.addNewPlayer(client);
     helper.assertTrue(
@@ -4416,7 +4433,7 @@ public class BioshipGameTests {
     var ship = assemble(helper);
     var core = core(ship);
     var level = helper.getLevel();
-    var root = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var root = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     var wall = BlockPos.containing(root).east();
     var resource = BlockPos.containing(root).above(8);
     for (var p : BlockPos.betweenClosed(wall.offset(0, 0, -2), wall.offset(0, 10, 2)))
@@ -4435,7 +4452,7 @@ public class BioshipGameTests {
         300,
         () -> {
           var current = core(ship);
-          height[0] = BioshipBlueprint.physical(current, BlockPos.ZERO).y;
+          height[0] = BodyCoordinates.physical(current.amoebaComponents(), BlockPos.ZERO).y;
           helper.assertTrue(
               height[0] > root.y + 3 && current.hasMouth(),
               "Hatchling did not climb to grab the visible high component: height="
@@ -4458,7 +4475,7 @@ public class BioshipGameTests {
                 ship,
                 () -> {
                   helper.assertTrue(
-                      BioshipBlueprint.physical(core(ship), BlockPos.ZERO).y < height[0] - 1,
+                      BodyCoordinates.physical(core(ship).amoebaComponents(), BlockPos.ZERO).y < height[0] - 1,
                       "Hatchling hovered after its wall was removed");
                   level.removeBlock(resource, false);
                 }));
@@ -4470,7 +4487,7 @@ public class BioshipGameTests {
     var ship = assemble(helper);
     var core = core(ship);
     var level = helper.getLevel();
-    var root = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var root = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     var machine = BlockPos.containing(root).east(4);
     level.setBlock(machine, block("biomancy:bio_forge").defaultBlockState(), 3);
     level.setBlock(machine.above(2), Blocks.OAK_LEAVES.defaultBlockState(), 3);
@@ -4530,7 +4547,7 @@ public class BioshipGameTests {
     var ship = assemble(helper);
     var core = core(ship);
     var level = helper.getLevel();
-    var root = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var root = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     for (int y = 1; y <= 5; y++)
       level.setBlock(core.getBlockPos().above(y), BioshipTissue.body().defaultBlockState(), 3);
     var wall = BlockPos.containing(root).north(5).above(2);
@@ -4564,7 +4581,7 @@ public class BioshipGameTests {
       data.putInt("Satiety", 1200);
       core.loadAdditional(data, helper.getLevel().registryAccess());
       BioshipTargetEntity.ensure(core);
-      var root = BioshipBlueprint.physical(core, BlockPos.ZERO);
+      var root = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
       var zombie = net.minecraft.world.entity.EntityType.ZOMBIE.create(helper.getLevel());
       zombie.setPos(root.x + 2.5, root.y - .5, root.z);
       zombie.setItemSlot(
@@ -4607,7 +4624,7 @@ public class BioshipGameTests {
     helper.assertTrue(
         BioshipTargetEntity.ensure(core) == proxy,
         "Same-tick attack-surface setup created duplicates");
-    var root = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var root = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     var skeleton = net.minecraft.world.entity.EntityType.SKELETON.create(level);
     skeleton.setPos(root.x + 9, root.y - .5, root.z);
     skeleton.setItemSlot(
@@ -4696,7 +4713,7 @@ public class BioshipGameTests {
     helper.assertTrue(
         BioshipTargetEntity.ensure(core) == proxy,
         "Same-tick attack-surface setup created duplicates");
-    var root = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var root = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     var creeper = net.minecraft.world.entity.EntityType.CREEPER.create(level);
     creeper.setNoAi(true);
     creeper.setPos(root.x - 3, root.y - .5, root.z);
@@ -4755,7 +4772,7 @@ public class BioshipGameTests {
     data.putInt("Satiety", 40);
     core.loadAdditional(data, level.registryAccess());
     level.setDayTime(1000);
-    var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var here = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     var prey = EntityType.CHICKEN.create(level);
     prey.setNoAi(true);
     prey.setNoGravity(true);
@@ -4772,11 +4789,11 @@ public class BioshipGameTests {
                 () -> {
                   ServerSubLevel wreck = null;
                   var loose =
-                      BlockPos.containing(BioshipBlueprint.physical(core(ship), BlockPos.ZERO))
+                      BlockPos.containing(BodyCoordinates.physical(core(ship).amoebaComponents(), BlockPos.ZERO))
                           .south(4);
                   try {
                     var current = core(ship);
-                    var root = BioshipBlueprint.physical(current, BlockPos.ZERO);
+                    var root = BodyCoordinates.physical(current.amoebaComponents(), BlockPos.ZERO);
                     var source = BlockPos.containing(root).east(6).south(2);
                     level.setBlock(source, Create_bioships.CARAPACE.get().defaultBlockState(), 3);
                     wreck =
@@ -4875,7 +4892,7 @@ public class BioshipGameTests {
     var data = core.saveWithFullMetadata(level.registryAccess());
     data.putInt("Satiety", 1200);
     core.loadAdditional(data, level.registryAccess());
-    var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var here = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     level.setDayTime(18000);
     var chicken = EntityType.CHICKEN.create(level);
     chicken.setNoAi(true);
@@ -4966,7 +4983,7 @@ public class BioshipGameTests {
     var core = core(ship);
     var level = helper.getLevel();
     digestive(helper, core, false);
-    var origin = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO));
+    var origin = BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO));
     var glass = new ArrayList<BlockPos>();
     for (var offset : BlockPos.betweenClosed(new BlockPos(-3, 0, -3), new BlockPos(3, 4, 3)))
       if (Math.abs(offset.getX()) == 3 || Math.abs(offset.getZ()) == 3 || offset.getY() == 4) {
@@ -5041,7 +5058,7 @@ public class BioshipGameTests {
     var ship = assemble(helper);
     var core = core(ship);
     var level = helper.getLevel();
-    var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var here = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     var creeper = EntityType.CREEPER.create(level);
     creeper.setNoAi(true);
     creeper.setPersistenceRequired();
@@ -5087,7 +5104,7 @@ public class BioshipGameTests {
                     () -> {
                       try {
                         helper.assertTrue(
-                            BioshipBlueprint.physical(core(ship), BlockPos.ZERO)
+                            BodyCoordinates.physical(core(ship).amoebaComponents(), BlockPos.ZERO)
                                     .distanceToSqr(creeper.position())
                                 > 36,
                             "Single-block creature did not retreat from blast range");
@@ -5145,7 +5162,7 @@ public class BioshipGameTests {
     var ship = assemble(helper);
     var level = helper.getLevel();
     digestive(helper, core(ship), true);
-    var start = BlockPos.containing(BioshipBlueprint.physical(core(ship), BlockPos.ZERO));
+    var start = BlockPos.containing(BodyCoordinates.physical(core(ship).amoebaComponents(), BlockPos.ZERO));
     courseFloor(helper, start);
     Vec3[] before = {Vec3.ZERO};
     boolean[] walked = {false};
@@ -5161,7 +5178,7 @@ public class BioshipGameTests {
           stomach.retain(new ItemStack(item("biomancy:elastic_fibers"), 20));
           stomach.retain(new ItemStack(item("biomancy:bone_fragments"), 10));
           hunt(helper, current, true);
-          before[0] = BioshipBlueprint.physical(current, BlockPos.ZERO);
+          before[0] = BodyCoordinates.physical(current.amoebaComponents(), BlockPos.ZERO);
         });
     for (int tick = 1020; tick < 1500; tick += 2)
       helper.runAfterDelay(tick, () -> walked[0] |= core(ship).crawl().walking());
@@ -5179,7 +5196,7 @@ public class BioshipGameTests {
                       "Heavy hull did not grow adequate leg strength");
                   helper.assertTrue(
                       walked[0]
-                          && BioshipBlueprint.physical(current, BlockPos.ZERO)
+                          && BodyCoordinates.physical(current.amoebaComponents(), BlockPos.ZERO)
                                   .distanceToSqr(before[0])
                               > 1,
                       "Built hull could not walk before acquiring flight: "
@@ -5225,7 +5242,7 @@ public class BioshipGameTests {
     var level = helper.getLevel();
     int previous = level.getServer().getPlayerList().getViewDistance();
     level.getServer().getPlayerList().setViewDistance(4);
-    var start = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO));
+    var start = BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO));
     courseFloor(helper, start);
     level.setDayTime(1000);
     digestive(helper, core, false);
@@ -5279,7 +5296,7 @@ public class BioshipGameTests {
             helper.assertTrue(
                 collected[0] >= 0,
                 "Wide hatchling snagged beside a ledge/tree: at="
-                    + BioshipBlueprint.physical(current, BlockPos.ZERO)
+                    + BodyCoordinates.physical(current.amoebaComponents(), BlockPos.ZERO)
                         .subtract(Vec3.atLowerCornerOf(start))
                     + " crawl="
                     + current.crawl().save()
@@ -5308,7 +5325,7 @@ public class BioshipGameTests {
     int previous = level.getServer().getPlayerList().getViewDistance();
     level.getServer().getPlayerList().setViewDistance(4);
     level.setDayTime(1000);
-    var start = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO));
+    var start = BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO));
     var course = NavigationLab.course(start, true);
     NavigationLab.place(level, course);
     digestive(helper, core, false).paidTubeStock = 0;
@@ -5335,7 +5352,7 @@ public class BioshipGameTests {
           () -> {
             if (completed[0] >= 0) return;
             var current = core(ship);
-            var point = BioshipBlueprint.physical(current, BlockPos.ZERO);
+            var point = BodyCoordinates.physical(current.amoebaComponents(), BlockPos.ZERO);
             var local = point.subtract(Vec3.atLowerCornerOf(start));
             peak[0] = Math.max(peak[0], local.y);
             if (local.x > 6 && local.z > 6) gates[0] = true;
@@ -5356,7 +5373,7 @@ public class BioshipGameTests {
             helper.assertTrue(
                 completed[0] >= 0,
                 "Wide hatchling stuck in stepped maze: at="
-                    + BioshipBlueprint.physical(current, BlockPos.ZERO)
+                    + BodyCoordinates.physical(current.amoebaComponents(), BlockPos.ZERO)
                         .subtract(Vec3.atLowerCornerOf(start))
                     + " rotation="
                     + ship.logicalPose().orientation()
@@ -5434,7 +5451,7 @@ public class BioshipGameTests {
     int previous = level.getServer().getPlayerList().getViewDistance();
     level.getServer().getPlayerList().setViewDistance(4);
     level.setDayTime(1000);
-    var start = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO));
+    var start = BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO));
     courseFloor(helper, start);
     var course = NavigationLab.course(start, false);
     NavigationLab.place(level, course);
@@ -5443,7 +5460,7 @@ public class BioshipGameTests {
     boolean[] gates = {false, false, false};
     int[] completed = {-1};
     double[] travelled = {0};
-    Vec3[] last = {BioshipBlueprint.physical(core, BlockPos.ZERO)};
+    Vec3[] last = {BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO)};
     helper.runAfterDelay(
         40,
         () -> {
@@ -5466,7 +5483,7 @@ public class BioshipGameTests {
           () -> {
             if (completed[0] >= 0) return;
             var current = core(ship);
-            var point = BioshipBlueprint.physical(current, BlockPos.ZERO);
+            var point = BodyCoordinates.physical(current.amoebaComponents(), BlockPos.ZERO);
             travelled[0] += point.distanceTo(last[0]);
             last[0] = point;
             var local = point.subtract(Vec3.atLowerCornerOf(start));
@@ -5492,7 +5509,7 @@ public class BioshipGameTests {
             helper.assertTrue(
                 completed[0] >= 0 && current.hasMouth(),
                 "Visible organ was not reached through the maze: at="
-                    + BioshipBlueprint.physical(current, BlockPos.ZERO)
+                    + BodyCoordinates.physical(current.amoebaComponents(), BlockPos.ZERO)
                         .subtract(Vec3.atLowerCornerOf(start))
                     + " crawl="
                     + current.crawl().save()
@@ -5533,7 +5550,7 @@ public class BioshipGameTests {
     int previous = level.getServer().getPlayerList().getViewDistance();
     level.getServer().getPlayerList().setViewDistance(4);
     level.setDayTime(1000);
-    var start = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO));
+    var start = BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO));
     courseFloor(helper, start);
     var wall = start.east(8);
     for (var p : BlockPos.betweenClosed(wall.offset(0, 0, -4), wall.offset(0, 3, 4)))
@@ -5557,7 +5574,7 @@ public class BioshipGameTests {
           tick,
           () ->
               furthest[0] =
-                  Math.max(furthest[0], BioshipBlueprint.physical(core(ship), BlockPos.ZERO).x));
+                  Math.max(furthest[0], BodyCoordinates.physical(core(ship).amoebaComponents(), BlockPos.ZERO).x));
     helper.runAfterDelay(
         750,
         () -> {
@@ -5566,7 +5583,7 @@ public class BioshipGameTests {
             helper.assertTrue(
                 current.hasMouth(),
                 "Ship did not navigate around the glass and assimilate its needed mouth: at="
-                    + BioshipBlueprint.physical(current, BlockPos.ZERO)
+                    + BodyCoordinates.physical(current.amoebaComponents(), BlockPos.ZERO)
                     + " "
                     + current.crawl().save()
                     + " path="
@@ -5598,7 +5615,7 @@ public class BioshipGameTests {
     int previous = level.getServer().getPlayerList().getViewDistance();
     level.getServer().getPlayerList().setViewDistance(4);
     level.setDayTime(1000);
-    var start = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO));
+    var start = BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO));
     courseFloor(helper, start);
     var grass = start.east(21);
     level.setBlock(grass.below(), Blocks.GRASS_BLOCK.defaultBlockState(), 3);
@@ -5629,7 +5646,7 @@ public class BioshipGameTests {
           tick,
           () -> {
             furthest[0] =
-                Math.max(furthest[0], BioshipBlueprint.physical(core(ship), BlockPos.ZERO).x);
+                Math.max(furthest[0], BodyCoordinates.physical(core(ship).amoebaComponents(), BlockPos.ZERO).x);
           });
     helper.runAfterDelay(
         650,
@@ -5694,7 +5711,7 @@ public class BioshipGameTests {
     var ship = assemble(helper);
     var core = core(ship);
     var level = helper.getLevel();
-    var here = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO));
+    var here = BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO));
     var source = here.east(3);
     level.setBlock(source, block("biomancy:bio_forge").defaultBlockState(), 3);
     try {
@@ -5760,7 +5777,7 @@ public class BioshipGameTests {
     var core = core(ship);
     var level = helper.getLevel();
     var home = core.getBlockPos();
-    var source = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO)).east(4);
+    var source = BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO)).east(4);
     level.setBlock(source, block("biomancy:bio_forge").defaultBlockState(), 3);
     survey(core);
     var tag = core.saveWithFullMetadata(level.registryAccess());
@@ -5817,7 +5834,7 @@ public class BioshipGameTests {
     var core = core(ship);
     var level = helper.getLevel();
     var home = core.getBlockPos();
-    var here = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO));
+    var here = BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO));
     var source = here.east(3);
     level.setBlock(source, block("biomancy:bio_forge").defaultBlockState(), 3);
     try {
@@ -5860,7 +5877,7 @@ public class BioshipGameTests {
     var organ = level.getBlockEntity(home.west());
     organ.getPersistentData().putString("PerchSentinel", "preserved");
     // A low real obstruction makes elevation useful; height alone is not a benefit.
-    var physical = BlockPos.containing(BioshipBlueprint.physical(original, BlockPos.ZERO));
+    var physical = BlockPos.containing(BodyCoordinates.physical(original.amoebaComponents(), BlockPos.ZERO));
     for (int x = -4; x <= 4; x++)
       for (int z = -4; z <= 4; z++)
         if (Math.abs(x) == 4 || Math.abs(z) == 4)
@@ -5932,7 +5949,7 @@ public class BioshipGameTests {
     var ship = assemble(helper);
     var core = core(ship);
     var level = helper.getLevel();
-    var here = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO));
+    var here = BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO));
     for (int x = -3; x <= 3; x++)
       for (int z = -3; z <= -1; z++)
         level.setBlock(here.offset(x, 0, z), Blocks.STONE.defaultBlockState(), 3);
@@ -6104,7 +6121,7 @@ public class BioshipGameTests {
     var ship = assemble(helper);
     var core = core(ship);
     var level = helper.getLevel();
-    var source = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO)).east();
+    var source = BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO)).east();
     level.setBlock(source, block("biomancy:storage_sac").defaultBlockState(), 3);
     Objects.requireNonNull(level.getCapability(Capabilities.ItemHandler.BLOCK, source, null))
         .insertItem(0, new ItemStack(Items.BEEF, 3), false);
@@ -6124,7 +6141,7 @@ public class BioshipGameTests {
                       level.getBlockState(source).isAir(), "World storage source was not removed");
                   int food = 0;
                   for (var be : BioshipIntegration.blockEntities(ship))
-                    if (EngineRoom.storage(be)) {
+                    if (NativeStorage.isStorage(be)) {
                       var inv =
                           level.getCapability(
                               Capabilities.ItemHandler.BLOCK, be.getBlockPos(), null);
@@ -6152,7 +6169,7 @@ public class BioshipGameTests {
             .defaultBlockState()
             .setValue(SurfaceEyeBlock.FACING, Direction.EAST),
         3);
-    var source = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO)).east(8);
+    var source = BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO)).east(8);
     level.setBlock(source, block("biomancy:storage_sac").defaultBlockState(), 3);
     survey(core);
     helper.assertTrue(
@@ -6179,7 +6196,7 @@ public class BioshipGameTests {
     var ship = assemble(helper);
     var core = core(ship);
     var level = helper.getLevel();
-    var here = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO));
+    var here = BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO));
     var sources = List.of(here.east(2), here.west(2), here.north(2), here.south(2));
     for (var source : sources) {
       level.setBlock(source, block("biomancy:storage_sac").defaultBlockState(), 3);
@@ -6193,7 +6210,7 @@ public class BioshipGameTests {
         core.assimilation().arms().size() == 1,
         "Available appendages were not used concurrently: " + core.assimilation().arms().size());
     helper.assertTrue(
-        BioshipIntegration.blockEntities(ship).stream().noneMatch(EngineRoom::storage),
+        BioshipIntegration.blockEntities(ship).stream().noneMatch(NativeStorage::isStorage),
         "Pickup required prematurely fitting organs");
     helper.assertTrue(
         sources.stream().filter(p -> level.getBlockState(p).isAir()).count() == 1,
@@ -6210,7 +6227,7 @@ public class BioshipGameTests {
                 () -> {
                   int food = 0;
                   for (var be : BioshipIntegration.blockEntities(ship))
-                    if (EngineRoom.storage(be)) {
+                    if (NativeStorage.isStorage(be)) {
                       var inv =
                           level.getCapability(
                               Capabilities.ItemHandler.BLOCK, be.getBlockPos(), null);
@@ -6235,7 +6252,7 @@ public class BioshipGameTests {
     var ship = assemble(helper);
     var core = core(ship);
     var level = helper.getLevel();
-    var start = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO)).east(4);
+    var start = BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO)).east(4);
     var cells =
         List.of(
             start,
@@ -6368,7 +6385,7 @@ public class BioshipGameTests {
           var core = core(ship);
           // Finish startup reconfiguration before inspecting the ordinary weighted branch.
           if (core.coreMotion().active()) core.coreMotion().cancel(core);
-          var here = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO));
+          var here = BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO));
           var source = here.south(3);
           var food =
               new net.minecraft.world.entity.item.ItemEntity(
@@ -6474,7 +6491,7 @@ public class BioshipGameTests {
         () -> {
           var current = core(ship);
           if (current.coreMotion().active()) current.coreMotion().cancel(current);
-          var here = BlockPos.containing(BioshipBlueprint.physical(current, BlockPos.ZERO));
+          var here = BlockPos.containing(BodyCoordinates.physical(current.amoebaComponents(), BlockPos.ZERO));
           var food =
               new net.minecraft.world.entity.item.ItemEntity(
                   level,
@@ -6490,7 +6507,7 @@ public class BioshipGameTests {
                 var core = core(ship);
                 if (core.coreMotion().active()) core.coreMotion().cancel(core);
                 var source =
-                    BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO)).east(2);
+                    BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO)).east(2);
                 level.setBlock(source, block("biomancy:storage_sac").defaultBlockState(), 3);
                 try {
                   var target = DigestiveSystem.storagePort(core, source);
@@ -6654,7 +6671,7 @@ public class BioshipGameTests {
     level.removeBlock(core.getBlockPos().north(), false);
     level.removeBlock(core.getBlockPos().west(), false);
     level.removeBlock(core.getBlockPos().south(), false);
-    var here = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO));
+    var here = BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO));
     var parts = List.of(here.north(2), here.west(2), here.south(2));
     level.setBlock(parts.get(0), block("biomancy:bio_forge").defaultBlockState(), 3);
     level.setBlock(parts.get(1), block("biomancy:decomposer").defaultBlockState(), 3);
@@ -6704,7 +6721,7 @@ public class BioshipGameTests {
     var ship = assemble(helper);
     var core = core(ship);
     var level = helper.getLevel();
-    var here = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO));
+    var here = BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO));
     var pool = new ArrayList<BlockPos>();
     for (var p : BlockPos.betweenClosed(here.offset(-4, 0, -4), here.offset(4, 4, 4))) {
       var pos = p.immutable();
@@ -7331,7 +7348,7 @@ public class BioshipGameTests {
     data.putInt("Satiety", 1200);
     core.loadAdditional(data, level.registryAccess());
     BioshipTargetEntity.ensure(core);
-    var root = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var root = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     var zombie = net.minecraft.world.entity.EntityType.ZOMBIE.create(level);
     zombie.setPos(root.x + 1.2, root.y - .5, root.z);
     zombie.setItemSlot(
@@ -7672,7 +7689,7 @@ public class BioshipGameTests {
     try {
       digestive(helper, core, false);
       var prey = EntityType.VILLAGER.create(level);
-      var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+      var here = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
       prey.setPos(here.x + core.vision().maximumDistance(core) + 32, here.y, here.z);
       var drops = new ArrayList<net.minecraft.world.entity.item.ItemEntity>();
       var proxy = BioshipTargetEntity.ensure(core);
@@ -7760,7 +7777,7 @@ public class BioshipGameTests {
     var ship = assemble(helper);
     var core = core(ship);
     var level = helper.getLevel();
-    var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var here = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     var wall = BlockPos.containing(here).east();
     var cells = new ArrayList<BlockPos>();
     try {
@@ -7801,7 +7818,7 @@ public class BioshipGameTests {
     var ship = assemble(helper);
     var core = core(ship);
     var level = helper.getLevel();
-    var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var here = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     var obstacles = List.of(BlockPos.containing(here).east(), BlockPos.containing(here).south());
     try {
       var direct = new GroundRoute();
@@ -7921,7 +7938,7 @@ public class BioshipGameTests {
     try {
       var core = core(ship);
       var level = helper.getLevel();
-      var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+      var here = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
       var floor = BlockPos.containing(here).below();
       for (var cell : BlockPos.betweenClosed(floor.offset(-4, 0, -4), floor.offset(4, 0, 4)))
         level.setBlock(cell, Blocks.STONE.defaultBlockState(), 3);
@@ -8275,7 +8292,7 @@ public class BioshipGameTests {
       stomach.credit(MaterialCost.BONE, 8);
       level.setBlock(core.getBlockPos().east(), BioshipTissue.body().defaultBlockState(), 3);
       level.setBlock(core.getBlockPos().south(), BioshipTissue.body().defaultBlockState(), 3);
-      var world = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO));
+      var world = BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO));
       for (var p : BlockPos.betweenClosed(world.offset(-4, -3, -4), world.offset(4, -1, 4)))
         level.setBlock(p, Blocks.WATER.defaultBlockState(), 3);
       var water = core.aquatic().save();
@@ -8528,7 +8545,7 @@ public class BioshipGameTests {
               .defaultBlockState()
               .setValue(RespiratoryOrganBlock.FACING, Direction.EAST);
       level.setBlock(gill, state, 3);
-      var world = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO));
+      var world = BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO));
       for (var pos : BlockPos.betweenClosed(world.offset(-4, -2, -4), world.offset(4, 2, 4)))
         level.setBlock(pos, Blocks.WATER.defaultBlockState(), 3);
       helper.assertTrue(
@@ -8566,7 +8583,7 @@ public class BioshipGameTests {
       stomach.credit(MaterialCost.BONE, EmergencyReserve.TARGET.bone());
       core.aquatic().gillUsage().restore(10, 900);
       helper.assertTrue(!BioshipRespiration.wantsGills(core), "A brief dive caused gill growth");
-      var world = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO));
+      var world = BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO));
       for (var pos : BlockPos.betweenClosed(world.offset(-4, -2, -4), world.offset(4, 2, 4)))
         level.setBlock(pos, Blocks.WATER.defaultBlockState(), 3);
       core.aquatic().gillUsage().restore(100, 900);
@@ -9086,7 +9103,7 @@ public class BioshipGameTests {
     var ship = assemble(helper);
     var core = core(ship);
     var level = helper.getLevel();
-    var root = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO));
+    var root = BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO));
     level.setBlock(core.getBlockPos().east(), Create_bioships.STOMACH.get().defaultBlockState(), 3);
     for (var pos : BlockPos.betweenClosed(root.offset(-4, 0, -4), root.offset(4, 8, 4)))
       if (Math.abs(pos.getX() - root.getX()) == 4
@@ -9121,7 +9138,7 @@ public class BioshipGameTests {
     var threat = EntityType.ZOMBIE.create(level);
     threat.setNoAi(true);
     threat.setNoGravity(true);
-    var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var here = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     threat.setPos(here.x + 8, here.y, here.z);
     level.addFreshEntity(threat);
     afterIndexed(
@@ -9188,7 +9205,7 @@ public class BioshipGameTests {
     core.body().load(injury, helper.getLevel().registryAccess());
     var panic = new net.minecraft.nbt.CompoundTag();
     panic.put(
-        "Danger", VisionDebug.vector(BioshipBlueprint.physical(core, BlockPos.ZERO).add(3, 0, 0)));
+        "Danger", VisionDebug.vector(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO).add(3, 0, 0)));
     panic.putLong("PanicUntil", helper.getLevel().getGameTime() + 100);
     core.autonomy().load(panic);
     helper.assertTrue(
@@ -9410,7 +9427,7 @@ public class BioshipGameTests {
   }
 
   private static void deepWater(GameTestHelper helper, LivingCoreBlockEntity core) {
-    var world = BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO));
+    var world = BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO));
     for (var pos : BlockPos.betweenClosed(world.offset(-8, 0, -8), world.offset(8, 12, 8)))
       helper.getLevel().setBlock(pos, Blocks.WATER.defaultBlockState(), 3);
   }
@@ -9682,7 +9699,7 @@ public class BioshipGameTests {
     try {
       var core = core(ship);
       var root = core.getBlockPos();
-      var world = BioshipBlueprint.physical(core, BlockPos.ZERO);
+      var world = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
       creeper.setPos(world.x - 3, world.y - .5, world.z);
       for (int x = 1; x <= 2; x++)
         helper.getLevel().setBlock(root.east(x), BioshipTissue.body().defaultBlockState(), 3);
@@ -9720,7 +9737,7 @@ public class BioshipGameTests {
     var creeper = EntityType.CREEPER.create(helper.getLevel());
     try {
       var core = core(ship);
-      var world = BioshipBlueprint.physical(core, BlockPos.ZERO);
+      var world = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
       creeper.setPos(world.x - 3, world.y - .5, world.z);
       for (int x = 1; x <= 6; x++)
         helper
@@ -9762,7 +9779,7 @@ public class BioshipGameTests {
     helper
         .getLevel()
         .setBlock(core.getBlockPos().east(), BioshipTissue.body().defaultBlockState(), 3);
-    var world = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var world = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     var creeper = EntityType.CREEPER.create(helper.getLevel());
     creeper.setNoAi(true);
     creeper.setNoGravity(true);
@@ -10201,7 +10218,7 @@ public class BioshipGameTests {
     var ship = assemble(helper);
     var core = core(ship);
     var level = helper.getLevel();
-    var root = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var root = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     var water = BlockPos.containing(root.add(0, -.49, 0));
     level.setBlock(water, Blocks.WATER.defaultBlockState().setValue(LiquidBlock.LEVEL, 4), 3);
     helper.assertTrue(BioshipAquatic.aboveFluid(core, root), "Fixture center must be above water");

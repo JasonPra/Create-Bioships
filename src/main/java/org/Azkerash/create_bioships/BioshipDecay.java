@@ -158,7 +158,7 @@ public final class BioshipDecay {
     child.setUserDataTag(tag);
   }
 
-  static List<BlockPos> blocks(ServerSubLevel ship) {
+  public static List<BlockPos> blocks(ServerSubLevel ship) {
     return BioshipStructure.positions(ship);
   }
 

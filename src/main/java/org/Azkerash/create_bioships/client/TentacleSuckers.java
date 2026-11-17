@@ -1,5 +1,7 @@
 package org.Azkerash.create_bioships.client;
 
+import org.Azkerash.create_bioships.MaterialRenderPass;
+
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.model.geom.*;
 import net.minecraft.client.model.geom.builders.*;
@@ -8,7 +10,7 @@ import net.minecraft.resources.ResourceLocation;
 import org.Azkerash.create_bioships.Create_bioships;
 
 /** Shared recessed sucker cups for locomotion legs and mouth-bound graspers. */
-final class TentacleSuckers {
+public final class TentacleSuckers {
   private static final ResourceLocation TEXTURE =
       ResourceLocation.fromNamespaceAndPath(
           Create_bioships.MOD_ID, "textures/block/tentacle_suckers.png");
@@ -29,7 +31,7 @@ final class TentacleSuckers {
     return LayerDefinition.create(mesh, 16, 16).bakeRoot().getChild("cups");
   }
 
-  static void renderSegment(
+  public static void renderSegment(
       ModelPart segment,
       PoseStack pose,
       MultiBufferSource buffers,

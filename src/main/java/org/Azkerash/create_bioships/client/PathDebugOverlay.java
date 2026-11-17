@@ -1,5 +1,10 @@
 package org.Azkerash.create_bioships.client;
 
+import org.Azkerash.create_bioships.Create_bioships;
+import org.Azkerash.create_bioships.BioshipNetwork;
+import org.Azkerash.create_bioships.VisionDebug;
+import org.Azkerash.create_bioships.NavigationDebug;
+
 import com.mojang.blaze3d.vertex.*;
 import java.util.*;
 import net.minecraft.client.Minecraft;

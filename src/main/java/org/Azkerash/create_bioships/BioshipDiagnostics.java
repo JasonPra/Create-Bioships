@@ -1,5 +1,7 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
+
 import com.mojang.brigadier.arguments.StringArgumentType;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
@@ -107,7 +109,7 @@ public final class BioshipDiagnostics {
     var data = new CompoundTag();
     var cells = BioshipStructure.cells(core.ship());
     data.putUUID("Ship", core.ship().getUniqueId());
-    data.put("Position", VisionDebug.vector(BioshipBlueprint.physical(core, BlockPos.ZERO)));
+    data.put("Position", VisionDebug.vector(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO)));
     data.putString("LogicalCore", core.getBlockPos().toShortString());
     data.putString("LogicalMouths", DigestiveSystem.mouths(core).toString());
     data.putBoolean("ChunkLease", core.chunkLoading.active());
@@ -162,7 +164,7 @@ public final class BioshipDiagnostics {
     data.put("CoreMove", core.coreMotion().save());
     data.putBoolean("CreeperPanic", core.autonomy().creeperPanic());
     var hazards = new net.minecraft.nbt.ListTag();
-    var center = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var center = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     for (var creeper :
         core.getLevel()
             .getEntitiesOfClass(
@@ -209,7 +211,7 @@ public final class BioshipDiagnostics {
                                             Component.literal(
                                                 core.ship().getUniqueId()
                                                     + " "
-                                                    + BioshipBlueprint.physical(core, BlockPos.ZERO)
+                                                    + BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO)
                                                     + " "
                                                     + core.brain().action()),
                                         false);

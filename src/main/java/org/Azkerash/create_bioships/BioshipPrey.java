@@ -5,8 +5,8 @@ import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.animal.IronGolem;
 
 /** Shared dietary eligibility; retaliation is a separate safety decision. */
-final class BioshipPrey {
-  static boolean eligible(LivingEntity entity) {
+public final class BioshipPrey {
+  public static boolean eligible(LivingEntity entity) {
     return entity instanceof Mob
         && !(entity instanceof BioshipTargetEntity)
         && !(entity instanceof IronGolem)

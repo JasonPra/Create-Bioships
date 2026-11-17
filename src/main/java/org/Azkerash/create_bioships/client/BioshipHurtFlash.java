@@ -1,5 +1,8 @@
 package org.Azkerash.create_bioships.client;
 
+import org.Azkerash.create_bioships.LivingCoreBlockEntity;
+import org.Azkerash.create_bioships.BioshipStructure;
+
 import com.mojang.blaze3d.vertex.PoseStack;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import net.minecraft.client.Minecraft;

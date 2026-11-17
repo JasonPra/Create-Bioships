@@ -1,5 +1,7 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.integration.biomancy.NativeStorage;
+
 import static org.Azkerash.create_bioships.MaterialCost.*;
 
 import java.util.*;
@@ -262,7 +264,7 @@ final class BioshipAdaptationPlanner {
       var be = core.getLevel().getBlockEntity(pos);
       boolean sac =
           be != null
-              && EngineRoom.storage(be)
+              && NativeStorage.isStorage(be)
               && BioshipScavenging.emptyComponent(core, pos)
               && (sacsOnly
                   ? be.getPersistentData().getBoolean(BioshipStores.AUTOMATIC)

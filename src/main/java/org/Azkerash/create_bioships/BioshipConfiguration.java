@@ -1,5 +1,8 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.integration.biomancy.NativeStorage;
+import org.Azkerash.create_bioships.disabled.wip.EngineRoom;
+
 import org.Azkerash.create_bioships.amoeba.ComponentMerging;
 import org.Azkerash.create_bioships.amoeba.ComponentTransport;
 
@@ -42,7 +45,7 @@ final class BioshipConfiguration {
     var stomach = DigestiveSystem.stomach(core);
     if (stomach != null && stomach.connected(core))
       for (var entity : entities)
-        if (EngineRoom.storage(entity)
+        if (NativeStorage.isStorage(entity)
             && !entity.getPersistentData().getBoolean("BioshipManualPlacement")
             && !stomach.sacPaths.containsKey(entity.getBlockPos())
             && DigestiveSystem.storagePort(core, entity.getBlockPos()) != null) urgent = true;

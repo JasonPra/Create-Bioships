@@ -1,5 +1,7 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
+
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.world.phys.Vec3;
@@ -53,7 +55,7 @@ final class BioshipRighting {
     }
     if (contacts.size() < 3
         || !BioshipSupport.containsProjection(center, contacts.toArray(Vec3[]::new))) return null;
-    var corePosition = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var corePosition = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     return new Support(top / contacts.size() + .85 + corePosition.y - center.y);
   }
 

@@ -1,5 +1,8 @@
 package org.Azkerash.create_bioships.mixin;
 
+import org.Azkerash.create_bioships.BioshipAccess;
+import org.Azkerash.create_bioships.ShipMembraneAccess;
+
 import com.github.elenterius.biomancy.block.membrane.BiometricMembraneBlockEntity;
 import net.minecraft.core.*;
 import net.minecraft.nbt.CompoundTag;

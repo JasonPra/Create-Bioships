@@ -28,3 +28,10 @@ Push each task separately; report the remaining count.
 - Registration/bootstrap belongs in `registry`, diagnostic packets in `network`, development
   worlds/commands in `development`, and external assembly hooks in `integration.sable.mixin`.
 - Mixin metadata, source fixtures, serialized names, docs and generated indexes must follow moves.
+
+Task 2 complete: 28 preserved prototype/client classes now live in `disabled.wip` and
+`disabled.wip.client`; their pure unit tests follow that ownership. Active coordinate/storage
+helpers are separate integration utilities. The availability gate still returns false and
+control registration still checks it. Only compiler-identified cross-package entry points were
+opened; the intended-cell map remains package-private behind `intendedCells()`.
+Production, GameTest and unit-test sources compile. Registry IDs and save tags are unchanged.

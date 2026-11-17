@@ -1,5 +1,8 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
+import org.Azkerash.create_bioships.disabled.wip.AirshipPrototype;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerLevel;
@@ -110,7 +113,7 @@ final class BioshipPriorities {
   static java.util.List<Objective> worldObjectives(LivingCoreBlockEntity core) {
     if (!(core.getLevel() instanceof ServerLevel level) || core.ship() == null)
       return java.util.List.of();
-    var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var here = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     int range = core.vision().maximumDistance(core);
     var candidates = new java.util.LinkedHashSet<>(sources(core, level, here, range));
     candidates.addAll(core.vision().rememberedSources());

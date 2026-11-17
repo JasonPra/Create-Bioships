@@ -4,7 +4,7 @@ import java.util.*;
 import net.minecraft.core.registries.BuiltInRegistries;
 
 /** Sable-to-energy adapter; all consumers share the same table and tick snapshot. */
-final class BioshipEnergy {
+public final class BioshipEnergy {
   private record Snapshot(long tick, int units) {}
 
   private static final Map<LivingCoreBlockEntity, Snapshot> CACHE =
@@ -14,7 +14,7 @@ final class BioshipEnergy {
     return BlockEnergyTable.demand(units(core));
   }
 
-  static int units(LivingCoreBlockEntity core) {
+  public static int units(LivingCoreBlockEntity core) {
     var level = core.getLevel();
     if (core.ship() == null || level == null) return 0;
     long now = level.getGameTime();

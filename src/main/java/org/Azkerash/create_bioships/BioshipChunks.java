@@ -1,5 +1,7 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -35,7 +37,7 @@ public final class BioshipChunks {
       release();
       return;
     }
-    var center = new ChunkPos(BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO)));
+    var center = new ChunkPos(BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO)));
     int view = core.vision().maximumDistance(core) / 16;
     int simulation = Math.min(view, level.getServer().getPlayerList().getSimulationDistance());
     var next = new Lease(level, center, ship.getUniqueId(), view, simulation);

@@ -1,5 +1,7 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
+
 import dev.ryanhcode.sable.api.SubLevelAssemblyHelper;
 import java.util.*;
 import net.minecraft.core.*;
@@ -523,7 +525,7 @@ public final class CoreMotion {
         && objective != null
         && objective.rank() == 0
         && Vec3.atCenterOf(objective.pos())
-                .distanceToSqr(BioshipBlueprint.physical(core, BlockPos.ZERO))
+                .distanceToSqr(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO))
             < 25
         && blockedSupply(core) == null) return false;
     var next = choose(core, returning);

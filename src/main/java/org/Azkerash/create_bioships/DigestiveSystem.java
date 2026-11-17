@@ -1,5 +1,8 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.integration.biomancy.NativeStorage;
+import org.Azkerash.create_bioships.disabled.wip.EngineRoom;
+
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import java.util.*;
 import net.minecraft.core.*;
@@ -25,7 +28,7 @@ public final class DigestiveSystem {
         .orElse(null);
   }
 
-  static List<StomachBlockEntity> stomachs(LivingCoreBlockEntity core) {
+  public static List<StomachBlockEntity> stomachs(LivingCoreBlockEntity core) {
     return core.ship() == null
         ? List.of()
         : BioshipIntegration.blockEntities(core.ship()).stream()
@@ -35,7 +38,7 @@ public final class DigestiveSystem {
             .toList();
   }
 
-  static List<BlockPos> mouths(LivingCoreBlockEntity core) {
+  public static List<BlockPos> mouths(LivingCoreBlockEntity core) {
     return core.ship() == null
         ? List.of()
         : BioshipStructure.cells(core.ship()).entrySet().stream()
@@ -45,7 +48,7 @@ public final class DigestiveSystem {
             .toList();
   }
 
-  static int requiredPairs(LivingCoreBlockEntity core) {
+  public static int requiredPairs(LivingCoreBlockEntity core) {
     return BlockEnergyTable.pairs(BioshipEnergy.demand(core));
   }
 
@@ -285,7 +288,7 @@ public final class DigestiveSystem {
     var sourceEntity = core.getLevel().getBlockEntity(source);
     boolean movesStore =
         stomach.sacPaths.containsKey(source)
-            || sourceEntity != null && EngineRoom.storage(sourceEntity);
+            || sourceEntity != null && NativeStorage.isStorage(sourceEntity);
     if (!movesMouth && !movesStomach && !movesStore) return true;
     var end = movesStomach ? target : stomach.getBlockPos();
     var start = movesMouth ? target : mouth;
@@ -390,7 +393,7 @@ public final class DigestiveSystem {
         || core.rescue().active()) return;
     for (var store : BioshipIntegration.blockEntities(core.ship())) {
       var pos = store.getBlockPos();
-      if (!EngineRoom.storage(store)
+      if (!NativeStorage.isStorage(store)
           || store.getPersistentData().getBoolean("BioshipManualPlacement")) continue;
       var path = stomach.sacPaths.get(pos);
       if (path != null && connectedStore(core, stomach, pos, path)) continue;
@@ -525,7 +528,7 @@ public final class DigestiveSystem {
     Map<BlockPos, List<BlockPos>> branches = new LinkedHashMap<>();
     var stores =
         BioshipIntegration.blockEntities(ship).stream()
-            .filter(EngineRoom::storage)
+            .filter(NativeStorage::isStorage)
             .filter(
                 store ->
                     stomachs(core).stream()
@@ -611,7 +614,7 @@ public final class DigestiveSystem {
     var entity = core.getLevel().getBlockEntity(pos);
     return BioshipIntegration.containing(core.getLevel(), pos) == core.ship()
         && entity != null
-        && EngineRoom.storage(entity)
+        && NativeStorage.isStorage(entity)
         && pathIntact(core, stomach.getBlockPos(), pos, path);
   }
 

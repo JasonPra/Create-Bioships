@@ -1,5 +1,7 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.phys.Vec3;
@@ -24,7 +26,7 @@ final class BioshipFoodCollection {
             .subtract(item.position())
             .normalize()
             .scale(grasper.swimming() && core.aquatic().wet() ? .45 : .3));
-    var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
+    var here = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     if (here.distanceToSqr(point) <= 4
         || core.mouthPosition(core.ship()).distanceToSqr(point) <= 2.25
         || BioshipReach.anchor(core, point).distanceToSqr(point) <= 2.25) {

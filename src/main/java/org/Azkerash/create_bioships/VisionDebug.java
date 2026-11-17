@@ -1,5 +1,7 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
+
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import net.minecraft.core.BlockPos;
@@ -17,14 +19,14 @@ public final class VisionDebug {
     var result = new CompoundTag();
     result.put("Target", vector(target));
     var route = new ListTag();
-    route.add(vector(BioshipBlueprint.physical(core, BlockPos.ZERO)));
+    route.add(vector(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO)));
     for (var point : core.crawl().path()) route.add(vector(point));
     result.put("Route", route);
     result.putBoolean("Walking", core.crawl().walking());
     result.putString("Behavior", core.brain().action().name());
     result.putString("BehaviorReason", core.brain().reason());
     result.putInt("SearchRange", core.vision().maximumDistance(core));
-    result.putDouble("Distance", BioshipBlueprint.physical(core, BlockPos.ZERO).distanceTo(target));
+    result.putDouble("Distance", BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO).distanceTo(target));
     result.putString("Core", core.getBlockPos().toShortString());
     result.putBoolean("Scouting", core.coreMotion().active());
     result.putString("ScoutStatus", core.coreMotion().scoutingHint(core));
@@ -82,7 +84,7 @@ public final class VisionDebug {
           for (var entity : BioshipIntegration.blockEntities(ship))
             if (entity instanceof LivingCoreBlockEntity core && !core.body().dead()) {
               double distance =
-                  BioshipBlueprint.physical(core, BlockPos.ZERO).distanceToSqr(player.position());
+                  BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO).distanceToSqr(player.position());
               if (distance < best) {
                 nearest = core;
                 best = distance;

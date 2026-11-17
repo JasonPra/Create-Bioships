@@ -1,5 +1,20 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.amoeba.AmoebaComponentHost;
+import org.Azkerash.create_bioships.amoeba.AmoebaComponentProvider;
+import org.Azkerash.create_bioships.disabled.wip.BioshipBlueprint;
+import org.Azkerash.create_bioships.disabled.wip.LivingThrottleBlock;
+import org.Azkerash.create_bioships.disabled.wip.FlagellumMotion;
+import org.Azkerash.create_bioships.disabled.wip.LivingDoorBlock;
+import org.Azkerash.create_bioships.disabled.wip.AirshipPrototype;
+import org.Azkerash.create_bioships.disabled.wip.DinghyGrowth;
+import org.Azkerash.create_bioships.disabled.wip.EngineRoom;
+import org.Azkerash.create_bioships.disabled.wip.NerveControlBlock;
+import org.Azkerash.create_bioships.disabled.wip.EngineRoomLayout;
+import org.Azkerash.create_bioships.disabled.wip.BioshipRescue;
+import org.Azkerash.create_bioships.disabled.wip.TentacleBlockEntity;
+import org.Azkerash.create_bioships.disabled.wip.BioshipEngineRoom;
+
 import dev.ryanhcode.sable.api.block.BlockEntitySubLevelActor;
 import dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
@@ -210,7 +225,7 @@ public class LivingCoreBlockEntity extends BlockEntity
   private final BioshipAquatic aquatic = new BioshipAquatic();
   private final BioshipEngineRoom engineRoom = new BioshipEngineRoom();
 
-  BioshipEngineRoom engineRoom() {
+  public BioshipEngineRoom engineRoom() {
     return engineRoom;
   }
 
@@ -236,7 +251,7 @@ public class LivingCoreBlockEntity extends BlockEntity
     super(Create_bioships.CORE_ENTITY.get(), pos, state);
   }
 
-  ServerSubLevel ship() {
+  public ServerSubLevel ship() {
     if (!(level instanceof ServerLevel server)) return null;
     var container = SubLevelContainer.getContainer(server);
     if (container == null || !container.inBounds(worldPosition)) return null;

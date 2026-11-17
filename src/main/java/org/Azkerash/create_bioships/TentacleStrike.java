@@ -30,7 +30,7 @@ public final class TentacleStrike {
     return victim != null && level.getEntity(victim) instanceof LivingEntity e ? e : null;
   }
 
-  void begin(LivingEntity target, long now) {
+  public void begin(LivingEntity target, long now) {
     aim = target.getBoundingBox().getCenter();
     victim = target.getUUID();
     started = now;
@@ -39,7 +39,7 @@ public final class TentacleStrike {
     previousTick = Long.MIN_VALUE;
   }
 
-  void clear() {
+  public void clear() {
     aim = null;
     victim = null;
     hit = false;
@@ -66,7 +66,7 @@ public final class TentacleStrike {
     return active() && now - started >= WINDUP && now - started <= WINDUP + SWEEP && !hit;
   }
 
-  boolean tick(
+  public boolean tick(
       LivingCoreBlockEntity core, Vec3 root, LivingEntity target, double reach, float damage) {
     long now = core.getLevel().getGameTime();
     if (!active()) return false;
@@ -101,7 +101,7 @@ public final class TentacleStrike {
         || expanded.clip(previous, current).isPresent();
   }
 
-  CompoundTag save() {
+  public CompoundTag save() {
     var tag = new CompoundTag();
     if (aim != null) tag.put("Aim", VisionDebug.vector(aim));
     if (victim != null) tag.putUUID("Victim", victim);
@@ -112,7 +112,7 @@ public final class TentacleStrike {
     return tag;
   }
 
-  void load(CompoundTag tag) {
+  public void load(CompoundTag tag) {
     aim = tag.contains("Aim") ? VisionDebug.vector(tag.getCompound("Aim")) : null;
     victim = tag.hasUUID("Victim") ? tag.getUUID("Victim") : null;
     started = tag.getLong("Started");

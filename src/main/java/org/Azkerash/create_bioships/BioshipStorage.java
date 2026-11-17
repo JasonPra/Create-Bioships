@@ -7,7 +7,7 @@ import net.neoforged.neoforge.capabilities.Capabilities;
 import org.Azkerash.create_bioships.creature.ResourceAccount;
 
 /** Shared material account: core first, connected sacs next, pending stomach output last. */
-final class BioshipStorage {
+public final class BioshipStorage {
   static final int CORE_CAPACITY = 256;
 
   static boolean fuel(String id) {
@@ -164,7 +164,7 @@ final class BioshipStorage {
     }
   }
 
-  static ResourceAccount account(LivingCoreBlockEntity core) {
+  public static ResourceAccount account(LivingCoreBlockEntity core) {
     return new ResourceAccount() {
       public int material(String id) {
         return amount(core, id);

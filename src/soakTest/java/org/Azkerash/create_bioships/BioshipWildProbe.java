@@ -1,5 +1,7 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
+
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import java.util.*;
 import net.minecraft.core.*;
@@ -71,7 +73,7 @@ public final class BioshipWildProbe {
                   + ship.getUniqueId());
         }
         state.missing = false;
-        state.position = BioshipBlueprint.physical(core, BlockPos.ZERO);
+        state.position = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
         state.lastSeen = tick;
         var stomachs = DigestiveSystem.stomachs(core);
         state.digestive |= !stomachs.isEmpty() && core.hasMouth();
@@ -119,7 +121,7 @@ public final class BioshipWildProbe {
                 + ":"
                 + cells.hashCode()
                 + ":"
-                + BlockPos.containing(BioshipBlueprint.physical(core, BlockPos.ZERO))
+                + BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO))
                 + ":"
                 + BioshipStorage.snapshot(core).hashCode();
         state.unchanged = signature.equals(state.signature) ? state.unchanged + 20 : 0;
@@ -136,7 +138,7 @@ public final class BioshipWildProbe {
                   + " ship="
                   + ship.getUniqueId()
                   + " position="
-                  + BioshipBlueprint.physical(core, BlockPos.ZERO)
+                  + BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO)
                   + " health="
                   + core.body().health()
                   + " air="

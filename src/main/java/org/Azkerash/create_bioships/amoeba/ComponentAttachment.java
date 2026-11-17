@@ -1,5 +1,14 @@
 package org.Azkerash.create_bioships.amoeba;
 
+import org.Azkerash.create_bioships.StomachBlock;
+import org.Azkerash.create_bioships.Create_bioships;
+import org.Azkerash.create_bioships.FeedingMouthBlockEntity;
+import org.Azkerash.create_bioships.FeedingMouthBlock;
+import org.Azkerash.create_bioships.StomachBlockEntity;
+import org.Azkerash.create_bioships.AmoebaLegBlock;
+import org.Azkerash.create_bioships.SurfaceEyeBlock;
+import org.Azkerash.create_bioships.BioshipTissue;
+
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.state.BlockState;
