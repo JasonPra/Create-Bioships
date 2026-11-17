@@ -99,3 +99,12 @@ All six checkpoints are complete and pushed. Final clean checks passed 100 unit 
 GameTests, all source sets and package/Mixin checks. See `docs/development/batch-layout-repair.md`.
 Zero tasks remain; graphical QA is unperformed. The uploaded clip showed a paused menu.
 The cancelled historical backlog remains cancelled.
+
+## Completed general batch-repair migration
+
+The user approved extending coordinated recall to blocked gills and invalid component placements,
+with anatomy owning plans, assimilation owning inventory/progress and transport owning animations.
+All three checkpoints are complete; see `docs/development/general-batch-repairs.md`.
+Malformed saved creatures enter repair automatically and are checked continuously after completion.
+Final validation passed 100 unit tests and 214 live GameTests plus source-set and package/Mixin checks.
+No graphical QA is claimed. Zero migration tasks remain; the historical backlog stays cancelled.

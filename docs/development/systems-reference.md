@@ -686,7 +686,7 @@ public final class BioshipStructure
 
 #### BioshipIntegration
 
-Source: `src/main/java/org/Azkerash/create_bioships/BioshipIntegration.java` (306 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipIntegration.java` (290 lines).
 
 ```java
 public final class BioshipIntegration
@@ -737,11 +737,11 @@ public final class BioshipIntegration
 
   static void orientMouth(LivingCoreBlockEntity core); // line 206
 
-  public static void relocateMouth(LivingCoreBlockEntity core, ServerSubLevel ship); // line 227
+  public static void relocateMouth(LivingCoreBlockEntity core, ServerSubLevel ship); // line 211
 
-  public static void routeBioshipWrench(PlayerInteractEvent.RightClickBlock event); // line 275
+  public static void routeBioshipWrench(PlayerInteractEvent.RightClickBlock event); // line 259
 
-  public static void feedMaw(PlayerInteractEvent.RightClickBlock event); // line 283
+  public static void feedMaw(PlayerInteractEvent.RightClickBlock event); // line 267
 
 ```
 
@@ -1935,7 +1935,7 @@ final class GroundRoute
 
 #### HatchlingFront
 
-Source: `src/main/java/org/Azkerash/create_bioships/HatchlingFront.java` (135 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/HatchlingFront.java` (98 lines).
 
 ```java
 final class HatchlingFront
@@ -1946,9 +1946,7 @@ final class HatchlingFront
 
   static boolean canArrange(LivingCoreBlockEntity core); // line 61
 
-  static void arrangeMouth(LivingCoreBlockEntity core); // line 84
-
-  static double turn(LivingCoreBlockEntity core, Vec3 goal); // line 121
+  static double turn(LivingCoreBlockEntity core, Vec3 goal); // line 84
 
 ```
 
@@ -2159,7 +2157,7 @@ public final class AmoebaLegBlock extends DirectionalBlock
 
 #### BioshipAnatomy
 
-Source: `src/main/java/org/Azkerash/create_bioships/BioshipAnatomy.java` (572 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipAnatomy.java` (682 lines).
 
 ```java
 final class BioshipAnatomy
@@ -2182,35 +2180,41 @@ final class BioshipAnatomy
 
   private static Audit audit(LivingCoreBlockEntity core); // line 56
 
-  record RepairPart(BlockPos source, BlockPos target, BlockState state); // line 70
+  record RepairPart(BlockPos source, BlockPos target, BlockState state); // line 72
 
-  static boolean blockedMouths(LivingCoreBlockEntity core); // line 72
+  static boolean blockedMouths(LivingCoreBlockEntity core); // line 74
 
-  static List<RepairPart> repairPlan(LivingCoreBlockEntity core); // line 84
+  static boolean invalidAttachment( LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells, BlockPos pos, BlockState state); // line 86
 
-  static int[] deploymentOrder(LivingCoreBlockEntity core, List<RepairPart> plan); // line 266
+  static boolean blockedGill(Map<BlockPos, BlockState> cells, BlockPos pos, BlockState state); // line 116
 
-  private static boolean connectedCells(BlockPos root, Set<BlockPos> cells); // line 304
+  private static boolean primaryNeedsRepair( LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells); // line 121
 
-  private static boolean layoutStable(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells); // line 319
+  static boolean needsBatchRepair(LivingCoreBlockEntity core); // line 133
 
-  static boolean mouthOpening(LivingCoreBlockEntity core, BlockPos pos); // line 323
+  static List<RepairPart> repairPlan(LivingCoreBlockEntity core); // line 144
 
-  private static boolean free(LivingCoreBlockEntity core, BlockPos target); // line 333
+  static int[] deploymentOrder(LivingCoreBlockEntity core, List<RepairPart> plan); // line 420
 
-  private static boolean canMove(LivingCoreBlockEntity core, BlockPos source, BlockPos target); // line 342
+  private static boolean connectedCells(BlockPos root, Set<BlockPos> cells); // line 459
 
-  private static List<BlockPos> ports(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells); // line 352
+  private static boolean layoutStable(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells); // line 474
 
-  private static Move opening(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells); // line 366
+  static boolean mouthOpening(LivingCoreBlockEntity core, BlockPos pos); // line 478
 
-  private static Move legs(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells); // line 387
+  private static boolean free(LivingCoreBlockEntity core, BlockPos target); // line 488
 
-  static int anchorIndex( BlockPos origin, BlockPos socket, Direction face, BioshipSupport.Layout layout); // line 433
+  private static boolean canMove(LivingCoreBlockEntity core, BlockPos source, BlockPos target); // line 497
 
-  static Move compact(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells); // line 447
+  private static List<BlockPos> ports(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells); // line 507
 
-  static BioshipAdaptation.Proposal protection(LivingCoreBlockEntity core); // line 489
+  private static Move opening(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells); // line 521
+
+  static int anchorIndex( BlockPos origin, BlockPos socket, Direction face, BioshipSupport.Layout layout); // line 542
+
+  static Move compact(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells); // line 556
+
+  static BioshipAdaptation.Proposal protection(LivingCoreBlockEntity core); // line 598
 
 ```
 
@@ -2714,7 +2718,7 @@ Mouth-bound collection slots, persistent swallowed stock, batch settlement and c
 
 #### BioshipAssimilation
 
-Source: `src/main/java/org/Azkerash/create_bioships/BioshipAssimilation.java` (596 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipAssimilation.java` (624 lines).
 
 ```java
 public final class BioshipAssimilation
@@ -2779,17 +2783,17 @@ public final class BioshipAssimilation
 
   boolean beginRepair(LivingCoreBlockEntity core, List<BioshipAnatomy.RepairPart> plan); // line 315
 
-  private void tickRepair(LivingCoreBlockEntity core); // line 340
+  private void tickRepair(LivingCoreBlockEntity core); // line 347
 
-  private void settle(LivingCoreBlockEntity core); // line 416
+  private void settle(LivingCoreBlockEntity core); // line 444
 
-  private void take(LivingCoreBlockEntity core, CompoundTag tag); // line 513
+  private void take(LivingCoreBlockEntity core, CompoundTag tag); // line 541
 
-  void abandon(LivingCoreBlockEntity core); // line 520
+  void abandon(LivingCoreBlockEntity core); // line 548
 
-  CompoundTag save(); // line 551
+  CompoundTag save(); // line 579
 
-  void load(CompoundTag tag); // line 570
+  void load(CompoundTag tag); // line 598
 
 ```
 
@@ -3298,7 +3302,7 @@ Compile cached many-mouth physical intake routes; share food between direct-cont
 
 #### DigestiveSystem
 
-Source: `src/main/java/org/Azkerash/create_bioships/DigestiveSystem.java` (811 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/DigestiveSystem.java` (813 lines).
 
 ```java
 public final class DigestiveSystem
@@ -3347,39 +3351,41 @@ public final class DigestiveSystem
 
   static BlockPos storagePort(LivingCoreBlockEntity core, BlockPos source); // line 367
 
-  static void arrangeStorage(LivingCoreBlockEntity core); // line 413
+  static boolean needsStorageRepair(LivingCoreBlockEntity core, BlockPos pos); // line 413
 
-  private static Plan plan( LivingCoreBlockEntity core, StomachBlockEntity stomach, Set<BlockPos> wanted, Set<BlockPos> starter, Map<BlockPos, net.minecraft.world.level.block.state.BlockState> existing); // line 430
+  static void arrangeStorage(LivingCoreBlockEntity core); // line 425
 
-  private static Plan plan( LivingCoreBlockEntity core, StomachBlockEntity stomach, Set<BlockPos> wanted, Set<BlockPos> starter, Map<BlockPos, net.minecraft.world.level.block.state.BlockState> existing, BlockPos replacingMouth); // line 439
+  private static Plan plan( LivingCoreBlockEntity core, StomachBlockEntity stomach, Set<BlockPos> wanted, Set<BlockPos> starter, Map<BlockPos, net.minecraft.world.level.block.state.BlockState> existing); // line 432
 
-  private static boolean affordable(StomachBlockEntity stomach, Plan plan); // line 480
+  private static Plan plan( LivingCoreBlockEntity core, StomachBlockEntity stomach, Set<BlockPos> wanted, Set<BlockPos> starter, Map<BlockPos, net.minecraft.world.level.block.state.BlockState> existing, BlockPos replacingMouth); // line 441
 
-  static boolean reserveCoreRoute(LivingCoreBlockEntity core, BlockPos target, boolean reserve); // line 484
+  private static boolean affordable(StomachBlockEntity stomach, Plan plan); // line 482
 
-  private static boolean reserveCorePairRoute( LivingCoreBlockEntity core, StomachBlockEntity stomach, BlockPos target, boolean reserve); // line 493
+  static boolean reserveCoreRoute(LivingCoreBlockEntity core, BlockPos target, boolean reserve); // line 486
 
-  public static void connect(LivingCoreBlockEntity core, ServerSubLevel ship); // line 529
+  private static boolean reserveCorePairRoute( LivingCoreBlockEntity core, StomachBlockEntity stomach, BlockPos target, boolean reserve); // line 495
 
-  public static void orientStorageSac(net.minecraft.world.level.Level level, BlockPos pos); // line 573
+  public static void connect(LivingCoreBlockEntity core, ServerSubLevel ship); // line 531
 
-  private static boolean connectPair( LivingCoreBlockEntity core, ServerSubLevel ship, StomachBlockEntity stomach, BlockPos mouth, boolean primary); // line 588
+  public static void orientStorageSac(net.minecraft.world.level.Level level, BlockPos pos); // line 575
 
-  private static boolean connectedStore( LivingCoreBlockEntity core, StomachBlockEntity stomach, BlockPos pos); // line 689
+  private static boolean connectPair( LivingCoreBlockEntity core, ServerSubLevel ship, StomachBlockEntity stomach, BlockPos mouth, boolean primary); // line 590
 
-  static boolean canStoreFood(LivingCoreBlockEntity core, ItemStack stack); // line 695
+  private static boolean connectedStore( LivingCoreBlockEntity core, StomachBlockEntity stomach, BlockPos pos); // line 691
 
-  static int foodCount(LivingCoreBlockEntity core); // line 712
+  static boolean canStoreFood(LivingCoreBlockEntity core, ItemStack stack); // line 697
 
-  static boolean functional(LivingCoreBlockEntity core); // line 738
+  static int foodCount(LivingCoreBlockEntity core); // line 714
 
-  public static boolean offerFood(LivingCoreBlockEntity core, ItemStack stack, boolean inherited); // line 748
+  static boolean functional(LivingCoreBlockEntity core); // line 740
 
-  static boolean offerFood( LivingCoreBlockEntity core, BlockPos mouth, ItemStack stack, boolean inherited); // line 753
+  public static boolean offerFood(LivingCoreBlockEntity core, ItemStack stack, boolean inherited); // line 750
 
-  private static boolean offerFood( LivingCoreBlockEntity core, StomachBlockEntity stomach, ItemStack stack, boolean inherited); // line 761
+  static boolean offerFood( LivingCoreBlockEntity core, BlockPos mouth, ItemStack stack, boolean inherited); // line 755
 
-  public static void pullStoredFood(LivingCoreBlockEntity core, StomachBlockEntity stomach); // line 785
+  private static boolean offerFood( LivingCoreBlockEntity core, StomachBlockEntity stomach, ItemStack stack, boolean inherited); // line 763
+
+  public static void pullStoredFood(LivingCoreBlockEntity core, StomachBlockEntity stomach); // line 787
 
 ```
 
@@ -4346,16 +4352,16 @@ public final class BioshipBodyBehavior
 
 #### BioshipConfiguration
 
-Source: `src/main/java/org/Azkerash/create_bioships/BioshipConfiguration.java` (95 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipConfiguration.java` (74 lines).
 
 ```java
 final class BioshipConfiguration
 
-  static BioshipAdaptation.Proposal proposal(LivingCoreBlockEntity core); // line 10
+  static BioshipAdaptation.Proposal proposal(LivingCoreBlockEntity core); // line 8
 
-  static void execute(LivingCoreBlockEntity core); // line 76
+  static void execute(LivingCoreBlockEntity core); // line 55
 
-  private BioshipConfiguration(); // line 92
+  private BioshipConfiguration(); // line 71
 
 ```
 

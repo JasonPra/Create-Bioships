@@ -30,3 +30,10 @@ Regression updates follow recall + deployment timing rather than the old one-way
 The malformed-save test checks every tick for 80 ticks after repair for a restarted batch or
 individual move. Additional coverage includes a completely encased gill, disconnected storage,
 legacy diagonal/buried legs, manual wrench placement and blocked front-mouth rearrangement.
+
+All three checkpoints complete. Final `check runGameTestServer` passed: 100 unit tests and
+214 required live GameTests, with zero failures. All source sets compiled; package/Mixin and
+whitespace checks passed. Architecture references were regenerated. Checkpoint 2 is `0b2d5f4`.
+The final malformed-save test also verifies all seven non-digestible inventory sentinels remain
+in the redeployed mouth throughout the continuous 80-tick stability check. No graphical QA is
+claimed and no new commands were introduced. Zero tasks remain in this migration scope.
