@@ -3,6 +3,7 @@ package org.Azkerash.create_bioships;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import java.util.*;
 import net.minecraft.core.*;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.capabilities.Capabilities;
@@ -556,8 +557,31 @@ public final class DigestiveSystem {
     for (var group : StomachConnections.groups(core))
       if (!group.isEmpty() && group.getFirst().connected(core))
         org.Azkerash.create_bioships.creature.digestion.DigestiveFoodRouting.balance(group);
+    for (var p : BioshipStructure.cells(ship).keySet()) {
+      var state = core.getLevel().getBlockState(p);
+      if (!BuiltInRegistries.BLOCK
+          .getKey(state.getBlock())
+          .toString()
+          .equals("biomancy:storage_sac")) continue;
+      orientStorageSac(core.getLevel(), p);
+    }
     BioshipDigestiveRepair.invalidate(core);
     BioshipAnatomy.invalidate(core);
+  }
+
+  /** Native sacs point away from their connector: the connector is on the opposite face. */
+  public static void orientStorageSac(net.minecraft.world.level.Level level, BlockPos pos) {
+    var state = level.getBlockState(pos);
+    var facing = net.minecraft.world.level.block.state.properties.BlockStateProperties.FACING;
+    if (!BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString().equals("biomancy:storage_sac")
+        || !state.hasProperty(facing)) return;
+    var current = state.getValue(facing).getOpposite();
+    if (level.getBlockState(pos.relative(current)).is(Create_bioships.INTESTINE.get())) return;
+    for (var direction : Direction.values())
+      if (level.getBlockState(pos.relative(direction)).is(Create_bioships.INTESTINE.get())) {
+        level.setBlock(pos, state.setValue(facing, direction.getOpposite()), 3);
+        return;
+      }
   }
 
   private static boolean connectPair(

@@ -52,6 +52,7 @@ final class ComponentAttachment {
           level.getBlockState(move.target()).setValue(FeedingMouthBlock.FACING, facing),
           3);
     }
+    DigestiveSystem.orientStorageSac(level, move.target());
     if (moved instanceof StomachBlockEntity) {
       var d = move.target().subtract(core.controllerPosition());
       level.setBlock(

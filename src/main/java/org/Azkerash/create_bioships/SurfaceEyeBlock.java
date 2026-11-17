@@ -43,12 +43,28 @@ public final class SurfaceEyeBlock extends DirectionalBlock {
     builder.add(FACING, WINDOW_MOUNTED, WINDOW_INTERNAL, AUTOMATIC);
   }
 
+  public static boolean canHostEye(BlockState host, BlockPos pos, Direction face) {
+    return host != null
+        && Block.isShapeFullBlock(host.getShape(EmptyBlockGetter.INSTANCE, pos))
+        && host.isFaceSturdy(EmptyBlockGetter.INSTANCE, pos, face)
+        && !net.minecraft.core.registries.BuiltInRegistries.BLOCK
+            .getKey(host.getBlock())
+            .toString()
+            .equals("biomancy:storage_sac");
+  }
+
+  @Override
+  protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+    var face = state.getValue(FACING);
+    var host = pos.relative(face.getOpposite());
+    return canHostEye(level.getBlockState(host), host, face);
+  }
+
   @Override
   public BlockState getStateForPlacement(BlockPlaceContext context) {
-    return mounted(
-        defaultBlockState().setValue(FACING, context.getClickedFace()),
-        context.getLevel(),
-        context.getClickedPos());
+    var state = defaultBlockState().setValue(FACING, context.getClickedFace());
+    if (!state.canSurvive(context.getLevel(), context.getClickedPos())) return null;
+    return mounted(state, context.getLevel(), context.getClickedPos());
   }
 
   static BlockState mounted(BlockState state, LevelAccessor level, BlockPos pos) {

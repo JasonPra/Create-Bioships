@@ -481,6 +481,55 @@ public class BioshipGameTests {
         });
   }
 
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "sac_mount_orientation")
+  public static void sacs_point_connectors_at_tubes_and_never_host_surface_appendages(
+      GameTestHelper helper) {
+    var level = helper.getLevel();
+    var sac = BuiltInRegistries.BLOCK.get(ResourceLocation.parse("biomancy:storage_sac"));
+    var pos = helper.absolutePos(new BlockPos(2, 2, 2));
+    try {
+      level.setBlock(pos, sac.defaultBlockState(), 3);
+      var entity = level.getCapability(Capabilities.ItemHandler.BLOCK, pos, null);
+      helper.assertTrue(
+          entity != null
+              && entity.insertItem(0, new ItemStack(Items.PORKCHOP, 13), false).isEmpty(),
+          "Could not fill native sac");
+      for (var direction : Direction.values()) {
+        var tube = pos.relative(direction);
+        level.setBlock(tube, Create_bioships.INTESTINE.get().defaultBlockState(), 3);
+        DigestiveSystem.orientStorageSac(level, pos);
+        helper.assertTrue(
+            level
+                    .getBlockState(pos)
+                    .getValue(
+                        net.minecraft.world.level.block.state.properties.BlockStateProperties
+                            .FACING)
+                == direction.getOpposite(),
+            "Sac connector did not point toward tube: " + direction);
+        helper.assertTrue(
+            level
+                    .getCapability(Capabilities.ItemHandler.BLOCK, pos, null)
+                    .getStackInSlot(0)
+                    .getCount()
+                == 13,
+            "Rotating sac lost inventory");
+        for (var face : Direction.values()) {
+          helper.assertTrue(
+              !AmoebaLegBlock.canHostLeg(level.getBlockState(pos), pos, face),
+              "Sac hosted leg/flipper: " + face);
+          helper.assertTrue(
+              !SurfaceEyeBlock.canHostEye(level.getBlockState(pos), pos, face),
+              "Sac hosted eye: " + face);
+        }
+        level.removeBlock(tube, false);
+      }
+      helper.succeed();
+    } finally {
+      level.removeBlock(pos, false);
+      for (var d : Direction.values()) level.removeBlock(pos.relative(d), false);
+    }
+  }
+
   @GameTest(template = "test_empty", timeoutTicks = 200, batch = "end_fixture_geometry")
   public static void developer_end_habitat_has_remote_islands_biome_and_void_gap(
       GameTestHelper helper) {

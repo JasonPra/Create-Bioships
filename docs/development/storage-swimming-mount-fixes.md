@@ -26,3 +26,9 @@ block mass/displacement changes were made: packed flesh and hull already have or
 Additional requested repairs: keep existing classes, fix sac orientation and exclude sac hosts for
 eyes/legs/flippers (10–15 min); prefer mounted flippers over core fallback limbs (5–10 min).
 These precede the final regression checkpoint.
+
+Checkpoint 5: retained existing classes as requested. Full-block geometry and explicit protected
+organ/sac checks reject partial hosts for legs and eyes. Automatic eye placement and amoeba eye
+transport now validate their host. Sacs orient their opposite-facing connector toward adjacent
+intestines on restoration and digestive reconnection, preserving native inventories. The six-
+direction sac/inventory test and existing eye/full-face regressions passed. No new tags/policy class.

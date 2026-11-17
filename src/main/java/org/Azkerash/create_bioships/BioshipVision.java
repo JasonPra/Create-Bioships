@@ -494,6 +494,7 @@ public final class BioshipVision {
           && !tissue.is(Create_bioships.CARAPACE.get())
           && !tissue.is(Create_bioships.ONE_WAY_WINDOW.get())) continue;
       for (var direction : Direction.values()) {
+        if (!SurfaceEyeBlock.canHostEye(tissue, host, direction)) continue;
         if (tissue.is(Create_bioships.ONE_WAY_WINDOW.get())
             && tissue.getValue(OneWayWindowBlock.FACING) != direction) continue;
         var pos = host.relative(direction);
@@ -603,6 +604,7 @@ public final class BioshipVision {
             && !tissue.is(Create_bioships.ONE_WAY_WINDOW.get())) continue;
         if (tissue.is(Create_bioships.ONE_WAY_WINDOW.get())
             && tissue.getValue(OneWayWindowBlock.FACING) != direction) continue;
+        if (!SurfaceEyeBlock.canHostEye(tissue, host, direction)) continue;
         var target = host.relative(direction);
         if (!level.getBlockState(target).isAir()
             || !core.ship().getPlot().contains(new net.minecraft.world.level.ChunkPos(target)))

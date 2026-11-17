@@ -27,6 +27,7 @@ public final class AmoebaLegBlock extends DirectionalBlock {
   static boolean supportsFace(BlockState host, BlockPos hostPos, Direction face) {
     return host != null
         && !BioshipLegEvolution.leg(host)
+        && Block.isShapeFullBlock(host.getShape(EmptyBlockGetter.INSTANCE, hostPos))
         && host.isFaceSturdy(EmptyBlockGetter.INSTANCE, hostPos, face);
   }
 
@@ -37,7 +38,11 @@ public final class AmoebaLegBlock extends DirectionalBlock {
         && !host.is(Create_bioships.LUNGS.get())
         && !(host.is(Create_bioships.FEEDING_MOUTH.get())
             && host.getValue(FeedingMouthBlock.FACING) == face)
-        && !host.is(Create_bioships.GILLS.get());
+        && !host.is(Create_bioships.GILLS.get())
+        && !net.minecraft.core.registries.BuiltInRegistries.BLOCK
+            .getKey(host.getBlock())
+            .toString()
+            .equals("biomancy:storage_sac");
   }
 
   public static boolean mounted(

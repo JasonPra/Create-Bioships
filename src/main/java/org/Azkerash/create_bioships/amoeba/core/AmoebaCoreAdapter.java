@@ -138,6 +138,12 @@ public final class AmoebaCoreAdapter implements AmoebaComponentHost {
       var oriented = state.setValue(AmoebaLegBlock.FACING, AmoebaLegBlock.outward(mounts, target));
       if (!AmoebaLegBlock.mounted(mounts, target, oriented)) return null;
     }
+    if (!stash && !consuming && state.is(Create_bioships.SURFACE_EYE.get())) {
+      var face = state.getValue(org.Azkerash.create_bioships.SurfaceEyeBlock.FACING);
+      var support = target.relative(face.getOpposite());
+      if (!org.Azkerash.create_bioships.SurfaceEyeBlock.canHostEye(
+          level.getBlockState(support), support, face)) return null;
+    }
     var sourceShip = BioshipIntegration.containing(level, source);
     boolean scavenged =
         external && sourceShip != null && sourceShip != ship && BioshipDecay.dead(sourceShip);
