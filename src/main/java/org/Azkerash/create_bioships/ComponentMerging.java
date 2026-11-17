@@ -8,6 +8,7 @@ import java.util.function.Supplier;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import org.Azkerash.create_bioships.amoeba.AmoebaComponentHost;
 
 /** Recipes and commit validation for directional-independent amoeba component fusion. */
 public final class ComponentMerging {
@@ -30,7 +31,7 @@ public final class ComponentMerging {
 
   @FunctionalInterface
   interface Commit {
-    void apply(LivingCoreBlockEntity core, BlockEntity source, BlockEntity destination);
+    void apply(AmoebaComponentHost core, BlockEntity source, BlockEntity destination);
   }
 
   record Recipe(
@@ -38,7 +39,7 @@ public final class ComponentMerging {
       Class<? extends BlockEntity> source,
       Class<? extends BlockEntity> destination,
       Supplier<BlockState> result,
-      Predicate<LivingCoreBlockEntity> needed,
+      Predicate<AmoebaComponentHost> needed,
       Commit commit) {
     boolean matches(BlockEntity from, BlockEntity to) {
       return source.isInstance(from) && destination.isInstance(to);
@@ -55,7 +56,7 @@ public final class ComponentMerging {
               DigesterBlockEntity.class,
               DecomposerBlockEntity.class,
               () -> Create_bioships.STOMACH.get().defaultBlockState(),
-              core -> DigestiveSystem.stomachs(core).size() < BioshipDigestiveGrowth.target(core),
+              core -> core.needsStomach(),
               (core, source, destination) ->
                   finishStomach(
                       core, (DecomposerBlockEntity) destination, (DigesterBlockEntity) source)));
@@ -77,16 +78,16 @@ public final class ComponentMerging {
   }
 
   static boolean commit(
-      String id, LivingCoreBlockEntity core, BlockEntity source, BlockEntity destination) {
+      String id, AmoebaComponentHost core, BlockEntity source, BlockEntity destination) {
     var recipe = Registry.RECIPES.get(id);
     if (recipe == null || !recipe.matches(source, destination)) return false;
     recipe.commit().apply(core, source, destination);
     return true;
   }
 
-  static void tryAvailable(LivingCoreBlockEntity core) {
-    if (core.ship() == null || ComponentTransport.busy(core)) return;
-    var entities = BioshipIntegration.blockEntities(core.ship());
+  static void tryAvailable(AmoebaComponentHost core) {
+    if (core.body() == null || ComponentTransport.busy(core)) return;
+    var entities = core.components();
     for (var recipe : Registry.RECIPES.values()) {
       if (!recipe.needed().test(core)) continue;
       for (var destination : entities)
@@ -100,19 +101,18 @@ public final class ComponentMerging {
     }
   }
 
-  static boolean absorbLarynx(LivingCoreBlockEntity core, CompoundTag capsule) {
-    if (!BioshipLarynx.ready(core)) return false;
-    var mouth =
-        BioshipLarynx.mouths(core).stream().filter(m -> !m.voiced()).findFirst().orElse(null);
+  static boolean absorbLarynx(AmoebaComponentHost core, CompoundTag capsule) {
+    if (!core.digestionReady()) return false;
+    var mouth = core.mouths().stream().filter(m -> !m.voiced()).findFirst().orElse(null);
     if (mouth == null) return false;
     attachLarynx(core, mouth, capsule);
     return true;
   }
 
   static void attachLarynx(
-      LivingCoreBlockEntity core, FeedingMouthBlockEntity mouth, CompoundTag capsule) {
+      AmoebaComponentHost core, FeedingMouthBlockEntity mouth, CompoundTag capsule) {
     mouth.absorbLarynx(capsule);
-    BioshipHealthChanges.changed(core);
+    core.changed();
   }
 
   private static final String RECIPE_TAG = "BioshipMergeRecipe";
@@ -123,7 +123,7 @@ public final class ComponentMerging {
 
   /** Returns false only for cargo which is not a fusion transaction. */
   static boolean finish(
-      LivingCoreBlockEntity core,
+      AmoebaComponentHost core,
       dev.ryanhcode.sable.sublevel.ServerSubLevel cargo,
       ComponentTransport.Move move) {
     var tag = cargo.getUserDataTag();
@@ -131,24 +131,23 @@ public final class ComponentMerging {
     if (recipe.isEmpty() && tag != null && tag.getBoolean("BioshipCombineStomach"))
       recipe = "stomach";
     if (recipe.isEmpty()) return false;
-    var owner = core.ship();
+    var owner = core.body();
     var level = cargo.getLevel();
     if (!commit(
         recipe,
         core,
-        BioshipContainerState.entity(level, cargo, move.cargoBlock()),
-        BioshipContainerState.entity(level, owner, move.target()))) {
+        core.component(cargo, move.cargoBlock()),
+        core.component(owner, move.target()))) {
       ComponentTransport.release(core, cargo);
       return true;
     }
     ComponentTransport.finishCargo(core, cargo);
-    DigestiveSystem.connect(core, owner);
-    core.coreMotion().layoutChanged(core);
+    core.merged();
     return true;
   }
 
   private static void finishStomach(
-      LivingCoreBlockEntity core,
+      AmoebaComponentHost core,
       com.github.elenterius.biomancy.block.decomposer.DecomposerBlockEntity decomposer,
       com.github.elenterius.biomancy.block.digester.DigesterBlockEntity digester) {
     var destination = decomposer.getBlockPos();
@@ -164,13 +163,11 @@ public final class ComponentMerging {
         decomposer.getStateData().fuelHandler.getFuelAmount()
             + digester.getStateData().fuelHandler.getFuelAmount();
     var stomachHost = BioshipTissue.host(decomposer);
-    core.getLevel().removeBlockEntity(destination);
-    core.getLevel().setBlock(destination, Create_bioships.STOMACH.get().defaultBlockState(), 3);
-    if (BioshipContainerState.entity(core.getLevel(), core.ship(), destination)
-        instanceof StomachBlockEntity stomach) {
-      BioshipTissue.remember(stomach, stomachHost);
-      core.adaptation().salvageStarterLegs();
-      core.setChanged();
+    core.level().removeBlockEntity(destination);
+    core.level().setBlock(destination, Create_bioships.STOMACH.get().defaultBlockState(), 3);
+    if (core.component(core.body(), destination) instanceof StomachBlockEntity stomach) {
+      core.rememberHost(stomach, stomachHost);
+      core.stomachFormed();
       for (var stack : stores) stomach.retain(stack);
       for (var stack : queued) stomach.inheritInput(stack);
       stomach.addNutrients(nutrients);

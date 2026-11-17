@@ -59,8 +59,8 @@ final class BioshipConfiguration {
 
   static void execute(LivingCoreBlockEntity core) {
     if (!BioshipBodyBehavior.blocker(core).isEmpty()) return;
-    ComponentMerging.tryAvailable(core);
-    if (ComponentTransport.busy(core)) return;
+    ComponentMerging.tryAvailable(core.amoebaComponents());
+    if (ComponentTransport.busy(core.amoebaComponents())) return;
     for (var actor : BioshipIntegration.blockEntities(core.ship())) {
       BioshipIntegration.convertFirstBioForge(core, actor.getBlockPos());
     }

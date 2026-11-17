@@ -47,7 +47,7 @@ final class BioshipAnatomy {
       CACHE.remove(core);
       return false;
     }
-    boolean moved = ComponentTransport.begin(core, source, move.target(), false);
+    boolean moved = ComponentTransport.begin(core.amoebaComponents(), source, move.target(), false);
     if (moved) CACHE.remove(core);
     return moved;
   }

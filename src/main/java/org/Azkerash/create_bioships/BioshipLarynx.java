@@ -66,7 +66,7 @@ final class BioshipLarynx {
         || !(core.getLevel().getBlockEntity(pos) instanceof FeedingMouthBlockEntity mouth)
         || mouth.voiced()) return false;
     var organ = nativeSource(core, mouth);
-    if (organ != null) return ComponentTransport.storeComponent(core, organ.getBlockPos());
+    if (organ != null) return ComponentTransport.storeComponent(core.amoebaComponents(), organ.getBlockPos());
     if (!EmergencyReserve.after(core, COST) || !COST.pay(BioshipStorage.account(core)))
       return false;
     var capsule = new CompoundTag();
@@ -75,7 +75,7 @@ final class BioshipLarynx {
         BuiltInRegistries.SOUND_EVENT
             .getKey(com.github.elenterius.biomancy.init.ModSoundEvents.FLESH_BLOB_GROWL.get())
             .toString());
-    ComponentMerging.attachLarynx(core, mouth, capsule);
+    ComponentMerging.attachLarynx(core.amoebaComponents(), mouth, capsule);
     core.setChanged();
     return true;
   }

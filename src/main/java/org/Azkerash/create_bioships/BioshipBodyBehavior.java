@@ -15,7 +15,7 @@ final class BioshipBodyBehavior {
     if (core.blueprint().busy()) return "Approved reconstruction owns the layout";
     if (core.rescue().active()) return "Ally rescue owns the aperture";
     if (core.coreMotion().active()) return "Core relocation owns the layout";
-    if (ComponentTransport.busy(core) || core.assimilation().finishing())
+    if (ComponentTransport.busy(core.amoebaComponents()) || core.assimilation().finishing())
       return "Component transaction owns the layout";
     return "";
   }

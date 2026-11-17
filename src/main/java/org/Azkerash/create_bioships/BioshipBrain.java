@@ -457,7 +457,7 @@ public final class BioshipBrain {
               effort(core, threat.position()),
               "Defend against an immediate threat"));
     boolean committed =
-        ComponentTransport.busy(core) || core.coreMotion().active() || core.assimilation().finishing();
+        ComponentTransport.busy(core.amoebaComponents()) || core.coreMotion().active() || core.assimilation().finishing();
     if (committed && (!BioshipNutrition.critical(core) || BioshipNutrition.movingFood(core)))
       return fixed(Action.MOVE_COMPONENT, "Finish a conserved component or food-recovery move");
     if (core.resting()) return fixed(Action.REST, "Rest command");

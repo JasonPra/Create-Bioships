@@ -34,3 +34,9 @@ Checkpoint 2: `CreatureBodyAccess` and `ResourceAccount` are public core-indepen
 Material transactions and storage now use `ResourceAccount`; the old nested account interface
 was removed rather than retained as a duplicate. Java compilation passed. Body binding follows
 in checkpoint 3, where the amoeba adapter and component lifecycle contract are introduced.
+
+Checkpoint 3: merging, transport and attachment accept `AmoebaComponentHost`, not
+`LivingCoreBlockEntity`. The cached `amoebaComponents()` adapter projects the existing movement
+state, shared resource account, placement rules and lifecycle notifications. No second inventory
+or movement state is introduced. All production and fixture callers migrated; Java and GameTest
+compilation passed. The next checkpoint changes package ownership, not behavior.

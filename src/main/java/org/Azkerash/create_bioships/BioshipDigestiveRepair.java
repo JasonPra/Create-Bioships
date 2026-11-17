@@ -60,11 +60,11 @@ final class BioshipDigestiveRepair {
     var move = move(core);
     return move != null
         && move.source().equals(source)
-        && ComponentTransport.begin(core, source, move.target(), false);
+        && ComponentTransport.begin(core.amoebaComponents(), source, move.target(), false);
   }
 
   private static Move move(LivingCoreBlockEntity core) {
-    if (core.ship() == null || ComponentTransport.busy(core)) return null;
+    if (core.ship() == null || ComponentTransport.busy(core.amoebaComponents())) return null;
     var cells = BioshipStructure.cells(core.ship());
     for (var stomach : DigestiveSystem.stomachs(core)) {
       if (stomach.connected(core) || DigestiveSystem.repairPath(core, stomach, null) != null)

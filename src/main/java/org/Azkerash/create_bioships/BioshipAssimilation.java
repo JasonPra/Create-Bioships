@@ -235,7 +235,7 @@ public final class BioshipAssimilation {
         resumeWreck = !stock.isEmpty();
         break;
       }
-      if (ComponentTransport.swallow(core, source.pos())) {
+      if (ComponentTransport.swallow(core.amoebaComponents(), source.pos())) {
         arms.add(core.organMove());
         grasperBindings.put(core.organMove().cargo(), grasper.key());
         core.organMove(null);
@@ -254,7 +254,7 @@ public final class BioshipAssimilation {
     int beforeArms = arms.size();
     for (var move : List.copyOf(arms)) {
       core.workingOrganMove(move);
-      ComponentTransport.tick(core);
+      ComponentTransport.tick(core.amoebaComponents());
       arms.remove(move);
       if (core.organMove() != null) arms.add(core.organMove());
       else grasperBindings.remove(move.cargo());
@@ -289,7 +289,7 @@ public final class BioshipAssimilation {
             t -> BioshipPriorities.rank(core, state(core, t), core.getBlockPos())));
     for (var tag : List.copyOf(stock)) {
       var state = state(core, tag);
-      if (BioshipLarynx.isLarynx(state) && ComponentMerging.absorbLarynx(core, tag.getCompound("Entity"))) {
+      if (BioshipLarynx.isLarynx(state) && ComponentMerging.absorbLarynx(core.amoebaComponents(), tag.getCompound("Entity"))) {
         take(core, tag);
         core.setChanged();
         continue;
@@ -386,7 +386,7 @@ public final class BioshipAssimilation {
   void abandon(LivingCoreBlockEntity core) {
     for (var move : List.copyOf(arms)) {
       core.organMove(move);
-      ComponentTransport.abandon(core);
+      ComponentTransport.abandon(core.amoebaComponents());
     }
     arms.clear();
     var at = BioshipBlueprint.physical(core, BlockPos.ZERO);

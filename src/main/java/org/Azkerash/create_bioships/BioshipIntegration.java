@@ -171,7 +171,7 @@ public final class BioshipIntegration {
       core.incorporateBiomass(1);
       return;
     }
-    ComponentMerging.tryAvailable(core);
+    ComponentMerging.tryAvailable(core.amoebaComponents());
     convertFirstBioForge(core, target);
   }
 
@@ -206,7 +206,7 @@ public final class BioshipIntegration {
       return;
     }
     var pos = core.mouthBlock();
-    if (pos == null || ComponentTransport.busy(core)) return;
+    if (pos == null || ComponentTransport.busy(core.amoebaComponents())) return;
     var state = core.getLevel().getBlockState(pos);
     if (!state.is(Create_bioships.FEEDING_MOUTH.get())) return;
     var entity = core.getLevel().getBlockEntity(pos);
@@ -222,7 +222,7 @@ public final class BioshipIntegration {
   }
 
   public static void relocateMouth(LivingCoreBlockEntity core, ServerSubLevel ship) {
-    if (ComponentTransport.busy(core)) return;
+    if (ComponentTransport.busy(core.amoebaComponents())) return;
     boolean hunting = core.huntingAllowed();
     var destinations = new ArrayList<BlockPos>();
     if (hunting)
@@ -264,7 +264,7 @@ public final class BioshipIntegration {
           if ((!tissue.isAir() && !tissue.is(Create_bioships.INTESTINE.get()))
               || !level.getBlockState(inside.above()).isAir()) continue;
         }
-        if (ComponentTransport.begin(core, source, target, false)) return;
+        if (ComponentTransport.begin(core.amoebaComponents(), source, target, false)) return;
       }
     }
   }

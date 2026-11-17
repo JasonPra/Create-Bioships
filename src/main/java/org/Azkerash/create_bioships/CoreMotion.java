@@ -421,7 +421,7 @@ public final class CoreMotion {
       if (!connectedAfter(body, source, support)
           || !connectedAfter(rearranged, core.getBlockPos(), destination)
           || !clearWorld(core, destination)) continue;
-      if (ComponentTransport.begin(core, source, support, false)) return true;
+      if (ComponentTransport.begin(core.amoebaComponents(), source, support, false)) return true;
     }
     return false;
   }
@@ -432,7 +432,7 @@ public final class CoreMotion {
     if (core.body().dead()
         || !core.hatchling() && !core.isMature()
         || core.blueprint().busy()
-        || ComponentTransport.busy(core)) {
+        || ComponentTransport.busy(core.amoebaComponents())) {
       if (active()) cancel(core);
       return false;
     }

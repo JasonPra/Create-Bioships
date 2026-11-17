@@ -53,7 +53,7 @@ final class BioshipEngineRoomPlanner {
         || !core.isMature()
         || core.blueprint().busy()
         || core.ship() == null
-        || ComponentTransport.busy(core)
+        || ComponentTransport.busy(core.amoebaComponents())
         || core.coreMotion().active()) return blocked(report, "Body is immature or moving");
     int desired =
         EngineRoomSizing.columns(

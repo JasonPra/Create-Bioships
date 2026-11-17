@@ -3,22 +3,23 @@ package org.Azkerash.create_bioships;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.state.BlockState;
+import org.Azkerash.create_bioships.amoeba.AmoebaComponentHost;
 
 /** Restores component data and mount orientation after transport, without moving cargo. */
 final class ComponentAttachment {
   private ComponentAttachment() {}
 
   static void restore(
-      LivingCoreBlockEntity core,
+      AmoebaComponentHost core,
       ComponentTransport.Move move,
       BlockState host,
       CompoundTag capsule) {
-    var level = core.getLevel();
-    var owner = core.ship();
-    BioshipContainerState.restore(level, owner, move.target(), capsule);
-    var moved = BioshipContainerState.entity(level, owner, move.target());
+    var level = core.level();
+    var owner = core.body();
+    core.restore(owner, move.target(), capsule);
+    var moved = core.component(owner, move.target());
     if (moved != null) {
-      BioshipTissue.remember(moved, host);
+      core.rememberHost(moved, host);
       if (move.manual()) moved.getPersistentData().putBoolean("BioshipManualPlacement", true);
       moved.setChanged();
     }
@@ -27,23 +28,23 @@ final class ComponentAttachment {
           move.target(),
           level.getBlockState(move.target()).setValue(SurfaceEyeBlock.AUTOMATIC, false),
           3);
-    if (BioshipLegEvolution.leg(level.getBlockState(move.target())))
+    if (core.leg(level.getBlockState(move.target())))
       level.setBlock(
           move.target(),
           level
               .getBlockState(move.target())
-              .setValue(AmoebaLegBlock.FACING, AmoebaLegBlock.outward(core, move.target())),
+              .setValue(AmoebaLegBlock.FACING, core.legFacing(move.target())),
           3);
     if (moved instanceof FeedingMouthBlockEntity mouth) {
       mouth.embeddedInHull(BioshipTissue.isTissue(host));
-      Direction facing = FeedingMouthBlock.outward(core, move.target());
+      Direction facing = core.mouthFacing(move.target());
       level.setBlock(
           move.target(),
           level.getBlockState(move.target()).setValue(FeedingMouthBlock.FACING, facing),
           3);
     }
     if (moved instanceof StomachBlockEntity) {
-      var d = move.target().subtract(core.getBlockPos());
+      var d = move.target().subtract(core.controllerPosition());
       level.setBlock(
           move.target(),
           level

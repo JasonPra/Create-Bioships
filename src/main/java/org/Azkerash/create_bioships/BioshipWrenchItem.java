@@ -87,7 +87,7 @@ public class BioshipWrenchItem extends Item {
         return InteractionResult.FAIL;
       }
       boolean mouth = level.getBlockState(source).is(Create_bioships.FEEDING_MOUTH.get());
-      if (ComponentTransport.begin(core, source, target, false, true)) {
+      if (ComponentTransport.begin(core.amoebaComponents(), source, target, false, true)) {
         if (mouth) core.preferredMouth(target.subtract(core.getBlockPos()));
         stack.remove(DataComponents.CUSTOM_DATA);
         player.displayClientMessage(

@@ -22,6 +22,13 @@ import net.minecraft.world.phys.*;
 import org.joml.Vector3d;
 
 public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySubLevelActor {
+  private final org.Azkerash.create_bioships.amoeba.AmoebaComponentHost componentHost =
+      new AmoebaCoreAdapter(this);
+
+  public org.Azkerash.create_bioships.amoeba.AmoebaComponentHost amoebaComponents() {
+    return componentHost;
+  }
+
   private static final TagKey<Item> MEAT =
       TagKey.create(
           Registries.ITEM,
@@ -756,7 +763,7 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     }
     var before = BioshipBody.actual(core);
     core.assimilation.tick(core);
-    ComponentTransport.tick(core);
+    ComponentTransport.tick(core.amoebaComponents());
     core.serverTick();
     var ship = core.ship();
     if (ship != null) core.adaptation.tick(core);
@@ -1241,7 +1248,9 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
     preferredMouth =
         tag.contains("PreferredMouth") ? BlockPos.of(tag.getLong("PreferredMouth")) : null;
     organMove =
-        tag.contains("OrganMove") ? ComponentTransport.Move.load(tag.getCompound("OrganMove")) : null;
+        tag.contains("OrganMove")
+            ? ComponentTransport.Move.load(tag.getCompound("OrganMove"))
+            : null;
     scavenging.load(tag.getCompound("Scavenging"));
     aquatic.load(tag.getCompound("Aquatic"));
     engineRoom.restore(tag.getInt("EngineColumns"));

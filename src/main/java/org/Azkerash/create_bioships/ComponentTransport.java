@@ -13,6 +13,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Unit;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.phys.Vec3;
+import org.Azkerash.create_bioships.amoeba.AmoebaComponentHost;
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
 
@@ -83,17 +84,17 @@ public final class ComponentTransport {
     }
   }
 
-  public static boolean busy(LivingCoreBlockEntity core) {
-    return core.organMove() != null || core.assimilation().active();
+  public static boolean busy(AmoebaComponentHost core) {
+    return core.movement() != null || core.absorptionActive();
   }
 
   public static boolean begin(
-      LivingCoreBlockEntity core, BlockPos source, BlockPos target, boolean external) {
+      AmoebaComponentHost core, BlockPos source, BlockPos target, boolean external) {
     return begin(core, source, target, external, false);
   }
 
   public static boolean begin(
-      LivingCoreBlockEntity core,
+      AmoebaComponentHost core,
       BlockPos source,
       BlockPos target,
       boolean external,
@@ -101,24 +102,24 @@ public final class ComponentTransport {
     return begin(core, source, target, external, manual, false);
   }
 
-  static boolean reabsorb(LivingCoreBlockEntity core, BlockPos source, BlockPos target) {
+  static boolean reabsorb(AmoebaComponentHost core, BlockPos source, BlockPos target) {
     return begin(core, source, target, false, false, true);
   }
 
-  static boolean reclaimToCore(LivingCoreBlockEntity core, BlockPos source) {
-    return begin(core, source, core.getBlockPos(), false, false, true, true);
+  static boolean reclaimToCore(AmoebaComponentHost core, BlockPos source) {
+    return begin(core, source, core.controllerPosition(), false, false, true, true);
   }
 
-  static boolean storeComponent(LivingCoreBlockEntity core, BlockPos source) {
-    return begin(core, source, core.getBlockPos(), false, false, false, true);
+  static boolean storeComponent(AmoebaComponentHost core, BlockPos source) {
+    return begin(core, source, core.controllerPosition(), false, false, false, true);
   }
 
-  static boolean swallow(LivingCoreBlockEntity core, BlockPos source) {
-    return begin(core, source, core.getBlockPos(), true, false, false, true);
+  static boolean swallow(AmoebaComponentHost core, BlockPos source) {
+    return begin(core, source, core.controllerPosition(), true, false, false, true);
   }
 
   private static boolean begin(
-      LivingCoreBlockEntity core,
+      AmoebaComponentHost core,
       BlockPos source,
       BlockPos target,
       boolean external,
@@ -128,7 +129,7 @@ public final class ComponentTransport {
   }
 
   private static boolean begin(
-      LivingCoreBlockEntity core,
+      AmoebaComponentHost core,
       BlockPos source,
       BlockPos target,
       boolean external,
@@ -138,13 +139,12 @@ public final class ComponentTransport {
     return begin(core, source, target, external, manual, consuming, stash, null);
   }
 
-  static boolean merge(
-      LivingCoreBlockEntity core, BlockPos source, BlockPos target, String recipe) {
+  static boolean merge(AmoebaComponentHost core, BlockPos source, BlockPos target, String recipe) {
     return begin(core, source, target, false, false, false, false, recipe);
   }
 
   private static boolean begin(
-      LivingCoreBlockEntity core,
+      AmoebaComponentHost core,
       BlockPos source,
       BlockPos target,
       boolean external,
@@ -153,97 +153,27 @@ public final class ComponentTransport {
       boolean stash,
       String mergeRecipe) {
     boolean combining = mergeRecipe != null;
-    if ((stash ? core.organMove() != null : busy(core))
+    if ((stash ? core.movement() != null : busy(core))
         || source.equals(target)
-        || core.ship() == null) return false;
-    var ship = core.ship();
+        || core.body() == null) return false;
+    var request =
+        new AmoebaComponentHost.Request(
+            source, target, external, manual, consuming, stash, mergeRecipe);
+    var prepared = core.prepare(request);
+    if (prepared == null) return false;
+    var ship = core.body();
     var level = ship.getLevel();
-    if (!stash && !consuming && !DigestiveSystem.permitsPlacement(core, target)) return false;
-    var host = level.getBlockState(target);
-    if (!stash && !host.isAir() && !BioshipTissue.isTissue(host) && !combining) return false;
-    if (combining
-        && !ComponentMerging.matches(
-            mergeRecipe,
-            BioshipContainerState.entity(level, ship, source),
-            BioshipContainerState.entity(level, ship, target))) return false;
-    var state = level.getBlockState(source);
-    if (state.isAir() || state.is(Create_bioships.CORE.get())) return false;
-    if (!stash && !consuming && BioshipLegEvolution.leg(state)) {
-      var mounts = new java.util.LinkedHashMap<>(BioshipStructure.cells(ship));
-      if (!external) mounts.remove(source);
-      var oriented = state.setValue(AmoebaLegBlock.FACING, AmoebaLegBlock.outward(mounts, target));
-      if (!AmoebaLegBlock.mounted(mounts, target, oriented)) return false;
-    }
-    var sourceShip = BioshipIntegration.containing(level, source);
-    boolean scavenged =
-        external && sourceShip != null && sourceShip != ship && BioshipDecay.dead(sourceShip);
-    if (external && sourceShip != null && sourceShip != ship && !scavenged) return false;
-    Vec3 sourceWorld =
-        sourceShip != null
-            ? sourceShip.logicalPose().transformPosition(Vec3.atCenterOf(source))
-            : Vec3.atCenterOf(source);
-    Vec3 destination = ship.logicalPose().transformPosition(Vec3.atCenterOf(target));
-    var destinationCell = BlockPos.containing(destination);
-    boolean vacatedSource = external && sourceShip == null && destinationCell.equals(source);
-    if (!stash
-        && !combining
-        && !vacatedSource
-        && !BioshipIntegration.growthSpace(level, destinationCell)) return false;
-    String id =
-        net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
-    boolean mouth =
-        state.is(Create_bioships.FEEDING_MOUTH.get())
-            || id.equals("biomancy:bio_forge") && !core.hasMouth();
-    boolean stomach =
-        state.is(Create_bioships.STOMACH.get())
-            || id.equals("biomancy:decomposer") && DigestiveSystem.stomach(core) == null;
-    var entity = BioshipContainerState.entity(level, sourceShip, source);
-    var sourceHost = BioshipTissue.host(entity);
+    var sourceHost = prepared.sourceHost();
     boolean restore = !sourceHost.isAir();
-    if (!stash
-        && !consuming
-        && !external
-        && !manual
-        && !(combining
-            ? BioshipSupport.safeMerge(
-                core, source, target, restore, ComponentMerging.result(mergeRecipe))
-            : BioshipSupport.safeMove(core, source, target, restore))) return false;
-    List<BlockPos> tissuePath = external ? List.of() : findTissuePath(core, source, target);
-    if (!external)
-      for (var player : level.players())
-        if (player.containerMenu instanceof net.minecraft.world.inventory.ChestMenu menu
-            && menu.getContainer() == entity) return false;
-    if (!stash
-        && !consuming
-        && (!external || entity != null && EngineRoom.storage(entity))
-        && !DigestiveSystem.reserveOrganRoute(core, source, target)) return false;
-    BioshipIntegration.clearGrowthPlant(level, BlockPos.containing(destination));
-    var capsule = BioshipContainerState.capture(level, entity);
     var cargo =
         SubLevelAssemblyHelper.assembleBlocks(
             level, source, List.of(source), new BoundingBox3i(source, source));
     if (cargo == null) return false;
-    BioshipContainerState.restore(level, cargo, cargo.getPlot().getCenterBlock(), capsule);
+    core.restore(cargo, cargo.getPlot().getCenterBlock(), prepared.capsule());
     SubLevelContainer.getContainer(level)
         .addForceLoadTicket(cargo, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
     cargo.setName(external ? "Bioship assimilation" : "Bioship moving organ");
-    var data = new CompoundTag();
-    data.putUUID("BioshipCargoOwner", ship.getUniqueId());
-    data.putBoolean("BioshipBound", true);
-    data.putBoolean("BioshipStash", stash);
-    if (combining) ComponentMerging.tag(data, mergeRecipe);
-    data.putBoolean("BioshipCoreReclamation", stash && consuming);
-    data.putBoolean("BioshipScavenged", scavenged);
-    data.putBoolean("ScavengeHostFlesh", BioshipTissue.isTissue(host));
-    var selected = core.brain().lastDecision();
-    data.putBoolean(
-        "BioshipEmergencyRecycle",
-        consuming
-            || external
-                && selected != null
-                && selected.recycle()
-                && source.equals(selected.block()));
-    cargo.setUserDataTag(data);
+    cargo.setUserDataTag(prepared.cargoTags());
     if (restore && !external) level.setBlock(source, sourceHost, 3);
     var move =
         new Move(
@@ -251,37 +181,24 @@ public final class ComponentTransport {
             cargo.getPlot().getCenterBlock(),
             source,
             target,
-            sourceWorld,
+            prepared.sourceWorld(),
             level.getGameTime(),
             external,
             restore,
-            mouth,
-            stomach,
+            prepared.mouth(),
+            prepared.stomach(),
             manual,
             SubLevelContainer.getContainer(level)
                 .addForceLoadTicket(ship, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE),
-            tissuePath);
-    if (!external) {
-      var local = source.subtract(core.getBlockPos());
-      core.body().memory.remove(local);
-      if (restore) core.body().memory.put(local, level.getBlockState(source));
-    }
-    core.organMove(move);
-    if (external && sourceShip == null) core.vision().forget(core, source);
+            prepared.tissuePath());
+    core.movement(move);
+    core.departed(request, prepared);
     return true;
   }
 
-  private static boolean tissue(net.minecraft.world.level.block.state.BlockState state) {
-    return BioshipTissue.isTissue(state)
-        || state.is(Create_bioships.CARAPACE.get())
-        || state.is(Create_bioships.INTESTINE.get())
-        || state.is(Create_bioships.ONE_WAY_WINDOW.get());
-  }
-
-  static List<BlockPos> findTissuePath(
-      LivingCoreBlockEntity core, BlockPos source, BlockPos target) {
-    var level = core.getLevel();
-    var ship = core.ship();
+  static List<BlockPos> findTissuePath(AmoebaComponentHost core, BlockPos source, BlockPos target) {
+    var level = core.level();
+    var ship = core.body();
     Map<BlockPos, BlockPos> parents = new HashMap<>();
     var queue = new ArrayDeque<BlockPos>();
     queue.add(source);
@@ -298,15 +215,14 @@ public final class ComponentTransport {
         path.add(source);
         Collections.reverse(path);
         // Adjacent free-standing organs have no flesh to sink through.
-        return path.stream().anyMatch(cell -> tissue(level.getBlockState(cell)))
+        return path.stream().anyMatch(cell -> core.travelTissue(level.getBlockState(cell)))
             ? List.copyOf(path)
             : List.of();
       }
       for (var d : Direction.values()) {
         var next = current.relative(d);
-        if (parents.containsKey(next) || BioshipIntegration.containing(level, next) != ship)
-          continue;
-        if (!next.equals(target) && !tissue(level.getBlockState(next))) continue;
+        if (parents.containsKey(next) || !core.owns(next)) continue;
+        if (!next.equals(target) && !core.travelTissue(level.getBlockState(next))) continue;
         parents.put(next, current);
         queue.add(next);
       }
@@ -321,16 +237,16 @@ public final class ComponentTransport {
         .lerp(Vec3.atCenterOf(path.get(start + 1)), index - start);
   }
 
-  public static void tick(LivingCoreBlockEntity core) {
-    var move = core.organMove();
-    var owner = core.ship();
+  public static void tick(AmoebaComponentHost core) {
+    var move = core.movement();
+    var owner = core.body();
     if (move == null || owner == null) return;
     var level = owner.getLevel();
     var container = SubLevelContainer.getContainer(level);
     if (!(container.getSubLevel(move.cargo()) instanceof ServerSubLevel cargo)
         || cargo.isRemoved()) {
-      core.organMove(null);
-      BioshipHealthChanges.changed(core);
+      core.movement(null);
+      core.changed();
       return;
     }
     long age = level.getGameTime() - move.started();
@@ -359,11 +275,10 @@ public final class ComponentTransport {
     if (age < ComponentMerging.DURATION_TICKS) return;
     if (ComponentMerging.finish(core, cargo, move)) return;
     if (cargo.getUserDataTag() != null && cargo.getUserDataTag().getBoolean("BioshipStash")) {
-      if (cargo.getUserDataTag().getBoolean("BioshipCoreReclamation"))
-        core.scavenging().recycleToCore(core, level.getBlockState(move.cargoBlock()));
-      else core.assimilation().receive(core, cargo, move.cargoBlock());
+      core.receive(
+          cargo, move.cargoBlock(), cargo.getUserDataTag().getBoolean("BioshipCoreReclamation"));
       finishCargo(core, cargo);
-      core.vision().invalidate();
+      core.invalidateVision();
       return;
     }
     var host = level.getBlockState(move.target());
@@ -372,22 +287,13 @@ public final class ComponentTransport {
       return;
     }
     var original = level.getBlockState(move.cargoBlock());
-    if (BioshipLegEvolution.leg(original)) {
-      var mounts = BioshipStructure.cells(owner);
-      var oriented =
-          original.setValue(AmoebaLegBlock.FACING, AmoebaLegBlock.outward(mounts, move.target()));
-      if (!AmoebaLegBlock.mounted(mounts, move.target(), oriented)) {
-        // The host may have been mined or moved during transport. Keep the actual cargo
-        // instead of attaching the socket to empty space or inventing replacement material.
-        release(core, cargo);
-        return;
-      }
+    if (!core.validAttachment(original, move.target())) {
+      release(core, cargo);
+      return;
     }
     if (!host.isAir()) level.removeBlock(move.target(), false);
     // Snapshot the current cargo, never an old pre-digestion/pre-growth copy.
-    var capsule =
-        BioshipContainerState.capture(
-            level, BioshipContainerState.entity(level, cargo, move.cargoBlock()));
+    var capsule = core.capture(core.component(cargo, move.cargoBlock()));
     SubLevelAssemblyHelper.moveBlocks(
         level,
         new SubLevelAssemblyHelper.AssemblyTransform(
@@ -402,42 +308,38 @@ public final class ComponentTransport {
     boolean hostFlesh =
         cargo.getUserDataTag() != null && cargo.getUserDataTag().getBoolean("ScavengeHostFlesh");
     finishCargo(core, cargo);
-    core.vision().invalidate();
-    if (scavenged || recycle) core.scavenging().finish(core, move.target(), hostFlesh, recycle);
-    else if (move.external()) BioshipIntegration.finishAssimilation(core, move.target());
-    DigestiveSystem.connect(core, owner);
-    core.coreMotion().layoutChanged(core);
-    BioshipAccess.tick(core);
+    core.invalidateVision();
+    core.placed(move, scavenged, recycle, hostFlesh);
   }
 
-  static void finishCargo(LivingCoreBlockEntity core, ServerSubLevel cargo) {
-    var move = core.organMove();
+  static void finishCargo(AmoebaComponentHost core, ServerSubLevel cargo) {
+    var move = core.movement();
     var container = SubLevelContainer.getContainer(cargo.getLevel());
     container.removeForceLoadTicket(cargo, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
     container.removeSubLevel(cargo, SubLevelRemovalReason.REMOVED);
-    if (move != null && move.ownerForced() && core.ship() != null)
+    if (move != null && move.ownerForced() && core.body() != null)
       container.removeForceLoadTicket(
-          core.ship(), SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
-    core.organMove(null);
-    BioshipHealthChanges.changed(core);
+          core.body(), SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
+    core.movement(null);
+    core.changed();
   }
 
-  static void release(LivingCoreBlockEntity core, ServerSubLevel cargo) {
-    var move = core.organMove();
-    if (move != null && move.ownerForced() && core.ship() != null)
+  static void release(AmoebaComponentHost core, ServerSubLevel cargo) {
+    var move = core.movement();
+    if (move != null && move.ownerForced() && core.body() != null)
       SubLevelContainer.getContainer(cargo.getLevel())
           .removeForceLoadTicket(
-              core.ship(), SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
+              core.body(), SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
     SubLevelContainer.getContainer(cargo.getLevel())
         .removeForceLoadTicket(cargo, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
     cargo.setName("Detached bioship component");
-    core.organMove(null);
-    BioshipHealthChanges.changed(core);
+    core.movement(null);
+    core.changed();
   }
 
-  public static void abandon(LivingCoreBlockEntity core) {
-    var move = core.organMove();
-    if (move == null || !(core.getLevel() instanceof net.minecraft.server.level.ServerLevel level))
+  public static void abandon(AmoebaComponentHost core) {
+    var move = core.movement();
+    if (move == null || !(core.level() instanceof net.minecraft.server.level.ServerLevel level))
       return;
     var cargo = SubLevelContainer.getContainer(level).getSubLevel(move.cargo());
     if (cargo instanceof ServerSubLevel server) release(core, server);

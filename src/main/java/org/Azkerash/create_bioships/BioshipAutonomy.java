@@ -128,7 +128,7 @@ public final class BioshipAutonomy {
   }
 
   Vec3 groundWander(LivingCoreBlockEntity core) {
-    if ((!core.hatchling() && !core.huntingAllowed()) || core.resting() || ComponentTransport.busy(core))
+    if ((!core.hatchling() && !core.huntingAllowed()) || core.resting() || ComponentTransport.busy(core.amoebaComponents()))
       return null;
     var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
     long now = core.getLevel().getGameTime();
