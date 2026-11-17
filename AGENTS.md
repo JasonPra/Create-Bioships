@@ -35,3 +35,9 @@ The user approved direct-contact stomach sharing and a solid 27-block large stom
 `docs/development/digestive-network-plan.md`. Implement them in order, push each completed task,
 and report how many remain. Preserve the sum of all 27 food queues; do not duplicate inventories.
 This feature's explicit authorization supersedes earlier stop/feature-freeze notes for this scope.
+
+The user subsequently approved the revised ten-checkpoint digestive scope in that document:
+many-mouth intake, resource-saving stomach grouping, natural cube arrangement, and coordinated
+whole-structure amoeba transport. This supersedes the earlier remaining nine-task sequence.
+The class responsibility split was explicitly discussed and accepted. Proceed automatically,
+pushing each completed checkpoint and reporting the remaining count.

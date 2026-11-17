@@ -48,3 +48,33 @@ Task 3 complete: direct-contact members inherit one intact mouth/intestine conne
 Topology updates immediately when a stomach link is removed. Growth counts stomach groups
 when deciding how many mouths are needed. Three focused GameTests and all 65 unit tests passed.
 The capacity requirement remains all 27 original food queues; intake routing follows in task 4.
+
+## Revised scope: many mouths, shared digestion, coordinated relocation
+
+Approved after task 3: all mouths are intake ports for a digestive network, not exclusive
+partners of individual stomachs. Stomachs still share queues by direct face contact only.
+An intestine may connect a mouth to a stomach group; it must not share food between otherwise
+separate stomach groups. Keep existing saved assignments readable as route hints during migration.
+
+Responsibilities:
+- Shared digestive topology discovers physical connectivity and routes food.
+- An amoeba digestive-layout planner chooses resource-saving adjacency and cube arrangements.
+- Formation detection validates actual, non-overlapping solid 27-block cubes.
+- Amoeba transport moves a formed structure together using the sinking animation, with its
+  inventories and digestion state intact. A validated move commits or restores as one operation.
+- The controller and player UI aggregate existing inventories; they never copy stored food.
+
+Revised remaining checkpoints (supersedes the earlier remaining list):
+1. Architecture/migration record — 5–10 minutes.
+2. All-mouth discovery over existing physical digestive links — 10–20 minutes.
+3. Resource-accounted wiring for additional mouths — 15–25 minutes.
+4. Safe queued-food sharing and intake distribution — 15–25 minutes.
+5. Resource-saving isolated-stomach adjacency — 15–25 minutes.
+6. Solid cube detection and natural arrangement planning — 15–25 minutes.
+7. Coordinated whole-structure sinking relocation — 20–30 minutes.
+8. Visible intake and player panel — 15–25 minutes.
+9. Combined inventory UI and 25% digestion-speed bonus — 20–30 minutes.
+10. Integration regressions and fixes — 20–30 minutes.
+
+Checkpoint 1 recorded. Preserve the full capacity of all 27 stomach queues. Never require a
+mouth per stomach or grant materials/duplicate inventories during arrangement or relocation.
