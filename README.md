@@ -264,6 +264,10 @@ Existing development worlds receive the missing fixture without resetting their 
 - `/potion_test status` — inspect the current case and saved results.
 - `/potion_test results` — print results with a copy-to-clipboard link.
 
+The resistance case deliberately applies one 5-point test hit after the potion lands.
+Resistance I reduces it to 4 damage (20%); the potion itself does no damage. The hologram
+and result label identify this hit explicitly.
+
 The fixture automatically returns to an unassembled state when finished and retains its results.
 Regression checks cover every dispenser case, shared core/readout data, one-dose routing across
 multiple hurtboxes, effect persistence, nonlethal poison, lethal wither, and permanent death.

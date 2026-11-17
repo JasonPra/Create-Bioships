@@ -75,6 +75,25 @@ public final class SharedPotionEffectsTests {
                     target.hasEffect(MobEffects.DAMAGE_RESISTANCE)
                         && weak.hasEffect(MobEffects.DAMAGE_RESISTANCE),
                     "Weak-point potion did not belong to grid");
+                double resistanceBefore = SubLevelHealth.status(body).current();
+                for (int i = 0; i < 5; i++) target.tick();
+                helper.assertTrue(
+                    SubLevelHealth.status(body).current() == resistanceBefore,
+                    "Resistance alone caused damage");
+                target.invulnerableTime = 0;
+                target.hurt(level.damageSources().generic(), 5);
+                helper.assertTrue(
+                    Math.abs(SubLevelHealth.status(body).current() - (resistanceBefore - 4)) < .001,
+                    "Resistance I did not reduce incoming damage by 20%");
+                for (int i = 0; i < 100; i++) target.tick();
+                helper.assertTrue(
+                    !target.hasEffect(MobEffects.DAMAGE_RESISTANCE), "Resistance did not expire");
+                double expiredBefore = SubLevelHealth.status(body).current();
+                target.invulnerableTime = 0;
+                target.hurt(level.damageSources().generic(), 5);
+                helper.assertTrue(
+                    Math.abs(SubLevelHealth.status(body).current() - (expiredBefore - 5)) < .001,
+                    "Expired resistance still reduced incoming damage");
                 target.removeAllEffects();
                 SubLevelHealth.heal(body, 100);
                 SubLevelHealth.damage(body, 28, "test");

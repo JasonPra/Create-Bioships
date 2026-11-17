@@ -214,13 +214,16 @@ public final class PotionFixture {
         effect == MobEffects.HEAL || effect == MobEffects.REGENERATION
             ? delta > 0
             : effect == MobEffects.DAMAGE_RESISTANCE
-                ? state.potionResistanceHit && delta < 0 && delta > -5
+                ? state.potionResistanceHit && Math.abs(delta + 4) < .001
                 : delta < 0;
     state.potionResults.add(
         BuiltInRegistries.MOB_EFFECT.getKey(effect.value())
             + ": "
             + (passed ? "PASS" : "FAIL")
-            + String.format(java.util.Locale.ROOT, " (HP %.1f → %.1f)", state.potionBefore, after));
+            + String.format(java.util.Locale.ROOT, " (HP %.1f → %.1f)", state.potionBefore, after)
+            + (effect == MobEffects.DAMAGE_RESISTANCE
+                ? " · test hit: 5 → 4 damage (20% reduced)"
+                : ""));
     state.potionIndex++;
     next(level);
   }
@@ -268,6 +271,7 @@ public final class PotionFixture {
                     + "Left: START · Right: RESET\n"
                     + "Six native splash potions; fresh subject each time.\n"
                     + "Inspect core or Vital Readout with goggles.\n"
+                    + "Resistance: test applies a 5 HP hit; expect 4 HP damage.\n"
                     + progress
                     + "\n"
                     + String.join("\n", results(level))),
