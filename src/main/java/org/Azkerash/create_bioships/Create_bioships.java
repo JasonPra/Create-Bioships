@@ -311,6 +311,9 @@ public class Create_bioships {
                                   .lightLevel(
                                       state -> state.getValue(NerveControlBlock.ACTIVE) ? 6 : 0))))
           .toList();
+  public static final DeferredItem<DeveloperTestTool> DEVELOPER_TEST_TOOL =
+      ITEMS.register(
+          "developer_test_tool", () -> new DeveloperTestTool(new Item.Properties().stacksTo(1)));
   public static final DeferredItem<BioshipWrenchItem> BIOSHIP_WRENCH =
       ITEMS.register(
           "bioship_wrench", () -> new BioshipWrenchItem(new Item.Properties().stacksTo(1)));
@@ -380,6 +383,7 @@ public class Create_bioships {
                       output.accept(GILLS.get());
                       if (AirshipPrototype.available()) output.accept(DOOR_ITEM.get());
                       output.accept(BIOSHIP_WRENCH.get());
+                      output.accept(DEVELOPER_TEST_TOOL.get());
                       output.accept(BIOSHIP_GOGGLES.get());
                       MOB_MEATS.values().forEach(item -> output.accept(item.get()));
                     })

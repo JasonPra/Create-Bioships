@@ -28,6 +28,38 @@ import net.neoforged.neoforge.gametest.*;
 @GameTestHolder(Create_bioships.MOD_ID)
 @PrefixGameTestTemplate(false)
 public class BioshipGameTests {
+  @GameTest(template = "test_empty", timeoutTicks = 200, batch = "end_fixture_geometry")
+  public static void developer_end_habitat_has_remote_islands_biome_and_void_gap(
+      GameTestHelper helper) {
+    var level = helper.getLevel();
+    var destination = EndHabitatLab.prepare(level);
+    helper.assertTrue(destination.getX() >= 4096, "End habitat is too close to other stations");
+    helper.assertTrue(
+        level
+            .getBiome(EndHabitatLab.CENTER)
+            .is(net.minecraft.world.level.biome.Biomes.END_HIGHLANDS),
+        "End habitat has the wrong biome");
+    helper.assertTrue(
+        level.getBlockState(EndHabitatLab.CENTER).is(Blocks.END_STONE),
+        "Central End island is absent");
+    helper.assertTrue(
+        level.getBlockState(EndHabitatLab.CENTER.offset(55, 0, 0)).isAir(),
+        "Floating islands have no air gap");
+    helper.assertTrue(
+        level.getBlockState(EndHabitatLab.CENTER.offset(64, 0, 0)).is(Blocks.GLASS),
+        "End enclosure has an open wall");
+    helper.assertTrue(
+        level.getBlockState(EndHabitatLab.CENTER.above(40)).is(Blocks.TINTED_GLASS),
+        "End habitat lacks daylight shade");
+    helper.assertTrue(
+        !EndHabitatLab.inside(EndHabitatLab.CENTER.getX() + 65, 112, 0),
+        "Escape destination counted as contained");
+    helper.assertTrue(
+        EndHabitatLab.prepare(level).equals(destination),
+        "Repeat visit rebuilt the habitat at a different location");
+    helper.succeed();
+  }
+
   private static int fixture;
 
   private static BlockPos location() {
@@ -8429,6 +8461,36 @@ public class BioshipGameTests {
     AquaticLab.build(level, new BlockPos(1000000, 80, 1000000));
     var center = AquaticLab.center(level);
     helper.assertTrue(
+        AquaticLab.RADIUS * 2 + 1 > 2 * 41 && AquaticLab.FISH_CAP >= 80,
+        "Ocean expansion is not more than twice the old width or fish budget was not scaled");
+    int low = Integer.MAX_VALUE, high = Integer.MIN_VALUE, grass = 0, kelp = 0, coral = 0;
+    for (int x = -AquaticLab.RADIUS + 2; x < AquaticLab.RADIUS - 1; x++)
+      for (int z = -AquaticLab.RADIUS + 2; z < AquaticLab.RADIUS - 1; z++) {
+        int floor = OceanLabTerrain.floor(x, z);
+        low = Math.min(low, floor);
+        high = Math.max(high, floor);
+        var root = level.getBlockState(center.offset(x, floor + 1, z));
+        if (root.is(Blocks.SEAGRASS)) grass++;
+        if (root.is(Blocks.KELP) || root.is(Blocks.KELP_PLANT)) kelp++;
+        if (root.is(net.minecraft.tags.BlockTags.CORAL_BLOCKS)) coral++;
+      }
+    helper.assertTrue(
+        high - low >= 5 && grass > 100 && kelp > 50 && coral > 10,
+        "Expanded ocean omitted relief/vegetation/reef: range="
+            + (high - low)
+            + " grass="
+            + grass
+            + " kelp="
+            + kelp
+            + " coral="
+            + coral);
+    helper.assertTrue(
+        level.getBlockState(center.offset(-16, -AquaticLab.DEPTH + 13, 12)).is(Blocks.STONE)
+            && level
+                .getFluidState(center.offset(-16, -AquaticLab.DEPTH + 10, 12))
+                .is(net.minecraft.tags.FluidTags.WATER),
+        "Seabed arch lacks its submerged opening or roof");
+    helper.assertTrue(
         level.getBlockState(center.above(AquaticLab.AIR_HEIGHT)).is(Blocks.GLASS),
         "Swimming test has no containment roof");
     helper.assertTrue(
@@ -8461,11 +8523,13 @@ public class BioshipGameTests {
     helper
         .startSequence()
         .thenWaitUntil(
-            () ->
-                helper.assertTrue(
-                    AquaticLab.fishCount(level) >= 8,
-                    "Waiting for real creature-owned chunks and initial fish to enter entity"
-                        + " simulation"))
+            () -> {
+              // The normal controller replenishes only once chunks actually simulate entities.
+              AquaticLab.replenish(level);
+              helper.assertTrue(
+                  AquaticLab.fishCount(level) >= 8,
+                  "Waiting for creature-owned chunks and fish replenishment to enter simulation");
+            })
         .thenExecute(
             () -> {
               for (var fish :
@@ -8479,7 +8543,10 @@ public class BioshipGameTests {
                     var counts = LabPopulation.counts(level, state.center);
                     helper.assertTrue(
                         AquaticLab.fishCount(level) == AquaticLab.FISH_CAP,
-                        "A full refill did not replenish fish immediately");
+                        "A full refill did not replenish fish immediately: "
+                            + AquaticLab.fishCount(level)
+                            + "/"
+                            + AquaticLab.FISH_CAP);
                     helper.assertTrue(
                         counts.prey() > 0
                             && counts.prey() <= EcosystemLab.PREY_CAP

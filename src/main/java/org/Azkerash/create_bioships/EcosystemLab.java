@@ -69,14 +69,17 @@ public final class EcosystemLab {
 
   static boolean lab(ServerLevel level) {
     return level == level.getServer().overworld()
-        && level.getChunkSource().getGenerator().getBiomeSource().possibleBiomes().stream()
-            .anyMatch(b -> b.is(BIOME));
+        && (NavigationLab.lab(level)
+            || level.getChunkSource().getGenerator().getBiomeSource().possibleBiomes().stream()
+                .anyMatch(b -> b.is(BIOME)));
   }
 
   @SubscribeEvent
   public static void start(ServerStartedEvent event) {
     var level = event.getServer().overworld();
-    if (lab(level)) prepare(level, level.getSharedSpawnPos());
+    if (lab(level))
+      prepare(
+          level, NavigationLab.lab(level) ? new BlockPos(0, 80, 320) : level.getSharedSpawnPos());
   }
 
   static void prepare(ServerLevel level, BlockPos center) {
@@ -92,15 +95,16 @@ public final class EcosystemLab {
       return;
     }
     state.center = center.immutable();
+    if (NavigationLab.lab(level)) LabHabitatTerrain.land(level, center);
     int top = level.getHeight(Heightmap.Types.MOTION_BLOCKING, center.getX(), center.getZ()) + 40;
     for (int x = -RADIUS; x <= RADIUS; x++)
       for (int z = -RADIUS; z <= RADIUS; z++) {
         if (Math.abs(x) != RADIUS && Math.abs(z) != RADIUS) continue;
-        int bottom = level.getMinBuildHeight();
+        int bottom = NavigationLab.lab(level) ? center.getY() - 12 : level.getMinBuildHeight();
         for (int y = bottom; y < top; y++)
           level.setBlock(
               new BlockPos(center.getX() + x, y, center.getZ() + z),
-              Blocks.BARRIER.defaultBlockState(),
+              (NavigationLab.lab(level) ? Blocks.GLASS : Blocks.BARRIER).defaultBlockState(),
               2);
       }
     for (int i = 0; i < 12; i++) {
@@ -293,7 +297,7 @@ public final class EcosystemLab {
                               var level = ctx.getSource().getLevel();
                               if (!lab(level)) return 0;
                               AquaticLab.build(level, State.get(level).center);
-                              var pos = AquaticLab.center(level).offset(-17, 2, 0);
+                              var pos = AquaticLab.viewpoint(level);
                               if (ctx.getSource().getEntity()
                                   instanceof net.minecraft.server.level.ServerPlayer player)
                                 player.teleportTo(pos.getX() + .5, pos.getY(), pos.getZ() + .5);

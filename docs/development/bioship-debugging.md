@@ -66,3 +66,26 @@ The existing `/bioship_debug inspect <id>` snapshot also includes `MaxHealth` (c
 ## Focused development checks
 
 Use `./gradlew runGameTestServer -PbioshipTests='(?i)resting_mouth|broken_core|replacement_core'` to select test names with a Java regular expression. The development-only selector prints the matched count and rejects an empty selection. `./gradlew build runGameTestServer` retains the full default suite. This is a coding aid; persistent prepared world scenarios and result boards are queued separately. No new in-game command is introduced by this selector.
+
+### Combined developer lab navigator (current checkpoint)
+
+New developer worlds use a void superflat base. Navigation regression courses have a bedrock
+platform; ecosystem chambers carry their own generated terrain. The former ecosystem preset
+is retained as a compatibility alias for the combined developer preset.
+
+The **Developer Test Navigator** is granted on login to a developer world. It can also be obtained
+with `/give @s create_bioships:developer_test_tool`. Right-click to open its vanilla inventory UI:
+
+- **General regression tests:** flat maze; elevation/tall-grass maze.
+- **Ecosystem tests:** land enclosure; ocean aquarium; remote End-island enclosure at X=8192.
+
+Destination clicks teleport the operator. The inventory is a selector, not a source of free items.
+Other feature regression stations and persistent result reporting are not yet exposed here.
+The End habitat is generated on first visit, with an actual End Highlands biome and five islands.
+It has a glass shell, shaded roof, a void buffer and cancels Enderman teleports outside its bounds.
+Its population is capped at twelve and replenishes every 6000 game ticks while actively simulated.
+This does not change spawning or teleport rules in ordinary worlds.
+
+Existing saves do not have their world generator replaced by an update. Create a new developer
+world to get the void layout. The ocean layout has geometry/refill checks; graphical navigation,
+End population/escape checks and the final combined-world walkthrough remain pending.

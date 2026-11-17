@@ -106,7 +106,7 @@ public final class NavigationLab {
     }
   }
 
-  private static boolean lab(ServerLevel level) {
+  static boolean lab(ServerLevel level) {
     return level == level.getServer().overworld()
         && level.getChunkSource().getGenerator().getBiomeSource().possibleBiomes().stream()
             .anyMatch(holder -> holder.is(BIOME));
@@ -139,6 +139,9 @@ public final class NavigationLab {
   }
 
   private static void build(ServerLevel level) {
+    for (int x = -16; x <= 64; x++)
+      for (int z = -32; z <= 160; z++)
+        level.setBlock(new BlockPos(x, 79, z), Blocks.BEDROCK.defaultBlockState(), 2);
     for (var origin : List.of(FLAT, ELEVATED)) {
       for (var p : BlockPos.betweenClosed(origin.offset(-3, 0, -11), origin.offset(24, 11, 11)))
         level.setBlock(p, Blocks.AIR.defaultBlockState(), 3);

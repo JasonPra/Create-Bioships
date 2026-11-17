@@ -12,3 +12,26 @@ Six milestones remain open. Developer tools are now the highest priority, ahead 
 Recent checkpoints: health/blast adaptations d026d1b; compaction fa7c5f3; socket identity 1ba50c9; protected core and initial habitat respiration af40e24. The initial affordable-first-eye policy in af40e24 is superseded by the requested need-only directional eye policy, pending implementation. Normal 3,600-tick replay passed; the 10,000-TPS-target continuation failed its watchdog and remains unqualified.
 
 Next batch (highest priority): persistent prepared regression-world scenarios and visible results; expand the aquatic arena beyond twice its current dimensions with realistic seabed relief, rocks/arches, seagrass, coral, kelp and scaled fish populations. Preserve/reset/refill existing tools and world presets. After that, replace conflicting growth/eye decisions before advanced creature features.
+
+### Developer lab layout update (in progress)
+
+Developer tools take precedence over creature feature work. Consolidate navigation/regression
+and ecosystem areas into the superflat developer preset; retain the old preset ID as an alias.
+The hotbar Developer Test Navigator uses a vanilla chest selector with separate Regression
+and Ecosystem sections. Existing maze and habitat destinations are implemented; full per-feature
+regression stations and persistent PASS/FAIL reporting remain pending.
+
+Ocean target: 161-block interior width (about ten chunks), procedural relief, rock arch, reef,
+kelp and seagrass; capped fish refill on the existing five-minute ecosystem controller.
+Decorative seabed dioramas occupy the four-block outer buffer. The land chamber now
+contains generated relief, trees, shaded alcoves, grass and a Forest biome assignment.
+The base preset now uses void; regression platforms alone use a bedrock floor.
+
+Implemented a large End-biome floating-island enclosure at X=8192,
+with navigator access, real biome assignment, Enderman population control and escape detection.
+Do not mark the End habitat ready until teleport containment has been exercised.
+
+Focused habitat checks passed 2/2; developer navigator and the combined-world first-boot
+walkthrough remain to be exercised graphically. The successful test process still logged a Sable
+`Body has been removed` shutdown exception; track cleanup separately before final signoff.
+Six creature milestones remain open; no additional creature behavior work was included here.

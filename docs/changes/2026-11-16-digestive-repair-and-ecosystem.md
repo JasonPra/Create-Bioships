@@ -306,3 +306,23 @@ Further queued requirements: prohibit leg mounts on lungs as well as the core an
 
 - Focused selector verification passed: 4/168 selected tests (timed fusion, closed jaw, destroyed core drops and replacement on a retained wreck), all four passed in a 47-second run. Full default suite remains 168 tests; the selector is excluded from the distributed mod.
 - Latest user priority supersedes the next-work line above: developer tools first, including persistent prepared scenarios/result reporting and an aquatic arena enlarged beyond twice the current dimensions with ocean-like seabed obstacles, vegetation/coral and a scaled fish population. Further creature implementation pauses behind those tools.
+
+### Combined developer world and hotbar navigator checkpoint
+
+- Added an operator-only vanilla inventory navigator, with Regression and Ecosystem categories
+  and teleport destinations for both navigation mazes and land/ocean/End habitats.
+- New lab worlds use void superflat generation; regression courses have a bedrock strip.
+  The old ecosystem preset ID remains an alias. Existing world generators are not migrated.
+- Added suspended generated forest terrain and a 161-block-wide procedural ocean aquarium,
+  including variable seabed, swim-through rocks, coral, kelp, seagrass, and an isolated scenic buffer.
+- Added a remote End Highlands enclosure at X=8192, five floating islands and a shaded roof.
+  Enderman teleport attempts leaving the enclosure are cancelled; capped population replenishes
+  every five simulated minutes while loaded. This is developer-world containment only.
+- Aquarium spawning now selects simulated water columns rather than trying unloaded positions.
+- Full per-feature regression selection/reporting and graphical/End escape QA remain unfinished.
+  This checkpoint is not a completed developer-tools milestone.
+
+Validation for this checkpoint: the focused aquatic and End geometry GameTests both passed
+(`combined-lab-focused-tests.log`, 2/2). The process exited successfully, but its shutdown logged
+Sable `RuntimeException: Body has been removed`; shutdown cleanup remains a tracked defect.
+Do not describe this run as error-free. Full regression and graphical UI/escape QA remain pending.

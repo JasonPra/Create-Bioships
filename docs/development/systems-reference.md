@@ -146,7 +146,7 @@ Registers blocks, items, menus and entities; placing a core creates its Sable bo
 
 #### Create_bioships
 
-Source: `src/main/java/org/Azkerash/create_bioships/Create_bioships.java` (420 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/Create_bioships.java` (424 lines).
 
 ```java
 public class Create_bioships
@@ -227,23 +227,25 @@ public class Create_bioships
 
   public static final java.util.List<DeferredBlock<NerveControlBlock>> CONTROLS; // line 297
 
-  public static final DeferredItem<BioshipWrenchItem> BIOSHIP_WRENCH; // line 313
+  public static final DeferredItem<DeveloperTestTool> DEVELOPER_TEST_TOOL; // line 313
 
-  public static final DeferredItem<BioshipGogglesItem> BIOSHIP_GOGGLES; // line 316
+  public static final DeferredItem<BioshipWrenchItem> BIOSHIP_WRENCH; // line 316
 
-  public static final DeferredItem<BlockItem> CORE_ITEM; // line 319
+  public static final DeferredItem<BioshipGogglesItem> BIOSHIP_GOGGLES; // line 319
 
-  public static final DeferredItem<net.minecraft.world.item.DoubleHighBlockItem> DOOR_ITEM; // line 321
+  public static final DeferredItem<BlockItem> CORE_ITEM; // line 322
 
-  public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<LivingCoreBlockEntity>> CORE_ENTITY; // line 335
+  public static final DeferredItem<net.minecraft.world.item.DoubleHighBlockItem> DOOR_ITEM; // line 324
 
-  public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<StomachBlockEntity>> STOMACH_ENTITY; // line 344
+  public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<LivingCoreBlockEntity>> CORE_ENTITY; // line 338
 
-  public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<FeedingMouthBlockEntity>> FEEDING_MOUTH_ENTITY; // line 351
+  public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<StomachBlockEntity>> STOMACH_ENTITY; // line 347
 
-  public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TentacleBlockEntity>> TENTACLE_ENTITY; // line 358
+  public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<FeedingMouthBlockEntity>> FEEDING_MOUTH_ENTITY; // line 354
 
-  public Create_bioships(IEventBus bus); // line 387
+  public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TentacleBlockEntity>> TENTACLE_ENTITY; // line 361
+
+  public Create_bioships(IEventBus bus); // line 391
 
 ```
 
@@ -4372,6 +4374,10 @@ Normal-world flat/elevation glass courses, world preset and reset command.
   NavigationLab
   EcosystemLab
   AquaticLab
+  OceanLabTerrain
+  LabHabitatTerrain
+  EndHabitatLab
+  DeveloperTestTool
   LabPopulation
   LabStarters
 ```
@@ -4379,7 +4385,7 @@ Normal-world flat/elevation glass courses, world preset and reset command.
 
 #### NavigationLab
 
-Source: `src/main/java/org/Azkerash/create_bioships/NavigationLab.java` (275 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/NavigationLab.java` (278 lines).
 
 ```java
 public final class NavigationLab
@@ -4396,26 +4402,26 @@ public final class NavigationLab
 
   public static void place(ServerLevel level, Course course); // line 99
 
-  private static boolean lab(ServerLevel level); // line 107
+  static boolean lab(ServerLevel level); // line 107
 
   private static final class State extends SavedData; // line 113
 
   private static void build(ServerLevel level); // line 139
 
-  private static void seed(ServerLevel level, UUID owner); // line 165
+  private static void seed(ServerLevel level, UUID owner); // line 168
 
-  public static void started(ServerStartedEvent event); // line 202
+  public static void started(ServerStartedEvent event); // line 205
 
-  public static void joined(PlayerEvent.PlayerLoggedInEvent event); // line 208
+  public static void joined(PlayerEvent.PlayerLoggedInEvent event); // line 211
 
-  public static void commands(RegisterCommandsEvent event); // line 224
+  public static void commands(RegisterCommandsEvent event); // line 227
 
 ```
 
 
 #### EcosystemLab
 
-Source: `src/main/java/org/Azkerash/create_bioships/EcosystemLab.java` (342 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/EcosystemLab.java` (346 lines).
 
 ```java
 public final class EcosystemLab
@@ -4428,57 +4434,141 @@ public final class EcosystemLab
 
   static boolean lab(ServerLevel level); // line 68
 
-  public static void start(ServerStartedEvent event); // line 74
+  public static void start(ServerStartedEvent event); // line 75
 
-  static void prepare(ServerLevel level, BlockPos center); // line 80
+  static void prepare(ServerLevel level, BlockPos center); // line 83
 
-  private static void installFixtures(ServerLevel level, State state); // line 150
+  private static void installFixtures(ServerLevel level, State state); // line 154
 
-  static void reset(ServerLevel level); // line 158
+  static void reset(ServerLevel level); // line 162
 
-  static BlockPos habitat(ServerLevel level, BlockPos base, int kind); // line 173
+  static BlockPos habitat(ServerLevel level, BlockPos base, int kind); // line 177
 
-  public static void tick(ServerTickEvent.Post event); // line 206
+  public static void tick(ServerTickEvent.Post event); // line 210
 
-  static void sunProtection(Mob mob); // line 218
+  static void sunProtection(Mob mob); // line 222
 
-  public static void join(PlayerEvent.PlayerLoggedInEvent event); // line 225
+  public static void join(PlayerEvent.PlayerLoggedInEvent event); // line 229
 
-  public static void commands(net.neoforged.neoforge.event.RegisterCommandsEvent event); // line 245
+  public static void commands(net.neoforged.neoforge.event.RegisterCommandsEvent event); // line 249
 
 ```
 
 
 #### AquaticLab
 
-Source: `src/main/java/org/Azkerash/create_bioships/AquaticLab.java` (233 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/AquaticLab.java` (334 lines).
 
 ```java
 final class AquaticLab
 
   static final int RADIUS, DEPTH, AIR_HEIGHT, FISH_CAP; // line 16
 
-  static final int ISOLATION_RADIUS; // line 17
+  private static final int LEGACY_RADIUS, VERSION; // line 17
 
-  private static final class State extends SavedData; // line 19
+  static final int ISOLATION_RADIUS; // line 18
 
-  static BlockPos center(ServerLevel level); // line 48
+  private static final class State extends SavedData; // line 20
 
-  static void build(ServerLevel level, BlockPos landCenter); // line 52
+  static BlockPos center(ServerLevel level); // line 52
 
-  static void isolate(ServerLevel level, BlockPos center); // line 126
+  static void build(ServerLevel level, BlockPos landCenter); // line 56
 
-  private static AABB bounds(BlockPos center); // line 178
+  static BlockPos viewpoint(ServerLevel level); // line 156
 
-  static int fishCount(ServerLevel level); // line 184
+  private static void plants(ServerLevel level, BlockPos center, boolean upgrading); // line 160
 
-  static void replenish(ServerLevel level); // line 191
+  static void isolate(ServerLevel level, BlockPos center); // line 184
 
-  static boolean contains(ServerLevel level, net.minecraft.world.phys.Vec3 point); // line 201
+  private static AABB bounds(BlockPos center); // line 250
 
-  static void reset(ServerLevel level, BlockPos landCenter); // line 205
+  static int fishCount(ServerLevel level); // line 256
 
-  private static void spawnFish(ServerLevel level, BlockPos center); // line 215
+  static void replenish(ServerLevel level); // line 263
+
+  static boolean contains(ServerLevel level, net.minecraft.world.phys.Vec3 point); // line 273
+
+  static void reset(ServerLevel level, BlockPos landCenter); // line 277
+
+  private record SpawnSites(long tick, BlockPos center, java.util.List<BlockPos> sites); // line 291
+
+  private static final java.util.Map<ServerLevel, SpawnSites> SPAWN_SITES; // line 293
+
+  private static void spawnFish(ServerLevel level, BlockPos center); // line 296
+
+```
+
+
+#### OceanLabTerrain
+
+Source: `src/main/java/org/Azkerash/create_bioships/OceanLabTerrain.java` (51 lines).
+
+```java
+final class OceanLabTerrain
+
+  static int floor(int x, int z); // line 7
+
+  static int pattern(int x, int z); // line 15
+
+  static Block sediment(int x, int z); // line 19
+
+  static Block rock(int x, int y, int z); // line 24
+
+```
+
+
+#### LabHabitatTerrain
+
+Source: `src/main/java/org/Azkerash/create_bioships/LabHabitatTerrain.java` (70 lines).
+
+```java
+final class LabHabitatTerrain
+
+  static void land(ServerLevel level, BlockPos center); // line 8
+
+```
+
+
+#### EndHabitatLab
+
+Source: `src/main/java/org/Azkerash/create_bioships/EndHabitatLab.java` (125 lines).
+
+```java
+final class EndHabitatLab
+
+  static final BlockPos CENTER; // line 16
+
+  static final int RADIUS; // line 17
+
+  static boolean inside(double x, double y, double z); // line 18
+
+  static BlockPos prepare(ServerLevel level); // line 25
+
+  private static final java.util.Map<ServerLevel, Long> NEXT_REFILL; // line 88
+
+  public static void population(ServerTickEvent.Post event); // line 90
+
+  public static void contain(EntityTeleportEvent.EnderEntity event); // line 114
+
+```
+
+
+#### DeveloperTestTool
+
+Source: `src/main/java/org/Azkerash/create_bioships/DeveloperTestTool.java` (119 lines).
+
+```java
+public final class DeveloperTestTool extends Item
+
+  public DeveloperTestTool(Properties properties); // line 18
+
+  public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand); // line 21
+
+  private static ItemStack icon(Item item, String name); // line 27
+
+  private static void open(ServerPlayer player, int section); // line 33
+
+  public static void joined(PlayerEvent.PlayerLoggedInEvent event); // line 95
 
 ```
 
