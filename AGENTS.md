@@ -19,3 +19,10 @@ The user approved a focused six-task amoeba modularization refactor, documented 
 `docs/development/amoeba-refactor.md`. Its boundaries were discussed and approved in chat.
 All six tasks are complete. The user prefers individual task pushes and remaining-task counts.
 This authorization supersedes the earlier stop instruction for this refactor only.
+
+## Authorized package organization
+
+The user approved the six-task package-only ownership pass in
+`docs/development/package-organization.md`, including `disabled.wip` for preserved prototypes.
+Proceed in that order, push after each completed task, and report how many tasks remain.
+Keep gameplay and feature gates unchanged; the earlier feature backlog remains cancelled.
