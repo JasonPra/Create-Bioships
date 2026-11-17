@@ -407,6 +407,8 @@ public final class DigestiveSystem {
       Set<BlockPos> starter,
       Map<BlockPos, net.minecraft.world.level.block.state.BlockState> existing) {
     wanted = new LinkedHashSet<>(wanted);
+    for (var route : DigestiveIntakes.routes(core).routes())
+      for (var point : route.tubes()) wanted.add(new BlockPos(point.x(), point.y(), point.z()));
     for (var other : stomachs(core))
       if (other != stomach) {
         other.gutPath.stream().filter(existing::containsKey).forEach(wanted::add);
@@ -487,41 +489,41 @@ public final class DigestiveSystem {
   }
 
   public static void connect(LivingCoreBlockEntity core, ServerSubLevel ship) {
-    var mouths = new LinkedHashSet<>(mouths(core));
+    var mouths = mouths(core);
     var stomachs = stomachs(core);
-    var assignments = new LinkedHashMap<StomachBlockEntity, BlockPos>();
+    // Preserve saved routes as construction hints, not exclusive intake ownership.
     for (var stomach : stomachs)
-      if (stomach.connectedMouth != null && mouths.remove(stomach.connectedMouth))
-        assignments.put(stomach, stomach.connectedMouth);
+      if (stomach.connectedMouth != null && mouths.contains(stomach.connectedMouth))
+        connectPair(core, ship, stomach, stomach.connectedMouth, true);
     for (var stomach : stomachs)
-      if (!assignments.containsKey(stomach) && !mouths.isEmpty()) {
-        var mouth =
-            mouths.stream()
-                .min(Comparator.comparingDouble(p -> p.distSqr(stomach.getBlockPos())))
-                .orElseThrow();
-        mouths.remove(mouth);
-        assignments.put(stomach, mouth);
+      if (!stomach.connected(core)) {
+        var candidates = new ArrayList<>(mouths);
+        candidates.sort(Comparator.comparingDouble(p -> p.distSqr(stomach.getBlockPos())));
+        for (var mouth : candidates) if (connectPair(core, ship, stomach, mouth, true)) break;
       }
-    for (var stomach : stomachs)
-      if (!assignments.containsKey(stomach)) {
-        stomach.connectedMouth = null;
-        stomach.setChanged();
+    for (var mouth : mouths)
+      if (forMouth(core, mouth) == null) {
+        var candidates = new ArrayList<>(stomachs);
+        candidates.sort(Comparator.comparingDouble(s -> mouth.distSqr(s.getBlockPos())));
+        for (var stomach : candidates) if (connectPair(core, ship, stomach, mouth, false)) break;
       }
-    for (var assignment : assignments.entrySet())
-      connectPair(core, ship, assignment.getKey(), assignment.getValue());
     BioshipDigestiveRepair.invalidate(core);
     BioshipAnatomy.invalidate(core);
   }
 
-  private static void connectPair(
-      LivingCoreBlockEntity core, ServerSubLevel ship, StomachBlockEntity stomach, BlockPos mouth) {
+  private static boolean connectPair(
+      LivingCoreBlockEntity core,
+      ServerSubLevel ship,
+      StomachBlockEntity stomach,
+      BlockPos mouth,
+      boolean primary) {
     var main = findPath(core, ship, mouth, stomach.getBlockPos());
-    if (main == null) return;
+    if (main == null) return false;
     var existing = tubes(core);
     Set<BlockPos> starter = stomach.tubeBootstrapped ? Set.of() : new HashSet<>(main);
     var wanted = new LinkedHashSet<>(main);
     var selected = plan(core, stomach, wanted, starter, existing);
-    if (!affordable(stomach, selected)) return;
+    if (!affordable(stomach, selected)) return false;
     Map<BlockPos, List<BlockPos>> branches = new LinkedHashMap<>();
     var stores =
         BioshipIntegration.blockEntities(ship).stream()
@@ -536,7 +538,8 @@ public final class DigestiveSystem {
             .sorted(
                 java.util.Comparator.comparing(e -> !stomach.sacPaths.containsKey(e.getBlockPos())))
             .toList();
-    for (var store : stores) {
+    for (var store :
+        primary ? stores : List.<net.minecraft.world.level.block.entity.BlockEntity>of()) {
       var path = findPath(core, ship, stomach.getBlockPos(), store.getBlockPos());
       if (path == null) continue;
       var trial = new LinkedHashSet<>(wanted);
@@ -553,9 +556,9 @@ public final class DigestiveSystem {
       var state = level.getBlockState(next);
       if (!state.isAir()
           && !BioshipTissue.isTissue(state)
-          && !state.is(Create_bioships.INTESTINE.get())) return;
+          && !state.is(Create_bioships.INTESTINE.get())) return false;
     }
-    if (!new MaterialCost(selected.purchases, selected.purchases, 0).pay(stomach)) return;
+    if (!new MaterialCost(selected.purchases, selected.purchases, 0).pay(stomach)) return false;
     stomach.paidTubeStock += selected.purchases;
     for (var old : selected.retired) {
       var state = existing.get(old);
@@ -580,7 +583,7 @@ public final class DigestiveSystem {
         stomach.paidTubeStock--;
         paid = true;
       } else {
-        if (!new MaterialCost(1, 1, 0).pay(stomach)) return;
+        if (!new MaterialCost(1, 1, 0).pay(stomach)) return false;
         paid = true;
       }
       level.setBlock(
@@ -597,13 +600,16 @@ public final class DigestiveSystem {
       var connected = Create_bioships.INTESTINE.get().connections(state, level, next);
       if (!state.equals(connected)) level.setBlock(next, connected, 3);
     }
-    stomach.gutPath.clear();
-    stomach.gutPath.addAll(main);
-    stomach.sacPaths.clear();
-    stomach.sacPaths.putAll(branches);
-    stomach.connectedMouth = mouth;
+    if (primary) {
+      stomach.gutPath.clear();
+      stomach.gutPath.addAll(main);
+      stomach.sacPaths.clear();
+      stomach.sacPaths.putAll(branches);
+      stomach.connectedMouth = mouth;
+    }
     stomach.tubeBootstrapped = true;
     stomach.setChanged();
+    return true;
   }
 
   private static boolean connectedStore(
@@ -647,7 +653,7 @@ public final class DigestiveSystem {
     if (core.ship() == null || core.body().dead()) return false;
     var stomachs = stomachs(core);
     int required = BioshipDigestiveGrowth.target(core);
-    return mouths(core).size() >= BioshipDigestiveGrowth.mouthTarget(core)
+    return !mouths(core).isEmpty()
         && stomachs.size() >= required
         && stomachs.stream().allMatch(stomach -> stomach.connected(core));
   }

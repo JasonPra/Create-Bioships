@@ -26,7 +26,7 @@ public final class BioshipDigestiveGrowth {
   }
 
   static int mouthTarget(LivingCoreBlockEntity core) {
-    return Math.max(1, StomachConnections.groups(core).size());
+    return 1;
   }
 
   static Plan plan(LivingCoreBlockEntity core) {

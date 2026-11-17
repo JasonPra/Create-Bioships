@@ -6988,58 +6988,55 @@ public class BioshipGameTests {
     }
   }
 
-  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "independent_digestive_pairs")
-  public static void each_mouth_requires_a_distinct_stomach_and_its_own_intact_intestine_path(
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "shared_digestive_intakes")
+  public static void additional_mouth_wiring_costs_materials_and_preserves_existing_intakes(
       GameTestHelper helper) {
     var ship = assemble(helper);
-    var core = core(ship);
-    var level = helper.getLevel();
-    var first = digestive(helper, core, false);
-    var mouth1 = core.getBlockPos().north();
-    var mouth2 = core.getBlockPos().south();
-    var stomach2 = core.getBlockPos().east();
-    level.setBlock(
-        mouth2,
-        Create_bioships.FEEDING_MOUTH
-            .get()
-            .defaultBlockState()
-            .setValue(FeedingMouthBlock.FACING, Direction.SOUTH),
-        3);
-    level.setBlock(stomach2, Create_bioships.STOMACH.get().defaultBlockState(), 3);
-    DigestiveSystem.connect(core, ship);
-    var second = (StomachBlockEntity) level.getBlockEntity(stomach2);
     try {
-      helper.assertTrue(
-          DigestiveSystem.forMouth(core, mouth1) == first
-              && DigestiveSystem.forMouth(core, mouth2) == second,
-          "Mouths shared a stomach or lost their own assignment");
-      helper.assertTrue(
-          !first.gutPath.isEmpty() && !second.gutPath.isEmpty(), "Pairs lack physical intestines");
-      helper.assertTrue(
-          DigestiveSystem.offerFood(core, mouth1, new ItemStack(Items.BEEF), false)
-              && DigestiveSystem.offerFood(core, mouth2, new ItemStack(Items.CHICKEN), false),
-          "Independent intakes did not accept food");
-      helper.assertTrue(
-          first.queuedFood() == 1 && second.queuedFood() == 1,
-          "Feeding was duplicated or redirected between stomachs");
-      var extra = core.getBlockPos().above(3);
+      var core = core(ship);
+      var level = helper.getLevel();
+      var stomach = digestive(helper, core, false);
+      var original = core.getBlockPos().north();
+      var extra = stomach.getBlockPos().west(4);
+      stomach.freeTubeStock = 0;
+      stomach.paidTubeStock = 0;
       level.setBlock(
           extra,
           Create_bioships.FEEDING_MOUTH
               .get()
               .defaultBlockState()
-              .setValue(FeedingMouthBlock.FACING, Direction.UP),
+              .setValue(FeedingMouthBlock.FACING, Direction.WEST),
           3);
       DigestiveSystem.connect(core, ship);
       helper.assertTrue(
-          !DigestiveSystem.offerFood(core, extra, new ItemStack(Items.BEEF), false),
-          "An extra mouth stole another stomach's intake");
-      var isolatedTube =
-          first.gutPath.stream().filter(p -> !second.gutPath.contains(p)).findFirst().orElseThrow();
-      level.removeBlock(isolatedTube, false);
+          DigestiveSystem.forMouth(core, extra) == null,
+          "Extra intake grew free intestines despite exhausted resources");
+      stomach.creditLocal("biomancy:flesh_bits", 32);
+      stomach.creditLocal("biomancy:elastic_fibers", 32);
+      DigestiveSystem.connect(core, ship);
       helper.assertTrue(
-          !first.connected(core) && second.connected(core),
-          "Breaking one pair's tube disabled or bypassed another pair");
+          DigestiveSystem.forMouth(core, extra) == stomach
+              && DigestiveSystem.forMouth(core, original) == stomach,
+          "Additional mouth failed to join the existing stomach network");
+      helper.assertTrue(
+          stomach.localMaterial("biomancy:flesh_bits") < 32
+              && stomach.localMaterial("biomancy:elastic_fibers") < 32,
+          "Extra intake did not pay for its intestine route");
+      DigestiveSystem.connect(core, ship);
+      helper.assertTrue(
+          DigestiveSystem.offerFood(core, extra, new ItemStack(Items.BEEF), false)
+              && DigestiveSystem.offerFood(core, original, new ItemStack(Items.CHICKEN), false)
+              && stomach.queuedFood() == 2,
+          "Route maintenance lost an intake or duplicated food");
+      var cell =
+          new org.Azkerash.create_bioships.creature.digestion.DigestiveNetwork.Cell(
+              extra.getX(), extra.getY(), extra.getZ());
+      var tube = DigestiveIntakes.routes(core).route(cell).tubes().getFirst();
+      level.removeBlock(new BlockPos(tube.x(), tube.y(), tube.z()), false);
+      helper.assertTrue(
+          DigestiveSystem.forMouth(core, extra) == null
+              && DigestiveSystem.forMouth(core, original) == stomach,
+          "Breaking an intake tube retained stale connectivity or disabled the other intake");
       helper.succeed();
     } finally {
       cleanup(helper, ship);

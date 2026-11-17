@@ -84,3 +84,9 @@ and branched intake paths without exclusive assignments. Cached routes validate 
 and tube face flags. Extra mouths no longer increase the stomach-growth quota. Four new pure
 routing cases, all unit tests, and two focused live GameTests passed. Automatic construction of
 additional intake routes follows in checkpoint 3.
+
+Revised checkpoint 3 complete: extra mouths receive resource-accounted intestine routes to
+existing stomachs. Route maintenance preserves all working intake branches; removing one branch
+disables that intake without disabling another. The obsolete exclusive-pair regression was
+replaced with paid many-mouth routing assertions. All unit tests and three focused live tests
+passed. Mouth count no longer dictates stomach count, nor does stomach count dictate mouth count.
