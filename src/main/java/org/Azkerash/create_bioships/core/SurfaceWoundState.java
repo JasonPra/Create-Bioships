@@ -34,6 +34,13 @@ public final class SurfaceWoundState {
     return wounds.values().stream().filter(w -> w.active(now)).toList();
   }
 
+  public List<Wound> removeIf(java.util.function.Predicate<Surface> predicate) {
+    var removed =
+        wounds.values().stream().filter(wound -> predicate.test(wound.surface())).toList();
+    removed.forEach(wound -> wounds.remove(wound.surface()));
+    return removed;
+  }
+
   public ListTag save(long now) {
     var list = new ListTag();
     for (var wound : active(now)) {

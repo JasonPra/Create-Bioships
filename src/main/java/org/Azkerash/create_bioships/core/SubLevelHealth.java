@@ -81,14 +81,14 @@ public final class SubLevelHealth {
       return removal.get();
     } finally {
       var after = status(body);
+      if (added) active.remove(body);
+      if (active.isEmpty()) SAFE_REMOVALS.remove();
       store(
           body,
           Math.min(before.current(), after.current()),
           after.maximum(),
           before.dead() || after.dead(),
           after.causeOfDeath());
-      if (added) active.remove(body);
-      if (active.isEmpty()) SAFE_REMOVALS.remove();
     }
   }
 
@@ -137,5 +137,7 @@ public final class SubLevelHealth {
     else if (current == 0) data.putString("cause", cause.isEmpty() ? "component_loss" : cause);
     root.put(DATA, data);
     body.setUserDataTag(root);
+    if (!dead && current > 0 && current == maximum && !SAFE_REMOVALS.get().contains(body))
+      org.Azkerash.create_bioships.combat.SubLevelWounds.healEyes(body);
   }
 }

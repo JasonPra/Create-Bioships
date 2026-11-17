@@ -41,7 +41,12 @@ public final class SubLevelWoundRenderer {
       WOUNDS.clear();
       world = level;
     }
-    WOUNDS.put(new Key(wound.body(), wound.cell(), wound.face()), wound);
+    var key = new Key(wound.body(), wound.cell(), wound.face());
+    if (wound.duration() <= 0) {
+      WOUNDS.remove(key);
+      return;
+    }
+    WOUNDS.put(key, wound);
     while (WOUNDS.size() > 512) WOUNDS.remove(WOUNDS.keySet().iterator().next());
   }
 

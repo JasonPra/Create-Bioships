@@ -222,3 +222,9 @@ ordinary Create interactions outside grids are retained. Both normal and sneak w
 on creature grids preserve existing health through temporary block removal/restoration, so a
 rollback cannot heal the grid. Core pickup/rotation stays disabled. Invisible combat adapters
 also disable vanilla's building-obstruction flag, allowing placement on all six core faces.
+
+Reaching full health on a living grid clears wound state from the core and both eye variants.
+The wound system saves the cleared state and sends removal updates to clients, allowing normal
+blinking to resume. Other tissue wounds retain their normal fade lifetime. Full-health recovery
+is deferred until a wrench operation finishes, so temporary block removal/restoration cannot heal
+eye injuries while the grid remains damaged. Dead grids are never treated as healed or revived.
