@@ -129,3 +129,35 @@ four ticks: 25% faster with unchanged recipe costs/yields. Live tests filled all
 capacity, inspected all nine pages, checked display isolation/shared resource totals and exercised
 the work bonus. Three focused live tests and all unit tests passed. Graphical layout QA is not yet
 performed; server behavior and all client source compilation passed.
+
+Intestine optimization clarification: the user reaffirmed direct-contact-only queued-food sharing.
+Intestines behave as the physical intake graph for all mouths and connected stomach destinations.
+Topology revisions invalidate cached routes immediately on block or connection-face changes.
+
+## Final regression milestone: six smaller checkpoints
+
+Prioritized at the user's request:
+1. Fixture isolation — 3–5 minutes.
+2. Digestive formation during defense — 5–15 minutes if repair is needed.
+3. Wreck-versus-hunting eligibility/priority — 5–15 minutes if repair is needed.
+4. Wall climbing — 10–20 minutes if repair is needed.
+5. Stepped glass maze — 10–20 minutes if repair is needed.
+6. Full validation, changelog and final push — 5–10 minutes.
+
+Mini-checkpoint 1 complete: ordinary regression coordinates are retained; plots intersecting the
+fixed End habitat are moved outside its bounds. A blanket relocation had introduced coordinate
+sensitivity into unrelated physics checks and was replaced with this narrow overlap guard.
+The recovery fixture also establishes daylight and restores the previous shared clock.
+
+This integration push includes the cache/storage and route-reuse fixes tested with isolation:
+- Revision-cached physical intake and storage endpoints, including manual sack connections.
+- Explicit invalidation on Sable handoffs and block/property edits.
+- Group storage deduplication and immediate disconnection; no network-owned inventory.
+- Intake-specific tube reuse, additional-mouth route reservation and valid route-hint adoption.
+- Replacement-route validation when moving the only intake anchor.
+- Whole-organ health conservation and read-only 32-bit aggregate menu values.
+- Obsolete exclusive-ownership/empty-GUI assertions updated to the approved shared/read-only model.
+
+The complete working tree passed `check runGameTestServer`: 74 unit tests and all 184 live tests.
+All source sets compile. Package/Mixin checks cover 190 types and all 13 hooks. Visual client QA
+of the new panel/models remains unperformed and is documented in the changelog.

@@ -2,7 +2,6 @@ package org.Azkerash.create_bioships;
 
 import java.util.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import org.Azkerash.create_bioships.integration.biomancy.NativeStorage;
 
 /** Private construction stock in connected native sacs; food slots remain player-accessible. */
 final class BioshipStores {
@@ -21,14 +20,7 @@ final class BioshipStores {
   static List<BlockEntity> connected(StomachBlockEntity stomach) {
     var core = core(stomach);
     if (core == null) return List.of();
-    var result = new ArrayList<BlockEntity>();
-    for (var pos : stomach.sacPaths.keySet()) {
-      var be = stomach.getLevel().getBlockEntity(pos);
-      if (be != null
-          && NativeStorage.isStorage(be)
-          && DigestiveSystem.storeConnected(core, stomach, pos)) result.add(be);
-    }
-    return result;
+    return DigestiveIntakes.connectedStores(core, stomach);
   }
 
   static int stored(BlockEntity sac, String id) {

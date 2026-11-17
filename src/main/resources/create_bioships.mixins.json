@@ -7,7 +7,7 @@
     "BiometricMembraneAccessMixin",
     "BiometricSubLevelCollisionMixin",
     "CreeperBlastAccess",
-    "ComponentHealthChangeMixin",
+    "BodyBlockChangeMixin",
     "SurvivalExplosionMixin",
     "SurvivalBlastResistanceMixin"
   ],

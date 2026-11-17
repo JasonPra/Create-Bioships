@@ -5,16 +5,18 @@ import org.Azkerash.create_bioships.creature.digestion.DigestiveNetwork.Cell;
 
 /** Physical intake routes. Mouths are inputs, tubes are transit, stomachs are destinations. */
 public final class DigestiveIntakeRoutes<T> {
-  public record Route<T>(T stomach, List<Cell> tubes) {
+  public record Route<T>(Cell mouth, T stomach, List<Cell> tubes) {
     public Route {
       tubes = List.copyOf(tubes);
     }
   }
 
   private final Map<Cell, List<Route<T>>> routes;
+  private final Set<Cell> mouths;
 
   public DigestiveIntakeRoutes(
       Map<Cell, T> stomachs, Set<Cell> mouths, Set<Cell> tubes, Map<Cell, Set<Cell>> links) {
+    this.mouths = Set.copyOf(mouths);
     var found = new TreeMap<Cell, List<Route<T>>>();
     for (var mouth : new TreeSet<>(mouths)) {
       var destinations = new ArrayList<Route<T>>();
@@ -33,7 +35,7 @@ public final class DigestiveIntakeRoutes<T> {
             previous = parents.get(previous);
           }
           Collections.reverse(path);
-          destinations.add(new Route<>(stomach, path));
+          destinations.add(new Route<>(mouth, stomach, path));
           continue;
         }
         for (var next : new TreeSet<>(links.getOrDefault(point, Set.of())))
@@ -43,6 +45,10 @@ public final class DigestiveIntakeRoutes<T> {
       if (!destinations.isEmpty()) found.put(mouth, List.copyOf(destinations));
     }
     routes = Map.copyOf(found);
+  }
+
+  public Set<Cell> mouths() {
+    return mouths;
   }
 
   public List<Route<T>> routes(Cell mouth) {

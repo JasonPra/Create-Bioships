@@ -119,6 +119,10 @@ final class StomachInventoryView implements Container {
   public void clearContent() {}
 
   public boolean stillValid(Player player) {
-    return present(anchor);
+    if (!present(anchor)) return false;
+    if (!formed) return true;
+    var core = BioshipStores.core(anchor);
+    var cube = core == null ? null : StomachMultiblock.containing(core, anchor.getBlockPos());
+    return cube != null && new HashSet<>(cube.members().values()).equals(new HashSet<>(members));
   }
 }

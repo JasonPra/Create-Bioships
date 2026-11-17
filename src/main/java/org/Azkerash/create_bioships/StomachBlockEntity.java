@@ -300,6 +300,8 @@ public class StomachBlockEntity extends BlockEntity
   @Override
   public boolean moveMealTo(StomachBlockEntity target) {
     if (target == this || level == null || target.getLevel() != level) return false;
+    var core = BioshipStores.core(this);
+    if (core == null || !StomachConnections.members(core, this).contains(target)) return false;
     for (int slot = 0; slot < input.size(); slot++) {
       var stack = input.get(slot);
       if (stack.isEmpty()) continue;

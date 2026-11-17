@@ -40,13 +40,10 @@ public final class DigestiveSystem {
   }
 
   public static List<BlockPos> mouths(LivingCoreBlockEntity core) {
-    return core.ship() == null
-        ? List.of()
-        : BioshipStructure.cells(core.ship()).entrySet().stream()
-            .filter(e -> BioshipIntegration.isMaw(e.getValue()))
-            .map(Map.Entry::getKey)
-            .sorted(Comparator.comparingLong(BlockPos::asLong))
-            .toList();
+    return DigestiveIntakes.routes(core).mouths().stream()
+        .map(StomachMultiblock::pos)
+        .sorted(Comparator.comparingLong(BlockPos::asLong))
+        .toList();
   }
 
   public static int requiredPairs(LivingCoreBlockEntity core) {
@@ -72,25 +69,8 @@ public final class DigestiveSystem {
     return false;
   }
 
-  private static boolean pathIntact(
-      LivingCoreBlockEntity core, BlockPos start, BlockPos end, List<BlockPos> path) {
-    var previous = start;
-    for (var point : path) {
-      if (!linked(core, previous, point)
-          || !core.getLevel().getBlockState(point).is(Create_bioships.INTESTINE.get()))
-        return false;
-      previous = point;
-    }
-    return linked(core, previous, end);
-  }
-
   public static boolean connected(LivingCoreBlockEntity core, StomachBlockEntity stomach) {
     return StomachConnections.connected(core, stomach);
-  }
-
-  static boolean directlyConnected(LivingCoreBlockEntity core, StomachBlockEntity stomach) {
-    return DigestiveIntakes.routes(core).routes().stream()
-        .anyMatch(route -> route.stomach() == stomach);
   }
 
   private static List<BlockPos> findPath(
@@ -310,15 +290,22 @@ public final class DigestiveSystem {
                         || s.sacPaths.containsKey(source))
             .findFirst()
             .orElse(stomach(core));
+    boolean sourceIsMouth = BioshipIntegration.isMaw(core.getLevel().getBlockState(source));
+    if (sourceIsMouth) {
+      var intake = forMouth(core, source);
+      if (intake != null) stomach = intake;
+    }
     var mouth =
-        stomach != null && stomach.connectedMouth != null
-            ? stomach.connectedMouth
-            : core.mouthBlock();
+        sourceIsMouth
+            ? source
+            : stomach != null && stomach.connectedMouth != null
+                ? stomach.connectedMouth
+                : core.mouthBlock();
     if (stomach == null || mouth == null || !stomach.tubeBootstrapped) return true;
     boolean movesMouth = source.equals(mouth), movesStomach = source.equals(stomach.getBlockPos());
     if (movesStomach)
       for (var neighbor : stomachs(core))
-        if (neighbor != stomach && neighbor.connected(core))
+        if (neighbor != stomach && StomachConnections.retainsConnection(core, neighbor, stomach))
           for (var face : Direction.values())
             if (target.relative(face).equals(neighbor.getBlockPos())) return true;
     var sourceEntity = core.getLevel().getBlockEntity(source);
@@ -348,7 +335,7 @@ public final class DigestiveSystem {
       if (path == null) return false;
       wanted.addAll(path);
     }
-    var result = plan(core, stomach, wanted, Set.of(), tubes(core));
+    var result = plan(core, stomach, wanted, Set.of(), tubes(core), mouth);
     if (!affordable(stomach, result)) return false;
     if (reserve && result.purchases > 0) {
       new MaterialCost(result.purchases, result.purchases, 0).pay(stomach);
@@ -431,8 +418,7 @@ public final class DigestiveSystem {
       var pos = store.getBlockPos();
       if (!NativeStorage.isStorage(store)
           || store.getPersistentData().getBoolean("BioshipManualPlacement")) continue;
-      var path = stomach.sacPaths.get(pos);
-      if (path != null && connectedStore(core, stomach, pos, path)) continue;
+      if (connectedStore(core, stomach, pos)) continue;
       var target = storagePort(core, pos);
       if (target != null && ComponentTransport.begin(core.amoebaComponents(), pos, target, false))
         return;
@@ -445,9 +431,20 @@ public final class DigestiveSystem {
       Set<BlockPos> wanted,
       Set<BlockPos> starter,
       Map<BlockPos, net.minecraft.world.level.block.state.BlockState> existing) {
+    return plan(core, stomach, wanted, starter, existing, stomach.connectedMouth);
+  }
+
+  private static Plan plan(
+      LivingCoreBlockEntity core,
+      StomachBlockEntity stomach,
+      Set<BlockPos> wanted,
+      Set<BlockPos> starter,
+      Map<BlockPos, net.minecraft.world.level.block.state.BlockState> existing,
+      BlockPos replacingMouth) {
     wanted = new LinkedHashSet<>(wanted);
     for (var route : DigestiveIntakes.routes(core).routes())
-      for (var point : route.tubes()) wanted.add(new BlockPos(point.x(), point.y(), point.z()));
+      if (replacingMouth == null || !StomachMultiblock.pos(route.mouth()).equals(replacingMouth))
+        for (var point : route.tubes()) wanted.add(new BlockPos(point.x(), point.y(), point.z()));
     for (var other : stomachs(core))
       if (other != stomach) {
         other.gutPath.stream().filter(existing::containsKey).forEach(wanted::add);
@@ -531,9 +528,19 @@ public final class DigestiveSystem {
     var mouths = mouths(core);
     var stomachs = stomachs(core);
     // Preserve saved routes as construction hints, not exclusive intake ownership.
-    for (var stomach : stomachs)
+    for (var stomach : stomachs) {
       if (stomach.connectedMouth != null && mouths.contains(stomach.connectedMouth))
         connectPair(core, ship, stomach, stomach.connectedMouth, true);
+      else {
+        var established =
+            DigestiveIntakes.routes(core).routes().stream()
+                .filter(route -> route.stomach() == stomach)
+                .findFirst()
+                .orElse(null);
+        if (established != null)
+          connectPair(core, ship, stomach, StomachMultiblock.pos(established.mouth()), true);
+      }
+    }
     for (var stomach : stomachs)
       if (!stomach.connected(core)) {
         var candidates = new ArrayList<>(mouths);
@@ -564,7 +571,7 @@ public final class DigestiveSystem {
     var existing = tubes(core);
     Set<BlockPos> starter = stomach.tubeBootstrapped ? Set.of() : new HashSet<>(main);
     var wanted = new LinkedHashSet<>(main);
-    var selected = plan(core, stomach, wanted, starter, existing);
+    var selected = plan(core, stomach, wanted, starter, existing, mouth);
     if (!affordable(stomach, selected)) return false;
     Map<BlockPos, List<BlockPos>> branches = new LinkedHashMap<>();
     var stores =
@@ -586,7 +593,7 @@ public final class DigestiveSystem {
       if (path == null) continue;
       var trial = new LinkedHashSet<>(wanted);
       trial.addAll(path);
-      var candidate = plan(core, stomach, trial, starter, existing);
+      var candidate = plan(core, stomach, trial, starter, existing, mouth);
       if (affordable(stomach, candidate)) {
         wanted = trial;
         selected = candidate;
@@ -655,39 +662,29 @@ public final class DigestiveSystem {
   }
 
   private static boolean connectedStore(
-      LivingCoreBlockEntity core, StomachBlockEntity stomach, BlockPos pos, List<BlockPos> path) {
-    var entity = core.getLevel().getBlockEntity(pos);
-    return BioshipIntegration.containing(core.getLevel(), pos) == core.ship()
-        && entity != null
-        && NativeStorage.isStorage(entity)
-        && pathIntact(core, stomach.getBlockPos(), pos, path);
-  }
-
-  static int connectedFoodCount(LivingCoreBlockEntity core, StomachBlockEntity stomach) {
-    int total = stomach.queuedNutrition();
-    for (var entry : stomach.sacPaths.entrySet())
-      if (connectedStore(core, stomach, entry.getKey(), entry.getValue())) {
-        var inventory =
-            core.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, entry.getKey(), null);
-        if (inventory != null)
-          for (int slot = 0; slot < inventory.getSlots(); slot++)
-            if (LivingCoreBlockEntity.isMeat(inventory.getStackInSlot(slot)))
-              total += inventory.getStackInSlot(slot).getCount();
-      }
-    return total;
+      LivingCoreBlockEntity core, StomachBlockEntity stomach, BlockPos pos) {
+    return DigestiveIntakes.connectedStores(core, stomach).stream()
+        .anyMatch(store -> store.getBlockPos().equals(pos));
   }
 
   static int foodCount(LivingCoreBlockEntity core) {
     int total = 0;
+    var seen = new HashSet<BlockPos>();
     for (var stomach : stomachs(core))
-      if (connected(core, stomach)) total += connectedFoodCount(core, stomach);
+      if (stomach.connected(core)) {
+        total += stomach.queuedNutrition();
+        for (var store : DigestiveIntakes.connectedStores(core, stomach))
+          if (seen.add(store.getBlockPos())) {
+            var inventory =
+                core.getLevel()
+                    .getCapability(Capabilities.ItemHandler.BLOCK, store.getBlockPos(), null);
+            if (inventory != null)
+              for (int slot = 0; slot < inventory.getSlots(); slot++)
+                if (LivingCoreBlockEntity.isMeat(inventory.getStackInSlot(slot)))
+                  total += inventory.getStackInSlot(slot).getCount();
+          }
+      }
     return total;
-  }
-
-  static boolean storeConnected(
-      LivingCoreBlockEntity core, StomachBlockEntity stomach, BlockPos pos) {
-    var path = stomach.sacPaths.get(pos);
-    return path != null && connectedStore(core, stomach, pos, path);
   }
 
   /** Shared functional-digestion prerequisite, independent of the upgrade being considered. */
@@ -726,44 +723,39 @@ public final class DigestiveSystem {
         return true;
       }
     if (inherited) return false;
-    for (var owner : StomachConnections.members(core, stomach))
-      for (var entry : owner.sacPaths.entrySet())
-        if (connectedStore(core, owner, entry.getKey(), entry.getValue())) {
-          var inventory =
-              core.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, entry.getKey(), null);
-          if (inventory == null) continue;
-          var one = stack.copyWithCount(1);
-          if (ItemHandlerHelper.insertItemStacked(inventory, one, true).isEmpty())
-            return ItemHandlerHelper.insertItemStacked(inventory, one, false).isEmpty();
-        }
+    for (var store : DigestiveIntakes.connectedStores(core, stomach)) {
+      var inventory =
+          core.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, store.getBlockPos(), null);
+      if (inventory == null) continue;
+      var one = stack.copyWithCount(1);
+      if (ItemHandlerHelper.insertItemStacked(inventory, one, true).isEmpty())
+        return ItemHandlerHelper.insertItemStacked(inventory, one, false).isEmpty();
+    }
     return false;
   }
 
   public static void pullStoredFood(LivingCoreBlockEntity core, StomachBlockEntity stomach) {
     if (!stomach.connected(core) || !core.wantsStoredFood()) return;
-    for (var owner : StomachConnections.members(core, stomach))
-      for (var entry : owner.sacPaths.entrySet())
-        if (connectedStore(core, owner, entry.getKey(), entry.getValue())) {
-          var inventory =
-              core.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, entry.getKey(), null);
-          if (inventory == null) continue;
-          for (int slot = 0; slot < inventory.getSlots(); slot++) {
-            var one = inventory.extractItem(slot, 1, true);
-            if (one.isEmpty()) continue;
-            boolean material =
-                one.is(BioshipIntegration.constructionMaterial())
-                    && !LivingCoreBlockEntity.isMeat(one);
-            if (material) {
-              var taken = inventory.extractItem(slot, 1, false);
-              if (!taken.isEmpty()) stomach.retain(taken);
-              return;
-            }
-            if (stomach.canEnqueue(one, false)) {
-              var taken = inventory.extractItem(slot, 1, false);
-              if (!taken.isEmpty()) stomach.enqueue(taken, false);
-              return;
-            }
-          }
+    for (var store : DigestiveIntakes.connectedStores(core, stomach)) {
+      var inventory =
+          core.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, store.getBlockPos(), null);
+      if (inventory == null) continue;
+      for (int slot = 0; slot < inventory.getSlots(); slot++) {
+        var one = inventory.extractItem(slot, 1, true);
+        if (one.isEmpty()) continue;
+        boolean material =
+            one.is(BioshipIntegration.constructionMaterial()) && !LivingCoreBlockEntity.isMeat(one);
+        if (material) {
+          var taken = inventory.extractItem(slot, 1, false);
+          if (!taken.isEmpty()) stomach.retain(taken);
+          return;
         }
+        if (stomach.canEnqueue(one, false)) {
+          var taken = inventory.extractItem(slot, 1, false);
+          if (!taken.isEmpty()) stomach.enqueue(taken, false);
+          return;
+        }
+      }
+    }
   }
 }

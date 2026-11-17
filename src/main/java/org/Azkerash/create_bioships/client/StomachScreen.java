@@ -11,7 +11,7 @@ public class StomachScreen extends AbstractContainerScreen<StomachMenu> {
   public StomachScreen(StomachMenu menu, Inventory inventory, Component title) {
     super(menu, inventory, title);
     imageWidth = 220;
-    imageHeight = 218;
+    imageHeight = 232;
   }
 
   @Override
@@ -58,13 +58,7 @@ public class StomachScreen extends AbstractContainerScreen<StomachMenu> {
         y + 77,
         0xffcbb9b2,
         false);
-    g.drawString(
-        font,
-        "Fibers " + menu.value(5) + " | Sacs " + menu.value(7),
-        x + 12,
-        y + 90,
-        0xffcbb9b2,
-        false);
+    g.drawString(font, "Fibers " + menu.value(5), x + 12, y + 90, 0xffcbb9b2, false);
     for (int row = 0; row < 3; row++)
       for (int column = 0; column < 9; column++) {
         int sx = x + 28 + column * 18, sy = y + 111 + row * 18;
@@ -82,6 +76,13 @@ public class StomachScreen extends AbstractContainerScreen<StomachMenu> {
         x + 12,
         y + 199,
         0xffa7c281,
+        false);
+    g.drawString(
+        font,
+        "Nutrients " + menu.value(8) + " | Sacs " + menu.value(7),
+        x + 12,
+        y + 214,
+        0xffcbb9b2,
         false);
   }
 

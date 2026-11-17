@@ -430,12 +430,20 @@ public class BioshipGameTests {
             data.putInt("Duration", 100);
             organ.loadWithComponents(data, level.registryAccess());
           }
+      core.amoebaComponents().rememberHost(anchor, BioshipTissue.body().defaultBlockState());
+      core.body().observe(core);
+      int capacity = core.body().capacity();
+      double health = core.body().health();
       anchor.creditLocal("biomancy:flesh_bits", 64);
       anchor.creditLocal("biomancy:elastic_fibers", 64);
       helper.assertTrue(
           ComponentTransport.begin(core.amoebaComponents(), origin, origin.above(), false),
           "Whole stomach could not start a validated coordinated move");
       var move = core.organMove();
+      core.body().observe(core);
+      helper.assertTrue(
+          core.body().capacity() == capacity && core.body().health() == health,
+          "Whole-organ transit lost pooled health or counted restored host flesh twice");
       var cargo = (ServerSubLevel) SubLevelContainer.getContainer(level).getSubLevel(move.cargo());
       helper.assertTrue(
           DigestiveSystem.stomachs(core).isEmpty()
@@ -546,7 +554,7 @@ public class BioshipGameTests {
                   organ.receiveMeal(new ItemStack(Items.BEEF, 64), false),
                   "A member lost queue capacity when forming");
           }
-      anchor.creditLocal("biomancy:flesh_bits", 10);
+      anchor.creditLocal("biomancy:flesh_bits", 70000);
       var view = new StomachInventoryView(anchor);
       var data = view.data();
       java.util.function.IntUnaryOperator value =
@@ -558,7 +566,9 @@ public class BioshipGameTests {
               && value.applyAsInt(11) == 1
               && view.pages() == 9,
           "Aggregate inventory did not retain 27 ordinary stomachs of capacity");
-      helper.assertTrue(value.applyAsInt(3) == 10, "Shared products were counted once per stomach");
+      helper.assertTrue(
+          value.applyAsInt(3) == 70000,
+          "Shared products were counted repeatedly or truncated to 16 bits");
       for (int page = 0; page < 9; page++) {
         for (int slot = 0; slot < 27; slot++)
           helper.assertTrue(
@@ -585,10 +595,129 @@ public class BioshipGameTests {
     }
   }
 
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "digestive_topology_cache")
+  public static void
+      digestive_routes_reuse_snapshots_and_invalidate_on_structural_or_property_changes(
+          GameTestHelper helper) {
+    var ship = assemble(helper);
+    try {
+      var core = core(ship);
+      var level = helper.getLevel();
+      var stomach = digestive(helper, core, false);
+      var routes = DigestiveIntakes.routes(core);
+      helper.assertTrue(
+          routes == DigestiveIntakes.routes(core), "Unchanged topology rebuilt its intake graph");
+      var tube = stomach.gutPath.getFirst();
+      var mouth = stomach.connectedMouth;
+      var original = level.getBlockState(tube);
+      level.setBlock(tube, original.setValue(IntestineBlock.ENCASED, true), 2);
+      helper.assertTrue(
+          routes != DigestiveIntakes.routes(core) && stomach.connected(core),
+          "Changing a block property retained a stale cached topology or broke valid connectivity");
+      level.removeBlock(tube, false);
+      helper.assertTrue(!stomach.connected(core), "Removing the tube retained cached connectivity");
+      level.setBlock(tube, original, 3);
+      helper.assertTrue(stomach.connected(core), "Restoring the tube did not restore connectivity");
+      var isolated = stomach.getBlockPos().south(2);
+      level.setBlock(isolated, Create_bioships.STOMACH.get().defaultBlockState(), 3);
+      level.setBlock(isolated.north(), Create_bioships.INTESTINE.get().defaultBlockState(), 3);
+      var peer = (StomachBlockEntity) level.getBlockEntity(isolated);
+      stomach.receiveMeal(new ItemStack(Items.BEEF, 8), false);
+      helper.assertTrue(
+          !stomach.moveMealTo(peer) && peer.queuedFood() == 0,
+          "Queued food shared between stomachs connected only by intestines");
+      helper.succeed();
+    } finally {
+      cleanup(helper, ship);
+    }
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "physical_storage_intake")
+  public static void
+      manually_connected_food_sacs_use_the_physical_network_without_saved_route_hints(
+          GameTestHelper helper) {
+    var ship = assemble(helper);
+    try {
+      var core = core(ship);
+      var level = helper.getLevel();
+      var stomach = digestive(helper, core, false);
+      var tube = stomach.getBlockPos().west();
+      var sac = tube.west();
+      level.setBlock(sac, block("biomancy:storage_sac").defaultBlockState(), 3);
+      level.setBlock(
+          tube,
+          Create_bioships.INTESTINE.get().defaultBlockState().setValue(IntestineBlock.MANUAL, true),
+          3);
+      var store = level.getBlockEntity(sac);
+      var inventory = level.getCapability(Capabilities.ItemHandler.BLOCK, sac, null);
+      helper.assertTrue(
+          inventory != null
+              && inventory.insertItem(0, new ItemStack(Items.BEEF, 4), false).isEmpty(),
+          "Storage fixture rejected food");
+      BioshipStores.change(store, MaterialCost.FLESH, 12);
+      helper.assertTrue(
+          !stomach.sacPaths.containsKey(sac) && BioshipStores.connected(stomach).contains(store),
+          "Connected storage required a historical per-stomach path assignment");
+      var child = stomach.getBlockPos().above();
+      level.setBlock(child, Create_bioships.STOMACH.get().defaultBlockState(), 3);
+      helper.assertTrue(
+          DigestiveSystem.foodCount(core) == 4
+              && BioshipStorage.amount(core, MaterialCost.FLESH) == 12,
+          "Shared storage was counted repeatedly across adjacent stomachs");
+      var data = core.saveWithFullMetadata(level.registryAccess());
+      data.putInt("Satiety", 100);
+      core.loadAdditional(data, level.registryAccess());
+      DigestiveSystem.pullStoredFood(core, stomach);
+      helper.assertTrue(
+          stomach.queuedFood() == 1
+              && inventory.getStackInSlot(0).getCount() == 3
+              && DigestiveSystem.foodCount(core) == 4,
+          "Food transport lost items or failed to feed the stomach");
+      level.removeBlock(tube, false);
+      helper.assertTrue(
+          BioshipStores.connected(stomach).isEmpty()
+              && BioshipStorage.amount(core, MaterialCost.FLESH) == 0
+              && DigestiveSystem.foodCount(core) == 1,
+          "Severed intestine left storage food or materials available to the creature");
+      helper.succeed();
+    } finally {
+      cleanup(helper, ship);
+    }
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "stomach_anchor_route_budget")
+  public static void moving_the_only_intake_anchor_cannot_borrow_its_own_departing_connection(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    try {
+      var core = core(ship);
+      var level = helper.getLevel();
+      var anchor = digestive(helper, core, false);
+      var peer = anchor.getBlockPos().west();
+      level.setBlock(peer, Create_bioships.STOMACH.get().defaultBlockState(), 3);
+      var child = (StomachBlockEntity) level.getBlockEntity(peer);
+      helper.assertTrue(
+          child.connected(core) && !StomachConnections.retainsConnection(core, child, anchor),
+          "Removing the only intake anchor retained a phantom digestive connection");
+      anchor.freeTubeStock = 0;
+      anchor.paidTubeStock = 0;
+      helper.assertTrue(
+          !DigestiveSystem.reserveOrganRoute(core, anchor.getBlockPos(), peer.west(), false),
+          "Moving the sole intake anchor bypassed the replacement-tube budget");
+      helper.succeed();
+    } finally {
+      cleanup(helper, ship);
+    }
+  }
+
   private static int fixture;
 
   private static BlockPos location() {
-    return new BlockPos(8 + 128 * fixture++, 80, 8);
+    int x = 8 + 128 * fixture++;
+    // Preserve established physics coordinates except where a fixed habitat overlaps a plot.
+    // The End chamber roof occupies x=8192 +/-64 at z=0; include the regression floor's margin.
+    int z = Math.abs(x - EndHabitatLab.CENTER.getX()) <= 96 ? 256 : 8;
+    return new BlockPos(x, 80, z);
   }
 
   private static Block block(String id) {
@@ -1338,8 +1467,16 @@ public class BioshipGameTests {
                                   Capabilities.ItemHandler.BLOCK, stomach.getBlockPos(), null)
                           == null,
                       "Stomach exposes extractable products");
-                  var menu = new StomachMenu(1, player(helper, "Captain").getInventory(), stomach);
-                  helper.assertTrue(menu.slots.isEmpty(), "Stomach GUI exposes output slots");
+                  var captain = player(helper, "Captain");
+                  var menu = new StomachMenu(1, captain.getInventory(), stomach);
+                  helper.assertTrue(
+                      menu.slots.size() == 27
+                          && menu.slots.stream()
+                              .allMatch(
+                                  slot ->
+                                      !slot.mayPickup(captain)
+                                          && !slot.mayPlace(new ItemStack(Items.BEEF))),
+                      "Stomach queue inspection exposed mutable/output slots");
                   var restored =
                       (StomachBlockEntity)
                           BlockEntity.loadStatic(
@@ -2623,6 +2760,10 @@ public class BioshipGameTests {
     var live = assemble(helper);
     var core = core(live);
     var level = helper.getLevel();
+    // This checks organ/inventory recovery, not night vision. Other batches change the shared
+    // clock.
+    long previousDay = level.getDayTime();
+    level.setDayTime(1000);
     var point =
         BlockPos.containing(BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO))
             .east(5);
@@ -2676,7 +2817,37 @@ public class BioshipGameTests {
           try {
             helper.assertTrue(
                 current.hasMouth() && DigestiveSystem.stomach(current) != null,
-                "Nearby wreck organs were not pulled aboard");
+                "Nearby wreck organs were not pulled aboard: mouth="
+                    + current.mouthBlock()
+                    + " stomachs="
+                    + DigestiveSystem.stomachs(current).size()
+                    + " decision="
+                    + current.brain().lastDecision()
+                    + " assimilation="
+                    + current.assimilation().save()
+                    + " distance="
+                    + BodyCoordinates.physical(current.amoebaComponents(), BlockPos.ZERO)
+                        .distanceTo(wreck.logicalPose().transformPosition(Vec3.atCenterOf(mouth)))
+                    + " visible="
+                    + current
+                        .vision()
+                        .visible(
+                            current, wreck.logicalPose().transformPosition(Vec3.atCenterOf(mouth)))
+                    + " root="
+                    + BodyCoordinates.physical(current.amoebaComponents(), BlockPos.ZERO)
+                    + " target="
+                    + wreck.logicalPose().transformPosition(Vec3.atCenterOf(mouth))
+                    + " concealed="
+                    + current.getBlockState().getValue(LivingCoreBlock.CONCEALED)
+                    + " views="
+                    + current.vision().views(current)
+                    + " ray="
+                    + BioshipVision.ray(
+                        current,
+                        BodyCoordinates.physical(current.amoebaComponents(), BlockPos.ZERO),
+                        wreck.logicalPose().transformPosition(Vec3.atCenterOf(mouth)))
+                    + " remaining="
+                    + BioshipStructure.cells(wreck));
             helper.assertTrue(
                 recoveredStock[0].is(Items.BARRIER) && recoveredStock[0].getCount() == 11,
                 "Recovered inventory could not be salvaged before digestion");
@@ -2732,6 +2903,7 @@ public class BioshipGameTests {
           } finally {
             cleanup(helper, wreck);
             cleanup(helper, live);
+            level.setDayTime(previousDay);
           }
         });
   }
@@ -8385,7 +8557,8 @@ public class BioshipGameTests {
   }
 
   @GameTest(template = "test_empty", timeoutTicks = 100, batch = "mouth_food_binding")
-  public static void floor_food_enters_the_stomach_of_its_graspers_mouth(GameTestHelper helper) {
+  public static void floor_food_enters_the_digestive_network_of_its_graspers_mouth(
+      GameTestHelper helper) {
     var ship = assemble(helper);
     var core = core(ship);
     var level = helper.getLevel();
@@ -8412,12 +8585,22 @@ public class BioshipGameTests {
           level.addFreshEntity(drop);
           try {
             var intake = DigestiveSystem.forMouth(current, rear);
-            helper.assertTrue(intake != null && intake != first, "Fixture mouths shared a stomach");
+            helper.assertTrue(
+                intake != null && intake.connected(current),
+                "Receiving mouth had no digestive route");
+            int before =
+                DigestiveSystem.stomachs(current).stream()
+                    .mapToInt(StomachBlockEntity::queuedFood)
+                    .sum();
             var result =
                 BioshipFoodCollection.collect(current, drop.position().add(0, .2, 0), drop);
             helper.assertTrue(
-                intake.queuedFood() == 1 && first.queuedFood() == 0,
-                "Food grasper delivered to a different mouth's stomach: first="
+                DigestiveSystem.stomachs(current).stream()
+                            .mapToInt(StomachBlockEntity::queuedFood)
+                            .sum()
+                        == before + 1
+                    && !drop.isAlive(),
+                "Food grasper failed to deliver exactly one item to the digestive network: first="
                     + first.queuedFood()
                     + " selected="
                     + intake.queuedFood()

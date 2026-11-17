@@ -10,12 +10,15 @@ import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(LevelChunk.class)
-abstract class ComponentHealthChangeMixin {
+abstract class BodyBlockChangeMixin {
   @Inject(method = "setBlockState", at = @At("RETURN"))
   private void bioships$structuralChange(
       BlockPos pos, BlockState state, boolean moved, CallbackInfoReturnable<BlockState> callback) {
     var chunk = (LevelChunk) (Object) this;
-    if (chunk.getLevel() instanceof ServerLevel level)
+    if (chunk.getLevel() instanceof ServerLevel level) {
+      org.Azkerash.create_bioships.integration.sable.BodyRevision.changed(
+          level, pos, callback.getReturnValue(), state);
       BioshipHealthChanges.changed(level, pos, callback.getReturnValue(), state);
+    }
   }
 }

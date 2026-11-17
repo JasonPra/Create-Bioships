@@ -206,6 +206,7 @@ public final class AmoebaCoreAdapter implements AmoebaComponentHost {
   }
 
   public void departed(Request request, Prepared prepared) {
+    org.Azkerash.create_bioships.integration.sable.BodyRevision.changed(body());
     if (!request.external()) {
       var local = request.source().subtract(core.getBlockPos());
       core.body().intendedCells().remove(local);
@@ -269,6 +270,7 @@ public final class AmoebaCoreAdapter implements AmoebaComponentHost {
   }
 
   public void changed() {
+    org.Azkerash.create_bioships.integration.sable.BodyRevision.changed(body());
     BioshipHealthChanges.changed(core);
   }
 
@@ -290,6 +292,7 @@ public final class AmoebaCoreAdapter implements AmoebaComponentHost {
   }
 
   public void merged() {
+    org.Azkerash.create_bioships.integration.sable.BodyRevision.changed(body());
     DigestiveSystem.connect(core, body());
     core.coreMotion().layoutChanged(core);
   }

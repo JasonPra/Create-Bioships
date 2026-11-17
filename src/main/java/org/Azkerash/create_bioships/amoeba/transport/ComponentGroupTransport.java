@@ -22,7 +22,8 @@ final class ComponentGroupTransport {
   static boolean begin(AmoebaComponentHost core, BlockPos source, BlockPos target, boolean manual) {
     var sources = core.movementGroup(source);
     if (sources.size() < 2
-        || sources.size() > 27
+        || sources.size() > 256
+        || !sources.contains(source)
         || new HashSet<>(sources).size() != sources.size()) return false;
     var delta = target.subtract(source);
     var sourceSet = new HashSet<>(sources);
@@ -51,7 +52,11 @@ final class ComponentGroupTransport {
             sources.stream().mapToInt(BlockPos::getX).min().orElseThrow(),
             sources.stream().mapToInt(BlockPos::getY).min().orElseThrow(),
             sources.stream().mapToInt(BlockPos::getZ).min().orElseThrow());
-    var high = low.offset(2, 2, 2);
+    var high =
+        new BlockPos(
+            sources.stream().mapToInt(BlockPos::getX).max().orElseThrow(),
+            sources.stream().mapToInt(BlockPos::getY).max().orElseThrow(),
+            sources.stream().mapToInt(BlockPos::getZ).max().orElseThrow());
     var cargo =
         SubLevelAssemblyHelper.assembleBlocks(level, source, sources, new BoundingBox3i(low, high));
     if (cargo == null) return false;
@@ -61,6 +66,8 @@ final class ComponentGroupTransport {
       var offset = p.subtract(source);
       var carried = cargoOrigin.offset(offset);
       core.restore(cargo, carried, capsules.get(p));
+      var carriedEntity = core.component(cargo, carried);
+      if (carriedEntity != null) core.rememberHost(carriedEntity, Blocks.AIR.defaultBlockState());
       var entry = new CompoundTag();
       entry.putLong("Offset", offset.asLong());
       members.add(entry);
@@ -105,7 +112,9 @@ final class ComponentGroupTransport {
     var offsets = new ArrayList<BlockPos>();
     for (var entry : data.getList(MEMBERS, 10))
       offsets.add(BlockPos.of(((CompoundTag) entry).getLong("Offset")));
-    if (offsets.size() != 27 || new HashSet<>(offsets).size() != 27) return true;
+    if (offsets.size() < 2
+        || offsets.size() > 256
+        || new HashSet<>(offsets).size() != offsets.size()) return true;
     var destination = data.getBoolean("BioshipGroupRollback") ? move.source() : move.target();
     if (!available(core, offsets, destination)) {
       data.putBoolean("BioshipGroupRollback", true);
