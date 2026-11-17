@@ -22,3 +22,5 @@ gills and waterline adaptation. Preserve those rules while replacing local steer
 The new planner will use loaded cells only, bounded search, collision-checked diagonals,
 a straight-route fast path, cached waypoints and throttled retries. Air routes must be able to
 move sideways under roofs before ascending. No flight permission or underwater breathing cheat.
+
+Checkpoint 2 complete: reusable bounded A* searches 26 directions with corner checks, a direct-path fast path and collision-checked waypoint simplification. Five new unit cases cover direct travel, 3D detours, roof openings and bounded failure; all 79 unit tests passed. No gameplay integration is claimed at this checkpoint.
