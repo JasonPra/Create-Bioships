@@ -51,12 +51,15 @@ public final class FullHealthEyeRecoveryTests {
     helper.assertTrue(
         SubLevelWounds.state(body).active(core, Direction.NORTH, now),
         "Temporary full capacity healed eyes before a wrench rollback finished");
-    // Reach full health through reduced capacity, without adding any health or using a wrench heal.
-    SubLevelHealth.withoutRemovalDamage(body, () -> level.removeBlock(core.north(), false));
+    SubLevelHealth.heal(body, 3);
+    helper.assertTrue(
+        SubLevelWounds.state(body).active(core, Direction.NORTH, now),
+        "Partial healing cleared the eye injury");
+    SubLevelHealth.heal(body, 7);
     var health = SubLevelHealth.status(body);
     helper.assertTrue(
-        health.current() == 40 && health.maximum() == 40,
-        "Test did not reach full health without healing");
+        health.current() == 50 && health.maximum() == 50,
+        "Explicit healing did not restore full health");
     for (var cell : List.of(core, core.east(), core.west()))
       helper.assertTrue(
           !SubLevelWounds.state(body).active(cell, Direction.NORTH, now),
@@ -71,7 +74,7 @@ public final class FullHealthEyeRecoveryTests {
     helper.assertTrue(
         !SubLevelWounds.state(body).active(core, Direction.NORTH, now),
         "Full-health core became injured without damage");
-    SubLevelHealth.damage(body, 40, "test");
+    SubLevelHealth.damage(body, 50, "test");
     SubLevelWounds.hit(body, core, Direction.NORTH);
     helper.assertTrue(
         SubLevelHealth.status(body).dead()

@@ -39,7 +39,7 @@ public final class WrenchRemovalTests {
     helper.assertTrue(body != null, "Wrench fixture assembly failed");
     var core = body.getPlot().getCenterBlock();
     CoreAssemblyRules.mark(level, core);
-    SubLevelHealth.damage(body, 35, "test");
+    SubLevelHealth.damage(body, 1.5, "test");
     var profile = new com.mojang.authlib.GameProfile(UUID.randomUUID(), "wrench-test");
     var player =
         new net.minecraft.server.level.ServerPlayer(
@@ -62,7 +62,7 @@ public final class WrenchRemovalTests {
         InteractionHand.MAIN_HAND,
         new BlockHitResult(Vec3.atCenterOf(core.east()), Direction.NORTH, core.east(), false));
     helper.assertTrue(
-        SubLevelHealth.status(body).current() == 5, "Normal wrench right-click healed creature");
+        SubLevelHealth.status(body).current() == 38.5, "Normal wrench right-click healed creature");
     player.setShiftKeyDown(true);
     // A failed/rolled-back removal must not convert the restored block into free health.
     var eyeState = level.getBlockState(core.east());
@@ -74,8 +74,10 @@ public final class WrenchRemovalTests {
           return net.minecraft.world.InteractionResult.PASS;
         });
     helper.assertTrue(
-        SubLevelHealth.status(body).current() == 5 && SubLevelHealth.status(body).maximum() == 40,
+        SubLevelHealth.status(body).current() == 38.5
+            && SubLevelHealth.status(body).maximum() == 40,
         "Wrench rollback healed the creature");
+    int capacity = 40;
     for (var pos : List.of(core.east(), core.west(), core.north())) {
       var result =
           player.gameMode.useItemOn(
@@ -88,8 +90,10 @@ public final class WrenchRemovalTests {
           result.consumesAction(), "Normal player Shift-wrench pickup was not handled");
       helper.assertTrue(
           level.getBlockState(pos).isAir(), "Wrench failed to remove non-core component");
+      capacity -= 10;
       helper.assertTrue(
-          SubLevelHealth.status(body).current() == 5 && !SubLevelHealth.status(body).dead(),
+          SubLevelHealth.status(body).current() == capacity - 1.5
+              && !SubLevelHealth.status(body).dead(),
           "Wrench removal dealt damage or killed the creature");
     }
     helper.assertTrue(
@@ -110,7 +114,7 @@ public final class WrenchRemovalTests {
     wrench.useOn(coreContext);
     helper.assertTrue(
         level.getBlockState(core).is(Create_bioships.CORE.get()), "Wrench picked up living core");
-    SubLevelHealth.damage(body, 5, "test");
+    SubLevelHealth.damage(body, SubLevelHealth.status(body).current(), "test");
     wrench.useOn(coreContext);
     helper.assertTrue(
         level.getBlockState(core).is(Create_bioships.CORE.get()), "Wrench picked up dead core");

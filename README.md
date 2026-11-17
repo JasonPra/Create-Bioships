@@ -228,3 +228,10 @@ The wound system saves the cleared state and sends removal updates to clients, a
 blinking to resume. Other tissue wounds retain their normal fade lifetime. Full-health recovery
 is deferred until a wrench operation finishes, so temporary block removal/restoration cannot heal
 eye injuries while the grid remains damaged. Dead grids are never treated as healed or revived.
+
+Health now persists an injury balance independently of block capacity. For example,
+58.5/60 becomes 48.5/50 after removing a ten-HP block, then returns to 58.5/60 when replaced.
+Neither action erases damage. Removing enough capacity can kill the grid, and adding blocks
+cannot revive it. Temporary removal/restoration is committed atomically so a rolled-back wrench
+operation neither heals nor kills it. Explicit healing reduces the injury balance and triggers
+full-health eye recovery; capacity changes do not count as healing.

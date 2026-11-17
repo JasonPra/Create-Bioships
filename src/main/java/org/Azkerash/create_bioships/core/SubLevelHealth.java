@@ -64,17 +64,24 @@ public final class SubLevelHealth {
     CELLS.put(body, cells);
     var root = body.getUserDataTag();
     var old = root == null ? new CompoundTag() : root.getCompound(DATA);
-    double missing =
-        old.contains("maximum")
-            ? Math.max(0, old.getDouble("maximum") - old.getDouble("current"))
-            : 0;
-    store(body, maximum - missing, maximum, old.getBoolean("dead"), old.getString("cause"));
+    store(body, damageFromTag(old), maximum, old.getBoolean("dead"), old.getString("cause"));
+  }
+
+  private static double damageFromTag(CompoundTag data) {
+    return data.contains("damage")
+        ? Math.max(0, data.getDouble("damage"))
+        : Math.max(0, data.getDouble("maximum") - data.getDouble("current"));
+  }
+
+  private static double damageTaken(ServerSubLevel body) {
+    return damageFromTag(body.getUserDataTag().getCompound(DATA));
   }
 
   /** Create owns pickup/drops; suppress only damage from the resulting capacity change. */
   public static <T> T withoutRemovalDamage(
       ServerSubLevel body, java.util.function.Supplier<T> removal) {
     var before = status(body);
+    double beforeDamage = damageTaken(body);
     var active = SAFE_REMOVALS.get();
     boolean added = active.add(body);
     try {
@@ -85,10 +92,10 @@ public final class SubLevelHealth {
       if (active.isEmpty()) SAFE_REMOVALS.remove();
       store(
           body,
-          Math.min(before.current(), after.current()),
+          Math.max(beforeDamage, damageTaken(body)),
           after.maximum(),
           before.dead() || after.dead(),
-          after.causeOfDeath());
+          after.maximum() < before.maximum() ? "component_loss" : after.causeOfDeath());
     }
   }
 
@@ -102,13 +109,12 @@ public final class SubLevelHealth {
     else cells.put(pos.asLong(), next);
     var old = status(body);
     double delta = next - previous;
-    boolean safe = delta < 0 && SAFE_REMOVALS.get().contains(body);
     store(
         body,
-        safe ? old.current() : old.current() + delta,
+        damageTaken(body),
         old.maximum() + delta,
         old.dead(),
-        delta < 0 && !safe ? "component_loss" : old.causeOfDeath());
+        delta < 0 ? "component_loss" : old.causeOfDeath());
   }
 
   public static boolean damage(ServerSubLevel body, double amount, DamageSource source) {
@@ -119,25 +125,38 @@ public final class SubLevelHealth {
     if (!Double.isFinite(amount) || amount <= 0) return false;
     var old = status(body);
     if (old.dead()) return false;
-    store(body, old.current() - amount, old.maximum(), false, cause);
+    store(body, damageTaken(body) + amount, old.maximum(), amount >= old.current(), cause);
+    return true;
+  }
+
+  /** Explicit healing reduces injury; changing block capacity never calls this. */
+  public static boolean heal(ServerSubLevel body, double amount) {
+    if (!Double.isFinite(amount) || amount <= 0) return false;
+    var old = status(body);
+    if (old.dead()) return false;
+    store(body, Math.max(0, damageTaken(body) - amount), old.maximum(), false, old.causeOfDeath());
     return true;
   }
 
   private static void store(
-      ServerSubLevel body, double current, double maximum, boolean dead, String cause) {
+      ServerSubLevel body, double injury, double maximum, boolean dead, String cause) {
     maximum = Math.max(0, maximum);
-    current = dead ? 0 : Math.clamp(current, 0, maximum);
+    injury = Math.max(0, injury);
+    boolean transaction = SAFE_REMOVALS.get().contains(body);
+    double current = Math.clamp(maximum - injury, 0, maximum);
     var root = body.getUserDataTag() == null ? new CompoundTag() : body.getUserDataTag().copy();
     var previous = root.getCompound(DATA);
+    boolean died = dead || previous.getBoolean("dead") || current == 0 && !transaction;
     var data = new CompoundTag();
-    data.putDouble("current", current);
+    data.putDouble("damage", injury);
+    data.putDouble("current", died ? 0 : current);
     data.putDouble("maximum", maximum);
-    data.putBoolean("dead", dead || current == 0);
-    if (dead) data.putString("cause", previous.getString("cause"));
-    else if (current == 0) data.putString("cause", cause.isEmpty() ? "component_loss" : cause);
+    data.putBoolean("dead", died);
+    if (previous.getBoolean("dead")) data.putString("cause", previous.getString("cause"));
+    else if (died) data.putString("cause", cause.isEmpty() ? "component_loss" : cause);
     root.put(DATA, data);
     body.setUserDataTag(root);
-    if (!dead && current > 0 && current == maximum && !SAFE_REMOVALS.get().contains(body))
+    if (!died && injury == 0 && maximum > 0 && !transaction)
       org.Azkerash.create_bioships.combat.SubLevelWounds.healEyes(body);
   }
 }
