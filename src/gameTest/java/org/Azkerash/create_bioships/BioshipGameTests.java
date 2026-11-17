@@ -261,6 +261,59 @@ public class BioshipGameTests {
     }
   }
 
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "shared_stomach_food")
+  public static void stomach_group_preserves_full_capacity_food_provenance_and_active_meals(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    try {
+      var core = core(ship);
+      var level = helper.getLevel();
+      var first = digestive(helper, core, false);
+      var next = first.getBlockPos().west();
+      level.setBlock(next, Create_bioships.STOMACH.get().defaultBlockState(), 3);
+      var second = (StomachBlockEntity) level.getBlockEntity(next);
+      for (int i = 0; i < 576; i++)
+        helper.assertTrue(
+            first.enqueue(new ItemStack(Items.BEEF), false),
+            "Ordinary stomach lost its original nine-stack food capacity");
+      helper.assertTrue(!first.enqueue(new ItemStack(Items.BEEF), false), "Full queue overfilled");
+      helper.assertTrue(
+          DigestiveSystem.offerFood(
+                  core, core.getBlockPos().north(), new ItemStack(Items.CHICKEN), false)
+              && second.queuedFood() == 1,
+          "Full anchor blocked unused peer inventory capacity");
+      int total = first.queuedFood() + second.queuedFood();
+      helper.assertTrue(
+          first.moveMealTo(second) && total == first.queuedFood() + second.queuedFood(),
+          "Meal sharing lost or duplicated food");
+      helper.assertTrue(
+          first.queuedNutrition() + second.queuedNutrition() == total,
+          "Fresh food became inherited during transfer");
+      var old = next.west();
+      level.setBlock(old, Create_bioships.STOMACH.get().defaultBlockState(), 3);
+      var inherited = (StomachBlockEntity) level.getBlockEntity(old);
+      for (int i = 0; i < 8; i++) inherited.enqueue(new ItemStack(Items.PORKCHOP), true);
+      helper.assertTrue(
+          inherited.moveMealTo(second)
+              && inherited.queuedNutrition() == 0
+              && first.queuedNutrition() + second.queuedNutrition() == total,
+          "Inherited food was credited as fresh after sharing");
+      // Starting digestion must not make the reserved portion transferable.
+      StomachBlockEntity.tick(level, old, level.getBlockState(old), inherited);
+      int progress = inherited.menuData().get(1);
+      int before = inherited.queuedFood() + second.queuedFood();
+      inherited.moveMealTo(second);
+      helper.assertTrue(
+          inherited.menuData().get(1) == progress
+              && inherited.queuedFood() > 0
+              && before == inherited.queuedFood() + second.queuedFood(),
+          "Sharing reset active digestion or removed its reserved ingredients");
+      helper.succeed();
+    } finally {
+      cleanup(helper, ship);
+    }
+  }
+
   private static int fixture;
 
   private static BlockPos location() {

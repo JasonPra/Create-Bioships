@@ -22,7 +22,11 @@ import org.Azkerash.create_bioships.disabled.wip.AirshipPrototype;
 import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** Outputs are tissue reserves, never an extractable inventory or capability. */
-public class StomachBlockEntity extends BlockEntity implements MenuProvider, ResourceAccount {
+public class StomachBlockEntity extends BlockEntity
+    implements MenuProvider,
+        ResourceAccount,
+        org.Azkerash.create_bioships.creature.digestion.DigestiveFoodRouting.Port<
+            StomachBlockEntity> {
   public static final int MAX_ACID = 1000;
   private final NonNullList<ItemStack> input = NonNullList.withSize(9, ItemStack.EMPTY);
   private final boolean[] inherited = new boolean[9];
@@ -235,39 +239,80 @@ public class StomachBlockEntity extends BlockEntity implements MenuProvider, Res
   }
 
   public boolean canEnqueue(ItemStack stack, boolean oldStock) {
+    return !stack.isEmpty() && canReceiveMeal(stack.copyWithCount(1), oldStock);
+  }
+
+  private boolean canReceiveMeal(ItemStack stack, boolean oldStock) {
     if (stack.isEmpty()
+        || level == null
         || level
             .getRecipeManager()
             .getRecipeFor(
                 DecomposerBlockEntity.RECIPE_TYPE.get(), new SingleRecipeInput(stack), level)
             .isEmpty()) return false;
+    int capacity = 0;
     for (int slot = 0; slot < input.size(); slot++) {
       var current = input.get(slot);
-      if (current.isEmpty()
-          || inherited[slot] == oldStock
-              && ItemStack.isSameItemSameComponents(current, stack)
-              && current.getCount() < current.getMaxStackSize()) return true;
+      if (current.isEmpty()) capacity += stack.getMaxStackSize();
+      else if (inherited[slot] == oldStock && ItemStack.isSameItemSameComponents(current, stack))
+        capacity += Math.max(0, current.getMaxStackSize() - current.getCount());
     }
-    return false;
+    return capacity >= stack.getCount();
+  }
+
+  /** Atomic batch insertion; the caller retains ownership of its original stack. */
+  boolean receiveMeal(ItemStack stack, boolean oldStock) {
+    if (!canReceiveMeal(stack, oldStock)) return false;
+    int left = stack.getCount();
+    for (int pass = 0; pass < 2; pass++)
+      for (int slot = 0; slot < input.size() && left > 0; slot++) {
+        var current = input.get(slot);
+        if (pass == 0
+            && !current.isEmpty()
+            && inherited[slot] == oldStock
+            && ItemStack.isSameItemSameComponents(current, stack)) {
+          int amount = Math.min(left, current.getMaxStackSize() - current.getCount());
+          current.grow(amount);
+          left -= amount;
+        } else if (pass == 1 && current.isEmpty()) {
+          int amount = Math.min(left, stack.getMaxStackSize());
+          input.set(slot, stack.copyWithCount(amount));
+          inherited[slot] = oldStock;
+          left -= amount;
+        }
+      }
+    setChanged();
+    return true;
   }
 
   public boolean enqueue(ItemStack stack, boolean oldStock) {
-    if (!canEnqueue(stack, oldStock)) return false;
+    return !stack.isEmpty() && receiveMeal(stack.copyWithCount(1), oldStock);
+  }
+
+  /**
+   * Reserve the active recipe's input and move complete future meals without resetting progress.
+   */
+  @Override
+  public boolean moveMealTo(StomachBlockEntity target) {
+    if (target == this || level == null || target.getLevel() != level) return false;
     for (int slot = 0; slot < input.size(); slot++) {
-      var current = input.get(slot);
-      if (current.isEmpty()) {
-        input.set(slot, stack.copyWithCount(1));
-        inherited[slot] = oldStock;
-        setChanged();
-        return true;
-      }
-      if (inherited[slot] == oldStock
-          && ItemStack.isSameItemSameComponents(current, stack)
-          && current.getCount() < current.getMaxStackSize()) {
-        current.grow(1);
-        setChanged();
-        return true;
-      }
+      var stack = input.get(slot);
+      if (stack.isEmpty()) continue;
+      var recipe =
+          level
+              .getRecipeManager()
+              .getRecipeFor(
+                  DecomposerBlockEntity.RECIPE_TYPE.get(), new SingleRecipeInput(stack), level);
+      if (recipe.isEmpty()) continue;
+      int count = Math.max(1, recipe.get().value().getIngredientQuantity().count());
+      int reserved = slot == activeSlot ? count : 0;
+      if (stack.getCount() - reserved < count || queuedFood() - target.queuedFood() < 2 * count)
+        continue;
+      if (!target.receiveMeal(stack.copyWithCount(count), inherited[slot])) continue;
+      stack.shrink(count);
+      if (stack.isEmpty()) inherited[slot] = false;
+      setChanged();
+      return true;
     }
     return false;
   }

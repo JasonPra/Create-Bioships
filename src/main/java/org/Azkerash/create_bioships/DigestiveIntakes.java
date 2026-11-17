@@ -61,8 +61,10 @@ final class DigestiveIntakes {
   }
 
   static StomachBlockEntity forMouth(LivingCoreBlockEntity core, BlockPos mouth) {
-    var route = routes(core).route(cell(mouth));
-    return route == null ? null : route.stomach();
+    return routes(core).routes(cell(mouth)).stream()
+        .map(DigestiveIntakeRoutes.Route::stomach)
+        .min(Comparator.comparingInt(StomachBlockEntity::queuedFood))
+        .orElse(null);
   }
 
   private DigestiveIntakes() {}

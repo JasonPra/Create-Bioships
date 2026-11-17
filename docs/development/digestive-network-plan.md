@@ -90,3 +90,9 @@ existing stomachs. Route maintenance preserves all working intake branches; remo
 disables that intake without disabling another. The obsolete exclusive-pair regression was
 replaced with paid many-mouth routing assertions. All unit tests and three focused live tests
 passed. Mouth count no longer dictates stomach count, nor does stomach count dictate mouth count.
+
+Revised checkpoint 4 complete: group intake uses available peer queues; bounded meal balancing
+preserves item components, inherited-food provenance and active recipe inputs/progress. Stomachs
+can pull from sacks attached to their direct-contact peers. Each real inventory is counted once.
+All unit tests and four focused live tests passed, including full-anchor overflow into a peer,
+item conservation and inherited food handling. Existing single-stomach capacity remains 576 items.
