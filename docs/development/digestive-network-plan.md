@@ -167,3 +167,5 @@ Mini-checkpoint 2 complete: `defensive_action_and_owned_digestive_conversion_run
 Mini-checkpoint 3 complete: `needs_tree_prefers_wreck_over_hunting_and_interrupts_for_escape` and wreck-organ recovery passed in the full run. Eligibility and priority assertions were retained; no priority-weight change was needed. Three checkpoints remain.
 
 Mini-checkpoint 4 complete: `hatchling_legs_climb_a_real_wall_and_fall_when_the_grip_is_removed` passed in the full run. Both climbing and grip-loss behavior assertions remain intact. No locomotion change was needed after restoring the established physics coordinates. Two checkpoints remain.
+
+Mini-checkpoint 5 complete: `wide_hatchling_navigates_enclosed_glass_maze_with_steps_and_tall_grass` passed in the full run. The enclosed course, elevation changes, tall grass, target and timeout were preserved; no navigation workaround was added. One checkpoint remains.
