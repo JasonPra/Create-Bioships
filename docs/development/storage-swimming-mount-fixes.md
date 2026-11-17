@@ -32,3 +32,8 @@ organ/sac checks reject partial hosts for legs and eyes. Automatic eye placement
 transport now validate their host. Sacs orient their opposite-facing connector toward adjacent
 intestines on restoration and digestive reconnection, preserving native inventories. The six-
 direction sac/inventory test and existing eye/full-face regressions passed. No new tags/policy class.
+
+Checkpoint 6: swimming uses valid mounted flippers even while fewer than four limbs have been
+deployed. Their actual sockets feed the existing procedural renderer; fallback roots also respect
+protected-organ mounting rules outside bare-core bootstrap. The focused flipper/socket test passed.
+Graphical animation review remains unperformed.

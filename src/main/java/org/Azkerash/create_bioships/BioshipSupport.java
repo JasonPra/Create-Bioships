@@ -153,7 +153,8 @@ public final class BioshipSupport {
       var attached = new ArrayList<Leg>(BioshipLegGrowth.attachments(core, cells));
       for (var provider : LEG_PROVIDERS)
         for (var leg : provider.apply(core)) if (attached.size() < 32) attached.add(leg);
-      if (attached.size() >= 4) {
+      if (attached.size() >= 4
+          || core.aquatic().swimming() && attached.stream().anyMatch(Leg::swimming)) {
         boolean balanced =
             containsProjection(center, attached.stream().map(Leg::foot).toArray(Vec3[]::new));
         return new Layout(center, List.copyOf(attached), balanced ? .15 : -1);
@@ -177,7 +178,9 @@ public final class BioshipSupport {
       for (var cell : roots) {
         for (var face : faces) {
           if (cells.containsKey(cell.relative(face))
-              || !AmoebaLegBlock.supportsFace(cells.get(cell), cell, face)) continue;
+              || !(bootstrap
+                  ? AmoebaLegBlock.supportsFace(cells.get(cell), cell, face)
+                  : AmoebaLegBlock.canHostLeg(cells.get(cell), cell, face))) continue;
           var p = Vec3.atCenterOf(cell).subtract(origin);
           double value =
               Math.pow(p.x - desired.x, 2)

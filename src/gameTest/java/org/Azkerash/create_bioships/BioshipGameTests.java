@@ -530,6 +530,49 @@ public class BioshipGameTests {
     }
   }
 
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "mounted_flipper_priority")
+  public static void mounted_flippers_replace_core_fallback_even_before_four_are_deployed(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    try {
+      var host = core.getBlockPos().east();
+      level.setBlock(host, BioshipTissue.body().defaultBlockState(), 3);
+      var leg = host.east();
+      level.setBlock(
+          leg,
+          Create_bioships.SWIMMING_LEG
+              .get()
+              .defaultBlockState()
+              .setValue(AmoebaLegBlock.FACING, Direction.EAST),
+          3);
+      var water = core.aquatic().save();
+      water.putBoolean("Swimming", true);
+      core.aquatic().load(water);
+      var layout = BioshipSupport.layout(core, BioshipStructure.cells(ship));
+      helper.assertTrue(
+          layout.legs().size() == 1
+              && layout.legs().getFirst().swimming()
+              && !layout.legs().getFirst().bootstrap(),
+          "Mounted flipper was hidden by four fallback core legs");
+      helper.assertTrue(
+          layout
+                  .legs()
+                  .getFirst()
+                  .root()
+                  .distanceTo(
+                      Vec3.atCenterOf(leg)
+                          .subtract(Vec3.atLowerCornerOf(core.structuralOrigin()))
+                          .add(-.48, 0, 0))
+              < .001,
+          "Rendered flipper root did not match actual socket");
+      helper.succeed();
+    } finally {
+      cleanup(helper, ship);
+    }
+  }
+
   @GameTest(template = "test_empty", timeoutTicks = 200, batch = "end_fixture_geometry")
   public static void developer_end_habitat_has_remote_islands_biome_and_void_gap(
       GameTestHelper helper) {
