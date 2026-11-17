@@ -161,3 +161,5 @@ This integration push includes the cache/storage and route-reuse fixes tested wi
 The complete working tree passed `check runGameTestServer`: 74 unit tests and all 184 live tests.
 All source sets compile. Package/Mixin checks cover 190 types and all 13 hooks. Visual client QA
 of the new panel/models remains unperformed and is documented in the changelog.
+
+Mini-checkpoint 2 complete: `defensive_action_and_owned_digestive_conversion_run_independently` passed in the full 184-test run at the established regression coordinates. No further gameplay change was needed. Four checkpoints remain.
