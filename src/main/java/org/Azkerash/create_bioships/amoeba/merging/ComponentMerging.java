@@ -25,6 +25,11 @@ public final class ComponentMerging {
   public static final class Animation {
     private Animation() {}
 
+    public static double grow(double progress) {
+      double t = Double.isFinite(progress) ? Math.clamp(progress, 0, 1) : 0;
+      return .025 + .975 * t * t * (3 - 2 * t);
+    }
+
     public static double scale(double progress, boolean swallowed) {
       double t = Double.isFinite(progress) ? Math.clamp(progress, 0, 1) : 0;
       double edge = swallowed ? (1 - t) / .25 : Math.min(t, 1 - t) / .2;

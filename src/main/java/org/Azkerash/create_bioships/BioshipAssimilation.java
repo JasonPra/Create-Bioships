@@ -316,6 +316,8 @@ public final class BioshipAssimilation {
 
   boolean beginRepair(LivingCoreBlockEntity core, List<BioshipAnatomy.RepairPart> plan) {
     if (plan.isEmpty() || pending() || core.organMove() != null || repairing()) return false;
+    var order = BioshipAnatomy.deploymentOrder(core, plan);
+    if (order.length != plan.size()) return false;
     var entries = new ListTag();
     for (var part : plan) {
       var entry = new CompoundTag();
@@ -327,6 +329,7 @@ public final class BioshipAssimilation {
       entries.add(entry);
     }
     repair.put("Parts", entries);
+    repair.putIntArray("DeployOrder", order);
     repair.putString("Phase", "recall");
     core.setChanged();
     return true;
@@ -374,8 +377,9 @@ public final class BioshipAssimilation {
       core.setChanged();
       return;
     }
-    var part = parts.getCompound(index);
-    final int slot = index;
+    var order = repair.getIntArray("DeployOrder");
+    final int slot = order.length == parts.size() ? order[index] : index;
+    var part = parts.getCompound(slot);
     var saved =
         stock.stream()
             .filter(t -> t.contains("RepairSlot") && t.getInt("RepairSlot") == slot)
@@ -397,6 +401,10 @@ public final class BioshipAssimilation {
     }
     if (ComponentTransport.deployStored(
         core.amoebaComponents(), target, state, saved.getCompound("Entity"))) {
+      var cargo =
+          (ServerSubLevel)
+              SubLevelContainer.getContainer(core.getLevel()).getSubLevel(core.organMove().cargo());
+      cargo.getUserDataTag().putInt("RepairSlot", slot);
       stock.remove(saved);
       BioshipHealthChanges.changed(core);
       core.setChanged();

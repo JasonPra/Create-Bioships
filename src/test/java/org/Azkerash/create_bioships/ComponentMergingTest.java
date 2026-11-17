@@ -7,6 +7,18 @@ import org.junit.jupiter.api.Test;
 
 class ComponentMergingTest {
   @Test
+  void storedDeploymentGrowsSmoothlyFromAbsorbedSize() {
+    double previous = .025;
+    for (int i = 0; i <= 100; i++) {
+      double size = ComponentMerging.Animation.grow(i / 100.0);
+      assertTrue(size >= previous && size <= 1);
+      previous = size;
+    }
+    assertEquals(.025, ComponentMerging.Animation.grow(0), 1e-9);
+    assertEquals(1, ComponentMerging.Animation.grow(1), 1e-9);
+  }
+
+  @Test
   void internalMoveAbsorbsAndRedeploysSymmetrically() {
     assertEquals(1, ComponentMerging.Animation.scale(0, false));
     assertEquals(1, ComponentMerging.Animation.scale(1, false));

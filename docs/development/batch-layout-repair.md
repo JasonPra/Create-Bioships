@@ -28,3 +28,10 @@ exist only in the live organ, its cargo, or stock, never in the saved layout pla
 organs pause inventory processing. Ordinary body edits and harvesting cannot compete with the
 repair. The full recall/redeployment test passed, including core-state reload and inventory
 conservation. Deployment hardening and obstruction tests are the next checkpoint.
+
+Checkpoint 5: redeployment uses host-before-appendage ordering, reserved cells, real owned cargo
+and shared grow/absorb animation curves. A newly obstructed destination returns its actual cargo
+to slot-linked stock, then waits to retry the same destination; it never clones an old snapshot.
+Three live tests passed, including multi-mouth repair with dependent eyes/flippers and blocked
+deployment followed by reload/resume. All 100 unit tests passed. Planner work is bounded to 64
+parts, 256 candidates per part, 2048 candidate checks and 64 route quotes per attempt.

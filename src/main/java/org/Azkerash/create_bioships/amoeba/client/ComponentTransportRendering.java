@@ -37,7 +37,10 @@ public final class ComponentTransportRendering {
                 && provider.amoebaComponents().alive()) {
               var core = provider.amoebaComponents();
               var moving = core.movement();
-              if (moving != null) ACTIVE.put(moving.cargo(), new Active(moving, false));
+              if (moving != null)
+                ACTIVE.put(
+                    moving.cargo(),
+                    new Active(moving, moving.target().equals(core.controllerPosition())));
               for (var move : core.absorptions()) ACTIVE.put(move.cargo(), new Active(move, true));
             }
     }
@@ -46,7 +49,10 @@ public final class ComponentTransportRendering {
     double progress =
         (current.getGameTime() + partial - active.move().started())
             / ComponentMerging.DURATION_TICKS;
-    double scale = ComponentMerging.Animation.scale(progress, active.swallowed());
+    double scale =
+        active.move().source().equals(active.move().target())
+            ? ComponentMerging.Animation.grow(progress)
+            : ComponentMerging.Animation.scale(progress, active.swallowed());
     if (scale >= 1) return original;
     var pivot = Vec3.atCenterOf(active.move().cargoBlock());
     var before = original.transformPosition(pivot);

@@ -701,6 +701,15 @@ public class BioshipGameTests {
           for (int slot = 0; slot < 9; slot++)
             if (stomach.foodStack(slot).is(Items.DIAMOND))
               diamonds += stomach.foodStack(slot).getCount();
+        for (var e : BioshipStructure.cells(ship).entrySet()) {
+          if (BioshipLegEvolution.leg(e.getValue()))
+            helper.assertTrue(
+                AmoebaLegBlock.mounted(BioshipStructure.cells(ship), e.getKey(), e.getValue()),
+                "Batch redeployed an unsupported leg");
+          if (e.getValue().is(Create_bioships.SURFACE_EYE.get()))
+            helper.assertTrue(
+                e.getValue().canSurvive(level, e.getKey()), "Batch redeployed an unsupported eye");
+        }
         helper.assertTrue(diamonds == 7, "Batch lost/duplicated recalled inventory: " + diamonds);
         helper.succeed();
       } finally {
@@ -709,6 +718,96 @@ public class BioshipGameTests {
       return;
     }
     helper.runAfterDelay(5, () -> pollLayoutRepair(helper, ship, observed));
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 700, batch = "batch_blocked_deployment")
+  public static void obstructed_batch_deployment_returns_actual_cargo_to_stock_then_resumes(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    digestive(helper, core, false);
+    var mouth = core.getBlockPos().north();
+    ((FeedingMouthBlockEntity) level.getBlockEntity(mouth))
+        .setItem(0, new ItemStack(Items.DIAMOND, 7));
+    level.setBlock(mouth.north(), BioshipTissue.body().defaultBlockState(), 3);
+    helper.assertTrue(
+        core.assimilation().beginRepair(core, BioshipAnatomy.repairPlan(core)),
+        "Could not start obstruction fixture");
+    obstructFirstDeployment(helper, ship);
+  }
+
+  private static void obstructFirstDeployment(GameTestHelper helper, ServerSubLevel ship) {
+    var core = core(ship);
+    var move = core.organMove();
+    if (move == null || !move.source().equals(move.target())) {
+      helper.runAfterDelay(5, () -> obstructFirstDeployment(helper, ship));
+      return;
+    }
+    var target = move.target();
+    var level = helper.getLevel();
+    level.setBlock(target, Blocks.GLASS.defaultBlockState(), 3);
+    helper.runAfterDelay(
+        85,
+        () -> {
+          try {
+            helper.assertTrue(
+                core.assimilation().repairing()
+                    && core.organMove() == null
+                    && core.assimilation().stored() > 0,
+                "Obstructed deployment did not safely recall into stock");
+            var saved = core.saveWithFullMetadata(level.registryAccess());
+            core.loadAdditional(saved, level.registryAccess());
+            level.removeBlock(target, false);
+            pollLayoutRepair(helper, ship, new boolean[] {true, true});
+          } catch (Throwable failure) {
+            cleanup(helper, ship);
+            throw failure;
+          }
+        });
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 700, batch = "batch_multiple_mouths")
+  public static void one_batch_repairs_both_mouths_instead_of_repeated_single_organ_moves(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    digestive(helper, core, false);
+    var mouth = core.getBlockPos().north();
+    ((FeedingMouthBlockEntity) level.getBlockEntity(mouth))
+        .setItem(0, new ItemStack(Items.DIAMOND, 7));
+    level.setBlock(mouth.north(), BioshipTissue.body().defaultBlockState(), 3);
+    var second = core.getBlockPos().south();
+    level.setBlock(
+        second,
+        Create_bioships.FEEDING_MOUTH
+            .get()
+            .defaultBlockState()
+            .setValue(FeedingMouthBlock.FACING, Direction.SOUTH),
+        3);
+    level.setBlock(second.south(), BioshipTissue.body().defaultBlockState(), 3);
+    level.setBlock(
+        core.getBlockPos().west(2),
+        Create_bioships.SWIMMING_LEG
+            .get()
+            .defaultBlockState()
+            .setValue(AmoebaLegBlock.FACING, Direction.WEST),
+        3);
+    level.setBlock(
+        mouth.north().above(),
+        Create_bioships.SURFACE_EYE
+            .get()
+            .defaultBlockState()
+            .setValue(SurfaceEyeBlock.FACING, Direction.UP),
+        3);
+    var plan = BioshipAnatomy.repairPlan(core);
+    helper.assertTrue(
+        plan.stream().filter(p -> p.state().is(Create_bioships.FEEDING_MOUTH.get())).count() == 2,
+        "Batch omitted a mouth");
+    helper.assertTrue(
+        core.assimilation().beginRepair(core, plan), "Could not begin multi-mouth batch");
+    pollLayoutRepair(helper, ship, new boolean[2]);
   }
 
   @GameTest(template = "test_empty", timeoutTicks = 200, batch = "end_fixture_geometry")

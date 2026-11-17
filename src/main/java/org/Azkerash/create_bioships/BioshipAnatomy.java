@@ -139,6 +139,7 @@ final class BioshipAnatomy {
     for (var e : planned.entrySet())
       if (e.getValue().is(Create_bioships.GILLS.get()))
         openings.add(e.getKey().relative(e.getValue().getValue(RespiratoryOrganBlock.FACING)));
+    int attempts = 0, quotes = 0;
     for (var source : selected) {
       var state = original.get(source);
       boolean mouth = state.is(Create_bioships.FEEDING_MOUTH.get());
@@ -152,9 +153,11 @@ final class BioshipAnatomy {
                   Comparator.<BlockPos>comparingDouble(
                           p -> p.equals(source) ? -1 : p.distSqr(source))
                       .thenComparing(Comparator.naturalOrder()))
+              .limit(256)
               .toList();
       RepairPart chosen = null;
       for (var target : ordered) {
+        if (++attempts > 2048) return List.of();
         if (openings.contains(target)
             || planned.containsKey(target)
             || !core.ship().getPlot().contains(new net.minecraft.world.level.ChunkPos(target)))
@@ -195,6 +198,7 @@ final class BioshipAnatomy {
                     net.minecraft.world.level.block.state.properties.BlockStateProperties.FACING,
                     face);
           }
+          if (mouth && ++quotes > 64) return List.of();
           if (mouth && !DigestiveSystem.reserveOrganRoute(core, source, target, false)) continue;
           chosen = new RepairPart(source, target, oriented);
           break;
@@ -250,7 +254,45 @@ final class BioshipAnatomy {
       if (!BioshipTissue.host(core.getLevel().getBlockEntity(leaf.source())).isAir())
         residual.add(leaf.source());
     }
-    return List.copyOf(recall);
+    return deploymentOrder(core, recall).length == recall.size() ? List.copyOf(recall) : List.of();
+  }
+
+  static int[] deploymentOrder(LivingCoreBlockEntity core, List<RepairPart> plan) {
+    var present = new LinkedHashMap<>(BioshipStructure.cells(core.ship()));
+    for (var p : plan) {
+      present.remove(p.source());
+      var host = BioshipTissue.host(core.getLevel().getBlockEntity(p.source()));
+      if (!host.isAir()) present.put(p.source(), host);
+    }
+    var pending = new ArrayList<Integer>();
+    for (int i = 0; i < plan.size(); i++) pending.add(i);
+    var order = new ArrayList<Integer>();
+    while (!pending.isEmpty()) {
+      Integer next = null;
+      for (var slot : pending) {
+        var p = plan.get(slot);
+        if (java.util.Arrays.stream(Direction.values())
+            .noneMatch(d -> present.containsKey(p.target().relative(d)))) continue;
+        if (BioshipLegEvolution.leg(p.state()) || p.state().is(Create_bioships.SURFACE_EYE.get())) {
+          var face =
+              p.state()
+                  .getValue(
+                      net.minecraft.world.level.block.state.properties.BlockStateProperties.FACING);
+          var host = p.target().relative(face.getOpposite());
+          if (BioshipLegEvolution.leg(p.state())
+              ? !AmoebaLegBlock.canHostLeg(present.get(host), host, face)
+              : !SurfaceEyeBlock.canHostEye(present.get(host), host, face)) continue;
+        }
+        next = slot;
+        break;
+      }
+      if (next == null) return new int[0];
+      order.add(next);
+      pending.remove(next);
+      var p = plan.get(next);
+      present.put(p.target(), p.state());
+    }
+    return order.stream().mapToInt(Integer::intValue).toArray();
   }
 
   private static boolean connectedCells(BlockPos root, Set<BlockPos> cells) {

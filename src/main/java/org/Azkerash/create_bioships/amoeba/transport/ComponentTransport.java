@@ -232,6 +232,7 @@ public final class ComponentTransport {
       return false;
     }
     core.restore(cargo, cargo.getPlot().getCenterBlock(), capsule);
+    core.rememberHost(core.component(cargo, cargo.getPlot().getCenterBlock()), host);
     var tags = new CompoundTag();
     tags.putUUID("BioshipCargoOwner", core.body().getUniqueId());
     tags.putBoolean("BioshipBound", true);
@@ -257,7 +258,7 @@ public final class ComponentTransport {
             false,
             container.addForceLoadTicket(
                 core.body(), SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE),
-            List.of()));
+            List.of(core.controllerPosition(), target)));
     core.changed();
     return true;
   }
@@ -354,15 +355,19 @@ public final class ComponentTransport {
     }
     var host = level.getBlockState(move.target());
     if (!host.isAir() && !BioshipTissue.isTissue(host)) {
-      if (cargo.getUserDataTag() != null && cargo.getUserDataTag().getBoolean("RepairDeploy"))
+      if (cargo.getUserDataTag() != null && cargo.getUserDataTag().getBoolean("RepairDeploy")) {
+        retainDeployment(core, cargo, move);
         return;
+      }
       release(core, cargo);
       return;
     }
     var original = level.getBlockState(move.cargoBlock());
     if (!core.validAttachment(original, move.target())) {
-      if (cargo.getUserDataTag() != null && cargo.getUserDataTag().getBoolean("RepairDeploy"))
+      if (cargo.getUserDataTag() != null && cargo.getUserDataTag().getBoolean("RepairDeploy")) {
+        retainDeployment(core, cargo, move);
         return;
+      }
       release(core, cargo);
       return;
     }
@@ -396,6 +401,29 @@ public final class ComponentTransport {
     finishCargo(core, cargo);
     core.invalidateVision();
     core.placed(move, scavenged, recycle, hostFlesh);
+  }
+
+  private static void retainDeployment(AmoebaComponentHost core, ServerSubLevel cargo, Move move) {
+    var data = cargo.getUserDataTag();
+    data.putBoolean("RepairDeploy", false);
+    data.putBoolean("BioshipStash", true);
+    var start = cargo.logicalPose().transformPosition(Vec3.atCenterOf(move.cargoBlock()));
+    core.movement(
+        new Move(
+            move.cargo(),
+            move.cargoBlock(),
+            move.target(),
+            core.controllerPosition(),
+            start,
+            core.level().getGameTime(),
+            false,
+            false,
+            false,
+            false,
+            false,
+            move.ownerForced(),
+            List.of(move.target(), core.controllerPosition())));
+    core.changed();
   }
 
   public static void finishCargo(AmoebaComponentHost core, ServerSubLevel cargo) {
