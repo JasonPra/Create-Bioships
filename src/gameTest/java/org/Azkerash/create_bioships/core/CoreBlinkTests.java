@@ -29,7 +29,9 @@ public final class CoreBlinkTests {
     level.setBlock(pos, Create_bioships.CORE.get().defaultBlockState(), 3);
     helper.assertTrue(
         level.getBlockState(pos).getValue(CoreBlock.BLINK), "Unassembled core is not closed-eyed");
-    helper.assertTrue(level.getBlockEntity(pos) == null, "Core acquired an unwanted block entity");
+    helper.assertTrue(
+        level.getBlockEntity(pos) instanceof CoreGogglesDisplay,
+        "Core inspection block entity missing");
     var player = helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL);
     for (var wrench :
         java.util.List.of(
@@ -168,7 +170,8 @@ public final class CoreBlinkTests {
           helper.assertTrue(
               counts[0] > 100 && counts[1] >= 7, "The original double-blink cycle did not run");
           helper.assertTrue(
-              level.getBlockEntity(pos) == null, "Assembly added an unwanted block entity");
+              level.getBlockEntity(pos) instanceof CoreGogglesDisplay,
+              "Assembly lost the inspection block entity");
           helper.assertTrue(
               CoreAssemblyRules.isCreature(body)
                   && body.getUserDataTag().hasUUID(CoreAssemblyRules.ID),

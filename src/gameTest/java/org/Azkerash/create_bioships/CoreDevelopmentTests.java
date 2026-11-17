@@ -77,7 +77,21 @@ public final class CoreDevelopmentTests {
                                                   b.getPlot().getCenterBlock()))))
                   .count();
           helper.assertTrue(
-              count == 49, "Honey-glued fixture did not become 49 independent cores: " + count);
+              count == 49,
+              "Honey-glued fixture did not become 49 independent cores: "
+                  + count
+                  + " bodies="
+                  + SubLevelContainer.getContainer(level).getAllSubLevels().stream()
+                      .filter(b -> CoreAssemblyRules.isCreature(b))
+                      .map(
+                          b ->
+                              b.getUniqueId()
+                                  + "@"
+                                  + b.logicalPose()
+                                      .transformPosition(
+                                          net.minecraft.world.phys.Vec3.atCenterOf(
+                                              b.getPlot().getCenterBlock())))
+                      .toList());
           for (int y = 0; y < 4; y++)
             helper.assertTrue(
                 level.getBlockState(layout.base().above(y)).is(Blocks.OAK_LOG),

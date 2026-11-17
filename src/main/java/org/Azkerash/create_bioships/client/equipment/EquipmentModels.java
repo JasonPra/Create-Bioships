@@ -1,4 +1,4 @@
-package org.Azkerash.create_bioships.equipment.client;
+package org.Azkerash.create_bioships.client.equipment;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.resources.model.*;

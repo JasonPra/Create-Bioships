@@ -13,10 +13,11 @@ import net.minecraft.world.level.block.state.*;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 
-/** A blinking core with player-only assembly; no block entity, limbs or creature behavior. */
+/** A blinking core with player-only assembly; inspection only; no limbs or creature behavior. */
 public final class CoreBlock extends Block
     implements dev.ryanhcode.sable.api.block.BlockSubLevelAssemblyListener,
-        com.simibubi.create.content.equipment.wrench.IWrenchable {
+        com.simibubi.create.content.equipment.wrench.IWrenchable,
+        net.minecraft.world.level.block.EntityBlock {
   public static final MapCodec<CoreBlock> CODEC = simpleCodec(CoreBlock::new);
   public static final BooleanProperty BLINK = BooleanProperty.create("blink");
   public static final IntegerProperty WAKE = IntegerProperty.create("wake", 0, 9);
@@ -38,6 +39,26 @@ public final class CoreBlock extends Block
   public net.minecraft.world.InteractionResult onSneakWrenched(
       BlockState state, net.minecraft.world.item.context.UseOnContext context) {
     return net.minecraft.world.InteractionResult.FAIL;
+  }
+
+  @Override
+  public net.minecraft.world.level.block.entity.BlockEntity newBlockEntity(
+      BlockPos pos, BlockState state) {
+    return new CoreGogglesDisplay(pos, state);
+  }
+
+  @Override
+  public <T extends net.minecraft.world.level.block.entity.BlockEntity>
+      net.minecraft.world.level.block.entity.BlockEntityTicker<T> getTicker(
+          Level level,
+          BlockState state,
+          net.minecraft.world.level.block.entity.BlockEntityType<T> type) {
+    return level.isClientSide
+            || type != org.Azkerash.create_bioships.Create_bioships.CORE_DISPLAY.get()
+        ? null
+        : (world, pos, block, entity) -> {
+          if (world.getGameTime() % 10 == 0) ((CoreGogglesDisplay) entity).update();
+        };
   }
 
   @Override

@@ -20,10 +20,22 @@ public final class Create_bioships {
   private static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MODID);
   private static final DeferredRegister<CreativeModeTab> TABS =
       DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
+  private static final DeferredRegister<net.minecraft.world.level.block.entity.BlockEntityType<?>>
+      BLOCK_ENTITIES = DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, MODID);
   public static final DeferredBlock<CoreBlock> CORE =
       BLOCKS.register(
           "living_core",
           () -> new CoreBlock(BlockBehaviour.Properties.of().strength(2).noLootTable()));
+  public static final DeferredHolder<
+          net.minecraft.world.level.block.entity.BlockEntityType<?>,
+          net.minecraft.world.level.block.entity.BlockEntityType<CoreGogglesDisplay>>
+      CORE_DISPLAY =
+          BLOCK_ENTITIES.register(
+              "core_display",
+              () ->
+                  net.minecraft.world.level.block.entity.BlockEntityType.Builder.of(
+                          CoreGogglesDisplay::new, CORE.get())
+                      .build(null));
   public static final DeferredItem<BlockItem> CORE_ITEM = ITEMS.registerSimpleBlockItem(CORE);
 
   public static final DeferredItem<BioshipGogglesItem> BIOSHIP_GOGGLES =
@@ -55,6 +67,7 @@ public final class Create_bioships {
             event.enqueueWork(
                 () -> {
                   BlockPlacementRules.refresh();
+                  BlockHealthValues.registerBlocks();
                   com.simibubi.create.content.equipment.goggles.GogglesItem.addIsWearingPredicate(
                       player ->
                           player
@@ -62,6 +75,7 @@ public final class Create_bioships {
                               .is(BIOSHIP_GOGGLES.get()));
                 }));
     BLOCKS.register(bus);
+    BLOCK_ENTITIES.register(bus);
     ITEMS.register(bus);
     TABS.register(bus);
   }
