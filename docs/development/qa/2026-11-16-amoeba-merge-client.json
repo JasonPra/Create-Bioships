@@ -1,0 +1,22 @@
+{
+  "result": "CLIENT_BOOT_PASSED_VISUAL_REVIEW_PARTIAL",
+  "runtime": "af40e24 plus merge rendering and permanent-core-loss changes, before the closed-rest jaw and Big Cannons additions",
+  "method": "Local Xorg :99, software Mesa OpenGL 4.6, existing Bioship Preview world; small elevated platform and native components for controlled rendering checks. Separate from natural ecosystem qualification.",
+  "observations": [
+    "Loaded singleplayer world with the new client render-pose mixin; no mixin-application or injection failure observed.",
+    "Observed bare-core walking and component assembly in the current graphical client.",
+    "Captured short screen sequences for review. Direct x11grab failed its shared-memory request; ImageMagick frames were captured instead.",
+    "Existing native Sable missing-sublevel movement messages and server timing warnings occurred.",
+    "The creature retained an awkward elevated layout and initially failed to acquire a nearby decomposer; needs/placement work remains open."
+  ],
+  "limitations": [
+    "Animation polish and all transitions are not signed off.",
+    "Final Big Cannons client boot and closed-rest jaw appearance were not tested in this client session; server validation covers their loading/behavior separately.",
+    "Recordings have limited temporal resolution and are not a physics performance benchmark."
+  ],
+  "artifacts": [
+    "/workspace/work/amoeba-merge-qa.mp4",
+    "/workspace/work/merge-qa-frames",
+    "/workspace/work/fusion-qa-frames"
+  ]
+}

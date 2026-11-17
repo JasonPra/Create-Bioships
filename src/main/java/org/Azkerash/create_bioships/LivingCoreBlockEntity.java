@@ -687,6 +687,10 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
 
   public static void tick(Level level, BlockPos pos, BlockState state, LivingCoreBlockEntity core) {
     if (level.isClientSide) return;
+    var owner = core.ship();
+    if (owner != null && BioshipDecay.dead(owner) && !core.body().dead())
+      core.body()
+          .die(core, BioshipDeathCause.read(owner.getUserDataTag().getString("BioshipDeathCause")));
     core.chunkLoading.update(core);
     core.body.initializeHealth(core);
     if (core.ship() != null && !core.body().dead() && level.getGameTime() % 20 == 0)

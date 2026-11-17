@@ -62,3 +62,7 @@ No new command is required for death logging.
 Optional JVM argument `-Dbioships.traceContainers=true` logs mouth capture/load records and missing destination block entities during physical handoffs. Pair it with `/bioship_debug inspect <id>` and F3+P. It is disabled by default. `Water.WaterContact` in inspection data describes habitat contact; `Water.Wet` remains the stricter swimming-physics classification. No new in-game commands. See [container persistence](container-persistence.md) for native item-component restoration and resource ownership.
 
 The existing `/bioship_debug inspect <id>` snapshot also includes `MaxHealth` (cached component capacity) and `BlastAdaptationPoints` (persistent 0–100 blast trait). These distinguish wounds from structural health changes without forcing another health audit. No additional command or permission level is introduced.
+
+## Focused development checks
+
+Use `./gradlew runGameTestServer -PbioshipTests='(?i)resting_mouth|broken_core|replacement_core'` to select test names with a Java regular expression. The development-only selector prints the matched count and rejects an empty selection. `./gradlew build runGameTestServer` retains the full default suite. This is a coding aid; persistent prepared world scenarios and result boards are queued separately. No new in-game command is introduced by this selector.

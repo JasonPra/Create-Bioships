@@ -54,6 +54,8 @@ An organ can compact directly only toward the fixed structural origin, improving
 
 ## External eyes and protected core
 
+The affordable-first-eye policy below describes checkpoint `af40e24`. The next growth-priority batch replaces that trigger with demonstrated directional sight gaps, valid body mounts, and required respiration first. Funding alone will not justify an eye.
+
 Once connected digestion can fund an eye while retaining emergency materials, existing external eyes take over sight scouting. A funded first eye is attempted promptly; later eyes can track targets and relocate in hatchlings too. The core stops seeking elevated sight perches. It seeks sheltered tissue instead; defensive destinations remain inside the body. A first protected entry can replace one Packed Flesh block, returning its normal tissue-growth material cost (8 flesh / 4 fiber) and vacating the former core cell. Subsequent moves swap existing tissue and do not issue another entry refund. The entry flag survives save/reload. Connectivity, support, world clearance and digestive routing still gate the transaction. Core transfer uses the owning Sable plot's authoritative block entity and the shared synchronous state handoff.
 
 Water contact or sustained water-use history defers lung growth. Sustained exposure proposes exposed gills first; declining air with current water contact also makes gills an immediate survival need. Essential gills can spend emergency materials; discretionary adaptations still leave the reserve. Paid support expansion quotes gills for an aquatic resident rather than reserving an unnecessary lung. Sustained dry use can later make lungs necessary. A mouth above water alone does not make lungs the preferred investment for a water resident.

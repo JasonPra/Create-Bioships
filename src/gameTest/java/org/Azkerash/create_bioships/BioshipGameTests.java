@@ -860,62 +860,79 @@ public class BioshipGameTests {
           level.getBlockState(digesterPos).isAir(),
           "Digester was not incorporated into the combined stomach");
       helper.assertTrue(
-          level.getBlockEntity(forgePos) instanceof FeedingMouthBlockEntity
-              && level.getBlockEntity(decomposerPos) instanceof StomachBlockEntity,
-          "First machines did not become unique organs");
-      BlockPos extraForge = core.getBlockPos().east(), extraDecomposer = core.getBlockPos().south();
-      level.setBlock(extraForge, block("biomancy:bio_forge").defaultBlockState(), 3);
-      level.setBlock(extraDecomposer, block("biomancy:decomposer").defaultBlockState(), 3);
-      BioshipIntegration.finishAssimilation(core, extraForge);
-      BioshipIntegration.finishAssimilation(core, extraDecomposer);
-      helper.assertTrue(
-          level.getBlockEntity(extraForge) instanceof BioForgeBlockEntity
-              && level.getBlockEntity(extraDecomposer) instanceof DecomposerBlockEntity,
-          "Additional crafting machines were converted");
-      var stomach = DigestiveSystem.stomach(core);
-      helper.assertTrue(
-          stomach.material("biomancy:bone_fragments") == 12
-              && stomach.material("biomancy:elastic_fibers") == 20,
-          "Existing decomposition products were lost");
-      helper.assertTrue(
-          stomach.material("biomancy:nutrients") == 3
-              && stomach.queuedFood() == 4
-              && stomach.nutrients() == 9,
-          "Digester contents were not preserved");
-      var extraDigester = extraDecomposer.east();
-      level.setBlock(extraDigester, block("biomancy:digester").defaultBlockState(), 3);
-      BioshipIntegration.finishAssimilation(core, extraDigester);
-      helper.assertTrue(
-          level.getBlockEntity(extraDigester)
-              instanceof com.github.elenterius.biomancy.block.digester.DigesterBlockEntity,
-          "A second digester was consumed");
-      DigestiveSystem.connect(core, ship);
-      helper.runAtTickTime(
-          40,
-          () ->
-              finish(
-                  helper,
-                  ship,
-                  () -> {
-                    int total =
-                        core.saveWithFullMetadata(level.registryAccess()).getInt("Biomass")
-                            + stomach.material("biomancy:flesh_bits");
-                    helper.assertTrue(
-                        total
-                                + 4
-                                    * BioshipStructure.cells(core.ship()).values().stream()
-                                        .filter(BioshipLegEvolution::leg)
-                                        .count()
-                                + BioshipRespiration.LUNG_COST.flesh()
-                                    * BioshipStructure.cells(core.ship()).values().stream()
-                                        .filter(state -> state.is(Create_bioships.LUNGS.get()))
-                                        .count()
-                            == 96,
-                        "Stored Bio-Forge biomass or one-time leg salvage was lost: " + total);
-                    helper.assertTrue(
-                        core.saveWithFullMetadata(level.registryAccess()).getInt("Satiety") <= 600,
-                        "Inherited tissue supplied nutrition");
-                  }));
+          OrganMotion.busy(core) && !core.organMove().usesArm(),
+          "Adjacent stomach parts skipped the amoeba merge transaction");
+      helper.runAfterDelay(
+          37,
+          () -> {
+            helper.assertTrue(
+                level.getBlockEntity(forgePos) instanceof FeedingMouthBlockEntity
+                    && level.getBlockEntity(decomposerPos) instanceof StomachBlockEntity,
+                "First machines did not become unique organs");
+            BlockPos extraForge = core.getBlockPos().east(),
+                extraDecomposer = core.getBlockPos().south();
+            level.setBlock(extraForge, block("biomancy:bio_forge").defaultBlockState(), 3);
+            level.setBlock(extraDecomposer, block("biomancy:decomposer").defaultBlockState(), 3);
+            BioshipIntegration.finishAssimilation(core, extraForge);
+            BioshipIntegration.finishAssimilation(core, extraDecomposer);
+            helper.assertTrue(
+                level.getBlockEntity(extraForge) instanceof BioForgeBlockEntity
+                    && level.getBlockEntity(extraDecomposer) instanceof DecomposerBlockEntity,
+                "Additional crafting machines were converted");
+            var stomach = DigestiveSystem.stomach(core);
+            helper.assertTrue(
+                stomach.material("biomancy:bone_fragments") == 12
+                    && stomach.material("biomancy:elastic_fibers") == 20,
+                "Existing decomposition products were lost");
+            helper.assertTrue(
+                stomach.material("biomancy:nutrients") == 3
+                    && stomach.queuedFood() == 4
+                    && stomach.nutrients() == 9,
+                "Digester contents were not preserved");
+            var extraDigester = extraDecomposer.east();
+            level.setBlock(extraDigester, block("biomancy:digester").defaultBlockState(), 3);
+            BioshipIntegration.finishAssimilation(core, extraDigester);
+            helper.assertTrue(
+                level.getBlockEntity(extraDigester)
+                    instanceof com.github.elenterius.biomancy.block.digester.DigesterBlockEntity,
+                "A second digester was consumed");
+            DigestiveSystem.connect(core, ship);
+            helper.runAfterDelay(
+                40,
+                () ->
+                    finish(
+                        helper,
+                        ship,
+                        () -> {
+                          int total =
+                              core.saveWithFullMetadata(level.registryAccess()).getInt("Biomass")
+                                  + stomach.material("biomancy:flesh_bits");
+                          helper.assertTrue(
+                              total
+                                      + 4
+                                          * BioshipStructure.cells(core.ship()).values().stream()
+                                              .filter(BioshipLegEvolution::leg)
+                                              .count()
+                                      + BioshipRespiration.LUNG_COST.flesh()
+                                          * BioshipStructure.cells(core.ship()).values().stream()
+                                              .filter(
+                                                  state -> state.is(Create_bioships.LUNGS.get()))
+                                              .count()
+                                      + 2
+                                          * BioshipStructure.cells(core.ship()).values().stream()
+                                              .filter(
+                                                  state ->
+                                                      state.is(Create_bioships.SURFACE_EYE.get()))
+                                              .count()
+                                  == 96,
+                              "Stored Bio-Forge biomass or one-time leg salvage was lost: "
+                                  + total);
+                          helper.assertTrue(
+                              core.saveWithFullMetadata(level.registryAccess()).getInt("Satiety")
+                                  <= 600,
+                              "Inherited tissue supplied nutrition");
+                        }));
+          });
     } catch (Throwable failure) {
       cleanup(helper, ship);
       throw failure;
@@ -2439,8 +2456,8 @@ public class BioshipGameTests {
     helper.assertTrue(
         OrganMotion.begin(core, source, target, false), "Bare component did not start moving");
     helper.assertTrue(
-        level.getBlockState(source).isAir() && core.organMove().usesArm(),
-        "Future hull geometry created early flesh or an imaginary tissue route");
+        level.getBlockState(source).isAir() && !core.organMove().usesArm(),
+        "Internal merge created filler or used an external carrying arm");
     helper.runAfterDelay(
         45,
         () -> {
@@ -7360,15 +7377,18 @@ public class BioshipGameTests {
                           current, mouth.getBlockPos(), new ItemStack(Items.BEEF), false),
                       "Working mouth rejected meal");
                   helper.assertTrue(
-                      mouth.jawShift(.5f) > 0, "Mouth did not close to swallow accepted food");
+                      mouth.jawShift(.5f) < FeedingMouthBlockEntity.REST_JAW_SHIFT,
+                      "Mouth did not articulate to swallow accepted food");
                   current.body().starve(current, 1);
                   helper.assertTrue(
-                      current.body().flashing(current) && mouth.jawShift(.5f) < 0,
+                      current.body().flashing(current)
+                          && mouth.jawShift(.5f) < FeedingMouthBlockEntity.REST_JAW_SHIFT,
                       "Hurt voice did not articulate the upgraded mouth");
                   var saved = mouth.saveWithFullMetadata(level.registryAccess());
                   mouth.loadWithComponents(saved, level.registryAccess());
                   helper.assertTrue(
-                      mouth.jawShift(.5f) < 0 && mouth.voiced(),
+                      mouth.jawShift(.5f) < FeedingMouthBlockEntity.REST_JAW_SHIFT
+                          && mouth.voiced(),
                       "Animation or voice lost on sync/transfer");
                 }));
   }
@@ -7673,7 +7693,8 @@ public class BioshipGameTests {
                     + " connected="
                     + intake.connected(current));
             helper.assertTrue(
-                ((FeedingMouthBlockEntity) level.getBlockEntity(rear)).jawShift(.5f) > 0,
+                ((FeedingMouthBlockEntity) level.getBlockEntity(rear)).jawShift(.5f)
+                    < FeedingMouthBlockEntity.REST_JAW_SHIFT,
                 "Receiving mouth did not swallow");
             helper.succeed();
           } finally {
@@ -7953,6 +7974,15 @@ public class BioshipGameTests {
     }
   }
 
+  private static long lungInvestment(LivingCoreBlockEntity core, boolean flesh) {
+    long count =
+        BioshipStructure.cells(core.ship()).values().stream()
+            .filter(state -> state.is(Create_bioships.LUNGS.get()))
+            .count();
+    return count
+        * (flesh ? BioshipRespiration.LUNG_COST.flesh() : BioshipRespiration.LUNG_COST.fiber());
+  }
+
   @GameTest(template = "test_empty", timeoutTicks = 100, batch = "protected_core_entry")
   public static void external_eyes_bury_core_reclaim_one_flesh_and_do_not_refund_twice(
       GameTestHelper helper) {
@@ -7991,9 +8021,10 @@ public class BioshipGameTests {
                   + " move="
                   + current.coreMotion().save());
           helper.assertTrue(
-              BioshipStorage.amount(current, MaterialCost.FLESH)
+              BioshipStorage.amount(current, MaterialCost.FLESH) + lungInvestment(current, true)
                       == BioshipTissue.GROWTH_COST.flesh()
                   && BioshipStorage.amount(current, MaterialCost.FIBER)
+                          + lungInvestment(current, false)
                       == BioshipTissue.GROWTH_COST.fiber(),
               "Replaced flesh material balance="
                   + BioshipStorage.snapshot(current)
@@ -8010,8 +8041,10 @@ public class BioshipGameTests {
                       current.coreMotion().save().getBoolean("Sheltered")
                           && !current.coreMotion().save().getBoolean("ReclaimEntry")
                           && BioshipStorage.amount(current, MaterialCost.FLESH)
+                                  + lungInvestment(current, true)
                               == BioshipTissue.GROWTH_COST.flesh()
                           && BioshipStorage.amount(current, MaterialCost.FIBER)
+                                  + lungInvestment(current, false)
                               == BioshipTissue.GROWTH_COST.fiber(),
                       "Reload/repeated shelter evaluation duplicated or lost the committed"
                           + " refund"));
@@ -8864,8 +8897,8 @@ public class BioshipGameTests {
                     + core.adaptation().behavior().debug().getString("Reason"));
             BioshipConfiguration.execute(core);
             helper.assertTrue(
-                core.hasMouth() && DigestiveSystem.functional(core),
-                "Owned essential components did not form connected digestion during defense");
+                OrganMotion.busy(core) && !core.organMove().usesArm(),
+                "Defense suppressed the timed digestive merge");
             helper.assertTrue(
                 core.brain().choose(core).action() == BioshipBrain.Action.DEFEND,
                 "Body work replaced the defensive action");
@@ -8874,10 +8907,23 @@ public class BioshipGameTests {
                 debug.getString("Action").equals("DEFEND")
                     && debug.getCompound("BodyWork").getString("Action").equals("CONFIGURE"),
                 "Debug snapshot does not expose both independent trees");
-            helper.succeed();
-          } finally {
+            helper.runAfterDelay(
+                50,
+                () -> {
+                  try {
+                    helper.assertTrue(
+                        DigestiveSystem.functional(core(ship)),
+                        "Owned components failed to finish connected digestion during defense");
+                    helper.succeed();
+                  } finally {
+                    threat.discard();
+                    cleanup(helper, ship);
+                  }
+                });
+          } catch (Throwable failure) {
             threat.discard();
             cleanup(helper, ship);
+            throw failure;
           }
         });
   }
@@ -9640,21 +9686,117 @@ public class BioshipGameTests {
   }
 
   @GameTest(template = "test_empty", timeoutTicks = 100)
-  public static void core_item_keeps_emergency_resources_without_dead_body_identity(
-      GameTestHelper helper) {
+  public static void broken_core_has_no_survival_or_creative_portable_drop(GameTestHelper helper) {
     var level = helper.getLevel();
     var pos = location();
     level.setBlock(pos, Create_bioships.CORE.get().defaultBlockState(), 3);
     var core = (LivingCoreBlockEntity) level.getBlockEntity(pos);
-    core.adaptation().creditRecovery("biomancy:flesh_bits", 37);
-    var restored = (LivingCoreBlockEntity) packedRoundTrip(helper, pos);
+    core.adaptation().creditRecovery(MaterialCost.FLESH, 37);
+    var state = level.getBlockState(pos);
+    var params =
+        new net.minecraft.world.level.storage.loot.LootParams.Builder(level)
+            .withParameter(
+                net.minecraft.world.level.storage.loot.parameters.LootContextParams.ORIGIN,
+                Vec3.atCenterOf(pos))
+            .withParameter(
+                net.minecraft.world.level.storage.loot.parameters.LootContextParams.TOOL,
+                ItemStack.EMPTY)
+            .withParameter(
+                net.minecraft.world.level.storage.loot.parameters.LootContextParams.BLOCK_ENTITY,
+                core);
+    helper.assertTrue(state.getDrops(params).isEmpty(), "Broken core yielded a reusable item");
+    var user = player(helper, "CorePermanentLoss");
+    user.setGameMode(GameType.CREATIVE);
+    int before =
+        level
+            .getEntitiesOfClass(
+                net.minecraft.world.entity.item.ItemEntity.class, new AABB(pos).inflate(2))
+            .size();
+    state.getBlock().playerWillDestroy(level, pos, state, user);
+    BioshipContainerState.creativeBreak(level, pos, user);
+    level.destroyBlock(pos, true, user);
+    helper.runAfterDelay(
+        2,
+        () -> {
+          helper.assertTrue(
+              level
+                      .getEntitiesOfClass(
+                          net.minecraft.world.entity.item.ItemEntity.class,
+                          new AABB(pos).inflate(2))
+                      .size()
+                  == before,
+              "Creative or ordinary destruction recovered a packed living core");
+          helper.succeed();
+        });
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "closed_resting_jaw")
+  public static void resting_mouth_closes_after_bites_and_vocalization(GameTestHelper helper) {
+    var pos = location();
+    var level = helper.getLevel();
+    level.setBlock(pos, Create_bioships.FEEDING_MOUTH.get().defaultBlockState(), 3);
+    var mouth = (FeedingMouthBlockEntity) level.getBlockEntity(pos);
     helper.assertTrue(
-        restored.adaptation().material("biomancy:flesh_bits") == 37
-            && !restored.body().dead()
-            && restored.organMove() == null,
-        "Core reserve lost or old death/transport state inherited");
-    level.removeBlock(pos, false);
-    helper.succeed();
+        mouth.jawShift(0) == FeedingMouthBlockEntity.REST_JAW_SHIFT, "Idle mouth is open");
+    mouth.animate(10, false);
+    helper.runAfterDelay(
+        5,
+        () -> {
+          helper.assertTrue(mouth.jawShift(0) < .01, "Bite did not open the closed resting jaw");
+          mouth.animate(10, true);
+          helper.runAfterDelay(
+              5,
+              () ->
+                  helper.assertTrue(
+                      mouth.jawShift(0) < 0,
+                      "Vocalization did not open the mouth wider than a bite"));
+          helper.runAfterDelay(
+              11,
+              () -> {
+                helper.assertTrue(
+                    mouth.jawShift(0) == FeedingMouthBlockEntity.REST_JAW_SHIFT,
+                    "Finished vocalization left the resting mouth open");
+                level.removeBlock(pos, false);
+                helper.succeed();
+              });
+        });
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "permanent_core_death")
+  public static void replacement_core_does_not_revive_registered_dead_ship(GameTestHelper helper) {
+    var ship = assemble(helper);
+    helper.runAfterDelay(
+        2,
+        () -> {
+          var original = core(ship);
+          var pos = original.getBlockPos();
+          helper.getLevel().setBlock(pos.east(), BioshipTissue.body().defaultBlockState(), 3);
+          original.body().die(original, BioshipDeathCause.CORE_REMOVED);
+          helper.assertTrue(
+              BioshipDecay.dead(ship), "Fixture death was not registered on its owning ship");
+          helper.getLevel().removeBlock(pos, false);
+          helper.getLevel().setBlock(pos, Create_bioships.CORE.get().defaultBlockState(), 3);
+          helper.runAfterDelay(
+              3,
+              () ->
+                  finish(
+                      helper,
+                      ship,
+                      () -> {
+                        var replacement = core(ship);
+                        helper.assertTrue(
+                            BioshipDecay.dead(ship)
+                                && replacement.body().dead()
+                                && replacement.brain().choose(replacement).action()
+                                    == BioshipBrain.Action.DEAD,
+                            "Replacement status: registry="
+                                + BioshipDecay.dead(ship)
+                                + " dead="
+                                + replacement.body().dead()
+                                + " action="
+                                + replacement.brain().choose(replacement).action());
+                      }));
+        });
   }
 
   private static BlockEntity packedRoundTrip(GameTestHelper helper, BlockPos pos) {

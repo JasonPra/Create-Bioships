@@ -201,6 +201,14 @@ public final class BioshipIntegration {
       }
       return;
     }
+    OrganMotion.combineStomach(core, source, destination);
+  }
+
+  static void finishStomach(
+      LivingCoreBlockEntity core,
+      com.github.elenterius.biomancy.block.decomposer.DecomposerBlockEntity decomposer,
+      com.github.elenterius.biomancy.block.digester.DigesterBlockEntity digester) {
+    var destination = decomposer.getBlockPos();
     var queued = new ArrayList<net.minecraft.world.item.ItemStack>();
     var stores = new ArrayList<net.minecraft.world.item.ItemStack>();
     for (int i = 0; i < decomposer.getInputInventory().getSlots(); i++)
@@ -216,13 +224,11 @@ public final class BioshipIntegration {
     int nutrients =
         decomposer.getStateData().fuelHandler.getFuelAmount()
             + digester.getStateData().fuelHandler.getFuelAmount();
-    var host = BioshipTissue.host(digester);
     var stomachHost = BioshipTissue.host(decomposer);
-    core.getLevel().removeBlockEntity(source);
-    core.getLevel().setBlock(source, host, 18);
     core.getLevel().removeBlockEntity(destination);
     core.getLevel().setBlock(destination, Create_bioships.STOMACH.get().defaultBlockState(), 3);
-    if (core.getLevel().getBlockEntity(destination) instanceof StomachBlockEntity stomach) {
+    if (BioshipContainerState.entity(core.getLevel(), core.ship(), destination)
+        instanceof StomachBlockEntity stomach) {
       BioshipTissue.remember(stomach, stomachHost);
       core.adaptation().salvageStarterLegs();
       core.setChanged();

@@ -250,7 +250,7 @@ public class Create_bioships
 
 #### LivingCoreBlock
 
-Source: `src/main/java/org/Azkerash/create_bioships/LivingCoreBlock.java` (187 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/LivingCoreBlock.java` (181 lines).
 
 ```java
 public class LivingCoreBlock extends BaseEntityBlock implements dev.ryanhcode.sable.api.block.BlockSubLevelAssemblyListener
@@ -301,8 +301,6 @@ public class LivingCoreBlock extends BaseEntityBlock implements dev.ryanhcode.sa
 
   protected java.util.List<ItemStack> getDrops( BlockState state, net.minecraft.world.level.storage.loot.LootParams.Builder params); // line 174
 
-  public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player); // line 180
-
 ```
 
 
@@ -318,7 +316,7 @@ Owns subsystem instances and saved state; schedules game ticks and publishes phy
 
 #### LivingCoreBlockEntity
 
-Source: `src/main/java/org/Azkerash/create_bioships/LivingCoreBlockEntity.java` (1287 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/LivingCoreBlockEntity.java` (1291 lines).
 
 ```java
 public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySubLevelActor
@@ -539,57 +537,57 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
 
   public static void tick(Level level, BlockPos pos, BlockState state, LivingCoreBlockEntity core); // line 686
 
-  private void updateCabinLights(); // line 794
+  private void updateCabinLights(); // line 798
 
-  private void growBody(); // line 805
+  private void growBody(); // line 809
 
-  public void sable$tick(ServerSubLevel ship); // line 881
+  public void sable$tick(ServerSubLevel ship); // line 885
 
-  private void serverTick(); // line 886
+  private void serverTick(); // line 890
 
-  private void incorporateAmalgam(); // line 993
+  private void incorporateAmalgam(); // line 997
 
-  public boolean canFly(); // line 1002
+  public boolean canFly(); // line 1006
 
-  private void updateEye(boolean active); // line 1011
+  private void updateEye(boolean active); // line 1015
 
-  public boolean isMature(); // line 1024
+  public boolean isMature(); // line 1028
 
-  public boolean resting(); // line 1028
+  public boolean resting(); // line 1032
 
-  public boolean aggressive(); // line 1032
+  public boolean aggressive(); // line 1036
 
-  public boolean isCaptain(net.minecraft.world.entity.Entity entity); // line 1036
+  public boolean isCaptain(net.minecraft.world.entity.Entity entity); // line 1040
 
-  public boolean huntingAllowed(); // line 1040
+  public boolean huntingAllowed(); // line 1044
 
-  public int foodLevel(); // line 1048
+  public int foodLevel(); // line 1052
 
-  public boolean starving(); // line 1052
+  public boolean starving(); // line 1056
 
-  public void adoptLarynx(); // line 1056
+  public void adoptLarynx(); // line 1060
 
-  public boolean wantsToHunt(); // line 1061
+  public boolean wantsToHunt(); // line 1065
 
-  public boolean hungry(); // line 1065
+  public boolean hungry(); // line 1069
 
-  public boolean hasMouth(); // line 1069
+  public boolean hasMouth(); // line 1073
 
-  public BlockPos mouthBlock(); // line 1073
+  public BlockPos mouthBlock(); // line 1077
 
-  public Vec3 mouthPosition(ServerSubLevel ship); // line 1095
+  public Vec3 mouthPosition(ServerSubLevel ship); // line 1099
 
-  public int swimmingFlagella(); // line 1107
+  public int swimmingFlagella(); // line 1111
 
-  Vec3 gatheringGoal(); // line 1115
+  Vec3 gatheringGoal(); // line 1119
 
-  static boolean droppedSupply(ItemStack stack); // line 1120
+  static boolean droppedSupply(ItemStack stack); // line 1124
 
-  public void sable$physicsTick(ServerSubLevel ship, RigidBodyHandle body, double dt); // line 1128
+  public void sable$physicsTick(ServerSubLevel ship, RigidBodyHandle body, double dt); // line 1132
 
-  protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries); // line 1182
+  protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries); // line 1186
 
-  protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries); // line 1232
+  protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries); // line 1236
 
 ```
 
@@ -674,7 +672,7 @@ public final class BioshipStructure
 
 #### BioshipIntegration
 
-Source: `src/main/java/org/Azkerash/create_bioships/BioshipIntegration.java` (358 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipIntegration.java` (364 lines).
 
 ```java
 public final class BioshipIntegration
@@ -723,15 +721,17 @@ public final class BioshipIntegration
 
   static void convertFirstStomach(LivingCoreBlockEntity core, BlockPos pos); // line 176
 
-  static void convertFirstBioForge(LivingCoreBlockEntity core, BlockPos pos); // line 233
+  static void finishStomach( LivingCoreBlockEntity core, com.github.elenterius.biomancy.block.decomposer.DecomposerBlockEntity decomposer, com.github.elenterius.biomancy.block.digester.DigesterBlockEntity digester); // line 205
 
-  static void orientMouth(LivingCoreBlockEntity core); // line 258
+  static void convertFirstBioForge(LivingCoreBlockEntity core, BlockPos pos); // line 239
 
-  public static void relocateMouth(LivingCoreBlockEntity core, ServerSubLevel ship); // line 279
+  static void orientMouth(LivingCoreBlockEntity core); // line 264
 
-  public static void routeBioshipWrench(PlayerInteractEvent.RightClickBlock event); // line 327
+  public static void relocateMouth(LivingCoreBlockEntity core, ServerSubLevel ship); // line 285
 
-  public static void feedMaw(PlayerInteractEvent.RightClickBlock event); // line 335
+  public static void routeBioshipWrench(PlayerInteractEvent.RightClickBlock event); // line 333
+
+  public static void feedMaw(PlayerInteractEvent.RightClickBlock event); // line 341
 
 ```
 
@@ -2385,7 +2385,7 @@ Move one actual component/Sable cargo with its complete state; route tube costs 
 
 #### OrganMotion
 
-Source: `src/main/java/org/Azkerash/create_bioships/OrganMotion.java` (450 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/OrganMotion.java` (497 lines).
 
 ```java
 public final class OrganMotion
@@ -2410,24 +2410,28 @@ public final class OrganMotion
 
   private static boolean begin( LivingCoreBlockEntity core, BlockPos source, BlockPos target, boolean external, boolean manual, boolean consuming, boolean stash); // line 128
 
-  private static boolean tissue(net.minecraft.world.level.block.state.BlockState state); // line 243
+  static boolean combineStomach(LivingCoreBlockEntity core, BlockPos source, BlockPos target); // line 139
 
-  static List<BlockPos> findTissuePath( LivingCoreBlockEntity core, BlockPos source, BlockPos target); // line 250
+  private static boolean begin( LivingCoreBlockEntity core, BlockPos source, BlockPos target, boolean external, boolean manual, boolean consuming, boolean stash, boolean combining); // line 143
 
-  private static Vec3 alongTissue(List<BlockPos> path, double progress); // line 286
+  private static boolean tissue(net.minecraft.world.level.block.state.BlockState state); // line 264
 
-  public static void tick(LivingCoreBlockEntity core); // line 293
+  static List<BlockPos> findTissuePath( LivingCoreBlockEntity core, BlockPos source, BlockPos target); // line 271
 
-  private static void release(LivingCoreBlockEntity core, ServerSubLevel cargo); // line 428
+  private static Vec3 alongTissue(List<BlockPos> path, double progress); // line 307
 
-  public static void abandon(LivingCoreBlockEntity core); // line 441
+  public static void tick(LivingCoreBlockEntity core); // line 314
+
+  private static void release(LivingCoreBlockEntity core, ServerSubLevel cargo); // line 475
+
+  public static void abandon(LivingCoreBlockEntity core); // line 488
 
 ```
 
 
 #### BioshipContainerState
 
-Source: `src/main/java/org/Azkerash/create_bioships/BioshipContainerState.java` (128 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipContainerState.java` (119 lines).
 
 ```java
 final class BioshipContainerState
@@ -2440,9 +2444,9 @@ final class BioshipContainerState
 
   static List<ItemStack> packDrops(List<ItemStack> drops, LootParams.Builder params); // line 65
 
-  static void creativeBreak( Level level, BlockPos pos, net.minecraft.world.entity.player.Player player); // line 94
+  static void creativeBreak( Level level, BlockPos pos, net.minecraft.world.entity.player.Player player); // line 85
 
-  private BioshipContainerState(); // line 125
+  private BioshipContainerState(); // line 116
 
 ```
 
@@ -2639,7 +2643,7 @@ final class BioshipDigestiveRepair
 
 #### FeedingMouthBlockEntity
 
-Source: `src/main/java/org/Azkerash/create_bioships/FeedingMouthBlockEntity.java` (258 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/FeedingMouthBlockEntity.java` (260 lines).
 
 ```java
 public class FeedingMouthBlockEntity extends BaseContainerBlockEntity
@@ -2670,47 +2674,49 @@ public class FeedingMouthBlockEntity extends BaseContainerBlockEntity
 
   CompoundTag larynxCapsule(); // line 54
 
-  public double jawShift(float partial); // line 58
+  public static final double REST_JAW_SHIFT; // line 58
 
-  void animate(int ticks, boolean vocal); // line 65
+  public double jawShift(float partial); // line 60
 
-  public void vocalize(boolean hurt); // line 74
+  void animate(int ticks, boolean vocal); // line 67
 
-  public void vocalize(char letter); // line 80
+  public void vocalize(boolean hurt); // line 76
 
-  public net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket getUpdatePacket(); // line 85
+  public void vocalize(char letter); // line 82
 
-  public CompoundTag getUpdateTag(HolderLookup.Provider registries); // line 90
+  public net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket getUpdatePacket(); // line 87
 
-  private boolean inheritedSlot, embeddedInHull; // line 95
+  public CompoundTag getUpdateTag(HolderLookup.Provider registries); // line 92
 
-  public FeedingMouthBlockEntity(BlockPos pos, BlockState state); // line 97
+  private boolean inheritedSlot, embeddedInHull; // line 97
 
-  public int getContainerSize(); // line 101
+  public FeedingMouthBlockEntity(BlockPos pos, BlockState state); // line 99
 
-  protected NonNullList<ItemStack> getItems(); // line 106
+  public int getContainerSize(); // line 103
 
-  protected void setItems(NonNullList<ItemStack> items); // line 111
+  protected NonNullList<ItemStack> getItems(); // line 108
 
-  protected Component getDefaultName(); // line 116
+  protected void setItems(NonNullList<ItemStack> items); // line 113
 
-  protected AbstractContainerMenu createMenu(int id, Inventory player); // line 122
+  protected Component getDefaultName(); // line 118
 
-  public void setItem(int slot, ItemStack stack); // line 127
+  protected AbstractContainerMenu createMenu(int id, Inventory player); // line 124
 
-  public boolean stillValid(Player player); // line 133
+  public void setItem(int slot, ItemStack stack); // line 129
 
-  public void inheritBioForge(ItemStack stack, int biomass); // line 142
+  public boolean stillValid(Player player); // line 135
 
-  public boolean embeddedInHull(); // line 149
+  public void inheritBioForge(ItemStack stack, int biomass); // line 144
 
-  public void embeddedInHull(boolean value); // line 153
+  public boolean embeddedInHull(); // line 151
 
-  public static void tick( Level level, BlockPos pos, BlockState state, FeedingMouthBlockEntity mouth); // line 158
+  public void embeddedInHull(boolean value); // line 155
 
-  protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries); // line 217
+  public static void tick( Level level, BlockPos pos, BlockState state, FeedingMouthBlockEntity mouth); // line 160
 
-  protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries); // line 231
+  protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries); // line 219
+
+  protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries); // line 233
 
 ```
 
@@ -4024,6 +4030,9 @@ Client registration, core/collection arms, supported legs and equipment meshes.
   client.BioshipClient
   client.AssimilationArmRenderer
   client.EquipmentModels
+  ComponentMergeAnimation
+  client.ComponentMergeRendering
+  mixin.ComponentMergeRenderMixin
 ```
 
 
@@ -4049,7 +4058,7 @@ public final class BioshipClient
 
 #### client.AssimilationArmRenderer
 
-Source: `src/main/java/org/Azkerash/create_bioships/client/AssimilationArmRenderer.java` (339 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/client/AssimilationArmRenderer.java` (342 lines).
 
 ```java
 public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBlockEntity>
@@ -4064,9 +4073,9 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
 
   public void render( LivingCoreBlockEntity core, float partial, PoseStack pose, MultiBufferSource buffers, int light, int overlay); // line 37
 
-  private void renderBatch( LivingCoreBlockEntity core, float partial, PoseStack pose, MultiBufferSource buffers, int light); // line 190
+  private void renderBatch( LivingCoreBlockEntity core, float partial, PoseStack pose, MultiBufferSource buffers, int light); // line 193
 
-  private void renderLegs( LivingCoreBlockEntity core, float partial, PoseStack pose, MultiBufferSource buffers, int light); // line 247
+  private void renderLegs( LivingCoreBlockEntity core, float partial, PoseStack pose, MultiBufferSource buffers, int light); // line 250
 
 ```
 
@@ -4085,6 +4094,52 @@ public final class EquipmentModels
   public static void bake(ModelEvent.ModifyBakingResult event); // line 26
 
   private static void bind( ModelEvent.ModifyBakingResult event, String item, String mesh, boolean headOnly); // line 32
+
+```
+
+
+#### ComponentMergeAnimation
+
+Source: `src/main/java/org/Azkerash/create_bioships/ComponentMergeAnimation.java` (14 lines).
+
+```java
+public final class ComponentMergeAnimation
+
+  private ComponentMergeAnimation(); // line 4
+
+  public static double scale(double progress, boolean swallowed); // line 5
+
+```
+
+
+#### client.ComponentMergeRendering
+
+Source: `src/main/java/org/Azkerash/create_bioships/client/ComponentMergeRendering.java` (53 lines).
+
+```java
+public final class ComponentMergeRendering
+
+  private record Active(OrganMotion.Move move, boolean swallowed); // line 14
+
+  private static final Map<UUID, Active> ACTIVE; // line 15
+
+  private static WeakReference<ClientLevel> level; // line 17
+
+  private static long tick; // line 18
+
+  private ComponentMergeRendering(); // line 19
+
+  public static Pose3dc pose(ClientSubLevel cargo, Pose3dc original, float partial); // line 21
+
+```
+
+
+#### mixin.ComponentMergeRenderMixin
+
+Source: `src/main/java/org/Azkerash/create_bioships/mixin/ComponentMergeRenderMixin.java` (22 lines).
+
+```java
+public class ComponentMergeRenderMixin
 
 ```
 

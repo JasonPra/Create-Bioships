@@ -58,3 +58,9 @@ The body queue uses `GROW_SUPPORT`; lower-priority paid upgrades preserve that
 budget. Occupied-slot stashing and the temporary-support transition remain open.
 
 Anatomy audits resolve a socket's planted contact by its attachment root and outward face. Invalid sockets omitted from the support layout cannot shift the contact indices of valid sockets; bootstrap contacts are excluded from this association. This preserves the distinction between core-only locomotion and physical leg blocks.
+
+## Amoeba component merging
+
+`ComponentMergeAnimation` supplies one bounded visual envelope for absorption and redeployment. Client cargo rendering scales around the carried block's center without changing logical poses or collisions. Swallowed components remain visible during approach and sink at arrival; internal moves sink and re-emerge, including movement without a tissue corridor. Internal transport no longer renders a carrying arm. Core relocation uses the same envelope.
+
+Adjacent digester/decomposer fusion now retains the real digester as timed cargo before committing the stomach and its inventories. Missing destination organs release that real cargo instead of creating a free stomach. The established physical cargo trajectory is retained independently of the new rendering treatment. Animation appearance still requires current-client observation; headless curve and transaction tests are separate evidence.

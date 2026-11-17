@@ -59,6 +59,9 @@ neoForge {
             type = "gameTestServer"
             gameDirectory = layout.buildDirectory.dir('gametest-run').get().asFile
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            if (project.hasProperty('bioshipTests')) {
+                systemProperty 'bioships.gameTests', project.property('bioshipTests')
+            }
         }
 
         data {
@@ -112,6 +115,8 @@ dependencies {
     dependencyMods "curse.maven:create-aeronautics-676721:${aeronautics_file_id}"
     dependencyMods "curse.maven:create-328085:${create_file_id}"
     dependencyMods "curse.maven:biomancy-reforged-1782601:${biomancy_file_id}"
+    dependencyMods "curse.maven:create-big-cannons-646668:${big_cannons_file_id}"
+    implementation "curse.maven:ritchies-projectile-library-1279407:${projectile_library_file_id}"
     implementation "curse.maven:geckolib-388172:${geckolib_file_id}"
 }
 

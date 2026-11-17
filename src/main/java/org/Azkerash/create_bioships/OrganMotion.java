@@ -37,7 +37,7 @@ public final class OrganMotion {
     }
 
     public boolean usesArm() {
-      return external || tissuePath.isEmpty();
+      return external;
     }
 
     public CompoundTag save() {
@@ -135,6 +135,22 @@ public final class OrganMotion {
       boolean manual,
       boolean consuming,
       boolean stash) {
+    return begin(core, source, target, external, manual, consuming, stash, false);
+  }
+
+  static boolean combineStomach(LivingCoreBlockEntity core, BlockPos source, BlockPos target) {
+    return begin(core, source, target, false, false, false, false, true);
+  }
+
+  private static boolean begin(
+      LivingCoreBlockEntity core,
+      BlockPos source,
+      BlockPos target,
+      boolean external,
+      boolean manual,
+      boolean consuming,
+      boolean stash,
+      boolean combining) {
     if ((stash ? core.organMove() != null : busy(core))
         || source.equals(target)
         || core.ship() == null) return false;
@@ -142,7 +158,11 @@ public final class OrganMotion {
     var level = ship.getLevel();
     if (!stash && !consuming && !DigestiveSystem.permitsPlacement(core, target)) return false;
     var host = level.getBlockState(target);
-    if (!stash && !host.isAir() && !BioshipTissue.isTissue(host)) return false;
+    if (!stash && !host.isAir() && !BioshipTissue.isTissue(host) && !combining) return false;
+    if (combining
+        && !(BioshipContainerState.entity(level, ship, target)
+            instanceof com.github.elenterius.biomancy.block.decomposer.DecomposerBlockEntity))
+      return false;
     var state = level.getBlockState(source);
     if (state.isAir() || state.is(Create_bioships.CORE.get())) return false;
     if (!stash && !consuming && BioshipLegEvolution.leg(state)) {
@@ -203,6 +223,7 @@ public final class OrganMotion {
     data.putUUID("BioshipCargoOwner", ship.getUniqueId());
     data.putBoolean("BioshipBound", true);
     data.putBoolean("BioshipStash", stash);
+    data.putBoolean("BioshipCombineStomach", combining);
     data.putBoolean("BioshipCoreReclamation", stash && consuming);
     data.putBoolean("BioshipScavenged", scavenged);
     data.putBoolean("ScavengeHostFlesh", BioshipTissue.isTissue(host));
@@ -328,6 +349,32 @@ public final class OrganMotion {
         cargo, new Vector3d(location.x, location.y, location.z).add(offset), orientation);
     pipeline.resetVelocity(cargo);
     if (age < 36) return;
+    if (cargo.getUserDataTag() != null
+        && cargo.getUserDataTag().getBoolean("BioshipCombineStomach")) {
+      var destinationOrgan = BioshipContainerState.entity(level, owner, move.target());
+      var sourceOrgan = BioshipContainerState.entity(level, cargo, move.cargoBlock());
+      if (!(destinationOrgan
+              instanceof
+              com.github.elenterius.biomancy.block.decomposer.DecomposerBlockEntity decomposer)
+          || !(sourceOrgan
+              instanceof
+              com.github.elenterius.biomancy.block.digester.DigesterBlockEntity digester)) {
+        release(core, cargo);
+        return;
+      }
+      BioshipIntegration.finishStomach(core, decomposer, digester);
+      container.removeForceLoadTicket(
+          cargo, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
+      container.removeSubLevel(cargo, SubLevelRemovalReason.REMOVED);
+      if (move.ownerForced())
+        container.removeForceLoadTicket(
+            owner, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
+      core.organMove(null);
+      BioshipHealthChanges.changed(core);
+      DigestiveSystem.connect(core, owner);
+      core.coreMotion().layoutChanged(core);
+      return;
+    }
     if (cargo.getUserDataTag() != null && cargo.getUserDataTag().getBoolean("BioshipStash")) {
       if (cargo.getUserDataTag().getBoolean("BioshipCoreReclamation"))
         core.scavenging().recycleToCore(core, level.getBlockState(move.cargoBlock()));

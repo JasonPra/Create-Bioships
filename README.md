@@ -2,9 +2,13 @@
 
 Living hatchling creatures for Minecraft 1.21.1, NeoForge 21.1.266, and Java 21.
 
+Development dependencies also include Create Big Cannons 5.11.7 (CurseForge file 8303106) and its required Ritchie’s Projectile Library 2.1.2 (file 7587771). Creature integration with these mods is reserved for later.
+
 **The airship stage is dormant pending a redesign.** Automatic hull construction, cockpit and engine-room expansion, flight progression, piloting, and blueprint rebuilding are unavailable. Their source, models, textures and registry IDs are preserved for future reuse and existing saves. They are not enabled by loading an older core or supplying more materials. See [prototype status](docs/development/airship-prototype.md).
 
 ## Raise a hatchling
+
+Breaking its living core is permanent death. It drops no reusable core item, and installing a replacement cannot revive the same wreck. Living internal core movement still preserves its resources.
 
 Craft a Living Ship Core in **Biomancy’s Bio-Forge → Machines** tab using 1 Living Flesh, 16 Flesh Bits, 8 Elastic Fibers, 4 Exotic Dust, an Eye of Ender and 4 nutrients. Placement creates a Sable physics body and records its creator. The core cannot be placed on an existing physics grid.
 

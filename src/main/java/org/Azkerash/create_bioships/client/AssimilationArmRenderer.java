@@ -54,7 +54,10 @@ public class AssimilationArmRenderer implements BlockEntityRenderer<LivingCoreBl
               1);
       var delta = core.coreMotion().target().subtract(core.getBlockPos());
       pose.pushPose();
-      pose.translate(delta.getX() * t, delta.getY() * t, delta.getZ() * t);
+      pose.translate(delta.getX() * t + .5, delta.getY() * t + .5, delta.getZ() * t + .5);
+      float merging = (float) ComponentMergeAnimation.scale(t, false);
+      pose.scale(merging, merging, merging);
+      pose.translate(-.5, -.5, -.5);
       net.minecraft.client.Minecraft.getInstance()
           .getBlockRenderer()
           .renderSingleBlock(

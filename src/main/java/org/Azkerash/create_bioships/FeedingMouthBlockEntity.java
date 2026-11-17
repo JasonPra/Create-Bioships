@@ -57,11 +57,13 @@ public class FeedingMouthBlockEntity extends BaseContainerBlockEntity {
     return larynx.copy();
   }
 
+  public static final double REST_JAW_SHIFT = .125;
+
   public double jawShift(float partial) {
-    if (level == null || motionTicks <= 0) return 0;
+    if (level == null || motionTicks <= 0) return REST_JAW_SHIFT;
     double t = (level.getGameTime() - motionStart + partial) / motionTicks;
-    if (t < 0 || t >= 1) return 0;
-    return Math.sin(Math.PI * t) * (vocalMotion ? -.12 : .125);
+    if (t < 0 || t >= 1) return REST_JAW_SHIFT;
+    return REST_JAW_SHIFT - Math.sin(Math.PI * t) * (vocalMotion ? .245 : .125);
   }
 
   void animate(int ticks, boolean vocal) {

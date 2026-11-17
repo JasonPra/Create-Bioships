@@ -105,3 +105,10 @@ type = "required"
 versionRange = "[2.9.11.0]"
 ordering = "AFTER"
 side = "BOTH"
+
+[[dependencies."${mod_id}"]]
+modId = "createbigcannons"
+type = "required"
+versionRange = "[5.11.7]"
+ordering = "AFTER"
+side = "BOTH"

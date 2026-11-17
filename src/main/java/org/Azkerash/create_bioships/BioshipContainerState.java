@@ -66,6 +66,7 @@ final class BioshipContainerState {
 
   static List<ItemStack> packDrops(List<ItemStack> drops, LootParams.Builder params) {
     var entity = params.getOptionalParameter(LootContextParams.BLOCK_ENTITY);
+    if (entity instanceof LivingCoreBlockEntity) return List.of();
     if (entity != null)
       for (var stack : drops)
         if (stack.is(entity.getBlockState().getBlock().asItem())) {
@@ -73,17 +74,7 @@ final class BioshipContainerState {
           var component = stack.get(net.minecraft.core.component.DataComponents.BLOCK_ENTITY_DATA);
           if (component == null) continue;
           var data = component.copyTag();
-          if (entity instanceof LivingCoreBlockEntity) {
-            // Carry resources, not old ship ownership, goals, corpse state or plot coordinates.
-            var resources = new CompoundTag();
-            for (var key : List.of("id", "Biomass", "Levitite", "Satiety", "SurvivalAdaptations"))
-              if (data.contains(key)) resources.put(key, data.get(key).copy());
-            var adaptation = data.getCompound("Adaptation").copy();
-            adaptation.remove("Armor");
-            adaptation.remove("Next");
-            resources.put("Adaptation", adaptation);
-            data = resources;
-          } else if (entity instanceof StomachBlockEntity) {
+          if (entity instanceof StomachBlockEntity) {
             for (var key : List.of("ConnectedMouth", "GutPath", "SacPaths")) data.remove(key);
           }
           stack.set(
@@ -97,7 +88,7 @@ final class BioshipContainerState {
       Level level, BlockPos pos, net.minecraft.world.entity.player.Player player) {
     if (level.isClientSide || !player.isCreative()) return;
     var entity = level.getBlockEntity(pos);
-    if (entity == null) return;
+    if (entity == null || entity instanceof LivingCoreBlockEntity) return;
     var data = capture(level, entity);
     boolean stored =
         !data.getList("Items", 10).isEmpty()

@@ -17,7 +17,8 @@
     "SurvivalBlastResistanceMixin"
   ],
   "client": [
-    "PathDebugKeyMixin"
+    "PathDebugKeyMixin",
+    "ComponentMergeRenderMixin"
   ],
   "injectors": {
     "defaultRequire": 1

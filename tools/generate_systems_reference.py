@@ -36,7 +36,7 @@ GROUPS=[
 ('allies','Owner and ally permissions','active',['BioshipAccess','ShipMembraneAccess'],'Owner/whitelist checks protect allies and refresh legacy membrane permissions.'),
 ('death','Corpse lineage and decay','active',['BioshipDecay'],'Mark core removal/death, retain saved fragment lineage and rot hull before organs/special blocks.'),
 ('debug','Read-only diagnostic transport','active',['BioshipNetwork','NavigationDebug','VisionDebug'],'Rate-limited server snapshots of actual perception, route, chosen behavior and outstanding needs.'),
-('render','Client rendering','active',['client.BioshipClient','client.AssimilationArmRenderer','client.EquipmentModels'],'Client registration, core/collection arms, supported legs and equipment meshes.'),
+('render','Client rendering','active',['client.BioshipClient','client.AssimilationArmRenderer','client.EquipmentModels','ComponentMergeAnimation','client.ComponentMergeRendering','mixin.ComponentMergeRenderMixin'],'Client registration, core/collection arms, supported legs and equipment meshes.'),
 ('overlay','Sight, path and status overlays','active',['BioshipDiagnostics','client.SightDebugOverlay','client.PathDebugOverlay','client.AppendageDebugOverlay','client.SymbioticTooltip'],'F3+B sight; F3+P native floating route/priority display; goggles status above hotbar.'),
 ('tools','Player tools and stomach UI','active',['BioshipWrenchItem','BioshipGogglesItem','StomachMenu','client.StomachScreen'],'Conserved manual component moves, wearable inspection and digestive inventory UI.'),
 ('lab','Packaged development world','active',['NavigationLab','EcosystemLab','AquaticLab','LabPopulation','LabStarters'],'Normal-world flat/elevation glass courses, world preset and reset command.'),
