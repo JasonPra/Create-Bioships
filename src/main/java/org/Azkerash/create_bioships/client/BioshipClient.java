@@ -1,6 +1,6 @@
 package org.Azkerash.create_bioships.client;
 
-import org.Azkerash.create_bioships.Create_bioships;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 import org.Azkerash.create_bioships.disabled.wip.AirshipPrototype;
 import org.Azkerash.create_bioships.disabled.wip.client.LivingControlHandler;
 import org.Azkerash.create_bioships.disabled.wip.client.AccessScreen;

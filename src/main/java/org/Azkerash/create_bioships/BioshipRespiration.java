@@ -1,5 +1,8 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.registry.Create_bioships;
+import org.Azkerash.create_bioships.creature.resources.MaterialCost;
+
 import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
 
 import java.util.*;
@@ -10,7 +13,7 @@ import net.minecraft.world.phys.Vec3;
 /**
  * Breathing capability and resource-funded proposals; habitat sampling stays in the aquatic sensor.
  */
-final class BioshipRespiration {
+public final class BioshipRespiration {
   static final MaterialCost LUNG_COST = new MaterialCost(6, 3, 0),
       GILL_COST = new MaterialCost(6, 6, 0);
 
@@ -30,7 +33,7 @@ final class BioshipRespiration {
             .count();
   }
 
-  static boolean has(LivingCoreBlockEntity core, boolean gills) {
+  public static boolean has(LivingCoreBlockEntity core, boolean gills) {
     return BioshipStructure.cells(core.ship()).values().stream()
         .anyMatch(s -> s.is(gills ? Create_bioships.GILLS.get() : Create_bioships.LUNGS.get()));
   }
@@ -59,7 +62,7 @@ final class BioshipRespiration {
     return !BioshipAquatic.aboveFluid(core, center) && !BioshipAquatic.aboveFluid(core, surface);
   }
 
-  static boolean activeGills(LivingCoreBlockEntity core) {
+  public static boolean activeGills(LivingCoreBlockEntity core) {
     return BioshipStructure.cells(core.ship()).entrySet().stream()
         .anyMatch(
             e ->

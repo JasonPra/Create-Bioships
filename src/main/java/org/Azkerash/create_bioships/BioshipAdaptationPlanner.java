@@ -1,8 +1,11 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.registry.Create_bioships;
+import org.Azkerash.create_bioships.creature.resources.MaterialCost;
+
 import org.Azkerash.create_bioships.integration.biomancy.NativeStorage;
 
-import static org.Azkerash.create_bioships.MaterialCost.*;
+import static org.Azkerash.create_bioships.creature.resources.MaterialCost.*;
 
 import java.util.*;
 import net.minecraft.core.*;

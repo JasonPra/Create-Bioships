@@ -1,5 +1,7 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.registry.Create_bioships;
+
 import org.Azkerash.create_bioships.disabled.wip.EngineRoom;
 
 import com.mojang.serialization.MapCodec;

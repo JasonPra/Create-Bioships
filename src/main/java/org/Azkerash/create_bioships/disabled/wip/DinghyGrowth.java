@@ -1,7 +1,7 @@
 package org.Azkerash.create_bioships.disabled.wip;
 
 import org.Azkerash.create_bioships.CarapaceBlock;
-import org.Azkerash.create_bioships.Create_bioships;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 import org.Azkerash.create_bioships.OneWayWindowBlock;
 import org.Azkerash.create_bioships.BioshipTissue;
 

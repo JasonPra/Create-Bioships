@@ -204,7 +204,7 @@ public final class BioshipAquatic {
     body.addLinearAndAngularVelocity(acceleration.mul(dt), new Vector3d());
   }
 
-  CompoundTag save() {
+  public CompoundTag save() {
     var t = new CompoundTag();
     t.putInt("Air", air);
     t.putInt("GillSamples", gillUsage.samples());

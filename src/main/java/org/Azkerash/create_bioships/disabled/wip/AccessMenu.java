@@ -1,6 +1,6 @@
 package org.Azkerash.create_bioships.disabled.wip;
 
-import org.Azkerash.create_bioships.Create_bioships;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 import org.Azkerash.create_bioships.BioshipAccess;
 import org.Azkerash.create_bioships.LivingCoreBlockEntity;
 

@@ -1,5 +1,10 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.development.EcosystemLab;
+import org.Azkerash.create_bioships.development.BioshipDiagnostics;
+import org.Azkerash.create_bioships.registry.Create_bioships;
+import org.Azkerash.create_bioships.creature.resources.MaterialCost;
+
 import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
 
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
@@ -36,7 +41,7 @@ public final class BioshipWildProbe {
     if (tick == 1) {
       var spawn = level.getSharedSpawnPos();
       var center =
-          EcosystemLab.lab(level) ? EcosystemLab.State.get(level).center : spawn.offset(80, 0, 40);
+          EcosystemLab.lab(level) ? EcosystemLab.State.get(level).center() : spawn.offset(80, 0, 40);
       EcosystemLab.prepare(level, center);
     }
     if (tick % 20 != 0) return;

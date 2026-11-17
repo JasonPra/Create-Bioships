@@ -1,5 +1,20 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.development.EcosystemLab;
+import org.Azkerash.create_bioships.development.LabPopulation;
+import org.Azkerash.create_bioships.development.LabStarters;
+import org.Azkerash.create_bioships.development.AquaticLab;
+import org.Azkerash.create_bioships.development.EndHabitatLab;
+import org.Azkerash.create_bioships.development.OceanLabTerrain;
+import org.Azkerash.create_bioships.development.BioshipDiagnostics;
+import org.Azkerash.create_bioships.development.NavigationLab;
+import org.Azkerash.create_bioships.registry.Create_bioships;
+import org.Azkerash.create_bioships.network.BioshipNetwork;
+import org.Azkerash.create_bioships.network.VisionDebug;
+import org.Azkerash.create_bioships.network.NavigationDebug;
+import org.Azkerash.create_bioships.creature.resources.MaterialLedger;
+import org.Azkerash.create_bioships.creature.resources.MaterialCost;
+
 import org.Azkerash.create_bioships.amoeba.components.AmoebaComponentHost;
 import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
 import org.Azkerash.create_bioships.integration.biomancy.NativeStorage;
@@ -8736,7 +8751,7 @@ public class BioshipGameTests {
               helper.runAfterDelay(
                   3,
                   () -> {
-                    var counts = LabPopulation.counts(level, state.center);
+                    var counts = LabPopulation.counts(level, state.center());
                     helper.assertTrue(
                         AquaticLab.fishCount(level) == AquaticLab.FISH_CAP,
                         "A full refill did not replenish fish immediately: "
@@ -8780,29 +8795,29 @@ public class BioshipGameTests {
     EcosystemLab.prepare(level, center);
     var state = EcosystemLab.State.get(level);
     helper.assertTrue(
-        state.starters.size() == 12,
+        state.starters().size() == 12,
         "Preset did not create three cores and nine native starter components");
     helper.assertTrue(
-        level.getBlockEntity(LabPopulation.controller(state.center))
+        level.getBlockEntity(LabPopulation.controller(state.center()))
             instanceof net.minecraft.world.level.block.entity.CommandBlockEntity,
         "Preset did not install a command-block population controller");
     helper.runAfterDelay(
         10,
         () -> {
           helper.assertTrue(
-              LabPopulation.counts(level, state.center).cores() == 3,
+              LabPopulation.counts(level, state.center()).cores() == 3,
               "Preset starters were missing without the optional observer");
           LabStarters.clear(level, state);
           helper.assertTrue(
-              LabPopulation.counts(level, state.center).cores() == 0,
+              LabPopulation.counts(level, state.center()).cores() == 0,
               "Reset cleanup left old bioship cores behind");
           LabStarters.seed(level, state);
           helper.runAfterDelay(
               10,
               () -> {
                 helper.assertTrue(
-                    state.starters.size() == 12
-                        && LabPopulation.counts(level, state.center).cores() == 3,
+                    state.starters().size() == 12
+                        && LabPopulation.counts(level, state.center()).cores() == 3,
                     "Reset duplicated or omitted starter creatures");
                 LabStarters.clear(level, state);
                 helper.succeed();
@@ -10257,13 +10272,13 @@ public class BioshipGameTests {
     var state = new EcosystemLab.State();
     helper.assertTrue(!LabPopulation.refillDue(state, 100), "Fresh lab refilled immediately");
     helper.assertTrue(
-        state.nextRefill == 6100 && !LabPopulation.refillDue(state, 6099),
+        state.nextRefill() == 6100 && !LabPopulation.refillDue(state, 6099),
         "Refill period is not five minutes");
     var saved = state.save(new net.minecraft.nbt.CompoundTag(), helper.getLevel().registryAccess());
     helper.assertTrue(saved.getLong("NextRefill") == 6100, "Refill deadline was not saved");
     helper.assertTrue(
         LabPopulation.refillDue(state, 6100)
-            && state.nextRefill == 12100
+            && state.nextRefill() == 12100
             && !LabPopulation.refillDue(state, 6100),
         "Refill duplicated in one tick or lost its next deadline");
     helper.succeed();

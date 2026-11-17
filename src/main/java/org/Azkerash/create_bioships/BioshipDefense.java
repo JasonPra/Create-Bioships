@@ -1,5 +1,7 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.network.VisionDebug;
+
 import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
 import org.Azkerash.create_bioships.disabled.wip.TentacleBlockEntity;
 

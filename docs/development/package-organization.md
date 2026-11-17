@@ -40,3 +40,11 @@ Task 3 complete: amoeba contracts live in `amoeba.components`, the core bridge i
 recipes in `amoeba.merging`, and cargo/attachment in `amoeba.transport`. The renderer remains
 client-only. The existing lifecycle coordinator stays at the legacy boundary; only the adapter's
 required cross-package entry points were opened. Production and GameTest compilation passed.
+
+Task 4 complete: registration/bootstrap is in `registry`, packets/snapshots in `network`,
+worlds/commands/debug overlays in `development`, and assembly hooks in `integration.sable.mixin`.
+Shared contracts/accounting are in `creature.api` and `creature.resources`. Mutable core fields
+remain behind accessors; developer scenario state exposes read-only accessors.
+Mixin configs are split by their actual Mixin packages, preserving all previous hooks without
+making the mod root a protected Mixin package. Production, unit-test, GameTest and optional
+soak-test sources compile. Command names, packet IDs, registry IDs and saved keys are unchanged.

@@ -1,5 +1,7 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.registry.Create_bioships;
+
 import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
 
 import dev.ryanhcode.sable.api.SubLevelAssemblyHelper;
@@ -165,7 +167,7 @@ public final class CoreMotion {
         .isEmpty();
   }
 
-  int coverage(LivingCoreBlockEntity core, BlockPos vantage) {
+  public int coverage(LivingCoreBlockEntity core, BlockPos vantage) {
     Vec3 origin = core.ship().logicalPose().transformPosition(Vec3.atCenterOf(vantage));
     int count = 0;
     for (double rise : new double[] {0, 4, 8})
@@ -621,7 +623,7 @@ public final class CoreMotion {
     return best;
   }
 
-  String scoutingHint(LivingCoreBlockEntity core) {
+  public String scoutingHint(LivingCoreBlockEntity core) {
     boolean external = !core.hatchling() || core.vision().externalEyesPreferred(core);
     if (active())
       return external ? "moving core to protected tissue" : "moving to a supported vantage";
@@ -716,7 +718,7 @@ public final class CoreMotion {
     level.sendBlockUpdated(to, moved.getBlockState(), moved.getBlockState(), 2);
   }
 
-  CompoundTag save() {
+  public CompoundTag save() {
     var tag = new CompoundTag();
     if (home != null) tag.putLong("Home", home.asLong());
     if (target != null) tag.putLong("Target", target.asLong());

@@ -5,8 +5,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.LongSupplier;
 
 /** Observation freshness uses real elapsed time, independently of server tick rate. */
-final class TargetMemory<K> {
-  static final long TIMEOUT = TimeUnit.SECONDS.toNanos(3);
+public final class TargetMemory<K> {
+  public static final long TIMEOUT = TimeUnit.SECONDS.toNanos(3);
 
   private record Seen(long nanos, long epochMillis) {}
 

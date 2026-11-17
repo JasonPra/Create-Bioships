@@ -1,5 +1,7 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.registry.Create_bioships;
+
 import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
 import org.Azkerash.create_bioships.disabled.wip.AirshipPrototype;
 

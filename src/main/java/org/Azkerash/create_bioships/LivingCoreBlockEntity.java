@@ -1,5 +1,8 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.registry.Create_bioships;
+import org.Azkerash.create_bioships.creature.resources.MaterialCost;
+
 import org.Azkerash.create_bioships.amoeba.core.AmoebaCoreAdapter;
 
 import org.Azkerash.create_bioships.amoeba.components.AmoebaComponentHost;
@@ -44,6 +47,8 @@ public class LivingCoreBlockEntity extends BlockEntity
         org.Azkerash.create_bioships.amoeba.components.AmoebaComponentProvider {
   private final org.Azkerash.create_bioships.amoeba.components.AmoebaComponentHost componentHost =
       new AmoebaCoreAdapter(this);
+
+  public BioshipChunks chunkLoading() { return chunkLoading; }
 
   public org.Azkerash.create_bioships.amoeba.components.AmoebaComponentHost amoebaComponents() {
     return componentHost;
@@ -683,11 +688,11 @@ public class LivingCoreBlockEntity extends BlockEntity
     transferTarget = pos.immutable();
   }
 
-  boolean hasTransferReceipt() {
+  public boolean hasTransferReceipt() {
     return transferLevel != null && transferTarget != null;
   }
 
-  boolean transferred() {
+  public boolean transferred() {
     return transferLevel != null
         && transferTarget != null
         && transferLevel.getBlockEntity(transferTarget) instanceof LivingCoreBlockEntity replacement

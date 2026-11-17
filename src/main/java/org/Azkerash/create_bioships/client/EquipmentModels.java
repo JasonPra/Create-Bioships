@@ -9,7 +9,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ModelEvent;
 import net.neoforged.neoforge.client.model.BakedModelWrapper;
-import org.Azkerash.create_bioships.Create_bioships;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** Inventory sprites and fitted equipment meshes are intentionally independent. */
 @EventBusSubscriber(modid = Create_bioships.MOD_ID, value = Dist.CLIENT)

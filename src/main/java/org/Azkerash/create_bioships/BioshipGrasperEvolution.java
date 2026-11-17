@@ -1,5 +1,7 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.creature.resources.MaterialCost;
+
 import net.minecraft.core.BlockPos;
 
 /** Mouth-owned swimming graspers share the leg specialization budget, history and cooldown. */

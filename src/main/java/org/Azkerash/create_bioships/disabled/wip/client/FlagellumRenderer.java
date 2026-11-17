@@ -1,6 +1,6 @@
 package org.Azkerash.create_bioships.disabled.wip.client;
 
-import org.Azkerash.create_bioships.Create_bioships;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 import org.Azkerash.create_bioships.client.TentacleSuckers;
 import org.Azkerash.create_bioships.disabled.wip.LivingThrottleBlock;
 import org.Azkerash.create_bioships.disabled.wip.DinghyGrowth;

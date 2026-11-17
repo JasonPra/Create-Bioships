@@ -1,12 +1,12 @@
 package org.Azkerash.create_bioships.disabled.wip;
 
-import org.Azkerash.create_bioships.Create_bioships;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 import org.Azkerash.create_bioships.BioshipBody;
 import org.Azkerash.create_bioships.BioshipTargetEntity;
 import org.Azkerash.create_bioships.LivingCoreBlockEntity;
 import org.Azkerash.create_bioships.BioshipDecay;
 import org.Azkerash.create_bioships.OneWayWindowBlock;
-import org.Azkerash.create_bioships.VisionDebug;
+import org.Azkerash.create_bioships.network.VisionDebug;
 import org.Azkerash.create_bioships.BioshipTissue;
 import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
 

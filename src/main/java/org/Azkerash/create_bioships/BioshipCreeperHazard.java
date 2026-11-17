@@ -4,8 +4,8 @@ import net.minecraft.world.entity.monster.Creeper;
 import org.Azkerash.create_bioships.mixin.CreeperBlastAccess;
 
 /** Native explosion power has twice that entity-damage reach; clearance includes a core cell. */
-final class BioshipCreeperHazard {
-  record Estimate(double damageReach, int fuseRemaining) {
+public final class BioshipCreeperHazard {
+  public record Estimate(double damageReach, int fuseRemaining) {
     double clearance() {
       return damageReach + 1;
     }
@@ -15,7 +15,7 @@ final class BioshipCreeperHazard {
     }
   }
 
-  static Estimate estimate(Creeper creeper) {
+  public static Estimate estimate(Creeper creeper) {
     var nativeState = (CreeperBlastAccess) creeper;
     double power =
         Math.max(0, nativeState.bioships$explosionRadius()) * (creeper.isPowered() ? 2d : 1d);

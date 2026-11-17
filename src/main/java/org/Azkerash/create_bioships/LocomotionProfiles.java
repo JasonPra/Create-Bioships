@@ -1,5 +1,7 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.registry.Create_bioships;
+
 import com.google.gson.*;
 import java.util.*;
 import net.minecraft.resources.ResourceLocation;

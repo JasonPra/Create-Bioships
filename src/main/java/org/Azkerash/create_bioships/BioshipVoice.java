@@ -1,5 +1,7 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.network.BioshipNetwork;
+
 import com.github.elenterius.biomancy.block.modularlarynx.ModularLarynxBlockEntity;
 import com.github.elenterius.biomancy.init.ModSoundEvents;
 import net.minecraft.core.registries.BuiltInRegistries;

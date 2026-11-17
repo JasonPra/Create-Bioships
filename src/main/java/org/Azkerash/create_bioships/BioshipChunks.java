@@ -1,5 +1,7 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.registry.Create_bioships;
+
 import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
 
 import java.util.Collections;
@@ -31,7 +33,7 @@ public final class BioshipChunks {
   private Lease lease;
   private long refreshed = Long.MIN_VALUE;
 
-  void update(LivingCoreBlockEntity core) {
+  public void update(LivingCoreBlockEntity core) {
     var ship = core.ship();
     if (!(core.getLevel() instanceof ServerLevel level) || ship == null || core.body().dead()) {
       release();
@@ -59,7 +61,7 @@ public final class BioshipChunks {
     refreshed = now;
   }
 
-  void release() {
+  public void release() {
     var previous = lease;
     lease = null;
     refreshed = Long.MIN_VALUE;
@@ -96,16 +98,16 @@ public final class BioshipChunks {
     }
   }
 
-  boolean active() {
+  public boolean active() {
     return lease != null;
   }
 
-  int viewDistance() {
+  public int viewDistance() {
     var current = lease;
     return current == null ? 0 : current.view();
   }
 
-  int simulationDistance() {
+  public int simulationDistance() {
     var current = lease;
     return current == null ? 0 : current.simulation();
   }

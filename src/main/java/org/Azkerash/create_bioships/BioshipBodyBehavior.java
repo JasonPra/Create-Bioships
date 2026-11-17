@@ -5,7 +5,7 @@ import net.minecraft.nbt.*;
 import org.Azkerash.create_bioships.amoeba.transport.ComponentTransport;
 
 /** A separately ranked body-work tree. Shared mutation locks do not depend on the action tree. */
-final class BioshipBodyBehavior {
+public final class BioshipBodyBehavior {
   private final GoalQueue<BioshipAdaptation.Proposal> goals = new GoalQueue<>();
   private String previous = "", waiting = "Not evaluated";
   private BioshipAdaptation.Proposal selected;
@@ -54,7 +54,7 @@ final class BioshipBodyBehavior {
         && (selected == null || selected.action() == BioshipBrain.Action.CONFIGURE);
   }
 
-  CompoundTag debug() {
+  public CompoundTag debug() {
     var data = new CompoundTag();
     data.putString("Action", selected == null ? "IDLE" : selected.action().name());
     data.putString("Reason", selected == null ? waiting : selected.reason());

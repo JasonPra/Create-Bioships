@@ -1,7 +1,7 @@
 package org.Azkerash.create_bioships.disabled.wip.client;
 
-import org.Azkerash.create_bioships.Create_bioships;
-import org.Azkerash.create_bioships.BioshipNetwork;
+import org.Azkerash.create_bioships.registry.Create_bioships;
+import org.Azkerash.create_bioships.network.BioshipNetwork;
 import org.Azkerash.create_bioships.disabled.wip.LivingThrottleBlock;
 
 import dev.simulated_team.simulated.util.hold_interaction.*;

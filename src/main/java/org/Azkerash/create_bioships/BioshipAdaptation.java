@@ -1,5 +1,9 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.registry.Create_bioships;
+import org.Azkerash.create_bioships.creature.resources.MaterialLedger;
+import org.Azkerash.create_bioships.creature.resources.MaterialCost;
+
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -26,7 +30,7 @@ public final class BioshipAdaptation {
 
   private final BioshipBodyBehavior behavior = new BioshipBodyBehavior();
 
-  BioshipBodyBehavior behavior() {
+  public BioshipBodyBehavior behavior() {
     return behavior;
   }
 

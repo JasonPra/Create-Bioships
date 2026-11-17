@@ -1,5 +1,8 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.registry.Create_bioships;
+import org.Azkerash.create_bioships.creature.resources.MaterialCost;
+
 import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
 import org.Azkerash.create_bioships.disabled.wip.AirshipPrototype;
 
@@ -69,7 +72,7 @@ public final class BioshipVision {
     return Math.max(1, serverChunks) * 16;
   }
 
-  boolean inView(LivingCoreBlockEntity core, View view, Vec3 point) {
+  public boolean inView(LivingCoreBlockEntity core, View view, Vec3 point) {
     if (!view.contains(point)) return false;
     var pos = BlockPos.containing(point);
     var level = (ServerLevel) core.getLevel();
@@ -157,7 +160,7 @@ public final class BioshipVision {
 
   private final TargetMemory<BlockPos> sourceFreshness = new TargetMemory<>();
 
-  long unseenNanos(BlockPos pos) {
+  public long unseenNanos(BlockPos pos) {
     return sourceFreshness.age(pos);
   }
 
@@ -171,7 +174,7 @@ public final class BioshipVision {
     return java.util.Set.copyOf(remembered.keySet());
   }
 
-  net.minecraft.world.level.block.state.BlockState rememberedState(BlockPos pos) {
+  public net.minecraft.world.level.block.state.BlockState rememberedState(BlockPos pos) {
     var seen = remembered.get(pos);
     return seen == null ? null : seen.state;
   }
@@ -330,7 +333,7 @@ public final class BioshipVision {
     return false;
   }
 
-  static boolean openToNature(net.minecraft.world.level.Level level, BlockPos source) {
+  public static boolean openToNature(net.minecraft.world.level.Level level, BlockPos source) {
     int top =
         level.getHeight(
             net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE,

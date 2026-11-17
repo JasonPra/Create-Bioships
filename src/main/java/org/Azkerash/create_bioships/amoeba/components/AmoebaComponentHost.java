@@ -3,8 +3,8 @@ package org.Azkerash.create_bioships.amoeba.components;
 import org.Azkerash.create_bioships.amoeba.transport.ComponentTransport;
 
 import org.Azkerash.create_bioships.FeedingMouthBlockEntity;
-import org.Azkerash.create_bioships.creature.ResourceAccount;
-import org.Azkerash.create_bioships.creature.CreatureBodyAccess;
+import org.Azkerash.create_bioships.creature.resources.ResourceAccount;
+import org.Azkerash.create_bioships.creature.api.CreatureBodyAccess;
 
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import java.util.List;
@@ -15,7 +15,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.Azkerash.create_bioships.*;
-import org.Azkerash.create_bioships.creature.*;
+
 
 /** Amoeba-only component lifecycle; other creature kinds need not implement this capability. */
 public interface AmoebaComponentHost extends CreatureBodyAccess {

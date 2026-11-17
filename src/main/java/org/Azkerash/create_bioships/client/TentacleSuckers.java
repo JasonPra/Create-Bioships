@@ -7,7 +7,7 @@ import net.minecraft.client.model.geom.*;
 import net.minecraft.client.model.geom.builders.*;
 import net.minecraft.client.renderer.*;
 import net.minecraft.resources.ResourceLocation;
-import org.Azkerash.create_bioships.Create_bioships;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 
 /** Shared recessed sucker cups for locomotion legs and mouth-bound graspers. */
 public final class TentacleSuckers {

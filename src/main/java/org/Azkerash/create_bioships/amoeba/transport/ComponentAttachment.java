@@ -3,7 +3,7 @@ package org.Azkerash.create_bioships.amoeba.transport;
 import org.Azkerash.create_bioships.amoeba.components.AmoebaComponentHost;
 
 import org.Azkerash.create_bioships.StomachBlock;
-import org.Azkerash.create_bioships.Create_bioships;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 import org.Azkerash.create_bioships.FeedingMouthBlockEntity;
 import org.Azkerash.create_bioships.FeedingMouthBlock;
 import org.Azkerash.create_bioships.StomachBlockEntity;

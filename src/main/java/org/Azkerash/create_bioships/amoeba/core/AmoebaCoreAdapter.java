@@ -3,7 +3,7 @@ package org.Azkerash.create_bioships.amoeba.core;
 import org.Azkerash.create_bioships.DigestiveSystem;
 import org.Azkerash.create_bioships.BioshipLarynx;
 import org.Azkerash.create_bioships.BioshipStorage;
-import org.Azkerash.create_bioships.Create_bioships;
+import org.Azkerash.create_bioships.registry.Create_bioships;
 import org.Azkerash.create_bioships.BioshipHealthChanges;
 import org.Azkerash.create_bioships.FeedingMouthBlockEntity;
 import org.Azkerash.create_bioships.BioshipLegEvolution;
@@ -32,7 +32,7 @@ import net.minecraft.world.phys.Vec3;
 import org.Azkerash.create_bioships.amoeba.components.AmoebaComponentHost;
 import org.Azkerash.create_bioships.amoeba.merging.ComponentMerging;
 import org.Azkerash.create_bioships.amoeba.transport.ComponentTransport;
-import org.Azkerash.create_bioships.creature.ResourceAccount;
+import org.Azkerash.create_bioships.creature.resources.ResourceAccount;
 
 /** Bridges the current amoeba core's policies to component mechanics; owns no cargo. */
 public final class AmoebaCoreAdapter implements AmoebaComponentHost {

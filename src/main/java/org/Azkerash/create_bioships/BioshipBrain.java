@@ -1,5 +1,7 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.creature.resources.MaterialCost;
+
 import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
 import org.Azkerash.create_bioships.disabled.wip.AirshipPrototype;
 
@@ -102,7 +104,7 @@ public final class BioshipBrain {
   private Decision lastDecision;
   private final GoalQueue<Decision> goals = new GoalQueue<>();
 
-  java.util.List<Decision> queuedGoals() {
+  public java.util.List<Decision> queuedGoals() {
     return goals.pending();
   }
 
@@ -113,11 +115,11 @@ public final class BioshipBrain {
   private net.minecraft.nbt.ListTag debugPriorities = new net.minecraft.nbt.ListTag();
   private int debugOfferCount;
 
-  net.minecraft.nbt.ListTag priorities() {
+  public net.minecraft.nbt.ListTag priorities() {
     return debugPriorities.copy();
   }
 
-  int offerCount() {
+  public int offerCount() {
     return debugOfferCount;
   }
 
@@ -589,7 +591,7 @@ public final class BioshipBrain {
     return core.adaptation().behavior().allowsConfiguration(core);
   }
 
-  MaterialCost materialNeeds(LivingCoreBlockEntity core) {
+  public MaterialCost materialNeeds(LivingCoreBlockEntity core) {
     var missing = needs(core);
     return new MaterialCost(missing.flesh(), missing.fiber(), missing.bone());
   }

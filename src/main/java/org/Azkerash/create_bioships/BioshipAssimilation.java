@@ -1,5 +1,7 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.registry.Create_bioships;
+
 import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
 
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
@@ -55,7 +57,7 @@ public final class BioshipAssimilation {
     return !deploymentBlocked && !stock.isEmpty() && (wreck == null || settling);
   }
 
-  int stored() {
+  public int stored() {
     return stock.stream().mapToInt(t -> Math.max(1, t.getInt("Count"))).sum();
   }
 

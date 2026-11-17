@@ -1,5 +1,7 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.creature.resources.MaterialCost;
+
 import com.github.elenterius.biomancy.block.modularlarynx.ModularLarynxBlockEntity;
 import java.util.*;
 import net.minecraft.core.*;

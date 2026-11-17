@@ -4,20 +4,14 @@
   "package": "org.Azkerash.create_bioships.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "DisassemblyPreventionMixin",
-    "SimAssemblyHelperMixin",
-    "ServerSubLevelMixin",
     "BiometricMembraneAccessMixin",
-    "ReconfigurationHeatMapMixin",
     "BiometricSubLevelCollisionMixin",
-    "SablePlotUnloadMixin",
     "CreeperBlastAccess",
     "ComponentHealthChangeMixin",
     "SurvivalExplosionMixin",
     "SurvivalBlastResistanceMixin"
   ],
   "client": [
-    "PathDebugKeyMixin",
     "ComponentTransportRenderMixin"
   ],
   "injectors": {

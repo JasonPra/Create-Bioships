@@ -1,7 +1,7 @@
 package org.Azkerash.create_bioships.integration.sable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
-import org.Azkerash.create_bioships.creature.CreatureBodyAccess;
+import org.Azkerash.create_bioships.creature.api.CreatureBodyAccess;
 /** Coordinate conversion used by active creatures, independent of reconstruction prototypes. */
 public final class BodyCoordinates {
   private BodyCoordinates() {}

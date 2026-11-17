@@ -1,10 +1,12 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.creature.resources.MaterialCost;
+
 import java.util.*;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.neoforge.capabilities.Capabilities;
-import org.Azkerash.create_bioships.creature.ResourceAccount;
+import org.Azkerash.create_bioships.creature.resources.ResourceAccount;
 
 /** Shared material account: core first, connected sacs next, pending stomach output last. */
 public final class BioshipStorage {

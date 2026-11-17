@@ -1,12 +1,14 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.registry.Create_bioships;
+
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.world.level.block.state.BlockState;
 
 /** Face-connected anatomy, independent of Sable's more permissive physical grouping. */
-final class BodyTopology {
-  static Set<BlockPos> structuralCells(Map<BlockPos, BlockState> cells) {
+public final class BodyTopology {
+  public static Set<BlockPos> structuralCells(Map<BlockPos, BlockState> cells) {
     var result = new HashSet<BlockPos>();
     cells.forEach(
         (pos, state) -> {
@@ -17,7 +19,7 @@ final class BodyTopology {
     return result;
   }
 
-  static int components(Set<BlockPos> cells) {
+  public static int components(Set<BlockPos> cells) {
     var remaining = new HashSet<>(cells);
     int count = 0;
     var queue = new ArrayDeque<BlockPos>();

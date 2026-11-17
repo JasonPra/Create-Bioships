@@ -1,5 +1,7 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.network.BioshipNetwork;
+
 import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
 
 import net.minecraft.nbt.*;
@@ -7,8 +9,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 /** Player-care feedback is independent of passive metabolism and behavior selection. */
-final class BioshipTrustFeedback {
-  static final String INBOX = "BioshipTrustBursts";
+public final class BioshipTrustFeedback {
+  public static final String INBOX = "BioshipTrustBursts";
   static final int PARTICLES = TrustParticleBudget.PARTICLES;
   private long nextTick;
 

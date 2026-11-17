@@ -1,5 +1,7 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.network.VisionDebug;
+
 import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
 import org.Azkerash.create_bioships.disabled.wip.PilotAuthority;
 import org.Azkerash.create_bioships.disabled.wip.AirshipPrototype;
@@ -25,7 +27,7 @@ public final class BioshipAutonomy {
   private java.util.UUID pilot;
   private long commandUntil;
 
-  void command(LivingCoreBlockEntity core, net.minecraft.server.level.ServerPlayer player) {
+  public void command(LivingCoreBlockEntity core, net.minecraft.server.level.ServerPlayer player) {
     if (core.access().allows(core, player)) {
       pilot = player.getUUID();
       commandUntil = core.getLevel().getGameTime() + 200;
