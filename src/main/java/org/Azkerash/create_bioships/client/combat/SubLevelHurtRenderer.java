@@ -147,10 +147,7 @@ public final class SubLevelHurtRenderer {
                 .createCompositeState(false));
   }
 
-  @EventBusSubscriber(
-      modid = Create_bioships.MODID,
-      value = Dist.CLIENT,
-      bus = EventBusSubscriber.Bus.MOD)
+  @EventBusSubscriber(modid = Create_bioships.MODID, value = Dist.CLIENT)
   public static final class Registration {
     @SubscribeEvent
     public static void shaders(RegisterShadersEvent event) throws java.io.IOException {

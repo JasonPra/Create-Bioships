@@ -11,7 +11,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import org.Azkerash.create_bioships.Create_bioships;
 
-@EventBusSubscriber(modid = Create_bioships.MODID, bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = Create_bioships.MODID)
 public record WoundPayload(UUID body, BlockPos cell, Direction face, long at, int duration)
     implements CustomPacketPayload {
   public static final Type<WoundPayload> TYPE =

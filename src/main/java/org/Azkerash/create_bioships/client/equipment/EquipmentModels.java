@@ -12,10 +12,7 @@ import net.neoforged.neoforge.client.model.BakedModelWrapper;
 import org.Azkerash.create_bioships.Create_bioships;
 
 /** Inventory sprites and fitted equipment meshes are intentionally independent. */
-@EventBusSubscriber(
-    modid = Create_bioships.MODID,
-    value = Dist.CLIENT,
-    bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = Create_bioships.MODID, value = Dist.CLIENT)
 public final class EquipmentModels {
   private static ModelResourceLocation extra(String name) {
     return ModelResourceLocation.standalone(

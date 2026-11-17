@@ -7,10 +7,7 @@ import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import org.Azkerash.create_bioships.Create_bioships;
 import org.Azkerash.create_bioships.development.testing.DevelopmentTestBlocks;
 
-@EventBusSubscriber(
-    modid = Create_bioships.MODID,
-    value = Dist.CLIENT,
-    bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = Create_bioships.MODID, value = Dist.CLIENT)
 public final class DevelopmentTestRendering {
   @SubscribeEvent
   public static void setup(FMLClientSetupEvent event) {

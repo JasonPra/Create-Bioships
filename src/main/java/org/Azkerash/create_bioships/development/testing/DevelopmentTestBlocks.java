@@ -10,7 +10,7 @@ import net.neoforged.neoforge.registries.*;
 import org.Azkerash.create_bioships.Create_bioships;
 
 /** Fixture-only blocks: deliberately no item registration or creative inventory entry. */
-@EventBusSubscriber(modid = Create_bioships.MODID, bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = Create_bioships.MODID)
 public final class DevelopmentTestBlocks {
   public static final DeferredHolder<Block, TransparentBlock> GLASS =
       DeferredHolder.create(

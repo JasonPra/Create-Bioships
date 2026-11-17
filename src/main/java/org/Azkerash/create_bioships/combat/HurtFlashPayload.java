@@ -11,7 +11,7 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import org.Azkerash.create_bioships.Create_bioships;
 
 /** Server notification contains identity only; the client owns flash duration and rendering. */
-@EventBusSubscriber(modid = Create_bioships.MODID, bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = Create_bioships.MODID)
 public record HurtFlashPayload(UUID body) implements CustomPacketPayload {
   public static final Type<HurtFlashPayload> TYPE =
       new Type<>(ResourceLocation.fromNamespaceAndPath(Create_bioships.MODID, "hurt_flash"));

@@ -17,7 +17,7 @@ import net.neoforged.neoforge.registries.*;
 import org.Azkerash.create_bioships.Create_bioships;
 
 /** Read-only vanilla inventory menu for visiting development fixtures. */
-@EventBusSubscriber(modid = Create_bioships.MODID, bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = Create_bioships.MODID)
 public final class DevelopmentNavigatorItem extends Item {
   public static final DeferredHolder<Item, DevelopmentNavigatorItem> ITEM =
       DeferredHolder.create(
