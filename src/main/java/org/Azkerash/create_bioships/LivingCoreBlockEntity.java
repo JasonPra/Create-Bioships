@@ -187,6 +187,7 @@ public class LivingCoreBlockEntity extends BlockEntity
   }
 
   private final BioshipAutonomy autonomy = new BioshipAutonomy();
+  private final PlaceObservations placeObservations = new PlaceObservations();
   private final org.Azkerash.create_bioships.creature.memory.PlaceMemory places =
       new org.Azkerash.create_bioships.creature.memory.PlaceMemory();
 
@@ -733,6 +734,7 @@ public class LivingCoreBlockEntity extends BlockEntity
     if (core.ship() != null) {
       BioshipTargetEntity.ensure(core);
       core.scavenging.deliver(core);
+      core.placeObservations.tick(core);
       core.autonomy.assess(core);
     }
     if (core.ship() != null && !core.body.dead()) core.aquatic.tick(core);

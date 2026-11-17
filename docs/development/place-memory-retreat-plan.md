@@ -37,3 +37,8 @@ Checkpoint 2 complete: up to 128 dimension-specific observed places persist with
 Terrain knowledge survives while prey and danger confidence age independently. Species lists and
 loaded NBT records are bounded; malformed entries are discarded. Six new unit tests pass; all
 93 unit tests and GameTest source compilation passed.
+
+Checkpoint 3 complete: terrain observations run every 40 ticks, sampling the occupied position
+and two rotating loaded columns. Distant terrain must pass actual vision checks. Water/biome,
+forest, nearby cover and elevation features are remembered without generating chunks. Compilation
+passed; live observer coverage is part of checkpoint 8.

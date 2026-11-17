@@ -318,7 +318,7 @@ Owns subsystem instances and saved state; schedules game ticks and publishes phy
 
 #### LivingCoreBlockEntity
 
-Source: `src/main/java/org/Azkerash/create_bioships/LivingCoreBlockEntity.java` (1336 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/LivingCoreBlockEntity.java` (1338 lines).
 
 ```java
 public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySubLevelActor, org.Azkerash.create_bioships.amoeba.components.AmoebaComponentProvider
@@ -403,203 +403,205 @@ public class LivingCoreBlockEntity extends BlockEntity implements BlockEntitySub
 
   private final BioshipAutonomy autonomy; // line 187
 
-  private final org.Azkerash.create_bioships.creature.memory.PlaceMemory places; // line 189
+  private final PlaceObservations placeObservations; // line 189
 
-  public org.Azkerash.create_bioships.creature.memory.PlaceMemory placeMemory(); // line 191
+  private final org.Azkerash.create_bioships.creature.memory.PlaceMemory places; // line 190
 
-  public BioshipAutonomy autonomy(); // line 195
+  public org.Azkerash.create_bioships.creature.memory.PlaceMemory placeMemory(); // line 192
 
-  int trustLevel(); // line 199
+  public BioshipAutonomy autonomy(); // line 196
 
-  private final BioshipDefense defense; // line 203
+  int trustLevel(); // line 200
 
-  public Vec3 attackTip(); // line 205
+  private final BioshipDefense defense; // line 204
 
-  public boolean attackSweeping(); // line 209
+  public Vec3 attackTip(); // line 206
 
-  BioshipDefense defense(); // line 213
+  public boolean attackSweeping(); // line 210
 
-  public boolean hatchling(); // line 217
+  BioshipDefense defense(); // line 214
 
-  private int bodyLayoutVersion; // line 221
+  public boolean hatchling(); // line 218
 
-  public int layoutVersion(); // line 223
+  private int bodyLayoutVersion; // line 222
 
-  public java.util.List<DinghyGrowth.Part> plannedBody(); // line 227
+  public int layoutVersion(); // line 224
 
-  private String growthObstacle; // line 231
+  public java.util.List<DinghyGrowth.Part> plannedBody(); // line 228
 
-  private long lastServerTick; // line 233
+  private String growthObstacle; // line 232
 
-  private final BioshipAquatic aquatic; // line 234
+  private long lastServerTick; // line 234
 
-  private final BioshipEngineRoom engineRoom; // line 235
+  private final BioshipAquatic aquatic; // line 235
 
-  public BioshipEngineRoom engineRoom(); // line 236
+  private final BioshipEngineRoom engineRoom; // line 236
 
-  public BioshipAquatic aquatic(); // line 240
+  public BioshipEngineRoom engineRoom(); // line 237
 
-  private double hoverHeight; // line 244
+  public BioshipAquatic aquatic(); // line 241
 
-  private volatile FlightIntent flight; // line 246
+  private double hoverHeight; // line 245
 
-  void inheritFlight(LivingCoreBlockEntity previous); // line 247
+  private volatile FlightIntent flight; // line 247
 
-  private record FlightIntent( boolean lift, Vec3 velocity, double turn, double supportHeight, Vec3 stanceUp); // line 251
+  void inheritFlight(LivingCoreBlockEntity previous); // line 248
 
-  public LivingCoreBlockEntity(BlockPos pos, BlockState state); // line 258
+  private record FlightIntent( boolean lift, Vec3 velocity, double turn, double supportHeight, Vec3 stanceUp); // line 252
 
-  public ServerSubLevel ship(); // line 262
+  public LivingCoreBlockEntity(BlockPos pos, BlockState state); // line 259
 
-  boolean primary(ServerSubLevel ship); // line 270
+  public ServerSubLevel ship(); // line 263
 
-  public void interact(Player player, ItemStack stack); // line 278
+  boolean primary(ServerSubLevel ship); // line 271
 
-  private int goggleFlesh, goggleBone, goggleFiber; // line 316
+  public void interact(Player player, ItemStack stack); // line 279
 
-  public java.util.List<Component> goggleTooltip(); // line 318
+  private int goggleFlesh, goggleBone, goggleFiber; // line 317
 
-  public boolean feedAtMouth(Player player, ItemStack stack); // line 414
+  public java.util.List<Component> goggleTooltip(); // line 319
 
-  public boolean feedAtMouth(BlockPos mouth, Player player, ItemStack stack); // line 418
+  public boolean feedAtMouth(Player player, ItemStack stack); // line 415
 
-  public static boolean isMeat(ItemStack stack); // line 450
+  public boolean feedAtMouth(BlockPos mouth, Player player, ItemStack stack); // line 419
 
-  final BioshipTrustFeedback trustFeedback; // line 454
+  public static boolean isMeat(ItemStack stack); // line 451
 
-  int poisonSeconds(); // line 456
+  final BioshipTrustFeedback trustFeedback; // line 455
 
-  public void digestMeal(ItemStack stack); // line 460
+  int poisonSeconds(); // line 457
 
-  public boolean acceptAmalgam(ItemStack stack); // line 479
+  public void digestMeal(ItemStack stack); // line 461
 
-  private final BioshipScavenging scavenging; // line 487
+  public boolean acceptAmalgam(ItemStack stack); // line 480
 
-  public BioshipScavenging scavenging(); // line 489
+  private final BioshipScavenging scavenging; // line 488
 
-  private final BioshipCrawl crawl; // line 493
+  public BioshipScavenging scavenging(); // line 490
 
-  public BioshipCrawl crawl(); // line 495
+  private final BioshipCrawl crawl; // line 494
 
-  private final BioshipSurvivalAdaptations survival; // line 499
+  public BioshipCrawl crawl(); // line 496
 
-  public BioshipSurvivalAdaptations survival(); // line 501
+  private final BioshipSurvivalAdaptations survival; // line 500
 
-  private final BioshipAdaptation adaptation; // line 505
+  public BioshipSurvivalAdaptations survival(); // line 502
 
-  public BioshipAdaptation adaptation(); // line 507
+  private final BioshipAdaptation adaptation; // line 506
 
-  private final BioshipBody body; // line 511
+  public BioshipAdaptation adaptation(); // line 508
 
-  private final BioshipBlueprint blueprint; // line 513
+  private final BioshipBody body; // line 512
 
-  public BioshipBody body(); // line 514
+  private final BioshipBlueprint blueprint; // line 514
 
-  public BioshipBlueprint blueprint(); // line 518
+  public BioshipBody body(); // line 515
 
-  public BlockPos layoutPos(BlockPos offset); // line 522
+  public BioshipBlueprint blueprint(); // line 519
 
-  final BioshipChunks chunkLoading; // line 527
+  public BlockPos layoutPos(BlockPos offset); // line 523
 
-  private final BioshipBrain brain; // line 529
+  final BioshipChunks chunkLoading; // line 528
 
-  public BioshipBrain brain(); // line 530
+  private final BioshipBrain brain; // line 530
 
-  int satiety(); // line 534
+  public BioshipBrain brain(); // line 531
 
-  boolean frameFunded(); // line 538
+  int satiety(); // line 535
 
-  boolean buildingHull(); // line 542
+  boolean frameFunded(); // line 539
 
-  private boolean framePaid, larynxDeveloped; // line 546
+  boolean buildingHull(); // line 543
 
-  public boolean wantsStoredFood(); // line 548
+  private boolean framePaid, larynxDeveloped; // line 547
 
-  private boolean prepareFrame(); // line 557
+  public boolean wantsStoredFood(); // line 549
 
-  private void developLarynx(ServerSubLevel ship); // line 590
+  private boolean prepareFrame(); // line 558
 
-  public int incorporateBiomass(int amount); // line 614
+  private void developLarynx(ServerSubLevel ship); // line 591
 
-  public int missingBiomass(); // line 620
+  public int incorporateBiomass(int amount); // line 615
 
-  private static void message(Player player, String key, Object... args); // line 624
+  public int missingBiomass(); // line 621
 
-  public void mistreat(); // line 628
+  private static void message(Player player, String key, Object... args); // line 625
 
-  private boolean clearForGrowth(ServerSubLevel ship, BlockPos pos); // line 636
+  public void mistreat(); // line 629
 
-  private void recordGrowthObstacle(ServerSubLevel ship, BlockPos offset); // line 645
+  private boolean clearForGrowth(ServerSubLevel ship, BlockPos pos); // line 637
 
-  private boolean roomToGrow(ServerSubLevel ship); // line 663
+  private void recordGrowthObstacle(ServerSubLevel ship, BlockPos offset); // line 646
 
-  private net.minecraft.server.level.ServerLevel transferLevel; // line 684
+  private boolean roomToGrow(ServerSubLevel ship); // line 664
 
-  private BlockPos transferTarget; // line 686
+  private net.minecraft.server.level.ServerLevel transferLevel; // line 685
 
-  void recordTransfer(net.minecraft.server.level.ServerLevel destination, BlockPos pos); // line 687
+  private BlockPos transferTarget; // line 687
 
-  public boolean hasTransferReceipt(); // line 692
+  void recordTransfer(net.minecraft.server.level.ServerLevel destination, BlockPos pos); // line 688
 
-  public boolean transferred(); // line 696
+  public boolean hasTransferReceipt(); // line 693
 
-  void coreRemoved(); // line 704
+  public boolean transferred(); // line 697
 
-  public void setRemoved(); // line 714
+  void coreRemoved(); // line 705
 
-  public static void tick(Level level, BlockPos pos, BlockState state, LivingCoreBlockEntity core); // line 721
+  public void setRemoved(); // line 715
 
-  private void updateCabinLights(); // line 837
+  public static void tick(Level level, BlockPos pos, BlockState state, LivingCoreBlockEntity core); // line 722
 
-  private void growBody(); // line 848
+  private void updateCabinLights(); // line 839
 
-  public void sable$tick(ServerSubLevel ship); // line 924
+  private void growBody(); // line 850
 
-  private void serverTick(); // line 929
+  public void sable$tick(ServerSubLevel ship); // line 926
 
-  private void incorporateAmalgam(); // line 1036
+  private void serverTick(); // line 931
 
-  public boolean canFly(); // line 1045
+  private void incorporateAmalgam(); // line 1038
 
-  private void updateEye(boolean active); // line 1054
+  public boolean canFly(); // line 1047
 
-  public boolean isMature(); // line 1067
+  private void updateEye(boolean active); // line 1056
 
-  public boolean resting(); // line 1071
+  public boolean isMature(); // line 1069
 
-  public boolean aggressive(); // line 1075
+  public boolean resting(); // line 1073
 
-  public boolean isCaptain(net.minecraft.world.entity.Entity entity); // line 1079
+  public boolean aggressive(); // line 1077
 
-  public boolean huntingAllowed(); // line 1083
+  public boolean isCaptain(net.minecraft.world.entity.Entity entity); // line 1081
 
-  public int foodLevel(); // line 1091
+  public boolean huntingAllowed(); // line 1085
 
-  public boolean starving(); // line 1095
+  public int foodLevel(); // line 1093
 
-  public void adoptLarynx(); // line 1099
+  public boolean starving(); // line 1097
 
-  public boolean wantsToHunt(); // line 1104
+  public void adoptLarynx(); // line 1101
 
-  public boolean hungry(); // line 1108
+  public boolean wantsToHunt(); // line 1106
 
-  public boolean hasMouth(); // line 1112
+  public boolean hungry(); // line 1110
 
-  public BlockPos mouthBlock(); // line 1116
+  public boolean hasMouth(); // line 1114
 
-  public Vec3 mouthPosition(ServerSubLevel ship); // line 1138
+  public BlockPos mouthBlock(); // line 1118
 
-  public int swimmingFlagella(); // line 1150
+  public Vec3 mouthPosition(ServerSubLevel ship); // line 1140
 
-  Vec3 gatheringGoal(); // line 1158
+  public int swimmingFlagella(); // line 1152
 
-  static boolean droppedSupply(ItemStack stack); // line 1163
+  Vec3 gatheringGoal(); // line 1160
 
-  public void sable$physicsTick(ServerSubLevel ship, RigidBodyHandle body, double dt); // line 1171
+  static boolean droppedSupply(ItemStack stack); // line 1165
 
-  protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries); // line 1225
+  public void sable$physicsTick(ServerSubLevel ship, RigidBodyHandle body, double dt); // line 1173
 
-  protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries); // line 1277
+  protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries); // line 1227
+
+  protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries); // line 1279
 
 ```
 
@@ -1411,6 +1413,7 @@ Threat assessment, retreat and idle wandering. Pilot authority is currently disa
   BioshipAutonomy
   creature.memory.PlaceMemory
   creature.memory.PlaceMemoryCodec
+  PlaceObservations
 ```
 
 
@@ -1528,6 +1531,30 @@ public final class PlaceMemoryCodec
   public static void load(PlaceMemory memory, CompoundTag tag); // line 52
 
   private PlaceMemoryCodec(); // line 83
+
+```
+
+
+#### PlaceObservations
+
+Source: `src/main/java/org/Azkerash/create_bioships/PlaceObservations.java` (95 lines).
+
+```java
+final class PlaceObservations
+
+  private long next; // line 14
+
+  private int spoke; // line 15
+
+  void tick(LivingCoreBlockEntity core); // line 16
+
+  static void terrain(LivingCoreBlockEntity core, Vec3 point, boolean occupied); // line 40
+
+  static String dimension(LivingCoreBlockEntity core); // line 78
+
+  static String biome(LivingCoreBlockEntity core, BlockPos pos); // line 82
+
+  static PlaceMemory.Point point(Vec3 p); // line 90
 
 ```
 
