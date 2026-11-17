@@ -96,3 +96,9 @@ preserves item components, inherited-food provenance and active recipe inputs/pr
 can pull from sacks attached to their direct-contact peers. Each real inventory is counted once.
 All unit tests and four focused live tests passed, including full-anchor overflow into a peer,
 item conservation and inherited food handling. Existing single-stomach capacity remains 576 items.
+
+Revised checkpoint 5 complete: an amoeba-only layout planner runs every 20 ticks and moves
+isolated stomachs beside an existing functioning group. It uses existing placement/support
+validation and inventory-preserving sinking transport; it does not move manually pinned organs.
+Joining a functioning direct-contact group does not reserve a redundant dedicated intestine route.
+Four focused live tests and all unit tests passed, including food-preserving relocation.

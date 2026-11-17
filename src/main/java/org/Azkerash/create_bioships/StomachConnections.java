@@ -6,7 +6,7 @@ import net.minecraft.core.BlockPos;
 import org.Azkerash.create_bioships.creature.digestion.DigestiveNetwork;
 
 /** Core adapter for live stomach topology; cached snapshots never own organ inventory or worlds. */
-final class StomachConnections {
+public final class StomachConnections {
   private record Snapshot(
       Map<DigestiveNetwork.Cell, StomachBlockEntity> nodes,
       DigestiveNetwork<StomachBlockEntity> network) {}
@@ -32,13 +32,14 @@ final class StomachConnections {
     return result;
   }
 
-  static List<StomachBlockEntity> members(LivingCoreBlockEntity core, StomachBlockEntity stomach) {
+  public static List<StomachBlockEntity> members(
+      LivingCoreBlockEntity core, StomachBlockEntity stomach) {
     var snapshot = snapshot(core);
     var cell = cell(stomach.getBlockPos());
     return snapshot.nodes().get(cell) == stomach ? snapshot.network().members(cell) : List.of();
   }
 
-  static List<List<StomachBlockEntity>> groups(LivingCoreBlockEntity core) {
+  public static List<List<StomachBlockEntity>> groups(LivingCoreBlockEntity core) {
     return snapshot(core).network().groups();
   }
 

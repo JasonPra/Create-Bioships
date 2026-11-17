@@ -314,6 +314,40 @@ public class BioshipGameTests {
     }
   }
 
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "stomach_adjacency_layout")
+  public static void isolated_stomach_moves_beside_network_without_losing_food(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    try {
+      var core = core(ship);
+      var level = helper.getLevel();
+      var first = digestive(helper, core, false);
+      var source = core.getBlockPos().east();
+      level.setBlock(source, Create_bioships.STOMACH.get().defaultBlockState(), 3);
+      var second = (StomachBlockEntity) level.getBlockEntity(source);
+      second.enqueue(new ItemStack(Items.BEEF), false);
+      helper.assertTrue(
+          org.Azkerash.create_bioships.amoeba.digestion.DigestiveLayoutPlanner.arrange(core),
+          "Isolated stomach was not queued to join an existing network");
+      var move = core.organMove();
+      helper.assertTrue(
+          move.source().equals(source),
+          "Planner selected the network anchor instead of the isolated stomach");
+      core.organMove(elapsedTransport(move));
+      ComponentTransport.tick(core.amoebaComponents());
+      var moved = (StomachBlockEntity) level.getBlockEntity(move.target());
+      helper.assertTrue(
+          moved != null
+              && moved.queuedFood() == 1
+              && moved.connected(core)
+              && StomachConnections.members(core, first).size() == 2,
+          "Relocation lost food or did not join the functioning stomach group");
+      helper.succeed();
+    } finally {
+      cleanup(helper, ship);
+    }
+  }
+
   private static int fixture;
 
   private static BlockPos location() {

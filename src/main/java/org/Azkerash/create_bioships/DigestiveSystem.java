@@ -282,6 +282,11 @@ public final class DigestiveSystem {
             : core.mouthBlock();
     if (stomach == null || mouth == null || !stomach.tubeBootstrapped) return true;
     boolean movesMouth = source.equals(mouth), movesStomach = source.equals(stomach.getBlockPos());
+    if (movesStomach)
+      for (var neighbor : stomachs(core))
+        if (neighbor != stomach && neighbor.connected(core))
+          for (var face : Direction.values())
+            if (target.relative(face).equals(neighbor.getBlockPos())) return true;
     var sourceEntity = core.getLevel().getBlockEntity(source);
     boolean movesStore =
         stomach.sacPaths.containsKey(source)
