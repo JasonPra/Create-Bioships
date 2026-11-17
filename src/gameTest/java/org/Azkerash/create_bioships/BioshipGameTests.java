@@ -889,6 +889,110 @@ public class BioshipGameTests {
     }
   }
 
+  @GameTest(template = "test_empty", timeoutTicks = 800, batch = "legacy_automatic_batch")
+  public static void malformed_saved_creature_automatically_batches_once_and_stays_repaired(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    digestive(helper, core, false);
+    var mouth = core.getBlockPos().north();
+    level.getBlockEntity(mouth).getPersistentData().putBoolean("BioshipManualPlacement", true);
+    ((FeedingMouthBlockEntity) level.getBlockEntity(mouth))
+        .setItem(0, new ItemStack(Items.DIAMOND, 7));
+    level.setBlock(mouth.north(), BioshipTissue.body().defaultBlockState(), 3);
+    var old = core.saveWithFullMetadata(level.registryAccess());
+    old.getCompound("Assimilation").remove("LayoutRepair");
+    core.loadAdditional(old, level.registryAccess());
+    helper.assertTrue(!core.assimilation().repairing(), "Fixture already contained a batch job");
+    watchAutomaticBatch(helper, ship, new int[2], null);
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 400, batch = "blocked_gill_batch")
+  public static void blocked_gill_uses_batch_alignment_without_recalling_the_breathing_organ(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var gill = core.getBlockPos().east();
+    level.setBlock(
+        gill,
+        Create_bioships.GILLS
+            .get()
+            .defaultBlockState()
+            .setValue(RespiratoryOrganBlock.FACING, Direction.NORTH),
+        3);
+    level.setBlock(gill.north(), BioshipTissue.body().defaultBlockState(), 3);
+    deepWater(helper, core);
+    watchAutomaticBatch(helper, ship, new int[2], gill);
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 700, batch = "invalid_attachments_batch")
+  public static void invalid_sac_eye_and_flipper_mounts_enter_one_automatic_batch(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    digestive(helper, core, false);
+    var sac = core.getBlockPos().east();
+    level.setBlock(sac, block("biomancy:storage_sac").defaultBlockState(), 3);
+    level.setBlock(sac.above(), Create_bioships.INTESTINE.get().defaultBlockState(), 3);
+    level.setBlock(core.getBlockPos().south(), BioshipTissue.body().defaultBlockState(), 3);
+    level.setBlock(sac.east().above(), BioshipTissue.body().defaultBlockState(), 3);
+    level.setBlock(
+        sac.east(),
+        Create_bioships.SURFACE_EYE
+            .get()
+            .defaultBlockState()
+            .setValue(SurfaceEyeBlock.FACING, Direction.EAST),
+        3);
+    level.setBlock(
+        sac.south(),
+        Create_bioships.SWIMMING_LEG
+            .get()
+            .defaultBlockState()
+            .setValue(AmoebaLegBlock.FACING, Direction.SOUTH),
+        3);
+    watchAutomaticBatch(helper, ship, new int[2], null);
+  }
+
+  private static void watchAutomaticBatch(
+      GameTestHelper helper, ServerSubLevel ship, int[] observations, BlockPos gill) {
+    var core = core(ship);
+    if (gill != null)
+      helper.assertTrue(
+          helper.getLevel().getBlockState(gill).is(Create_bioships.GILLS.get()),
+          "Repair recalled the breathing organ");
+    boolean active = core.assimilation().repairing();
+    if (active && observations[1] == 0) observations[0]++;
+    if (!active && observations[1] == 1) {
+      helper.assertTrue(
+          observations[0] == 1, "Existing creature repeatedly restarted batch repair");
+      helper.runAfterDelay(
+          80,
+          () -> {
+            try {
+              helper.assertTrue(
+                  !core.assimilation().repairing()
+                      && !BioshipAnatomy.needsBatchRepair(core)
+                      && core.organMove() == null,
+                  "Malformed saved creature resumed individual/batch organ oscillation: "
+                      + core.adaptation().behavior().debug());
+              if (gill != null)
+                helper.assertTrue(
+                    BioshipRespiration.activeGills(core),
+                    "Gill repair failed to restore breathing");
+              helper.succeed();
+            } finally {
+              cleanup(helper, ship);
+            }
+          });
+      return;
+    }
+    observations[1] = active ? 1 : 0;
+    helper.runAfterDelay(1, () -> watchAutomaticBatch(helper, ship, observations, gill));
+  }
+
   @GameTest(template = "test_empty", timeoutTicks = 200, batch = "end_fixture_geometry")
   public static void developer_end_habitat_has_remote_islands_biome_and_void_gap(
       GameTestHelper helper) {

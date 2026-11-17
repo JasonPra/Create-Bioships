@@ -335,6 +335,13 @@ public final class BioshipAssimilation {
     repair.put("Parts", entries);
     repair.putIntArray("DeployOrder", order);
     repair.putString("Phase", "recall");
+    for (var part : plan)
+      if (part.state().is(Create_bioships.GILLS.get())
+          && core.getLevel().getBlockState(part.target()).is(Create_bioships.GILLS.get())
+          && core.getLevel()
+              .getBlockState(
+                  part.target().relative(part.state().getValue(RespiratoryOrganBlock.FACING)))
+              .isAir()) core.getLevel().setBlock(part.target(), part.state(), 3);
     core.setChanged();
     return true;
   }
@@ -347,6 +354,17 @@ public final class BioshipAssimilation {
       if (index >= parts.size()) {
         repair.putString("Phase", "deploy");
         repair.putInt("Cursor", 0);
+        core.setChanged();
+        return;
+      }
+      var original =
+          NbtUtils.readBlockState(
+              core.getLevel()
+                  .registryAccess()
+                  .lookupOrThrow(net.minecraft.core.registries.Registries.BLOCK),
+              parts.getCompound(index).getCompound("OriginalState"));
+      if (original.is(Create_bioships.GILLS.get())) {
+        repair.putInt("Cursor", index + 1);
         core.setChanged();
         return;
       }
@@ -396,6 +414,16 @@ public final class BioshipAssimilation {
                 .registryAccess()
                 .lookupOrThrow(net.minecraft.core.registries.Registries.BLOCK),
             part.getCompound("State"));
+    if (state.is(Create_bioships.GILLS.get())) {
+      var front = target.relative(state.getValue(RespiratoryOrganBlock.FACING));
+      if (core.getLevel().getBlockState(target).is(Create_bioships.GILLS.get())
+          && core.getLevel().getBlockState(front).isAir()) {
+        core.getLevel().setBlock(target, state, 3);
+        repair.putInt("Cursor", index + 1);
+        core.setChanged();
+      }
+      return;
+    }
     if (saved == null) {
       if (core.getLevel().getBlockState(target).equals(state)) {
         repair.putInt("Cursor", index + 1);

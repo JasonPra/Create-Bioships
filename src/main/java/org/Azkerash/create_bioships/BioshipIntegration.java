@@ -206,24 +206,8 @@ public final class BioshipIntegration {
   }
 
   static void orientMouth(LivingCoreBlockEntity core) {
-    if (core.hatchling()) {
-      HatchlingFront.arrangeMouth(core);
-      return;
-    }
-    var pos = core.mouthBlock();
-    if (pos == null || ComponentTransport.busy(core.amoebaComponents())) return;
-    var state = core.getLevel().getBlockState(pos);
-    if (!state.is(Create_bioships.FEEDING_MOUTH.get())) return;
-    var entity = core.getLevel().getBlockEntity(pos);
-    if (entity != null && entity.getPersistentData().getBoolean("BioshipManualPlacement")) return;
-    var facing = state.getValue(FeedingMouthBlock.FACING);
-    if (!FeedingMouthBlock.openFace(core, pos, facing)
-        || !core.isMature() && facing == Direction.DOWN)
-      core.getLevel()
-          .setBlock(
-              pos,
-              state.setValue(FeedingMouthBlock.FACING, FeedingMouthBlock.outward(core, pos)),
-              3);
+    if (!ComponentTransport.busy(core.amoebaComponents()) && BioshipAnatomy.needsBatchRepair(core))
+      core.assimilation().beginRepair(core, BioshipAnatomy.repairPlan(core));
   }
 
   public static void relocateMouth(LivingCoreBlockEntity core, ServerSubLevel ship) {

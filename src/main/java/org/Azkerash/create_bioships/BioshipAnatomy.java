@@ -61,9 +61,11 @@ final class BioshipAnatomy {
     if (cached != null && now - cached.at() < 20) return cached;
     var cells = BioshipStructure.cells(core.ship());
     Move move = opening(core, cells);
-    if (move == null) move = legs(core, cells);
-    if (move == null && DigestiveSystem.functional(core) && BioshipLegGrowth.missing(core) == 0)
-      move = compact(core, cells);
+    // Invalid appendages are repaired by the coordinated batch path.
+    if (move == null
+        && !needsBatchRepair(core)
+        && DigestiveSystem.functional(core)
+        && BioshipLegGrowth.missing(core) == 0) move = compact(core, cells);
     var value = new Audit(now, move);
     CACHE.put(core, value);
     return value;
@@ -83,10 +85,81 @@ final class BioshipAnatomy {
             });
   }
 
+  static boolean invalidAttachment(
+      LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells, BlockPos pos, BlockState state) {
+    if (BioshipLegEvolution.leg(state))
+      return !AmoebaLegBlock.mounted(cells, pos, state)
+          || cells.containsKey(pos.relative(state.getValue(AmoebaLegBlock.FACING)));
+    if (state.is(Create_bioships.SURFACE_EYE.get())) {
+      var face = state.getValue(SurfaceEyeBlock.FACING);
+      var host = pos.relative(face.getOpposite());
+      return !SurfaceEyeBlock.canHostEye(cells.get(host), host, face)
+          || cells.containsKey(pos.relative(face));
+    }
+    var entity = core.getLevel().getBlockEntity(pos);
+    if (entity != null
+        && org.Azkerash.create_bioships.integration.biomancy.NativeStorage.isStorage(entity)) {
+      var face =
+          state.getValue(
+              net.minecraft.world.level.block.state.properties.BlockStateProperties.FACING);
+      boolean pipe = false;
+      for (var direction : Direction.values()) {
+        var neighbor = cells.get(pos.relative(direction));
+        if (neighbor != null && neighbor.is(Create_bioships.INTESTINE.get())) {
+          pipe = true;
+          if (face == direction.getOpposite()) return false;
+        }
+      }
+      return pipe;
+    }
+    return false;
+  }
+
+  static boolean blockedGill(Map<BlockPos, BlockState> cells, BlockPos pos, BlockState state) {
+    return state.is(Create_bioships.GILLS.get())
+        && cells.containsKey(pos.relative(state.getValue(RespiratoryOrganBlock.FACING)));
+  }
+
+  static boolean needsBatchRepair(LivingCoreBlockEntity core) {
+    if (blockedMouths(core)) return true;
+    var cells = BioshipStructure.cells(core.ship());
+    var primary = core.mouthBlock();
+    if (core.hatchling()
+        && primary != null
+        && cells.get(primary) != null
+        && cells.get(primary).is(Create_bioships.FEEDING_MOUTH.get())
+        && cells.get(primary).getValue(FeedingMouthBlock.FACING) != Direction.NORTH) return true;
+    return cells.entrySet().stream()
+        .anyMatch(
+            e ->
+                blockedGill(cells, e.getKey(), e.getValue())
+                    || invalidAttachment(core, cells, e.getKey(), e.getValue()));
+  }
+
   /** One immutable arrangement is selected before any inventory leaves its owner. */
   static List<RepairPart> repairPlan(LivingCoreBlockEntity core) {
-    if (!blockedMouths(core)) return List.of();
+    if (!needsBatchRepair(core)) return List.of();
     var original = BioshipStructure.cells(core.ship());
+    boolean mouthRepair = blockedMouths(core);
+    var primary = core.mouthBlock();
+    mouthRepair |=
+        core.hatchling()
+            && primary != null
+            && original.containsKey(primary)
+            && original.get(primary).is(Create_bioships.FEEDING_MOUTH.get())
+            && original.get(primary).getValue(FeedingMouthBlock.FACING) != Direction.NORTH;
+    var adjusted = new LinkedHashMap<BlockPos, BlockState>();
+    for (var e : original.entrySet())
+      if (blockedGill(original, e.getKey(), e.getValue())) {
+        for (var face : Direction.values()) {
+          if (original.containsKey(e.getKey().relative(face))) continue;
+          var candidate = e.getValue().setValue(RespiratoryOrganBlock.FACING, face);
+          if (core.aquatic().wet() && !BioshipRespiration.exposedGill(core, e.getKey(), candidate))
+            continue;
+          adjusted.put(e.getKey(), candidate);
+          break;
+        }
+      }
     var selected = new ArrayList<BlockPos>();
     for (var e : original.entrySet()) {
       var state = e.getValue();
@@ -111,9 +184,27 @@ final class BioshipAnatomy {
       boolean grouped =
           state.is(Create_bioships.STOMACH.get())
               && StomachMultiblock.containing(core, e.getKey()) != null;
-      if (organ && !grouped) selected.add(e.getKey());
+      boolean gillBlocker =
+          original.entrySet().stream()
+              .anyMatch(
+                  g ->
+                      blockedGill(original, g.getKey(), g.getValue())
+                          && !adjusted.containsKey(g.getKey())
+                          && g.getKey()
+                              .relative(g.getValue().getValue(RespiratoryOrganBlock.FACING))
+                              .equals(e.getKey()));
+      boolean unmovable =
+          state.is(Create_bioships.CORE.get())
+              || state.is(Create_bioships.GILLS.get())
+              || state.is(Create_bioships.LUNGS.get());
+      if (!grouped
+          && !unmovable
+          && (mouthRepair && organ
+              || invalidAttachment(core, original, e.getKey(), state)
+              || gillBlocker)) selected.add(e.getKey());
     }
-    if (selected.isEmpty() || selected.size() > 64) return List.of();
+    if (selected.isEmpty() && adjusted.isEmpty() || selected.size() + adjusted.size() > 64)
+      return List.of();
     // Respiration organs remain deployed. A breath-limited submerged body cannot begin a long
     // recall.
     if (core.aquatic().wet()
@@ -121,7 +212,10 @@ final class BioshipAnatomy {
         && selected.size()
                 * org.Azkerash.create_bioships.amoeba.merging.ComponentMerging.DURATION_TICKS
                 * 2
-            > core.aquatic().air() - 60) return List.of();
+            > core.aquatic().air() - 60
+        && adjusted.isEmpty()
+        && original.values().stream().noneMatch(st -> st.is(Create_bioships.GILLS.get())))
+      return List.of();
     selected.sort(
         Comparator.<BlockPos>comparingInt(
                 p -> {
@@ -135,6 +229,7 @@ final class BioshipAnatomy {
                 })
             .thenComparing(Comparator.naturalOrder()));
     var planned = new LinkedHashMap<>(original);
+    planned.putAll(adjusted);
     selected.forEach(planned::remove);
     for (var p : selected) {
       var host = BioshipTissue.host(core.getLevel().getBlockEntity(p));
@@ -197,6 +292,7 @@ final class BioshipAnatomy {
             oriented = state.setValue(FeedingMouthBlock.FACING, face);
           } else if (BioshipLegEvolution.leg(state)
               || state.is(Create_bioships.SURFACE_EYE.get())) {
+            if (planned.containsKey(target.relative(face))) continue;
             var support = target.relative(face.getOpposite());
             if (BioshipLegEvolution.leg(state)
                 ? !AmoebaLegBlock.canHostLeg(planned.get(support), support, face)
@@ -205,6 +301,19 @@ final class BioshipAnatomy {
                 state.setValue(
                     net.minecraft.world.level.block.state.properties.BlockStateProperties.FACING,
                     face);
+          }
+          var entity = core.getLevel().getBlockEntity(source);
+          if (entity != null
+              && org.Azkerash.create_bioships.integration.biomancy.NativeStorage.isStorage(
+                  entity)) {
+            var facing =
+                net.minecraft.world.level.block.state.properties.BlockStateProperties.FACING;
+            for (var d : Direction.values())
+              if (planned.get(target.relative(d)) != null
+                  && planned.get(target.relative(d)).is(Create_bioships.INTESTINE.get())) {
+                oriented = state.setValue(facing, d.getOpposite());
+                break;
+              }
           }
           if (mouth && ++quotes > 64) return List.of();
           if (mouth && !DigestiveSystem.reserveOrganRoute(core, source, target, false)) continue;
@@ -262,12 +371,44 @@ final class BioshipAnatomy {
       if (!BioshipTissue.host(core.getLevel().getBlockEntity(leaf.source())).isAir())
         residual.add(leaf.source());
     }
+    if (core.aquatic().wet() && !BioshipRespiration.activeGills(core) && adjusted.isEmpty()) {
+      int breathAfter =
+          selected.size()
+                  * org.Azkerash.create_bioships.amoeba.merging.ComponentMerging.DURATION_TICKS
+                  * 2
+              + 60;
+      for (int i = 0; i < recall.size(); i++) {
+        var part = recall.get(i);
+        if (original.entrySet().stream()
+            .anyMatch(
+                e ->
+                    blockedGill(original, e.getKey(), e.getValue())
+                        && e.getKey()
+                            .relative(e.getValue().getValue(RespiratoryOrganBlock.FACING))
+                            .equals(part.source())))
+          breathAfter =
+              Math.min(
+                  breathAfter,
+                  (i + 1)
+                          * (org.Azkerash.create_bioships
+                                  .amoeba
+                                  .merging
+                                  .ComponentMerging
+                                  .DURATION_TICKS
+                              + 2)
+                      + 20);
+      }
+      if (breathAfter >= core.aquatic().air()) return List.of();
+    }
+    for (var e : adjusted.entrySet())
+      recall.add(new RepairPart(e.getKey(), e.getKey(), e.getValue()));
     return deploymentOrder(core, recall).length == recall.size() ? List.copyOf(recall) : List.of();
   }
 
   static int[] deploymentOrder(LivingCoreBlockEntity core, List<RepairPart> plan) {
     var present = new LinkedHashMap<>(BioshipStructure.cells(core.ship()));
     for (var p : plan) {
+      if (p.state().is(Create_bioships.GILLS.get())) continue;
       present.remove(p.source());
       var host = BioshipTissue.host(core.getLevel().getBlockEntity(p.source()));
       if (!host.isAir()) present.put(p.source(), host);
