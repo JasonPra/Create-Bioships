@@ -1,11 +1,10 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.amoeba.ComponentTransport;
-
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import org.Azkerash.create_bioships.amoeba.ComponentTransport;
 
 /**
  * Read-only twenty-tick anatomy audit; all rearrangement is executed through conserved transport.

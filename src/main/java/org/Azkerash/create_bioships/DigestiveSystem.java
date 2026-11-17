@@ -1,7 +1,5 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.amoeba.ComponentTransport;
-
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import java.util.*;
 import net.minecraft.core.*;
@@ -9,6 +7,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
+import org.Azkerash.create_bioships.amoeba.ComponentTransport;
 
 /**
  * Food crosses assigned physical intestine networks; construction products enter shared storage.
@@ -396,7 +395,8 @@ public final class DigestiveSystem {
       var path = stomach.sacPaths.get(pos);
       if (path != null && connectedStore(core, stomach, pos, path)) continue;
       var target = storagePort(core, pos);
-      if (target != null && ComponentTransport.begin(core.amoebaComponents(), pos, target, false)) return;
+      if (target != null && ComponentTransport.begin(core.amoebaComponents(), pos, target, false))
+        return;
     }
   }
 

@@ -1,10 +1,9 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.amoeba.ComponentTransport;
-
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.world.phys.Vec3;
+import org.Azkerash.create_bioships.amoeba.ComponentTransport;
 
 /** Logical north is the hatchling's front; facing the target rotates the living body itself. */
 final class HatchlingFront {
@@ -61,7 +60,9 @@ final class HatchlingFront {
 
   static boolean canArrange(LivingCoreBlockEntity core) {
     var source = core.mouthBlock();
-    if (source == null || ComponentTransport.busy(core.amoebaComponents()) || core.coreMotion().active()) return false;
+    if (source == null
+        || ComponentTransport.busy(core.amoebaComponents())
+        || core.coreMotion().active()) return false;
     var state = core.getLevel().getBlockState(source);
     if (!state.is(Create_bioships.FEEDING_MOUTH.get())) return false;
     var target = port(core, source);
@@ -82,8 +83,10 @@ final class HatchlingFront {
 
   static void arrangeMouth(LivingCoreBlockEntity core) {
     var source = core.mouthBlock();
-    if (!core.hatchling() || source == null || ComponentTransport.busy(core.amoebaComponents()) || core.coreMotion().active())
-      return;
+    if (!core.hatchling()
+        || source == null
+        || ComponentTransport.busy(core.amoebaComponents())
+        || core.coreMotion().active()) return;
     var mouth = core.getLevel().getBlockEntity(source);
     if (mouth != null && mouth.getPersistentData().getBoolean("BioshipManualPlacement")) return;
     var state = core.getLevel().getBlockState(source);
@@ -111,7 +114,8 @@ final class HatchlingFront {
             && ComponentTransport.begin(core.amoebaComponents(), front, bay, false)) return;
       }
     }
-    if (target != null && !target.equals(source)) ComponentTransport.begin(core.amoebaComponents(), source, target, false);
+    if (target != null && !target.equals(source))
+      ComponentTransport.begin(core.amoebaComponents(), source, target, false);
   }
 
   static double turn(LivingCoreBlockEntity core, Vec3 goal) {

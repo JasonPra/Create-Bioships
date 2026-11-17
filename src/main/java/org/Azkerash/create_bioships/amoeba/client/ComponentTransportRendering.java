@@ -1,7 +1,5 @@
 package org.Azkerash.create_bioships.amoeba.client;
 
-import org.Azkerash.create_bioships.amoeba.*;
-
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.companion.math.Pose3d;
 import dev.ryanhcode.sable.companion.math.Pose3dc;
@@ -11,6 +9,7 @@ import java.util.*;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.world.phys.Vec3;
 import org.Azkerash.create_bioships.*;
+import org.Azkerash.create_bioships.amoeba.*;
 
 /** Client-only cargo deformation; logical poses, collisions and inventories stay authoritative. */
 public final class ComponentTransportRendering {
@@ -32,17 +31,19 @@ public final class ComponentTransportRendering {
       if (container != null)
         for (var ship : container.getAllSubLevels())
           for (var actor : ship.getPlot().getBlockEntityActors())
-            if (actor instanceof AmoebaComponentProvider provider && provider.amoebaComponents().alive()) {
-              var core=provider.amoebaComponents();
+            if (actor instanceof AmoebaComponentProvider provider
+                && provider.amoebaComponents().alive()) {
+              var core = provider.amoebaComponents();
               var moving = core.movement();
               if (moving != null) ACTIVE.put(moving.cargo(), new Active(moving, false));
-              for (var move : core.absorptions())
-                ACTIVE.put(move.cargo(), new Active(move, true));
+              for (var move : core.absorptions()) ACTIVE.put(move.cargo(), new Active(move, true));
             }
     }
     var active = ACTIVE.get(cargo.getUniqueId());
     if (active == null) return original;
-    double progress = (current.getGameTime() + partial - active.move().started()) / ComponentMerging.DURATION_TICKS;
+    double progress =
+        (current.getGameTime() + partial - active.move().started())
+            / ComponentMerging.DURATION_TICKS;
     double scale = ComponentMerging.Animation.scale(progress, active.swallowed());
     if (scale >= 1) return original;
     var pivot = Vec3.atCenterOf(active.move().cargoBlock());

@@ -1,7 +1,5 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.creature.ResourceAccount;
-
 import com.github.elenterius.biomancy.block.decomposer.DecomposerBlockEntity;
 import com.github.elenterius.biomancy.crafting.recipe.DecomposingRecipe;
 import java.util.*;
@@ -18,6 +16,7 @@ import net.minecraft.world.item.crafting.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import org.Azkerash.create_bioships.creature.ResourceAccount;
 
 /** Outputs are tissue reserves, never an extractable inventory or capability. */
 public class StomachBlockEntity extends BlockEntity implements MenuProvider, ResourceAccount {

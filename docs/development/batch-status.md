@@ -1,10 +1,10 @@
 # Current work scope
 
-The user cancelled the previous milestone and priority backlog. Do not continue historical tasks
-automatically. Existing implementations, test evidence and known limitations remain in history;
-this cancellation does not revert published code.
+The only active work is the user-approved six-task amoeba component refactor in
+[amoeba-refactor.md](amoeba-refactor.md). The earlier creature-feature backlog remains cancelled.
 
-Current checkpoint completes the reusable merge consolidation and removes the separate
-ecosystem world type. After validation and push, stop for the user to reevaluate scope.
-For future new features, discuss class responsibilities and modularization with the user first.
-See repository AGENTS.md for the collaboration rule and class ownership boundaries.
+Tasks 1–5 are complete: boundaries, body/resource contracts, caller migration, amoeba package
+ownership and cleanup/documentation. Task 6 is focused regression testing and any resulting fixes.
+Push after every completed task and report the remaining count.
+
+Future new features require discussion with the user about responsibility boundaries first.

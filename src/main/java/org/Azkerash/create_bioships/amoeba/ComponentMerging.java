@@ -1,7 +1,5 @@
 package org.Azkerash.create_bioships.amoeba;
 
-import org.Azkerash.create_bioships.*;
-
 import com.github.elenterius.biomancy.block.decomposer.DecomposerBlockEntity;
 import com.github.elenterius.biomancy.block.digester.DigesterBlockEntity;
 import java.util.*;
@@ -10,7 +8,7 @@ import java.util.function.Supplier;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-
+import org.Azkerash.create_bioships.*;
 
 /** Recipes and commit validation for directional-independent amoeba component fusion. */
 public final class ComponentMerging {
@@ -32,11 +30,11 @@ public final class ComponentMerging {
   }
 
   @FunctionalInterface
-  interface Commit {
+  public interface Commit {
     void apply(AmoebaComponentHost core, BlockEntity source, BlockEntity destination);
   }
 
-  record Recipe(
+  public record Recipe(
       String id,
       Class<? extends BlockEntity> source,
       Class<? extends BlockEntity> destination,
@@ -79,7 +77,7 @@ public final class ComponentMerging {
     return Registry.RECIPES.get(id).result().get();
   }
 
-  public static boolean commit(
+  private static boolean commit(
       String id, AmoebaComponentHost core, BlockEntity source, BlockEntity destination) {
     var recipe = Registry.RECIPES.get(id);
     if (recipe == null || !recipe.matches(source, destination)) return false;
@@ -124,7 +122,7 @@ public final class ComponentMerging {
   }
 
   /** Returns false only for cargo which is not a fusion transaction. */
-  public static boolean finish(
+  static boolean finish(
       AmoebaComponentHost core,
       dev.ryanhcode.sable.sublevel.ServerSubLevel cargo,
       ComponentTransport.Move move) {
@@ -134,7 +132,6 @@ public final class ComponentMerging {
       recipe = "stomach";
     if (recipe.isEmpty()) return false;
     var owner = core.body();
-    var level = cargo.getLevel();
     if (!commit(
         recipe,
         core,

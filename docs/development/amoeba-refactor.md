@@ -46,3 +46,9 @@ Checkpoint 4: engines now live in `amoeba`; the client pose adapter lives in `am
 core class. The concrete-core bridge remains beside the legacy core and its package-private
 policies. Both production and GameTest sources compile. Save keys and movement records retain
 exactly the same serialized fields; no old-package forwarding classes were introduced.
+
+Checkpoint 5: removed the old nested account contract and all old-package entry points; no
+forwarding facades remain. Restricted cargo-finalization helpers to the amoeba package and
+exposed recipe definitions as the intended extension point. Removed stale locals/imports,
+formatted touched Java sources and regenerated the class index/reference. Production and
+GameTest compilation passed. Focused behavioral checks follow in checkpoint 6.

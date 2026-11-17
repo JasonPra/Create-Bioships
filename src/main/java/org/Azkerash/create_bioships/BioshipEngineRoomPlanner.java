@@ -1,7 +1,5 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.amoeba.ComponentTransport;
-
 import static org.Azkerash.create_bioships.EngineRoomLayout.*;
 
 import java.util.*;
@@ -9,6 +7,7 @@ import net.minecraft.core.*;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.*;
+import org.Azkerash.create_bioships.amoeba.ComponentTransport;
 
 /** Read-only engine-room clearance, load, capacity and complete-investment quotes. */
 final class BioshipEngineRoomPlanner {

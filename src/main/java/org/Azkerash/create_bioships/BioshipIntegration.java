@@ -1,8 +1,5 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.amoeba.ComponentMerging;
-import org.Azkerash.create_bioships.amoeba.ComponentTransport;
-
 import dev.ryanhcode.sable.api.SubLevelAssemblyHelper;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.companion.math.BoundingBox3i;
@@ -20,6 +17,8 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import org.Azkerash.create_bioships.amoeba.ComponentMerging;
+import org.Azkerash.create_bioships.amoeba.ComponentTransport;
 
 /** World mutation happens in ordinary block ticks, outside Sable's actor iteration. */
 @EventBusSubscriber(modid = Create_bioships.MOD_ID)

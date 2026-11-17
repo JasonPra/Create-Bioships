@@ -1,7 +1,5 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.amoeba.ComponentTransport;
-
 import dev.ryanhcode.sable.api.SubLevelAssemblyHelper;
 import java.util.*;
 import net.minecraft.core.*;
@@ -10,6 +8,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import org.Azkerash.create_bioships.amoeba.ComponentTransport;
 
 /** The eye trades places with existing tissue. No organs, grid, or extra biomass are moved. */
 public final class CoreMotion {

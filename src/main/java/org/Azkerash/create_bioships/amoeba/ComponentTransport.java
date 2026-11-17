@@ -1,7 +1,5 @@
 package org.Azkerash.create_bioships.amoeba;
 
-import org.Azkerash.create_bioships.*;
-
 import dev.ryanhcode.sable.api.SubLevelAssemblyHelper;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.api.sublevel.ticket.SubLevelLoadingTicketType;
@@ -15,7 +13,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Unit;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.phys.Vec3;
-
+import org.Azkerash.create_bioships.*;
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
 
@@ -141,7 +139,8 @@ public final class ComponentTransport {
     return begin(core, source, target, external, manual, consuming, stash, null);
   }
 
-  public static boolean merge(AmoebaComponentHost core, BlockPos source, BlockPos target, String recipe) {
+  public static boolean merge(
+      AmoebaComponentHost core, BlockPos source, BlockPos target, String recipe) {
     return begin(core, source, target, false, false, false, false, recipe);
   }
 
@@ -154,7 +153,6 @@ public final class ComponentTransport {
       boolean consuming,
       boolean stash,
       String mergeRecipe) {
-    boolean combining = mergeRecipe != null;
     if ((stash ? core.movement() != null : busy(core))
         || source.equals(target)
         || core.body() == null) return false;
@@ -198,9 +196,9 @@ public final class ComponentTransport {
     return true;
   }
 
-  public static List<BlockPos> findTissuePath(AmoebaComponentHost core, BlockPos source, BlockPos target) {
+  public static List<BlockPos> findTissuePath(
+      AmoebaComponentHost core, BlockPos source, BlockPos target) {
     var level = core.level();
-    var ship = core.body();
     Map<BlockPos, BlockPos> parents = new HashMap<>();
     var queue = new ArrayDeque<BlockPos>();
     queue.add(source);
@@ -314,7 +312,7 @@ public final class ComponentTransport {
     core.placed(move, scavenged, recycle, hostFlesh);
   }
 
-  public static void finishCargo(AmoebaComponentHost core, ServerSubLevel cargo) {
+  static void finishCargo(AmoebaComponentHost core, ServerSubLevel cargo) {
     var move = core.movement();
     var container = SubLevelContainer.getContainer(cargo.getLevel());
     container.removeForceLoadTicket(cargo, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
@@ -326,7 +324,7 @@ public final class ComponentTransport {
     core.changed();
   }
 
-  public static void release(AmoebaComponentHost core, ServerSubLevel cargo) {
+  static void release(AmoebaComponentHost core, ServerSubLevel cargo) {
     var move = core.movement();
     if (move != null && move.ownerForced() && core.body() != null)
       SubLevelContainer.getContainer(cargo.getLevel())

@@ -1,13 +1,12 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.amoeba.ComponentTransport;
-
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
+import org.Azkerash.create_bioships.amoeba.ComponentTransport;
 
 /** Resource-funded body-work actuator; action selection belongs to a separate tree. */
 final class BioshipAdaptation {

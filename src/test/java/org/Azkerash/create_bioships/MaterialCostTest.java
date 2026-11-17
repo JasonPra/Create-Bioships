@@ -1,10 +1,9 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.creature.ResourceAccount;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.*;
+import org.Azkerash.create_bioships.creature.ResourceAccount;
 import org.junit.jupiter.api.Test;
 
 class MaterialCostTest {

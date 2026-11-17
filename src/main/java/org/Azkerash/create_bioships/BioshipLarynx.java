@@ -1,8 +1,5 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.amoeba.ComponentMerging;
-import org.Azkerash.create_bioships.amoeba.ComponentTransport;
-
 import com.github.elenterius.biomancy.block.modularlarynx.ModularLarynxBlockEntity;
 import java.util.*;
 import net.minecraft.core.*;
@@ -10,6 +7,8 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import org.Azkerash.create_bioships.amoeba.ComponentMerging;
+import org.Azkerash.create_bioships.amoeba.ComponentTransport;
 
 /** One conserved larynx capsule per upgraded mouth, acquired only after functional digestion. */
 final class BioshipLarynx {
@@ -69,7 +68,8 @@ final class BioshipLarynx {
         || !(core.getLevel().getBlockEntity(pos) instanceof FeedingMouthBlockEntity mouth)
         || mouth.voiced()) return false;
     var organ = nativeSource(core, mouth);
-    if (organ != null) return ComponentTransport.storeComponent(core.amoebaComponents(), organ.getBlockPos());
+    if (organ != null)
+      return ComponentTransport.storeComponent(core.amoebaComponents(), organ.getBlockPos());
     if (!EmergencyReserve.after(core, COST) || !COST.pay(BioshipStorage.account(core)))
       return false;
     var capsule = new CompoundTag();

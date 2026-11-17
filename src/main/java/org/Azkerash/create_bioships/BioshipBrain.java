@@ -1,7 +1,5 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.amoeba.ComponentTransport;
-
 import java.util.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -11,6 +9,7 @@ import net.minecraft.world.item.*;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.capabilities.Capabilities;
+import org.Azkerash.create_bioships.amoeba.ComponentTransport;
 
 /**
  * The behavior tree owns goal selection. Sensors propose work; actuators may execute only the
@@ -459,7 +458,9 @@ public final class BioshipBrain {
               effort(core, threat.position()),
               "Defend against an immediate threat"));
     boolean committed =
-        ComponentTransport.busy(core.amoebaComponents()) || core.coreMotion().active() || core.assimilation().finishing();
+        ComponentTransport.busy(core.amoebaComponents())
+            || core.coreMotion().active()
+            || core.assimilation().finishing();
     if (committed && (!BioshipNutrition.critical(core) || BioshipNutrition.movingFood(core)))
       return fixed(Action.MOVE_COMPONENT, "Finish a conserved component or food-recovery move");
     if (core.resting()) return fixed(Action.REST, "Rest command");

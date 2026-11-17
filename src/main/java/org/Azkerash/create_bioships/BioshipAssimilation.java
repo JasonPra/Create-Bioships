@@ -1,8 +1,5 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.amoeba.ComponentMerging;
-import org.Azkerash.create_bioships.amoeba.ComponentTransport;
-
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import java.util.*;
@@ -10,6 +7,8 @@ import net.minecraft.core.*;
 import net.minecraft.nbt.*;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import org.Azkerash.create_bioships.amoeba.ComponentMerging;
+import org.Azkerash.create_bioships.amoeba.ComponentTransport;
 
 /** Conserved cargo is swallowed first; fitting kept organs is a separate, subsequent job. */
 public final class BioshipAssimilation {
@@ -292,7 +291,8 @@ public final class BioshipAssimilation {
             t -> BioshipPriorities.rank(core, state(core, t), core.getBlockPos())));
     for (var tag : List.copyOf(stock)) {
       var state = state(core, tag);
-      if (BioshipLarynx.isLarynx(state) && ComponentMerging.absorbLarynx(core.amoebaComponents(), tag.getCompound("Entity"))) {
+      if (BioshipLarynx.isLarynx(state)
+          && ComponentMerging.absorbLarynx(core.amoebaComponents(), tag.getCompound("Entity"))) {
         take(core, tag);
         core.setChanged();
         continue;

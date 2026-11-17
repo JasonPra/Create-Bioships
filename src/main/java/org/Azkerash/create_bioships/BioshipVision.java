@@ -1,11 +1,10 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.amoeba.ComponentTransport;
-
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.Vec3;
+import org.Azkerash.create_bioships.amoeba.ComponentTransport;
 
 /** Connected surface eyes extend sight; they do not reveal buried world machines. */
 public final class BioshipVision {

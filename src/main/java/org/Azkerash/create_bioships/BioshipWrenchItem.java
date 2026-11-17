@@ -1,7 +1,5 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.amoeba.ComponentTransport;
-
 import java.util.List;
 import net.minecraft.core.*;
 import net.minecraft.core.component.DataComponents;
@@ -12,6 +10,7 @@ import net.minecraft.world.item.*;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import org.Azkerash.create_bioships.amoeba.ComponentTransport;
 
 public class BioshipWrenchItem extends Item {
   public BioshipWrenchItem(Properties properties) {

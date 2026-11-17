@@ -1,7 +1,5 @@
 package org.Azkerash.create_bioships.client;
 
-import org.Azkerash.create_bioships.amoeba.ComponentMerging;
-
 import com.mojang.blaze3d.vertex.PoseStack;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.sublevel.ClientSubLevel;
@@ -14,6 +12,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.Vec3;
 import org.Azkerash.create_bioships.*;
+import org.Azkerash.create_bioships.amoeba.ComponentMerging;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 

@@ -1,6 +1,5 @@
 package org.Azkerash.create_bioships.mixin;
 
-import org.Azkerash.create_bioships.amoeba.ComponentTransport;
 
 import dev.ryanhcode.sable.companion.math.Pose3dc;
 import dev.ryanhcode.sable.sublevel.ClientSubLevel;

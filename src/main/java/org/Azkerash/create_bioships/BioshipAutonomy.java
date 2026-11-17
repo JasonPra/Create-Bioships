@@ -1,10 +1,9 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.amoeba.ComponentTransport;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.phys.Vec3;
+import org.Azkerash.create_bioships.amoeba.ComponentTransport;
 
 /** Idle exploration and injured escape share the same collision checks as ordinary travel. */
 public final class BioshipAutonomy {
@@ -130,8 +129,9 @@ public final class BioshipAutonomy {
   }
 
   Vec3 groundWander(LivingCoreBlockEntity core) {
-    if ((!core.hatchling() && !core.huntingAllowed()) || core.resting() || ComponentTransport.busy(core.amoebaComponents()))
-      return null;
+    if ((!core.hatchling() && !core.huntingAllowed())
+        || core.resting()
+        || ComponentTransport.busy(core.amoebaComponents())) return null;
     var here = BioshipBlueprint.physical(core, BlockPos.ZERO);
     long now = core.getLevel().getGameTime();
     if (wander != null
