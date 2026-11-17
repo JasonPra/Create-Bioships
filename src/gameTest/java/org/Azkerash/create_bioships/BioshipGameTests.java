@@ -538,6 +538,11 @@ public class BioshipGameTests {
     var level = helper.getLevel();
     try {
       var host = core.getBlockPos().east();
+      level.setBlock(host, block("biomancy:storage_sac").defaultBlockState(), 3);
+      var early = BioshipSupport.layout(core, BioshipStructure.cells(ship));
+      helper.assertTrue(
+          early.legs().size() == 4,
+          "Collecting the first sac disabled the core's intrinsic starter limbs");
       level.setBlock(host, BioshipTissue.body().defaultBlockState(), 3);
       var leg = host.east();
       level.setBlock(

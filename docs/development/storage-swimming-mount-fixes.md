@@ -35,5 +35,11 @@ direction sac/inventory test and existing eye/full-face regressions passed. No n
 
 Checkpoint 6: swimming uses valid mounted flippers even while fewer than four limbs have been
 deployed. Their actual sockets feed the existing procedural renderer; fallback roots also respect
-protected-organ mounting rules outside bare-core bootstrap. The focused flipper/socket test passed.
+protected-organ mounting rules. Intrinsic core starter limbs remain available during early organ
+assembly; this is separate from placing leg blocks on a core. The focused flipper/socket test passed.
 Graphical animation review remains unperformed.
+
+Final regression follow-up: the initial strict fallback rule excluded intrinsic starter limbs once
+the first component was collected, preventing support validation and deployment. Restored that
+early-assembly fallback while retaining sac/gill/lung exclusions and mounted-flipper priority. All
+six focused pickup, starter-support and reconnection checks passed after the correction.

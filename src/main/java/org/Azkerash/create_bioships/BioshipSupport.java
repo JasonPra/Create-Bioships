@@ -178,7 +178,7 @@ public final class BioshipSupport {
       for (var cell : roots) {
         for (var face : faces) {
           if (cells.containsKey(cell.relative(face))
-              || !(bootstrap
+              || !(bootstrap || cells.get(cell).is(Create_bioships.CORE.get())
                   ? AmoebaLegBlock.supportsFace(cells.get(cell), cell, face)
                   : AmoebaLegBlock.canHostLeg(cells.get(cell), cell, face))) continue;
           var p = Vec3.atCenterOf(cell).subtract(origin);
