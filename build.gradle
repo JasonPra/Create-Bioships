@@ -179,3 +179,14 @@ idea {
         downloadJavadoc = true
     }
 }
+
+// Core integration checks are development-only and do not enter the mod JAR.
+sourceSets { gameTest {
+    compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+    runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
+} }
+neoForge.mods."${mod_id}".sourceSet(sourceSets.gameTest)
+tasks.named('check') { dependsOn tasks.named('gameTestClasses') }
+neoForge.runs.gameTestServer.gameDirectory = layout.buildDirectory.dir('gametest-run').get().asFile
+tasks.register('resetGameTestWorld', Delete) { delete layout.buildDirectory.dir('gametest-run/world') }
+tasks.named('prepareGameTestServerRun') { dependsOn 'resetGameTestWorld' }

@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "blink=false": {
+      "model": "create_bioships:block/core_awake"
+    },
+    "blink=true": {
+      "model": "create_bioships:block/core_closed"
+    }
+  }
+}
