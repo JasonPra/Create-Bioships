@@ -54,13 +54,10 @@ public final class DigestiveSystem {
   }
 
   static StomachBlockEntity forMouth(LivingCoreBlockEntity core, BlockPos mouth) {
-    return stomachs(core).stream()
-        .filter(s -> mouth.equals(s.connectedMouth) && connected(core, s))
-        .findFirst()
-        .orElse(null);
+    return DigestiveIntakes.forMouth(core, mouth);
   }
 
-  private static boolean linked(LivingCoreBlockEntity core, BlockPos a, BlockPos b) {
+  static boolean linked(LivingCoreBlockEntity core, BlockPos a, BlockPos b) {
     for (var direction : Direction.values())
       if (a.relative(direction).equals(b)) {
         var first = core.getLevel().getBlockState(a);
@@ -92,14 +89,8 @@ public final class DigestiveSystem {
   }
 
   static boolean directlyConnected(LivingCoreBlockEntity core, StomachBlockEntity stomach) {
-    var mouth = stomach.connectedMouth;
-    return mouth != null
-        && core.ship() != null
-        && BioshipIntegration.isMaw(core.getLevel().getBlockState(mouth))
-        && BioshipIntegration.containing(core.getLevel(), mouth) == core.ship()
-        && stomachs(core).stream()
-            .noneMatch(other -> other != stomach && mouth.equals(other.connectedMouth))
-        && pathIntact(core, mouth, stomach.getBlockPos(), stomach.gutPath);
+    return DigestiveIntakes.routes(core).routes().stream()
+        .anyMatch(route -> route.stomach() == stomach);
   }
 
   private static List<BlockPos> findPath(

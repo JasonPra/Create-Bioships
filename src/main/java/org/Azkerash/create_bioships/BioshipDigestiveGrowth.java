@@ -6,7 +6,9 @@ import net.minecraft.world.phys.Vec3;
 import org.Azkerash.create_bioships.creature.resources.MaterialCost;
 import org.Azkerash.create_bioships.registry.Create_bioships;
 
-/** Read-only capacity planning for separately connected mouth/stomach pairs. */
+/**
+ * Read-only digestion capacity planning; additional mouths are intake capacity, not stomach quotas.
+ */
 public final class BioshipDigestiveGrowth {
   record Plan(
       BlockPos mouth,
@@ -20,9 +22,7 @@ public final class BioshipDigestiveGrowth {
       int legUpgrades) {}
 
   public static int target(LivingCoreBlockEntity core) {
-    return Math.max(
-        DigestiveSystem.requiredPairs(core),
-        Math.max(DigestiveSystem.mouths(core).size(), DigestiveSystem.stomachs(core).size()));
+    return Math.max(DigestiveSystem.requiredPairs(core), DigestiveSystem.stomachs(core).size());
   }
 
   static int mouthTarget(LivingCoreBlockEntity core) {
@@ -41,7 +41,7 @@ public final class BioshipDigestiveGrowth {
         || stomachs.size() < target && originals.stomach()) return null;
     var unmatchedMouth =
         mouths.stream()
-            .filter(p -> stomachs.stream().noneMatch(s -> p.equals(s.connectedMouth)))
+            .filter(p -> DigestiveSystem.forMouth(core, p) == null)
             .findFirst()
             .orElse(null);
     if (unmatchedMouth != null) {

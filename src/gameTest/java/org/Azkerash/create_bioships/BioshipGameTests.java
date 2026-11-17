@@ -225,6 +225,42 @@ public class BioshipGameTests {
     }
   }
 
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "many_mouths_one_stomach")
+  public static void multiple_mouths_feed_one_stomach_without_growing_redundant_stomachs(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    try {
+      var core = core(ship);
+      var level = helper.getLevel();
+      var stomach = digestive(helper, core, false);
+      var extra = stomach.getBlockPos().west();
+      level.setBlock(
+          extra,
+          Create_bioships.FEEDING_MOUTH
+              .get()
+              .defaultBlockState()
+              .setValue(FeedingMouthBlock.FACING, Direction.WEST),
+          3);
+      helper.assertTrue(
+          DigestiveSystem.forMouth(core, extra) == stomach,
+          "A directly connected extra mouth required an exclusive stomach assignment");
+      helper.assertTrue(
+          DigestiveSystem.offerFood(core, extra, new ItemStack(Items.BEEF), false)
+              && stomach.queuedFood() == 1,
+          "Additional intake did not deliver exactly one food item");
+      helper.assertTrue(
+          BioshipDigestiveGrowth.target(core) == 1 && BioshipDigestiveGrowth.plan(core) == null,
+          "Additional mouth demanded another stomach");
+      level.removeBlock(extra, false);
+      helper.assertTrue(
+          DigestiveSystem.forMouth(core, extra) == null,
+          "Removed mouth retained a cached intake route");
+      helper.succeed();
+    } finally {
+      cleanup(helper, ship);
+    }
+  }
+
   private static int fixture;
 
   private static BlockPos location() {

@@ -78,3 +78,9 @@ Revised remaining checkpoints (supersedes the earlier remaining list):
 
 Checkpoint 1 recorded. Preserve the full capacity of all 27 stomach queues. Never require a
 mouth per stomach or grant materials/duplicate inventories during arrangement or relocation.
+
+Revised checkpoint 2 complete: reusable physical intake routing supports many mouths per stomach
+and branched intake paths without exclusive assignments. Cached routes validate actual blocks
+and tube face flags. Extra mouths no longer increase the stomach-growth quota. Four new pure
+routing cases, all unit tests, and two focused live GameTests passed. Automatic construction of
+additional intake routes follows in checkpoint 3.
