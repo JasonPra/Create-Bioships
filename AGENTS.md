@@ -27,3 +27,11 @@ The user approved the six-task package-only ownership pass in
 All six tasks are complete. For subsequent approved task lists, push each completed task and
 report how many tasks remain.
 Keep gameplay and feature gates unchanged; the earlier feature backlog remains cancelled.
+
+## Authorized digestive-network feature
+
+The user approved direct-contact stomach sharing and a solid 27-block large stomach as the end
+ goal. Responsibilities and the nine prioritized tasks were discussed in chat and recorded in
+`docs/development/digestive-network-plan.md`. Implement them in order, push each completed task,
+and report how many remain. Preserve the sum of all 27 food queues; do not duplicate inventories.
+This feature's explicit authorization supersedes earlier stop/feature-freeze notes for this scope.
