@@ -25,7 +25,15 @@ public final class SubLevelCombatTests {
     for (int x = (origin.getX() - 6) >> 4; x <= (origin.getX() + 6) >> 4; x++)
       for (int z = (origin.getZ() - 6) >> 4; z <= (origin.getZ() + 6) >> 4; z++)
         level.setChunkForced(x, z, true);
-    helper.runAfterDelay(10, () -> exercise(helper, origin));
+    helper
+        .startSequence()
+        .thenWaitUntil(
+            () ->
+                helper.assertTrue(
+                    level.isPositionEntityTicking(origin.north(3))
+                        && level.isPositionEntityTicking(origin),
+                    "Waiting for forced combat chunks"))
+        .thenExecute(() -> exercise(helper, origin));
   }
 
   private static void exercise(GameTestHelper helper, BlockPos origin) {
@@ -87,51 +95,66 @@ public final class SubLevelCombatTests {
                               net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal<
                                   ?>),
               "No hostile target goal");
-          target.tick();
-          for (int i = 0; i < 100 && zombie.getTarget() == null; i++) zombie.targetSelector.tick();
-          helper.assertTrue(
-              zombie.getTarget() instanceof SubLevelCombatTarget acquired
-                  && acquired.body() == body,
-              "Hostile AI failed to acquire the sublevel target; canAttack="
-                  + zombie.canAttack(target)
-                  + " visible="
-                  + zombie.getSensing().hasLineOfSight(target)
-                  + " nearby="
-                  + level
-                      .getEntitiesOfClass(
-                          SubLevelCombatTarget.class, zombie.getBoundingBox().inflate(35))
-                      .size()
-                  + " zombie="
-                  + zombie.position()
-                  + " target="
-                  + target.position()
-                  + " goals="
-                  + zombie.targetSelector.getAvailableGoals().size());
-          before = SubLevelHealth.status(body).current();
-          zombie.doHurtTarget(zombie.getTarget());
-          helper.assertTrue(
-              SubLevelHealth.status(body).current() < before, "Zombie attack did not damage grid");
-          zombie.discard();
-          target.invulnerableTime = 0;
-          var arrow =
-              new net.minecraft.world.entity.projectile.Arrow(
-                  level, player, new ItemStack(Items.ARROW), new ItemStack(Items.BOW));
-          var impactPoint =
-              body.logicalPose()
-                  .transformPosition(Vec3.atCenterOf(body.getPlot().getCenterBlock()));
-          arrow.setPos(impactPoint.add(0, 0, -3));
-          arrow.setDeltaMovement(0, 0, 2);
-          before = SubLevelHealth.status(body).current();
-          level.addFreshEntity(arrow);
-          for (int i = 0; i < 3 && !arrow.isRemoved(); i++) arrow.tick();
-          helper.assertTrue(
-              SubLevelHealth.status(body).current() < before,
-              "Arrow did not collide with the real Sable grid");
-          helper.assertTrue(
-              !target.canBeHitByProjectile(),
-              "Empty space can hit adapter rather than Sable geometry");
-          player.discard();
-          helper.succeed();
+          helper.runAfterDelay(
+              5,
+              () -> {
+                target.tick();
+                zombie.getSensing().tick();
+                for (int i = 0; i < 100 && zombie.getTarget() == null; i++)
+                  zombie.targetSelector.tick();
+                helper.assertTrue(
+                    zombie.getTarget() instanceof SubLevelCombatTarget acquired
+                        && acquired.body() == body,
+                    "Hostile AI failed to acquire the sublevel target; canAttack="
+                        + zombie.canAttack(target)
+                        + " visible="
+                        + zombie.getSensing().hasLineOfSight(target)
+                        + " nearby="
+                        + level
+                            .getEntitiesOfClass(
+                                SubLevelCombatTarget.class, zombie.getBoundingBox().inflate(35))
+                            .size()
+                        + " zombie="
+                        + zombie.position()
+                        + " target="
+                        + target.position()
+                        + " goals="
+                        + zombie.targetSelector.getAvailableGoals().size()
+                        + " status="
+                        + SubLevelHealth.status(body)
+                        + " removed="
+                        + target.isRemoved()
+                        + " bbox="
+                        + target.getBoundingBox()
+                        + " bodyRemoved="
+                        + body.isRemoved());
+                double mobBefore = SubLevelHealth.status(body).current();
+                zombie.doHurtTarget(zombie.getTarget());
+                helper.assertTrue(
+                    SubLevelHealth.status(body).current() < mobBefore,
+                    "Zombie attack did not damage grid");
+                zombie.discard();
+                target.invulnerableTime = 0;
+                var arrow =
+                    new net.minecraft.world.entity.projectile.Arrow(
+                        level, player, new ItemStack(Items.ARROW), new ItemStack(Items.BOW));
+                var impactPoint =
+                    body.logicalPose()
+                        .transformPosition(Vec3.atCenterOf(body.getPlot().getCenterBlock()));
+                arrow.setPos(impactPoint.add(0, 0, -3));
+                arrow.setDeltaMovement(0, 0, 2);
+                double arrowBefore = SubLevelHealth.status(body).current();
+                level.addFreshEntity(arrow);
+                for (int i = 0; i < 3 && !arrow.isRemoved(); i++) arrow.tick();
+                helper.assertTrue(
+                    SubLevelHealth.status(body).current() < arrowBefore,
+                    "Arrow did not collide with the real Sable grid");
+                helper.assertTrue(
+                    !target.canBeHitByProjectile(),
+                    "Empty space can hit adapter rather than Sable geometry");
+                player.discard();
+                helper.succeed();
+              });
         });
   }
 }

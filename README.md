@@ -187,3 +187,25 @@ block interactions outside creature grids are unchanged. The core cannot be coll
 
 After death, ordinary block breaking is allowed again and the core can be removed immediately
 by hand. **The core never drops an item**, alive or dead. Other components keep their normal drops.
+
+### Corpse decay and linked fragments
+
+`core.CreatureDecay` slowly removes exposed blocks from dead creature grids without block or
+inventory drops. Living creatures are excluded. A family's initial block count sets a shared
+cadence targeting roughly three in-game days, with at most one block removed per second.
+Unloaded fragments do not catch up by instantly disappearing when loaded again.
+
+There are exactly **two decay groups**. All ordinary blocks across the entire remains family must
+be gone before any registered final-group component is eligible. The final group initially contains
+`living_core`, `land_eye`, and `aquatic_eye`. Once that group is eligible, any of its components may
+rot even while several others remain. Exposed blocks are preferred within the eligible group.
+
+Add future components through `CreatureDecay.registerLastToRot(ResourceLocation)` during common
+setup. `lastToRotRegistry()` returns an immutable snapshot. Saved per-fragment block-ID summaries
+use the registry when deciding eligibility, so future registrations also apply to saved remains.
+
+A native Sable split preserves a persistent `create_bioships:remains_family` UUID and the death
+state on detached fragments, including fragments without a core. Each retains independent Sable
+physics. Saved summaries keep unloaded ordinary fragments from allowing the final group to rot
+early; permanent deletion removes their membership. Once the last block of a fragment is due to
+rot, the grid is removed through Sable rather than leaving an empty physics body.

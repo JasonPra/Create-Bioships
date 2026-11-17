@@ -12,7 +12,9 @@
     "SlimeCombatTargetMixin",
     "EmbeddedArrowAccess",
     "EmbeddedProjectileRetentionMixin",
-    "PlayerSweepMixin"
+    "PlayerSweepMixin",
+    "CreatureDecaySplitMixin",
+    "CreatureDecayRemovalMixin"
   ],
   "client": [],
   "injectors": {

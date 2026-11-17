@@ -13,6 +13,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class SubLevelHealthMixin {
   @Inject(method = "onBlockChange", at = @At("TAIL"), remap = false)
   private void core$blockChanged(BlockPos pos, BlockState state, CallbackInfo callback) {
-    SubLevelHealth.blockChanged(((ServerLevelPlot) (Object) this).getSubLevel(), pos, state);
+    var body = ((ServerLevelPlot) (Object) this).getSubLevel();
+    SubLevelHealth.blockChanged(body, pos, state);
+    org.Azkerash.create_bioships.core.CreatureDecay.changed(body, pos, state);
   }
 }
