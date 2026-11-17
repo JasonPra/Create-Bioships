@@ -1,12 +1,5 @@
 import net.neoforged.moddevgradle.dsl.RunModel
 import net.neoforged.moddevgradle.dsl.ModModel
-import org.gradle.api.Task
-import org.gradle.api.file.FileCopyDetails
-import org.gradle.api.tasks.TaskProvider
-import org.gradle.api.tasks.Sync
-import org.gradle.api.tasks.Delete
-import org.gradle.language.jvm.tasks.ProcessResources
-import org.gradle.api.publish.maven.MavenPublication
 
 plugins {
     id 'java-library'
@@ -48,14 +41,14 @@ neoForge {
     // Default run configurations.
     // These can be tweaked, removed, or duplicated as needed.
     runs {
-        client { RunModel run ->
+        register('client') { RunModel run ->
             run.client()
 
             // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
             run.systemProperty('neoforge.enabledGameTestNamespaces', providers.gradleProperty('mod_id').get())
         }
 
-        server { RunModel run ->
+        register('server') { RunModel run ->
             run.server()
             run.programArgument '--nogui'
             run.systemProperty('neoforge.enabledGameTestNamespaces', providers.gradleProperty('mod_id').get())
@@ -64,12 +57,12 @@ neoForge {
         // This run config launches GameTestServer and runs all registered gametests, then exits.
         // By default, the server will crash when no gametests are provided.
         // The gametest system is also enabled by default for other run configs under the /test command.
-        gameTestServer { RunModel run ->
+        register('gameTestServer') { RunModel run ->
             run.type = "gameTestServer"
             run.systemProperty('neoforge.enabledGameTestNamespaces', providers.gradleProperty('mod_id').get())
         }
 
-        data { RunModel run ->
+        register('data') { RunModel run ->
             run.data()
 
             // example of overriding the workingDirectory set in configureEach above, uncomment if you want to use it
@@ -80,18 +73,18 @@ neoForge {
         }
 
         // applies to all the run configs above
-        configureEach {
+        configureEach { RunModel run ->
             // Recommended logging data for a userdev environment
             // The markers can be added/remove as needed separated by commas.
             // "SCAN": For mods scan.
             // "REGISTRIES": For firing of registry events.
             // "REGISTRYDUMP": For getting the contents of all registries.
-            systemProperty 'forge.logging.markers', 'REGISTRIES'
+            run.systemProperty('forge.logging.markers', 'REGISTRIES')
 
             // Recommended logging level for the console
             // You can set various levels here.
             // Please read: https://stackoverflow.com/questions/2031163/when-to-use-the-different-log-levels
-            logLevel = org.slf4j.event.Level.DEBUG
+            run.logLevel = org.slf4j.event.Level.DEBUG
         }
     }
 
@@ -197,6 +190,8 @@ sourceSets { gameTest {
 } }
 neoForge.mods.named(mod_id.toString()).configure { ModModel model -> model.sourceSet(sourceSets.getByName('gameTest')) }
 tasks.named('check', Task) { Task checkTask -> checkTask.dependsOn tasks.named('gameTestClasses') }
-neoForge.runs.gameTestServer.gameDirectory = layout.buildDirectory.dir('gametest-run').get().asFile
+neoForge.runs.named('gameTestServer').configure { RunModel run ->
+    run.gameDirectory = layout.buildDirectory.dir('gametest-run').get().asFile
+}
 tasks.register('resetGameTestWorld', Delete) { Delete resetTask -> resetTask.delete layout.buildDirectory.dir('gametest-run/world') }
 tasks.named('prepareGameTestServerRun', Task) { Task prepareTask -> prepareTask.dependsOn 'resetGameTestWorld' }
