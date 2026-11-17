@@ -124,6 +124,21 @@ public final class CoreBlock extends Block
   }
 
   @Override
+  protected float getDestroyProgress(
+      BlockState state,
+      net.minecraft.world.entity.player.Player player,
+      net.minecraft.world.level.BlockGetter level,
+      BlockPos pos) {
+    boolean dead =
+        level.getBlockEntity(pos) instanceof CoreGogglesDisplay display && display.dead();
+    if (level instanceof ServerLevel server) {
+      var body = CoreAssemblyRules.containing(server, pos);
+      if (body != null) dead = SubLevelHealth.status(body).dead();
+    }
+    return dead ? 1 : super.getDestroyProgress(state, player, level, pos);
+  }
+
+  @Override
   protected java.util.List<net.minecraft.world.item.ItemStack> getDrops(
       BlockState state, net.minecraft.world.level.storage.loot.LootParams.Builder params) {
     return java.util.List.of();

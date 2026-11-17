@@ -11,7 +11,8 @@
     "BreezeCombatTargetMixin",
     "SlimeCombatTargetMixin",
     "EmbeddedArrowAccess",
-    "EmbeddedProjectileRetentionMixin"
+    "EmbeddedProjectileRetentionMixin",
+    "PlayerSweepMixin"
   ],
   "client": [],
   "injectors": {

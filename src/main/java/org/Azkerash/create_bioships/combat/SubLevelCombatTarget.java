@@ -111,6 +111,7 @@ public class SubLevelCombatTarget extends LivingEntity {
       }
       position(body);
     }
+    setDeltaMovement(Vec3.ZERO);
     super.tick();
     setDeltaMovement(Vec3.ZERO);
   }
@@ -174,8 +175,13 @@ public class SubLevelCombatTarget extends LivingEntity {
   }
 
   @Override
+  public void knockback(double strength, double x, double z) {
+    // This adapter follows tissue. Vanilla knockback must not detach its target point from it.
+  }
+
+  @Override
   public boolean isPushable() {
-    return true;
+    return false;
   }
 
   @Override

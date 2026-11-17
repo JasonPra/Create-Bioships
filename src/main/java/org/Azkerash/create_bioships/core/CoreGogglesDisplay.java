@@ -19,6 +19,10 @@ public final class CoreGogglesDisplay extends BlockEntity implements IHaveGoggle
     super(Create_bioships.CORE_DISPLAY.get(), pos, state);
   }
 
+  public boolean dead() {
+    return inspection.getBoolean("dead");
+  }
+
   public void update() {
     if (!(level instanceof ServerLevel server)) return;
     var body = CoreAssemblyRules.containing(server, worldPosition);

@@ -12,6 +12,9 @@ public final class SubLevelHealth {
   public static final String DATA = "create_bioships:health";
   private static final Map<ServerSubLevel, Map<Long, Double>> CELLS = new WeakHashMap<>();
 
+  private static final ThreadLocal<Set<ServerSubLevel>> SAFE_REMOVALS =
+      ThreadLocal.withInitial(() -> Collections.newSetFromMap(new IdentityHashMap<>()));
+
   public record Status(double current, double maximum, boolean dead, String causeOfDeath) {}
 
   private SubLevelHealth() {}
@@ -68,6 +71,20 @@ public final class SubLevelHealth {
     store(body, maximum - missing, maximum, old.getBoolean("dead"), old.getString("cause"));
   }
 
+  /** Create owns pickup/drops; suppress only damage from the resulting capacity change. */
+  public static <T> T withoutRemovalDamage(
+      ServerSubLevel body, java.util.function.Supplier<T> removal) {
+    status(body);
+    var active = SAFE_REMOVALS.get();
+    boolean added = active.add(body);
+    try {
+      return removal.get();
+    } finally {
+      if (added) active.remove(body);
+      if (active.isEmpty()) SAFE_REMOVALS.remove();
+    }
+  }
+
   /** Called by Sable after a plot block changes. State-only animations cost no health work. */
   public static void blockChanged(ServerSubLevel body, BlockPos pos, BlockState state) {
     if (!CoreAssemblyRules.isCreature(body) || !CELLS.containsKey(body)) return;
@@ -78,12 +95,13 @@ public final class SubLevelHealth {
     else cells.put(pos.asLong(), next);
     var old = status(body);
     double delta = next - previous;
+    boolean safe = delta < 0 && SAFE_REMOVALS.get().contains(body);
     store(
         body,
-        old.current() + delta,
+        safe ? old.current() : old.current() + delta,
         old.maximum() + delta,
         old.dead(),
-        delta < 0 ? "component_loss" : old.causeOfDeath());
+        delta < 0 && !safe ? "component_loss" : old.causeOfDeath());
   }
 
   public static boolean damage(ServerSubLevel body, double amount, DamageSource source) {

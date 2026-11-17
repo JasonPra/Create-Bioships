@@ -172,3 +172,18 @@ The supplied `epic-fight-21.17.3.1-mc1.21.1-neoforge.jar` is kept in an isolated
 not added to the project's dependency list or included in the mod JAR. A final in-game visual
 check of attack animations, wound overlays, and the revised goggles remains separate from the
 headless collision/damage checks.
+
+### Player attacks and component removal
+
+Vanilla sword sweeps retain the weapon's native sweep volume and damage. Intersected creature
+blocks route to one damage target per grid, excluding the already-struck primary grid so its body
+and eye adapters cannot multiply the hit. Normal entity victims keep vanilla sweep handling.
+Damage adapters stay anchored to tissue rather than drifting under vanilla knockback.
+
+Shift-right-click with the **Symbiotic Wrench** extends Create's normal pickup interaction to
+non-core blocks on a creature grid. Create owns removal, drops, and pickup; capacity updates do
+not count as damage. Current health is preserved up to the reduced maximum. Existing Create
+block interactions outside creature grids are unchanged. The core cannot be collected with a wrench.
+
+After death, ordinary block breaking is allowed again and the core can be removed immediately
+by hand. **The core never drops an item**, alive or dead. Other components keep their normal drops.

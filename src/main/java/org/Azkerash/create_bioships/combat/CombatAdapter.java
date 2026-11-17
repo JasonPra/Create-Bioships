@@ -98,16 +98,82 @@ public final class CombatAdapter {
     TARGETS.entrySet().removeIf(e -> e.getKey().isRemoved() || e.getValue().isRemoved());
   }
 
+  /** Use the weapon's vanilla sweep box, not the invisible adapters' incidental positions. */
+  public static java.util.List<net.minecraft.world.entity.LivingEntity> sweepTargets(
+      net.minecraft.world.entity.player.Player player,
+      net.minecraft.world.phys.AABB bounds,
+      net.minecraft.world.entity.Entity primary,
+      java.util.List<net.minecraft.world.entity.LivingEntity> nativeTargets) {
+    if (!(player.level() instanceof ServerLevel level)) return nativeTargets;
+    var result = new java.util.ArrayList<>(nativeTargets);
+    result.removeIf(e -> e instanceof SubLevelCombatTarget);
+    var primaryBody = primary instanceof SubLevelCombatTarget target ? target.body() : null;
+    var container = SubLevelContainer.getContainer(level);
+    if (container == null) return result;
+    for (var entry : container.getAllSubLevels()) {
+      if (!(entry instanceof ServerSubLevel body)
+          || body == primaryBody
+          || body.isRemoved()
+          || !CoreAssemblyRules.isCreature(body)
+          || SubLevelHealth.status(body).dead()
+          || !body.boundingBox().toMojang().intersects(bounds)) continue;
+      SubLevelCombatTarget selected = null;
+      net.minecraft.core.BlockPos selectedCell = null;
+      net.minecraft.core.Direction selectedFace = null;
+      net.minecraft.world.phys.Vec3 aim = null;
+      for (var cell : SubLevelHealth.blocks(body)) {
+        var state = level.getBlockState(cell);
+        for (var local : state.getCollisionShape(level, cell).toAabbs()) {
+          var logical = local.move(cell);
+          var box = new dev.ryanhcode.sable.companion.math.BoundingBox3d(logical);
+          if (!box.transform(body.logicalPose(), box).toMojang().intersects(bounds)) continue;
+          var from =
+              body.logicalPose()
+                  .transformPositionInverse(player.getEyePosition())
+                  .subtract(logical.getCenter());
+          var face = net.minecraft.core.Direction.getNearest(from.x, from.y, from.z);
+          var target = hitTarget(body, cell, face);
+          if (selected instanceof EyeCombatHurtbox
+              || selected != null && !(target instanceof EyeCombatHurtbox)) continue;
+          selected = target;
+          selectedCell = cell;
+          selectedFace = face;
+          double extent =
+              switch (face.getAxis()) {
+                case X -> logical.getXsize();
+                case Y -> logical.getYsize();
+                case Z -> logical.getZsize();
+              };
+          aim =
+              body.logicalPose()
+                  .transformPosition(logical.getCenter().relative(face, extent / 2 + .03));
+        }
+      }
+      if (selected != null) {
+        selected.impact(selectedCell, selectedFace);
+        selected.focusForAttack(aim);
+        result.add(selected);
+      }
+    }
+    return result;
+  }
+
   @SubscribeEvent
   public static void punch(PlayerInteractEvent.LeftClickBlock event) {
     if (!(event.getLevel() instanceof ServerLevel level)) return;
     var body = CoreAssemblyRules.containing(level, event.getPos());
     if (body == null || !CoreAssemblyRules.isCreature(body)) return;
+    if (SubLevelHealth.status(body).dead()) return;
     event.setCanceled(true);
     if (event.getAction() != PlayerInteractEvent.LeftClickBlock.Action.START) return;
     var target = hitTarget(body, event.getPos(), event.getFace());
     if (target != null) {
       target.impact(event.getPos(), event.getFace());
+      target.focusForAttack(
+          body.logicalPose()
+              .transformPosition(
+                  net.minecraft.world.phys.Vec3.atCenterOf(event.getPos())
+                      .relative(event.getFace(), .55)));
       event.getEntity().attack(target);
     }
   }
