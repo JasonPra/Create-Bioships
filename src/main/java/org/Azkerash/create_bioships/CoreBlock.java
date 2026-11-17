@@ -40,7 +40,7 @@ public final class CoreBlock extends Block
       BlockState state, Level level, BlockPos pos, BlockState previous, boolean moved) {
     super.onPlace(state, level, pos, previous, moved);
     if (level instanceof ServerLevel server && !previous.is(this)) {
-      CoreAssemblyRules.mark(server, pos);
+      CoreAssemblyRules.changed(server, pos);
       level.scheduleTick(pos, this, 1);
     }
   }
@@ -60,6 +60,8 @@ public final class CoreBlock extends Block
       return;
     }
     CoreAssemblyRules.mark(level, pos);
+    CoreAssemblyRules.reconcile(level, pos);
+    if (!level.getBlockState(pos).is(this)) return;
     int stage = state.getValue(STAGE);
     // Newly assembled cores open first. The old four/four/three-tick double blink follows.
     boolean opening = stage == 3 || stage == 0 && state.getValue(BLINK);
@@ -86,7 +88,7 @@ public final class CoreBlock extends Block
       ServerLevel source, ServerLevel destination, BlockState state, BlockPos from, BlockPos to) {
     // Use Sable's move callback so both assembly and disassembly refresh the eye state.
     destination.setBlock(to, state.setValue(BLINK, true).setValue(STAGE, 0), 2);
-    CoreAssemblyRules.mark(destination, to);
+    CoreAssemblyRules.changed(destination, to);
     destination.scheduleTick(to, this, 1);
   }
 }

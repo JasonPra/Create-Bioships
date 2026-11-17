@@ -1,9 +1,12 @@
 package org.Azkerash.create_bioships;
 
+import dev.ryanhcode.sable.api.SubLevelAssemblyHelper;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
+import dev.ryanhcode.sable.companion.math.BoundingBox3i;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import dev.simulated_team.simulated.content.blocks.physics_assembler.PhysicsAssemblerBlock;
+import java.util.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
@@ -18,6 +21,8 @@ import net.neoforged.neoforge.event.level.BlockEvent;
 public final class CoreAssemblyRules {
   public static final String TYPE = "create_bioships:creature_type",
       ID = "create_bioships:creature_id";
+  private static final String PRIMARY = "create_bioships:primary_core",
+      CHECK = "create_bioships:check_cores";
 
   public static ServerSubLevel containing(ServerLevel level, BlockPos pos) {
     var container = SubLevelContainer.getContainer(level);
@@ -32,11 +37,85 @@ public final class CoreAssemblyRules {
     var body = containing(level, core);
     if (body == null) return;
     var old = body.getUserDataTag();
-    if (old != null && "amoeba".equals(old.getString(TYPE)) && old.hasUUID(ID)) return;
+    if (old != null
+        && "amoeba".equals(old.getString(TYPE))
+        && old.hasUUID(ID)
+        && old.getUUID(ID).equals(body.getUniqueId())) return;
     var tag = old == null ? new CompoundTag() : old.copy();
     tag.putString(TYPE, "amoeba");
-    if (!tag.hasUUID(ID)) tag.putUUID(ID, body.getUniqueId());
+    tag.putUUID(ID, body.getUniqueId());
     body.setUserDataTag(tag);
+  }
+
+  /** Movement callbacks request work; splitting happens after native assembly has finished. */
+  public static void changed(ServerLevel level, BlockPos core) {
+    mark(level, core);
+    var body = containing(level, core);
+    if (body == null) return;
+    var tag = body.getUserDataTag().copy();
+    if (!tag.contains(PRIMARY)) tag.putLong(PRIMARY, core.asLong());
+    tag.putBoolean(CHECK, true);
+    body.setUserDataTag(tag);
+  }
+
+  static List<BlockPos> cores(ServerSubLevel body) {
+    var result = new ArrayList<BlockPos>();
+    for (var holder : body.getPlot().getLoadedChunks()) {
+      var chunk = holder.getChunk();
+      var sections = chunk.getSections();
+      for (int index = 0; index < sections.length; index++) {
+        var section = sections[index];
+        if (!section.maybeHas(state -> state.is(Create_bioships.CORE.get()))) continue;
+        int floor = chunk.getSectionYFromSectionIndex(index) << 4;
+        for (int x = 0; x < 16; x++)
+          for (int y = 0; y < 16; y++)
+            for (int z = 0; z < 16; z++)
+              if (section.getBlockState(x, y, z).is(Create_bioships.CORE.get()))
+                result.add(
+                    new BlockPos(
+                        chunk.getPos().getMinBlockX() + x,
+                        floor + y,
+                        chunk.getPos().getMinBlockZ() + z));
+      }
+    }
+    result.sort(Comparator.naturalOrder());
+    return List.copyOf(result);
+  }
+
+  public static void reconcile(ServerLevel level, BlockPos core) {
+    var body = containing(level, core);
+    if (body == null) return;
+    var tag = body.getUserDataTag();
+    if (tag == null) {
+      mark(level, core);
+      tag = body.getUserDataTag();
+    }
+    // The usual single-core blink does not scan the grid. Extra loaded cores still self-detect.
+    if (tag.contains(PRIMARY) && !tag.getBoolean(CHECK) && tag.getLong(PRIMARY) == core.asLong())
+      return;
+    var positions = cores(body);
+    if (positions.isEmpty()) return;
+    var keeper = tag.contains(PRIMARY) ? BlockPos.of(tag.getLong(PRIMARY)) : positions.getFirst();
+    if (!positions.contains(keeper)) keeper = positions.getFirst();
+    tag = tag.copy();
+    tag.putLong(PRIMARY, keeper.asLong());
+    tag.putBoolean(CHECK, false);
+    body.setUserDataTag(tag);
+    for (var extra : positions) {
+      if (extra.equals(keeper)) continue;
+      var child =
+          SubLevelAssemblyHelper.assembleBlocks(
+              level, extra, List.of(extra), new BoundingBox3i(extra, extra));
+      if (child == null) {
+        var retry = body.getUserDataTag().copy();
+        retry.putBoolean(CHECK, true);
+        body.setUserDataTag(retry);
+        level.scheduleTick(keeper, Create_bioships.CORE.get(), 20);
+        return;
+      }
+      // Sable preserves the source pose and velocity. The new grid gets an independent identity.
+      changed(level, child.getPlot().getCenterBlock());
+    }
   }
 
   public static boolean isCreature(SubLevel body) {
