@@ -1,4 +1,4 @@
-package org.Azkerash.create_bioships.development;
+package org.Azkerash.create_bioships.development.testing;
 
 import dev.simulated_team.simulated.content.entities.honey_glue.HoneyGlueEntity;
 import java.util.*;
@@ -77,6 +77,7 @@ public final class CoreSplitFixture {
                     + "RESET restores the sleeping pyramid."),
             level.registryAccess()));
     data.putString("billboard", "center");
+    data.putString("alignment", "center");
     data.putInt("line_width", 220);
     data.putInt("background", 0x60000000);
     data.putBoolean("shadow", true);
@@ -100,7 +101,9 @@ public final class CoreSplitFixture {
         for (int y = 0; y <= HEIGHT; y++) {
           boolean shell = Math.abs(x) == RADIUS || Math.abs(z) == RADIUS || y == HEIGHT;
           level.setBlock(
-              base.offset(x, y, z), (shell ? Blocks.GLASS : Blocks.AIR).defaultBlockState(), 2);
+              base.offset(x, y, z),
+              (shell ? DevelopmentTestBlocks.GLASS.get() : Blocks.AIR).defaultBlockState(),
+              2);
         }
     for (int y = 0; y < 4; y++)
       level.setBlock(base.above(y), Blocks.OAK_LOG.defaultBlockState(), 3);

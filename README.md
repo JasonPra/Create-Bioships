@@ -9,8 +9,7 @@ assembled into a Sable structure it slowly wakes once, then repeats the original
 Creature grids cannot be disassembled.
 
 Direct placement by a real player automatically assembles the core through Sable after placement
-finishes. Commands, automation and fixture construction leave cores unassembled. There is no block
-entity, leg animation, AI, growth or other creature system.
+finishes. Commands, automation and fixture construction leave cores unassembled. The core has a synchronized inspection block entity, but no leg animation, growth, or creature behavior tree.
 Assembly uses the dependency tools. Sable user data stores the amoeba creature type and a persistent
 creature UUID. Players cannot place a native physics assembler on tagged grids. A small guard at the
 shared native disassembly entry also protects against assemblers that were present before assembly.
@@ -70,6 +69,43 @@ Both are available in the creative tab and through their Biomancy Bio-Forge reci
 this wrench nor Create's own wrench can rotate or collect the core, including while sneaking.
 
 Production packages are organized by responsibility: `core` contains the core and grid rules,
-`equipment` contains the two item classes, `equipment.client` binds their display models,
-`development` owns the test fixture and commands, and `mixin` holds the native disassembly guard.
+`equipment` contains the two item classes, `client.equipment` binds their display models,
+`development.testing` owns the test fixtures, world setup, state, and commands, and `mixin` holds the native disassembly guard.
 The root mod class only registers content and wires lifecycle hooks.
+
+## Grid health and combat
+
+`core.BlockHealthValues` registers every loaded block ID in a tree map at 10 HP per block (air
+contributes zero). `core.SubLevelHealth` stores current/max health, permanent death, and cause
+of death on the Sable sublevel, not on the core. It counts the grid once and then updates from
+Sable's block-change notification. Adding blocks preserves damage; removing blocks reduces
+both current and maximum HP. Health is clamped to zero and adding blocks cannot revive a dead grid.
+`CoreGogglesDisplay` synchronizes an inspection snapshot for Create's goggles overlay.
+
+`combat` adapts Minecraft hostile targeting and native player/projectile attacks to that pool.
+Projectile impacts must hit a real sublevel block, so arrows through holes do not hit an enclosing
+box. `client.combat` owns a ten-tick red shader overlay on the grid's block meshes. The shader
+compiles in headless EGL; its final appearance still needs an in-game client check.
+
+## Sequential combat regression enclosure
+
+The development preset also contains a glass enclosure centered at x=48. The fixture-only glass
+uses the vanilla glass model/texture, has no item or creative entry, and resists mining, explosions,
+and boss block destruction. New dev worlds have a seeded mixed-stone walkway over bedrock;
+the test arenas themselves have bedrock floors. Existing worlds retain their floor layout.
+
+The combat fixture starts as an unassembled packed-flesh pillar with its core nine blocks above
+its base. Its START button assembles a fresh subject at **1 HP**, then spawns each registered
+monster-category `Enemy` type one at a time. Death advances to a fresh subject. A sixty-second
+simulation-time timeout records failure and advances instead of stalling the suite. This is a
+regression runner, not a claim that every specialized vanilla/modded hostile AI has passed.
+Each enemy's outcome remains saved after the suite automatically restores the sleeping fixture.
+
+- `/combat_test start` — run the sequential hostile suite.
+- `/combat_test reset` — stop and restore the unassembled subject; retain results.
+- `/combat_test status` — show progress and result count.
+- `/combat_test results` — print saved per-enemy outcomes.
+
+The explanation hologram sits between START and RESET. `/tick rate` accelerates these simulation
+windows as usual. An existing dev world receives the combat fixture when next opened; the
+new decorative terrain applies only when a dev world is first set up.

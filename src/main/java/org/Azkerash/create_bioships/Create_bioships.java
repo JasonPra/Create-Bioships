@@ -18,6 +18,24 @@ public final class Create_bioships {
   public static final String MODID = "create_bioships";
   private static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(MODID);
   private static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MODID);
+  private static final DeferredRegister<net.minecraft.world.entity.EntityType<?>> ENTITIES =
+      DeferredRegister.create(Registries.ENTITY_TYPE, MODID);
+  public static final DeferredHolder<
+          net.minecraft.world.entity.EntityType<?>,
+          net.minecraft.world.entity.EntityType<
+              org.Azkerash.create_bioships.combat.SubLevelCombatTarget>>
+      COMBAT_TARGET =
+          ENTITIES.register(
+              "sublevel_combat_target",
+              () ->
+                  net.minecraft.world.entity.EntityType.Builder
+                      .<org.Azkerash.create_bioships.combat.SubLevelCombatTarget>of(
+                          org.Azkerash.create_bioships.combat.SubLevelCombatTarget::new,
+                          net.minecraft.world.entity.MobCategory.MISC)
+                      .sized(.5f, .5f)
+                      .clientTrackingRange(10)
+                      .updateInterval(1)
+                      .build("create_bioships:sublevel_combat_target"));
   private static final DeferredRegister<CreativeModeTab> TABS =
       DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
   private static final DeferredRegister<net.minecraft.world.level.block.entity.BlockEntityType<?>>
@@ -74,6 +92,12 @@ public final class Create_bioships {
                               .getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD)
                               .is(BIOSHIP_GOGGLES.get()));
                 }));
+    bus.addListener(
+        (net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent event) ->
+            event.put(
+                COMBAT_TARGET.get(),
+                org.Azkerash.create_bioships.combat.SubLevelCombatTarget.attributes().build()));
+    ENTITIES.register(bus);
     BLOCKS.register(bus);
     BLOCK_ENTITIES.register(bus);
     ITEMS.register(bus);

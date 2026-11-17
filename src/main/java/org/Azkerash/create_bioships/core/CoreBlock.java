@@ -112,6 +112,11 @@ public final class CoreBlock extends Block
     CoreAssemblyRules.mark(level, pos);
     CoreAssemblyRules.reconcile(level, pos);
     if (!level.getBlockState(pos).is(this)) return;
+    var body = CoreAssemblyRules.containing(level, pos);
+    if (body != null && SubLevelHealth.status(body).dead()) {
+      level.setBlock(pos, state.setValue(BLINK, true).setValue(WAKE, 0).setValue(STAGE, 0), 2);
+      return;
+    }
     int wake = state.getValue(WAKE);
     if (wake > 0) {
       int nextWake = wake == 9 ? 0 : wake + 1;

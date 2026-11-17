@@ -1,4 +1,4 @@
-package org.Azkerash.create_bioships;
+package org.Azkerash.create_bioships.development.testing;
 
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.simulated_team.simulated.content.entities.honey_glue.HoneyGlueEntity;
@@ -7,8 +7,8 @@ import net.minecraft.gametest.framework.*;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.CommandBlockEntity;
 import net.neoforged.neoforge.gametest.*;
+import org.Azkerash.create_bioships.Create_bioships;
 import org.Azkerash.create_bioships.core.*;
-import org.Azkerash.create_bioships.development.*;
 
 @GameTestHolder(Create_bioships.MODID)
 @PrefixGameTestTemplate(false)
@@ -32,7 +32,9 @@ public final class CoreDevelopmentTests {
     helper.assertTrue(
         level.getBlockState(layout.tip().above(2)).isAir(), "Pyramid interior is not hollow");
     helper.assertTrue(
-        level.getBlockState(layout.base().above(CoreSplitFixture.HEIGHT)).is(Blocks.GLASS),
+        level
+            .getBlockState(layout.base().above(CoreSplitFixture.HEIGHT))
+            .is(DevelopmentTestBlocks.GLASS.get()),
         "Glass roof missing");
     var glues = level.getEntitiesOfClass(HoneyGlueEntity.class, layout.glue());
     helper.assertTrue(
@@ -67,31 +69,10 @@ public final class CoreDevelopmentTests {
                       b ->
                           !b.isRemoved()
                               && CoreAssemblyRules.isCreature(b)
-                              && layout
-                                  .arena()
-                                  .inflate(1)
-                                  .contains(
-                                      b.logicalPose()
-                                          .transformPosition(
-                                              net.minecraft.world.phys.Vec3.atCenterOf(
-                                                  b.getPlot().getCenterBlock()))))
+                              && CoreTestState.get(level).owned.contains(b.getUniqueId()))
                   .count();
           helper.assertTrue(
-              count == 49,
-              "Honey-glued fixture did not become 49 independent cores: "
-                  + count
-                  + " bodies="
-                  + SubLevelContainer.getContainer(level).getAllSubLevels().stream()
-                      .filter(b -> CoreAssemblyRules.isCreature(b))
-                      .map(
-                          b ->
-                              b.getUniqueId()
-                                  + "@"
-                                  + b.logicalPose()
-                                      .transformPosition(
-                                          net.minecraft.world.phys.Vec3.atCenterOf(
-                                              b.getPlot().getCenterBlock())))
-                      .toList());
+              count == 49, "Honey-glued fixture did not become 49 independent cores: " + count);
           for (int y = 0; y < 4; y++)
             helper.assertTrue(
                 level.getBlockState(layout.base().above(y)).is(Blocks.OAK_LOG),

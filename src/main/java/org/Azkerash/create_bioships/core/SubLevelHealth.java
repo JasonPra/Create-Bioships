@@ -16,6 +16,11 @@ public final class SubLevelHealth {
 
   private SubLevelHealth() {}
 
+  public static java.util.List<BlockPos> blocks(ServerSubLevel body) {
+    initialize(body);
+    return CELLS.get(body).keySet().stream().map(BlockPos::of).toList();
+  }
+
   public static Status status(ServerSubLevel body) {
     initialize(body);
     var tag = body.getUserDataTag().getCompound(DATA);

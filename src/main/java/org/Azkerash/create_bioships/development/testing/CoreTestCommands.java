@@ -1,4 +1,4 @@
-package org.Azkerash.create_bioships.development;
+package org.Azkerash.create_bioships.development.testing;
 
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.api.sublevel.ticket.SubLevelLoadingTicketType;
@@ -9,7 +9,6 @@ import dev.simulated_team.simulated.util.SimAssemblyHelper;
 import java.util.*;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.*;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.*;
 import net.minecraft.server.level.ServerLevel;
@@ -18,7 +17,6 @@ import net.minecraft.world.phys.*;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
-import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import org.Azkerash.create_bioships.*;
 import org.Azkerash.create_bioships.core.*;
@@ -27,27 +25,11 @@ import org.Azkerash.create_bioships.core.*;
 @EventBusSubscriber(modid = Create_bioships.MODID)
 public final class CoreTestCommands {
   private static final String FIXTURE = "create_bioships:regression_fixture";
-  private static final ResourceKey<net.minecraft.world.level.biome.Biome> BIOME =
-      ResourceKey.create(
-          Registries.BIOME,
-          ResourceLocation.fromNamespaceAndPath(Create_bioships.MODID, "core_development"));
 
   private CoreTestCommands() {}
 
   public static boolean development(ServerLevel level) {
-    return level == level.getServer().overworld()
-        && level.getChunkSource().getGenerator().getBiomeSource().possibleBiomes().stream()
-            .anyMatch(b -> b.is(BIOME));
-  }
-
-  @SubscribeEvent
-  public static void started(ServerStartedEvent event) {
-    var level = event.getServer().overworld();
-    if (development(level) && !CoreTestState.get(level).built) {
-      var layout = new CoreSplitFixture.Layout(new BlockPos(0, level.getMinBuildHeight() + 1, 0));
-      reset(level, layout);
-      level.setDefaultSpawnPos(layout.base().offset(0, 0, -15), 0);
-    }
+    return DevelopmentWorldSetup.isDevelopment(level);
   }
 
   public static int start(ServerLevel level)
@@ -97,6 +79,7 @@ public final class CoreTestCommands {
   @SubscribeEvent
   public static void tick(ServerTickEvent.Post event) {
     observe(event.getServer().overworld());
+    CombatFixture.tick(event.getServer().overworld());
   }
 
   public static void reset(ServerLevel level, CoreSplitFixture.Layout layout) {
@@ -174,5 +157,26 @@ public final class CoreTestCommands {
                     return 1;
                   }));
     event.getDispatcher().register(root);
+    var combat = Commands.literal("combat_test").requires(source -> source.hasPermission(2));
+    for (var action : List.of("start", "reset", "status", "results"))
+      combat.then(
+          Commands.literal(action)
+              .executes(
+                  ctx -> {
+                    var source = ctx.getSource();
+                    var level = source.getLevel();
+                    if (!CoreTestState.get(level).combatBuilt) {
+                      source.sendFailure(Component.literal("No combat fixture in this world."));
+                      return 0;
+                    }
+                    if (action.equals("start")) return CombatFixture.start(level);
+                    if (action.equals("reset")) CombatFixture.reset(level);
+                    if (action.equals("results"))
+                      for (var result : CombatFixture.results(level))
+                        source.sendSuccess(() -> Component.literal(result), false);
+                    source.sendSuccess(() -> Component.literal(CombatFixture.status(level)), false);
+                    return 1;
+                  }));
+    event.getDispatcher().register(combat);
   }
 }
