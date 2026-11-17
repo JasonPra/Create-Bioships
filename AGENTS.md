@@ -13,9 +13,9 @@ The previous milestone/priority backlog was cancelled by the user. Do not resurr
 user explicitly reopens them. After the authorized merge cleanup/preset removal is pushed, stop
 for scope reevaluation.
 
-## Newly authorized refactor
+## Completed amoeba refactor
 
-The user has reopened a focused six-task amoeba modularization refactor, documented in
+The user approved a focused six-task amoeba modularization refactor, documented in
 `docs/development/amoeba-refactor.md`. Its boundaries were discussed and approved in chat.
-Proceed in the documented order; push after each completed task and report how many remain.
+All six tasks are complete. The user prefers individual task pushes and remaining-task counts.
 This authorization supersedes the earlier stop instruction for this refactor only.

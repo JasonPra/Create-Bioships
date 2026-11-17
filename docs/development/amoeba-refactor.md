@@ -52,3 +52,16 @@ forwarding facades remain. Restricted cargo-finalization helpers to the amoeba p
 exposed recipe definitions as the intended extension point. Removed stale locals/imports,
 formatted touched Java sources and regenerated the class index/reference. Production and
 GameTest compilation passed. Focused behavioral checks follow in checkpoint 6.
+
+Checkpoint 6: all 61 unit tests and 18 focused GameTests passed. The new independent-host
+fixture completes a real fusion with movement state outside the concrete core, verifies invalid
+recipe rejection and round-trips the saved movement record. Existing checks cover six-face and
+under-core fusion, larynx absorption, external cargo, live inventory handoff, support changes,
+stashing/reload, connected storage and mouth movement.
+
+Review preserved the original notification order: update body memory, publish movement, then
+forget a consumed world source. The conversion inventory fixture now samples at fusion commit
+before growth can legitimately spend transferred products; timed merge tests still exercise
+the full duration. Full 172-test regression and graphical QA were not rerun in this focused scope.
+
+All six checkpoints are complete. No earlier feature backlog is reactivated.

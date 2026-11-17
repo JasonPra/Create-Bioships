@@ -7745,106 +7745,111 @@
         },
         {
           "kind": "method",
+          "signature": "public void forgetSource(BlockPos source)",
+          "line": 165
+        },
+        {
+          "kind": "method",
           "signature": "public boolean owns(BlockPos pos)",
-          "line": 167
+          "line": 169
         },
         {
           "kind": "method",
           "signature": "public boolean travelTissue(BlockState state)",
-          "line": 171
+          "line": 173
         },
         {
           "kind": "method",
           "signature": "public boolean leg(BlockState state)",
-          "line": 178
+          "line": 180
         },
         {
           "kind": "method",
           "signature": "public Direction legFacing(BlockPos target)",
-          "line": 182
+          "line": 184
         },
         {
           "kind": "method",
           "signature": "public Direction mouthFacing(BlockPos target)",
-          "line": 186
+          "line": 188
         },
         {
           "kind": "method",
           "signature": "public boolean validAttachment(BlockState state, BlockPos target)",
-          "line": 190
+          "line": 192
         },
         {
           "kind": "method",
           "signature": "public BlockEntity component(ServerSubLevel owner, BlockPos pos)",
-          "line": 197
+          "line": 199
         },
         {
           "kind": "method",
           "signature": "public List<BlockEntity> components()",
-          "line": 201
+          "line": 203
         },
         {
           "kind": "method",
           "signature": "public CompoundTag capture(BlockEntity entity)",
-          "line": 205
+          "line": 207
         },
         {
           "kind": "method",
           "signature": "public void restore(ServerSubLevel owner, BlockPos pos, CompoundTag capsule)",
-          "line": 209
+          "line": 211
         },
         {
           "kind": "method",
           "signature": "public void rememberHost(BlockEntity entity, BlockState host)",
-          "line": 213
+          "line": 215
         },
         {
           "kind": "method",
           "signature": "public void changed()",
-          "line": 217
+          "line": 219
         },
         {
           "kind": "method",
           "signature": "public void invalidateVision()",
-          "line": 221
+          "line": 223
         },
         {
           "kind": "method",
           "signature": "public void receive(ServerSubLevel cargo, BlockPos pos, boolean reclaim)",
-          "line": 225
+          "line": 227
         },
         {
           "kind": "method",
           "signature": "public void placed( ComponentTransport.Move move, boolean scavenged, boolean recycle, boolean hostFlesh)",
-          "line": 230
+          "line": 232
         },
         {
           "kind": "method",
           "signature": "public void merged()",
-          "line": 238
+          "line": 240
         },
         {
           "kind": "method",
           "signature": "public boolean needsStomach()",
-          "line": 243
+          "line": 245
         },
         {
           "kind": "method",
           "signature": "public boolean digestionReady()",
-          "line": 247
+          "line": 249
         },
         {
           "kind": "method",
           "signature": "public List<FeedingMouthBlockEntity> mouths()",
-          "line": 251
+          "line": 253
         },
         {
           "kind": "method",
           "signature": "public void stomachFormed()",
-          "line": 255
+          "line": 257
         }
       ],
-      "lines": 261
+      "lines": 263
     },
     "BioshipEngineRoomPlanner": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipEngineRoomPlanner.java",
@@ -10827,111 +10832,116 @@
         },
         {
           "kind": "method",
-          "signature": "boolean owns(BlockPos pos)",
+          "signature": "void forgetSource(BlockPos source)",
           "line": 54
         },
         {
           "kind": "method",
-          "signature": "boolean travelTissue(BlockState state)",
+          "signature": "boolean owns(BlockPos pos)",
           "line": 56
         },
         {
           "kind": "method",
-          "signature": "boolean validAttachment(BlockState state, BlockPos target)",
+          "signature": "boolean travelTissue(BlockState state)",
           "line": 58
         },
         {
           "kind": "method",
-          "signature": "boolean leg(BlockState state)",
+          "signature": "boolean validAttachment(BlockState state, BlockPos target)",
           "line": 60
         },
         {
           "kind": "method",
-          "signature": "Direction legFacing(BlockPos target)",
+          "signature": "boolean leg(BlockState state)",
           "line": 62
         },
         {
           "kind": "method",
-          "signature": "Direction mouthFacing(BlockPos target)",
+          "signature": "Direction legFacing(BlockPos target)",
           "line": 64
         },
         {
           "kind": "method",
-          "signature": "BlockEntity component(ServerSubLevel owner, BlockPos pos)",
+          "signature": "Direction mouthFacing(BlockPos target)",
           "line": 66
         },
         {
           "kind": "method",
-          "signature": "List<BlockEntity> components()",
+          "signature": "BlockEntity component(ServerSubLevel owner, BlockPos pos)",
           "line": 68
         },
         {
           "kind": "method",
-          "signature": "CompoundTag capture(BlockEntity entity)",
+          "signature": "List<BlockEntity> components()",
           "line": 70
         },
         {
           "kind": "method",
-          "signature": "void restore(ServerSubLevel owner, BlockPos pos, CompoundTag capsule)",
+          "signature": "CompoundTag capture(BlockEntity entity)",
           "line": 72
         },
         {
           "kind": "method",
-          "signature": "void rememberHost(BlockEntity entity, BlockState host)",
+          "signature": "void restore(ServerSubLevel owner, BlockPos pos, CompoundTag capsule)",
           "line": 74
         },
         {
           "kind": "method",
-          "signature": "BlockState hostTissue(BlockEntity entity)",
+          "signature": "void rememberHost(BlockEntity entity, BlockState host)",
           "line": 76
         },
         {
           "kind": "method",
-          "signature": "void changed()",
+          "signature": "BlockState hostTissue(BlockEntity entity)",
           "line": 78
         },
         {
           "kind": "method",
-          "signature": "void invalidateVision()",
+          "signature": "void changed()",
           "line": 80
         },
         {
           "kind": "method",
-          "signature": "void receive(ServerSubLevel cargo, BlockPos pos, boolean reclaim)",
+          "signature": "void invalidateVision()",
           "line": 82
         },
         {
           "kind": "method",
-          "signature": "void placed(ComponentTransport.Move move, boolean scavenged, boolean recycle, boolean hostFlesh)",
+          "signature": "void receive(ServerSubLevel cargo, BlockPos pos, boolean reclaim)",
           "line": 84
         },
         {
           "kind": "method",
-          "signature": "void merged()",
+          "signature": "void placed(ComponentTransport.Move move, boolean scavenged, boolean recycle, boolean hostFlesh)",
           "line": 86
         },
         {
           "kind": "method",
-          "signature": "boolean needsStomach()",
+          "signature": "void merged()",
           "line": 88
         },
         {
           "kind": "method",
-          "signature": "boolean digestionReady()",
+          "signature": "boolean needsStomach()",
           "line": 90
         },
         {
           "kind": "method",
-          "signature": "List<FeedingMouthBlockEntity> mouths()",
+          "signature": "boolean digestionReady()",
           "line": 92
         },
         {
           "kind": "method",
-          "signature": "void stomachFormed()",
+          "signature": "List<FeedingMouthBlockEntity> mouths()",
           "line": 94
+        },
+        {
+          "kind": "method",
+          "signature": "void stomachFormed()",
+          "line": 96
         }
       ],
-      "lines": 97
+      "lines": 99
     },
     "amoeba.AmoebaComponentProvider": {
       "path": "src/main/java/org/Azkerash/create_bioships/amoeba/AmoebaComponentProvider.java",
@@ -11029,35 +11039,35 @@
         {
           "kind": "method",
           "signature": "public static List<BlockPos> findTissuePath( AmoebaComponentHost core, BlockPos source, BlockPos target)",
-          "line": 197
+          "line": 198
         },
         {
           "kind": "method",
           "signature": "private static Vec3 alongTissue(List<BlockPos> path, double progress)",
-          "line": 231
+          "line": 232
         },
         {
           "kind": "method",
           "signature": "public static void tick(AmoebaComponentHost core)",
-          "line": 238
+          "line": 239
         },
         {
           "kind": "method",
           "signature": "static void finishCargo(AmoebaComponentHost core, ServerSubLevel cargo)",
-          "line": 313
+          "line": 314
         },
         {
           "kind": "method",
           "signature": "static void release(AmoebaComponentHost core, ServerSubLevel cargo)",
-          "line": 325
+          "line": 326
         },
         {
           "kind": "method",
           "signature": "public static void abandon(AmoebaComponentHost core)",
-          "line": 338
+          "line": 339
         }
       ],
-      "lines": 347
+      "lines": 348
     },
     "amoeba.ComponentMerging": {
       "path": "src/main/java/org/Azkerash/create_bioships/amoeba/ComponentMerging.java",

@@ -162,8 +162,10 @@ final class AmoebaCoreAdapter implements AmoebaComponentHost {
       if (!prepared.sourceHost().isAir())
         core.body().memory.put(local, level().getBlockState(request.source()));
     }
-    if (request.external() && prepared.sourceBody() == null)
-      core.vision().forget(core, request.source());
+  }
+
+  public void forgetSource(BlockPos source) {
+    core.vision().forget(core, source);
   }
 
   public boolean owns(BlockPos pos) {

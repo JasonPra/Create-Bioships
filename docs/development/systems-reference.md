@@ -2394,7 +2394,7 @@ Move one actual component/Sable cargo with its complete state; route tube costs 
 
 #### amoeba.ComponentTransport
 
-Source: `src/main/java/org/Azkerash/create_bioships/amoeba/ComponentTransport.java` (347 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/amoeba/ComponentTransport.java` (348 lines).
 
 ```java
 public final class ComponentTransport
@@ -2423,24 +2423,24 @@ public final class ComponentTransport
 
   private static boolean begin( AmoebaComponentHost core, BlockPos source, BlockPos target, boolean external, boolean manual, boolean consuming, boolean stash, String mergeRecipe); // line 145
 
-  public static List<BlockPos> findTissuePath( AmoebaComponentHost core, BlockPos source, BlockPos target); // line 197
+  public static List<BlockPos> findTissuePath( AmoebaComponentHost core, BlockPos source, BlockPos target); // line 198
 
-  private static Vec3 alongTissue(List<BlockPos> path, double progress); // line 231
+  private static Vec3 alongTissue(List<BlockPos> path, double progress); // line 232
 
-  public static void tick(AmoebaComponentHost core); // line 238
+  public static void tick(AmoebaComponentHost core); // line 239
 
-  static void finishCargo(AmoebaComponentHost core, ServerSubLevel cargo); // line 313
+  static void finishCargo(AmoebaComponentHost core, ServerSubLevel cargo); // line 314
 
-  static void release(AmoebaComponentHost core, ServerSubLevel cargo); // line 325
+  static void release(AmoebaComponentHost core, ServerSubLevel cargo); // line 326
 
-  public static void abandon(AmoebaComponentHost core); // line 338
+  public static void abandon(AmoebaComponentHost core); // line 339
 
 ```
 
 
 #### AmoebaCoreAdapter
 
-Source: `src/main/java/org/Azkerash/create_bioships/AmoebaCoreAdapter.java` (261 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/AmoebaCoreAdapter.java` (263 lines).
 
 ```java
 final class AmoebaCoreAdapter implements AmoebaComponentHost
@@ -2473,52 +2473,54 @@ final class AmoebaCoreAdapter implements AmoebaComponentHost
 
   public void departed(Request request, Prepared prepared); // line 156
 
-  public boolean owns(BlockPos pos); // line 167
+  public void forgetSource(BlockPos source); // line 165
 
-  public boolean travelTissue(BlockState state); // line 171
+  public boolean owns(BlockPos pos); // line 169
 
-  public boolean leg(BlockState state); // line 178
+  public boolean travelTissue(BlockState state); // line 173
 
-  public Direction legFacing(BlockPos target); // line 182
+  public boolean leg(BlockState state); // line 180
 
-  public Direction mouthFacing(BlockPos target); // line 186
+  public Direction legFacing(BlockPos target); // line 184
 
-  public boolean validAttachment(BlockState state, BlockPos target); // line 190
+  public Direction mouthFacing(BlockPos target); // line 188
 
-  public BlockEntity component(ServerSubLevel owner, BlockPos pos); // line 197
+  public boolean validAttachment(BlockState state, BlockPos target); // line 192
 
-  public List<BlockEntity> components(); // line 201
+  public BlockEntity component(ServerSubLevel owner, BlockPos pos); // line 199
 
-  public CompoundTag capture(BlockEntity entity); // line 205
+  public List<BlockEntity> components(); // line 203
 
-  public void restore(ServerSubLevel owner, BlockPos pos, CompoundTag capsule); // line 209
+  public CompoundTag capture(BlockEntity entity); // line 207
 
-  public void rememberHost(BlockEntity entity, BlockState host); // line 213
+  public void restore(ServerSubLevel owner, BlockPos pos, CompoundTag capsule); // line 211
 
-  public void changed(); // line 217
+  public void rememberHost(BlockEntity entity, BlockState host); // line 215
 
-  public void invalidateVision(); // line 221
+  public void changed(); // line 219
 
-  public void receive(ServerSubLevel cargo, BlockPos pos, boolean reclaim); // line 225
+  public void invalidateVision(); // line 223
 
-  public void placed( ComponentTransport.Move move, boolean scavenged, boolean recycle, boolean hostFlesh); // line 230
+  public void receive(ServerSubLevel cargo, BlockPos pos, boolean reclaim); // line 227
 
-  public void merged(); // line 238
+  public void placed( ComponentTransport.Move move, boolean scavenged, boolean recycle, boolean hostFlesh); // line 232
 
-  public boolean needsStomach(); // line 243
+  public void merged(); // line 240
 
-  public boolean digestionReady(); // line 247
+  public boolean needsStomach(); // line 245
 
-  public List<FeedingMouthBlockEntity> mouths(); // line 251
+  public boolean digestionReady(); // line 249
 
-  public void stomachFormed(); // line 255
+  public List<FeedingMouthBlockEntity> mouths(); // line 253
+
+  public void stomachFormed(); // line 257
 
 ```
 
 
 #### amoeba.AmoebaComponentHost
 
-Source: `src/main/java/org/Azkerash/create_bioships/amoeba/AmoebaComponentHost.java` (97 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/amoeba/AmoebaComponentHost.java` (99 lines).
 
 ```java
 public interface AmoebaComponentHost extends CreatureBodyAccess
@@ -2543,47 +2545,49 @@ public interface AmoebaComponentHost extends CreatureBodyAccess
 
   void departed(Request request, Prepared prepared); // line 52
 
-  boolean owns(BlockPos pos); // line 54
+  void forgetSource(BlockPos source); // line 54
 
-  boolean travelTissue(BlockState state); // line 56
+  boolean owns(BlockPos pos); // line 56
 
-  boolean validAttachment(BlockState state, BlockPos target); // line 58
+  boolean travelTissue(BlockState state); // line 58
 
-  boolean leg(BlockState state); // line 60
+  boolean validAttachment(BlockState state, BlockPos target); // line 60
 
-  Direction legFacing(BlockPos target); // line 62
+  boolean leg(BlockState state); // line 62
 
-  Direction mouthFacing(BlockPos target); // line 64
+  Direction legFacing(BlockPos target); // line 64
 
-  BlockEntity component(ServerSubLevel owner, BlockPos pos); // line 66
+  Direction mouthFacing(BlockPos target); // line 66
 
-  List<BlockEntity> components(); // line 68
+  BlockEntity component(ServerSubLevel owner, BlockPos pos); // line 68
 
-  CompoundTag capture(BlockEntity entity); // line 70
+  List<BlockEntity> components(); // line 70
 
-  void restore(ServerSubLevel owner, BlockPos pos, CompoundTag capsule); // line 72
+  CompoundTag capture(BlockEntity entity); // line 72
 
-  void rememberHost(BlockEntity entity, BlockState host); // line 74
+  void restore(ServerSubLevel owner, BlockPos pos, CompoundTag capsule); // line 74
 
-  BlockState hostTissue(BlockEntity entity); // line 76
+  void rememberHost(BlockEntity entity, BlockState host); // line 76
 
-  void changed(); // line 78
+  BlockState hostTissue(BlockEntity entity); // line 78
 
-  void invalidateVision(); // line 80
+  void changed(); // line 80
 
-  void receive(ServerSubLevel cargo, BlockPos pos, boolean reclaim); // line 82
+  void invalidateVision(); // line 82
 
-  void placed(ComponentTransport.Move move, boolean scavenged, boolean recycle, boolean hostFlesh); // line 84
+  void receive(ServerSubLevel cargo, BlockPos pos, boolean reclaim); // line 84
 
-  void merged(); // line 86
+  void placed(ComponentTransport.Move move, boolean scavenged, boolean recycle, boolean hostFlesh); // line 86
 
-  boolean needsStomach(); // line 88
+  void merged(); // line 88
 
-  boolean digestionReady(); // line 90
+  boolean needsStomach(); // line 90
 
-  List<FeedingMouthBlockEntity> mouths(); // line 92
+  boolean digestionReady(); // line 92
 
-  void stomachFormed(); // line 94
+  List<FeedingMouthBlockEntity> mouths(); // line 94
+
+  void stomachFormed(); // line 96
 
 ```
 

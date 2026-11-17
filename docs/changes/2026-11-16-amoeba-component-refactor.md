@@ -18,4 +18,10 @@ remodeling is optional and does not become a requirement for other creature/core
   Existing callers explicitly obtain `amoebaComponents()` from the core.
 
 Checkpoints are pushed individually. Production and GameTest compilation passed after each
-code migration. Focused regression results will be recorded when task 6 completes.
+code migration. Final validation: 61 unit tests and 18 focused GameTests passed.
+
+The regression fixture also verifies a host with independent movement state and unchanged save
+format. A timing-dependent inventory assertion now runs at the fusion boundary, before growth
+spending; the separate timed checks retain real merge-duration coverage. Notification order
+was kept consistent with the original implementation. Full 172-test regression and graphical
+QA were outside this focused run. All six tasks are complete and pushed separately.

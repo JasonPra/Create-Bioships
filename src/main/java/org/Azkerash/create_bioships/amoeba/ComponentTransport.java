@@ -191,8 +191,9 @@ public final class ComponentTransport {
             SubLevelContainer.getContainer(level)
                 .addForceLoadTicket(ship, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE),
             prepared.tissuePath());
-    core.movement(move);
     core.departed(request, prepared);
+    core.movement(move);
+    if (external && prepared.sourceBody() == null) core.forgetSource(source);
     return true;
   }
 

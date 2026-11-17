@@ -53,6 +53,8 @@ public interface AmoebaComponentHost extends CreatureBodyAccess {
 
   void departed(Request request, Prepared prepared);
 
+  void forgetSource(BlockPos source);
+
   boolean owns(BlockPos pos);
 
   boolean travelTissue(BlockState state);

@@ -62,6 +62,87 @@ public class BioshipGameTests {
     helper.succeed();
   }
 
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "amoeba_host_contract")
+  public static void amoeba_transport_uses_host_movement_state_and_preserves_its_save_format(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    try {
+      var core = core(ship);
+      var delegate = core.amoebaComponents();
+      var state = new java.util.concurrent.atomic.AtomicReference<ComponentTransport.Move>();
+      var host =
+          (org.Azkerash.create_bioships.amoeba.AmoebaComponentHost)
+              java.lang.reflect.Proxy.newProxyInstance(
+                  org.Azkerash.create_bioships.amoeba.AmoebaComponentHost.class.getClassLoader(),
+                  new Class<?>[] {org.Azkerash.create_bioships.amoeba.AmoebaComponentHost.class},
+                  (proxy, method, args) -> {
+                    if (method.getName().equals("movement")) {
+                      if (args == null || args.length == 0) return state.get();
+                      state.set((ComponentTransport.Move) args[0]);
+                      return null;
+                    }
+                    try {
+                      return method.invoke(delegate, args);
+                    } catch (java.lang.reflect.InvocationTargetException e) {
+                      throw e.getCause();
+                    }
+                  });
+      var level = helper.getLevel();
+      var destination = core.getBlockPos().west();
+      var source = destination.north();
+      level.setBlock(destination, block("biomancy:decomposer").defaultBlockState(), 3);
+      level.setBlock(source, block("biomancy:digester").defaultBlockState(), 3);
+      var digester =
+          (com.github.elenterius.biomancy.block.digester.DigesterBlockEntity)
+              level.getBlockEntity(source);
+      digester.getOutputInventory().setStackInSlot(0, new ItemStack(item("biomancy:nutrients"), 7));
+      helper.assertTrue(
+          !ComponentTransport.merge(host, source, destination, "missing_recipe")
+              && level.getBlockEntity(source) == digester,
+          "Invalid recipe detached or consumed its source");
+      helper.assertTrue(
+          ComponentTransport.merge(host, source, destination, "stomach"),
+          "Alternate host could not start fusion");
+      helper.assertTrue(
+          core.organMove() == null && state.get() != null,
+          "Transport used concrete-core movement state");
+      var move = state.get();
+      helper.assertTrue(
+          move.equals(ComponentTransport.Move.load(move.save())),
+          "Movement serialization changed during extraction");
+      // Complete this host's elapsed transaction without letting another controller tick it.
+      state.set(elapsedTransport(move));
+      ComponentTransport.tick(host);
+      var organ = host.component(ship, destination);
+      helper.assertTrue(
+          state.get() == null
+              && core.organMove() == null
+              && organ instanceof StomachBlockEntity stomach
+              && stomach.material("biomancy:nutrients") == 7,
+          "Alternate host did not commit fusion and preserve inventory");
+      helper.succeed();
+    } finally {
+      cleanup(helper, ship);
+    }
+  }
+
+  private static ComponentTransport.Move elapsedTransport(ComponentTransport.Move move) {
+    return new ComponentTransport.Move(
+        move.cargo(),
+        move.cargoBlock(),
+        move.source(),
+        move.target(),
+        move.start(),
+        move.started() - ComponentMerging.DURATION_TICKS,
+        move.external(),
+        move.restoreFlesh(),
+        move.mouth(),
+        move.stomach(),
+        move.manual(),
+        move.ownerForced(),
+        move.tissuePath());
+  }
+
   private static int fixture;
 
   private static BlockPos location() {
@@ -896,82 +977,80 @@ public class BioshipGameTests {
       helper.assertTrue(
           ComponentTransport.busy(core.amoebaComponents()) && !core.organMove().usesArm(),
           "Adjacent stomach parts skipped the amoeba merge transaction");
-      helper.runAfterDelay(
-          37,
-          () -> {
-            helper.assertTrue(
-                level.getBlockEntity(forgePos) instanceof FeedingMouthBlockEntity
-                    && level.getBlockEntity(decomposerPos) instanceof StomachBlockEntity,
-                "First machines did not become unique organs");
-            BlockPos extraForge = core.getBlockPos().east(),
-                extraDecomposer = core.getBlockPos().south();
-            level.setBlock(extraForge, block("biomancy:bio_forge").defaultBlockState(), 3);
-            level.setBlock(extraDecomposer, block("biomancy:decomposer").defaultBlockState(), 3);
-            BioshipIntegration.finishAssimilation(core, extraForge);
-            BioshipIntegration.finishAssimilation(core, extraDecomposer);
-            helper.assertTrue(
-                level.getBlockEntity(extraForge) instanceof BioForgeBlockEntity
-                    && level.getBlockEntity(extraDecomposer) instanceof DecomposerBlockEntity,
-                "Additional crafting machines were converted");
-            var stomach = DigestiveSystem.stomach(core);
-            helper.assertTrue(
-                stomach.material("biomancy:bone_fragments") == 12
-                    && stomach.material("biomancy:elastic_fibers") == 20,
-                "Existing decomposition products were lost");
-            helper.assertTrue(
-                stomach.material("biomancy:nutrients") == 3
-                    && stomach.queuedFood() == 4
-                    && stomach.nutrients() == 9,
-                "Digester contents were not preserved: products="
-                    + stomach.material("biomancy:nutrients")
-                    + " queued="
-                    + stomach.queuedFood()
-                    + " fuel="
-                    + stomach.nutrients());
-            var extraDigester = extraDecomposer.east();
-            level.setBlock(extraDigester, block("biomancy:digester").defaultBlockState(), 3);
-            BioshipIntegration.finishAssimilation(core, extraDigester);
-            helper.assertTrue(
-                level.getBlockEntity(extraDigester)
-                    instanceof com.github.elenterius.biomancy.block.digester.DigesterBlockEntity,
-                "A second digester was consumed");
-            DigestiveSystem.connect(core, ship);
-            helper.runAfterDelay(
-                40,
-                () ->
-                    finish(
-                        helper,
-                        ship,
-                        () -> {
-                          int total =
-                              core.saveWithFullMetadata(level.registryAccess()).getInt("Biomass")
-                                  + stomach.material("biomancy:flesh_bits");
-                          helper.assertTrue(
-                              total
-                                      + 4
-                                          * BioshipStructure.cells(core.ship()).values().stream()
-                                              .filter(BioshipLegEvolution::leg)
-                                              .count()
-                                      + BioshipRespiration.LUNG_COST.flesh()
-                                          * BioshipStructure.cells(core.ship()).values().stream()
-                                              .filter(
-                                                  state -> state.is(Create_bioships.LUNGS.get()))
-                                              .count()
-                                      + 2
-                                          * BioshipStructure.cells(core.ship()).values().stream()
-                                              .filter(
-                                                  state ->
-                                                      state.is(Create_bioships.SURFACE_EYE.get()))
-                                              .count()
-                                  == 96,
-                              "Stored Bio-Forge biomass or one-time leg salvage was lost: "
-                                  + total);
-                          helper.assertTrue(
-                              core.saveWithFullMetadata(level.registryAccess()).getInt("Satiety")
-                                  <= 600,
-                              "Inherited tissue supplied nutrition");
-                        }));
-          });
+      // Sample inventory at the actual fusion boundary, before normal growth can spend it.
+      core.organMove(elapsedTransport(core.organMove()));
+      ComponentTransport.tick(core.amoebaComponents());
+      {
+        helper.assertTrue(
+            level.getBlockEntity(forgePos) instanceof FeedingMouthBlockEntity
+                && level.getBlockEntity(decomposerPos) instanceof StomachBlockEntity,
+            "First machines did not become unique organs");
+        BlockPos extraForge = core.getBlockPos().east(),
+            extraDecomposer = core.getBlockPos().south();
+        level.setBlock(extraForge, block("biomancy:bio_forge").defaultBlockState(), 3);
+        level.setBlock(extraDecomposer, block("biomancy:decomposer").defaultBlockState(), 3);
+        BioshipIntegration.finishAssimilation(core, extraForge);
+        BioshipIntegration.finishAssimilation(core, extraDecomposer);
+        helper.assertTrue(
+            level.getBlockEntity(extraForge) instanceof BioForgeBlockEntity
+                && level.getBlockEntity(extraDecomposer) instanceof DecomposerBlockEntity,
+            "Additional crafting machines were converted");
+        var stomach = DigestiveSystem.stomach(core);
+        helper.assertTrue(
+            stomach.material("biomancy:bone_fragments") == 12
+                && stomach.material("biomancy:elastic_fibers") == 20,
+            "Existing decomposition products were lost");
+        helper.assertTrue(
+            stomach.material("biomancy:nutrients") == 3
+                && stomach.queuedFood() == 4
+                && stomach.nutrients() == 9,
+            "Digester contents were not preserved: products="
+                + stomach.material("biomancy:nutrients")
+                + " queued="
+                + stomach.queuedFood()
+                + " fuel="
+                + stomach.nutrients());
+        var extraDigester = extraDecomposer.east();
+        level.setBlock(extraDigester, block("biomancy:digester").defaultBlockState(), 3);
+        BioshipIntegration.finishAssimilation(core, extraDigester);
+        helper.assertTrue(
+            level.getBlockEntity(extraDigester)
+                instanceof com.github.elenterius.biomancy.block.digester.DigesterBlockEntity,
+            "A second digester was consumed");
+        DigestiveSystem.connect(core, ship);
+        helper.runAfterDelay(
+            40,
+            () ->
+                finish(
+                    helper,
+                    ship,
+                    () -> {
+                      int total =
+                          core.saveWithFullMetadata(level.registryAccess()).getInt("Biomass")
+                              + stomach.material("biomancy:flesh_bits");
+                      helper.assertTrue(
+                          total
+                                  + 4
+                                      * BioshipStructure.cells(core.ship()).values().stream()
+                                          .filter(BioshipLegEvolution::leg)
+                                          .count()
+                                  + BioshipRespiration.LUNG_COST.flesh()
+                                      * BioshipStructure.cells(core.ship()).values().stream()
+                                          .filter(state -> state.is(Create_bioships.LUNGS.get()))
+                                          .count()
+                                  + 2
+                                      * BioshipStructure.cells(core.ship()).values().stream()
+                                          .filter(
+                                              state -> state.is(Create_bioships.SURFACE_EYE.get()))
+                                          .count()
+                              == 96,
+                          "Stored Bio-Forge biomass or one-time leg salvage was lost: " + total);
+                      helper.assertTrue(
+                          core.saveWithFullMetadata(level.registryAccess()).getInt("Satiety")
+                              <= 600,
+                          "Inherited tissue supplied nutrition");
+                    }));
+      }
     } catch (Throwable failure) {
       cleanup(helper, ship);
       throw failure;
