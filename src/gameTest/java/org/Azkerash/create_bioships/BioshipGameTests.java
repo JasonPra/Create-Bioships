@@ -59,6 +59,287 @@ import org.Azkerash.create_bioships.registry.Create_bioships;
 @GameTestHolder(Create_bioships.MOD_ID)
 @PrefixGameTestTemplate(false)
 public class BioshipGameTests {
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "place_retreat_persistence")
+  public static void place_memory_survives_core_save_and_discards_bad_records(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    try {
+      var core = core(ship);
+      var here = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
+      long now = helper.getLevel().getGameTime();
+      String dim = PlaceObservations.dimension(core);
+      var point = PlaceObservations.point(here);
+      core.placeMemory()
+          .terrain(
+              dim,
+              point,
+              "minecraft:river",
+              Set.of(org.Azkerash.create_bioships.creature.memory.PlaceMemory.Feature.RIVER),
+              now);
+      core.placeMemory().prey(dim, point, "minecraft:river", "minecraft:salmon", now);
+      var saved = core.saveWithFullMetadata(helper.getLevel().registryAccess());
+      core.placeMemory().restore(List.of());
+      core.loadAdditional(saved, helper.getLevel().registryAccess());
+      var entry = core.placeMemory().snapshot().getFirst();
+      helper.assertTrue(
+          entry.prey().containsKey("minecraft:salmon")
+              && entry
+                  .features()
+                  .contains(org.Azkerash.create_bioships.creature.memory.PlaceMemory.Feature.RIVER),
+          "Core save lost place evidence");
+      var encoded =
+          org.Azkerash.create_bioships.creature.memory.PlaceMemoryCodec.save(core.placeMemory());
+      var bad = new net.minecraft.nbt.CompoundTag();
+      bad.putString("Dimension", dim);
+      bad.putDouble("X", Double.NaN);
+      encoded.getList("Places", 10).add(bad);
+      org.Azkerash.create_bioships.creature.memory.PlaceMemoryCodec.load(
+          core.placeMemory(), encoded);
+      helper.assertTrue(core.placeMemory().size() == 1, "Malformed record damaged valid memory");
+      helper.succeed();
+    } finally {
+      cleanup(helper, ship);
+    }
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "place_retreat_species")
+  public static void place_memory_records_visible_prey_without_a_hunting_need(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    long previous = level.getDayTime();
+    level.setDayTime(1000);
+    var here = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
+    var pig = EntityType.PIG.create(level);
+    pig.setNoAi(true);
+    pig.setNoGravity(true);
+    pig.setPos(here.add(4, 0, 0));
+    level.addFreshEntity(pig);
+    afterIndexed(
+        helper,
+        List.of(pig),
+        () -> {
+          try {
+            helper.assertTrue(!core.wantsToHunt(), "Bare core fixture unexpectedly wants to hunt");
+            new EncounterObservations().observe(core, here);
+            helper.assertTrue(
+                core.placeMemory().snapshot().stream()
+                    .anyMatch(e -> e.prey().containsKey("minecraft:pig")),
+                "Visible prey was not remembered independently of hunger");
+            helper.succeed();
+          } finally {
+            pig.discard();
+            level.setDayTime(previous);
+            cleanup(helper, ship);
+          }
+        });
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "place_retreat_occlusion")
+  public static void place_memory_does_not_reveal_occluded_water(GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var here = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
+    var root = BlockPos.containing(here);
+    var cells = new ArrayList<BlockPos>();
+    long previous = level.getDayTime();
+    level.setDayTime(1000);
+    try {
+      for (var p : BlockPos.betweenClosed(root.offset(2, -3, -4), root.offset(2, 4, 4))) {
+        cells.add(p.immutable());
+        level.setBlock(p, Blocks.STONE.defaultBlockState(), 3);
+      }
+      var water = root.east(6);
+      cells.add(water);
+      level.setBlock(water, Blocks.WATER.defaultBlockState(), 3);
+      core.placeMemory().restore(List.of());
+      helper.assertTrue(
+          !core.vision().visible(core, Vec3.atCenterOf(water)),
+          "Fixture wall did not occlude water");
+      PlaceObservations.terrain(core, Vec3.atCenterOf(water), false);
+      helper.assertTrue(core.placeMemory().size() == 0, "Memory revealed occluded terrain");
+      helper.succeed();
+    } finally {
+      cells.forEach(p -> level.removeBlock(p, false));
+      level.setDayTime(previous);
+      cleanup(helper, ship);
+    }
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "place_retreat_profiles")
+  public static void place_retreat_profiles_cover_ranged_aquatic_and_climbing_threats(
+      GameTestHelper helper) {
+    var level = helper.getLevel();
+    helper.assertTrue(
+        ThreatObservations.profile(EntityType.PILLAGER.create(level)).ranged(),
+        "Pillager not ranged");
+    helper.assertTrue(
+        ThreatObservations.profile(EntityType.WITCH.create(level)).ranged(), "Witch not ranged");
+    var drowned = EntityType.DROWNED.create(level);
+    drowned.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.TRIDENT));
+    helper.assertTrue(
+        ThreatObservations.profile(drowned).ranged()
+            && ThreatObservations.profile(drowned).aquatic(),
+        "Trident drowned lost combined capabilities");
+    helper.assertTrue(
+        ThreatObservations.profile(EntityType.GUARDIAN.create(level)).aquatic(),
+        "Guardian not aquatic");
+    helper.assertTrue(
+        ThreatObservations.profile(EntityType.CAVE_SPIDER.create(level)).climbing(),
+        "Cave spider not climbing");
+    helper.assertTrue(
+        ThreatObservations.profile(EntityType.BLAZE.create(level)).flying(), "Blaze not flying");
+    helper.succeed();
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "place_retreat_tnt")
+  public static void place_retreat_primed_tnt_interrupts_with_explosive_escape(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var here = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
+    var tnt =
+        new net.minecraft.world.entity.item.PrimedTnt(level, here.x - 3, here.y, here.z, null);
+    tnt.setFuse(200);
+    tnt.setNoGravity(true);
+    level.addFreshEntity(tnt);
+    afterIndexed(
+        helper,
+        List.of(tnt),
+        () -> {
+          try {
+            core.autonomy().load(core.autonomy().save());
+            core.autonomy().assess(core);
+            helper.assertTrue(
+                core.autonomy().creeperPanic()
+                    && core.brain().choose(core).action() == BioshipBrain.Action.FLEE,
+                "Primed TNT did not trigger explosive retreat");
+            var goal = core.autonomy().groundEscape(core);
+            helper.assertTrue(
+                goal != null && goal.distanceTo(tnt.position()) > here.distanceTo(tnt.position()),
+                "Explosive retreat did not open distance");
+            helper.succeed();
+          } finally {
+            tnt.discard();
+            cleanup(helper, ship);
+          }
+        });
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "place_retreat_swimming")
+  public static void place_retreat_can_choose_a_safe_submerged_escape(GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var here = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
+    var root = BlockPos.containing(here);
+    var cells = new ArrayList<BlockPos>();
+    try {
+      for (var p : BlockPos.betweenClosed(root.offset(-13, -1, -13), root.offset(13, 6, 13))) {
+        cells.add(p.immutable());
+        level.setBlock(p, Blocks.WATER.defaultBlockState(), 3);
+      }
+      var threat =
+          new org.Azkerash.create_bioships.creature.survival.EscapeScoring.Threat(
+              PlaceObservations.point(here.add(-3, 0, 0)),
+              new org.Azkerash.create_bioships.creature.survival.ThreatProfile(
+                  true, false, false, false, false, false));
+      var goal = new RetreatPlanning().choose(core, here.add(-3, 0, 0), List.of(threat), true);
+      helper.assertTrue(
+          goal != null && goal.distanceTo(here.add(-3, 0, 0)) > 3,
+          "Submerged retreat did not find a safe route");
+      var route = new WaterNavigation();
+      helper.assertTrue(
+          route.toward(core, goal).lengthSqr() > 0, "Water navigator rejected the escape goal");
+      var air = core.aquatic().save();
+      air.putInt("Air", 100);
+      core.aquatic().load(air);
+      helper.assertTrue(
+          !RetreatPlanning.safe(core, goal, true),
+          "Low-air creature chose an unsafe deep-water retreat");
+      helper.succeed();
+    } finally {
+      cells.forEach(p -> level.removeBlock(p, false));
+      cleanup(helper, ship);
+    }
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "place_retreat_swipes")
+  public static void place_retreat_selects_a_pursuer_without_replacing_flee_movement(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var here = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
+    var zombie = EntityType.ZOMBIE.create(level);
+    zombie.setNoAi(true);
+    zombie.setNoGravity(true);
+    zombie.setPos(here.add(2, 0, 0));
+    zombie.setItemSlot(EquipmentSlot.HEAD, new ItemStack(Items.IRON_HELMET));
+    level.addFreshEntity(zombie);
+    afterIndexed(
+        helper,
+        List.of(zombie),
+        () -> {
+          try {
+            var body = core.body().save();
+            body.putDouble("Health", 10);
+            core.body().load(body, level.registryAccess());
+            core.defense().remember(core, zombie);
+            core.autonomy().load(core.autonomy().save());
+            core.autonomy().assess(core);
+            helper.assertTrue(
+                core.brain().choose(core).action() == BioshipBrain.Action.FLEE,
+                "Injury did not select retreat");
+            helper.assertTrue(
+                core.brain().attackTarget(core) == zombie,
+                "Retreat did not select close pursuer for swipe");
+            helper.assertTrue(
+                core.brain().choose(core).action() == BioshipBrain.Action.FLEE,
+                "Retreat swipe replaced movement behavior");
+            helper.succeed();
+          } finally {
+            zombie.discard();
+            cleanup(helper, ship);
+          }
+        });
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "place_retreat_memory_route")
+  public static void place_retreat_uses_remembered_water_to_choose_a_shore_approach(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    try {
+      var here = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
+      var water = here.add(7, 0, 7);
+      core.placeMemory()
+          .terrain(
+              PlaceObservations.dimension(core),
+              PlaceObservations.point(water),
+              "minecraft:river",
+              Set.of(org.Azkerash.create_bioships.creature.memory.PlaceMemory.Feature.WATER),
+              level.getGameTime());
+      var enemy = here.add(-3, 0, 0);
+      var threat =
+          new org.Azkerash.create_bioships.creature.survival.EscapeScoring.Threat(
+              PlaceObservations.point(enemy),
+              new org.Azkerash.create_bioships.creature.survival.ThreatProfile(
+                  true, false, false, false, false, false));
+      var goal = new RetreatPlanning().choose(core, enemy, List.of(threat), false);
+      helper.assertTrue(
+          goal != null && goal.z > here.z + 5 && goal.distanceTo(enemy) > here.distanceTo(enemy),
+          "Remembered water did not influence the supported escape approach: " + goal);
+      helper.succeed();
+    } finally {
+      cleanup(helper, ship);
+    }
+  }
+
   @GameTest(template = "test_empty", timeoutTicks = 200, batch = "end_fixture_geometry")
   public static void developer_end_habitat_has_remote_islands_biome_and_void_gap(
       GameTestHelper helper) {

@@ -76,6 +76,12 @@ final class ThreatObservations {
     return seen.values().stream().map(Seen::threat).toList();
   }
 
+  void clear() {
+    seen.clear();
+    next = 0;
+    explosive = null;
+  }
+
   Vec3 explosive() {
     return explosive;
   }

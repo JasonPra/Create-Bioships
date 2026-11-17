@@ -5364,7 +5364,7 @@
           "line": 214
         }
       ],
-      "lines": 228
+      "lines": 231
     },
     "BioshipPoisonFeedback": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipPoisonFeedback.java",
@@ -6530,11 +6530,16 @@
         },
         {
           "kind": "method",
-          "signature": "Vec3 explosive()",
+          "signature": "void clear()",
           "line": 77
+        },
+        {
+          "kind": "method",
+          "signature": "Vec3 explosive()",
+          "line": 83
         }
       ],
-      "lines": 82
+      "lines": 88
     },
     "BioshipVoice": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipVoice.java",
@@ -9816,15 +9821,15 @@
         {
           "kind": "method",
           "signature": "private static void marker( PoseStack.Pose pose, VertexConsumer out, Vec3 p, double size, int color)",
-          "line": 231
+          "line": 232
         },
         {
           "kind": "method",
           "signature": "private static void line(PoseStack.Pose pose, VertexConsumer out, Vec3 a, Vec3 b, int color)",
-          "line": 238
+          "line": 239
         }
       ],
-      "lines": 250
+      "lines": 251
     },
     "development.client.mixin.PathDebugKeyMixin": {
       "path": "src/main/java/org/Azkerash/create_bioships/development/client/mixin/PathDebugKeyMixin.java",

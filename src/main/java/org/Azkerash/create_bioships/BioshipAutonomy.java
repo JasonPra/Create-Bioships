@@ -214,6 +214,9 @@ public final class BioshipAutonomy {
   }
 
   void load(CompoundTag tag) {
+    threats.clear();
+    observed = java.util.List.of();
+    escape.clear();
     pilot = tag.hasUUID("Pilot") ? tag.getUUID("Pilot") : null;
     commandUntil = tag.getLong("CommandUntil");
     nextWander = tag.getLong("NextWander");

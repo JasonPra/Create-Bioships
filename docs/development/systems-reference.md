@@ -1425,7 +1425,7 @@ Threat assessment, retreat and idle wandering. Pilot authority is currently disa
 
 #### BioshipAutonomy
 
-Source: `src/main/java/org/Azkerash/create_bioships/BioshipAutonomy.java` (228 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipAutonomy.java` (231 lines).
 
 ```java
 public final class BioshipAutonomy
@@ -1591,7 +1591,7 @@ final class EncounterObservations
 
 #### ThreatObservations
 
-Source: `src/main/java/org/Azkerash/create_bioships/ThreatObservations.java` (82 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/ThreatObservations.java` (88 lines).
 
 ```java
 final class ThreatObservations
@@ -1608,7 +1608,9 @@ final class ThreatObservations
 
   List<Threat> update(LivingCoreBlockEntity core, Vec3 here); // line 44
 
-  Vec3 explosive(); // line 77
+  void clear(); // line 77
+
+  Vec3 explosive(); // line 83
 
 ```
 
@@ -5240,7 +5242,7 @@ public final class SightDebugOverlay
 
 #### development.client.PathDebugOverlay
 
-Source: `src/main/java/org/Azkerash/create_bioships/development/client/PathDebugOverlay.java` (250 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/development/client/PathDebugOverlay.java` (251 lines).
 
 ```java
 public final class PathDebugOverlay
@@ -5267,9 +5269,9 @@ public final class PathDebugOverlay
 
   private static void hologram( CompoundTag data, PoseStack pose, net.minecraft.client.renderer.MultiBufferSource buffers); // line 159
 
-  private static void marker( PoseStack.Pose pose, VertexConsumer out, Vec3 p, double size, int color); // line 231
+  private static void marker( PoseStack.Pose pose, VertexConsumer out, Vec3 p, double size, int color); // line 232
 
-  private static void line(PoseStack.Pose pose, VertexConsumer out, Vec3 a, Vec3 b, int color); // line 238
+  private static void line(PoseStack.Pose pose, VertexConsumer out, Vec3 a, Vec3 b, int color); // line 239
 
 ```
 

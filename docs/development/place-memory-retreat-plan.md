@@ -65,3 +65,10 @@ Checkpoint 7 complete: FLEE movement can select a close actual pursuer for the e
 swipe. A valid active victim is retained during the swipe. Allies, uninvolved prey and unsafe creeper
 fights are excluded. Range only gates attack selection; damage still requires the existing swept
 tip hitbox to collide, with no new radius damage. All 99 unit tests and live-test compilation pass.
+
+Checkpoint 8 complete: nine focused live checks passed. Eight new fixtures cover core-save memory
+round trips/malformed records, prey evidence without hunger, occluded-water privacy, concrete mob
+profiles, remembered shore preference, submerged retreat/low-air rejection, TNT interruption and
+FLEE swipe selection. The existing player-dodge collision test also passed. The TNT fixture exposed
+that reloading autonomy retained its old observation cooldown; reload now clears transient tactical
+and route caches. Existing F3+P holograms display the remembered-place count. No commands were added.

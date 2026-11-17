@@ -196,6 +196,7 @@ public final class PathDebugOverlay {
             + data.getInt("NeedBone")
             + " bone");
     words.add("Digestive pairs needed: " + data.getInt("DigestiveDemand"));
+    words.add("Remembered places: " + data.getInt("KnownPlaces"));
     if (data.contains("EngineCapacity"))
       words.add("Prototype engine bays: " + data.getInt("EngineCapacity"));
     var body = data.getCompound("BodyWork");
