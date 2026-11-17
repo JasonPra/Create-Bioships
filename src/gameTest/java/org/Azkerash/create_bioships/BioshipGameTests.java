@@ -10055,7 +10055,11 @@ public class BioshipGameTests {
               .setValue(AmoebaLegBlock.FACING, face);
       var pos = BlockPos.ZERO.relative(face);
       helper.assertTrue(AmoebaLegBlock.mounted(body, pos, leg), "Full face rejected: " + face);
-      for (var forbidden : List.of(Create_bioships.CORE.get(), Create_bioships.LUNGS.get())) {
+      for (var forbidden :
+          List.of(
+              Create_bioships.CORE.get(),
+              Create_bioships.LUNGS.get(),
+              Create_bioships.GILLS.get())) {
         helper.assertTrue(
             !AmoebaLegBlock.mounted(Map.of(BlockPos.ZERO, forbidden.defaultBlockState()), pos, leg),
             "Leg mounted on protected organ: " + forbidden);

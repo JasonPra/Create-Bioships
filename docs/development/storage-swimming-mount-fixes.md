@@ -8,3 +8,7 @@ Checkpoint 1: food counts now include meat buffered in mouths. Hunting checks si
 capacity in connected digestion queues/storage before selecting prey. Defensive attacks remain
 independent. All 99 unit tests passed and two live tests passed: buffered/full delivery queues and
 existing well-fed growth hunting. Capacity simulation leaves inventory unchanged.
+
+Checkpoint 2: shared mounting validation rejects every gill face, in addition to cores and lungs.
+Growth, manual placement, reconfiguration and mount repair use this rule. The live full-face socket
+regression passed for all six directions, including diagonal/pipe/orphaning exclusions.

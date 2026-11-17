@@ -37,8 +37,7 @@ public final class AmoebaLegBlock extends DirectionalBlock {
         && !host.is(Create_bioships.LUNGS.get())
         && !(host.is(Create_bioships.FEEDING_MOUTH.get())
             && host.getValue(FeedingMouthBlock.FACING) == face)
-        && !(host.is(Create_bioships.GILLS.get())
-            && host.getValue(RespiratoryOrganBlock.FACING) == face);
+        && !host.is(Create_bioships.GILLS.get());
   }
 
   public static boolean mounted(
