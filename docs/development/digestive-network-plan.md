@@ -43,3 +43,8 @@ Task 2 complete: a Minecraft/core-independent immutable direct-contact graph is 
 Four unit cases cover face-only links, inherited group connectivity, a 27-member cube, immutable
 snapshots and splitting when a link is removed. All 65 unit tests passed before integration.
 Live stomach integration follows in task 3; this checkpoint does not yet change gameplay.
+
+Task 3 complete: direct-contact members inherit one intact mouth/intestine connection.
+Topology updates immediately when a stomach link is removed. Growth counts stomach groups
+when deciding how many mouths are needed. Three focused GameTests and all 65 unit tests passed.
+The capacity requirement remains all 27 original food queues; intake routing follows in task 4.

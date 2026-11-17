@@ -88,6 +88,10 @@ public final class DigestiveSystem {
   }
 
   public static boolean connected(LivingCoreBlockEntity core, StomachBlockEntity stomach) {
+    return StomachConnections.connected(core, stomach);
+  }
+
+  static boolean directlyConnected(LivingCoreBlockEntity core, StomachBlockEntity stomach) {
     var mouth = stomach.connectedMouth;
     return mouth != null
         && core.ship() != null
@@ -652,7 +656,7 @@ public final class DigestiveSystem {
     if (core.ship() == null || core.body().dead()) return false;
     var stomachs = stomachs(core);
     int required = BioshipDigestiveGrowth.target(core);
-    return mouths(core).size() >= required
+    return mouths(core).size() >= BioshipDigestiveGrowth.mouthTarget(core)
         && stomachs.size() >= required
         && stomachs.stream().allMatch(stomach -> stomach.connected(core));
   }

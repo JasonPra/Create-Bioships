@@ -175,6 +175,56 @@ public class BioshipGameTests {
         move.tissuePath());
   }
 
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "shared_stomach_connection")
+  public static void adjacent_stomachs_share_one_anchor_but_not_tubes_diagonals_or_broken_links(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    try {
+      var core = core(ship);
+      var level = helper.getLevel();
+      var anchor = digestive(helper, core, false);
+      var middle = anchor.getBlockPos().west();
+      var end = middle.west();
+      level.setBlock(middle, Create_bioships.STOMACH.get().defaultBlockState(), 3);
+      level.setBlock(end, Create_bioships.STOMACH.get().defaultBlockState(), 3);
+      DigestiveSystem.connect(core, ship);
+      var child = (StomachBlockEntity) level.getBlockEntity(end);
+      helper.assertTrue(
+          anchor.connected(core)
+              && child.connected(core)
+              && child.connectedMouth == null
+              && child.gutPath.isEmpty(),
+          "Connected stomach required its own mouth or intestine route");
+      helper.assertTrue(
+          DigestiveSystem.functional(core)
+              && BioshipDigestiveGrowth.mouthTarget(core) == 1
+              && BioshipDigestiveGrowth.plan(core) == null,
+          "Shared group demanded redundant mouths");
+      var diagonal = anchor.getBlockPos().east().south();
+      level.setBlock(diagonal, Create_bioships.STOMACH.get().defaultBlockState(), 3);
+      var tube = anchor.getBlockPos().south();
+      var separated = tube.south();
+      level.setBlock(separated, Create_bioships.STOMACH.get().defaultBlockState(), 3);
+      level.setBlock(
+          tube,
+          Create_bioships.INTESTINE.get().defaultBlockState().setValue(IntestineBlock.MANUAL, true),
+          3);
+      helper.assertTrue(
+          !((StomachBlockEntity) level.getBlockEntity(diagonal)).connected(core)
+              && !((StomachBlockEntity) level.getBlockEntity(separated)).connected(core),
+          "Diagonal or intestine-only stomach contact inherited an anchor");
+      level.removeBlock(middle, false);
+      helper.assertTrue(
+          !child.connected(core), "Broken stomach bridge retained its old group connection");
+      helper.assertTrue(!anchor.gutPath.isEmpty(), "Fixture had no external intestine connection");
+      level.removeBlock(anchor.gutPath.getFirst(), false);
+      helper.assertTrue(!anchor.connected(core), "Broken intake connection remained functional");
+      helper.succeed();
+    } finally {
+      cleanup(helper, ship);
+    }
+  }
+
   private static int fixture;
 
   private static BlockPos location() {

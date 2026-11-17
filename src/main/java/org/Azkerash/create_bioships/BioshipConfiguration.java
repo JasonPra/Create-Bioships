@@ -21,7 +21,7 @@ final class BioshipConfiguration {
       digester |= id.equals("biomancy:digester");
     }
     boolean urgent =
-        DigestiveSystem.mouths(core).size() < BioshipDigestiveGrowth.target(core) && forge
+        DigestiveSystem.mouths(core).size() < BioshipDigestiveGrowth.mouthTarget(core) && forge
             || DigestiveSystem.stomachs(core).size() < BioshipDigestiveGrowth.target(core)
                 && decomposer
                 && digester;

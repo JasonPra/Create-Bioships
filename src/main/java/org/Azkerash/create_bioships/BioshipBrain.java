@@ -168,7 +168,10 @@ public final class BioshipBrain {
     if (room != null) upgrades = Math.max(upgrades, room.legUpgrades());
     int capacityGoal =
         Math.max(BioshipDigestiveGrowth.target(core), room == null ? 0 : room.pairs());
-    int extraMouths = Math.max(0, capacityGoal - DigestiveSystem.mouths(core).size());
+    int mouthGoal =
+        BioshipDigestiveGrowth.mouthTarget(core)
+            + Math.max(0, capacityGoal - DigestiveSystem.stomachs(core).size());
+    int extraMouths = Math.max(0, mouthGoal - DigestiveSystem.mouths(core).size());
     int extraStomachs = Math.max(0, capacityGoal - DigestiveSystem.stomachs(core).size());
     int voice =
         digestive

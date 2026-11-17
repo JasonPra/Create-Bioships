@@ -181,7 +181,7 @@ public final class BioshipIntegration {
   }
 
   static void convertFirstBioForge(LivingCoreBlockEntity core, BlockPos pos) {
-    if (DigestiveSystem.mouths(core).size() >= BioshipDigestiveGrowth.target(core)
+    if (DigestiveSystem.mouths(core).size() >= BioshipDigestiveGrowth.mouthTarget(core)
         || !(core.getLevel().getBlockEntity(pos)
             instanceof com.github.elenterius.biomancy.block.bioforge.BioForgeBlockEntity forge))
       return;

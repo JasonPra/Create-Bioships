@@ -25,15 +25,19 @@ public final class BioshipDigestiveGrowth {
         Math.max(DigestiveSystem.mouths(core).size(), DigestiveSystem.stomachs(core).size()));
   }
 
+  static int mouthTarget(LivingCoreBlockEntity core) {
+    return Math.max(1, StomachConnections.groups(core).size());
+  }
+
   static Plan plan(LivingCoreBlockEntity core) {
     var stomachs = DigestiveSystem.stomachs(core);
     var mouths = DigestiveSystem.mouths(core);
     if (stomachs.isEmpty() || mouths.isEmpty() || BioshipNutrition.critical(core)) return null;
     int target = target(core);
     if (core.isMature() && core.engineRoom().capacity() < target) return null;
-    if (stomachs.size() >= target && mouths.size() >= target) return null;
+    if (stomachs.size() >= target && mouths.size() >= mouthTarget(core)) return null;
     var originals = BioshipRecovery.available(core);
-    if (mouths.size() < target && originals.mouth()
+    if (mouths.size() < mouthTarget(core) && originals.mouth()
         || stomachs.size() < target && originals.stomach()) return null;
     var unmatchedMouth =
         mouths.stream()
@@ -57,7 +61,10 @@ public final class BioshipDigestiveGrowth {
       if (result != null) return result;
     }
     var unmatchedStomach =
-        stomachs.stream().filter(s -> s.connectedMouth == null).findFirst().orElse(null);
+        stomachs.stream()
+            .filter(s -> !s.connected(core) && s.connectedMouth == null)
+            .findFirst()
+            .orElse(null);
     if (unmatchedStomach != null)
       for (var face : Direction.values()) {
         var result =
