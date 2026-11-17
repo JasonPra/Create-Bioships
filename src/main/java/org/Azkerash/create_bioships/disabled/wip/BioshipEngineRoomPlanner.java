@@ -19,7 +19,7 @@ import net.minecraft.core.*;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.*;
-import org.Azkerash.create_bioships.amoeba.ComponentTransport;
+import org.Azkerash.create_bioships.amoeba.transport.ComponentTransport;
 
 /** Read-only engine-room clearance, load, capacity and complete-investment quotes. */
 public final class BioshipEngineRoomPlanner {

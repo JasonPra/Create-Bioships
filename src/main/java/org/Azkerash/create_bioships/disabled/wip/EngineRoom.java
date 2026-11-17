@@ -12,7 +12,7 @@ import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import org.Azkerash.create_bioships.amoeba.ComponentTransport;
+import org.Azkerash.create_bioships.amoeba.transport.ComponentTransport;
 
 public final class EngineRoom {
   public static boolean inside(LivingCoreBlockEntity core, BlockPos pos) {

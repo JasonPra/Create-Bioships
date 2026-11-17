@@ -214,11 +214,11 @@ public final class BioshipScavenging {
     return false;
   }
 
-  void finish(LivingCoreBlockEntity core, BlockPos target, boolean restoreHost) {
+  public void finish(LivingCoreBlockEntity core, BlockPos target, boolean restoreHost) {
     finish(core, target, restoreHost, false);
   }
 
-  void finish(LivingCoreBlockEntity core, BlockPos target, boolean restoreHost, boolean forced) {
+  public void finish(LivingCoreBlockEntity core, BlockPos target, boolean restoreHost, boolean forced) {
     var state = core.getLevel().getBlockState(target);
     String id = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
     boolean essential =
@@ -306,7 +306,7 @@ public final class BioshipScavenging {
     return true;
   }
 
-  void recycleToCore(LivingCoreBlockEntity core, BlockState state) {
+  public void recycleToCore(LivingCoreBlockEntity core, BlockState state) {
     int flesh = pendingFlesh, bone = pendingBone, fiber = pendingFiber;
     recycle(state);
     core.adaptation().creditRecovery(MaterialCost.FLESH, pendingFlesh - flesh);

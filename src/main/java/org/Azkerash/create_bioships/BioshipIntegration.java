@@ -20,8 +20,8 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
-import org.Azkerash.create_bioships.amoeba.ComponentMerging;
-import org.Azkerash.create_bioships.amoeba.ComponentTransport;
+import org.Azkerash.create_bioships.amoeba.merging.ComponentMerging;
+import org.Azkerash.create_bioships.amoeba.transport.ComponentTransport;
 
 /** World mutation happens in ordinary block ticks, outside Sable's actor iteration. */
 @EventBusSubscriber(modid = Create_bioships.MOD_ID)

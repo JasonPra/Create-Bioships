@@ -1,4 +1,7 @@
-package org.Azkerash.create_bioships.amoeba;
+package org.Azkerash.create_bioships.amoeba.transport;
+
+import org.Azkerash.create_bioships.amoeba.merging.ComponentMerging;
+import org.Azkerash.create_bioships.amoeba.components.AmoebaComponentHost;
 
 import org.Azkerash.create_bioships.BioshipTissue;
 
@@ -315,7 +318,7 @@ public final class ComponentTransport {
     core.placed(move, scavenged, recycle, hostFlesh);
   }
 
-  static void finishCargo(AmoebaComponentHost core, ServerSubLevel cargo) {
+  public static void finishCargo(AmoebaComponentHost core, ServerSubLevel cargo) {
     var move = core.movement();
     var container = SubLevelContainer.getContainer(cargo.getLevel());
     container.removeForceLoadTicket(cargo, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
@@ -327,7 +330,7 @@ public final class ComponentTransport {
     core.changed();
   }
 
-  static void release(AmoebaComponentHost core, ServerSubLevel cargo) {
+  public static void release(AmoebaComponentHost core, ServerSubLevel cargo) {
     var move = core.movement();
     if (move != null && move.ownerForced() && core.body() != null)
       SubLevelContainer.getContainer(cargo.getLevel())

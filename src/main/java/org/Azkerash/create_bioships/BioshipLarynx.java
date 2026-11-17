@@ -7,11 +7,11 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import org.Azkerash.create_bioships.amoeba.ComponentMerging;
-import org.Azkerash.create_bioships.amoeba.ComponentTransport;
+import org.Azkerash.create_bioships.amoeba.merging.ComponentMerging;
+import org.Azkerash.create_bioships.amoeba.transport.ComponentTransport;
 
 /** One conserved larynx capsule per upgraded mouth, acquired only after functional digestion. */
-final class BioshipLarynx {
+public final class BioshipLarynx {
   static final MaterialCost COST = new MaterialCost(8, 4, 2);
 
   static boolean isLarynx(BlockState state) {
@@ -21,7 +21,7 @@ final class BioshipLarynx {
         .equals("biomancy:modular_larynx");
   }
 
-  static List<FeedingMouthBlockEntity> mouths(LivingCoreBlockEntity core) {
+  public static List<FeedingMouthBlockEntity> mouths(LivingCoreBlockEntity core) {
     if (core.ship() == null) return List.of();
     return BioshipIntegration.blockEntities(core.ship()).stream()
         .filter(e -> e instanceof FeedingMouthBlockEntity)
@@ -37,7 +37,7 @@ final class BioshipLarynx {
     return missingCount(core) > 0;
   }
 
-  static boolean ready(LivingCoreBlockEntity core) {
+  public static boolean ready(LivingCoreBlockEntity core) {
     return !BioshipNutrition.critical(core) && DigestiveSystem.functional(core);
   }
 

@@ -1,4 +1,6 @@
-package org.Azkerash.create_bioships.amoeba;
+package org.Azkerash.create_bioships.amoeba.components;
+
+import org.Azkerash.create_bioships.amoeba.transport.ComponentTransport;
 
 import org.Azkerash.create_bioships.FeedingMouthBlockEntity;
 import org.Azkerash.create_bioships.creature.ResourceAccount;

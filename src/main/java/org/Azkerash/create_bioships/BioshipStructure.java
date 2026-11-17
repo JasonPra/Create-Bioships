@@ -32,7 +32,7 @@ public final class BioshipStructure {
     }
   }
 
-  static Map<BlockPos, BlockState> cells(SubLevel ship) {
+  public static Map<BlockPos, BlockState> cells(SubLevel ship) {
     var result = new LinkedHashMap<BlockPos, BlockState>();
     visit(ship, result::put);
     return result;

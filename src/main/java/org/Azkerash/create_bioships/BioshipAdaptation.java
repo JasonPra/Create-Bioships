@@ -6,10 +6,10 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
-import org.Azkerash.create_bioships.amoeba.ComponentTransport;
+import org.Azkerash.create_bioships.amoeba.transport.ComponentTransport;
 
 /** Resource-funded body-work actuator; action selection belongs to a separate tree. */
-final class BioshipAdaptation {
+public final class BioshipAdaptation {
   static final String FLESH = MaterialCost.FLESH,
       FIBER = MaterialCost.FIBER,
       BONE = MaterialCost.BONE;
@@ -44,7 +44,7 @@ final class BioshipAdaptation {
     if (starterLegBudget > 0) starterLegBudget--;
   }
 
-  void salvageStarterLegs() {
+  public void salvageStarterLegs() {
     if (starterLegSalvage) return;
     starterLegSalvage = true;
     starterLegBudget = 4;

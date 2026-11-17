@@ -1,7 +1,9 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.amoeba.AmoebaComponentHost;
-import org.Azkerash.create_bioships.amoeba.AmoebaComponentProvider;
+import org.Azkerash.create_bioships.amoeba.core.AmoebaCoreAdapter;
+
+import org.Azkerash.create_bioships.amoeba.components.AmoebaComponentHost;
+import org.Azkerash.create_bioships.amoeba.components.AmoebaComponentProvider;
 import org.Azkerash.create_bioships.disabled.wip.BioshipBlueprint;
 import org.Azkerash.create_bioships.disabled.wip.LivingThrottleBlock;
 import org.Azkerash.create_bioships.disabled.wip.FlagellumMotion;
@@ -34,16 +36,16 @@ import net.minecraft.world.level.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.*;
-import org.Azkerash.create_bioships.amoeba.ComponentTransport;
+import org.Azkerash.create_bioships.amoeba.transport.ComponentTransport;
 import org.joml.Vector3d;
 
 public class LivingCoreBlockEntity extends BlockEntity
     implements BlockEntitySubLevelActor,
-        org.Azkerash.create_bioships.amoeba.AmoebaComponentProvider {
-  private final org.Azkerash.create_bioships.amoeba.AmoebaComponentHost componentHost =
+        org.Azkerash.create_bioships.amoeba.components.AmoebaComponentProvider {
+  private final org.Azkerash.create_bioships.amoeba.components.AmoebaComponentHost componentHost =
       new AmoebaCoreAdapter(this);
 
-  public org.Azkerash.create_bioships.amoeba.AmoebaComponentHost amoebaComponents() {
+  public org.Azkerash.create_bioships.amoeba.components.AmoebaComponentHost amoebaComponents() {
     return componentHost;
   }
 
@@ -496,7 +498,7 @@ public class LivingCoreBlockEntity extends BlockEntity
 
   private final BioshipAdaptation adaptation = new BioshipAdaptation();
 
-  BioshipAdaptation adaptation() {
+  public BioshipAdaptation adaptation() {
     return adaptation;
   }
 

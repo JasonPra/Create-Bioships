@@ -230,12 +230,12 @@ public final class BioshipSupport {
     return layout(core, values).stable();
   }
 
-  static boolean safeMove(
+  public static boolean safeMove(
       LivingCoreBlockEntity core, BlockPos source, BlockPos target, boolean restoreFlesh) {
     return core.canFly() || movedLayout(core, source, target, restoreFlesh).stable();
   }
 
-  static boolean safeMerge(
+  public static boolean safeMerge(
       LivingCoreBlockEntity core,
       BlockPos source,
       BlockPos target,

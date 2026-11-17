@@ -10,7 +10,7 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.level.BlockEvent;
-import org.Azkerash.create_bioships.amoeba.ComponentTransport;
+import org.Azkerash.create_bioships.amoeba.transport.ComponentTransport;
 
 /** Persistent intended tissue, independent of current holes. Never exposes a health HUD. */
 @EventBusSubscriber(modid = Create_bioships.MOD_ID)

@@ -1,4 +1,7 @@
-package org.Azkerash.create_bioships.amoeba;
+package org.Azkerash.create_bioships.amoeba.merging;
+
+import org.Azkerash.create_bioships.amoeba.transport.ComponentTransport;
+import org.Azkerash.create_bioships.amoeba.components.AmoebaComponentHost;
 
 import org.Azkerash.create_bioships.Create_bioships;
 import org.Azkerash.create_bioships.FeedingMouthBlockEntity;
@@ -126,7 +129,7 @@ public final class ComponentMerging {
   }
 
   /** Returns false only for cargo which is not a fusion transaction. */
-  static boolean finish(
+  public static boolean finish(
       AmoebaComponentHost core,
       dev.ryanhcode.sable.sublevel.ServerSubLevel cargo,
       ComponentTransport.Move move) {

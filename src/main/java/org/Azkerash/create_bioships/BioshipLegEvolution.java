@@ -5,11 +5,11 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
 
 /** Usage-based, paid specialization of existing legs; does not change mouth graspers. */
-final class BioshipLegEvolution {
+public final class BioshipLegEvolution {
   static final MaterialCost SWIM_COST = new MaterialCost(4, 4, 0),
       LAND_COST = new MaterialCost(2, 2, 0);
 
-  static boolean leg(BlockState state) {
+  public static boolean leg(BlockState state) {
     return state.getBlock() instanceof AmoebaLegBlock;
   }
 

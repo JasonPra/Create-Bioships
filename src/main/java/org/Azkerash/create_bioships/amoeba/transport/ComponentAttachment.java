@@ -1,4 +1,6 @@
-package org.Azkerash.create_bioships.amoeba;
+package org.Azkerash.create_bioships.amoeba.transport;
+
+import org.Azkerash.create_bioships.amoeba.components.AmoebaComponentHost;
 
 import org.Azkerash.create_bioships.StomachBlock;
 import org.Azkerash.create_bioships.Create_bioships;

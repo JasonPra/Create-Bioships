@@ -54,7 +54,7 @@ public class FeedingMouthBlock extends BaseEntityBlock {
             type, Create_bioships.FEEDING_MOUTH_ENTITY.get(), FeedingMouthBlockEntity::tick);
   }
 
-  static Direction outward(LivingCoreBlockEntity core, BlockPos pos) {
+  public static Direction outward(LivingCoreBlockEntity core, BlockPos pos) {
     var delta = pos.subtract(core.getBlockPos());
     Direction preferred =
         core.isMature() && EngineRoom.inside(core, pos)

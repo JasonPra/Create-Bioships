@@ -7,7 +7,7 @@ import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.Vec3;
-import org.Azkerash.create_bioships.amoeba.ComponentTransport;
+import org.Azkerash.create_bioships.amoeba.transport.ComponentTransport;
 
 /** Connected surface eyes extend sight; they do not reveal buried world machines. */
 public final class BioshipVision {
@@ -106,7 +106,7 @@ public final class BioshipVision {
         || block instanceof net.minecraft.world.level.block.WaterlilyBlock;
   }
 
-  void invalidate() {
+  public void invalidate() {
     scanned = Long.MIN_VALUE;
   }
 
@@ -161,7 +161,7 @@ public final class BioshipVision {
     return sourceFreshness.age(pos);
   }
 
-  void forget(LivingCoreBlockEntity core, BlockPos pos) {
+  public void forget(LivingCoreBlockEntity core, BlockPos pos) {
     remembered.remove(pos);
     sourceFreshness.forget(pos);
     if (pos.equals(core.supplyTarget)) core.supplyTarget = null;

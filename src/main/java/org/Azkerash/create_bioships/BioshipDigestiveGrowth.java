@@ -5,7 +5,7 @@ import net.minecraft.core.*;
 import net.minecraft.world.phys.Vec3;
 
 /** Read-only capacity planning for separately connected mouth/stomach pairs. */
-final class BioshipDigestiveGrowth {
+public final class BioshipDigestiveGrowth {
   record Plan(
       BlockPos mouth,
       BlockPos stomach,
@@ -17,7 +17,7 @@ final class BioshipDigestiveGrowth {
       int tubeCredits,
       int legUpgrades) {}
 
-  static int target(LivingCoreBlockEntity core) {
+  public static int target(LivingCoreBlockEntity core) {
     return Math.max(
         DigestiveSystem.requiredPairs(core),
         Math.max(DigestiveSystem.mouths(core).size(), DigestiveSystem.stomachs(core).size()));

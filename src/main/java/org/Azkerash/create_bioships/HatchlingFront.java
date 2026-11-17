@@ -5,7 +5,7 @@ import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.world.phys.Vec3;
-import org.Azkerash.create_bioships.amoeba.ComponentTransport;
+import org.Azkerash.create_bioships.amoeba.transport.ComponentTransport;
 
 /** Logical north is the hatchling's front; facing the target rotates the living body itself. */
 final class HatchlingFront {

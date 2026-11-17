@@ -16,7 +16,7 @@ public final class BioshipTissue {
     return state.is(body()) || state.is(Create_bioships.FLESH.get());
   }
 
-  static void remember(
+  public static void remember(
       net.minecraft.world.level.block.entity.BlockEntity entity, BlockState state) {
     if (entity == null) return;
     var data = entity.getPersistentData();
@@ -26,7 +26,7 @@ public final class BioshipTissue {
     else data.remove("BioshipHostState");
   }
 
-  static BlockState host(net.minecraft.world.level.block.entity.BlockEntity entity) {
+  public static BlockState host(net.minecraft.world.level.block.entity.BlockEntity entity) {
     if (entity == null || !entity.getPersistentData().getBoolean("BioshipHostFlesh"))
       return net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
     var data = entity.getPersistentData();

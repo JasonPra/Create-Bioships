@@ -10,7 +10,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import org.Azkerash.create_bioships.amoeba.ComponentTransport;
+import org.Azkerash.create_bioships.amoeba.transport.ComponentTransport;
 
 /** The eye trades places with existing tissue. No organs, grid, or extra biomass are moved. */
 public final class CoreMotion {
@@ -20,7 +20,7 @@ public final class CoreMotion {
   private boolean evasive, sheltered, reclaimEntry;
   private boolean layoutDirty;
 
-  void layoutChanged(LivingCoreBlockEntity core) {
+  public void layoutChanged(LivingCoreBlockEntity core) {
     layoutDirty = true;
     nextScan = Math.max(1, core.getLevel().getGameTime());
     core.vision().invalidate();

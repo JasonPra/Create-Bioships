@@ -8,7 +8,7 @@ import org.Azkerash.create_bioships.disabled.wip.DinghyGrowth;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.phys.Vec3;
-import org.Azkerash.create_bioships.amoeba.ComponentTransport;
+import org.Azkerash.create_bioships.amoeba.transport.ComponentTransport;
 
 /** Idle exploration and injured escape share the same collision checks as ordinary travel. */
 public final class BioshipAutonomy {

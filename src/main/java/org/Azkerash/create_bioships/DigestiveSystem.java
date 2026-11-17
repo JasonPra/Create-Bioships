@@ -10,7 +10,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
-import org.Azkerash.create_bioships.amoeba.ComponentTransport;
+import org.Azkerash.create_bioships.amoeba.transport.ComponentTransport;
 
 /**
  * Food crosses assigned physical intestine networks; construction products enter shared storage.
@@ -185,7 +185,7 @@ public final class DigestiveSystem {
     return null;
   }
 
-  static boolean permitsPlacement(LivingCoreBlockEntity core, BlockPos pos) {
+  public static boolean permitsPlacement(LivingCoreBlockEntity core, BlockPos pos) {
     return !BioshipRespiration.blocksOpening(core, pos)
         && stomachs(core).stream()
             .noneMatch(
@@ -264,11 +264,11 @@ public final class DigestiveSystem {
     return false;
   }
 
-  static boolean reserveOrganRoute(LivingCoreBlockEntity core, BlockPos source, BlockPos target) {
+  public static boolean reserveOrganRoute(LivingCoreBlockEntity core, BlockPos source, BlockPos target) {
     return reserveOrganRoute(core, source, target, true);
   }
 
-  static boolean reserveOrganRoute(
+  public static boolean reserveOrganRoute(
       LivingCoreBlockEntity core, BlockPos source, BlockPos target, boolean reserve) {
     var stomach =
         stomachs(core).stream()

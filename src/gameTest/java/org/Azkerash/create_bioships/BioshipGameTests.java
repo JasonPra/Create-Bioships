@@ -1,6 +1,6 @@
 package org.Azkerash.create_bioships;
 
-import org.Azkerash.create_bioships.amoeba.AmoebaComponentHost;
+import org.Azkerash.create_bioships.amoeba.components.AmoebaComponentHost;
 import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
 import org.Azkerash.create_bioships.integration.biomancy.NativeStorage;
 import org.Azkerash.create_bioships.disabled.wip.BioshipBlueprint;
@@ -41,8 +41,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.gametest.*;
-import org.Azkerash.create_bioships.amoeba.ComponentMerging;
-import org.Azkerash.create_bioships.amoeba.ComponentTransport;
+import org.Azkerash.create_bioships.amoeba.merging.ComponentMerging;
+import org.Azkerash.create_bioships.amoeba.transport.ComponentTransport;
 
 @GameTestHolder(Create_bioships.MOD_ID)
 @PrefixGameTestTemplate(false)
@@ -88,10 +88,10 @@ public class BioshipGameTests {
       var delegate = core.amoebaComponents();
       var state = new java.util.concurrent.atomic.AtomicReference<ComponentTransport.Move>();
       var host =
-          (org.Azkerash.create_bioships.amoeba.AmoebaComponentHost)
+          (org.Azkerash.create_bioships.amoeba.components.AmoebaComponentHost)
               java.lang.reflect.Proxy.newProxyInstance(
-                  org.Azkerash.create_bioships.amoeba.AmoebaComponentHost.class.getClassLoader(),
-                  new Class<?>[] {org.Azkerash.create_bioships.amoeba.AmoebaComponentHost.class},
+                  org.Azkerash.create_bioships.amoeba.components.AmoebaComponentHost.class.getClassLoader(),
+                  new Class<?>[] {org.Azkerash.create_bioships.amoeba.components.AmoebaComponentHost.class},
                   (proxy, method, args) -> {
                     if (method.getName().equals("movement")) {
                       if (args == null || args.length == 0) return state.get();

@@ -19,7 +19,7 @@ public final class AmoebaLegBlock extends DirectionalBlock {
     registerDefaultState(stateDefinition.any().setValue(FACING, Direction.DOWN));
   }
 
-  static Direction outward(LivingCoreBlockEntity core, BlockPos target) {
+  public static Direction outward(LivingCoreBlockEntity core, BlockPos target) {
     return outward(BioshipStructure.cells(core.ship()), target);
   }
 
@@ -40,13 +40,13 @@ public final class AmoebaLegBlock extends DirectionalBlock {
             && host.getValue(RespiratoryOrganBlock.FACING) == face);
   }
 
-  static boolean mounted(java.util.Map<BlockPos, BlockState> cells, BlockPos pos, BlockState leg) {
+  public static boolean mounted(java.util.Map<BlockPos, BlockState> cells, BlockPos pos, BlockState leg) {
     var face = leg.getValue(FACING);
     var hostPos = pos.relative(face.getOpposite());
     return canHostLeg(cells.get(hostPos), hostPos, face);
   }
 
-  static Direction outward(java.util.Map<BlockPos, BlockState> cells, BlockPos target) {
+  public static Direction outward(java.util.Map<BlockPos, BlockState> cells, BlockPos target) {
     for (var face : Direction.values()) {
       var hostPos = target.relative(face.getOpposite());
       if (canHostLeg(cells.get(hostPos), hostPos, face)) return face;

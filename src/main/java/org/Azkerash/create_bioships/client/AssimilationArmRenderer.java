@@ -18,7 +18,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.Vec3;
 import org.Azkerash.create_bioships.*;
-import org.Azkerash.create_bioships.amoeba.ComponentMerging;
+import org.Azkerash.create_bioships.amoeba.merging.ComponentMerging;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 

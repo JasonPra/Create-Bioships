@@ -9,8 +9,8 @@ import net.minecraft.core.*;
 import net.minecraft.nbt.*;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import org.Azkerash.create_bioships.amoeba.ComponentMerging;
-import org.Azkerash.create_bioships.amoeba.ComponentTransport;
+import org.Azkerash.create_bioships.amoeba.merging.ComponentMerging;
+import org.Azkerash.create_bioships.amoeba.transport.ComponentTransport;
 
 /** Conserved cargo is swallowed first; fitting kept organs is a separate, subsequent job. */
 public final class BioshipAssimilation {
@@ -39,7 +39,7 @@ public final class BioshipAssimilation {
     return List.copyOf(arms);
   }
 
-  boolean active() {
+  public boolean active() {
     return !arms.isEmpty();
   }
 
@@ -105,7 +105,7 @@ public final class BioshipAssimilation {
     return true;
   }
 
-  void receive(LivingCoreBlockEntity core, ServerSubLevel cargo, BlockPos pos) {
+  public void receive(LivingCoreBlockEntity core, ServerSubLevel cargo, BlockPos pos) {
     var state = core.getLevel().getBlockState(pos);
     var tag = new CompoundTag();
     tag.put("State", NbtUtils.writeBlockState(state));

@@ -10,8 +10,8 @@ import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 
 /** Conserves current inventory and data-only reserves across a synchronous physical handoff. */
-final class BioshipContainerState {
-  static CompoundTag capture(Level level, BlockEntity entity) {
+public final class BioshipContainerState {
+  public static CompoundTag capture(Level level, BlockEntity entity) {
     var data = entity == null ? null : entity.saveWithFullMetadata(level.registryAccess());
     if (Boolean.getBoolean("bioships.traceContainers") && entity instanceof FeedingMouthBlockEntity)
       System.out.println(
@@ -24,7 +24,7 @@ final class BioshipContainerState {
     return data;
   }
 
-  static BlockEntity entity(
+  public static BlockEntity entity(
       Level level, dev.ryanhcode.sable.sublevel.ServerSubLevel owner, BlockPos pos) {
     if (owner == null) return level.getBlockEntity(pos);
     var plot = owner.getPlot();
@@ -32,7 +32,7 @@ final class BioshipContainerState {
     return holder == null ? null : holder.getChunk().getBlockEntity(pos);
   }
 
-  static void restore(
+  public static void restore(
       Level level,
       dev.ryanhcode.sable.sublevel.ServerSubLevel owner,
       BlockPos destination,

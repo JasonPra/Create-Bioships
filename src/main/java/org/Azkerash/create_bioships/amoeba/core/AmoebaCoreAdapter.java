@@ -1,4 +1,23 @@
-package org.Azkerash.create_bioships;
+package org.Azkerash.create_bioships.amoeba.core;
+
+import org.Azkerash.create_bioships.DigestiveSystem;
+import org.Azkerash.create_bioships.BioshipLarynx;
+import org.Azkerash.create_bioships.BioshipStorage;
+import org.Azkerash.create_bioships.Create_bioships;
+import org.Azkerash.create_bioships.BioshipHealthChanges;
+import org.Azkerash.create_bioships.FeedingMouthBlockEntity;
+import org.Azkerash.create_bioships.BioshipLegEvolution;
+import org.Azkerash.create_bioships.FeedingMouthBlock;
+import org.Azkerash.create_bioships.BioshipAccess;
+import org.Azkerash.create_bioships.LivingCoreBlockEntity;
+import org.Azkerash.create_bioships.BioshipContainerState;
+import org.Azkerash.create_bioships.AmoebaLegBlock;
+import org.Azkerash.create_bioships.BioshipDecay;
+import org.Azkerash.create_bioships.BioshipStructure;
+import org.Azkerash.create_bioships.BioshipSupport;
+import org.Azkerash.create_bioships.BioshipIntegration;
+import org.Azkerash.create_bioships.BioshipTissue;
+import org.Azkerash.create_bioships.BioshipDigestiveGrowth;
 
 import org.Azkerash.create_bioships.integration.biomancy.NativeStorage;
 
@@ -10,16 +29,16 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import org.Azkerash.create_bioships.amoeba.AmoebaComponentHost;
-import org.Azkerash.create_bioships.amoeba.ComponentMerging;
-import org.Azkerash.create_bioships.amoeba.ComponentTransport;
+import org.Azkerash.create_bioships.amoeba.components.AmoebaComponentHost;
+import org.Azkerash.create_bioships.amoeba.merging.ComponentMerging;
+import org.Azkerash.create_bioships.amoeba.transport.ComponentTransport;
 import org.Azkerash.create_bioships.creature.ResourceAccount;
 
 /** Bridges the current amoeba core's policies to component mechanics; owns no cargo. */
-final class AmoebaCoreAdapter implements AmoebaComponentHost {
+public final class AmoebaCoreAdapter implements AmoebaComponentHost {
   private final LivingCoreBlockEntity core;
 
-  AmoebaCoreAdapter(LivingCoreBlockEntity core) {
+  public AmoebaCoreAdapter(LivingCoreBlockEntity core) {
     this.core = core;
   }
 
@@ -160,9 +179,9 @@ final class AmoebaCoreAdapter implements AmoebaComponentHost {
   public void departed(Request request, Prepared prepared) {
     if (!request.external()) {
       var local = request.source().subtract(core.getBlockPos());
-      core.body().memory.remove(local);
+      core.body().intendedCells().remove(local);
       if (!prepared.sourceHost().isAir())
-        core.body().memory.put(local, level().getBlockState(request.source()));
+        core.body().intendedCells().put(local, level().getBlockState(request.source()));
     }
   }
 

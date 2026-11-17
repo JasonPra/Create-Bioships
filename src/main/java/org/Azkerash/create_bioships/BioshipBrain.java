@@ -12,7 +12,7 @@ import net.minecraft.world.item.*;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.capabilities.Capabilities;
-import org.Azkerash.create_bioships.amoeba.ComponentTransport;
+import org.Azkerash.create_bioships.amoeba.transport.ComponentTransport;
 
 /**
  * The behavior tree owns goal selection. Sensors propose work; actuators may execute only the
@@ -140,7 +140,7 @@ public final class BioshipBrain {
     }
   }
 
-  Decision lastDecision() {
+  public Decision lastDecision() {
     return lastDecision;
   }
 

@@ -35,3 +35,8 @@ helpers are separate integration utilities. The availability gate still returns 
 control registration still checks it. Only compiler-identified cross-package entry points were
 opened; the intended-cell map remains package-private behind `intendedCells()`.
 Production, GameTest and unit-test sources compile. Registry IDs and save tags are unchanged.
+
+Task 3 complete: amoeba contracts live in `amoeba.components`, the core bridge in `amoeba.core`,
+recipes in `amoeba.merging`, and cargo/attachment in `amoeba.transport`. The renderer remains
+client-only. The existing lifecycle coordinator stays at the legacy boundary; only the adapter's
+required cross-package entry points were opened. Production and GameTest compilation passed.

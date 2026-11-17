@@ -2,7 +2,7 @@ package org.Azkerash.create_bioships;
 
 import java.util.*;
 import net.minecraft.nbt.*;
-import org.Azkerash.create_bioships.amoeba.ComponentTransport;
+import org.Azkerash.create_bioships.amoeba.transport.ComponentTransport;
 
 /** A separately ranked body-work tree. Shared mutation locks do not depend on the action tree. */
 final class BioshipBodyBehavior {

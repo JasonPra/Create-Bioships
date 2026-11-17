@@ -3,7 +3,7 @@ package org.Azkerash.create_bioships;
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.world.phys.Vec3;
-import org.Azkerash.create_bioships.amoeba.ComponentTransport;
+import org.Azkerash.create_bioships.amoeba.transport.ComponentTransport;
 
 /**
  * Detects broken gut graphs and proposes conserved obstruction moves to the existing goal queue.
