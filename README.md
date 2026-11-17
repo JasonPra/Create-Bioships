@@ -264,9 +264,14 @@ Existing development worlds receive the missing fixture without resetting their 
 - `/potion_test status` — inspect the current case and saved results.
 - `/potion_test results` — print results with a copy-to-clipboard link.
 
-The resistance case deliberately applies one 5-point test hit after the potion lands.
-Resistance I reduces it to 4 damage (20%); the potion itself does no damage. The hologram
-and result label identify this hit explicitly.
+The resistance case uses two identical adult zombies with no weapon and the same attack
+attribute. It records one native melee hit before the potion, removes that zombie, dispenses
+Resistance I, and spawns a second zombie for exactly one hit. The second zombie is then
+removed and the measured damage values are compared for the expected 20% reduction.
+Each stage times out rather than fabricating an attack if the mob cannot reach the subject.
+The front wall has indestructible, hand-operated double glass doors for goggle inspection;
+use `/potion_test reset` to rebuild an existing enclosure with the new doors. These test-only
+blocks remain outside the creative inventory.
 
 The fixture automatically returns to an unassembled state when finished and retains its results.
 Regression checks cover every dispenser case, shared core/readout data, one-dose routing across

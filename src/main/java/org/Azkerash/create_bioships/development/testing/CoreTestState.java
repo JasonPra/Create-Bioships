@@ -19,7 +19,9 @@ public final class CoreTestState extends SavedData {
   boolean combatAcquired;
   boolean potionBuilt, potionRunning, potionResistanceHit;
   BlockPos potionOrigin = new BlockPos(256, -63, 0);
-  UUID potionBody;
+  UUID potionBody, potionZombie;
+  int potionResistancePhase;
+  double potionBaselineDamage, potionProtectedDamage, potionHitBefore;
   int potionIndex;
   long potionDeadline;
   double potionBefore;
@@ -55,6 +57,11 @@ public final class CoreTestState extends SavedData {
                   state.potionIndex = tag.getInt("PotionIndex");
                   state.potionDeadline = tag.getLong("PotionDeadline");
                   state.potionBefore = tag.getDouble("PotionBefore");
+                  state.potionResistancePhase = tag.getInt("PotionResistancePhase");
+                  state.potionBaselineDamage = tag.getDouble("PotionBaselineDamage");
+                  state.potionProtectedDamage = tag.getDouble("PotionProtectedDamage");
+                  state.potionHitBefore = tag.getDouble("PotionHitBefore");
+                  if (tag.hasUUID("PotionZombie")) state.potionZombie = tag.getUUID("PotionZombie");
                   if (tag.contains("PotionOrigin"))
                     state.potionOrigin = BlockPos.of(tag.getLong("PotionOrigin"));
                   if (tag.hasUUID("PotionBody")) state.potionBody = tag.getUUID("PotionBody");
@@ -104,6 +111,11 @@ public final class CoreTestState extends SavedData {
     tag.putInt("PotionIndex", potionIndex);
     tag.putLong("PotionDeadline", potionDeadline);
     tag.putDouble("PotionBefore", potionBefore);
+    tag.putInt("PotionResistancePhase", potionResistancePhase);
+    tag.putDouble("PotionBaselineDamage", potionBaselineDamage);
+    tag.putDouble("PotionProtectedDamage", potionProtectedDamage);
+    tag.putDouble("PotionHitBefore", potionHitBefore);
+    if (potionZombie != null) tag.putUUID("PotionZombie", potionZombie);
     var potionEntries = new ListTag();
     potionResults.forEach(e -> potionEntries.add(StringTag.valueOf(e)));
     tag.put("PotionResults", potionEntries);

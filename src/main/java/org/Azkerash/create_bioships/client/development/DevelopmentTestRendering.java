@@ -12,9 +12,13 @@ public final class DevelopmentTestRendering {
   @SubscribeEvent
   public static void setup(FMLClientSetupEvent event) {
     event.enqueueWork(
-        () ->
-            net.minecraft.client.renderer.ItemBlockRenderTypes.setRenderLayer(
-                DevelopmentTestBlocks.GLASS.get(),
-                net.minecraft.client.renderer.RenderType.translucent()));
+        () -> {
+          net.minecraft.client.renderer.ItemBlockRenderTypes.setRenderLayer(
+              DevelopmentTestBlocks.GLASS.get(),
+              net.minecraft.client.renderer.RenderType.translucent());
+          net.minecraft.client.renderer.ItemBlockRenderTypes.setRenderLayer(
+              DevelopmentTestBlocks.GLASS_DOOR.get(),
+              net.minecraft.client.renderer.RenderType.cutout());
+        });
   }
 }

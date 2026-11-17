@@ -36,6 +36,26 @@ public final class PotionFixtureTests {
   private static void checkCase(GameTestHelper helper, int index) {
     var level = helper.getLevel();
     var state = CoreTestState.get(level);
+    if (index == 5) {
+      helper
+          .startSequence()
+          .thenWaitUntil(
+              () ->
+                  helper.assertTrue(
+                      !state.potionRunning, "Waiting for baseline and protected zombie hits"))
+          .thenExecute(
+              () -> {
+                helper.assertTrue(
+                    state.potionResults.size() == 6
+                        && state.potionResults.get(5).contains(": PASS")
+                        && state.potionResults.get(5).contains("zombie damage"),
+                    "Zombie resistance comparison failed: " + state.potionResults);
+                helper.assertTrue(
+                    state.potionZombie == null, "Resistance zombie remained after test");
+                finished(helper);
+              });
+      return;
+    }
     helper.runAfterDelay(
         18,
         () -> {
@@ -68,20 +88,39 @@ public final class PotionFixtureTests {
                   && state.potionResults.get(index).contains(": PASS"),
               "Potion case failed: " + state.potionResults);
           if (index + 1 < PotionFixture.EFFECTS.size()) checkCase(helper, index + 1);
-          else {
-            helper.assertTrue(
-                !state.potionRunning && state.potionBody == null,
-                "Finished suite did not restore non-started state");
-            helper.assertTrue(
-                level.getBlockState(PotionFixture.core(level)).is(Create_bioships.CORE.get()),
-                "Reset did not restore sleeping core");
-            helper.assertTrue(
-                level.getBlockState(PotionFixture.dispenser(level).north()).is(Blocks.AIR),
-                "Reset left dispenser powered");
-            helper.assertTrue(PotionFixture.start(level) == 1, "Potion test cannot run twice");
-            PotionFixture.reset(level);
-            helper.runAfterDelay(10, helper::succeed);
-          }
+          else finished(helper);
         });
+  }
+
+  private static void finished(GameTestHelper helper) {
+    var level = helper.getLevel();
+    var state = CoreTestState.get(level);
+    helper.assertTrue(
+        !state.potionRunning && state.potionBody == null,
+        "Finished suite did not restore non-started state");
+    helper.assertTrue(
+        level.getBlockState(PotionFixture.core(level)).is(Create_bioships.CORE.get()),
+        "Reset did not restore sleeping core");
+    helper.assertTrue(
+        level.getBlockState(PotionFixture.dispenser(level).north()).is(Blocks.AIR),
+        "Reset left dispenser powered");
+    for (int x = 1; x <= 2; x++) {
+      var pos = state.potionOrigin.offset(x, 0, -6);
+      var door = level.getBlockState(pos);
+      helper.assertTrue(
+          door.is(DevelopmentTestBlocks.GLASS_DOOR.get())
+              && level.getBlockState(pos.above()).is(DevelopmentTestBlocks.GLASS_DOOR.get()),
+          "Double glass door missing");
+      helper.assertTrue(
+          DevelopmentTestBlocks.protectedBlock(door) && door.getDestroySpeed(level, pos) < 0,
+          "Glass door was destructible");
+      DevelopmentTestBlocks.GLASS_DOOR.get().setOpen(null, level, door, pos, true);
+      helper.assertTrue(
+          level.getBlockState(pos).getValue(net.minecraft.world.level.block.DoorBlock.OPEN),
+          "Glass door cannot open");
+    }
+    helper.assertTrue(PotionFixture.start(level) == 1, "Potion test cannot run twice");
+    PotionFixture.reset(level);
+    helper.runAfterDelay(10, helper::succeed);
   }
 }
