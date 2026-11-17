@@ -49,3 +49,11 @@ See `docs/development/digestive-network-plan.md` and `digestive-network-changelo
 All 74 unit tests and 184 live GameTests passed. Graphical model/panel review is explicitly
 unperformed; do not imply visual QA passed. The approved automated task list has zero remaining
 items. The historical creature backlog remains cancelled unless the user reopens it.
+
+## Authorized underwater navigation
+
+The user chose a reusable 3D water-route planner, separate respiration policy and swimming
+controller, and air-supply-driven surfacing. The six prioritized checkpoints and estimates are
+in `docs/development/underwater-navigation-plan.md`. Proceed automatically, push each completed
+checkpoint and report the remaining count. This new scope supersedes prior completion/stop
+notes for underwater navigation only; the historical backlog stays cancelled.

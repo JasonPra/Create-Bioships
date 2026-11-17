@@ -1,0 +1,24 @@
+# Underwater navigation
+
+Approved responsibilities: a reusable 3D route planner finds obstacle-free paths, respiration
+owns finite air and the decision to seek air, and the swimming controller follows routes.
+Working gills permit underwater breathing. Lungs still require air; small organisms retain
+existing mouth/core breathing. Seek air when supplies fall, not on an arbitrary fixed timer.
+
+Prioritized checkpoints:
+1. Audit swimming/breathing and tests — 5–10 minutes.
+2. Reusable bounded 3D route planner — 10–20 minutes.
+3. Full-body water clearance and swimming integration — 15–20 minutes.
+4. Routes to breathable air and recovery hysteresis — 10–20 minutes.
+5. Submerged obstacle/surface/breathing integration fixtures — 10–20 minutes.
+6. Broader regressions, fixes, documentation and final push — 10–15 minutes.
+Push each completed checkpoint and report how many remain.
+
+Checkpoint 1 complete: the current aquatic controller already tracks 300 air units, seeks air
+below 200, and waits for full recovery before diving. Its movement is local steering (target,
+up, four rising sideways options), not obstacle-aware route search. The brain already ranks
+SURFACE before ordinary goals. Existing tests cover trapped drowning, exposed mouths, active
+gills and waterline adaptation. Preserve those rules while replacing local steering with routes.
+The new planner will use loaded cells only, bounded search, collision-checked diagonals,
+a straight-route fast path, cached waypoints and throttled retries. Air routes must be able to
+move sideways under roofs before ascending. No flight permission or underwater breathing cheat.
