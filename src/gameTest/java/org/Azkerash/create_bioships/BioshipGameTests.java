@@ -391,6 +391,45 @@ public class BioshipGameTests {
     }
   }
 
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "biological_physics_audit")
+  public static void registered_biological_blocks_have_finite_mass_and_volume(
+      GameTestHelper helper) {
+    int blocks = 0, states = 0;
+    for (var block : BuiltInRegistries.BLOCK) {
+      var id = BuiltInRegistries.BLOCK.getKey(block);
+      if (!Set.of("biomancy", "create_bioships").contains(id.getNamespace())) continue;
+      blocks++;
+      double minMass = Double.POSITIVE_INFINITY, maxMass = 0, maxVolume = 0;
+      for (var state : block.getStateDefinition().getPossibleStates()) {
+        double mass =
+            dev.ryanhcode.sable.physics.config.block_properties.PhysicsBlockPropertyHelper.getMass(
+                helper.getLevel(), helper.absolutePos(BlockPos.ZERO), state);
+        double volume =
+            dev.ryanhcode.sable.physics.config.block_properties.PhysicsBlockPropertyHelper
+                .getVolume(state);
+        helper.assertTrue(
+            Double.isFinite(mass) && mass >= 0 && Double.isFinite(volume) && volume >= 0,
+            "Invalid physics: " + id);
+        minMass = Math.min(minMass, mass);
+        maxMass = Math.max(maxMass, mass);
+        maxVolume = Math.max(maxVolume, volume);
+        states++;
+      }
+      System.out.println(
+          "BIOLOGICAL_PHYSICS "
+              + id
+              + " mass="
+              + minMass
+              + ".."
+              + maxMass
+              + " volumeMax="
+              + maxVolume);
+    }
+    helper.assertTrue(blocks > 50, "Audit missed registered biological blocks");
+    System.out.println("BIOLOGICAL_PHYSICS_TOTAL blocks=" + blocks + " states=" + states);
+    helper.succeed();
+  }
+
   @GameTest(template = "test_empty", timeoutTicks = 200, batch = "end_fixture_geometry")
   public static void developer_end_habitat_has_remote_islands_biome_and_void_gap(
       GameTestHelper helper) {

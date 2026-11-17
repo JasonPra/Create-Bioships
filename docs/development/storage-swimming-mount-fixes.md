@@ -12,3 +12,8 @@ existing well-fed growth hunting. Capacity simulation leaves inventory unchanged
 Checkpoint 2: shared mounting validation rejects every gill face, in addition to cores and lungs.
 Growth, manual placement, reconfiguration and mount repair use this rule. The live full-face socket
 regression passed for all six directions, including diagonal/pipe/orphaning exclusions.
+
+Checkpoint 3: enumerated every registered Biomancy/bioship block and every block-state variant.
+The live audit passed; complete mass ranges and maximum displaced volume are recorded in
+`biological-block-physics-audit.txt`. No special high-buoyancy override exists for packed flesh or
+hull. Grown-body swimming still uses a land-load cutoff, which is addressed in checkpoint 4.
