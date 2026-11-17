@@ -14,6 +14,7 @@ import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
 final class PlaceObservations {
   private long next;
   private int spoke;
+  private final EncounterObservations encounters = new EncounterObservations();
 
   void tick(LivingCoreBlockEntity core) {
     var level = core.getLevel();
@@ -23,6 +24,7 @@ final class PlaceObservations {
     next = now + 40;
     var here = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);
     terrain(core, here, true);
+    encounters.observe(core, here);
     // Two columns per observation; rotate through nearby directions and distances.
     for (int i = 0; i < 2; i++) {
       int index = spoke++ % 24;

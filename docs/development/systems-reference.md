@@ -1414,6 +1414,7 @@ Threat assessment, retreat and idle wandering. Pilot authority is currently disa
   creature.memory.PlaceMemory
   creature.memory.PlaceMemoryCodec
   PlaceObservations
+  EncounterObservations
 ```
 
 
@@ -1537,7 +1538,7 @@ public final class PlaceMemoryCodec
 
 #### PlaceObservations
 
-Source: `src/main/java/org/Azkerash/create_bioships/PlaceObservations.java` (95 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/PlaceObservations.java` (97 lines).
 
 ```java
 final class PlaceObservations
@@ -1546,15 +1547,31 @@ final class PlaceObservations
 
   private int spoke; // line 15
 
-  void tick(LivingCoreBlockEntity core); // line 16
+  private final EncounterObservations encounters; // line 16
 
-  static void terrain(LivingCoreBlockEntity core, Vec3 point, boolean occupied); // line 40
+  void tick(LivingCoreBlockEntity core); // line 17
 
-  static String dimension(LivingCoreBlockEntity core); // line 78
+  static void terrain(LivingCoreBlockEntity core, Vec3 point, boolean occupied); // line 42
 
-  static String biome(LivingCoreBlockEntity core, BlockPos pos); // line 82
+  static String dimension(LivingCoreBlockEntity core); // line 80
 
-  static PlaceMemory.Point point(Vec3 p); // line 90
+  static String biome(LivingCoreBlockEntity core, BlockPos pos); // line 84
+
+  static PlaceMemory.Point point(Vec3 p); // line 92
+
+```
+
+
+#### EncounterObservations
+
+Source: `src/main/java/org/Azkerash/create_bioships/EncounterObservations.java` (45 lines).
+
+```java
+final class EncounterObservations
+
+  private int cursor; // line 13
+
+  void observe(LivingCoreBlockEntity core, Vec3 here); // line 14
 
 ```
 
@@ -4527,7 +4544,7 @@ final class BioshipDefense
 
   static LivingEntity target(LivingCoreBlockEntity core); // line 97
 
-  private static boolean eligiblePrey(LivingCoreBlockEntity core, LivingEntity entity); // line 138
+  static boolean eligiblePrey(LivingCoreBlockEntity core, LivingEntity entity); // line 138
 
   static LivingEntity prey(LivingCoreBlockEntity core); // line 148
 

@@ -137,7 +137,7 @@ final class BioshipDefense {
     return nearest;
   }
 
-  private static boolean eligiblePrey(LivingCoreBlockEntity core, LivingEntity entity) {
+  static boolean eligiblePrey(LivingCoreBlockEntity core, LivingEntity entity) {
     return TentacleBlockEntity.attackable(entity)
         && TentacleBlockEntity.edible(entity)
         && !core.access().allows(core, entity)

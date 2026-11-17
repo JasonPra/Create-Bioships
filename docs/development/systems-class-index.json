@@ -104,7 +104,8 @@
         "BioshipAutonomy",
         "creature.memory.PlaceMemory",
         "creature.memory.PlaceMemoryCodec",
-        "PlaceObservations"
+        "PlaceObservations",
+        "EncounterObservations"
       ],
       "Threat assessment, retreat and idle wandering. Pilot authority is currently disabled."
     ],
@@ -670,7 +671,7 @@
         },
         {
           "kind": "method",
-          "signature": "private static boolean eligiblePrey(LivingCoreBlockEntity core, LivingEntity entity)",
+          "signature": "static boolean eligiblePrey(LivingCoreBlockEntity core, LivingEntity entity)",
           "line": 138
         },
         {
@@ -1097,32 +1098,37 @@
           "line": 15
         },
         {
-          "kind": "method",
-          "signature": "void tick(LivingCoreBlockEntity core)",
+          "kind": "field",
+          "signature": "private final EncounterObservations encounters",
           "line": 16
         },
         {
           "kind": "method",
+          "signature": "void tick(LivingCoreBlockEntity core)",
+          "line": 17
+        },
+        {
+          "kind": "method",
           "signature": "static void terrain(LivingCoreBlockEntity core, Vec3 point, boolean occupied)",
-          "line": 40
+          "line": 42
         },
         {
           "kind": "method",
           "signature": "static String dimension(LivingCoreBlockEntity core)",
-          "line": 78
+          "line": 80
         },
         {
           "kind": "method",
           "signature": "static String biome(LivingCoreBlockEntity core, BlockPos pos)",
-          "line": 82
+          "line": 84
         },
         {
           "kind": "method",
           "signature": "static PlaceMemory.Point point(Vec3 p)",
-          "line": 90
+          "line": 92
         }
       ],
-      "lines": 95
+      "lines": 97
     },
     "BioshipLarynx": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipLarynx.java",
@@ -6444,6 +6450,23 @@
         }
       ],
       "lines": 52
+    },
+    "EncounterObservations": {
+      "path": "src/main/java/org/Azkerash/create_bioships/EncounterObservations.java",
+      "declaration": "final class EncounterObservations",
+      "members": [
+        {
+          "kind": "field",
+          "signature": "private int cursor",
+          "line": 13
+        },
+        {
+          "kind": "method",
+          "signature": "void observe(LivingCoreBlockEntity core, Vec3 here)",
+          "line": 14
+        }
+      ],
+      "lines": 45
     },
     "BioshipCreeperHazard": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipCreeperHazard.java",

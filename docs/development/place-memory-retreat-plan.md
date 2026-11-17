@@ -42,3 +42,8 @@ Checkpoint 3 complete: terrain observations run every 40 ticks, sampling the occ
 and two rotating loaded columns. Distant terrain must pass actual vision checks. Water/biome,
 forest, nearby cover and elevation features are remembered without generating chunks. Compilation
 passed; live observer coverage is part of checkpoint 8.
+
+Checkpoint 4 complete: visible prey species are recorded even when not hungry. Visible actual
+pursuers, nearby creepers and primed TNT leave aging danger evidence. At most 16 entity visibility
+checks occur per 40-tick observation, with a rotating start to avoid dense-herd bias. Species data
+is not treated as a live target. Compilation passed.
