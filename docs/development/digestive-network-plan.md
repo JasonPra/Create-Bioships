@@ -37,3 +37,9 @@ Unformed direct-contact groups share food but receive no formation bonus.
 
 Estimated total: 105–180 minutes. Push after each completed task and report remaining tasks.
 The old creature-feature backlog stays cancelled. This document authorizes this feature only.
+
+Task 1 complete (`8243b92`): ownership, capacity and formation rules recorded.
+Task 2 complete: a Minecraft/core-independent immutable direct-contact graph is implemented.
+Four unit cases cover face-only links, inherited group connectivity, a 27-member cube, immutable
+snapshots and splitting when a link is removed. All 65 unit tests passed before integration.
+Live stomach integration follows in task 3; this checkpoint does not yet change gameplay.
