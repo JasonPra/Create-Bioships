@@ -412,21 +412,23 @@ public final class DigestiveSystem {
     return null;
   }
 
-  static void arrangeStorage(LivingCoreBlockEntity core) {
+  static boolean needsStorageRepair(LivingCoreBlockEntity core, BlockPos pos) {
     var stomach = stomach(core);
-    if (stomach == null
-        || !stomach.connected(core)
-        || ComponentTransport.busy(core.amoebaComponents())
-        || core.rescue().active()) return;
-    for (var store : BioshipIntegration.blockEntities(core.ship())) {
-      var pos = store.getBlockPos();
-      if (!NativeStorage.isStorage(store)
-          || store.getPersistentData().getBoolean("BioshipManualPlacement")) continue;
-      if (connectedStore(core, stomach, pos)) continue;
-      var target = storagePort(core, pos);
-      if (target != null && ComponentTransport.begin(core.amoebaComponents(), pos, target, false))
-        return;
-    }
+    var store = core.getLevel().getBlockEntity(pos);
+    return stomach != null
+        && stomach.connected(core)
+        && store != null
+        && NativeStorage.isStorage(store)
+        && !store.getPersistentData().getBoolean("BioshipManualPlacement")
+        && !connectedStore(core, stomach, pos)
+        && storagePort(core, pos) != null;
+  }
+
+  static void arrangeStorage(LivingCoreBlockEntity core) {
+    if (!ComponentTransport.busy(core.amoebaComponents())
+        && !core.rescue().active()
+        && BioshipAnatomy.needsBatchRepair(core))
+      core.assimilation().beginRepair(core, BioshipAnatomy.repairPlan(core));
   }
 
   private static Plan plan(

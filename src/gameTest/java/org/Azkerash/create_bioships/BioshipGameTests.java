@@ -899,13 +899,13 @@ public class BioshipGameTests {
     var mouth = core.getBlockPos().north();
     level.getBlockEntity(mouth).getPersistentData().putBoolean("BioshipManualPlacement", true);
     ((FeedingMouthBlockEntity) level.getBlockEntity(mouth))
-        .setItem(0, new ItemStack(Items.DIAMOND, 7));
+        .setItem(0, new ItemStack(Items.STRUCTURE_VOID, 7));
     level.setBlock(mouth.north(), BioshipTissue.body().defaultBlockState(), 3);
     var old = core.saveWithFullMetadata(level.registryAccess());
     old.getCompound("Assimilation").remove("LayoutRepair");
     core.loadAdditional(old, level.registryAccess());
     helper.assertTrue(!core.assimilation().repairing(), "Fixture already contained a batch job");
-    watchAutomaticBatch(helper, ship, new int[2], null);
+    watchAutomaticBatch(helper, ship, new int[] {0, 0, 7}, null);
   }
 
   @GameTest(template = "test_empty", timeoutTicks = 400, batch = "blocked_gill_batch")
@@ -923,6 +923,29 @@ public class BioshipGameTests {
             .setValue(RespiratoryOrganBlock.FACING, Direction.NORTH),
         3);
     level.setBlock(gill.north(), BioshipTissue.body().defaultBlockState(), 3);
+    deepWater(helper, core);
+    watchAutomaticBatch(helper, ship, new int[2], gill);
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 400, batch = "encased_gill_batch")
+  public static void fully_encased_gill_batches_its_blocker_without_removing_the_gill(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    var gill = core.getBlockPos().east();
+    level.setBlock(
+        gill,
+        Create_bioships.GILLS
+            .get()
+            .defaultBlockState()
+            .setValue(RespiratoryOrganBlock.FACING, Direction.NORTH),
+        3);
+    for (var face : Direction.values()) {
+      var pos = gill.relative(face);
+      if (!pos.equals(core.getBlockPos()))
+        level.setBlock(pos, BioshipTissue.body().defaultBlockState(), 3);
+    }
     deepWater(helper, core);
     watchAutomaticBatch(helper, ship, new int[2], gill);
   }
@@ -968,29 +991,43 @@ public class BioshipGameTests {
     if (!active && observations[1] == 1) {
       helper.assertTrue(
           observations[0] == 1, "Existing creature repeatedly restarted batch repair");
-      helper.runAfterDelay(
-          80,
-          () -> {
-            try {
-              helper.assertTrue(
-                  !core.assimilation().repairing()
-                      && !BioshipAnatomy.needsBatchRepair(core)
-                      && core.organMove() == null,
-                  "Malformed saved creature resumed individual/batch organ oscillation: "
-                      + core.adaptation().behavior().debug());
-              if (gill != null)
-                helper.assertTrue(
-                    BioshipRespiration.activeGills(core),
-                    "Gill repair failed to restore breathing");
-              helper.succeed();
-            } finally {
-              cleanup(helper, ship);
-            }
-          });
+      verifyAutomaticBatchStable(
+          helper, ship, gill, 80, observations.length > 2 ? observations[2] : 0);
       return;
     }
     observations[1] = active ? 1 : 0;
     helper.runAfterDelay(1, () -> watchAutomaticBatch(helper, ship, observations, gill));
+  }
+
+  private static void verifyAutomaticBatchStable(
+      GameTestHelper helper, ServerSubLevel ship, BlockPos gill, int remaining, int expected) {
+    var core = core(ship);
+    helper.assertTrue(
+        !core.assimilation().repairing()
+            && !BioshipAnatomy.needsBatchRepair(core)
+            && core.organMove() == null,
+        "Malformed saved creature resumed individual/batch organ oscillation: "
+            + core.adaptation().behavior().debug());
+    if (gill != null)
+      helper.assertTrue(
+          BioshipRespiration.activeGills(core), "Gill repair failed to restore breathing");
+    if (expected > 0) {
+      int retained = 0;
+      for (var pos : DigestiveSystem.mouths(core)) {
+        var mouth = (FeedingMouthBlockEntity) helper.getLevel().getBlockEntity(pos);
+        for (int slot = 0; slot < mouth.getContainerSize(); slot++)
+          if (mouth.getItem(slot).is(Items.STRUCTURE_VOID))
+            retained += mouth.getItem(slot).getCount();
+      }
+      helper.assertTrue(
+          retained == expected, "Automatic repair lost or duplicated mouth inventory");
+    }
+    if (remaining == 0) {
+      helper.succeed();
+      cleanup(helper, ship);
+    } else
+      helper.runAfterDelay(
+          1, () -> verifyAutomaticBatchStable(helper, ship, gill, remaining - 1, expected));
   }
 
   @GameTest(template = "test_empty", timeoutTicks = 200, batch = "end_fixture_geometry")
@@ -4220,7 +4257,7 @@ public class BioshipGameTests {
     }
   }
 
-  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "front_mouth_stability")
+  @GameTest(template = "test_empty", timeoutTicks = 180, batch = "front_mouth_stability")
   public static void hatchling_mouth_moves_to_front_once_and_keeps_inventory(
       GameTestHelper helper) {
     var ship = assemble(helper);
@@ -4234,7 +4271,7 @@ public class BioshipGameTests {
         .setItem(0, new ItemStack(Items.BEEF, 5));
     BioshipIntegration.orientMouth(core);
     helper.runAfterDelay(
-        70,
+        120,
         () ->
             finish(
                 helper,
@@ -4483,7 +4520,7 @@ public class BioshipGameTests {
                 }));
   }
 
-  @GameTest(template = "test_empty", timeoutTicks = 150, batch = "storage_attachment")
+  @GameTest(template = "test_empty", timeoutTicks = 220, batch = "storage_attachment")
   public static void disconnected_sac_relocates_to_existing_gut_without_free_tubes(
       GameTestHelper helper) {
     var ship = assemble(helper);
@@ -4512,7 +4549,7 @@ public class BioshipGameTests {
     helper.assertTrue(
         ComponentTransport.busy(core.amoebaComponents()), "Disconnected sac was not repositioned");
     helper.runAfterDelay(
-        90,
+        140,
         () ->
             finish(
                 helper,
@@ -6715,7 +6752,7 @@ public class BioshipGameTests {
         });
   }
 
-  @GameTest(template = "test_empty", timeoutTicks = 180, batch = "mouth_configuration")
+  @GameTest(template = "test_empty", timeoutTicks = 300, batch = "mouth_configuration")
   public static void front_obstruction_is_rearranged_without_inward_teeth(GameTestHelper helper) {
     var ship = assemble(helper);
     var core = core(ship);
@@ -6731,10 +6768,9 @@ public class BioshipGameTests {
         "Inventory sentinel has a decomposition recipe");
     BioshipIntegration.orientMouth(core);
     helper.assertTrue(
-        level.getBlockState(origin.south()).getValue(FeedingMouthBlock.FACING) == Direction.SOUTH,
-        "Mouth teeth faced through the core while awaiting relocation");
+        core.assimilation().repairing(), "Malformed mouth did not enter coordinated recall");
     helper.runAfterDelay(
-        145,
+        220,
         () ->
             finish(
                 helper,
@@ -10252,9 +10288,9 @@ public class BioshipGameTests {
       var blocked = leg.getKey().relative(leg.getValue().getValue(AmoebaLegBlock.FACING));
       level.setBlock(blocked, BioshipTissue.body().defaultBlockState(), 3);
       BioshipAnatomy.invalidate(core);
-      var relocation = BioshipAnatomy.proposal(core);
+      var relocation = BioshipConfiguration.proposal(core);
       helper.assertTrue(
-          relocation != null && relocation.action() == BioshipBrain.Action.REPOSITION_ANATOMY,
+          relocation != null && relocation.action() == BioshipBrain.Action.CONFIGURE,
           "A leg buried by new flesh did not enter the anatomy repair queue");
       helper.assertTrue(
           BioshipAnatomy.protection(core) == null,
@@ -10771,13 +10807,16 @@ public class BioshipGameTests {
                 .setValue(AmoebaLegBlock.FACING, Direction.EAST),
             3);
     BioshipAnatomy.invalidate(core);
-    var proposal = BioshipAnatomy.proposal(core);
+    var proposal = BioshipConfiguration.proposal(core);
     helper.assertTrue(
-        proposal != null && proposal.pos().equals(bad),
+        proposal != null
+            && BioshipAnatomy.repairPlan(core).stream().anyMatch(p -> p.source().equals(bad)),
         "Legacy diagonal leg was not queued for a full-face relocation");
-    helper.assertTrue(BioshipAnatomy.execute(core, bad), "Full-face repair could not begin");
+    helper.assertTrue(
+        core.assimilation().beginRepair(core, BioshipAnatomy.repairPlan(core)),
+        "Full-face repair could not begin");
     helper.runAfterDelay(
-        45,
+        90,
         () ->
             finish(
                 helper,

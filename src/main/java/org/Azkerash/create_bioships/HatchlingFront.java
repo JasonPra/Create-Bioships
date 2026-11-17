@@ -83,43 +83,6 @@ final class HatchlingFront {
         && DigestiveSystem.reserveOrganRoute(core, source, target, false);
   }
 
-  static void arrangeMouth(LivingCoreBlockEntity core) {
-    var source = core.mouthBlock();
-    if (!core.hatchling()
-        || source == null
-        || ComponentTransport.busy(core.amoebaComponents())
-        || core.coreMotion().active()) return;
-    var mouth = core.getLevel().getBlockEntity(source);
-    if (mouth != null && mouth.getPersistentData().getBoolean("BioshipManualPlacement")) return;
-    var state = core.getLevel().getBlockState(source);
-    if (!state.is(Create_bioships.FEEDING_MOUTH.get())) return;
-    var target = port(core, source);
-    // Never point through the body while a destination is blocked or awaiting an affordable move.
-    var facing =
-        source.equals(target) && FeedingMouthBlock.openFace(core, source, Direction.NORTH)
-            ? Direction.NORTH
-            : FeedingMouthBlock.outward(core, source);
-    if (state.getValue(FeedingMouthBlock.FACING) != facing)
-      core.getLevel().setBlock(source, state.setValue(FeedingMouthBlock.FACING, facing), 3);
-    var front = core.structuralOrigin().north();
-    var blocker = core.getLevel().getBlockEntity(front);
-    if (!source.equals(front)
-        && blocker != null
-        && !(blocker instanceof LivingCoreBlockEntity)
-        && !blocker.getPersistentData().getBoolean("BioshipManualPlacement")) {
-      for (var offset :
-          List.of(new BlockPos(0, 0, 1), new BlockPos(-1, 0, 0), new BlockPos(1, 0, 0))) {
-        var bay = core.structuralOrigin().offset(offset);
-        var host = core.getLevel().getBlockState(bay);
-        if (!bay.equals(source)
-            && (host.isAir() || BioshipTissue.isTissue(host))
-            && ComponentTransport.begin(core.amoebaComponents(), front, bay, false)) return;
-      }
-    }
-    if (target != null && !target.equals(source))
-      ComponentTransport.begin(core.amoebaComponents(), source, target, false);
-  }
-
   static double turn(LivingCoreBlockEntity core, Vec3 goal) {
     if (!core.hatchling() || goal == null) return 0;
     var root = BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO);

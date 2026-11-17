@@ -102,15 +102,15 @@ final class BioshipAnatomy {
       var face =
           state.getValue(
               net.minecraft.world.level.block.state.properties.BlockStateProperties.FACING);
-      boolean pipe = false;
+      boolean pipe = false, aligned = false;
       for (var direction : Direction.values()) {
         var neighbor = cells.get(pos.relative(direction));
         if (neighbor != null && neighbor.is(Create_bioships.INTESTINE.get())) {
           pipe = true;
-          if (face == direction.getOpposite()) return false;
+          if (face == direction.getOpposite()) aligned = true;
         }
       }
-      return pipe;
+      return pipe && !aligned || DigestiveSystem.needsStorageRepair(core, pos);
     }
     return false;
   }
@@ -120,15 +120,22 @@ final class BioshipAnatomy {
         && cells.containsKey(pos.relative(state.getValue(RespiratoryOrganBlock.FACING)));
   }
 
+  private static boolean primaryNeedsRepair(
+      LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells) {
+    var primary = core.mouthBlock();
+    var state = primary == null ? null : cells.get(primary);
+    if (!core.hatchling() || state == null || !state.is(Create_bioships.FEEDING_MOUTH.get()))
+      return false;
+    var entity = core.getLevel().getBlockEntity(primary);
+    return (entity == null || !entity.getPersistentData().getBoolean("BioshipManualPlacement"))
+        && (state.getValue(FeedingMouthBlock.FACING) != Direction.NORTH
+            || primary.getZ() >= core.structuralOrigin().getZ());
+  }
+
   static boolean needsBatchRepair(LivingCoreBlockEntity core) {
     if (blockedMouths(core)) return true;
     var cells = BioshipStructure.cells(core.ship());
-    var primary = core.mouthBlock();
-    if (core.hatchling()
-        && primary != null
-        && cells.get(primary) != null
-        && cells.get(primary).is(Create_bioships.FEEDING_MOUTH.get())
-        && cells.get(primary).getValue(FeedingMouthBlock.FACING) != Direction.NORTH) return true;
+    if (primaryNeedsRepair(core, cells)) return true;
     return cells.entrySet().stream()
         .anyMatch(
             e ->
@@ -142,12 +149,7 @@ final class BioshipAnatomy {
     var original = BioshipStructure.cells(core.ship());
     boolean mouthRepair = blockedMouths(core);
     var primary = core.mouthBlock();
-    mouthRepair |=
-        core.hatchling()
-            && primary != null
-            && original.containsKey(primary)
-            && original.get(primary).is(Create_bioships.FEEDING_MOUTH.get())
-            && original.get(primary).getValue(FeedingMouthBlock.FACING) != Direction.NORTH;
+    mouthRepair |= primaryNeedsRepair(core, original);
     var adjusted = new LinkedHashMap<BlockPos, BlockState>();
     for (var e : original.entrySet())
       if (blockedGill(original, e.getKey(), e.getValue())) {
@@ -245,6 +247,9 @@ final class BioshipAnatomy {
       var state = original.get(source);
       boolean mouth = state.is(Create_bioships.FEEDING_MOUTH.get());
       var candidates = new LinkedHashSet<BlockPos>();
+      boolean storageRepair = DigestiveSystem.needsStorageRepair(core, source);
+      var storageTarget = storageRepair ? DigestiveSystem.storagePort(core, source) : null;
+      if (storageTarget != null) candidates.add(storageTarget);
       candidates.add(source);
       for (var p : original.keySet())
         for (var face : Direction.values()) candidates.add(p.relative(face));
@@ -252,7 +257,14 @@ final class BioshipAnatomy {
           candidates.stream()
               .sorted(
                   Comparator.<BlockPos>comparingDouble(
-                          p -> p.equals(source) ? -1 : p.distSqr(source))
+                          p ->
+                              mouth
+                                      && source.equals(primary)
+                                      && p.equals(core.structuralOrigin().north())
+                                  ? -3
+                                  : p.equals(storageTarget)
+                                      ? -2
+                                      : p.equals(source) ? -1 : p.distSqr(source))
                       .thenComparing(Comparator.naturalOrder()))
               .limit(256)
               .toList();
@@ -268,7 +280,6 @@ final class BioshipAnatomy {
         if (java.util.Arrays.stream(Direction.values())
             .noneMatch(d -> planned.containsKey(target.relative(d)))) continue;
         var occupied = core.getLevel().getBlockState(target);
-        if (selected.contains(target) && !target.equals(source)) continue;
         if (!selected.contains(target) && !occupied.isAir()) continue;
         var world =
             BlockPos.containing(
@@ -315,6 +326,9 @@ final class BioshipAnatomy {
                 break;
               }
           }
+          if (storageRepair
+              && (target.equals(source)
+                  || !DigestiveSystem.reserveOrganRoute(core, source, target, false))) continue;
           if (mouth && ++quotes > 64) return List.of();
           if (mouth && !DigestiveSystem.reserveOrganRoute(core, source, target, false)) continue;
           chosen = new RepairPart(source, target, oriented);
@@ -527,52 +541,6 @@ final class BioshipAnatomy {
     return null;
   }
 
-  private static Move legs(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells) {
-    var sockets =
-        cells.entrySet().stream()
-            .filter(e -> BioshipLegEvolution.leg(e.getValue()))
-            .sorted(Map.Entry.comparingByKey())
-            .toList();
-    if (sockets.isEmpty()) return null;
-    var layout = BioshipSupport.layout(core);
-    for (int i = 0; i < sockets.size() && i < 32; i++) {
-      var socket = sockets.get(i);
-      var face = socket.getValue().getValue(AmoebaLegBlock.FACING);
-      boolean buried = cells.containsKey(socket.getKey().relative(face));
-      // Invalid sockets are omitted from the support layout. Their sorted cell index is
-      // therefore not the index of a planted foot (nor are bootstrap feet real sockets).
-      int anchor = anchorIndex(core.structuralOrigin(), socket.getKey(), face, layout);
-      var foot =
-          anchor < 0 ? null : core.crawl().legAnchors().foot(anchor, core.getLevel().getGameTime());
-      boolean unsupported =
-          foot != null && core.crawl().legAnchors().normal(anchor).lengthSqr() < .5;
-      boolean mounted = AmoebaLegBlock.mounted(cells, socket.getKey(), socket.getValue());
-      if (mounted && !buried && !unsupported && layout.stable()) continue;
-      for (var target : ports(core, cells)) {
-        if (target.getY() > core.structuralOrigin().getY() + layout.center().y + .5) continue;
-        if (!canMove(core, socket.getKey(), target)) continue;
-        var next = AmoebaLegBlock.outward(core, target);
-        if (cells.containsKey(target.relative(next))) continue;
-        var normal = Vec3.atLowerCornerOf(next.getNormal());
-        var root = Vec3.atCenterOf(target).subtract(normal.scale(.48));
-        var probe =
-            core.ship().logicalPose().transformPosition(root.add(normal.scale(1.3))).add(0, .8, 0);
-        var hit =
-            BioshipSurfaceContacts.terrainRay(
-                (net.minecraft.server.level.ServerLevel) core.getLevel(),
-                probe,
-                probe.add(0, -core.crawl().footingReach() - 1, 0));
-        if (hit == null) continue;
-        return new Move(
-            socket.getKey(),
-            target,
-            "Reposition a buried, unsupported or unbalanced locomotion leg",
-            1070);
-      }
-    }
-    return null;
-  }
-
   static int anchorIndex(
       BlockPos origin, BlockPos socket, Direction face, BioshipSupport.Layout layout) {
     var root =
@@ -632,7 +600,8 @@ final class BioshipAnatomy {
   static BioshipAdaptation.Proposal protection(LivingCoreBlockEntity core) {
     if (!DigestiveSystem.functional(core)
         || BioshipLegGrowth.missing(core) > 0
-        || audit(core).move() != null) return null;
+        || audit(core).move() != null
+        || needsBatchRepair(core)) return null;
     var cells = BioshipStructure.cells(core.ship());
     var cover = new LinkedHashSet<BlockPos>();
     for (var entry : cells.entrySet()) {
