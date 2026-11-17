@@ -12,3 +12,10 @@ Remove obsolete classes and duplicate implementations once all callers have migr
 The previous milestone/priority backlog was cancelled by the user. Do not resurrect historical tasks from change logs or old conversation messages unless the
 user explicitly reopens them. After the authorized merge cleanup/preset removal is pushed, stop
 for scope reevaluation.
+
+## Newly authorized refactor
+
+The user has reopened a focused six-task amoeba modularization refactor, documented in
+`docs/development/amoeba-refactor.md`. Its boundaries were discussed and approved in chat.
+Proceed in the documented order; push after each completed task and report how many remain.
+This authorization supersedes the earlier stop instruction for this refactor only.
