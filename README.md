@@ -104,7 +104,7 @@ Each enemy's outcome remains saved after the suite automatically restores the sl
 - `/combat_test start` — run the sequential hostile suite.
 - `/combat_test reset` — stop and restore the unassembled subject; retain results.
 - `/combat_test status` — show progress and result count.
-- `/combat_test results` — print saved per-enemy outcomes.
+- `/combat_test results` — show a compact summary with **Copy failures** and **Copy all results** chat links. Console callers receive plain per-enemy outcomes.
 
 The explanation hologram sits between START and RESET. `/tick rate` accelerates these simulation
 windows as usual. An existing dev world receives the combat fixture when next opened; the

@@ -76,6 +76,31 @@ public final class CoreTestCommands {
         own(level, state, body);
   }
 
+  private static Component copyableCombatResults(ServerLevel level) {
+    var results = CombatFixture.results(level);
+    var failures = results.stream().filter(result -> result.contains(": FAIL")).toList();
+    var status = CombatFixture.status(level);
+    return Component.literal(status + " · " + failures.size() + " failures")
+        .append(copyLink(" [Copy failures]", status + "\n" + String.join("\n", failures)))
+        .append(copyLink(" [Copy all results]", status + "\n" + String.join("\n", results)));
+  }
+
+  private static Component copyLink(String label, String report) {
+    return Component.literal(label)
+        .withStyle(
+            style ->
+                style
+                    .withColor(net.minecraft.ChatFormatting.AQUA)
+                    .withUnderlined(true)
+                    .withClickEvent(
+                        new net.minecraft.network.chat.ClickEvent(
+                            net.minecraft.network.chat.ClickEvent.Action.COPY_TO_CLIPBOARD, report))
+                    .withHoverEvent(
+                        new net.minecraft.network.chat.HoverEvent(
+                            net.minecraft.network.chat.HoverEvent.Action.SHOW_TEXT,
+                            Component.literal("Copy the saved report to your clipboard"))));
+  }
+
   @SubscribeEvent
   public static void tick(ServerTickEvent.Post event) {
     observe(event.getServer().overworld());
@@ -192,9 +217,15 @@ public final class CoreTestCommands {
                     }
                     if (action.equals("start")) return CombatFixture.start(level);
                     if (action.equals("reset")) CombatFixture.reset(level);
-                    if (action.equals("results"))
-                      for (var result : CombatFixture.results(level))
-                        source.sendSuccess(() -> Component.literal(result), false);
+                    if (action.equals("results")) {
+                      if (source.getPlayer() == null) {
+                        for (var result : CombatFixture.results(level))
+                          source.sendSuccess(() -> Component.literal(result), false);
+                      } else {
+                        source.sendSuccess(() -> copyableCombatResults(level), false);
+                        return 1;
+                      }
+                    }
                     source.sendSuccess(() -> Component.literal(CombatFixture.status(level)), false);
                     return 1;
                   }));
