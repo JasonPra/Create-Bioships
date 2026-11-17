@@ -430,6 +430,57 @@ public class BioshipGameTests {
     helper.succeed();
   }
 
+  @GameTest(template = "test_empty", timeoutTicks = 240, batch = "grown_body_swimming")
+  public static void grown_body_keeps_swimming_when_it_outgrows_land_leg_capacity(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var current = core(ship);
+    var level = helper.getLevel();
+    var root =
+        BlockPos.containing(BodyCoordinates.physical(current.amoebaComponents(), BlockPos.ZERO));
+    var pool = roofedSwimmingPool(helper, root, true);
+    for (int x = 0; x < 5; x++)
+      for (int y = 0; y < 3; y++)
+        for (int z = 0; z < 3; z++) {
+          var p = current.getBlockPos().offset(x, y, z);
+          if (!p.equals(current.getBlockPos()))
+            level.setBlock(p, BioshipTissue.body().defaultBlockState(), 3);
+        }
+    level.setBlock(
+        current.getBlockPos().west(),
+        Create_bioships.GILLS
+            .get()
+            .defaultBlockState()
+            .setValue(RespiratoryOrganBlock.FACING, Direction.WEST),
+        3);
+    helper.runAfterDelay(
+        20,
+        () -> {
+          var core = core(ship);
+          System.out.println(
+              "GROWN_SWIM load="
+                  + core.crawl().carriedLoad(core)
+                  + " landCapacity="
+                  + core.crawl().loadCapacity()
+                  + " wet="
+                  + core.aquatic().wet()
+                  + " swimming="
+                  + core.aquatic().swimming());
+          try {
+            helper.assertTrue(
+                core.crawl().carriedLoad(core) > core.crawl().loadCapacity(),
+                "Fixture did not exceed land capacity");
+            helper.assertTrue(
+                core.aquatic().wet() && core.aquatic().swimming(),
+                "Growing beyond land capacity disabled underwater propulsion");
+            helper.succeed();
+          } finally {
+            pool.forEach(p -> level.removeBlock(p, false));
+            cleanup(helper, ship);
+          }
+        });
+  }
+
   @GameTest(template = "test_empty", timeoutTicks = 200, batch = "end_fixture_geometry")
   public static void developer_end_habitat_has_remote_islands_biome_and_void_gap(
       GameTestHelper helper) {

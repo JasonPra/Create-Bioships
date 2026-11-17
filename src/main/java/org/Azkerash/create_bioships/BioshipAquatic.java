@@ -103,10 +103,9 @@ public final class BioshipAquatic {
       if (airAccess) core.body().asphyxiate(core);
       else core.body().drown(core);
     }
+    // Water propulsion must not switch off at a land-support weight threshold.
     swimming =
-        (wet || air.seeking() && breathing && waterWithinReach(core, here))
-            && !core.body().dead()
-            && (core.canFly() || core.crawl().carriedLoad(core) <= core.crawl().loadCapacity());
+        (wet || air.seeking() && breathing && waterWithinReach(core, here)) && !core.body().dead();
     velocity = Vec3.ZERO;
     if (swimming) {
       if (air.seeking() && breathing) {
@@ -123,7 +122,15 @@ public final class BioshipAquatic {
       } else if (selected != null && selected.point() != null)
         velocity = navigation.toward(core, selected.point());
       else navigation.clear();
-      velocity = velocity.scale(1.5 * (1 + .6 * BioshipLegEvolution.swimmingFraction(core)));
+      double loadScale =
+          Math.sqrt(
+              core.crawl().loadCapacity()
+                  / Math.max(core.crawl().loadCapacity(), core.crawl().carriedLoad(core)));
+      velocity =
+          velocity.scale(
+              1.5
+                  * Math.max(.1, loadScale)
+                  * (1 + .6 * BioshipLegEvolution.swimmingFraction(core)));
     }
     if (!swimming) navigation.clear();
     if (level.getGameTime() % 20 == 0) {

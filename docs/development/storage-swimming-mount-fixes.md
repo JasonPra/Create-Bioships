@@ -17,3 +17,12 @@ Checkpoint 3: enumerated every registered Biomancy/bioship block and every block
 The live audit passed; complete mass ranges and maximum displaced volume are recorded in
 `biological-block-physics-audit.txt`. No special high-buoyancy override exists for packed flesh or
 hull. Grown-body swimming still uses a land-load cutoff, which is addressed in checkpoint 4.
+
+Checkpoint 4: reproduced the cutoff with load=46, land capacity=32, wet=true, swimming=false.
+Swimming now continues above land capacity with reduced speed as load grows. The grown-body
+fixture, real roof-detour air recovery and working-gills idle-submersion tests all passed. No global
+block mass/displacement changes were made: packed flesh and hull already have ordinary values.
+
+Additional requested repairs: keep existing classes, fix sac orientation and exclude sac hosts for
+eyes/legs/flippers (10–15 min); prefer mounted flippers over core fallback limbs (5–10 min).
+These precede the final regression checkpoint.
