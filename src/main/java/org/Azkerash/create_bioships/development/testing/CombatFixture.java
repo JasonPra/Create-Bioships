@@ -32,6 +32,8 @@ public final class CombatFixture {
   private static final String MARK = "create_bioships.combat_fixture";
   public static final int RADIUS = 12, HEIGHT = 16, TRIAL_TICKS = 200;
 
+  private static final Set<ServerLevel> UI_READY = Collections.newSetFromMap(new WeakHashMap<>());
+
   private CombatFixture() {}
 
   private static BlockPos base(ServerLevel level) {
@@ -153,6 +155,7 @@ public final class CombatFixture {
   }
 
   private static void explanation(ServerLevel level, String progress) {
+    UI_READY.add(level);
     for (var old :
         level.getEntitiesOfClass(
             net.minecraft.world.entity.Display.TextDisplay.class,
@@ -169,7 +172,7 @@ public final class CombatFixture {
                     + "Left: START · Right: RESET\n"
                     + "Assembles a 1-HP flesh pillar, then tests\n"
                     + "every registered hostile type one at a time.\n"
-                    + "Death advances; 10s timeout records failure.\n"
+                    + "Death advances; timeout records failure.\n"
                     + "Automatically restores the sleeping fixture.\n"
                     + progress
                     + "\n/combat_test status · /combat_test results"),
@@ -242,7 +245,8 @@ public final class CombatFixture {
     state.combatBody = body.getUniqueId();
     var health = SubLevelHealth.status(body);
     SubLevelHealth.damage(body, health.current() - 1, "test_setup");
-    state.combatDeadline = level.getGameTime() + TRIAL_TICKS;
+    state.combatActiveTrialSeconds = state.combatTrialSeconds;
+    state.combatDeadline = level.getGameTime() + state.combatActiveTrialSeconds * 20L;
     var type =
         BuiltInRegistries.ENTITY_TYPE.get(
             ResourceLocation.parse(state.combatEnemies.get(state.combatIndex)));
@@ -299,6 +303,10 @@ public final class CombatFixture {
 
   public static void tick(ServerLevel level) {
     var state = CoreTestState.get(level);
+    if (state.combatBuilt
+        && !UI_READY.contains(level)
+        && level.isPositionEntityTicking(base(level))
+        && level.isPositionEntityTicking(base(level).north(16))) explanation(level, status(level));
     if (!state.combatRunning) return;
     var enemy = state.combatEnemy == null ? null : level.getEntity(state.combatEnemy);
     if (enemy instanceof Mob mob
@@ -315,7 +323,7 @@ public final class CombatFixture {
       finishTrial(level, "PASS (" + SubLevelHealth.status(server).causeOfDeath() + ")");
     else if (body == null || body.isRemoved()) finishTrial(level, "FAIL (subject lost)");
     else if (level.getGameTime() >= state.combatDeadline)
-      finishTrial(level, "FAIL (no lethal attack within 10s)");
+      finishTrial(level, "FAIL (no lethal attack within " + state.combatActiveTrialSeconds + "s)");
   }
 
   public static String status(ServerLevel level) {
@@ -325,7 +333,10 @@ public final class CombatFixture {
             ? "running " + (s.combatIndex + 1) + " / " + s.combatEnemies.size()
             : "ready")
         + ", saved results: "
-        + s.combatResults.size();
+        + s.combatResults.size()
+        + ", trial limit: "
+        + s.combatTrialSeconds
+        + "s";
   }
 
   public static List<String> results(ServerLevel level) {
@@ -334,12 +345,21 @@ public final class CombatFixture {
 
   private static final String FAILURE_LABEL = MARK + ".failure_label",
       FAILURE_TOGGLE = MARK + ".failure_toggle",
-      FAILURE_NEXT = MARK + ".failure_next";
+      FAILURE_NEXT = MARK + ".failure_next",
+      TIME_DECREASE = MARK + ".time_decrease",
+      TIME_INCREASE = MARK + ".time_increase";
 
   public static void toggleFailures(ServerLevel level, boolean nextPage) {
     var state = CoreTestState.get(level);
     if (nextPage) state.combatFailurePage++;
     else state.combatFailuresExpanded = !state.combatFailuresExpanded;
+    state.setDirty();
+    failureDisplay(level);
+  }
+
+  public static void adjustTrialDuration(ServerLevel level, int seconds) {
+    var state = CoreTestState.get(level);
+    state.combatTrialSeconds = Math.clamp(state.combatTrialSeconds + seconds, 5, 120);
     state.setDirty();
     failureDisplay(level);
   }
@@ -350,7 +370,9 @@ public final class CombatFixture {
       if (entity != null
           && (entity.getTags().contains(FAILURE_LABEL)
               || entity.getTags().contains(FAILURE_TOGGLE)
-              || entity.getTags().contains(FAILURE_NEXT))) removed.add(entity);
+              || entity.getTags().contains(FAILURE_NEXT)
+              || entity.getTags().contains(TIME_DECREASE)
+              || entity.getTags().contains(TIME_INCREASE))) removed.add(entity);
     removed.forEach(Entity::discard);
     var state = CoreTestState.get(level);
     var failures = state.combatResults.stream().filter(r -> r.contains(": FAIL")).toList();
@@ -366,6 +388,13 @@ public final class CombatFixture {
             + (state.combatFailuresExpanded ? "▲" : "▼")
             + " · right-click");
     failureButton(level, header.add(0, -.17, 0), FAILURE_TOGGLE, 4);
+    var timerRow = header.add(0, .9, 0);
+    failureText(
+        level, timerRow, "Trial limit: " + state.combatTrialSeconds + "s\nApplies to next test");
+    failureText(level, timerRow.add(-3, 0, 0), "[−5s]");
+    failureText(level, timerRow.add(3, 0, 0), "[+5s]");
+    failureButton(level, timerRow.add(-3, -.17, 0), TIME_DECREASE, 1.2f);
+    failureButton(level, timerRow.add(3, -.17, 0), TIME_INCREASE, 1.2f);
     if (state.combatFailuresExpanded) {
       var lines = new java.util.ArrayList<String>();
       for (int i = state.combatFailurePage * 4;
@@ -420,9 +449,13 @@ public final class CombatFixture {
       net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.EntityInteract event) {
     if (!(event.getLevel() instanceof ServerLevel level)) return;
     boolean next = event.getTarget().getTags().contains(FAILURE_NEXT);
-    if (!next && !event.getTarget().getTags().contains(FAILURE_TOGGLE)) return;
+    boolean decrease = event.getTarget().getTags().contains(TIME_DECREASE);
+    boolean increase = event.getTarget().getTags().contains(TIME_INCREASE);
+    if (!next && !decrease && !increase && !event.getTarget().getTags().contains(FAILURE_TOGGLE))
+      return;
     if (!CoreTestState.get(level).combatBuilt) return;
-    toggleFailures(level, next);
+    if (decrease || increase) adjustTrialDuration(level, increase ? 5 : -5);
+    else toggleFailures(level, next);
     event.setCancellationResult(net.minecraft.world.InteractionResult.SUCCESS);
     event.setCanceled(true);
   }

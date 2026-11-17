@@ -209,3 +209,9 @@ state on detached fragments, including fragments without a core. Each retains in
 physics. Saved summaries keep unloaded ordinary fragments from allowing the final group to rot
 early; permanent deletion removes their membership. Once the last block of a fragment is due to
 rot, the grid is removed through Sable rather than leaving an empty physics body.
+
+The combat-results hologram also provides **−5s / +5s** controls for the per-enemy trial limit.
+The setting ranges from 5 to 120 seconds and defaults to 10 for existing/new saves. It is saved
+with the fixture and takes effect on the next trial; an active trial retains its original deadline
+and timeout label. Changing the setting does not clear results. Existing dev worlds receive the
+controls when the arena's chunks are ready, without resetting or rerunning their test.

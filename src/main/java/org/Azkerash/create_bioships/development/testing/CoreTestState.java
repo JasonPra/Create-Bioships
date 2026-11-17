@@ -14,6 +14,7 @@ public final class CoreTestState extends SavedData {
   int combatFailurePage;
   int combatIndex;
   long combatDeadline;
+  int combatTrialSeconds = 10, combatActiveTrialSeconds = 10;
   UUID combatBody, combatEnemy;
   boolean combatAcquired;
   boolean arrowBuilt, arrowRunning;
@@ -50,6 +51,11 @@ public final class CoreTestState extends SavedData {
                   state.combatRunning = tag.getBoolean("CombatRunning");
                   state.combatIndex = tag.getInt("CombatIndex");
                   state.combatDeadline = tag.getLong("CombatDeadline");
+                  if (tag.contains("CombatTrialSeconds"))
+                    state.combatTrialSeconds = Math.clamp(tag.getInt("CombatTrialSeconds"), 5, 120);
+                  if (tag.contains("CombatActiveTrialSeconds"))
+                    state.combatActiveTrialSeconds =
+                        Math.clamp(tag.getInt("CombatActiveTrialSeconds"), 5, 120);
                   if (tag.contains("CombatOrigin"))
                     state.combatOrigin = BlockPos.of(tag.getLong("CombatOrigin"));
                   state.combatAcquired = tag.getBoolean("CombatAcquired");
@@ -81,6 +87,8 @@ public final class CoreTestState extends SavedData {
     tag.putLong("CombatOrigin", combatOrigin.asLong());
     tag.putInt("CombatIndex", combatIndex);
     tag.putLong("CombatDeadline", combatDeadline);
+    tag.putInt("CombatTrialSeconds", combatTrialSeconds);
+    tag.putInt("CombatActiveTrialSeconds", combatActiveTrialSeconds);
     tag.putBoolean("CombatAcquired", combatAcquired);
     if (combatEnemy != null) tag.putUUID("CombatEnemy", combatEnemy);
     if (combatBody != null) tag.putUUID("CombatBody", combatBody);
