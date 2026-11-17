@@ -588,6 +588,35 @@ public class BioshipGameTests {
     }
   }
 
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "all_mouth_apertures")
+  public static void every_mouth_reserves_its_tooth_face_against_new_placement(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    var level = helper.getLevel();
+    try {
+      digestive(helper, core, false);
+      var second = core.getBlockPos().south();
+      level.setBlock(
+          second,
+          Create_bioships.FEEDING_MOUTH
+              .get()
+              .defaultBlockState()
+              .setValue(FeedingMouthBlock.FACING, Direction.SOUTH),
+          3);
+      helper.assertTrue(DigestiveSystem.mouths(core).size() == 2, "Missing secondary mouth");
+      for (var mouth : DigestiveSystem.mouths(core)) {
+        var front = mouth.relative(level.getBlockState(mouth).getValue(FeedingMouthBlock.FACING));
+        helper.assertTrue(
+            !DigestiveSystem.permitsPlacement(core, front),
+            "Mouth tooth face was available for organ/cover placement");
+      }
+      helper.succeed();
+    } finally {
+      cleanup(helper, ship);
+    }
+  }
+
   @GameTest(template = "test_empty", timeoutTicks = 200, batch = "end_fixture_geometry")
   public static void developer_end_habitat_has_remote_islands_biome_and_void_gap(
       GameTestHelper helper) {

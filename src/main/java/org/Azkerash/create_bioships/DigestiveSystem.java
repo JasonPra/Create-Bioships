@@ -130,6 +130,7 @@ public final class DigestiveSystem {
         var next = point.relative(direction);
         var offset = next.subtract(origin);
         if (parent.containsKey(next)
+            || !next.equals(end) && !next.equals(freed) && BioshipAnatomy.mouthOpening(core, next)
             || !next.equals(end) && excluded.contains(next)
             || Math.abs(offset.getX()) > 24
             || offset.getY() < low
@@ -197,7 +198,8 @@ public final class DigestiveSystem {
   }
 
   public static boolean permitsPlacement(LivingCoreBlockEntity core, BlockPos pos) {
-    return !BioshipRespiration.blocksOpening(core, pos)
+    return !BioshipAnatomy.mouthOpening(core, pos)
+        && !BioshipRespiration.blocksOpening(core, pos)
         && stomachs(core).stream()
             .noneMatch(
                 s ->

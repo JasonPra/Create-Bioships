@@ -14,3 +14,6 @@ inventories but opportunistically settles components instead of holding a reserv
 Recall uses real Sable cargo and existing merge animation. Grouped stomach transport forbids
 single-member recall; it must remain intact during a repair. Respiration and support must survive
 recall, and no plan may duplicate inventories as both saved snapshots and active stock/cargo.
+
+Checkpoint 2: shared placement now protects every mouth tooth-facing cell, and intestinal route
+search avoids those openings. All 99 unit tests and two focused live aperture/water checks passed.
