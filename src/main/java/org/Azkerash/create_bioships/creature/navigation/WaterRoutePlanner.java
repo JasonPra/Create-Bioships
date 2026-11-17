@@ -24,6 +24,7 @@ public final class WaterRoutePlanner {
 
   public enum Status {
     COMPLETE,
+    SEGMENT,
     UNREACHABLE,
     BUDGET_EXHAUSTED
   }
@@ -50,18 +51,27 @@ public final class WaterRoutePlanner {
       Point start, Point target, double arrival, Space space, int budget, int radius) {
     if (!Double.isFinite(start.distance(target)) || arrival < 0 || !Double.isFinite(arrival))
       throw new IllegalArgumentException("Non-finite route or invalid arrival radius");
+    if (budget < 1 || radius < 1)
+      throw new IllegalArgumentException("Positive search limits required");
     double distance = start.distance(target);
     if (distance <= arrival) return new Result(List.of(start), Status.COMPLETE, 0);
     var approach = start.lerp(target, Math.max(0, (distance - arrival * .8) / distance));
-    if (distance <= radius && space.fits(approach) && space.clear(start, approach))
+    if (space.fits(approach) && space.clear(start, approach))
       return new Result(List.of(start, approach), Status.COMPLETE, 0);
-    return find(
-        start,
-        p -> p.distance(target) <= arrival,
-        p -> Math.max(0, p.distance(target) - arrival),
-        space,
-        budget,
-        radius);
+    boolean segment = distance > radius * .75;
+    var goal = segment ? start.lerp(target, radius * .75 / distance) : target;
+    double tolerance = segment ? Math.max(1.1, arrival) : arrival;
+    var result =
+        find(
+            start,
+            p -> p.distance(goal) <= tolerance,
+            p -> Math.max(0, p.distance(goal) - tolerance),
+            space,
+            budget,
+            radius);
+    return segment && result.status() == Status.COMPLETE
+        ? new Result(result.points(), Status.SEGMENT, result.expanded())
+        : result;
   }
 
   public static Result find(

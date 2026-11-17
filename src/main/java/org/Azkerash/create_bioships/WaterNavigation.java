@@ -50,7 +50,12 @@ final class WaterNavigation {
       cursor++;
     }
     boolean blocked = cursor < path.size() && !nextClear(space, here, path.get(cursor));
-    if (changed || now >= retryAfter && (blocked || path.isEmpty() || now - plannedAt >= 40)) {
+    if (changed
+        || now >= retryAfter
+            && (blocked
+                || path.isEmpty()
+                || now - plannedAt >= 40
+                || !air && cursor >= path.size() && here.distanceToSqr(target) > 1.21)) {
       var result =
           air
               ? airRoute(core, here, space)

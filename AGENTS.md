@@ -57,3 +57,11 @@ controller, and air-supply-driven surfacing. The six prioritized checkpoints and
 in `docs/development/underwater-navigation-plan.md`. Proceed automatically, push each completed
 checkpoint and report the remaining count. This new scope supersedes prior completion/stop
 notes for underwater navigation only; the historical backlog stays cancelled.
+
+## Completed underwater navigation
+
+All six underwater-navigation checkpoints are complete and pushed. Final validation passed all
+87 unit tests and 189 live GameTests, plus all source-set compilation and package/Mixin checks.
+See `docs/development/underwater-navigation-plan.md` and `underwater-navigation-changelog.md`.
+Zero tasks remain in this approved scope. Do not revive the cancelled historical backlog.
+Headless Sable movement tests passed; no graphical animation review is claimed.

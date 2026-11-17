@@ -159,13 +159,18 @@ public class BioshipGameTests {
   }
 
   private static ComponentTransport.Move elapsedTransport(ComponentTransport.Move move) {
+    return elapsedTransport(move, ComponentMerging.DURATION_TICKS);
+  }
+
+  private static ComponentTransport.Move elapsedTransport(
+      ComponentTransport.Move move, int elapsed) {
     return new ComponentTransport.Move(
         move.cargo(),
         move.cargoBlock(),
         move.source(),
         move.target(),
         move.start(),
-        move.started() - ComponentMerging.DURATION_TICKS,
+        move.started() - elapsed,
         move.external(),
         move.restoreFlesh(),
         move.mouth(),
@@ -2684,31 +2689,37 @@ public class BioshipGameTests {
     var ship = assemble(helper);
     var core = core(ship);
     var level = helper.getLevel();
-    var destination = core.getBlockPos().below();
-    var source = core.getBlockPos().east();
-    level.setBlock(destination, block("biomancy:decomposer").defaultBlockState(), 3);
-    level.setBlock(source, block("biomancy:digester").defaultBlockState(), 3);
-    var digester =
-        (com.github.elenterius.biomancy.block.digester.DigesterBlockEntity)
-            level.getBlockEntity(source);
-    digester.getOutputInventory().setStackInSlot(0, new ItemStack(item("biomancy:nutrients"), 7));
-    ComponentMerging.tryAvailable(core.amoebaComponents());
-    helper.assertTrue(
-        ComponentTransport.busy(core.amoebaComponents()),
-        "Core above decomposer prevented the merge from starting");
-    helper.runAfterDelay(
-        37,
-        () ->
-            finish(
-                helper,
-                ship,
-                () -> {
-                  var organ = BioshipContainerState.entity(level, ship, destination);
-                  helper.assertTrue(
-                      organ instanceof StomachBlockEntity stomach
-                          && stomach.material("biomancy:nutrients") == 7,
-                      "Under-core merge failed or lost resources");
-                }));
+    try {
+      var destination = core.getBlockPos().below();
+      var source = core.getBlockPos().east();
+      level.setBlock(destination, block("biomancy:decomposer").defaultBlockState(), 3);
+      level.setBlock(source, block("biomancy:digester").defaultBlockState(), 3);
+      var digester =
+          (com.github.elenterius.biomancy.block.digester.DigesterBlockEntity)
+              level.getBlockEntity(source);
+      digester.getOutputInventory().setStackInSlot(0, new ItemStack(item("biomancy:nutrients"), 7));
+      ComponentMerging.tryAvailable(core.amoebaComponents());
+      helper.assertTrue(
+          ComponentTransport.busy(core.amoebaComponents()),
+          "Core above decomposer prevented merge startup");
+      var move = core.organMove();
+      core.organMove(elapsedTransport(move, ComponentMerging.DURATION_TICKS - 1));
+      ComponentTransport.tick(core.amoebaComponents());
+      helper.assertTrue(
+          level.getBlockState(destination).is(block("biomancy:decomposer"))
+              && core.organMove() != null,
+          "Merge committed before its animation completed");
+      core.organMove(elapsedTransport(move));
+      ComponentTransport.tick(core.amoebaComponents());
+      var organ = BioshipContainerState.entity(level, ship, destination);
+      helper.assertTrue(
+          organ instanceof StomachBlockEntity stomach
+              && stomach.material("biomancy:nutrients") == 7,
+          "Under-core merge failed or lost resources at the transaction boundary");
+      helper.succeed();
+    } finally {
+      cleanup(helper, ship);
+    }
   }
 
   @GameTest(template = "test_empty", timeoutTicks = 100, batch = "merge_faces")
@@ -10061,19 +10072,34 @@ public class BioshipGameTests {
                 debug.getString("Action").equals("DEFEND")
                     && debug.getCompound("BodyWork").getString("Action").equals("CONFIGURE"),
                 "Debug snapshot does not expose both independent trees");
-            helper.runAfterDelay(
-                50,
-                () -> {
-                  try {
-                    helper.assertTrue(
-                        DigestiveSystem.functional(core(ship)),
-                        "Owned components failed to finish connected digestion during defense");
-                    helper.succeed();
-                  } finally {
-                    threat.discard();
-                    cleanup(helper, ship);
-                  }
-                });
+            // Observe the merge boundary, before later autonomous rearrangement can take an
+            // otherwise functional mouth/stomach temporarily back into transport.
+            var move = core.organMove();
+            core.organMove(elapsedTransport(move, ComponentMerging.DURATION_TICKS - 1));
+            ComponentTransport.tick(core.amoebaComponents());
+            helper.assertTrue(
+                core.organMove() != null && DigestiveSystem.stomachs(core).isEmpty(),
+                "Owned merge finished before its animation elapsed");
+            core.organMove(elapsedTransport(move));
+            ComponentTransport.tick(core.amoebaComponents());
+            helper.assertTrue(
+                DigestiveSystem.stomachs(core).size() == 1
+                    && core.brain().choose(core).action() == BioshipBrain.Action.DEFEND,
+                "Owned stomach merge failed to commit independently of defense");
+            // Configuration deliberately pauses while the timed merge owns transport. Its next
+            // normal step converts the already-owned Bio-Forge into the feeding mouth.
+            var followup = core.adaptation().behavior().choose(core);
+            helper.assertTrue(
+                followup != null && followup.action() == BioshipBrain.Action.CONFIGURE,
+                "Defense suppressed the remaining owned mouth conversion");
+            BioshipConfiguration.execute(core);
+            helper.assertTrue(
+                DigestiveSystem.functional(core)
+                    && core.brain().choose(core).action() == BioshipBrain.Action.DEFEND,
+                "Owned mouth/stomach configuration failed alongside defense");
+            helper.succeed();
+            threat.discard();
+            cleanup(helper, ship);
           } catch (Throwable failure) {
             threat.discard();
             cleanup(helper, ship);

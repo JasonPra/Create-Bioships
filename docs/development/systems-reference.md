@@ -2006,10 +2006,15 @@ final class LegUsageHistory
 
 ### Swimming and breathing [active]
 
-Saved air supply, all-mouth fluid checks, surfacing need and non-flight propulsion intent.
+Bounded 3D water routes, whole-body clearance, low-air roof detours, recovery hysteresis and buoyancy-aware velocity feedback.
 
 ```text
 [water]
+  creature.respiration.AirSupply
+  creature.navigation.WaterRoutePlanner
+  creature.navigation.SwimVelocityControl
+  WaterNavigation
+  WaterNavigationSpace
   BioshipAquatic
   BioshipRespiration
   RespiratoryOrganBlock
@@ -2017,75 +2022,223 @@ Saved air supply, all-mouth fluid checks, surfacing need and non-flight propulsi
 ```
 
 
+#### creature.respiration.AirSupply
+
+Source: `src/main/java/org/Azkerash/create_bioships/creature/respiration/AirSupply.java` (31 lines).
+
+```java
+public final class AirSupply
+
+  public static final int CAPACITY, SEEK_BELOW; // line 4
+
+  private int remaining; // line 5
+
+  private boolean seeking; // line 6
+
+  public int remaining(); // line 7
+
+  public boolean seeking(); // line 11
+
+  public boolean needsAir(boolean breathing, boolean airAccess); // line 15
+
+  public void tick(boolean breathing, boolean airAccess, boolean workingGills); // line 19
+
+  public void restore(int air, boolean seeking); // line 25
+
+```
+
+
+#### creature.navigation.WaterRoutePlanner
+
+Source: `src/main/java/org/Azkerash/create_bioships/creature/navigation/WaterRoutePlanner.java` (161 lines).
+
+```java
+public final class WaterRoutePlanner
+
+  public record Point(double x, double y, double z); // line 7
+
+  public interface Space; // line 17
+
+  public enum Status; // line 23
+
+  public record Result(List<Point> points, Status status, int expanded); // line 30
+
+  private record Cell(int x, int y, int z); // line 36
+
+  private record Entry(Cell cell, double cost, double estimate, long order); // line 46
+
+  public static Result toTarget( Point start, Point target, double arrival, Space space, int budget, int radius); // line 48
+
+  public static Result find( Point start, Predicate<Point> goal, ToDoubleFunction<Point> heuristic, Space space, int budget, int radius); // line 75
+
+  private static List<Point> smooth(List<Point> path, Space space); // line 145
+
+  private WaterRoutePlanner(); // line 158
+
+```
+
+
+#### creature.navigation.SwimVelocityControl
+
+Source: `src/main/java/org/Azkerash/create_bioships/creature/navigation/SwimVelocityControl.java` (20 lines).
+
+```java
+public final class SwimVelocityControl
+
+  public record Vector(double x, double y, double z); // line 4
+
+  private final double[] correction; // line 5
+
+  public Vector acceleration(Vector wanted, Vector actual, double dt); // line 7
+
+```
+
+
+#### WaterNavigation
+
+Source: `src/main/java/org/Azkerash/create_bioships/WaterNavigation.java` (125 lines).
+
+```java
+final class WaterNavigation
+
+  private List<Vec3> path; // line 12
+
+  private Vec3 destination; // line 13
+
+  private int cursor, expanded; // line 14
+
+  private long plannedAt; // line 15
+
+  private String status; // line 16
+
+  private boolean airRoute; // line 17
+
+  void clear(); // line 18
+
+  List<Vec3> remaining(); // line 27
+
+  Vec3 toward(LivingCoreBlockEntity core, Vec3 target); // line 31
+
+  Vec3 towardAir(LivingCoreBlockEntity core); // line 35
+
+  private Vec3 steer(LivingCoreBlockEntity core, Vec3 target, boolean air); // line 39
+
+  private WaterRoutePlanner.Result airRoute( LivingCoreBlockEntity core, Vec3 here, WaterNavigationSpace space); // line 82
+
+  private boolean nextClear(WaterNavigationSpace space, Vec3 from, Vec3 to); // line 106
+
+  CompoundTag debug(long now); // line 113
+
+```
+
+
+#### WaterNavigationSpace
+
+Source: `src/main/java/org/Azkerash/create_bioships/WaterNavigationSpace.java` (84 lines).
+
+```java
+final class WaterNavigationSpace implements Space
+
+  private final ServerLevel level; // line 11
+
+  private final List<Vec3> offsets; // line 12
+
+  private final Vec3 half; // line 13
+
+  private final boolean surface; // line 14
+
+  private final Map<BlockPos, Integer> samples; // line 15
+
+  private int sample(BlockPos cell); // line 16
+
+  WaterNavigationSpace(LivingCoreBlockEntity core, boolean surface); // line 29
+
+  static Point point(Vec3 p); // line 48
+
+  static Vec3 vector(Point p); // line 52
+
+  public boolean fits(Point point); // line 56
+
+  public boolean clear(Point from, Point to); // line 77
+
+```
+
+
 #### BioshipAquatic
 
-Source: `src/main/java/org/Azkerash/create_bioships/BioshipAquatic.java` (241 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipAquatic.java` (232 lines).
 
 ```java
 public final class BioshipAquatic
 
-  private int air; // line 14
+  private final WaterNavigation navigation; // line 16
 
-  private long lastTick; // line 15
+  private final SwimVelocityControl steering; // line 17
 
-  private volatile boolean wet, swimming; // line 16
+  public java.util.List<Vec3> path(); // line 18
 
-  private boolean waterContact; // line 17
+  public CompoundTag navigationDebug(long now); // line 22
 
-  private boolean breathing, airAccess; // line 18
+  private final AirSupply air; // line 31
 
-  private final ExposureHistory gillUsage; // line 19
+  private long lastTick; // line 33
 
-  ExposureHistory gillUsage(); // line 20
+  private volatile boolean wet, swimming; // line 34
 
-  private volatile Vec3 velocity; // line 24
+  private boolean waterContact; // line 35
 
-  private final LegUsageHistory legUsage; // line 26
+  private boolean breathing, airAccess; // line 36
 
-  private long nextLegEvolution; // line 28
+  private final ExposureHistory gillUsage; // line 37
 
-  LegUsageHistory legUsage(); // line 29
+  ExposureHistory gillUsage(); // line 38
 
-  long nextLegEvolution(); // line 33
+  private volatile Vec3 velocity; // line 42
 
-  void legEvolved(long next); // line 37
+  private final LegUsageHistory legUsage; // line 44
 
-  public boolean wet(); // line 41
+  private long nextLegEvolution; // line 46
 
-  boolean waterContact(); // line 45
+  LegUsageHistory legUsage(); // line 47
 
-  public boolean swimming(); // line 49
+  long nextLegEvolution(); // line 51
 
-  public int air(); // line 53
+  void legEvolved(long next); // line 55
 
-  boolean needsAir(); // line 57
+  public boolean wet(); // line 59
 
-  void tick(LivingCoreBlockEntity core); // line 61
+  boolean waterContact(); // line 63
 
-  static boolean touchesWater(LivingCoreBlockEntity core); // line 126
+  public boolean swimming(); // line 67
 
-  private static boolean waterAt(LivingCoreBlockEntity core, Vec3 point); // line 157
+  public int air(); // line 71
 
-  static boolean canBreathe(LivingCoreBlockEntity core); // line 162
+  boolean needsAir(); // line 75
 
-  static boolean aboveFluid(LivingCoreBlockEntity core, Vec3 point); // line 166
+  void tick(LivingCoreBlockEntity core); // line 79
 
-  private static boolean waterWithinReach(LivingCoreBlockEntity core, Vec3 here); // line 172
+  static boolean touchesWater(LivingCoreBlockEntity core); // line 129
 
-  private boolean clear(LivingCoreBlockEntity core, Vec3 offset); // line 180
+  private static boolean waterAt(LivingCoreBlockEntity core, Vec3 point); // line 160
 
-  void propel(ServerSubLevel ship, RigidBodyHandle body, double dt); // line 192
+  static boolean canBreathe(LivingCoreBlockEntity core); // line 165
 
-  public CompoundTag save(); // line 204
+  static boolean aboveFluid(LivingCoreBlockEntity core, Vec3 point); // line 169
 
-  void load(CompoundTag t); // line 223
+  private static boolean waterWithinReach(LivingCoreBlockEntity core, Vec3 here); // line 175
+
+  void propel(ServerSubLevel ship, RigidBodyHandle body, double dt); // line 183
+
+  public CompoundTag save(); // line 195
+
+  void load(CompoundTag t); // line 214
 
 ```
 
 
 #### BioshipRespiration
 
-Source: `src/main/java/org/Azkerash/create_bioships/BioshipRespiration.java` (170 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipRespiration.java` (177 lines).
 
 ```java
 public final class BioshipRespiration
@@ -2100,29 +2253,31 @@ public final class BioshipRespiration
 
   static boolean airAccess(LivingCoreBlockEntity core); // line 37
 
-  static boolean exposedGill(LivingCoreBlockEntity core, BlockPos pos, BlockState state); // line 49
+  static boolean airAccessAt(LivingCoreBlockEntity core, Vec3 root); // line 41
 
-  public static boolean activeGills(LivingCoreBlockEntity core); // line 62
+  static boolean exposedGill(LivingCoreBlockEntity core, BlockPos pos, BlockState state); // line 56
 
-  static boolean canBreathe(LivingCoreBlockEntity core); // line 70
+  public static boolean activeGills(LivingCoreBlockEntity core); // line 69
 
-  static boolean wantsGills(LivingCoreBlockEntity core); // line 74
+  static boolean canBreathe(LivingCoreBlockEntity core); // line 77
 
-  static boolean prefersGills(LivingCoreBlockEntity core); // line 79
+  static boolean wantsGills(LivingCoreBlockEntity core); // line 81
 
-  static boolean missingLungs(LivingCoreBlockEntity core); // line 83
+  static boolean prefersGills(LivingCoreBlockEntity core); // line 86
 
-  static boolean needsLungs(LivingCoreBlockEntity core); // line 87
+  static boolean missingLungs(LivingCoreBlockEntity core); // line 90
 
-  static boolean blocksOpening(LivingCoreBlockEntity core, BlockPos target); // line 91
+  static boolean needsLungs(LivingCoreBlockEntity core); // line 94
 
-  record Growth(BlockPos pos, BlockState state, MaterialCost cost, boolean gills); // line 101
+  static boolean blocksOpening(LivingCoreBlockEntity core, BlockPos target); // line 98
 
-  static Growth plan(LivingCoreBlockEntity core); // line 103
+  record Growth(BlockPos pos, BlockState state, MaterialCost cost, boolean gills); // line 108
 
-  static BioshipAdaptation.Proposal proposal(LivingCoreBlockEntity core); // line 135
+  static Growth plan(LivingCoreBlockEntity core); // line 110
 
-  static boolean grow(LivingCoreBlockEntity core, BlockPos pos, BlockState state); // line 154
+  static BioshipAdaptation.Proposal proposal(LivingCoreBlockEntity core); // line 142
+
+  static boolean grow(LivingCoreBlockEntity core, BlockPos pos, BlockState state); // line 161
 
 ```
 
@@ -4626,7 +4781,7 @@ public final class BioshipNetwork
 
 #### network.NavigationDebug
 
-Source: `src/main/java/org/Azkerash/create_bioships/network/NavigationDebug.java` (118 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/network/NavigationDebug.java` (121 lines).
 
 ```java
 public final class NavigationDebug
@@ -4635,9 +4790,9 @@ public final class NavigationDebug
 
   public static CompoundTag inspect(LivingCoreBlockEntity core); // line 21
 
-  public static CompoundTag request(ServerPlayer player); // line 91
+  public static CompoundTag request(ServerPlayer player); // line 94
 
-  private NavigationDebug(); // line 115
+  private NavigationDebug(); // line 118
 
 ```
 

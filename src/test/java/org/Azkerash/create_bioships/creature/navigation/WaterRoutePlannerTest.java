@@ -26,6 +26,32 @@ class WaterRoutePlannerTest {
   }
 
   @Test
+  void longClearRoutesDoNotRequireAnUnboundedSearch() {
+    var route = WaterRoutePlanner.toTarget(p(0, 0, 0), p(100, 0, 0), 1, space(q -> true), 32, 16);
+    assertEquals(Status.COMPLETE, route.status());
+    assertEquals(0, route.expanded());
+  }
+
+  @Test
+  void longBlockedRoutesReturnAnExplicitContinuationSegment() {
+    var water =
+        space(
+            q ->
+                q.y() >= 0
+                    && q.y() < 4
+                    && q.z() >= 0
+                    && q.z() < 7
+                    && q.x() >= 0
+                    && q.x() < 102
+                    && !(q.x() >= 4 && q.x() < 5 && q.z() < 4));
+    var route = WaterRoutePlanner.toTarget(p(1, 1, 1), p(100, 1, 1), 1, water, 4096, 32);
+    assertEquals(Status.SEGMENT, route.status());
+    assertFalse(route.points().isEmpty());
+    assertTrue(route.points().getLast().x() > 20);
+    assertTrue(route.expanded() <= 4096);
+  }
+
+  @Test
   void openWaterUsesDirectPathWithoutSearchingAndKeepsDiagonals() {
     var route = WaterRoutePlanner.toTarget(p(0, 0, 0), p(8, 3, 8), .1, space(q -> true), 4096, 32);
     assertEquals(Status.COMPLETE, route.status());

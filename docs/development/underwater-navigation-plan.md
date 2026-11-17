@@ -36,3 +36,15 @@ feedback unit tests bring the unit total to 85. Feedback compensates buoyancy/dr
 blindly adding gravity cancellation; roof clearance and corner transitions avoid ceiling pinning.
 The breach assertion checks actual air access, accounting for Minecraft fluid height below the
 block boundary. Block buoyancy/mass values and corpse physics were not changed.
+
+Checkpoint 6 complete: all **87 unit tests and 189 live GameTests passed** with
+`python /workspace/work/run_bioship_build.py check runGameTestServer`. All main/client, GameTest
+and soak-test source sets compile. Package/Mixin validation covers 195 types and all 13 hooks.
+Long clear routes use direct travel; long obstructed routes return explicit bounded continuation
+segments. Merge fixtures now assert the animation transaction boundary and both owned digestive
+configuration steps, without depending on subsequent autonomous organ movement.
+
+Detailed changes: `underwater-navigation-changelog.md`. Existing F3+P tools expose underwater
+routes. Block buoyancy, corpse physics, resource costs and flight permissions remain unchanged.
+All six checkpoints are complete. **Zero tasks remain** in this approved scope. Headless physics
+movement is tested; no graphical animation review is claimed.
