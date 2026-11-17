@@ -52,7 +52,39 @@ public final class CoreSplitFixture {
     }
   }
 
+  private static final String HOLOGRAM_TAG = "create_bioships.core_split_explanation";
+
   private CoreSplitFixture() {}
+
+  private static void explanation(ServerLevel level, Layout layout) {
+    var position = Vec3.atLowerCornerOf(layout.base()).add(0.5, 1.62, -11.5);
+    for (var old :
+        level.getEntitiesOfClass(
+            net.minecraft.world.entity.Display.TextDisplay.class,
+            new AABB(position, position).inflate(4),
+            display -> display.getTags().contains(HOLOGRAM_TAG))) old.discard();
+    var display = net.minecraft.world.entity.EntityType.TEXT_DISPLAY.create(level);
+    if (display == null) return;
+    var data = new net.minecraft.nbt.CompoundTag();
+    data.putString(
+        "text",
+        Component.Serializer.toJson(
+            Component.literal(
+                "CORE SEPARATION TEST\n"
+                    + "START assembles the glued hollow pyramid.\n"
+                    + "Expected: 49 separate cores wake up and blink.\n"
+                    + "The wooden pole stays behind.\n"
+                    + "RESET restores the sleeping pyramid."),
+            level.registryAccess()));
+    data.putString("billboard", "center");
+    data.putInt("line_width", 220);
+    data.putInt("background", 0x60000000);
+    data.putBoolean("shadow", true);
+    display.load(data);
+    display.setPos(position);
+    display.addTag(HOLOGRAM_TAG);
+    level.addFreshEntity(display);
+  }
 
   public static void build(ServerLevel level, Layout layout) {
     var base = layout.base();
@@ -79,6 +111,7 @@ public final class CoreSplitFixture {
     glue.setBoundsAndSync(layout.glue());
     control(level, layout.startButton(), "core_test start", "START", "Assemble pyramid");
     control(level, layout.resetButton(), "core_test reset", "RESET", "Restore fixture");
+    explanation(level, layout);
   }
 
   private static void control(

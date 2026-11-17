@@ -1,10 +1,22 @@
 {
   "variants": {
-    "blink=false": {
+    "wake=0,blink=false": {
       "model": "create_bioships:block/core_awake"
     },
-    "blink=true": {
+    "wake=0,blink=true": {
       "model": "create_bioships:block/core_closed"
+    },
+    "wake=1": {
+      "model": "create_bioships:block/core_closed"
+    },
+    "wake=2": {
+      "model": "create_bioships:block/core_waking_2"
+    },
+    "wake=3": {
+      "model": "create_bioships:block/core_waking_3"
+    },
+    "wake=4": {
+      "model": "create_bioships:block/core_waking_4"
     }
   }
 }

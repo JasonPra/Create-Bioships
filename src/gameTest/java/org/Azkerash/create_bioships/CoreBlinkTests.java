@@ -127,11 +127,13 @@ public final class CoreBlinkTests {
           helper.assertTrue(
               level.getBlockState(idle).getValue(CoreBlock.BLINK),
               "Unassembled core blinked or opened");
-          if (tick >= 3 && tick <= 80)
+          if (tick >= 26 && tick <= 100)
             helper.assertTrue(
                 !state.getValue(CoreBlock.BLINK), "Assembled core did not default open-eyed");
+          if (tick >= 26)
+            helper.assertTrue(state.getValue(CoreBlock.WAKE) == 0, "Wake animation replayed");
           counts[state.getValue(CoreBlock.BLINK) ? 1 : 0]++;
-          if (tick < 139) {
+          if (tick < 170) {
             sample(helper, body, pos, idle, counts, tick + 1);
             return;
           }

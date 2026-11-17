@@ -18,11 +18,13 @@ public final class CoreBlock extends Block
     implements dev.ryanhcode.sable.api.block.BlockSubLevelAssemblyListener {
   public static final MapCodec<CoreBlock> CODEC = simpleCodec(CoreBlock::new);
   public static final BooleanProperty BLINK = BooleanProperty.create("blink");
+  public static final IntegerProperty WAKE = IntegerProperty.create("wake", 0, 4);
   private static final IntegerProperty STAGE = IntegerProperty.create("blink_stage", 0, 3);
 
   public CoreBlock(Properties properties) {
     super(properties);
-    registerDefaultState(stateDefinition.any().setValue(BLINK, true).setValue(STAGE, 0));
+    registerDefaultState(
+        stateDefinition.any().setValue(BLINK, true).setValue(STAGE, 0).setValue(WAKE, 0));
   }
 
   @Override
@@ -32,7 +34,7 @@ public final class CoreBlock extends Block
 
   @Override
   protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-    builder.add(BLINK, STAGE);
+    builder.add(BLINK, STAGE, WAKE);
   }
 
   @Override
@@ -69,13 +71,20 @@ public final class CoreBlock extends Block
   @Override
   protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
     if (!assembled(level, pos)) {
-      if (!state.getValue(BLINK) || state.getValue(STAGE) != 0)
-        level.setBlock(pos, state.setValue(BLINK, true).setValue(STAGE, 0), 2);
+      if (!state.getValue(BLINK) || state.getValue(STAGE) != 0 || state.getValue(WAKE) != 0)
+        level.setBlock(pos, state.setValue(BLINK, true).setValue(STAGE, 0).setValue(WAKE, 0), 2);
       return;
     }
     CoreAssemblyRules.mark(level, pos);
     CoreAssemblyRules.reconcile(level, pos);
     if (!level.getBlockState(pos).is(this)) return;
+    int wake = state.getValue(WAKE);
+    if (wake > 0) {
+      int nextWake = wake == 4 ? 0 : wake + 1;
+      level.setBlock(pos, state.setValue(WAKE, nextWake).setValue(BLINK, nextWake != 0), 2);
+      level.scheduleTick(pos, this, nextWake == 0 ? 109 : 6);
+      return;
+    }
     int stage = state.getValue(STAGE);
     // Newly assembled cores open first. The old four/four/three-tick double blink follows.
     boolean opening = stage == 3 || stage == 0 && state.getValue(BLINK);
@@ -101,7 +110,13 @@ public final class CoreBlock extends Block
   public void afterMove(
       ServerLevel source, ServerLevel destination, BlockState state, BlockPos from, BlockPos to) {
     // Use Sable's move callback so both assembly and disassembly refresh the eye state.
-    destination.setBlock(to, state.setValue(BLINK, true).setValue(STAGE, 0), 2);
+    destination.setBlock(
+        to,
+        state
+            .setValue(BLINK, true)
+            .setValue(STAGE, 0)
+            .setValue(WAKE, assembled(destination, to) ? 1 : 0),
+        2);
     CoreAssemblyRules.changed(destination, to);
     destination.scheduleTick(to, this, 1);
   }
