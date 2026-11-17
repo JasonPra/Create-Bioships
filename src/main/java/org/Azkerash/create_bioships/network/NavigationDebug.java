@@ -24,7 +24,10 @@ public final class NavigationDebug {
     var level = core.getLevel();
     var ship = core.ship();
     if (level == null || ship == null || core.body().dead()) return new CompoundTag();
-    var data = core.crawl().navigationDebug(level.getGameTime());
+    var data =
+        core.aquatic().swimming()
+            ? core.aquatic().navigationDebug(level.getGameTime())
+            : core.crawl().navigationDebug(level.getGameTime());
     data.putUUID("Ship", ship.getUniqueId());
     data.putString("Action", core.brain().action().name());
     data.putString("Reason", core.brain().reason());
@@ -79,7 +82,7 @@ public final class NavigationDebug {
       data.putString("TargetLabel", label);
     }
     var route = new ListTag();
-    var points = core.crawl().path();
+    var points = core.aquatic().swimming() ? core.aquatic().path() : core.crawl().path();
     for (var point : points.stream().limit(256).toList()) {
       var entry = new CompoundTag();
       entry.put("Point", VisionDebug.vector(point));

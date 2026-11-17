@@ -24,3 +24,5 @@ a straight-route fast path, cached waypoints and throttled retries. Air routes m
 move sideways under roofs before ascending. No flight permission or underwater breathing cheat.
 
 Checkpoint 2 complete: reusable bounded A* searches 26 directions with corner checks, a direct-path fast path and collision-checked waypoint simplification. Five new unit cases cover direct travel, 3D detours, roof openings and bounded failure; all 79 unit tests passed. No gameplay integration is claimed at this checkpoint.
+
+Checkpoint 3 complete: loaded-world clearance checks the rotated whole body, rejects terrain/lava/unloaded cells and caches block samples per query. The swimming controller follows cached routes, checks the next travel segment, throttles retries and exposes water waypoints through existing F3+P diagnostics. Four live tests and all 79 unit tests passed, including a collision-checked submerged detour. Air-seeking still uses the previous controller until checkpoint 4.

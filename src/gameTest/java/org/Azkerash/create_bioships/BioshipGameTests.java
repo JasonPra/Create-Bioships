@@ -710,6 +710,43 @@ public class BioshipGameTests {
     }
   }
 
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "underwater_route_clearance")
+  public static void water_navigation_plans_a_loaded_collision_checked_submerged_detour(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var level = helper.getLevel();
+    var root =
+        BlockPos.containing(BodyCoordinates.physical(core(ship).amoebaComponents(), BlockPos.ZERO));
+    var cells = new ArrayList<BlockPos>();
+    try {
+      for (var p : BlockPos.betweenClosed(root.offset(-3, -1, -4), root.offset(9, 4, 4))) {
+        var pos = p.immutable();
+        cells.add(pos);
+        boolean wall = pos.getX() == root.getX() + 3 && pos.getZ() < root.getZ() + 2;
+        level.setBlock(pos, (wall ? Blocks.GLASS : Blocks.WATER).defaultBlockState(), 3);
+      }
+      var current = core(ship);
+      var route = new WaterNavigation();
+      var direction = route.toward(current, Vec3.atCenterOf(root.east(7)));
+      helper.assertTrue(
+          direction.lengthSqr() > 0
+              && route.remaining().stream().anyMatch(p -> p.z() >= root.getZ() + 2),
+          "Underwater controller did not plan a sideways detour around the glass wall");
+      var space = new WaterNavigationSpace(current, false);
+      var previous = BodyCoordinates.physical(current.amoebaComponents(), BlockPos.ZERO);
+      for (var next : route.remaining()) {
+        helper.assertTrue(
+            space.clear(WaterNavigationSpace.point(previous), WaterNavigationSpace.point(next)),
+            "A water route segment intersected terrain or left the water");
+        previous = next;
+      }
+      helper.succeed();
+    } finally {
+      cells.forEach(p -> level.removeBlock(p, false));
+      cleanup(helper, ship);
+    }
+  }
+
   private static int fixture;
 
   private static BlockPos location() {

@@ -12,6 +12,16 @@ import org.joml.Vector3d;
 
 /** Water propulsion is separate from flight; breathing remains a finite survival resource. */
 public final class BioshipAquatic {
+  private final WaterNavigation navigation = new WaterNavigation();
+
+  public java.util.List<Vec3> path() {
+    return navigation.remaining();
+  }
+
+  public CompoundTag navigationDebug(long now) {
+    return navigation.debug(now);
+  }
+
   private int air = 300;
   private long lastTick = Long.MIN_VALUE;
   private volatile boolean wet, swimming;
@@ -101,6 +111,14 @@ public final class BioshipAquatic {
         return;
       }
       var selected = core.brain().lastDecision();
+      if (!needsAir() && selected != null && selected.point() != null) {
+        velocity =
+            navigation
+                .toward(core, selected.point())
+                .scale(1.5 * (1 + .6 * BioshipLegEvolution.swimmingFraction(core)));
+        return;
+      }
+      navigation.clear();
       Vec3 direction =
           selected != null && selected.point() != null && !needsAir()
               ? selected.point().subtract(here).normalize()
@@ -119,6 +137,7 @@ public final class BioshipAquatic {
           break;
         }
     }
+    if (!swimming) navigation.clear();
     if (level.getGameTime() % 20 == 0) {
       core.setChanged();
       level.sendBlockUpdated(core.getBlockPos(), core.getBlockState(), core.getBlockState(), 2);
