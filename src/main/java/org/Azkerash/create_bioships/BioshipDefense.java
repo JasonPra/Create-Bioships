@@ -187,6 +187,11 @@ final class BioshipDefense {
     return false;
   }
 
+  LivingEntity retreatTarget(LivingCoreBlockEntity core) {
+    return RetreatCombat.select(
+        core, strike.active() ? strike.victim((ServerLevel) core.getLevel()) : null);
+  }
+
   void tick(LivingCoreBlockEntity core) {
     if (cooldown > 0) cooldown--;
     if (core.isMature()

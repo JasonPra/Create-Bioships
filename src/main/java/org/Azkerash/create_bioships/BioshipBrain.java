@@ -603,6 +603,7 @@ public final class BioshipBrain {
 
   public LivingEntity attackTarget(LivingCoreBlockEntity core) {
     var decision = choose(core);
+    if (decision.action == Action.FLEE) return core.defense().retreatTarget(core);
     return decision.action == Action.HUNT || decision.action == Action.DEFEND
         ? decision.entity
         : null;

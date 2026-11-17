@@ -108,6 +108,7 @@
         "EncounterObservations",
         "ThreatObservations",
         "RetreatPlanning",
+        "RetreatCombat",
         "creature.survival.ThreatProfile",
         "creature.survival.EscapeScoring"
       ],
@@ -690,11 +691,16 @@
         },
         {
           "kind": "method",
-          "signature": "void tick(LivingCoreBlockEntity core)",
+          "signature": "LivingEntity retreatTarget(LivingCoreBlockEntity core)",
           "line": 188
+        },
+        {
+          "kind": "method",
+          "signature": "void tick(LivingCoreBlockEntity core)",
+          "line": 193
         }
       ],
-      "lines": 251
+      "lines": 256
     },
     "DigestiveSystem": {
       "path": "src/main/java/org/Azkerash/create_bioships/DigestiveSystem.java",
@@ -5223,25 +5229,25 @@
         {
           "kind": "method",
           "signature": "Vec3 groundGoal(LivingCoreBlockEntity core)",
-          "line": 609
+          "line": 610
         },
         {
           "kind": "method",
           "signature": "Vec3 flightVelocity(LivingCoreBlockEntity core)",
-          "line": 647
+          "line": 648
         },
         {
           "kind": "method",
           "signature": "CompoundTag save()",
-          "line": 662
+          "line": 663
         },
         {
           "kind": "method",
           "signature": "void load(CompoundTag tag)",
-          "line": 670
+          "line": 671
         }
       ],
-      "lines": 684
+      "lines": 685
     },
     "BioshipAutonomy": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipAutonomy.java",
@@ -7008,6 +7014,28 @@
         }
       ],
       "lines": 142
+    },
+    "RetreatCombat": {
+      "path": "src/main/java/org/Azkerash/create_bioships/RetreatCombat.java",
+      "declaration": "final class RetreatCombat",
+      "members": [
+        {
+          "kind": "method",
+          "signature": "private RetreatCombat()",
+          "line": 12
+        },
+        {
+          "kind": "method",
+          "signature": "static LivingEntity select(LivingCoreBlockEntity core, LivingEntity current)",
+          "line": 13
+        },
+        {
+          "kind": "method",
+          "signature": "private static boolean eligible(LivingCoreBlockEntity core, LivingEntity entity)",
+          "line": 25
+        }
+      ],
+      "lines": 39
     },
     "BioshipIntegration": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipIntegration.java",

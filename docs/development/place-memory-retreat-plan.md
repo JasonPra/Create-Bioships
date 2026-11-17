@@ -60,3 +60,8 @@ remains a higher-priority need. Ground routes approach water from safe support r
 walking can enter deep water; submerged creatures can choose underwater escape routes. Nearby TNT
 triggers explosive panic. Fire, lava and other hazardous destinations/routes are rejected. All 99
 unit tests and three existing live navigation/escape checks passed. F3+P data includes KnownPlaces.
+
+Checkpoint 7 complete: FLEE movement can select a close actual pursuer for the existing telegraphed
+swipe. A valid active victim is retained during the swipe. Allies, uninvolved prey and unsafe creeper
+fights are excluded. Range only gates attack selection; damage still requires the existing swept
+tip hitbox to collide, with no new radius damage. All 99 unit tests and live-test compilation pass.

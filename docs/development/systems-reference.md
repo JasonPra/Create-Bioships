@@ -1280,7 +1280,7 @@ Safety branches, committed work, NEED before GOAL, weighted ranking, one selecte
 
 #### BioshipBrain
 
-Source: `src/main/java/org/Azkerash/create_bioships/BioshipBrain.java` (684 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipBrain.java` (685 lines).
 
 ```java
 public final class BioshipBrain
@@ -1357,13 +1357,13 @@ public final class BioshipBrain
 
   public LivingEntity attackTarget(LivingCoreBlockEntity core); // line 602
 
-  Vec3 groundGoal(LivingCoreBlockEntity core); // line 609
+  Vec3 groundGoal(LivingCoreBlockEntity core); // line 610
 
-  Vec3 flightVelocity(LivingCoreBlockEntity core); // line 647
+  Vec3 flightVelocity(LivingCoreBlockEntity core); // line 648
 
-  CompoundTag save(); // line 662
+  CompoundTag save(); // line 663
 
-  void load(CompoundTag tag); // line 670
+  void load(CompoundTag tag); // line 671
 
 ```
 
@@ -1417,6 +1417,7 @@ Threat assessment, retreat and idle wandering. Pilot authority is currently disa
   EncounterObservations
   ThreatObservations
   RetreatPlanning
+  RetreatCombat
   creature.survival.ThreatProfile
   creature.survival.EscapeScoring
 ```
@@ -1640,6 +1641,22 @@ final class RetreatPlanning
   static boolean safe(LivingCoreBlockEntity core, Vec3 point, boolean water); // line 174
 
   static Vec3 vector(PlaceMemory.Point p); // line 195
+
+```
+
+
+#### RetreatCombat
+
+Source: `src/main/java/org/Azkerash/create_bioships/RetreatCombat.java` (39 lines).
+
+```java
+final class RetreatCombat
+
+  private RetreatCombat(); // line 12
+
+  static LivingEntity select(LivingCoreBlockEntity core, LivingEntity current); // line 13
+
+  private static boolean eligible(LivingCoreBlockEntity core, LivingEntity entity); // line 25
 
 ```
 
@@ -4607,7 +4624,7 @@ abstract class SurvivalBlastResistanceMixin
 
 #### BioshipDefense
 
-Source: `src/main/java/org/Azkerash/create_bioships/BioshipDefense.java` (251 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipDefense.java` (256 lines).
 
 ```java
 final class BioshipDefense
@@ -4650,7 +4667,9 @@ final class BioshipDefense
 
   private static boolean sensesPrey(LivingCoreBlockEntity core, LivingEntity entity); // line 169
 
-  void tick(LivingCoreBlockEntity core); // line 188
+  LivingEntity retreatTarget(LivingCoreBlockEntity core); // line 188
+
+  void tick(LivingCoreBlockEntity core); // line 193
 
 ```
 
