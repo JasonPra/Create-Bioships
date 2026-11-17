@@ -44,6 +44,16 @@ public interface AmoebaComponentHost extends CreatureBodyAccess {
     return List.of(source);
   }
 
+  default boolean prepareGroup(List<BlockPos> sources, BlockPos delta) {
+    return false;
+  }
+
+  default boolean permitsGroupTarget(BlockPos target) {
+    return false;
+  }
+
+  default void groupDeparted(List<BlockPos> sources) {}
+
   ResourceAccount resources();
 
   ComponentTransport.Move movement();

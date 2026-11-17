@@ -109,3 +109,10 @@ amoeba planner preferentially fills nearly completed valid cube footprints from 
 formed cubes are protected from single-member transport. Unit tests cover missing centers and
 overlap, and three live tests passed including completing a 26-block cube by relocation.
 Whole-cube movement follows in checkpoint 7; formed members currently reject individual moves.
+
+Revised checkpoint 7 complete: formed organs use one real 27-block cargo body with the shared
+sinking animation, all-member placement preflight, support checks and paid external intake-route
+reservation. Current cargo inventories are captured at commit. An obstructed destination rolls
+the entire organ back; if both footprints are obstructed, real cargo is retained until restoration
+is possible. The move and group offsets persist in existing movement/cargo NBT. Three live tests
+passed, including all 27 queues/progress surviving relocation and obstructed-destination rollback.

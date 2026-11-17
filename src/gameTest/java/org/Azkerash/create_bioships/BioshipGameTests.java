@@ -396,6 +396,79 @@ public class BioshipGameTests {
     }
   }
 
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "whole_stomach_transport")
+  public static void formed_stomach_moves_as_one_cargo_and_preserves_every_queue_and_progress(
+      GameTestHelper helper) {
+    wholeStomachMove(helper, false);
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "whole_stomach_rollback")
+  public static void blocked_whole_stomach_move_restores_every_member_to_its_source(
+      GameTestHelper helper) {
+    wholeStomachMove(helper, true);
+  }
+
+  private static void wholeStomachMove(GameTestHelper helper, boolean obstruct) {
+    var ship = assemble(helper);
+    try {
+      var core = core(ship);
+      var level = helper.getLevel();
+      var anchor = digestive(helper, core, false);
+      var origin = core.getBlockPos().west(3);
+      level.setBlock(core.getBlockPos().above(), BioshipTissue.body().defaultBlockState(), 3);
+      for (int x = 0; x < 3; x++)
+        for (int y = 0; y < 3; y++)
+          for (int z = 0; z < 3; z++) {
+            var p = origin.offset(x, y, z);
+            if (!p.equals(anchor.getBlockPos()))
+              level.setBlock(p, Create_bioships.STOMACH.get().defaultBlockState(), 3);
+            var organ = (StomachBlockEntity) level.getBlockEntity(p);
+            organ.enqueue(new ItemStack(Items.BEEF), false);
+            var data = organ.saveWithFullMetadata(level.registryAccess());
+            data.putInt("Progress", 7);
+            data.putInt("ActiveSlot", 0);
+            data.putInt("Duration", 100);
+            organ.loadWithComponents(data, level.registryAccess());
+          }
+      anchor.creditLocal("biomancy:flesh_bits", 64);
+      anchor.creditLocal("biomancy:elastic_fibers", 64);
+      helper.assertTrue(
+          ComponentTransport.begin(core.amoebaComponents(), origin, origin.above(), false),
+          "Whole stomach could not start a validated coordinated move");
+      var move = core.organMove();
+      var cargo = (ServerSubLevel) SubLevelContainer.getContainer(level).getSubLevel(move.cargo());
+      helper.assertTrue(
+          DigestiveSystem.stomachs(core).isEmpty()
+              && BioshipIntegration.blockEntities(cargo).stream()
+                      .filter(e -> e instanceof StomachBlockEntity)
+                      .count()
+                  == 27,
+          "Structure was moved one member at a time or copied into both bodies");
+      var blocked = origin.offset(0, 3, 0);
+      if (obstruct) level.setBlock(blocked, Blocks.OBSIDIAN.defaultBlockState(), 3);
+      core.organMove(elapsedTransport(move));
+      ComponentTransport.tick(core.amoebaComponents());
+      var expected = obstruct ? origin : origin.above();
+      helper.assertTrue(
+          core.organMove() == null && StomachMultiblock.formations(core).size() == 1,
+          "Group commit or rollback left a partial structure");
+      for (int x = 0; x < 3; x++)
+        for (int y = 0; y < 3; y++)
+          for (int z = 0; z < 3; z++) {
+            var organ = (StomachBlockEntity) level.getBlockEntity(expected.offset(x, y, z));
+            helper.assertTrue(
+                organ != null && organ.queuedFood() == 1 && organ.menuData().get(1) == 7,
+                "Group commit lost a member's queue or digestion progress");
+          }
+      helper.assertTrue(
+          DigestiveSystem.stomachs(core).stream().allMatch(s -> s.connected(core)),
+          "Relocated structure could not restore its digestive connection");
+      helper.succeed();
+    } finally {
+      cleanup(helper, ship);
+    }
+  }
+
   private static int fixture;
 
   private static BlockPos location() {

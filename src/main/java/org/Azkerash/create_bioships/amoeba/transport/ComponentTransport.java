@@ -160,7 +160,11 @@ public final class ComponentTransport {
         || source.equals(target)
         || core.body() == null) return false;
     // Whole-structure transport owns formed organs; never tear them into single-block moves.
-    if (!external && movementIsGrouped(core, source)) return false;
+    if (!external && movementIsGrouped(core, source))
+      return !consuming
+          && !stash
+          && mergeRecipe == null
+          && ComponentGroupTransport.begin(core, source, target, manual);
     var request =
         new AmoebaComponentHost.Request(
             source, target, external, manual, consuming, stash, mergeRecipe);
@@ -283,6 +287,7 @@ public final class ComponentTransport {
         cargo, new Vector3d(location.x, location.y, location.z).add(offset), orientation);
     pipeline.resetVelocity(cargo);
     if (age < ComponentMerging.DURATION_TICKS) return;
+    if (ComponentGroupTransport.finish(core, cargo, move)) return;
     if (ComponentMerging.finish(core, cargo, move)) return;
     if (cargo.getUserDataTag() != null && cargo.getUserDataTag().getBoolean("BioshipStash")) {
       core.receive(

@@ -91,6 +91,26 @@ public final class AmoebaCoreAdapter implements AmoebaComponentHost {
             .toList();
   }
 
+  public boolean prepareGroup(List<BlockPos> sources, BlockPos delta) {
+    return BioshipSupport.safeGroupMove(core, sources, delta)
+        && DigestiveSystem.reserveGroupRoute(core, sources, delta);
+  }
+
+  public boolean permitsGroupTarget(BlockPos target) {
+    if (!DigestiveSystem.permitsPlacement(core, target)) return false;
+    var physical = body().logicalPose().transformPosition(Vec3.atCenterOf(target));
+    return BioshipIntegration.growthSpace(level(), BlockPos.containing(physical));
+  }
+
+  public void groupDeparted(List<BlockPos> sources) {
+    for (var source : sources) {
+      var local = source.subtract(core.getBlockPos());
+      core.body().intendedCells().remove(local);
+      var state = level().getBlockState(source);
+      if (!state.isAir()) core.body().intendedCells().put(local, state);
+    }
+  }
+
   public Prepared prepare(Request request) {
     var source = request.source();
     var target = request.target();

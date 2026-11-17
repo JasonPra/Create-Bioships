@@ -105,8 +105,10 @@ public final class DigestiveSystem {
       BlockPos end,
       BlockPos blocked,
       BlockPos freed) {
-    var preferred = findPath(core, ship, start, end, blocked, freed, false);
-    return preferred != null ? preferred : findPath(core, ship, start, end, blocked, freed, true);
+    var preferred = findPath(core, ship, start, end, blocked, freed, false, Set.of());
+    return preferred != null
+        ? preferred
+        : findPath(core, ship, start, end, blocked, freed, true, Set.of());
   }
 
   private static List<BlockPos> findPath(
@@ -116,7 +118,8 @@ public final class DigestiveSystem {
       BlockPos end,
       BlockPos blocked,
       BlockPos freed,
-      boolean spatial) {
+      boolean spatial,
+      Set<BlockPos> excluded) {
     var level = ship.getLevel();
     var origin = core.structuralOrigin();
     int low = spatial ? Math.min(-2, Math.min(start.getY(), end.getY()) - origin.getY() - 1) : 0;
@@ -146,6 +149,7 @@ public final class DigestiveSystem {
         var next = point.relative(direction);
         var offset = next.subtract(origin);
         if (parent.containsKey(next)
+            || !next.equals(end) && excluded.contains(next)
             || Math.abs(offset.getX()) > 24
             || offset.getY() < low
             || offset.getY() > high
@@ -179,6 +183,36 @@ public final class DigestiveSystem {
       }
     }
     return null;
+  }
+
+  /** Reserves a complete external intake route without routing through the future solid organ. */
+  public static boolean reserveGroupRoute(
+      LivingCoreBlockEntity core, List<BlockPos> sources, BlockPos delta) {
+    var targets = new HashSet<BlockPos>();
+    sources.forEach(p -> targets.add(p.offset(delta)));
+    StomachBlockEntity payer = null;
+    List<BlockPos> best = null;
+    int cost = Integer.MAX_VALUE;
+    for (var source : sources) {
+      var entity = core.getLevel().getBlockEntity(source);
+      if (!(entity instanceof StomachBlockEntity stomach)) return false;
+      var end = source.offset(delta);
+      for (var mouth : mouths(core)) {
+        var path = findPath(core, core.ship(), mouth, end, null, source, true, targets);
+        if (path == null) continue;
+        var proposal = plan(core, stomach, new LinkedHashSet<>(path), Set.of(), tubes(core));
+        if (proposal.purchases < cost && affordable(stomach, proposal)) {
+          payer = stomach;
+          best = path;
+          cost = proposal.purchases;
+        }
+      }
+    }
+    if (payer == null || best == null) return false;
+    if (!new MaterialCost(cost, cost, 0).pay(payer)) return false;
+    payer.paidTubeStock += cost;
+    payer.setChanged();
+    return true;
   }
 
   public static boolean permitsPlacement(LivingCoreBlockEntity core, BlockPos pos) {
