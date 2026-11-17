@@ -15,6 +15,12 @@ import org.Azkerash.create_bioships.core.SubLevelHealth;
 
 /** Vanilla attack calculations enter here; persistent health belongs exclusively to the grid. */
 public class SubLevelCombatTarget extends LivingEntity {
+  private static final net.minecraft.network.syncher.EntityDataAccessor<Float> POOL_HEALTH =
+      net.minecraft.network.syncher.SynchedEntityData.defineId(
+          SubLevelCombatTarget.class, net.minecraft.network.syncher.EntityDataSerializers.FLOAT);
+  private static final net.minecraft.network.syncher.EntityDataAccessor<Float> POOL_MAXIMUM =
+      net.minecraft.network.syncher.SynchedEntityData.defineId(
+          SubLevelCombatTarget.class, net.minecraft.network.syncher.EntityDataSerializers.FLOAT);
   private UUID bodyId, anchorThreat;
   protected net.minecraft.core.BlockPos impactCell;
   protected net.minecraft.core.Direction impactFace = net.minecraft.core.Direction.NORTH;
@@ -29,6 +35,103 @@ public class SubLevelCombatTarget extends LivingEntity {
     setInvisible(true);
   }
 
+  @Override
+  protected void defineSynchedData(
+      net.minecraft.network.syncher.SynchedEntityData.Builder builder) {
+    super.defineSynchedData(builder);
+    builder.define(POOL_HEALTH, 1024f);
+    builder.define(POOL_MAXIMUM, 1024f);
+  }
+
+  private void syncPool(ServerSubLevel body) {
+    var health = SubLevelHealth.status(body);
+    entityData.set(POOL_HEALTH, (float) health.current());
+    entityData.set(POOL_MAXIMUM, (float) health.maximum());
+    setHealth((float) health.current());
+  }
+
+  @Override
+  public float getHealth() {
+    var body = body();
+    return body == null
+        ? entityData.get(POOL_HEALTH)
+        : (float) SubLevelHealth.status(body).current();
+  }
+
+  @Override
+  public double getAttributeValue(net.minecraft.core.Holder<Attribute> attribute) {
+    if (attribute != Attributes.MAX_HEALTH) return super.getAttributeValue(attribute);
+    var body = body();
+    return body == null ? entityData.get(POOL_MAXIMUM) : SubLevelHealth.status(body).maximum();
+  }
+
+  @Override
+  public void heal(float amount) {
+    var body = body();
+    if (body != null) {
+      amount = net.neoforged.neoforge.event.EventHooks.onLivingHeal(this, amount);
+      SubLevelHealth.heal(body, amount);
+      syncPool(body);
+    } else if (!level().isClientSide) super.heal(amount);
+  }
+
+  private SubLevelCombatTarget effectOwner() {
+    var body = body();
+    return body != null && this instanceof EyeCombatHurtbox ? CombatAdapter.target(body) : this;
+  }
+
+  @Override
+  public boolean addEffect(net.minecraft.world.effect.MobEffectInstance effect, Entity source) {
+    var owner = effectOwner();
+    if (owner == null) return false;
+    if (owner != this)
+      return owner.addEffect(new net.minecraft.world.effect.MobEffectInstance(effect), source);
+    boolean added = super.addEffect(effect, source);
+    if (added && body() != null) CombatAdapter.saveEffects(body(), this);
+    return added;
+  }
+
+  @Override
+  public boolean hasEffect(net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect> effect) {
+    var owner = effectOwner();
+    return owner != null && (owner == this ? super.hasEffect(effect) : owner.hasEffect(effect));
+  }
+
+  @Override
+  public net.minecraft.world.effect.MobEffectInstance getEffect(
+      net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect> effect) {
+    var owner = effectOwner();
+    return owner == null ? null : owner == this ? super.getEffect(effect) : owner.getEffect(effect);
+  }
+
+  @Override
+  public java.util.Collection<net.minecraft.world.effect.MobEffectInstance> getActiveEffects() {
+    var owner = effectOwner();
+    return owner == null
+        ? List.of()
+        : owner == this ? super.getActiveEffects() : owner.getActiveEffects();
+  }
+
+  @Override
+  public boolean removeEffect(
+      net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect> effect) {
+    var owner = effectOwner();
+    if (owner == null) return false;
+    if (owner != this) return owner.removeEffect(effect);
+    boolean removed = super.removeEffect(effect);
+    if (removed && body() != null) CombatAdapter.saveEffects(body(), this);
+    return removed;
+  }
+
+  @Override
+  public boolean removeAllEffects() {
+    var owner = effectOwner();
+    if (owner == null) return false;
+    boolean changed = owner == this ? super.removeAllEffects() : owner.removeAllEffects();
+    if (owner == this && body() != null) CombatAdapter.saveEffects(body(), this);
+    return changed;
+  }
+
   public static AttributeSupplier.Builder attributes() {
     return LivingEntity.createLivingAttributes().add(Attributes.MAX_HEALTH, 1024);
   }
@@ -37,6 +140,8 @@ public class SubLevelCombatTarget extends LivingEntity {
     bodyId = body.getUniqueId();
     setHealth(getMaxHealth());
     position(body);
+    syncPool(body);
+    if (!(this instanceof EyeCombatHurtbox)) CombatAdapter.restoreEffects(body, this);
   }
 
   public ServerSubLevel body() {
@@ -115,6 +220,12 @@ public class SubLevelCombatTarget extends LivingEntity {
     setDeltaMovement(Vec3.ZERO);
     super.tick();
     setDeltaMovement(Vec3.ZERO);
+    var body = body();
+    if (body != null) {
+      syncPool(body);
+      if (!(this instanceof EyeCombatHurtbox) && tickCount % 20 == 0)
+        CombatAdapter.saveEffects(body, this);
+    }
   }
 
   @Override
@@ -139,7 +250,7 @@ public class SubLevelCombatTarget extends LivingEntity {
         SubLevelWounds.hit(body, impactCell, impactFace);
     }
     // This entity is an adapter, never a second health pool or loot-bearing creature.
-    setHealth(getMaxHealth());
+    if (body != null) syncPool(body);
   }
 
   protected double damageMultiplier() {

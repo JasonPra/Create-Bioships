@@ -105,6 +105,7 @@ public final class CoreTestCommands {
   public static void tick(ServerTickEvent.Post event) {
     observe(event.getServer().overworld());
     CombatFixture.tick(event.getServer().overworld());
+    PotionFixture.tick(event.getServer().overworld());
   }
 
   public static void reset(ServerLevel level, CoreSplitFixture.Layout layout) {
@@ -230,6 +231,31 @@ public final class CoreTestCommands {
                     return 1;
                   }));
     event.getDispatcher().register(combat);
+    var potions = Commands.literal("potion_test").requires(source -> source.hasPermission(2));
+    for (var action : List.of("start", "reset", "status", "results"))
+      potions.then(
+          Commands.literal(action)
+              .executes(
+                  ctx -> {
+                    var level = ctx.getSource().getLevel();
+                    if (action.equals("reset")) PotionFixture.reset(level);
+                    if (action.equals("start")) return PotionFixture.start(level);
+                    if (action.equals("results"))
+                      ctx.getSource()
+                          .sendSuccess(
+                              () ->
+                                  Component.literal(PotionFixture.status(level))
+                                      .append(
+                                          copyLink(
+                                              " [Copy results]",
+                                              String.join("\n", PotionFixture.results(level)))),
+                              false);
+                    else
+                      ctx.getSource()
+                          .sendSuccess(() -> Component.literal(PotionFixture.status(level)), false);
+                    return 1;
+                  }));
+    event.getDispatcher().register(potions);
     var arrow = Commands.literal("arrow_test").requires(source -> source.hasPermission(2));
     for (var action : List.of("start", "reset", "status"))
       arrow.then(

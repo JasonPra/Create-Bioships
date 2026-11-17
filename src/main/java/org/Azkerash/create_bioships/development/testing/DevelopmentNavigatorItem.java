@@ -66,17 +66,20 @@ public final class DevelopmentNavigatorItem extends Item {
     entries.setItem(0, icon(Items.GLASS, "Regression: Core separation"));
     entries.setItem(1, icon(Items.DIAMOND_SWORD, "Regression: Hostile combat arena"));
     entries.setItem(2, icon(Items.DISPENSER, "Regression: Core arrow wound"));
+    entries.setItem(3, icon(Items.SPLASH_POTION, "Regression: Shared potion effects"));
     player.openMenu(
         new SimpleMenuProvider(
             (id, inventory, viewer) ->
                 new ChestMenu(MenuType.GENERIC_9x1, id, inventory, entries, 1) {
                   @Override
                   public void clicked(int slot, int button, ClickType type, Player clicking) {
-                    if (slot < 0 || slot > 2) return;
+                    if (slot < 0 || slot > 3) return;
                     var base =
                         slot == 0
                             ? state.layout().base()
-                            : slot == 1 ? state.combatOrigin : state.arrowOrigin;
+                            : slot == 1
+                                ? state.combatOrigin
+                                : slot == 2 ? state.arrowOrigin : state.potionOrigin;
                     clicking.closeContainer();
                     if (clicking instanceof ServerPlayer server) {
                       server.teleportTo(

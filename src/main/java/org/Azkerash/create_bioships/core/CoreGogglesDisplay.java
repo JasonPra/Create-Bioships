@@ -19,6 +19,17 @@ public final class CoreGogglesDisplay extends BlockEntity implements IHaveGoggle
     super(Create_bioships.CORE_DISPLAY.get(), pos, state);
   }
 
+  public static <T extends BlockEntity>
+      net.minecraft.world.level.block.entity.BlockEntityTicker<T> ticker(
+          net.minecraft.world.level.Level level,
+          net.minecraft.world.level.block.entity.BlockEntityType<T> type) {
+    return level.isClientSide || type != Create_bioships.CORE_DISPLAY.get()
+        ? null
+        : (world, pos, state, entity) -> {
+          if (world.getGameTime() % 10 == 0) ((CoreGogglesDisplay) entity).update();
+        };
+  }
+
   public boolean dead() {
     return inspection.getBoolean("dead");
   }
@@ -33,6 +44,15 @@ public final class CoreGogglesDisplay extends BlockEntity implements IHaveGoggle
       next.putDouble("maximum", status.maximum());
       next.putBoolean("dead", status.dead());
       next.putString("cause", status.causeOfDeath());
+      next.putInt("hunger", SubLevelData.hunger(body));
+      next.putInt("trust", SubLevelData.trust(body));
+      var effects = new net.minecraft.nbt.ListTag();
+      var owner =
+          CoreAssemblyRules.isCreature(body)
+              ? org.Azkerash.create_bioships.combat.CombatAdapter.target(body)
+              : null;
+      if (owner != null) for (var effect : owner.getActiveEffects()) effects.add(effect.save());
+      next.put("effects", effects);
     }
     if (inspection.equals(next)) return;
     inspection = next;
@@ -59,6 +79,34 @@ public final class CoreGogglesDisplay extends BlockEntity implements IHaveGoggle
                   "Health: %.1f / %.1f",
                   inspection.getDouble("current"),
                   inspection.getDouble("maximum"))));
+      tooltip.add(
+          Component.literal("Hunger: ")
+              .append(
+                  Component.literal("                      ")
+                      .withStyle(
+                          style ->
+                              style.withInsertion(
+                                  "create_bioships:hunger/" + inspection.getInt("hunger"))))
+              .append(Component.literal(" " + inspection.getInt("hunger") + "/20")));
+      tooltip.add(Component.literal("Trust: " + inspection.getInt("trust") + "/100"));
+      for (var entry : inspection.getList("effects", 10)) {
+        var effect = net.minecraft.world.effect.MobEffectInstance.load((CompoundTag) entry);
+        if (effect == null) continue;
+        var id =
+            net.minecraft.core.registries.BuiltInRegistries.MOB_EFFECT.getKey(
+                effect.getEffect().value());
+        int seconds = Math.max(0, effect.getDuration() / 20);
+        var label = Component.translatable(effect.getDescriptionId());
+        if (effect.getAmplifier() > 0) label.append(" " + (effect.getAmplifier() + 1));
+        label.append(
+            effect.isInfiniteDuration()
+                ? " ∞"
+                : String.format(java.util.Locale.ROOT, " %d:%02d", seconds / 60, seconds % 60));
+        tooltip.add(
+            Component.literal("   ")
+                .withStyle(style -> style.withInsertion("create_bioships:effect/" + id))
+                .append(label));
+      }
       if (inspection.getBoolean("dead"))
         tooltip.add(Component.literal("Dead · " + inspection.getString("cause")));
     }

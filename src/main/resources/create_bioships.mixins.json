@@ -14,7 +14,9 @@
     "EmbeddedProjectileRetentionMixin",
     "PlayerSweepMixin",
     "CreatureDecaySplitMixin",
-    "CreatureDecayRemovalMixin"
+    "CreatureDecayRemovalMixin",
+    "PotionSplashTargetsMixin",
+    "PotionCloudTargetsMixin"
   ],
   "client": [],
   "injectors": {

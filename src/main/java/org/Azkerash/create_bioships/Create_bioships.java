@@ -76,6 +76,16 @@ public final class Create_bioships {
       BLOCKS.register(
           "living_core",
           () -> new CoreBlock(BlockBehaviour.Properties.of().strength(2).noLootTable()));
+  public static final DeferredBlock<
+          org.Azkerash.create_bioships.components.readout.VitalReadoutBlock>
+      VITAL_READOUT =
+          BLOCKS.register(
+              "vital_readout",
+              () ->
+                  new org.Azkerash.create_bioships.components.readout.VitalReadoutBlock(
+                      BlockBehaviour.Properties.of().strength(1).noOcclusion()));
+  public static final DeferredItem<BlockItem> VITAL_READOUT_ITEM =
+      ITEMS.registerSimpleBlockItem(VITAL_READOUT);
   public static final DeferredHolder<
           net.minecraft.world.level.block.entity.BlockEntityType<?>,
           net.minecraft.world.level.block.entity.BlockEntityType<CoreGogglesDisplay>>
@@ -84,7 +94,7 @@ public final class Create_bioships {
               "core_display",
               () ->
                   net.minecraft.world.level.block.entity.BlockEntityType.Builder.of(
-                          CoreGogglesDisplay::new, CORE.get())
+                          CoreGogglesDisplay::new, CORE.get(), VITAL_READOUT.get())
                       .build(null));
   public static final DeferredBlock<org.Azkerash.create_bioships.components.eye.EyeBlock> LAND_EYE =
       BLOCKS.register(
@@ -121,6 +131,7 @@ public final class Create_bioships {
                 .displayItems(
                     (parameters, output) -> {
                       output.accept(CORE_ITEM.get());
+                      output.accept(VITAL_READOUT_ITEM.get());
                       output.accept(LAND_EYE_ITEM.get());
                       output.accept(AQUATIC_EYE_ITEM.get());
                       output.accept(BIOSHIP_GOGGLES.get());

@@ -56,12 +56,7 @@ public final class CoreBlock extends Block
           Level level,
           BlockState state,
           net.minecraft.world.level.block.entity.BlockEntityType<T> type) {
-    return level.isClientSide
-            || type != org.Azkerash.create_bioships.Create_bioships.CORE_DISPLAY.get()
-        ? null
-        : (world, pos, block, entity) -> {
-          if (world.getGameTime() % 10 == 0) ((CoreGogglesDisplay) entity).update();
-        };
+    return CoreGogglesDisplay.ticker(level, type);
   }
 
   @Override

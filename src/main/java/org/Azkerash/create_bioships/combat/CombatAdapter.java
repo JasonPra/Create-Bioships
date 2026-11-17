@@ -63,6 +63,27 @@ public final class CombatAdapter {
     return target(body);
   }
 
+  public static void saveEffects(ServerSubLevel body, SubLevelCombatTarget target) {
+    var list = new net.minecraft.nbt.ListTag();
+    for (var effect : target.getActiveEffects()) list.add(effect.save());
+    if (body.getUserDataTag()
+        .getList(org.Azkerash.create_bioships.core.SubLevelData.EFFECTS, 10)
+        .equals(list)) return;
+    var root = body.getUserDataTag().copy();
+    root.put(org.Azkerash.create_bioships.core.SubLevelData.EFFECTS, list);
+    body.setUserDataTag(root);
+  }
+
+  public static void restoreEffects(ServerSubLevel body, SubLevelCombatTarget target) {
+    var root = body.getUserDataTag();
+    if (root == null) return;
+    for (var entry : root.getList(org.Azkerash.create_bioships.core.SubLevelData.EFFECTS, 10)) {
+      var effect =
+          net.minecraft.world.effect.MobEffectInstance.load((net.minecraft.nbt.CompoundTag) entry);
+      if (effect != null) target.addEffect(effect);
+    }
+  }
+
   private CombatAdapter() {}
 
   public static SubLevelCombatTarget target(ServerSubLevel body) {
@@ -96,6 +117,47 @@ public final class CombatAdapter {
         }
     }
     TARGETS.entrySet().removeIf(e -> e.getKey().isRemoved() || e.getValue().isRemoved());
+  }
+
+  /** Vanilla potion/cloud volumes select one recipient for each grid, using real block shapes. */
+  public static java.util.List<net.minecraft.world.entity.LivingEntity> potionTargets(
+      net.minecraft.world.level.Level level,
+      net.minecraft.world.phys.AABB bounds,
+      java.util.List<net.minecraft.world.entity.LivingEntity> nativeTargets) {
+    if (!(level instanceof ServerLevel server)) return nativeTargets;
+    var result = new java.util.ArrayList<>(nativeTargets);
+    result.removeIf(e -> e instanceof SubLevelCombatTarget);
+    var container = SubLevelContainer.getContainer(server);
+    if (container == null) return result;
+    for (var entry :
+        container.queryIntersecting(new dev.ryanhcode.sable.companion.math.BoundingBox3d(bounds))) {
+      if (!(entry instanceof ServerSubLevel body)
+          || body.isRemoved()
+          || !CoreAssemblyRules.isCreature(body)
+          || SubLevelHealth.status(body).dead()) continue;
+      net.minecraft.world.phys.Vec3 nearest = null;
+      double distance = Double.POSITIVE_INFINITY;
+      for (var cell : SubLevelHealth.blocks(body)) {
+        for (var local : level.getBlockState(cell).getCollisionShape(level, cell).toAabbs()) {
+          var box = new dev.ryanhcode.sable.companion.math.BoundingBox3d(local.move(cell));
+          var world = box.transform(body.logicalPose(), box).toMojang();
+          if (!world.intersects(bounds)) continue;
+          double d = world.getCenter().distanceToSqr(bounds.getCenter());
+          if (d < distance) {
+            nearest = world.getCenter();
+            distance = d;
+          }
+        }
+      }
+      if (nearest != null) {
+        var target = target(body);
+        if (target != null) {
+          target.setPos(nearest);
+          result.add(target);
+        }
+      }
+    }
+    return result;
   }
 
   /** Use the weapon's vanilla sweep box, not the invisible adapters' incidental positions. */
@@ -184,7 +246,10 @@ public final class CombatAdapter {
         || !(event.getRayTraceResult() instanceof BlockHitResult hit)) return;
     var body = CoreAssemblyRules.containing(level, hit.getBlockPos());
     if (body == null || !CoreAssemblyRules.isCreature(body)) return;
-    var target = hitTarget(body, hit.getBlockPos(), hit.getDirection());
+    var target =
+        event.getProjectile() instanceof net.minecraft.world.entity.projectile.ThrownPotion
+            ? target(body)
+            : hitTarget(body, hit.getBlockPos(), hit.getDirection());
     if (target == null) return;
     target.impact(hit.getBlockPos(), hit.getDirection());
     // Collision has already been resolved against Sable's actual block shapes. Never use an

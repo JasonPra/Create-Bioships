@@ -2,7 +2,7 @@
 
 Minecraft 1.21.1 / NeoForge 21.1.266, Java 21. Dependencies are pinned in `gradle.properties`.
 
-The only registered gameplay block is `create_bioships:living_core`, using its original texture
+The foundation block is `create_bioships:living_core`, using its original texture
 and open/closed models. It is closed-eyed as a normal world block or inventory item. When
 assembled into a Sable structure it slowly wakes once, then repeats the original double blink: 4 ticks closed,
 4 open, 3 closed, and 109 open. Raised eyelid rims remain visible while awake.
@@ -235,3 +235,35 @@ Neither action erases damage. Removing enough capacity can kill the grid, and ad
 cannot revive it. Temporary removal/restoration is committed atomically so a rolled-back wrench
 operation neither heals nor kills it. Explicit healing reduces the injury balance and triggers
 full-health eye recovery; capacity changes do not count as healing.
+
+
+## Shared state, potions, and Vital Readout
+
+`core.SubLevelData` defines and initializes saved grid variables, including health state,
+hunger (20/20 initially), and trust (0/100 initially). Hunger and trust are placeholders;
+there is no automatic consumption or trust behavior yet. Health calculations and changes
+remain in `SubLevelHealth`. Changing block capacity preserves accumulated damage and can
+kill a creature if its remaining capacity cannot sustain that damage. Dead grids cannot revive.
+
+The **Vital Readout** is a mounted display block available in the creative tab. It reuses
+the core's inspection implementation, showing the same health, hunger bar, trust, and effects.
+Status effects use vanilla icons and remaining durations.
+
+Poison, wither, regeneration, instant healing, instant harming, and resistance operate on
+one shared grid through the combat adapter's vanilla effect logic. Splash potions, lingering
+clouds, and effects applied through core/eye hurtboxes resolve to that shared owner, avoiding
+multiple doses from overlapping adapters. Ongoing effects are saved across adapter recreation.
+Instant effects change health immediately rather than leaving a persistent icon.
+
+The development world includes a roofed potion-test enclosure near (256, 0), with a dispenser,
+a core-and-flesh subject, a Vital Readout, and START/RESET buttons. The navigator includes it.
+Existing development worlds receive the missing fixture without resetting their other arenas.
+
+- `/potion_test start` — run all six native dispenser cases, ten seconds per case.
+- `/potion_test reset` — restore the unassembled subject and dispenser.
+- `/potion_test status` — inspect the current case and saved results.
+- `/potion_test results` — print results with a copy-to-clipboard link.
+
+The fixture automatically returns to an unassembled state when finished and retains its results.
+Regression checks cover every dispenser case, shared core/readout data, one-dose routing across
+multiple hurtboxes, effect persistence, nonlethal poison, lethal wither, and permanent death.

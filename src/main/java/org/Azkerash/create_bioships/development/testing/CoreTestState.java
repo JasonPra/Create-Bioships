@@ -17,6 +17,13 @@ public final class CoreTestState extends SavedData {
   int combatTrialSeconds = 10, combatActiveTrialSeconds = 10;
   UUID combatBody, combatEnemy;
   boolean combatAcquired;
+  boolean potionBuilt, potionRunning, potionResistanceHit;
+  BlockPos potionOrigin = new BlockPos(256, -63, 0);
+  UUID potionBody;
+  int potionIndex;
+  long potionDeadline;
+  double potionBefore;
+  final List<String> potionResults = new ArrayList<>();
   boolean arrowBuilt, arrowRunning;
   BlockPos arrowOrigin = new BlockPos(128, -63, 0);
   UUID arrowBody;
@@ -42,6 +49,17 @@ public final class CoreTestState extends SavedData {
                   var state = new CoreTestState();
                   state.combatFailuresExpanded = tag.getBoolean("CombatFailuresExpanded");
                   state.combatFailurePage = tag.getInt("CombatFailurePage");
+                  state.potionBuilt = tag.getBoolean("PotionBuilt");
+                  state.potionRunning = tag.getBoolean("PotionRunning");
+                  state.potionResistanceHit = tag.getBoolean("PotionResistanceHit");
+                  state.potionIndex = tag.getInt("PotionIndex");
+                  state.potionDeadline = tag.getLong("PotionDeadline");
+                  state.potionBefore = tag.getDouble("PotionBefore");
+                  if (tag.contains("PotionOrigin"))
+                    state.potionOrigin = BlockPos.of(tag.getLong("PotionOrigin"));
+                  if (tag.hasUUID("PotionBody")) state.potionBody = tag.getUUID("PotionBody");
+                  tag.getList("PotionResults", 8)
+                      .forEach(e -> state.potionResults.add(e.getAsString()));
                   state.arrowBuilt = tag.getBoolean("ArrowBuilt");
                   state.arrowRunning = tag.getBoolean("ArrowRunning");
                   if (tag.contains("ArrowOrigin"))
@@ -78,6 +96,17 @@ public final class CoreTestState extends SavedData {
   public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
     tag.putBoolean("CombatFailuresExpanded", combatFailuresExpanded);
     tag.putInt("CombatFailurePage", combatFailurePage);
+    tag.putBoolean("PotionBuilt", potionBuilt);
+    tag.putBoolean("PotionRunning", potionRunning);
+    tag.putBoolean("PotionResistanceHit", potionResistanceHit);
+    tag.putLong("PotionOrigin", potionOrigin.asLong());
+    if (potionBody != null) tag.putUUID("PotionBody", potionBody);
+    tag.putInt("PotionIndex", potionIndex);
+    tag.putLong("PotionDeadline", potionDeadline);
+    tag.putDouble("PotionBefore", potionBefore);
+    var potionEntries = new ListTag();
+    potionResults.forEach(e -> potionEntries.add(StringTag.valueOf(e)));
+    tag.put("PotionResults", potionEntries);
     tag.putBoolean("ArrowBuilt", arrowBuilt);
     tag.putBoolean("ArrowRunning", arrowRunning);
     tag.putLong("ArrowOrigin", arrowOrigin.asLong());

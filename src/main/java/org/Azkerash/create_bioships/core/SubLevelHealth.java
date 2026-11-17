@@ -3,19 +3,16 @@ package org.Azkerash.create_bioships.core;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import java.util.*;
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.level.block.state.BlockState;
 
 /** The sublevel owns persistent health and death; blocks only contribute capacity. */
 public final class SubLevelHealth {
-  public static final String DATA = "create_bioships:health";
+  public static final String DATA = SubLevelData.HEALTH;
   private static final Map<ServerSubLevel, Map<Long, Double>> CELLS = new WeakHashMap<>();
 
   private static final ThreadLocal<Set<ServerSubLevel>> SAFE_REMOVALS =
       ThreadLocal.withInitial(() -> Collections.newSetFromMap(new IdentityHashMap<>()));
-
-  public record Status(double current, double maximum, boolean dead, String causeOfDeath) {}
 
   private SubLevelHealth() {}
 
@@ -24,14 +21,9 @@ public final class SubLevelHealth {
     return CELLS.get(body).keySet().stream().map(BlockPos::of).toList();
   }
 
-  public static Status status(ServerSubLevel body) {
+  public static SubLevelData.Health status(ServerSubLevel body) {
     initialize(body);
-    var tag = body.getUserDataTag().getCompound(DATA);
-    return new Status(
-        tag.getDouble("current"),
-        tag.getDouble("maximum"),
-        tag.getBoolean("dead"),
-        tag.getString("cause"));
+    return SubLevelData.health(body);
   }
 
   private static void initialize(ServerSubLevel body) {
@@ -62,19 +54,12 @@ public final class SubLevelHealth {
       }
     }
     CELLS.put(body, cells);
-    var root = body.getUserDataTag();
-    var old = root == null ? new CompoundTag() : root.getCompound(DATA);
-    store(body, damageFromTag(old), maximum, old.getBoolean("dead"), old.getString("cause"));
-  }
-
-  private static double damageFromTag(CompoundTag data) {
-    return data.contains("damage")
-        ? Math.max(0, data.getDouble("damage"))
-        : Math.max(0, data.getDouble("maximum") - data.getDouble("current"));
+    var old = SubLevelData.health(body);
+    store(body, old.damage(), maximum, old.dead(), old.causeOfDeath());
   }
 
   private static double damageTaken(ServerSubLevel body) {
-    return damageFromTag(body.getUserDataTag().getCompound(DATA));
+    return SubLevelData.health(body).damage();
   }
 
   /** Create owns pickup/drops; suppress only damage from the resulting capacity change. */
@@ -144,18 +129,14 @@ public final class SubLevelHealth {
     injury = Math.max(0, injury);
     boolean transaction = SAFE_REMOVALS.get().contains(body);
     double current = Math.clamp(maximum - injury, 0, maximum);
-    var root = body.getUserDataTag() == null ? new CompoundTag() : body.getUserDataTag().copy();
-    var previous = root.getCompound(DATA);
-    boolean died = dead || previous.getBoolean("dead") || current == 0 && !transaction;
-    var data = new CompoundTag();
-    data.putDouble("damage", injury);
-    data.putDouble("current", died ? 0 : current);
-    data.putDouble("maximum", maximum);
-    data.putBoolean("dead", died);
-    if (previous.getBoolean("dead")) data.putString("cause", previous.getString("cause"));
-    else if (died) data.putString("cause", cause.isEmpty() ? "component_loss" : cause);
-    root.put(DATA, data);
-    body.setUserDataTag(root);
+    var previous = SubLevelData.health(body);
+    boolean died = dead || previous.dead() || current == 0 && !transaction;
+    String deathCause =
+        previous.dead()
+            ? previous.causeOfDeath()
+            : died ? cause.isEmpty() ? "component_loss" : cause : "";
+    SubLevelData.health(
+        body, new SubLevelData.Health(died ? 0 : current, maximum, injury, died, deathCause));
     if (!died && injury == 0 && maximum > 0 && !transaction)
       org.Azkerash.create_bioships.combat.SubLevelWounds.healEyes(body);
   }
