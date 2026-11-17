@@ -25,6 +25,7 @@ import org.Azkerash.create_bioships.DigestiveSystem;
 import org.Azkerash.create_bioships.FeedingMouthBlock;
 import org.Azkerash.create_bioships.FeedingMouthBlockEntity;
 import org.Azkerash.create_bioships.LivingCoreBlockEntity;
+import org.Azkerash.create_bioships.StomachMultiblock;
 import org.Azkerash.create_bioships.amoeba.components.AmoebaComponentHost;
 import org.Azkerash.create_bioships.amoeba.merging.ComponentMerging;
 import org.Azkerash.create_bioships.amoeba.transport.ComponentTransport;
@@ -78,6 +79,16 @@ public final class AmoebaCoreAdapter implements AmoebaComponentHost {
 
   public boolean absorptionActive() {
     return core.assimilation().active();
+  }
+
+  public List<BlockPos> movementGroup(BlockPos source) {
+    var cube = StomachMultiblock.containing(core, source);
+    return cube == null
+        ? List.of(source)
+        : cube.members().keySet().stream()
+            .map(StomachMultiblock::pos)
+            .sorted(java.util.Comparator.comparingLong(BlockPos::asLong))
+            .toList();
   }
 
   public Prepared prepare(Request request) {

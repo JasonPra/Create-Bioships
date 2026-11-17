@@ -348,6 +348,54 @@ public class BioshipGameTests {
     }
   }
 
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "stomach_cube_formation")
+  public static void existing_stomachs_are_arranged_into_a_solid_cube_and_breakage_unforms_it(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    try {
+      var core = core(ship);
+      var level = helper.getLevel();
+      digestive(helper, core, false);
+      var origin = core.getBlockPos().west(3);
+      var missing = origin.offset(0, 2, 2);
+      for (int x = 0; x < 3; x++)
+        for (int y = 0; y < 3; y++)
+          for (int z = 0; z < 3; z++) {
+            var p = origin.offset(x, y, z);
+            if (!p.equals(missing))
+              level.setBlock(p, Create_bioships.STOMACH.get().defaultBlockState(), 3);
+          }
+      var source = core.getBlockPos().east();
+      level.setBlock(source, Create_bioships.STOMACH.get().defaultBlockState(), 3);
+      var organ = (StomachBlockEntity) level.getBlockEntity(source);
+      organ.enqueue(new ItemStack(Items.BEEF), false);
+      helper.assertTrue(
+          StomachMultiblock.formations(core).isEmpty(), "Incomplete cube formed early");
+      helper.assertTrue(
+          org.Azkerash.create_bioships.amoeba.digestion.DigestiveLayoutPlanner.arrange(core),
+          "Available stomach was not queued to complete a solid cube");
+      var move = core.organMove();
+      helper.assertTrue(
+          move.target().equals(missing), "Planner abandoned the nearly complete footprint");
+      core.organMove(elapsedTransport(move));
+      ComponentTransport.tick(core.amoebaComponents());
+      var cubes = StomachMultiblock.formations(core);
+      helper.assertTrue(
+          cubes.size() == 1 && cubes.getFirst().members().size() == 27,
+          "Arranged stomachs did not form a solid 27-block structure");
+      helper.assertTrue(
+          ((StomachBlockEntity) level.getBlockEntity(missing)).queuedFood() == 1,
+          "Formation lost the moved stomach's food");
+      level.removeBlock(origin.offset(1, 1, 1), false);
+      helper.assertTrue(
+          StomachMultiblock.formations(core).isEmpty(),
+          "Missing center did not dissolve formation");
+      helper.succeed();
+    } finally {
+      cleanup(helper, ship);
+    }
+  }
+
   private static int fixture;
 
   private static BlockPos location() {

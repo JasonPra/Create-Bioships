@@ -102,3 +102,10 @@ isolated stomachs beside an existing functioning group. It uses existing placeme
 validation and inventory-preserving sinking transport; it does not move manually pinned organs.
 Joining a functioning direct-contact group does not reserve a redundant dedicated intestine route.
 Four focused live tests and all unit tests passed, including food-preserving relocation.
+
+Revised checkpoint 6 complete: solid 27-block cubes are derived from actual stomach owners,
+with deterministic non-overlapping membership. Removing the center dissolves formation. The
+amoeba planner preferentially fills nearly completed valid cube footprints from existing organs;
+formed cubes are protected from single-member transport. Unit tests cover missing centers and
+overlap, and three live tests passed including completing a 26-block cube by relocation.
+Whole-cube movement follows in checkpoint 7; formed members currently reject individual moves.

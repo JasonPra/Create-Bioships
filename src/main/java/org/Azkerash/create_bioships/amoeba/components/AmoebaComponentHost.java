@@ -39,6 +39,11 @@ public interface AmoebaComponentHost extends CreatureBodyAccess {
     }
   }
 
+  /** An indivisible formed organ moves together; single components use a one-cell group. */
+  default List<BlockPos> movementGroup(BlockPos source) {
+    return List.of(source);
+  }
+
   ResourceAccount resources();
 
   ComponentTransport.Move movement();

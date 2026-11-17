@@ -159,6 +159,8 @@ public final class ComponentTransport {
     if ((stash ? core.movement() != null : busy(core))
         || source.equals(target)
         || core.body() == null) return false;
+    // Whole-structure transport owns formed organs; never tear them into single-block moves.
+    if (!external && movementIsGrouped(core, source)) return false;
     var request =
         new AmoebaComponentHost.Request(
             source, target, external, manual, consuming, stash, mergeRecipe);
@@ -198,6 +200,10 @@ public final class ComponentTransport {
     core.movement(move);
     if (external && prepared.sourceBody() == null) core.forgetSource(source);
     return true;
+  }
+
+  private static boolean movementIsGrouped(AmoebaComponentHost core, BlockPos source) {
+    return core.movementGroup(source).size() > 1;
   }
 
   public static List<BlockPos> findTissuePath(
