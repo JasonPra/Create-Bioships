@@ -667,6 +667,23 @@ public final class DigestiveSystem {
         .anyMatch(store -> store.getBlockPos().equals(pos));
   }
 
+  /** Read-only capacity check using the same queues and connected stores as food delivery. */
+  static boolean canStoreFood(LivingCoreBlockEntity core, ItemStack stack) {
+    for (var stomach : stomachs(core)) {
+      if (!stomach.connected(core)) continue;
+      if (stomach.canEnqueue(stack, false)) return true;
+      for (var store : DigestiveIntakes.connectedStores(core, stomach)) {
+        var inventory =
+            core.getLevel()
+                .getCapability(Capabilities.ItemHandler.BLOCK, store.getBlockPos(), null);
+        if (inventory != null
+            && ItemHandlerHelper.insertItemStacked(inventory, stack.copyWithCount(1), true)
+                .isEmpty()) return true;
+      }
+    }
+    return false;
+  }
+
   static int foodCount(LivingCoreBlockEntity core) {
     int total = 0;
     var seen = new HashSet<BlockPos>();
@@ -684,6 +701,11 @@ public final class DigestiveSystem {
                   total += inventory.getStackInSlot(slot).getCount();
           }
       }
+    for (var mouth : mouths(core))
+      if (core.getLevel().getBlockEntity(mouth) instanceof FeedingMouthBlockEntity intake)
+        for (int slot = 0; slot < intake.getContainerSize(); slot++)
+          if (LivingCoreBlockEntity.isMeat(intake.getItem(slot)))
+            total += intake.getItem(slot).getCount();
     return total;
   }
 

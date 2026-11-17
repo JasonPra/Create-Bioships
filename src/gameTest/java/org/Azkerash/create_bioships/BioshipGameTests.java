@@ -364,6 +364,33 @@ public class BioshipGameTests {
     }
   }
 
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "hunt_capacity")
+  public static void hunting_pauses_for_buffered_food_and_full_delivery_queues(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var core = core(ship);
+    try {
+      var stomach = digestive(helper, core, false);
+      helper.assertTrue(core.wantsToHunt(), "Empty growing creature should be able to hunt");
+      var mouth = (FeedingMouthBlockEntity) helper.getLevel().getBlockEntity(core.mouthBlock());
+      mouth.setItem(0, new ItemStack(Items.PORKCHOP, 64));
+      helper.assertTrue(!core.wantsToHunt(), "Buffered mouth food did not pause hunting");
+      mouth.setItem(0, ItemStack.EMPTY);
+      helper.assertTrue(core.wantsToHunt(), "Hunting did not resume after buffered food was used");
+      for (int i = 0; i < 9; i++)
+        helper.assertTrue(
+            stomach.receiveMeal(new ItemStack(Items.PORKCHOP, 64), true),
+            "Failed to fill digestion queue");
+      helper.assertTrue(
+          !DigestiveSystem.canStoreFood(core, new ItemStack(Items.PORKCHOP)) && !core.wantsToHunt(),
+          "Full delivery queues allowed unnecessary hunting");
+      helper.assertTrue(stomach.queuedFood() == 576, "Capacity simulation mutated food inventory");
+      helper.succeed();
+    } finally {
+      cleanup(helper, ship);
+    }
+  }
+
   @GameTest(template = "test_empty", timeoutTicks = 200, batch = "end_fixture_geometry")
   public static void developer_end_habitat_has_remote_islands_biome_and_void_gap(
       GameTestHelper helper) {

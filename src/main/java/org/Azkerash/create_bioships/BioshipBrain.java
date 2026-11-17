@@ -249,6 +249,7 @@ public final class BioshipBrain {
         || core.autonomy().creeperPanic()) return false;
     var n = needs(core);
     return n.digestive
+        && DigestiveSystem.canStoreFood(core, new ItemStack(Items.PORKCHOP))
         && n.food == 0
         && (n.hungry && (core.huntingAllowed() || n.growth)
             || n.growth && n.materials()
