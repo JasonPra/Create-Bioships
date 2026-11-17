@@ -215,3 +215,10 @@ The setting ranges from 5 to 120 seconds and defaults to 10 for existing/new sav
 with the fixture and takes effect on the next trial; an active trial retains its original deadline
 and timeout label. Changing the setting does not clear results. Existing dev worlds receive the
 controls when the arena's chunks are ready, without resetting or rerunning their test.
+
+The Ossified Wrench's normal player right-click path now handles grid actions before ordinary
+block-use handlers. All Biomancy/own non-core blocks on a Sable sublevel support Create pickup;
+ordinary Create interactions outside grids are retained. Both normal and sneak wrench actions
+on creature grids preserve existing health through temporary block removal/restoration, so a
+rollback cannot heal the grid. Core pickup/rotation stays disabled. Invisible combat adapters
+also disable vanilla's building-obstruction flag, allowing placement on all six core faces.

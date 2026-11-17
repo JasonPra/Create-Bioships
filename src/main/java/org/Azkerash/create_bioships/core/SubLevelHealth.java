@@ -74,12 +74,19 @@ public final class SubLevelHealth {
   /** Create owns pickup/drops; suppress only damage from the resulting capacity change. */
   public static <T> T withoutRemovalDamage(
       ServerSubLevel body, java.util.function.Supplier<T> removal) {
-    status(body);
+    var before = status(body);
     var active = SAFE_REMOVALS.get();
     boolean added = active.add(body);
     try {
       return removal.get();
     } finally {
+      var after = status(body);
+      store(
+          body,
+          Math.min(before.current(), after.current()),
+          after.maximum(),
+          before.dead() || after.dead(),
+          after.causeOfDeath());
       if (added) active.remove(body);
       if (active.isEmpty()) SAFE_REMOVALS.remove();
     }

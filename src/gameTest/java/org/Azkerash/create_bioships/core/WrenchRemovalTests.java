@@ -25,30 +25,67 @@ public final class WrenchRemovalTests {
     level.setBlock(origin, Create_bioships.CORE.get().defaultBlockState(), 3);
     level.setBlock(origin.east(), Create_bioships.LAND_EYE.get().defaultBlockState(), 3);
     level.setBlock(origin.west(), Blocks.CHEST.defaultBlockState(), 3);
+    var flesh =
+        net.minecraft.core.registries.BuiltInRegistries.BLOCK.get(
+            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
+                "biomancy", "packed_flesh"));
+    level.setBlock(origin.north(), flesh.defaultBlockState(), 3);
     var body =
         SubLevelAssemblyHelper.assembleBlocks(
             level,
             origin,
-            List.of(origin, origin.east(), origin.west()),
-            new BoundingBox3i(origin.west(), origin.east()));
+            List.of(origin, origin.east(), origin.west(), origin.north()),
+            new BoundingBox3i(origin.west().north(), origin.east()));
     helper.assertTrue(body != null, "Wrench fixture assembly failed");
     var core = body.getPlot().getCenterBlock();
     CoreAssemblyRules.mark(level, core);
-    SubLevelHealth.damage(body, 25, "test");
+    SubLevelHealth.damage(body, 35, "test");
+    var profile = new com.mojang.authlib.GameProfile(UUID.randomUUID(), "wrench-test");
     var player =
-        new net.neoforged.neoforge.common.util.FakePlayer(
-            level, new com.mojang.authlib.GameProfile(UUID.randomUUID(), "wrench-test"));
+        new net.minecraft.server.level.ServerPlayer(
+            level.getServer(),
+            level,
+            profile,
+            net.minecraft.server.level.ClientInformation.createDefault());
+    player.connection =
+        new net.neoforged.neoforge.common.util.FakePlayer(level, profile).connection;
+    player.setPos(body.logicalPose().transformPosition(Vec3.atCenterOf(core).add(0, 0, -2)));
     player.setShiftKeyDown(true);
     player.setItemInHand(
         InteractionHand.MAIN_HAND, Create_bioships.BIOSHIP_WRENCH.get().getDefaultInstance());
     var wrench = Create_bioships.BIOSHIP_WRENCH.get();
-    for (var pos : List.of(core.east(), core.west())) {
-      var context =
-          new UseOnContext(
+    player.setShiftKeyDown(false);
+    player.gameMode.useItemOn(
+        player,
+        level,
+        player.getMainHandItem(),
+        InteractionHand.MAIN_HAND,
+        new BlockHitResult(Vec3.atCenterOf(core.east()), Direction.NORTH, core.east(), false));
+    helper.assertTrue(
+        SubLevelHealth.status(body).current() == 5, "Normal wrench right-click healed creature");
+    player.setShiftKeyDown(true);
+    // A failed/rolled-back removal must not convert the restored block into free health.
+    var eyeState = level.getBlockState(core.east());
+    SubLevelHealth.withoutRemovalDamage(
+        body,
+        () -> {
+          level.removeBlock(core.east(), false);
+          level.setBlock(core.east(), eyeState, 3);
+          return net.minecraft.world.InteractionResult.PASS;
+        });
+    helper.assertTrue(
+        SubLevelHealth.status(body).current() == 5 && SubLevelHealth.status(body).maximum() == 40,
+        "Wrench rollback healed the creature");
+    for (var pos : List.of(core.east(), core.west(), core.north())) {
+      var result =
+          player.gameMode.useItemOn(
               player,
+              level,
+              player.getMainHandItem(),
               InteractionHand.MAIN_HAND,
               new BlockHitResult(Vec3.atCenterOf(pos), Direction.NORTH, pos, false));
-      helper.assertTrue(wrench.useOn(context).consumesAction(), "Create pickup was not handled");
+      helper.assertTrue(
+          result.consumesAction(), "Normal player Shift-wrench pickup was not handled");
       helper.assertTrue(
           level.getBlockState(pos).isAir(), "Wrench failed to remove non-core component");
       helper.assertTrue(
@@ -62,6 +99,9 @@ public final class WrenchRemovalTests {
         "Create pickup lost eye item");
     helper.assertTrue(
         player.getInventory().countItem(Items.CHEST) == 1, "Create pickup lost chest item");
+    helper.assertTrue(
+        player.getInventory().countItem(flesh.asItem()) == 1,
+        "Create pickup lost packed flesh block");
     var coreContext =
         new UseOnContext(
             player,
@@ -74,6 +114,57 @@ public final class WrenchRemovalTests {
     wrench.useOn(coreContext);
     helper.assertTrue(
         level.getBlockState(core).is(Create_bioships.CORE.get()), "Wrench picked up dead core");
+    level.setBlock(core.east(), eyeState, 3);
+    player.gameMode.useItemOn(
+        player,
+        level,
+        player.getMainHandItem(),
+        InteractionHand.MAIN_HAND,
+        new BlockHitResult(Vec3.atCenterOf(core.east()), Direction.NORTH, core.east(), false));
+    helper.assertTrue(
+        level.getBlockState(core.east()).isAir(),
+        "Normal player could not wrench a dead creature component");
+    helper.assertTrue(
+        SubLevelHealth.status(body).current() == 0 && SubLevelHealth.status(body).dead(),
+        "Wrench revived or healed dead creature");
+    var outside = origin.east(4);
+    level.setBlock(outside, com.simibubi.create.AllBlocks.SHAFT.get().defaultBlockState(), 3);
+    player.gameMode.useItemOn(
+        player,
+        level,
+        player.getMainHandItem(),
+        InteractionHand.MAIN_HAND,
+        new BlockHitResult(Vec3.atCenterOf(outside), Direction.NORTH, outside, false));
+    helper.assertTrue(
+        level.getBlockState(outside).isAir(),
+        "Existing Create wrench pickup stopped working outside creature");
+    var genericOrigin = origin.south(5);
+    level.setBlock(genericOrigin, Blocks.STONE.defaultBlockState(), 3);
+    level.setBlock(genericOrigin.east(), flesh.defaultBlockState(), 3);
+    level.setBlock(genericOrigin.west(), eyeState, 3);
+    var generic =
+        SubLevelAssemblyHelper.assembleBlocks(
+            level,
+            genericOrigin,
+            List.of(genericOrigin, genericOrigin.east(), genericOrigin.west()),
+            new BoundingBox3i(genericOrigin.west(), genericOrigin.east()));
+    var genericCenter = generic.getPlot().getCenterBlock();
+    helper.assertTrue(
+        !CoreAssemblyRules.isCreature(generic), "Ordinary sublevel became a creature");
+    for (var pos : List.of(genericCenter.east(), genericCenter.west())) {
+      player.gameMode.useItemOn(
+          player,
+          level,
+          player.getMainHandItem(),
+          InteractionHand.MAIN_HAND,
+          new BlockHitResult(Vec3.atCenterOf(pos), Direction.NORTH, pos, false));
+      helper.assertTrue(
+          level.getBlockState(pos).isAir(),
+          "Wrench failed on Biomancy/own block in ordinary sublevel");
+    }
+    helper.assertTrue(
+        !CoreAssemblyRules.isCreature(generic),
+        "Wrench added creature identity to ordinary sublevel");
     player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
     var click =
         new net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.LeftClickBlock(

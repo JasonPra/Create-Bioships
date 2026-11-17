@@ -24,6 +24,7 @@ public class SubLevelCombatTarget extends LivingEntity {
   public SubLevelCombatTarget(EntityType<? extends SubLevelCombatTarget> type, Level level) {
     super(type, level);
     noPhysics = true;
+    blocksBuilding = false;
     setNoGravity(true);
     setInvisible(true);
   }
