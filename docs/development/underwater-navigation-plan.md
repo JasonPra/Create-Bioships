@@ -28,3 +28,11 @@ Checkpoint 2 complete: reusable bounded A* searches 26 directions with corner ch
 Checkpoint 3 complete: loaded-world clearance checks the rotated whole body, rejects terrain/lava/unloaded cells and caches block samples per query. The swimming controller follows cached routes, checks the next travel segment, throttles retries and exposes water waypoints through existing F3+P diagnostics. Four live tests and all 79 unit tests passed, including a collision-checked submerged detour. Air-seeking still uses the previous controller until checkpoint 4.
 
 Checkpoint 4 complete: reusable AirSupply owns finite air and low-air/full-recovery hysteresis. Swimming follows collision-checked routes to a position where an actual mouth (or lone core) reaches air, including sideways movement under roofs. Working gills cancel unnecessary air-seeking. Existing Air/SeekingAir NBT keys are preserved; routes rebuild after reload. All 83 unit tests and six focused live breathing/navigation tests passed.
+
+Checkpoint 5 complete: six focused live tests passed, including actual sideways travel under a
+roof followed by breathing and air refill, a planned roof-opening route, sealed-pool drowning,
+active-gill submersion, submerged obstacle routing and whole-body gap rejection. Two velocity
+feedback unit tests bring the unit total to 85. Feedback compensates buoyancy/drag instead of
+blindly adding gravity cancellation; roof clearance and corner transitions avoid ceiling pinning.
+The breach assertion checks actual air access, accounting for Minecraft fluid height below the
+block boundary. Block buoyancy/mass values and corpse physics were not changed.

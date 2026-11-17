@@ -45,7 +45,10 @@ final class WaterNavigation {
     boolean changed =
         air != airRoute
             || !air && (destination == null || destination.distanceToSqr(target) > 2.25);
-    while (cursor < path.size() && here.distanceToSqr(path.get(cursor)) < .16) cursor++;
+    while (cursor < path.size() && here.distanceToSqr(path.get(cursor)) < .16) {
+      if (cursor + 1 < path.size() && !nextClear(space, here, path.get(cursor + 1))) break;
+      cursor++;
+    }
     boolean blocked = cursor < path.size() && !nextClear(space, here, path.get(cursor));
     if (changed || now >= retryAfter && (blocked || path.isEmpty() || now - plannedAt >= 40)) {
       var result =

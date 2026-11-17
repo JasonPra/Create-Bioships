@@ -7,23 +7,30 @@ import net.minecraft.core.*;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.phys.Vec3;
+import org.Azkerash.create_bioships.creature.navigation.SwimVelocityControl;
+import org.Azkerash.create_bioships.creature.respiration.AirSupply;
 import org.Azkerash.create_bioships.integration.sable.BodyCoordinates;
 import org.joml.Vector3d;
 
 /** Water propulsion is separate from flight; breathing remains a finite survival resource. */
 public final class BioshipAquatic {
   private final WaterNavigation navigation = new WaterNavigation();
+  private final SwimVelocityControl steering = new SwimVelocityControl();
 
   public java.util.List<Vec3> path() {
     return navigation.remaining();
   }
 
   public CompoundTag navigationDebug(long now) {
-    return navigation.debug(now);
+    var tag = navigation.debug(now);
+    tag.put("Velocity", org.Azkerash.create_bioships.network.VisionDebug.vector(velocity));
+    tag.putDouble("Speed", velocity.length());
+    tag.putInt("Air", air.remaining());
+    tag.putBoolean("SeekingAir", air.seeking());
+    return tag;
   }
 
-  private final org.Azkerash.create_bioships.creature.respiration.AirSupply air =
-      new org.Azkerash.create_bioships.creature.respiration.AirSupply();
+  private final AirSupply air = new AirSupply();
   private long lastTick = Long.MIN_VALUE;
   private volatile boolean wet, swimming;
   private boolean waterContact;
@@ -179,12 +186,12 @@ public final class BioshipAquatic {
     var current = body.getLinearVelocity(new Vector3d());
     var goal = velocity;
     var acceleration =
-        new Vector3d(goal.x - current.x, goal.y - current.y, goal.z - current.z).mul(4);
-    acceleration.y -=
-        dev.ryanhcode.sable.physics.config.dimension_physics.DimensionPhysicsData.getGravity(
-                ship.getLevel())
-            .y;
-    body.addLinearAndAngularVelocity(acceleration.mul(dt), new Vector3d());
+        steering.acceleration(
+            new SwimVelocityControl.Vector(goal.x, goal.y, goal.z),
+            new SwimVelocityControl.Vector(current.x, current.y, current.z),
+            dt);
+    body.addLinearAndAngularVelocity(
+        new Vector3d(acceleration.x(), acceleration.y(), acceleration.z()).mul(dt), new Vector3d());
   }
 
   public CompoundTag save() {

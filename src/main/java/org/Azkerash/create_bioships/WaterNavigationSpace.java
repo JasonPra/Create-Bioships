@@ -44,7 +44,7 @@ final class WaterNavigationSpace implements Space {
                 Math.abs(x.x) + Math.abs(y.x) + Math.abs(z.x),
                 Math.abs(x.y) + Math.abs(y.y) + Math.abs(z.y),
                 Math.abs(x.z) + Math.abs(y.z) + Math.abs(z.z))
-            .scale(.45);
+            .scale(.49);
   }
 
   static Point point(Vec3 p) {
@@ -62,7 +62,8 @@ final class WaterNavigationSpace implements Space {
       var center = root.add(offset);
       for (var cell :
           BlockPos.betweenClosed(
-              BlockPos.containing(center.subtract(half)), BlockPos.containing(center.add(half)))) {
+              BlockPos.containing(center.subtract(half)),
+              BlockPos.containing(center.add(half).add(0, .1, 0)))) {
         int state = sample(cell);
         if (state == 0) return false;
         if (state == 2) water = true;

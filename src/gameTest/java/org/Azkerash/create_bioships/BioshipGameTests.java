@@ -747,6 +747,167 @@ public class BioshipGameTests {
     }
   }
 
+  private static List<BlockPos> roofedSwimmingPool(
+      GameTestHelper helper, BlockPos root, boolean sealed) {
+    var cells = new ArrayList<BlockPos>();
+    var level = helper.getLevel();
+    for (var p : BlockPos.betweenClosed(root.offset(-7, -1, -4), root.offset(7, 6, 4))) {
+      var pos = p.immutable();
+      cells.add(pos);
+      int x = pos.getX() - root.getX(), y = pos.getY() - root.getY(), z = pos.getZ() - root.getZ();
+      boolean glass =
+          Math.abs(x) == 7 || Math.abs(z) == 4 || y == -1 || y == 4 && (sealed || x < 4);
+      level.setBlock(
+          pos, (glass ? Blocks.GLASS : y < 4 ? Blocks.WATER : Blocks.AIR).defaultBlockState(), 3);
+    }
+    return cells;
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "water_air_roof_route")
+  public static void low_air_route_finds_a_side_opening_before_ascending(GameTestHelper helper) {
+    var ship = assemble(helper);
+    var current = core(ship);
+    var level = helper.getLevel();
+    var root =
+        BlockPos.containing(BodyCoordinates.physical(current.amoebaComponents(), BlockPos.ZERO));
+    var pool = roofedSwimmingPool(helper, root, false);
+    try {
+      var route = new WaterNavigation();
+      var direction = route.towardAir(current);
+      helper.assertTrue(
+          direction.lengthSqr() > 0
+              && route.remaining().stream().anyMatch(p -> p.x() >= root.getX() + 4),
+          "Air search failed to move sideways around the roof");
+      var last = route.remaining().getLast();
+      helper.assertTrue(
+          BioshipRespiration.airAccessAt(current, last), "Air route ended underwater");
+      helper.assertTrue(
+          route.remaining().stream()
+              .allMatch(p -> p.y() < root.getY() + 4 || p.x() >= root.getX() + 4),
+          "Air route crossed the sealed part of the glass ceiling");
+      helper.succeed();
+    } finally {
+      pool.forEach(p -> level.removeBlock(p, false));
+      cleanup(helper, ship);
+    }
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 420, batch = "water_air_roof_swim")
+  public static void low_air_creature_swims_around_roof_and_recovers_air_without_flight(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var current = core(ship);
+    var level = helper.getLevel();
+    var root =
+        BlockPos.containing(BodyCoordinates.physical(current.amoebaComponents(), BlockPos.ZERO));
+    var pool = roofedSwimmingPool(helper, root, false);
+    boolean[] sawLow = {false}, recovered = {false}, breached = {false};
+    double[] highest = {root.getY()};
+    for (int tick = 10; tick <= 360; tick += 10)
+      helper.runAfterDelay(
+          tick,
+          () -> {
+            var core = core(ship);
+            sawLow[0] |= core.aquatic().air() < 200;
+            recovered[0] |= sawLow[0] && core.aquatic().air() >= 280;
+            breached[0] |= sawLow[0] && BioshipRespiration.airAccess(core);
+            highest[0] =
+                Math.max(
+                    highest[0], BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO).y);
+          });
+    helper.runAfterDelay(
+        370,
+        () -> {
+          try {
+            var core = core(ship);
+            helper.assertTrue(
+                sawLow[0] && recovered[0] && breached[0] && !core.canFly() && !core.body().dead(),
+                "Creature failed its real roof-detour breach: air="
+                    + core.aquatic().air()
+                    + " peak="
+                    + highest[0]
+                    + " recovered="
+                    + recovered[0]
+                    + " route="
+                    + core.aquatic().navigationDebug(level.getGameTime())
+                    + " position="
+                    + BodyCoordinates.physical(core.amoebaComponents(), BlockPos.ZERO)
+                    + " path="
+                    + core.aquatic().path()
+                    + " swimming="
+                    + core.aquatic().swimming());
+            helper.succeed();
+          } finally {
+            pool.forEach(p -> level.removeBlock(p, false));
+            cleanup(helper, ship);
+          }
+        });
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 220, batch = "gilled_submerged_navigation")
+  public static void working_gills_allow_idle_creature_to_remain_submerged_without_breaching(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var current = core(ship);
+    var level = helper.getLevel();
+    var root =
+        BlockPos.containing(BodyCoordinates.physical(current.amoebaComponents(), BlockPos.ZERO));
+    var pool = roofedSwimmingPool(helper, root, true);
+    level.setBlock(
+        current.getBlockPos().east(),
+        Create_bioships.GILLS
+            .get()
+            .defaultBlockState()
+            .setValue(RespiratoryOrganBlock.FACING, Direction.EAST),
+        3);
+    helper.runAfterDelay(
+        160,
+        () -> {
+          try {
+            var core = core(ship);
+            helper.assertTrue(
+                BioshipRespiration.activeGills(core)
+                    && core.aquatic().air() == 300
+                    && !core.aquatic().needsAir()
+                    && !core.body().dead(),
+                "Working gills triggered a needless breach or depleted air");
+            helper.succeed();
+          } finally {
+            pool.forEach(p -> level.removeBlock(p, false));
+            cleanup(helper, ship);
+          }
+        });
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "underwater_body_gap")
+  public static void water_clearance_rejects_a_gap_that_fits_core_but_not_attached_organs(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    var current = core(ship);
+    var level = helper.getLevel();
+    var root =
+        BlockPos.containing(BodyCoordinates.physical(current.amoebaComponents(), BlockPos.ZERO));
+    var pool = roofedSwimmingPool(helper, root, true);
+    try {
+      for (int y = 0; y < 4; y++)
+        for (int z = -3; z <= 3; z++)
+          if (z != 0) level.setBlock(root.offset(2, y, z), Blocks.GLASS.defaultBlockState(), 3);
+      var target = WaterNavigationSpace.point(Vec3.atCenterOf(root.east(2)));
+      helper.assertTrue(
+          new WaterNavigationSpace(current, false).fits(target),
+          "One-block gap rejected a lone core");
+      level.setBlock(
+          current.getBlockPos().north(), Create_bioships.STOMACH.get().defaultBlockState(), 3);
+      helper.assertTrue(
+          !new WaterNavigationSpace(current, false).fits(target),
+          "Underwater clearance ignored an organ protruding into the wall");
+      helper.succeed();
+    } finally {
+      pool.forEach(p -> level.removeBlock(p, false));
+      cleanup(helper, ship);
+    }
+  }
+
   private static int fixture;
 
   private static BlockPos location() {
