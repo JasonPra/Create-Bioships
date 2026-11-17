@@ -39,7 +39,10 @@ public final class CoreBlock extends Block
   protected void onPlace(
       BlockState state, Level level, BlockPos pos, BlockState previous, boolean moved) {
     super.onPlace(state, level, pos, previous, moved);
-    if (!level.isClientSide && !previous.is(this)) level.scheduleTick(pos, this, 1);
+    if (level instanceof ServerLevel server && !previous.is(this)) {
+      CoreAssemblyRules.mark(server, pos);
+      level.scheduleTick(pos, this, 1);
+    }
   }
 
   static boolean assembled(ServerLevel level, BlockPos pos) {
@@ -56,6 +59,7 @@ public final class CoreBlock extends Block
         level.setBlock(pos, state.setValue(BLINK, true).setValue(STAGE, 0), 2);
       return;
     }
+    CoreAssemblyRules.mark(level, pos);
     int stage = state.getValue(STAGE);
     // Newly assembled cores open first. The old four/four/three-tick double blink follows.
     boolean opening = stage == 3 || stage == 0 && state.getValue(BLINK);
@@ -66,10 +70,23 @@ public final class CoreBlock extends Block
   }
 
   @Override
+  protected java.util.List<net.minecraft.world.item.ItemStack> getDrops(
+      BlockState state, net.minecraft.world.level.storage.loot.LootParams.Builder params) {
+    return java.util.List.of();
+  }
+
+  @Override
+  public net.minecraft.world.item.ItemStack getCloneItemStack(
+      net.minecraft.world.level.LevelReader level, BlockPos pos, BlockState state) {
+    return net.minecraft.world.item.ItemStack.EMPTY;
+  }
+
+  @Override
   public void afterMove(
       ServerLevel source, ServerLevel destination, BlockState state, BlockPos from, BlockPos to) {
     // Use Sable's move callback so both assembly and disassembly refresh the eye state.
     destination.setBlock(to, state.setValue(BLINK, true).setValue(STAGE, 0), 2);
+    CoreAssemblyRules.mark(destination, to);
     destination.scheduleTick(to, this, 1);
   }
 }

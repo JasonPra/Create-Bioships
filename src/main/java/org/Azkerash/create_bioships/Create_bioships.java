@@ -19,7 +19,8 @@ public final class Create_bioships {
       DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
   public static final DeferredBlock<CoreBlock> CORE =
       BLOCKS.register(
-          "living_core", () -> new CoreBlock(BlockBehaviour.Properties.of().strength(2)));
+          "living_core",
+          () -> new CoreBlock(BlockBehaviour.Properties.of().strength(2).noLootTable()));
   public static final DeferredItem<BlockItem> CORE_ITEM = ITEMS.registerSimpleBlockItem(CORE);
 
   static {
