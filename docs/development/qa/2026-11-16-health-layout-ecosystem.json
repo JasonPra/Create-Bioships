@@ -1,0 +1,53 @@
+{
+  "runtimeCommit": "fa7c5f3",
+  "result": "PASSED",
+  "scenario": "Fresh ecosystem preset, seed 8675309, normal difficulty, normal 20 TPS target, real terrain and spawning, 3600 ticks, up to four real mouth feeding cycles. No behavior or resource overrides beyond pork placed in mouths.",
+  "summary": "WILDPROBE COMPLETE ticks=3600 observed=3 digestive=3 repeatedlyFed=3 alive=3 resourceProducing=3 expected=3 porkOffered=1971 failures=0",
+  "layoutMetrics": {
+    "c4092e7e-fa6b-4c07-9199-7865b6b8a4f8": {
+      "layoutSamples": 68,
+      "peakHeight": 5,
+      "peakStructuralSections": 1,
+      "peakInvalidLegMounts": 0,
+      "lastHeight": 5,
+      "lastStructuralComponents": 1,
+      "lastInvalidLegMounts": 0,
+      "lastStableSupport": 1,
+      "lastConnectedStomachs": 1
+    },
+    "aff527ac-6667-4d2e-b2bb-2420aa3562f2": {
+      "layoutSamples": 12,
+      "peakHeight": 2,
+      "peakStructuralSections": 1,
+      "peakInvalidLegMounts": 0,
+      "lastHeight": 2,
+      "lastStructuralComponents": 1,
+      "lastInvalidLegMounts": 0,
+      "lastStableSupport": 1,
+      "lastConnectedStomachs": 1
+    },
+    "5517fece-2e37-4b96-bd7d-8e99399b95fc": {
+      "layoutSamples": 78,
+      "peakHeight": 2,
+      "peakStructuralSections": 1,
+      "peakInvalidLegMounts": 0,
+      "lastHeight": 2,
+      "lastStructuralComponents": 1,
+      "lastInvalidLegMounts": 0,
+      "lastStableSupport": 1,
+      "lastConnectedStomachs": 1
+    }
+  },
+  "finalSamples": [
+    "WILDPROBE tick=3600 ship=c4092e7e-fa6b-4c07-9199-7865b6b8a4f8 position=(-6.512374929947291, 70.78872951016824, 109.55393015968315) health=236.0 air=300 wet=false aquatic={Air:300,AirAccess:1b,Breathing:1b,GillSamples:180,GillUse:0,GillUsePrecise:0.0d,LegEvolutionAfter:0L,SeekingAir:0b,Swimming:0b,UseSamples:180,WaterContact:0b,WaterUse:0,WaterUsePrecise:0.0d,Wet:0b} organMove=null action=WANDER reason=No reachable urgent need or funded goal bodyWork={Action:\"IDLE\",Priorities:[],QueuedGoals:0,Reason:\"No feasible funded body work\"} cells=32 stomachs=1 connected=1 coreMotion=false coreRemoved=false primary=true digestion=[acid=969, queued=264, progress=70/185] mouthFood=[0] waterUse=0 swimmingLegs=0.0 legsMissing=0 materials={biomancy:elastic_fibers=38, biomancy:nutrient_paste=11, biomancy:bone_fragments=108, biomancy:flesh_bits=31} feeds=4",
+    "WILDPROBE tick=3600 ship=aff527ac-6667-4d2e-b2bb-2420aa3562f2 position=(11.44022977626761, 64.20471822157344, 57.65730456088503) health=128.0 air=300 wet=false aquatic={Air:300,AirAccess:1b,Breathing:1b,GillSamples:180,GillUse:984,GillUsePrecise:983.8656171190495d,LegEvolutionAfter:3380L,SeekingAir:0b,Swimming:0b,UseSamples:180,WaterContact:1b,WaterUse:984,WaterUsePrecise:983.8656171190495d,Wet:0b} organMove=null action=WANDER reason=No reachable urgent need or funded goal bodyWork={Action:\"IDLE\",Priorities:[],QueuedGoals:0,Reason:\"No feasible funded body work\"} cells=7 stomachs=1 connected=1 coreMotion=false coreRemoved=false primary=true digestion=[acid=969, queued=153, progress=70/185] mouthFood=[0] waterUse=984 swimmingLegs=0.25 legsMissing=0 materials={biomancy:elastic_fibers=19, biomancy:nutrient_paste=11, biomancy:bone_fragments=42, biomancy:flesh_bits=64} feeds=4",
+    "WILDPROBE tick=3600 ship=5517fece-2e37-4b96-bd7d-8e99399b95fc position=(153.9843577643367, 66.00872486470405, 80.45520754854903) health=132.0 air=300 wet=false aquatic={Air:300,AirAccess:1b,Breathing:1b,GillSamples:180,GillUse:990,GillUsePrecise:989.508663285316d,LegEvolutionAfter:3740L,SeekingAir:0b,Swimming:0b,UseSamples:180,WaterContact:1b,WaterUse:990,WaterUsePrecise:989.508663285316d,Wet:0b} organMove=null action=WANDER reason=No reachable urgent need or funded goal bodyWork={Action:\"IDLE\",Priorities:[],QueuedGoals:0,Reason:\"No feasible funded body work\"} cells=8 stomachs=1 connected=1 coreMotion=false coreRemoved=false primary=true digestion=[acid=969, queued=153, progress=70/185] mouthFood=[0] waterUse=990 swimmingLegs=0.5 legsMissing=0 materials={biomancy:elastic_fibers=16, biomancy:nutrient_paste=11, biomancy:bone_fragments=44, biomancy:flesh_bits=69} feeds=4"
+  ],
+  "deaths": [],
+  "failures": [],
+  "limitations": [
+    "Three-minute seeded replay, not long-term or accelerated-tick qualification.",
+    "Snapshots do not replace continuous graphical contact/animation QA.",
+    "No gill progression qualified; later aquatic adaptation remains under test."
+  ]
+}

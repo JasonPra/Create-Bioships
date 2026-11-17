@@ -264,3 +264,9 @@ Further queued requirements: prohibit leg mounts on lungs as well as the core an
 - Equal anatomy-port and paid-leg choices now use stable coordinate tie breaks; compaction scans organs and cover deterministically. No new material grants, AI overrides or commands.
 - Validation: build, all 58 unit tests and all 162 required GameTests passed. The new in-engine fixture checks a movable remote organ and then adds a real branch making it immovable, verifying that cover rearrangement stops.
 - Seven broader groups remain open; this resolves a local progress failure rather than qualifying whole-body convergence. See `docs/development/batch-status.md`. A fresh normal-world ecosystem replay follows.
+
+### Fresh health/layout ecosystem replay
+
+- Runtime `fa7c5f3` passed a fresh 3,600-tick normal-world ecosystem replay: 3/3 alive, digestive, repeatedly fed and resource-producing; 1,971 pork offered through real mouths; no probe failures or recorded deaths. Land and water creatures retained the new component-derived health totals.
+- Report: `docs/development/qa/2026-11-16-health-layout-ecosystem.json`, including per-creature layout samples, peak height/sections/mount faults and final samples. This short run does not close convergence, endurance or graphical qualification.
+- Seven broader groups remain. Next focused batch corrects socket-to-foot association in anatomy audits and adds health capacity/mutation points to existing developer snapshots. No additional command is needed.
