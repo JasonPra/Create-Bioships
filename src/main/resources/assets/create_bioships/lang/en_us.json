@@ -1,3 +1,4 @@
 {
-  "block.create_bioships.living_core": "Bioship Core"
+  "block.create_bioships.living_core": "Bioship Core",
+  "generator.create_bioships.core_development": "Core Development (Bedrock Superflat)"
 }

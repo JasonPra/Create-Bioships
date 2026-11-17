@@ -13,7 +13,7 @@ import net.minecraft.world.level.block.state.*;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 
-/** A visual core only: no block entity, assembly trigger, limbs or creature systems. */
+/** A blinking core with player-only assembly; no block entity, limbs or creature behavior. */
 public final class CoreBlock extends Block
     implements dev.ryanhcode.sable.api.block.BlockSubLevelAssemblyListener {
   public static final MapCodec<CoreBlock> CODEC = simpleCodec(CoreBlock::new);
@@ -43,6 +43,20 @@ public final class CoreBlock extends Block
       CoreAssemblyRules.changed(server, pos);
       level.scheduleTick(pos, this, 1);
     }
+  }
+
+  @Override
+  public void setPlacedBy(
+      Level level,
+      BlockPos pos,
+      BlockState state,
+      net.minecraft.world.entity.LivingEntity placer,
+      net.minecraft.world.item.ItemStack stack) {
+    super.setPlacedBy(level, pos, state, placer, stack);
+    if (level instanceof ServerLevel server
+        && placer instanceof net.minecraft.world.entity.player.Player
+        && !(placer instanceof net.neoforged.neoforge.common.util.FakePlayer))
+      CoreAssemblyRules.playerPlaced(server, pos);
   }
 
   static boolean assembled(ServerLevel level, BlockPos pos) {

@@ -5,7 +5,6 @@ import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.companion.math.BoundingBox3i;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.ryanhcode.sable.sublevel.SubLevel;
-import dev.simulated_team.simulated.content.blocks.physics_assembler.PhysicsAssemblerBlock;
 import java.util.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -124,11 +123,61 @@ public final class CoreAssemblyRules {
         && "amoeba".equals(server.getUserDataTag().getString(TYPE));
   }
 
+  private static final Map<ServerLevel, Set<BlockPos>> PLAYER_PLACEMENTS = new WeakHashMap<>();
+
+  public static void playerPlaced(ServerLevel level, BlockPos pos) {
+    PLAYER_PLACEMENTS.computeIfAbsent(level, ignored -> new LinkedHashSet<>()).add(pos.immutable());
+  }
+
+  @SubscribeEvent
+  public static void assemblePlayerPlacements(
+      net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) {
+    for (var level : event.getServer().getAllLevels()) {
+      var positions = PLAYER_PLACEMENTS.remove(level);
+      if (positions == null) continue;
+      for (var pos : positions) {
+        if (!level.getBlockState(pos).is(Create_bioships.CORE.get())) continue;
+        if (containing(level, pos) != null) changed(level, pos);
+        else
+          SubLevelAssemblyHelper.assembleBlocks(
+              level, pos, List.of(pos), new BoundingBox3i(pos, pos));
+      }
+    }
+  }
+
+  private static boolean creatureSurface(net.minecraft.world.level.Level level, BlockPos pos) {
+    var container = SubLevelContainer.getContainer(level);
+    if (container == null || !container.inBounds(pos)) return false;
+    var plot = container.getPlot(new ChunkPos(pos));
+    if (plot == null) return false;
+    var body = plot.getSubLevel();
+    if (body instanceof ServerSubLevel) return isCreature(body);
+    // The client can reject the click before item prediction using its loaded core geometry.
+    for (var holder : plot.getLoadedChunks())
+      for (var section : holder.getChunk().getSections())
+        if (section.maybeHas(state -> state.is(Create_bioships.CORE.get()))) return true;
+    return false;
+  }
+
+  @SubscribeEvent
+  public static void clicked(
+      net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickBlock event) {
+    if (!(event.getItemStack().getItem() instanceof net.minecraft.world.item.BlockItem item)
+        || BlockPlacementRules.allows(item.getBlock().defaultBlockState())) return;
+    var pos = event.getPos();
+    var face = event.getFace();
+    if (creatureSurface(event.getLevel(), pos)
+        || face != null && creatureSurface(event.getLevel(), pos.relative(face))) {
+      event.setCanceled(true);
+      event.setCancellationResult(net.minecraft.world.InteractionResult.FAIL);
+    }
+  }
+
   @SubscribeEvent
   public static void placed(BlockEvent.EntityPlaceEvent event) {
     if (event.getEntity() instanceof Player
         && event.getLevel() instanceof ServerLevel level
-        && event.getPlacedBlock().getBlock() instanceof PhysicsAssemblerBlock
+        && !BlockPlacementRules.allows(event.getPlacedBlock())
         && isCreature(containing(level, event.getPos()))) event.setCanceled(true);
   }
 }

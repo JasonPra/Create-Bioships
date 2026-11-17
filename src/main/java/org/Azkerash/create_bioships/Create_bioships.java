@@ -35,6 +35,9 @@ public final class Create_bioships {
   }
 
   public Create_bioships(IEventBus bus) {
+    bus.addListener(
+        (net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent event) ->
+            event.enqueueWork(BlockPlacementRules::refresh));
     BLOCKS.register(bus);
     ITEMS.register(bus);
     TABS.register(bus);
