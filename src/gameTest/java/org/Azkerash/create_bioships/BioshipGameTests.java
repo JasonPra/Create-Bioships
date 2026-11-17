@@ -7901,6 +7901,39 @@ public class BioshipGameTests {
     helper.succeed();
   }
 
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "compact_chamber_progress")
+  public static void compaction_does_not_shuffle_cover_for_an_immovable_organ(
+      GameTestHelper helper) {
+    var ship = assemble(helper);
+    try {
+      var core = core(ship);
+      var origin = core.structuralOrigin();
+      var level = helper.getLevel();
+      // A filled central chamber and a distant lung connected by a horizontal tissue bridge.
+      for (var pos : BlockPos.betweenClosed(origin.offset(-2, 0, -2), origin.offset(2, 0, 2)))
+        if (!pos.equals(core.getBlockPos()))
+          level.setBlock(pos, BioshipTissue.body().defaultBlockState(), 3);
+      level.setBlock(origin.east(3), BioshipTissue.body().defaultBlockState(), 3);
+      level.setBlock(origin.east(4), Create_bioships.LUNGS.get().defaultBlockState(), 3);
+      var cells = BioshipStructure.cells(ship);
+      var plan = BioshipAnatomy.compact(core, cells);
+      helper.assertTrue(plan != null, "A movable organ had no compaction plan");
+      if (BioshipTissue.isTissue(cells.get(plan.source()))) {
+        helper.assertTrue(
+            plan.target().distManhattan(origin) > 2,
+            "Cover moved back into the chamber being cleared");
+      }
+      // Removing the lung now severs a real branch. Clearing unrelated cover cannot fix that.
+      level.setBlock(origin.east(5), BioshipTissue.body().defaultBlockState(), 3);
+      helper.assertTrue(
+          BioshipAnatomy.compact(core, BioshipStructure.cells(ship)) == null,
+          "An immovable bridging organ caused pointless cover reshuffling");
+      helper.succeed();
+    } finally {
+      cleanup(helper, ship);
+    }
+  }
+
   @GameTest(template = "test_empty", timeoutTicks = 100, batch = "anatomy_balance_protection")
   public static void buried_legs_queue_relocation_before_protection_and_armor(
       GameTestHelper helper) {

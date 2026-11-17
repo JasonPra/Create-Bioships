@@ -87,17 +87,18 @@ final class BioshipLegGrowth {
     }
     // Spread sockets around the body rather than growing every leg on the first free face.
     candidates.sort(
-        Comparator.comparingDouble(
-            e -> {
-              var p = Vec3.atCenterOf(e.getKey());
-              double spacing =
-                  cells.entrySet().stream()
-                      .filter(c -> BioshipLegEvolution.leg(c.getValue()))
-                      .mapToDouble(c -> Vec3.atCenterOf(c.getKey()).distanceToSqr(p))
-                      .min()
-                      .orElse(0);
-              return p.distanceToSqr(center) - spacing * 2;
-            }));
+        Comparator.<Map.Entry<BlockPos, BlockState>>comparingDouble(
+                e -> {
+                  var p = Vec3.atCenterOf(e.getKey());
+                  double spacing =
+                      cells.entrySet().stream()
+                          .filter(c -> BioshipLegEvolution.leg(c.getValue()))
+                          .mapToDouble(c -> Vec3.atCenterOf(c.getKey()).distanceToSqr(p))
+                          .min()
+                          .orElse(0);
+                  return p.distanceToSqr(center) - spacing * 2;
+                })
+            .thenComparing(Map.Entry.comparingByKey()));
     return candidates;
   }
 

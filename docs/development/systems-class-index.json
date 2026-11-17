@@ -2617,25 +2617,25 @@
         {
           "kind": "method",
           "signature": "private static Move opening(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells)",
-          "line": 108
+          "line": 110
         },
         {
           "kind": "method",
           "signature": "private static Move legs(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells)",
-          "line": 129
+          "line": 131
         },
         {
           "kind": "method",
-          "signature": "private static Move compact(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells)",
-          "line": 170
+          "signature": "static Move compact(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells)",
+          "line": 172
         },
         {
           "kind": "method",
           "signature": "static BioshipAdaptation.Proposal protection(LivingCoreBlockEntity core)",
-          "line": 202
+          "line": 214
         }
       ],
-      "lines": 285
+      "lines": 297
     },
     "BioshipWrenchItem": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipWrenchItem.java",
@@ -9331,15 +9331,15 @@
         {
           "kind": "method",
           "signature": "static boolean develop(LivingCoreBlockEntity core, BlockPos pos, BlockState state)",
-          "line": 102
+          "line": 103
         },
         {
           "kind": "method",
           "signature": "static List<BioshipSupport.Leg> attachments( LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells)",
-          "line": 116
+          "line": 117
         }
       ],
-      "lines": 141
+      "lines": 142
     },
     "EmergencyReserve": {
       "path": "src/main/java/org/Azkerash/create_bioships/EmergencyReserve.java",

@@ -1804,7 +1804,7 @@ public final class BioshipLegAnchors
 
 #### BioshipLegGrowth
 
-Source: `src/main/java/org/Azkerash/create_bioships/BioshipLegGrowth.java` (141 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipLegGrowth.java` (142 lines).
 
 ```java
 final class BioshipLegGrowth
@@ -1817,9 +1817,9 @@ final class BioshipLegGrowth
 
   static List<Map.Entry<BlockPos, BlockState>> sites( LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells); // line 50
 
-  static boolean develop(LivingCoreBlockEntity core, BlockPos pos, BlockState state); // line 102
+  static boolean develop(LivingCoreBlockEntity core, BlockPos pos, BlockState state); // line 103
 
-  static List<BioshipSupport.Leg> attachments( LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells); // line 116
+  static List<BioshipSupport.Leg> attachments( LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells); // line 117
 
 ```
 
@@ -1894,7 +1894,7 @@ public final class AmoebaLegBlock extends DirectionalBlock
 
 #### BioshipAnatomy
 
-Source: `src/main/java/org/Azkerash/create_bioships/BioshipAnatomy.java` (285 lines).
+Source: `src/main/java/org/Azkerash/create_bioships/BioshipAnatomy.java` (297 lines).
 
 ```java
 final class BioshipAnatomy
@@ -1925,13 +1925,13 @@ final class BioshipAnatomy
 
   private static List<BlockPos> ports(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells); // line 96
 
-  private static Move opening(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells); // line 108
+  private static Move opening(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells); // line 110
 
-  private static Move legs(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells); // line 129
+  private static Move legs(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells); // line 131
 
-  private static Move compact(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells); // line 170
+  static Move compact(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells); // line 172
 
-  static BioshipAdaptation.Proposal protection(LivingCoreBlockEntity core); // line 202
+  static BioshipAdaptation.Proposal protection(LivingCoreBlockEntity core); // line 214
 
 ```
 

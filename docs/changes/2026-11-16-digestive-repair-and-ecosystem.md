@@ -257,3 +257,10 @@ Further queued requirements: prohibit leg mounts on lungs as well as the core an
 - Full-suite validation exposed the wall-climbing height controller stalling below its next ledge. Increased vertical traction only while a real wall/ceiling grip is present; ordinary ground movement remains unchanged. The real wall-climb and maze regressions passed in the final run.
 - Validation: build, all 58 unit tests and all 161 required GameTests passed. New checks cover table values, armor, event caching, permanent loss, wounds through stashing/reload, actual digestion, native core/flesh blast resistance, one reward per survived explosion, and no reward for harmless/lethal blasts. This is automated coverage, not a new ecosystem endurance or graphical sign-off. No new in-game commands.
 - Seven broader groups remain: stable layouts; attachment/intake transitions; paid remodeling/stashing; land/water shapes; extended survival tests; graphical animation/collision QA; final regression/packaging/docs.
+
+### Structural progress: compaction chamber planning
+
+- Cover relocation now checks that the waiting organ can move into the cell being cleared with valid structural support and an affordable digestive route. A bridging organ that cannot move no longer causes unrelated protective tissue to shuffle. Relocated cover must leave the requested interior radius.
+- Equal anatomy-port and paid-leg choices now use stable coordinate tie breaks; compaction scans organs and cover deterministically. No new material grants, AI overrides or commands.
+- Validation: build, all 58 unit tests and all 162 required GameTests passed. The new in-engine fixture checks a movable remote organ and then adds a real branch making it immovable, verifying that cover rearrangement stops.
+- Seven broader groups remain open; this resolves a local progress failure rather than qualifying whole-body convergence. See `docs/development/batch-status.md`. A fresh normal-world ecosystem replay follows.

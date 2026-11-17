@@ -103,7 +103,9 @@ final class BioshipAnatomy {
         Vec3.atLowerCornerOf(core.structuralOrigin()).add(BioshipSupport.layout(core).center());
     return result.stream()
         .filter(p -> !cells.containsKey(p) && free(core, p))
-        .sorted(Comparator.comparingDouble(p -> p.distToCenterSqr(center)))
+        .sorted(
+            Comparator.<BlockPos>comparingDouble(p -> p.distToCenterSqr(center))
+                .thenComparing(Comparator.naturalOrder()))
         .toList();
   }
 
@@ -169,9 +171,9 @@ final class BioshipAnatomy {
     return null;
   }
 
-  private static Move compact(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells) {
+  static Move compact(LivingCoreBlockEntity core, Map<BlockPos, BlockState> cells) {
     var targets = ports(core, cells);
-    for (var entry : cells.entrySet()) {
+    for (var entry : cells.entrySet().stream().sorted(Map.Entry.comparingByKey()).toList()) {
       var state = entry.getValue();
       if (!state.is(Create_bioships.STOMACH.get())
           && !state.is(Create_bioships.FEEDING_MOUTH.get())
@@ -185,12 +187,22 @@ final class BioshipAnatomy {
             entry.getKey(), target, "Compact vital organs before adding protective flesh", 920);
       }
       // A removable covering block must not permanently prevent internal expansion.
-      for (var cover : cells.entrySet()) {
+      for (var cover : cells.entrySet().stream().sorted(Map.Entry.comparingByKey()).toList()) {
         if (!BioshipTissue.isTissue(cover.getValue())
             || !DigestiveSystem.permitsPlacement(core, cover.getKey())
-            || cover.getKey().distManhattan(core.structuralOrigin()) > distance - 2) continue;
+            || cover.getKey().distManhattan(core.structuralOrigin()) > distance - 2
+            || mouthOpening(core, cover.getKey())
+            // Clearing a chamber is useful only if the waiting organ can actually occupy it.
+            || !BioshipSupport.safeMove(
+                core,
+                entry.getKey(),
+                cover.getKey(),
+                !BioshipTissue.host(core.getLevel().getBlockEntity(entry.getKey())).isAir())
+            || !DigestiveSystem.reserveOrganRoute(core, entry.getKey(), cover.getKey(), false))
+          continue;
         for (var target : targets)
-          if (canMove(core, cover.getKey(), target))
+          if (target.distManhattan(core.structuralOrigin()) > distance - 2
+              && canMove(core, cover.getKey(), target))
             return new Move(
                 cover.getKey(),
                 target,
