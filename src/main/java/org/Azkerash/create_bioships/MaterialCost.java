@@ -1,20 +1,13 @@
 package org.Azkerash.create_bioships;
 
 import java.util.*;
+import org.Azkerash.create_bioships.creature.ResourceAccount;
 
 /** Resource transactions shared by storage, emergency reserves, growth and routing. */
 record MaterialCost(int flesh, int fiber, int bone) {
   static final String FLESH = "biomancy:flesh_bits",
       FIBER = "biomancy:elastic_fibers",
       BONE = "biomancy:bone_fragments";
-
-  interface Account {
-    int material(String id);
-
-    boolean spend(String id, int count);
-
-    void credit(String id, int count);
-  }
 
   MaterialCost {
     if (flesh < 0 || fiber < 0 || bone < 0)
@@ -25,12 +18,12 @@ record MaterialCost(int flesh, int fiber, int bone) {
     return Map.of(FLESH, flesh, FIBER, fiber, BONE, bone);
   }
 
-  boolean funded(Account account) {
+  boolean funded(ResourceAccount account) {
     return entries().entrySet().stream()
         .allMatch(e -> account.material(e.getKey()) >= e.getValue());
   }
 
-  boolean pay(Account account) {
+  boolean pay(ResourceAccount account) {
     if (!funded(account)) return false;
     var spent = new LinkedHashMap<String, Integer>();
     for (var entry : entries().entrySet())
@@ -44,7 +37,7 @@ record MaterialCost(int flesh, int fiber, int bone) {
     return true;
   }
 
-  void refund(Account account) {
+  void refund(ResourceAccount account) {
     entries()
         .forEach(
             (id, count) -> {
@@ -52,7 +45,7 @@ record MaterialCost(int flesh, int fiber, int bone) {
             });
   }
 
-  static boolean transfer(Account from, Account to, String id, int count) {
+  static boolean transfer(ResourceAccount from, ResourceAccount to, String id, int count) {
     if (count < 0) throw new IllegalArgumentException("Negative transfer");
     if (count == 0) return true;
     if (!from.spend(id, count)) return false;

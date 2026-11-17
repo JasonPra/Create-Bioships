@@ -1,5 +1,7 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.creature.ResourceAccount;
+
 import java.util.*;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -163,8 +165,8 @@ final class BioshipStorage {
     }
   }
 
-  static MaterialCost.Account account(LivingCoreBlockEntity core) {
-    return new MaterialCost.Account() {
+  static ResourceAccount account(LivingCoreBlockEntity core) {
+    return new ResourceAccount() {
       public int material(String id) {
         return amount(core, id);
       }

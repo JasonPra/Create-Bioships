@@ -1,5 +1,7 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.creature.ResourceAccount;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.*;
@@ -40,7 +42,7 @@ class MaterialCostTest {
     var before = ledger.snapshot();
     var calls = new int[] {0};
     var uncertain =
-        new MaterialCost.Account() {
+        new ResourceAccount() {
           public int material(String id) {
             return ledger.material(id);
           }

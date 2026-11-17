@@ -29,3 +29,8 @@ merging/transport do not acquire health, hunting or growth responsibilities.
 
 Push each completed checkpoint and report the number remaining. Preserve save/network keys,
 component inventories, merge timing, physics behavior and the current world preset.
+
+Checkpoint 2: `CreatureBodyAccess` and `ResourceAccount` are public core-independent contracts.
+Material transactions and storage now use `ResourceAccount`; the old nested account interface
+was removed rather than retained as a duplicate. Java compilation passed. Body binding follows
+in checkpoint 3, where the amoeba adapter and component lifecycle contract are introduced.

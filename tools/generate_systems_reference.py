@@ -26,7 +26,7 @@ GROUPS=[
 ('gut','Mouths and physical gut graph','active',['DigestiveSystem','BioshipDigestiveRepair','FeedingMouthBlockEntity','FeedingMouthBlock','IntestineBlock'],'Assign distinct stomachs, validate tube paths, buffer mouth input and connect food sacs.'),
 ('stomach','Recipe digestion','active',['StomachBlockEntity','StomachBlock'],'Native Biomancy recipes and output rolls, acid, input queues, local nutrient paste and tube stock.'),
 ('storage','Shared usable storage','active',['BioshipStorage','BioshipStores'],'Core-first deposits, connected native/private sac stocks, external-first withdrawal and reserve refill.'),
-('money','Costs, ledgers and reserve policy','active',['MaterialCost','MaterialLedger','EmergencyReserve'],'Affordability, payment rollback and refunds; core emergency target 32 flesh / 16 fiber / 8 bone.'),
+('money','Costs, ledgers and reserve policy','active',['MaterialCost','creature.ResourceAccount','creature.CreatureBodyAccess','MaterialLedger','EmergencyReserve'],'Affordability, payment rollback and refunds; core emergency target 32 flesh / 16 fiber / 8 bone.'),
 ('plans','Read-only anatomical proposals','active',['BioshipAdaptationPlanner','BioshipDigestiveGrowth','BioshipRecovery'],'Propose funded organ recovery, digestion, storage, reinforcement or safe reclamation; no block edits.'),
 ('adapt','Execute anatomical adaptation','active',['BioshipAdaptation','BioshipBodyBehavior','BioshipConfiguration'],'Rank body work independently of actions, share layout transaction locks, and execute paid adaptation or native configuration.'),
 ('metabolism','Metabolism and emergency fuel','active',['BioshipMetabolism'],'One metabolic step at the core cadence; nutrient paste, emergency resources, then starvation damage.'),

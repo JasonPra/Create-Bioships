@@ -1,5 +1,7 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.creature.ResourceAccount;
+
 import com.github.elenterius.biomancy.block.decomposer.DecomposerBlockEntity;
 import com.github.elenterius.biomancy.crafting.recipe.DecomposingRecipe;
 import java.util.*;
@@ -18,7 +20,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 /** Outputs are tissue reserves, never an extractable inventory or capability. */
-public class StomachBlockEntity extends BlockEntity implements MenuProvider, MaterialCost.Account {
+public class StomachBlockEntity extends BlockEntity implements MenuProvider, ResourceAccount {
   public static final int MAX_ACID = 1000;
   private final NonNullList<ItemStack> input = NonNullList.withSize(9, ItemStack.EMPTY);
   private final boolean[] inherited = new boolean[9];

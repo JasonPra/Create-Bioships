@@ -1,9 +1,11 @@
 package org.Azkerash.create_bioships;
 
+import org.Azkerash.create_bioships.creature.ResourceAccount;
+
 import java.util.*;
 
 /** Plain resource accounting, independent of block entities and behavior selection. */
-final class MaterialLedger implements MaterialCost.Account {
+final class MaterialLedger implements ResourceAccount {
   private final Map<String, Integer> amounts = new HashMap<>();
 
   public int material(String id) {
