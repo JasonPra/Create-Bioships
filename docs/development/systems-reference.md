@@ -1415,6 +1415,9 @@ Threat assessment, retreat and idle wandering. Pilot authority is currently disa
   creature.memory.PlaceMemoryCodec
   PlaceObservations
   EncounterObservations
+  ThreatObservations
+  creature.survival.ThreatProfile
+  creature.survival.EscapeScoring
 ```
 
 
@@ -1572,6 +1575,60 @@ final class EncounterObservations
   private int cursor; // line 13
 
   void observe(LivingCoreBlockEntity core, Vec3 here); // line 14
+
+```
+
+
+#### ThreatObservations
+
+Source: `src/main/java/org/Azkerash/create_bioships/ThreatObservations.java` (82 lines).
+
+```java
+final class ThreatObservations
+
+  private record Seen(Threat threat, long until); // line 14
+
+  private final Map<UUID, Seen> seen; // line 15
+
+  private long next; // line 17
+
+  private Vec3 explosive; // line 18
+
+  static ThreatProfile profile(Entity entity); // line 19
+
+  List<Threat> update(LivingCoreBlockEntity core, Vec3 here); // line 44
+
+  Vec3 explosive(); // line 77
+
+```
+
+
+#### creature.survival.ThreatProfile
+
+Source: `src/main/java/org/Azkerash/create_bioships/creature/survival/ThreatProfile.java` (13 lines).
+
+```java
+public record ThreatProfile( boolean explosive, boolean ranged, boolean climbing, boolean flying, boolean aquatic, boolean jumping)
+
+  public static final ThreatProfile GROUND; // line 10
+
+```
+
+
+#### creature.survival.EscapeScoring
+
+Source: `src/main/java/org/Azkerash/create_bioships/creature/survival/EscapeScoring.java` (55 lines).
+
+```java
+public final class EscapeScoring
+
+  private EscapeScoring(); // line 9
+
+  public record Threat(Point position, ThreatProfile profile); // line 10
+
+  public record Candidate( Point position, Set<Feature> features, double confidence, boolean breaksSight, boolean safe, double danger, double prey); // line 12
+
+  public static double score(Point origin, Candidate candidate, List<Threat> threats); // line 25
 
 ```
 

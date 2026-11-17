@@ -105,7 +105,10 @@
         "creature.memory.PlaceMemory",
         "creature.memory.PlaceMemoryCodec",
         "PlaceObservations",
-        "EncounterObservations"
+        "EncounterObservations",
+        "ThreatObservations",
+        "creature.survival.ThreatProfile",
+        "creature.survival.EscapeScoring"
       ],
       "Threat assessment, retreat and idle wandering. Pilot authority is currently disabled."
     ],
@@ -6397,6 +6400,48 @@
       ],
       "lines": 55
     },
+    "ThreatObservations": {
+      "path": "src/main/java/org/Azkerash/create_bioships/ThreatObservations.java",
+      "declaration": "final class ThreatObservations",
+      "members": [
+        {
+          "kind": "nested type",
+          "signature": "private record Seen(Threat threat, long until)",
+          "line": 14
+        },
+        {
+          "kind": "field",
+          "signature": "private final Map<UUID, Seen> seen",
+          "line": 15
+        },
+        {
+          "kind": "field",
+          "signature": "private long next",
+          "line": 17
+        },
+        {
+          "kind": "field",
+          "signature": "private Vec3 explosive",
+          "line": 18
+        },
+        {
+          "kind": "method",
+          "signature": "static ThreatProfile profile(Entity entity)",
+          "line": 19
+        },
+        {
+          "kind": "method",
+          "signature": "List<Threat> update(LivingCoreBlockEntity core, Vec3 here)",
+          "line": 44
+        },
+        {
+          "kind": "method",
+          "signature": "Vec3 explosive()",
+          "line": 77
+        }
+      ],
+      "lines": 82
+    },
     "BioshipVoice": {
       "path": "src/main/java/org/Azkerash/create_bioships/BioshipVoice.java",
       "declaration": "final class BioshipVoice",
@@ -10285,6 +10330,45 @@
         }
       ],
       "lines": 31
+    },
+    "creature.survival.ThreatProfile": {
+      "path": "src/main/java/org/Azkerash/create_bioships/creature/survival/ThreatProfile.java",
+      "declaration": "public record ThreatProfile( boolean explosive, boolean ranged, boolean climbing, boolean flying, boolean aquatic, boolean jumping)",
+      "members": [
+        {
+          "kind": "field",
+          "signature": "public static final ThreatProfile GROUND",
+          "line": 10
+        }
+      ],
+      "lines": 13
+    },
+    "creature.survival.EscapeScoring": {
+      "path": "src/main/java/org/Azkerash/create_bioships/creature/survival/EscapeScoring.java",
+      "declaration": "public final class EscapeScoring",
+      "members": [
+        {
+          "kind": "method",
+          "signature": "private EscapeScoring()",
+          "line": 9
+        },
+        {
+          "kind": "nested type",
+          "signature": "public record Threat(Point position, ThreatProfile profile)",
+          "line": 10
+        },
+        {
+          "kind": "nested type",
+          "signature": "public record Candidate( Point position, Set<Feature> features, double confidence, boolean breaksSight, boolean safe, double danger, double prey)",
+          "line": 12
+        },
+        {
+          "kind": "method",
+          "signature": "public static double score(Point origin, Candidate candidate, List<Threat> threats)",
+          "line": 25
+        }
+      ],
+      "lines": 55
     },
     "creature.api.CreatureBodyAccess": {
       "path": "src/main/java/org/Azkerash/create_bioships/creature/api/CreatureBodyAccess.java",

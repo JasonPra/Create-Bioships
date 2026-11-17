@@ -47,3 +47,9 @@ Checkpoint 4 complete: visible prey species are recorded even when not hungry. V
 pursuers, nearby creepers and primed TNT leave aging danger evidence. At most 16 entity visibility
 checks occur per 40-tick observation, with a rotating start to avoid dense-herd bias. Species data
 is not treated as a live target. Compilation passed.
+
+Checkpoint 5 complete: reusable capability profiles cover explosions, ranged weapons, climbing,
+flying, aquatic pursuit and jumping. Weighted scoring considers mixed-threat separation, verified
+cover, height, water, recent danger and prey evidence. Explosive retreat rejects destinations that
+approach the blast. Tactical sightings expire after three seconds and are bounded to eight.
+All 99 unit tests pass, including six scoring tests.
