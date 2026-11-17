@@ -78,3 +78,11 @@ disabled/wip/mixin           preserved rescue hook
 
 The lifecycle coordinator and remaining coupled gameplay systems stay in the root package.
 Shared perception/anatomy extraction and gameplay redesign are not part of this pass.
+
+Task 6 complete: 61 unit tests and 27 focused GameTests passed. Runtime startup verified the
+relocated mod bootstrap and common Mixin configs. Checks covered disabled legacy progression,
+independent amoeba hosts, all-face/under-core merging, inventory transfer, support changes,
+resource storage, diagnostic snapshots, habitat geometry and ecosystem seed/reset/refill.
+No gameplay fixes were needed. Full 172-test regression and graphical QA were not rerun.
+
+All six checkpoints are complete; no tasks remain in this approved scope.

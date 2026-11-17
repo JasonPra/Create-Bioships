@@ -16,4 +16,9 @@ Mixins retain the same 13 hooks, now declared in four configs scoped to actual M
 The mod root is not a Mixin package. `tools/check_package_layout.py` checks paths and metadata.
 
 Production, unit-test, GameTest and soak-test sources compile. Registry literal comparison
-against the previous checkpoint passed. Runtime regression results follow in the final task.
+against the previous checkpoint passed. Final validation: 61 unit tests and 27 focused GameTests passed.
+
+The focused runtime checks include the relocated bootstrap/Mixin configuration, disabled-stage
+gates, independent component hosts, storage/inventory preservation, diagnostic snapshots and
+developer habitat/reset/refill tools. No gameplay fixes were introduced. Full 172-test regression
+and graphical QA were not rerun in this package-only scope. All six tasks were pushed separately.

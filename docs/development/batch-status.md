@@ -1,7 +1,8 @@
 # Current work scope
 
-Tasks 1–5 of the approved [package organization](package-organization.md) pass are complete
-and pushed individually. One task remains: focused runtime regression testing and any resulting
-fixes. The earlier feature backlog remains cancelled.
+All six tasks in the approved [package ownership pass](package-organization.md) are complete
+and pushed individually. No tasks remain. Validation: 61 unit tests and 27 focused GameTests
+passed; package/Mixin metadata checks cover 178 Java types and 13 hooks across four configs.
 
-Future features require discussion of class responsibilities and modularization with the user.
+Disabled prototypes remain under `disabled.wip` with progression gated off. The earlier feature
+backlog remains cancelled. Future features require discussion of class responsibilities first.
