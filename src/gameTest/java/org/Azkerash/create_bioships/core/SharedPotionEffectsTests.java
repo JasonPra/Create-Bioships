@@ -32,8 +32,24 @@ public final class SharedPotionEffectsTests {
         10,
         () -> {
           level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
-          level.setBlock(origin.east(), ComponentRegistry.LAND_EYE.get().defaultBlockState(), 3);
-          level.setBlock(origin.west(), ComponentRegistry.AQUATIC_EYE.get().defaultBlockState(), 3);
+          level.setBlock(
+              origin.east(),
+              ComponentRegistry.LAND_EYE
+                  .get()
+                  .defaultBlockState()
+                  .setValue(
+                      net.minecraft.world.level.block.state.properties.BlockStateProperties.FACING,
+                      Direction.EAST),
+              3);
+          level.setBlock(
+              origin.west(),
+              ComponentRegistry.AQUATIC_EYE
+                  .get()
+                  .defaultBlockState()
+                  .setValue(
+                      net.minecraft.world.level.block.state.properties.BlockStateProperties.FACING,
+                      Direction.WEST),
+              3);
           var body =
               SubLevelAssemblyHelper.assembleBlocks(
                   level,

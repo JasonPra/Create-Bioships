@@ -19,8 +19,24 @@ public final class FullHealthEyeRecoveryTests {
     var level = helper.getLevel();
     var origin = new BlockPos(656, 80, 128);
     level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
-    level.setBlock(origin.east(), ComponentRegistry.LAND_EYE.get().defaultBlockState(), 3);
-    level.setBlock(origin.west(), ComponentRegistry.AQUATIC_EYE.get().defaultBlockState(), 3);
+    level.setBlock(
+        origin.east(),
+        ComponentRegistry.LAND_EYE
+            .get()
+            .defaultBlockState()
+            .setValue(
+                net.minecraft.world.level.block.state.properties.BlockStateProperties.FACING,
+                Direction.EAST),
+        3);
+    level.setBlock(
+        origin.west(),
+        ComponentRegistry.AQUATIC_EYE
+            .get()
+            .defaultBlockState()
+            .setValue(
+                net.minecraft.world.level.block.state.properties.BlockStateProperties.FACING,
+                Direction.WEST),
+        3);
     level.setBlock(origin.north(), Blocks.STONE.defaultBlockState(), 3);
     level.setBlock(origin.south(), Blocks.STONE.defaultBlockState(), 3);
     var body =

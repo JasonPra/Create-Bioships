@@ -125,7 +125,7 @@ public final class SubLevelWoundRenderer {
             light,
             .006f);
       } else if (EyeWoundBehavior.isWeakPoint(state, wound.face())) {
-        var closed = state.setValue(EyeBlink.BLINK, true);
+        var closed = EyeBlink.sleeping(state);
         var model = mc.getBlockRenderer().getBlockModel(closed);
         var consumer =
             buffers.getBuffer(
@@ -135,8 +135,11 @@ public final class SubLevelWoundRenderer {
         pose.translate(.5, .5, .5);
         pose.scale(1.003f, 1.003f, 1.003f);
         pose.translate(-.5, -.5, -.5);
-        for (var q : model.getQuads(closed, null, net.minecraft.util.RandomSource.create()))
-          consumer.putBulkData(pose.last(), q, 1, 1, 1, 1, light, OverlayTexture.NO_OVERLAY);
+        var faces = new java.util.ArrayList<Direction>(java.util.List.of(Direction.values()));
+        faces.add(null);
+        for (var face : faces)
+          for (var q : model.getQuads(closed, face, net.minecraft.util.RandomSource.create()))
+            consumer.putBulkData(pose.last(), q, 1, 1, 1, 1, light, OverlayTexture.NO_OVERLAY);
         pose.popPose();
       }
       float

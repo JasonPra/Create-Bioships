@@ -14,7 +14,33 @@ import net.minecraft.world.phys.shapes.*;
 import org.Azkerash.create_bioships.core.*;
 
 /** Small outward-facing sensory component; land and aquatic forms share all behavior. */
+@net.neoforged.fml.common.EventBusSubscriber(
+    modid = org.Azkerash.create_bioships.Create_bioships.MODID)
 public final class EyeBlock extends Block implements BlockSubLevelAssemblyListener {
+  private static final java.util.Map<ServerLevel, java.util.Set<BlockPos>> SUPPORT_CHECKS =
+      new java.util.WeakHashMap<>();
+
+  public static void supportChanged(
+      dev.ryanhcode.sable.sublevel.ServerSubLevel body, BlockPos pos) {
+    var pending = SUPPORT_CHECKS.computeIfAbsent(body.getLevel(), l -> new java.util.HashSet<>());
+    pending.add(pos.immutable());
+    for (var face : Direction.values()) pending.add(pos.relative(face));
+  }
+
+  @net.neoforged.bus.api.SubscribeEvent
+  public static void validateSupports(
+      net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) {
+    for (var level : event.getServer().getAllLevels()) {
+      var pending = SUPPORT_CHECKS.remove(level);
+      if (pending == null) continue;
+      for (var pos : pending) {
+        var state = level.getBlockState(pos);
+        if (state.getBlock() instanceof EyeBlock && !state.canSurvive(level, pos))
+          level.destroyBlock(pos, true);
+      }
+    }
+  }
+
   public static final MapCodec<EyeBlock> CODEC = simpleCodec(EyeBlock::new);
 
   public EyeBlock(Properties properties) {
@@ -36,7 +62,26 @@ public final class EyeBlock extends Block implements BlockSubLevelAssemblyListen
 
   @Override
   public BlockState getStateForPlacement(BlockPlaceContext context) {
-    return defaultBlockState().setValue(BlockStateProperties.FACING, context.getClickedFace());
+    var state = defaultBlockState().setValue(BlockStateProperties.FACING, context.getClickedFace());
+    return state.canSurvive(context.getLevel(), context.getClickedPos()) ? state : null;
+  }
+
+  @Override
+  protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+    return EyeWoundBehavior.hasSupport(state, level, pos);
+  }
+
+  @Override
+  protected BlockState updateShape(
+      BlockState state,
+      Direction direction,
+      BlockState other,
+      LevelAccessor level,
+      BlockPos pos,
+      BlockPos otherPos) {
+    if (direction == state.getValue(BlockStateProperties.FACING).getOpposite()
+        && !state.canSurvive(level, pos)) level.scheduleTick(pos, this, 1);
+    return super.updateShape(state, direction, other, level, pos, otherPos);
   }
 
   @Override
@@ -61,9 +106,24 @@ public final class EyeBlock extends Block implements BlockSubLevelAssemblyListen
 
   @Override
   protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+    if (!state.canSurvive(level, pos)) {
+      level.destroyBlock(pos, true);
+      return;
+    }
     var body = CoreAssemblyRules.containing(level, pos);
     if (body == null || !CoreAssemblyRules.isCreature(body) || SubLevelHealth.status(body).dead()) {
       level.setBlock(pos, EyeBlink.sleeping(state), 2);
+      return;
+    }
+    if (org.Azkerash.create_bioships
+        .combat
+        .SubLevelWounds
+        .state(body)
+        .active(level.getGameTime())
+        .stream()
+        .anyMatch(w -> w.surface().cell().equals(pos))) {
+      level.setBlock(pos, EyeBlink.sleeping(state), 2);
+      level.scheduleTick(pos, this, 20);
       return;
     }
     EyeBlink.advance(this, state, level, pos);

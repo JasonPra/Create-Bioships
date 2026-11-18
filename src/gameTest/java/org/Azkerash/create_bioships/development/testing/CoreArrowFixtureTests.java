@@ -62,7 +62,7 @@ public final class CoreArrowFixtureTests {
                   arrows.size() == 6, "Expected two native arrows per eye, got " + arrows.size());
               for (var cell : CoreArrowFixture.targets(body)) {
                 helper.assertTrue(
-                    SubLevelWounds.state(body).active(cell, Direction.UP, level.getGameTime()),
+                    SubLevelWounds.state(body).active(cell, Direction.NORTH, level.getGameTime()),
                     "Eye has no corpse wound: " + cell);
                 helper.assertTrue(
                     arrows.stream()

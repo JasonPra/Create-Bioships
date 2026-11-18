@@ -58,6 +58,12 @@ public final class SubLevelWounds {
     var now = body.getLevel().getGameTime();
     var wounds = state(body);
     wounds.hit(cell, face, now, EyeWoundBehavior.WOUND_TICKS);
+    if (EyeWoundBehavior.isEye(block)) {
+      body.getLevel()
+          .setBlock(
+              cell, org.Azkerash.create_bioships.components.logic.eye.EyeBlink.sleeping(block), 2);
+      body.getLevel().scheduleTick(cell, block.getBlock(), 1);
+    }
     var root =
         body.getUserDataTag() == null
             ? new net.minecraft.nbt.CompoundTag()

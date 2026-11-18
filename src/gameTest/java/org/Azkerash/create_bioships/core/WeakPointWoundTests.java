@@ -40,27 +40,28 @@ public final class WeakPointWoundTests {
           level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
           level.setBlock(origin.east(), eyeState, 3);
           level.setBlock(origin.west(), Blocks.STONE.defaultBlockState(), 3);
+          level.setBlock(origin.east().south(), Blocks.STONE.defaultBlockState(), 3);
           var body =
               SubLevelAssemblyHelper.assembleBlocks(
                   level,
                   origin,
-                  java.util.List.of(origin, origin.east(), origin.west()),
-                  new BoundingBox3i(origin.west(), origin.east()));
+                  java.util.List.of(origin, origin.east(), origin.west(), origin.east().south()),
+                  new BoundingBox3i(origin.west(), origin.east().south()));
           helper.assertTrue(body != null, "Assembly failed");
           var core = body.getPlot().getCenterBlock();
           CoreAssemblyRules.mark(level, core);
           var source = level.damageSources().generic();
           var normal = CombatAdapter.target(body);
           normal.hurt(source, 2);
-          helper.assertTrue(SubLevelHealth.status(body).current() == 28, "Ordinary damage changed");
+          helper.assertTrue(SubLevelHealth.status(body).current() == 38, "Ordinary damage changed");
           var critical = CombatAdapter.coreTarget(body);
           critical.hurt(source, 2);
           helper.assertTrue(
-              SubLevelHealth.status(body).current() == 25, "Core weak point is not 1.5x");
+              SubLevelHealth.status(body).current() == 35, "Core weak point is not 1.5x");
           var eye = CombatAdapter.eyeTarget(body, core.east());
           eye.hurt(source, 2);
           helper.assertTrue(
-              SubLevelHealth.status(body).current() == 22, "Eye weak point is not 1.5x");
+              SubLevelHealth.status(body).current() == 32, "Eye weak point is not 1.5x");
           helper.assertTrue(
               CombatAdapter.hitTarget(body, core.east(), Direction.SOUTH) == normal,
               "Eye backing incorrectly receives critical damage");

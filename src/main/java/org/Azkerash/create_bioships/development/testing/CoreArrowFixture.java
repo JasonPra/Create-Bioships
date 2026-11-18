@@ -34,11 +34,11 @@ public final class CoreArrowFixture {
   }
 
   public static BlockPos dispenser(ServerLevel level) {
-    return core(level).above(2);
+    return core(level).north(2);
   }
 
   public static List<BlockPos> dispensers(ServerLevel level) {
-    return List.of(dispenser(level), core(level).west(3).above(), core(level).east(3).above());
+    return List.of(dispenser(level), core(level).west(3).north(), core(level).east(3).north());
   }
 
   public static List<BlockPos> targets(ServerSubLevel body) {
@@ -52,6 +52,7 @@ public final class CoreArrowFixture {
     for (int x : new int[] {-3, 0, 3}) {
       result.add(base.offset(x, 1, 0));
       result.add(base.offset(x, 2, 0));
+      result.add(base.offset(x, 2, 1));
     }
     return result;
   }
@@ -68,14 +69,14 @@ public final class CoreArrowFixture {
         ComponentRegistry.LAND_EYE
             .get()
             .defaultBlockState()
-            .setValue(BlockStateProperties.FACING, Direction.UP),
+            .setValue(BlockStateProperties.FACING, Direction.NORTH),
         3);
     level.setBlock(
         core(level).east(3),
         ComponentRegistry.AQUATIC_EYE
             .get()
             .defaultBlockState()
-            .setValue(BlockStateProperties.FACING, Direction.UP),
+            .setValue(BlockStateProperties.FACING, Direction.NORTH),
         3);
   }
 
@@ -128,7 +129,7 @@ public final class CoreArrowFixture {
     for (var pos : dispensers(level)) {
       level.setBlock(
           pos,
-          Blocks.DISPENSER.defaultBlockState().setValue(DispenserBlock.FACING, Direction.DOWN),
+          Blocks.DISPENSER.defaultBlockState().setValue(DispenserBlock.FACING, Direction.SOUTH),
           3);
       var inventory = (DispenserBlockEntity) level.getBlockEntity(pos);
       inventory.setItem(0, new ItemStack(Items.ARROW, 16));
@@ -177,7 +178,7 @@ public final class CoreArrowFixture {
                 "EYE ARROW REGRESSION\n"
                     + "Left: START · Right: RESET\n"
                     + "Core · Land eye · Aquatic eye\n"
-                    + "Wait for wake-up; three top-down arrows.\n"
+                    + "Wait for wake-up; three front-facing arrows.\n"
                     + "Then repeat on the corpse after 5 seconds.\n"
                     + "Expected: embedded arrows and fading wounds.\n"
                     + state.arrowResult),
@@ -198,7 +199,10 @@ public final class CoreArrowFixture {
     var base = state.arrowOrigin;
     var body =
         SubLevelAssemblyHelper.assembleBlocks(
-            level, core(level), cells(base), new BoundingBox3i(base.west(3), core(level).east(3)));
+            level,
+            core(level),
+            cells(base),
+            new BoundingBox3i(base.west(3), core(level).east(3).south()));
     if (body == null) return 0;
     CoreAssemblyRules.changed(level, body.getPlot().getCenterBlock());
     var tag = body.getUserDataTag().copy();
@@ -219,11 +223,28 @@ public final class CoreArrowFixture {
 
   private static void fire(ServerLevel level) {
     for (var pos : dispensers(level)) {
+      if (!level.getBlockState(pos).is(Blocks.DISPENSER)) {
+        level.setBlock(
+            pos,
+            Blocks.DISPENSER.defaultBlockState().setValue(DispenserBlock.FACING, Direction.SOUTH),
+            3);
+        ((DispenserBlockEntity) level.getBlockEntity(pos))
+            .setItem(0, new ItemStack(Items.ARROW, 16));
+      }
       level.setBlock(pos.north(), Blocks.AIR.defaultBlockState(), 3);
       level.neighborChanged(pos, Blocks.AIR, pos.north());
       level.setBlock(pos.north(), Blocks.REDSTONE_BLOCK.defaultBlockState(), 3);
       level.neighborChanged(pos, Blocks.REDSTONE_BLOCK, pos.north());
       level.scheduleTick(pos, Blocks.DISPENSER, 4);
+    }
+  }
+
+  private static void clearShooters(ServerLevel level) {
+    for (var pos : dispensers(level)) {
+      if (level.getBlockEntity(pos) instanceof net.minecraft.world.Container inventory)
+        inventory.clearContent();
+      level.removeBlock(pos, false);
+      level.removeBlock(pos.north(), false);
     }
   }
 
@@ -256,6 +277,7 @@ public final class CoreArrowFixture {
         explain(level);
       }
     } else if (state.arrowPhase == 1 && wounded(body, state.arrowShotAt)) {
+      clearShooters(level);
       state.arrowPhase = 2;
       state.arrowNextAction = now + 100;
       state.arrowDeadline = now + 300;
@@ -271,6 +293,7 @@ public final class CoreArrowFixture {
         state.setDirty();
         explain(level);
       } else if (wounded(body, state.arrowShotAt)) {
+        clearShooters(level);
         state.arrowPhase = 3;
         state.arrowResult = "PASS: core, land and aquatic eyes · living + corpse";
         state.setDirty();
@@ -290,7 +313,7 @@ public final class CoreArrowFixture {
                     .anyMatch(
                         w ->
                             w.surface().cell().equals(pos)
-                                && w.surface().face() == Direction.UP
+                                && w.surface().face() == Direction.NORTH
                                 && w.at() >= since));
   }
 

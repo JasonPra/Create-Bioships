@@ -42,6 +42,7 @@ public final class EpicFightCompatibilityTests {
                   .defaultBlockState()
                   .setValue(facing, Direction.NORTH),
               3);
+          level.setBlock(origin.east().south(), Blocks.STONE.defaultBlockState(), 3);
           level.setBlock(origin.west(2), Blocks.STONE.defaultBlockState(), 3);
           level.setBlock(origin.south(), Blocks.STONE.defaultBlockState(), 3);
           level.setBlock(origin.south().west(), Blocks.STONE.defaultBlockState(), 3);
@@ -53,6 +54,7 @@ public final class EpicFightCompatibilityTests {
                   List.of(
                       origin,
                       origin.east(),
+                      origin.east().south(),
                       origin.west(2),
                       origin.south(),
                       origin.south().west(),

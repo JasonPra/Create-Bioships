@@ -36,7 +36,15 @@ public final class WrenchRemovalTests {
   private static void exercise(GameTestHelper helper, BlockPos origin) {
     var level = helper.getLevel();
     level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
-    level.setBlock(origin.east(), ComponentRegistry.LAND_EYE.get().defaultBlockState(), 3);
+    level.setBlock(
+        origin.east(),
+        ComponentRegistry.LAND_EYE
+            .get()
+            .defaultBlockState()
+            .setValue(
+                net.minecraft.world.level.block.state.properties.BlockStateProperties.FACING,
+                Direction.EAST),
+        3);
     level.setBlock(origin.west(), Blocks.CHEST.defaultBlockState(), 3);
     var flesh =
         net.minecraft.core.registries.BuiltInRegistries.BLOCK.get(

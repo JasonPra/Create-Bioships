@@ -47,9 +47,8 @@ public final class CreatureDecayTests {
           var core = parent.getPlot().getCenterBlock();
           CoreAssemblyRules.mark(level, core);
           var detached = origin.south(3);
-          level.setBlock(detached, ComponentRegistry.LAND_EYE.get().defaultBlockState(), 3);
-          level.setBlock(
-              detached.east(), ComponentRegistry.AQUATIC_EYE.get().defaultBlockState(), 3);
+          level.setBlock(detached, Blocks.DIAMOND_BLOCK.defaultBlockState(), 3);
+          level.setBlock(detached.east(), Blocks.DIAMOND_BLOCK.defaultBlockState(), 3);
           var child =
               SubLevelAssemblyHelper.assembleBlocks(
                   level,
@@ -70,7 +69,7 @@ public final class CreatureDecayTests {
                 child.setSplitFrom(parent, parent.logicalPose());
                 helper.assertTrue(
                     CreatureDecay.familyId(parent).equals(CreatureDecay.familyId(child)),
-                    "Detached eyes lost corpse-family ID");
+                    "Detached protected components lost corpse-family ID");
                 helper.assertTrue(SubLevelHealth.status(child).dead(), "Detached fragment revived");
                 CreatureDecay.advance(level, now);
                 var world = CreatureDecay.WorldState.get(level);
@@ -92,7 +91,7 @@ public final class CreatureDecayTests {
                     "Registered group rotted too early");
                 helper.assertTrue(
                     SubLevelHealth.blocks(child).size() == 2,
-                    "Detached eyes rotted before ordinary blocks");
+                    "Detached protected components rotted before ordinary blocks");
                 helper.assertTrue(
                     level
                         .getEntitiesOfClass(ItemEntity.class, new AABB(origin).inflate(10))
