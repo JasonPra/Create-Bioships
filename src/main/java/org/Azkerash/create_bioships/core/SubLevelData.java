@@ -298,6 +298,48 @@ public final class SubLevelData {
     body.setUserDataTag(root);
   }
 
+  public static final int TRUST_ATTACK_LOG_LIMIT = 8;
+
+  public record OwnerHit(long tick, double damage, java.util.UUID player) {}
+
+  public static java.util.List<OwnerHit> ownerHits(ServerSubLevel body) {
+    body = SubLevelCreatureParts.root(body);
+    initialize(body);
+    var list = body.getUserDataTag().getCompound(STATE).getList("ownerHits", 10);
+    var result = new java.util.ArrayList<OwnerHit>();
+    for (int i = Math.max(0, list.size() - TRUST_ATTACK_LOG_LIMIT); i < list.size(); i++) {
+      var hit = list.getCompound(i);
+      double damage = hit.getDouble("damage");
+      if (hit.hasUUID("player")
+          && hit.getLong("tick") >= 0
+          && Double.isFinite(damage)
+          && damage >= 0)
+        result.add(new OwnerHit(hit.getLong("tick"), damage, hit.getUUID("player")));
+    }
+    return java.util.List.copyOf(result);
+  }
+
+  public static void ownerHits(ServerSubLevel body, java.util.List<OwnerHit> hits) {
+    if (!SubLevelCreatureParts.available(body)) return;
+    body = SubLevelCreatureParts.root(body);
+    initialize(body);
+    var root = body.getUserDataTag().copy();
+    var list = new net.minecraft.nbt.ListTag();
+    for (var hit : hits.subList(Math.max(0, hits.size() - TRUST_ATTACK_LOG_LIMIT), hits.size())) {
+      if (hit.player() == null
+          || hit.tick() < 0
+          || !Double.isFinite(hit.damage())
+          || hit.damage() < 0) continue;
+      var item = new CompoundTag();
+      item.putLong("tick", hit.tick());
+      item.putDouble("damage", hit.damage());
+      item.putUUID("player", hit.player());
+      list.add(item);
+    }
+    root.getCompound(STATE).put("ownerHits", list);
+    body.setUserDataTag(root);
+  }
+
   public static void trust(ServerSubLevel body, double value) {
     if (!SubLevelCreatureParts.available(body)) return;
     body = SubLevelCreatureParts.root(body);

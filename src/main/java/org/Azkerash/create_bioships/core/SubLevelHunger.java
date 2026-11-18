@@ -137,7 +137,11 @@ public final class SubLevelHunger {
         if (starvation >= STARVATION_INTERVAL) {
           starvation -= STARVATION_INTERVAL;
           var target = CombatAdapter.target(body);
-          if (target != null) target.hurt(body.getLevel().damageSources().starve(), 1);
+          if (target != null) {
+            var before = SubLevelHealth.status(body);
+            target.hurt(body.getLevel().damageSources().starve(), 1);
+            org.Azkerash.create_bioships.core.trust.SubLevelTrustLoss.starvation(body, before);
+          }
         }
       }
       var health = SubLevelHealth.status(body);
