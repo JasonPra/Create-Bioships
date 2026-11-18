@@ -16,6 +16,70 @@ import org.Azkerash.create_bioships.development.testing.LocomotionFixture;
 @GameTestHolder(Create_bioships.MODID)
 @PrefixGameTestTemplate(false)
 public final class CrabLegTests {
+  @GameTest(template = "test_empty", timeoutTicks = 240, batch = "crab_activation")
+  public static void passive_support_and_adding_brain_preserve_position(GameTestHelper helper) {
+    var level = helper.getLevel();
+    var base = new BlockPos(2304, 80, 128);
+    for (int x = 143; x <= 145; x++) for (int z = 7; z <= 9; z++) level.setChunkForced(x, z, true);
+    for (int x = -12; x <= 12; x++)
+      for (int z = -12; z <= 12; z++)
+        level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 3);
+    helper.runAfterDelay(
+        20,
+        () -> {
+          var cells = new ArrayList<>(LocomotionFixture.place(level, base));
+          var brainCell = base.offset(0, 3, 0);
+          cells.remove(brainCell);
+          level.removeBlock(brainCell, false);
+          var extra = base.offset(0, 2, 2);
+          level.setBlock(
+              extra,
+              org.Azkerash.create_bioships
+                  .components
+                  .ComponentRegistry
+                  .CHITIN_ARMOR
+                  .get()
+                  .defaultBlockState(),
+              3);
+          cells.add(extra);
+          var body =
+              SubLevelAssemblyHelper.assembleBlocks(
+                  level,
+                  base.offset(0, 2, 0),
+                  cells,
+                  new BoundingBox3i(base.offset(-2, 2, -1), base.offset(2, 3, 2)));
+          var core = body.getPlot().getCenterBlock();
+          CoreAssemblyRules.mark(level, core);
+          SubLevelData.hungerPaused(body, true);
+          SubLevelLegs.request(body);
+          helper.runAfterDelay(
+              80,
+              () -> {
+                var before = body.logicalPose().transformPosition(Vec3.atCenterOf(core));
+                helper.assertTrue(
+                    before.y - .5 > base.getY() + .5, "Brain-free legs did not support the body");
+                level.setBlock(
+                    core.above(),
+                    org.Azkerash.create_bioships
+                        .components
+                        .ComponentRegistry
+                        .BRAIN
+                        .get()
+                        .defaultBlockState(),
+                    3);
+                helper.runAfterDelay(
+                    80,
+                    () -> {
+                      var after = body.logicalPose().transformPosition(Vec3.atCenterOf(core));
+                      helper.assertTrue(
+                          Double.isFinite(after.lengthSqr()) && after.distanceTo(before) < 3,
+                          "Adding brain launched asymmetric creature: " + after.subtract(before));
+                      helper.succeed();
+                    });
+              });
+        });
+  }
+
   @GameTest(template = "test_empty", timeoutTicks = 260, batch = "crab_legs")
   public static void native_ik_ground_contact_brain_movement_and_stop(GameTestHelper helper) {
     var level = helper.getLevel();

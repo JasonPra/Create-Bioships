@@ -189,7 +189,7 @@ public final class SubLevelLegs {
       if (handle == null || !handle.isValid()) continue;
       double mass = body.getMassTracker().getMass();
       if (!Double.isFinite(mass) || mass <= 0) continue;
-      if (!BrainMotorControls.active(body)) continue;
+      if (SubLevelHealth.status(body).dead()) continue;
       int contacts = contacts(body);
       if (contacts == 0) continue;
       var velocity = handle.getLinearVelocity();
@@ -213,13 +213,18 @@ public final class SubLevelLegs {
                     lift,
                     Math.clamp((desired.z - velocity.z()) * 4, -8 * load, 8 * load))
                 .scale(mass * dt / contacts);
-        handle.applyImpulseAtPoint(root, impulse);
+        // Support acts on the body COM; gait contacts must not inject a
+        // plot-space lever arm or tip the body when one stance foot lifts.
+        handle.applyLinearImpulse(new org.joml.Vector3d(impulse.x, impulse.y, impulse.z));
       }
       var angular = handle.getAngularVelocity();
-      // Damped yaw control. Pitch/roll are stabilized by distributed foot support.
+      // Bounded upright suspension torque, with brain-controlled yaw only.
+      var up = body.logicalPose().orientation().transform(new org.joml.Vector3d(0, 1, 0));
+      double pitch = Math.clamp(-up.z * 8 - angular.x() * 3, -8, 8) * mass * dt;
+      double roll = Math.clamp(up.x * 8 - angular.z() * 3, -8, 8) * mass * dt;
       double torque = (command.yawRate() * load - angular.y()) * mass * dt * .6;
       handle.applyAngularImpulse(
-          new org.joml.Vector3d(0, Math.clamp(torque, -mass * dt, mass * dt), 0));
+          new org.joml.Vector3d(pitch, Math.clamp(torque, -mass * dt, mass * dt), roll));
     }
   }
 
