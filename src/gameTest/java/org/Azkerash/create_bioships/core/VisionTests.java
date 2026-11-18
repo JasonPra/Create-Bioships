@@ -106,6 +106,73 @@ public final class VisionTests {
           helper.assertTrue(
               hit.blocked() && hit.from().distanceTo(hit.to()) < 3, "World wall did not stop ray");
           level.removeBlock(wall, false);
+
+          long oldDay = level.getDayTime();
+          level.setDayTime(6000);
+          level.updateSkyBrightness();
+          SubLevelVision.refresh(body, 100);
+          double dayRange =
+              SubLevelVision.sights(body).stream()
+                  .filter(
+                      sight ->
+                          sight.eye().cell().equals(core) && sight.eye().face() == Direction.UP)
+                  .findFirst()
+                  .orElseThrow()
+                  .range();
+          level.setDayTime(18000);
+          level.updateSkyBrightness();
+          SubLevelVision.refresh(body, 100);
+          double nightRange =
+              SubLevelVision.sights(body).stream()
+                  .filter(
+                      sight ->
+                          sight.eye().cell().equals(core) && sight.eye().face() == Direction.UP)
+                  .findFirst()
+                  .orElseThrow()
+                  .range();
+          helper.assertTrue(nightRange < dayRange, "Physical world night did not reduce eye range");
+          level.setDayTime(oldDay);
+          level.updateSkyBrightness();
+          int loadedX = origin.getX() >> 4;
+          int chunkZ = origin.getZ() >> 4;
+          for (int step = 0; step < 256 && level.hasChunk(loadedX + 1, chunkZ); step++) loadedX++;
+          helper.assertTrue(
+              !level.hasChunk(loadedX + 1, chunkZ), "Could not find unloaded chunk boundary");
+          var edge = new Vec3((loadedX + 1) * 16.0 - .5, 85, origin.getZ() + .5);
+          double limited = VisionRaycaster.loadedDistance(level, edge, new Vec3(1, 0, 0), 24);
+          helper.assertTrue(
+              limited > .49 && limited < .5 && !level.hasChunk(loadedX + 1, chunkZ),
+              "Ray crossed or loaded an unloaded chunk boundary");
+          // Cached sensor frame follows the rotated grid, including its own tissue clipping.
+          body.logicalPose().orientation().rotateY(Math.PI / 2);
+          body.forceUpdateGlobalBounds();
+          SubLevelVision.refresh(body, 100);
+          var rotated =
+              SubLevelVision.sights(body).stream()
+                  .filter(sight -> sight.eye().cell().equals(core.east(2)))
+                  .findFirst()
+                  .orElseThrow();
+          var direction =
+              rotated.rays().getFirst().to().subtract(rotated.rays().getFirst().from()).normalize();
+          helper.assertTrue(
+              Math.abs(direction.x) < 1e-5 && Math.abs(direction.z) > .99,
+              "Eye cone ignored grid rotation");
+          body.logicalPose().orientation().identity();
+          body.forceUpdateGlobalBounds();
+          // A topology change replaces the cached sensor face immediately.
+          level.setBlock(
+              core.east(2),
+              level.getBlockState(core.east(2)).setValue(BlockStateProperties.FACING, Direction.UP),
+              2);
+          SubLevelVision.refresh(body, 100);
+          helper.assertTrue(
+              SubLevelVision.sights(body).stream()
+                  .noneMatch(
+                      sight ->
+                          sight.eye().cell().equals(core.east(2))
+                              && sight.eye().face() == Direction.EAST),
+              "Reoriented eye retained stale direction");
+
           org.Azkerash.create_bioships
               .combat
               .SubLevelWounds

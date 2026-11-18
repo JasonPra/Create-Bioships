@@ -29,7 +29,9 @@ public final class WrenchRemovalTests {
         .thenWaitUntil(
             () ->
                 helper.assertTrue(
-                    level.isPositionEntityTicking(origin), "Waiting for world-drop chunks"))
+                    List.of(origin, origin.east(), origin.west(), origin.north()).stream()
+                        .allMatch(level::isPositionEntityTicking),
+                    "Waiting for all world-drop chunks"))
         .thenExecute(() -> exercise(helper, origin));
   }
 

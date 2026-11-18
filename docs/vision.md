@@ -31,3 +31,15 @@ and stop at unloaded physical chunks without requesting them. Water does not occ
 
 The overlay uses the same see-through development line renderer as F3+I. Debug
 packets contain only bounded ray samples, never inventories or component state.
+
+## Validation
+
+Regression coverage includes all six core faces, both eye profiles, bounded sampling,
+self-occlusion and world obstacles, grid rotation, eye reorientation, injured/dead
+sensors, day/night light changes, unloaded chunk boundaries, the debug wire codec,
+and the visible fixture's reset/start cycle. Native client QA also exercises the
+actual F3+V shortcut and renders both air/water subjects. The shortcut covers Veil's
+extra development chunk-debug handler as well as Minecraft's ordinary debug handler.
+
+Release check: all 46 required GameTests passed with Epic Fight installed and with
+it absent. The native client captured two grids through the actual F3+V input path.
