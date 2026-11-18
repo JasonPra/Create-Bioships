@@ -59,6 +59,40 @@ public final class ComponentRegistry {
                   new StomachBlock(
                       BlockBehaviour.Properties.of().strength(1).sound(SoundType.SLIME_BLOCK))));
 
+  public static final DeferredBlock<org.Azkerash.create_bioships.components.logic.mouth.MouthBlock>
+      MOUTH =
+          component(
+              new ComponentDefinition<>(
+                  "feeding_mouth",
+                  () ->
+                      new org.Azkerash.create_bioships.components.logic.mouth.MouthBlock(
+                          BlockBehaviour.Properties.of()
+                              .strength(1)
+                              .sound(SoundType.SLIME_BLOCK))));
+  public static final DeferredBlock<
+          org.Azkerash.create_bioships.components.logic.intestine.IntestineBlock>
+      INTESTINE =
+          component(
+              new ComponentDefinition<>(
+                  "fleshy_intestine",
+                  () ->
+                      new org.Azkerash.create_bioships.components.logic.intestine.IntestineBlock(
+                          BlockBehaviour.Properties.of()
+                              .strength(1)
+                              .sound(SoundType.SLIME_BLOCK)
+                              .noOcclusion())));
+  public static final DeferredHolder<
+          BlockEntityType<?>,
+          BlockEntityType<org.Azkerash.create_bioships.components.logic.mouth.MouthBlockEntity>>
+      MOUTH_ENTITY =
+          BLOCK_ENTITIES.register(
+              "feeding_mouth",
+              () ->
+                  BlockEntityType.Builder.of(
+                          org.Azkerash.create_bioships.components.logic.mouth.MouthBlockEntity::new,
+                          MOUTH.get())
+                      .build(null));
+
   public static final DeferredItem<BlockItem> CORE_ITEM = item(CORE),
       VITAL_READOUT_ITEM = item(VITAL_READOUT),
       LAND_EYE_ITEM = item(LAND_EYE),

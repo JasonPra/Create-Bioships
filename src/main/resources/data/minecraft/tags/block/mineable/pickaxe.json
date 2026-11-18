@@ -5,6 +5,8 @@
     "create_bioships:land_eye",
     "create_bioships:aquatic_eye",
     "create_bioships:vital_readout",
-    "create_bioships:stomach"
+    "create_bioships:stomach",
+    "create_bioships:feeding_mouth",
+    "create_bioships:fleshy_intestine"
   ]
 }

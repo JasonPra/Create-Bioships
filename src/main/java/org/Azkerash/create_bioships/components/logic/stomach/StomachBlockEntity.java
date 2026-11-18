@@ -142,7 +142,7 @@ public final class StomachBlockEntity extends OrganInventory implements IHaveGog
         recipeId = match.get().id().toString();
         duration = Math.max(1, value.getCraftingTimeTicks());
         progress = 0;
-        pending.clear();
+        pending = NonNullList.create();
         for (var output : value.getOutputs()) {
           var result = output.getItemStack(level.random);
           if (!result.isEmpty()) pending.add(result.copy());
@@ -162,7 +162,7 @@ public final class StomachBlockEntity extends OrganInventory implements IHaveGog
       // outputs.
       activeSlot = -1;
       progress = duration = 0;
-      pending.clear();
+      pending = NonNullList.create();
       setChanged();
       return;
     }
@@ -186,7 +186,7 @@ public final class StomachBlockEntity extends OrganInventory implements IHaveGog
     items.get(activeSlot).shrink(match.get().value().getIngredientQuantity().count());
     activeSlot = -1;
     progress = duration = 0;
-    pending.clear();
+    pending = NonNullList.create();
     setChanged();
   }
 
@@ -240,6 +240,7 @@ public final class StomachBlockEntity extends OrganInventory implements IHaveGog
 
   protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
     super.loadAdditional(tag, registries);
+    clientQueued = tag.getInt("Queued");
     acid = tag.contains("Acid") ? Math.clamp(tag.getInt("Acid"), 0, MAX_ACID) : 200;
     progress = Math.max(0, tag.getInt("Progress"));
     duration = Math.max(0, tag.getInt("Duration"));

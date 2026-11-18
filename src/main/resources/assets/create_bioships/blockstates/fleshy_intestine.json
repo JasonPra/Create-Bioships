@@ -1,0 +1,69 @@
+{
+  "multipart": [
+    {
+      "apply": {
+        "model": "create_bioships:block/fleshy_intestine"
+      }
+    },
+    {
+      "when": {
+        "north": "true"
+      },
+      "apply": {
+        "model": "create_bioships:block/intestine_branch",
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "south": "true"
+      },
+      "apply": {
+        "model": "create_bioships:block/intestine_branch",
+        "x": 0,
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "east": "true"
+      },
+      "apply": {
+        "model": "create_bioships:block/intestine_branch",
+        "x": 0,
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "west": "true"
+      },
+      "apply": {
+        "model": "create_bioships:block/intestine_branch",
+        "x": 0,
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "up": "true"
+      },
+      "apply": {
+        "model": "create_bioships:block/intestine_branch",
+        "x": 270,
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "down": "true"
+      },
+      "apply": {
+        "model": "create_bioships:block/intestine_branch",
+        "x": 90,
+        "y": 0
+      }
+    }
+  ]
+}

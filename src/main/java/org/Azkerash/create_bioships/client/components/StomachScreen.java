@@ -42,6 +42,12 @@ public final class StomachScreen extends AbstractContainerScreen<StomachMenu> {
     g.fill(x + 1, y + 1, x + 1 + (width - 2) * Math.clamp(value, 0, max) / max, y + 9, color);
   }
 
+  @Override
+  protected void renderLabels(GuiGraphics g, int mouseX, int mouseY) {
+    g.drawString(font, title, 12, 8, 0xffead8c9, false);
+    g.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0xffd9c9b4, false);
+  }
+
   public void render(GuiGraphics g, int mouseX, int mouseY, float partial) {
     super.render(g, mouseX, mouseY, partial);
     renderTooltip(g, mouseX, mouseY);
