@@ -83,13 +83,15 @@ public final class ComponentRegistry {
       CRAB_LEG =
           component(
               new ComponentDefinition<>(
-                  "crab_leg",
-                  () ->
-                      new org.Azkerash.create_bioships.components.logic.legs.CrabLegBlock(
-                          BlockBehaviour.Properties.of()
-                              .strength(2, 5)
-                              .noOcclusion()
-                              .sound(SoundType.BONE_BLOCK))));
+                      "crab_leg",
+                      () ->
+                          new org.Azkerash.create_bioships.components.logic.legs.CrabLegBlock(
+                              BlockBehaviour.Properties.of()
+                                  .strength(2, 5)
+                                  .noOcclusion()
+                                  .sound(SoundType.BONE_BLOCK)))
+                  .withBehavior(
+                      org.Azkerash.create_bioships.components.logic.legs.CrabLegBlock::initialize));
 
   public static final DeferredBlock<CoreBlock> CORE =
       component(
@@ -136,6 +138,14 @@ public final class ComponentRegistry {
                               .strength(1)
                               .noOcclusion()
                               .sound(SoundType.SLIME_BLOCK))));
+  public static final DeferredItem<
+          org.Azkerash.create_bioships.components.logic.brain.FactoryBehaviorCardItem>
+      WANDER_BEHAVIOR_CARD =
+          ITEMS.register(
+              "wander_behavior_card",
+              () ->
+                  new org.Azkerash.create_bioships.components.logic.brain.FactoryBehaviorCardItem(
+                      org.Azkerash.create_bioships.core.brain.behavior.WanderBehavior.ID));
   public static final DeferredItem<
           org.Azkerash.create_bioships.components.logic.brain.BehaviorCardItem>
       BLANK_BEHAVIOR_CARD =
@@ -263,6 +273,7 @@ public final class ComponentRegistry {
   public static void addToCreative(CreativeModeTab.Output output) {
     BLOCK_ITEMS.values().forEach(item -> output.accept(item.get()));
     output.accept(BLANK_BEHAVIOR_CARD.get());
+    output.accept(WANDER_BEHAVIOR_CARD.get());
     output.accept(LONGEVITY_SERUM.get());
     output.accept(EFFICIENCY_SERUM.get());
   }

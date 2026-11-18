@@ -264,6 +264,30 @@ public final class CompactLegCollisions {
     return false;
   }
 
+  public net.minecraft.world.phys.AABB bounds() {
+    net.minecraft.world.phys.AABB result = null;
+    for (var limb : limbs.values())
+      for (var segment : limb.segments) {
+        if (segment.box.isRemoved()) continue;
+        segment.box.updatePose();
+        var pose = segment.box.getPose();
+        var q = pose.orientation();
+        var h = segment.box.getHalfExtents();
+        var c = pose.position();
+        var x = q.transform(new Vector3d(1, 0, 0));
+        var y = q.transform(new Vector3d(0, 1, 0));
+        var z = q.transform(new Vector3d(0, 0, 1));
+        double ex = Math.abs(x.x) * h.x() + Math.abs(y.x) * h.y() + Math.abs(z.x) * h.z();
+        double ey = Math.abs(x.y) * h.x() + Math.abs(y.y) * h.y() + Math.abs(z.y) * h.z();
+        double ez = Math.abs(x.z) * h.x() + Math.abs(y.z) * h.y() + Math.abs(z.z) * h.z();
+        var box =
+            new net.minecraft.world.phys.AABB(
+                c.x() - ex, c.y() - ey, c.z() - ez, c.x() + ex, c.y() + ey, c.z() + ez);
+        result = result == null ? box : result.minmax(box);
+      }
+    return result;
+  }
+
   public int count() {
     return limbs.values().stream().mapToInt(l -> l.segments.size()).sum();
   }

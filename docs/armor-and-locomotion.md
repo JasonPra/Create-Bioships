@@ -18,7 +18,7 @@ The renderer follows refreshed native body poses and F3+B outlines the entire se
 
 Normal right-click with the **Ossified Wrench** extends a compact leg through heights 1, 2, and 3. Facing stays unchanged. Thickness and actual segment lengths increase together. The third setting provides approximately three blocks of clearance when sockets are attached on the lowest body row. Further clicks do nothing. Create's standard wrench does not extend the leg; shift-wrench still removes it.
 
-The visible development fixture has `/leg_test start`, `/leg_test reset`, and `/leg_test status`. START assembles six legs and issues a short forward movement request. RESET restores the unassembled subject.
+The visible development fixture has `/leg_test start`, `/leg_test reset`, and `/leg_test status`. START assembles six legs and installs a Wander card in the grid-owned brain inventory. RESET restores the unassembled subject.
 
 ## Native water behavior and development access
 

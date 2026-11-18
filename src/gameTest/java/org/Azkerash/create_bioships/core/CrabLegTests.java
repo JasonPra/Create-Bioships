@@ -94,21 +94,24 @@ public final class CrabLegTests {
   }
 
   @GameTest(template = "test_empty", timeoutTicks = 160, batch = "native_box_terrain")
-  public static void native_segment_box_collides_with_world_floor(GameTestHelper helper) {
+  public static void native_segment_middle_collides_with_existing_obstacle(GameTestHelper helper) {
     var level = helper.getLevel();
     var pos = new BlockPos(2432, 80, 128);
-    level.setChunkForced(152, 8, true);
+    for (int x = 151; x <= 153; x++) for (int z = 7; z <= 9; z++) level.setChunkForced(x, z, true);
     for (int x = -3; x <= 3; x++)
       for (int z = -3; z <= 3; z++)
         level.setBlock(pos.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 3);
+    level.setBlock(pos, Blocks.BEDROCK.defaultBlockState(), 3);
+    level.setBlock(pos.above(), Blocks.BEDROCK.defaultBlockState(), 3);
     helper.runAfterDelay(
         20,
         () -> {
           var pose = new dev.ryanhcode.sable.companion.math.Pose3d();
-          pose.position().set(pos.getX() + .5, pos.getY() + 3, pos.getZ() + .5);
+          pose.position().set(pos.getX() + .5, pos.getY() + 5, pos.getZ() + .5);
+          pose.orientation().rotationZ(Math.PI / 2);
           var box =
               new dev.ryanhcode.sable.api.physics.object.box.BoxPhysicsObject(
-                  pose, new org.joml.Vector3d(.15, .5, .15), .25) {
+                  pose, new org.joml.Vector3d(.15, 1.5, .15), .25) {
                 @Override
                 public void getBoundingBox(
                     dev.ryanhcode.sable.companion.math.BoundingBox3d bounds) {
@@ -124,10 +127,10 @@ public final class CrabLegTests {
                 box.updatePose();
                 double y = box.getPose().position().y();
                 physics.removeObject(box);
-                System.out.println("NATIVE_BOX_FLOOR_Y=" + y);
+                System.out.println("NATIVE_SEGMENT_POST_Y=" + y);
                 helper.assertTrue(
-                    y > pos.getY() + .35 && y < pos.getY() + .7,
-                    "Native box failed terrain collision: " + y);
+                    y > pos.getY() + 2.05 && y < pos.getY() + 2.4,
+                    "The middle of the segment did not land on the post: " + y);
                 helper.succeed();
               });
         });
@@ -234,19 +237,9 @@ public final class CrabLegTests {
                             System.out.println("MIXED_LEG_TILT=" + (front.y - back.y));
                             helper.assertTrue(
                                 front.y - back.y > .2, "Long front legs failed to tilt the body");
-                            var joints = SubLevelLegs.poses(body).getLast().collisionEndpoints();
-                            var middle =
-                                body.logicalPose()
-                                    .transformPosition(joints.get(2).add(joints.get(3)).scale(.5));
-                            var obstacle = BlockPos.containing(middle);
-                            level.setBlock(obstacle, Blocks.BEDROCK.defaultBlockState(), 3);
                             helper.runAfterDelay(
                                 70,
                                 () -> {
-                                  helper.assertTrue(
-                                      !SubLevelLegs.collisionOverlaps(
-                                          body, new net.minecraft.world.phys.AABB(obstacle), .08),
-                                      "Middle leg segment remained inside an obstacle");
                                   helper.assertTrue(
                                       !SubLevelLegs.collisionOverlaps(
                                           body,

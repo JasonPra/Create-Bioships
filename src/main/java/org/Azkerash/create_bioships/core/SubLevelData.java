@@ -7,6 +7,7 @@ import net.minecraft.nbt.CompoundTag;
  * Saved variable definitions and defaults. Gameplay systems supply changes, never duplicate them.
  */
 public final class SubLevelData {
+  public static final String BEHAVIOR = "create_bioships:behavior";
   public static final String ARMOR = "create_bioships:armor";
   public static final String BRAIN = "create_bioships:brain";
   public static final String ACCESS = "create_bioships:access";
@@ -80,7 +81,7 @@ public final class SubLevelData {
     var existing = body.getUserDataTag();
     if (existing != null
         && existing.contains(HEALTH)
-        && existing.getCompound(STATE).getInt("version") == 3) return;
+        && existing.getCompound(STATE).getInt("version") == 4) return;
     var root = existing == null ? new CompoundTag() : existing.copy();
     var health = root.getCompound(HEALTH);
     var state = root.getCompound(STATE);
@@ -138,8 +139,13 @@ public final class SubLevelData {
       state.putInt("trust", DEFAULT_TRUST);
       changed = true;
     }
-    if (state.getInt("version") != 3) {
-      state.putInt("version", 3);
+    for (var key : new String[] {"hasLegs", "hasFins", "hasWallClimbers"})
+      if (!state.contains(key)) {
+        state.putBoolean(key, false);
+        changed = true;
+      }
+    if (state.getInt("version") != 4) {
+      state.putInt("version", 4);
       changed = true;
     }
     if (changed) {
@@ -147,6 +153,27 @@ public final class SubLevelData {
       root.put(STATE, state);
       body.setUserDataTag(root);
     }
+  }
+
+  public record Locomotion(boolean hasLegs, boolean hasFins, boolean hasWallClimbers) {}
+
+  public static Locomotion locomotion(ServerSubLevel body) {
+    initialize(body);
+    var state = body.getUserDataTag().getCompound(STATE);
+    return new Locomotion(
+        state.getBoolean("hasLegs"),
+        state.getBoolean("hasFins"),
+        state.getBoolean("hasWallClimbers"));
+  }
+
+  public static void locomotion(ServerSubLevel body, Locomotion value) {
+    if (value.equals(locomotion(body))) return;
+    var root = body.getUserDataTag().copy();
+    var state = root.getCompound(STATE);
+    state.putBoolean("hasLegs", value.hasLegs());
+    state.putBoolean("hasFins", value.hasFins());
+    state.putBoolean("hasWallClimbers", value.hasWallClimbers());
+    body.setUserDataTag(root);
   }
 
   public static Health health(ServerSubLevel body) {

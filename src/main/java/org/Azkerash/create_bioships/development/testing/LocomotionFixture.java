@@ -21,13 +21,13 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
 import org.Azkerash.create_bioships.core.*;
-import org.Azkerash.create_bioships.core.brain.BrainMotorControls;
+import org.Azkerash.create_bioships.core.brain.SubLevelBrains;
 
 /** Repeatable native physics demonstration: six armored legs under brain motor control. */
 @EventBusSubscriber(modid = "create_bioships")
 public final class LocomotionFixture {
   private static final String MARK = "create_bioships:locomotion_fixture";
-  private static final Map<ServerSubLevel, Long> RUNNING = new IdentityHashMap<>();
+  private static final String WANDER_VERSION = "create_bioships:locomotion_wander";
 
   private LocomotionFixture() {}
 
@@ -86,7 +86,6 @@ public final class LocomotionFixture {
       for (int z = -1; z <= 2; z++) level.setChunkForced(x, z, true);
     var old = body(level);
     if (old != null) {
-      RUNNING.remove(old);
       SubLevelContainer.getContainer(level).removeSubLevel(old, SubLevelRemovalReason.REMOVED);
     }
     for (var e :
@@ -119,7 +118,7 @@ public final class LocomotionFixture {
                 "ARMORED LOCOMOTION\n"
                     + "Left: START · Right: RESET\n"
                     + "Six attachable legs · native Let It Walk IK\n"
-                    + "Brain requests movement; feet provide support.\n"
+                    + "Wander card in brain · local ground routes.\n"
                     + "Armor absorbs only hits on armored parts."),
             level.registryAccess()));
     nbt.putString("billboard", "center");
@@ -161,7 +160,7 @@ public final class LocomotionFixture {
     SubLevelContainer.getContainer(level)
         .addForceLoadTicket(
             body, SubLevelLoadingTicketType.COMMAND_FORCED, net.minecraft.util.Unit.INSTANCE);
-    RUNNING.put(body, level.getGameTime() + 200);
+    installWander(body);
     return 1;
   }
 
@@ -209,20 +208,23 @@ public final class LocomotionFixture {
                             })));
   }
 
+  private static void installWander(ServerSubLevel body) {
+    var brain = SubLevelBrains.get(body);
+    if (brain.capacity() == 0) return;
+    brain.inventory().setItem(0, ComponentRegistry.WANDER_BEHAVIOR_CARD.get().getDefaultInstance());
+    var tag = body.getUserDataTag().copy();
+    tag.putBoolean(WANDER_VERSION, true);
+    body.setUserDataTag(tag);
+  }
+
   @SubscribeEvent
   public static void tick(net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) {
-    RUNNING
-        .entrySet()
-        .removeIf(
-            e -> {
-              var body = e.getKey();
-              if (body.isRemoved()) return true;
-              if (body.getLevel().getGameTime() >= e.getValue()) {
-                BrainMotorControls.stop(body);
-                return true;
-              }
-              BrainMotorControls.move(body, new Vec3(0, 0, .8), 0, 10);
-              return false;
-            });
+    if (event.getServer().getTickCount() % 20 != 0) return;
+    for (var level : event.getServer().getAllLevels()) {
+      if (!DevelopmentWorldSetup.isDevelopment(level)) continue;
+      var subject = body(level);
+      if (subject != null && !subject.getUserDataTag().getBoolean(WANDER_VERSION))
+        installWander(subject);
+    }
   }
 }

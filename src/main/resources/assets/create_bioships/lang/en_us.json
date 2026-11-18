@@ -21,5 +21,7 @@
   "block.create_bioships.brain": "Brain",
   "item.create_bioships.blank_behavior_card": "Blank Behavior Card",
   "block.create_bioships.chitin_armor": "Chitin Armor",
-  "block.create_bioships.crab_leg": "Armored Crab Leg"
+  "block.create_bioships.crab_leg": "Armored Crab Leg",
+  "item.create_bioships.wander_behavior_card": "Wander Behavior Card",
+  "item.create_bioships.wander_behavior_card.tooltip": "Brain program: short routes with pauses. Requires suitable locomotion appendages."
 }

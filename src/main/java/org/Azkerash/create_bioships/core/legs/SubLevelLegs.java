@@ -53,8 +53,10 @@ public final class SubLevelLegs {
   }
 
   public static void request(ServerSubLevel body) {
-    if (SubLevelData.isLiving(body))
+    if (SubLevelData.isLiving(body)) {
+      org.Azkerash.create_bioships.core.locomotion.SubLevelLocomotion.get(body);
       CONTROLLERS.computeIfAbsent(body, SubLevelLegs::new).dirty = true;
+    }
   }
 
   public static void changed(ServerSubLevel body, BlockPos pos, BlockState state) {
@@ -102,6 +104,11 @@ public final class SubLevelLegs {
       ServerSubLevel body, net.minecraft.world.phys.AABB box, double tolerance) {
     var c = CONTROLLERS.get(body);
     return c != null && c.collisions.overlaps(box, tolerance);
+  }
+
+  public static net.minecraft.world.phys.AABB collisionBounds(ServerSubLevel body) {
+    var c = CONTROLLERS.get(body);
+    return c == null ? null : c.collisions.bounds();
   }
 
   public static int contacts(ServerSubLevel body) {
@@ -273,6 +280,8 @@ public final class SubLevelLegs {
       int planted = contacts(body);
       boolean controlled =
           command.expires() > body.getLevel().getGameTime()
+              && command.mode()
+                  == org.Azkerash.create_bioships.core.pathfinding.SubLevelPathfinder.Mode.GROUND
               && !SubLevelHealth.status(body).dead()
               && planted >= 3;
       for (var leg : c.legs.values())

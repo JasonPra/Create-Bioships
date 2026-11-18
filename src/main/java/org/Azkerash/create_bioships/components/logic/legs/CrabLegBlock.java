@@ -22,6 +22,12 @@ public final class CrabLegBlock extends Block
       net.minecraft.world.level.block.state.properties.IntegerProperty.create("height", 1, 3);
   public static final MapCodec<CrabLegBlock> CODEC = simpleCodec(CrabLegBlock::new);
 
+  public static void initialize(CrabLegBlock block) {
+    org.Azkerash.create_bioships.core.locomotion.SubLevelLocomotion.registerBounds(
+        net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(block),
+        SubLevelLegs::collisionBounds);
+  }
+
   public CrabLegBlock(Properties properties) {
     super(properties);
     registerDefaultState(
