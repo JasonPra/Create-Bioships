@@ -25,6 +25,7 @@ public final class SubLevelLegs {
 
   private static final class Leg {
     final BlockPos cell;
+    Direction facing;
     CrabLegKinematics solver;
     int desiredHeight;
     Vec3 planted, from, to, contact;
@@ -65,6 +66,19 @@ public final class SubLevelLegs {
     else if (controller != null && controller.legs.containsKey(pos)) controller.dirty = true;
   }
 
+  /** Remove stale sockets immediately without moving the scheduled gait/height update. */
+  private void discardRemoved() {
+    if (!dirty) return;
+    boolean removed =
+        legs.entrySet()
+            .removeIf(
+                entry ->
+                    !body.getLevel()
+                        .getBlockState(entry.getKey())
+                        .is(ComponentRegistry.CRAB_LEG.get()));
+    if (removed) collisions.retain(legs.keySet());
+  }
+
   private void rebuild() {
     if (!dirty) return;
     dirty = false;
@@ -83,6 +97,8 @@ public final class SubLevelLegs {
       var old = legs.get(pos);
       if (old == null) legs.put(pos, new Leg(pos, height));
       else old.desiredHeight = height;
+      legs.get(pos).facing =
+          body.getLevel().getBlockState(pos).getValue(BlockStateProperties.HORIZONTAL_FACING);
     }
   }
 
@@ -133,7 +149,11 @@ public final class SubLevelLegs {
                 leg.solver.extension
                     + Math.clamp(leg.desiredHeight - leg.solver.extension, -.05, .05));
       var state = body.getLevel().getBlockState(leg.cell);
-      var face = state.getValue(BlockStateProperties.HORIZONTAL_FACING);
+      if (!state.is(ComponentRegistry.CRAB_LEG.get())) {
+        dirty = true;
+        continue;
+      }
+      var face = leg.facing;
       var side = Vec3.atLowerCornerOf(face.getNormal());
       // Socket root is flush to its supporting face; feet project outward and down.
       var root = Vec3.atCenterOf(leg.cell).subtract(side.scale(.25));
@@ -276,7 +296,9 @@ public final class SubLevelLegs {
     if (!(dt > 0 && dt <= .1)) return;
     for (var c : CONTROLLERS.values()) {
       var body = c.body;
-      if (body.getLevel() != level || body.isRemoved() || c.legs.isEmpty()) continue;
+      if (body.getLevel() != level || body.isRemoved()) continue;
+      c.discardRemoved();
+      if (c.legs.isEmpty()) continue;
       var handle = RigidBodyHandle.of(body);
       if (handle == null || !handle.isValid()) continue;
       var command = BrainMotorControls.current(body);
@@ -315,10 +337,7 @@ public final class SubLevelLegs {
       for (var leg : c.legs.values()) {
         if (!leg.grounded || leg.contact == null) continue;
         var root = body.logicalPose().transformPosition(leg.points.getFirst());
-        var face =
-            body.getLevel()
-                .getBlockState(leg.cell)
-                .getValue(BlockStateProperties.HORIZONTAL_FACING);
+        var face = leg.facing;
         var restFoot =
             leg.points
                 .getFirst()

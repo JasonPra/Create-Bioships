@@ -27,3 +27,13 @@ All 84 installed Biomancy block IDs and the current components are included in t
 The native water regression compares equal-size core/tissue and core/armor subjects. Both must sink, with tissue sinking more slowly. Physics, collider creation and ray casting are exercised rather than inferred from a mass constant.
 
 The development navigator now includes the locomotion enclosure at x=896, and the development world initializes it automatically. Existing saves get the missing fixture without replacing their other fixtures.
+
+## Removal safety and test tuning
+
+Physics prunes removed sockets before applying limb forces, and uses the facing cached from
+validated socket states. Removing a leg between the scheduled gait update and physics no
+longer reads block properties from air or leaves that leg's collision bodies active.
+
+The compact-leg development exhibit starts at 1.5× damping with unchanged stiffness. Existing
+exhibit subjects receive this adjustment once; higher user-selected damping is preserved.
+Subsequent Positioner adjustments are respected. Global limb tuning defaults are unchanged.

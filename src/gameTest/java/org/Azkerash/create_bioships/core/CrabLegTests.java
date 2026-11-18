@@ -386,4 +386,49 @@ public final class CrabLegTests {
               });
         });
   }
+
+  @GameTest(template = "test_empty", timeoutTicks = 180, batch = "compact_removal_physics")
+  public static void removed_sockets_are_discarded_before_the_next_physics_step(
+      GameTestHelper helper) {
+    var level = helper.getLevel();
+    var base = new BlockPos(3840, 80, 128);
+    for (int cx = 239; cx <= 241; cx++)
+      for (int cz = 7; cz <= 9; cz++) level.setChunkForced(cx, cz, true);
+    for (int x = -12; x <= 12; x++)
+      for (int z = -12; z <= 12; z++)
+        level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 3);
+    helper.runAfterDelay(
+        20,
+        () -> {
+          var cells = LocomotionFixture.place(level, base);
+          var body =
+              SubLevelAssemblyHelper.assembleBlocks(
+                  level,
+                  base.above(2),
+                  cells,
+                  new BoundingBox3i(base.offset(-2, 2, -1), base.offset(2, 3, 1)));
+          CoreAssemblyRules.mark(level, body.getPlot().getCenterBlock());
+          SubLevelData.hungerPaused(body, true);
+          SubLevelLegs.request(body);
+          BrainMotorControls.move(body, Vec3.ZERO, 0, 200);
+          helper.runAfterDelay(
+              80,
+              () -> {
+                var poses = SubLevelLegs.poses(body);
+                helper.assertTrue(
+                    poses.size() == 6 && SubLevelLegs.collisionShapes(body) == 18,
+                    "Removal fixture did not initialize six physical legs");
+                for (var pose : poses) level.removeBlock(pose.cell(), false);
+                // Exercise the exact gap in the report: no intervening scheduled controller update.
+                SubLevelLegs.physics(
+                    new dev.ryanhcode.sable.neoforge.event.ForgeSablePrePhysicsTickEvent(
+                        dev.ryanhcode.sable.sublevel.system.SubLevelPhysicsSystem.require(level),
+                        .01));
+                helper.assertTrue(
+                    SubLevelLegs.poses(body).isEmpty() && SubLevelLegs.collisionShapes(body) == 0,
+                    "Removed legs survived into physics or retained ghost colliders");
+                helper.succeed();
+              });
+        });
+  }
 }

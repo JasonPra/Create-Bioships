@@ -219,6 +219,14 @@ public final class WanderTests {
               "Exhibit brain did not contain Wander");
           helper.assertTrue(
               SubLevelData.hungerState(body).paused(), "Exhibit hunger was not paused");
+          for (var cell : SubLevelHealth.blocks(body))
+            if (level.getBlockState(cell).is(ComponentRegistry.CRAB_LEG.get())) {
+              var tuning =
+                  org.Azkerash.create_bioships.compat.letitwalk.LimbTuning.get(level, cell);
+              helper.assertTrue(
+                  tuning.damping() == 1.5 && tuning.stiffness() == 1,
+                  "Exhibit tuning changed global stiffness or omitted higher damping");
+            }
           helper.runAfterDelay(
               20,
               () -> {
