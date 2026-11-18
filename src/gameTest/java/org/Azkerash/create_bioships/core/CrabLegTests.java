@@ -389,6 +389,9 @@ public final class CrabLegTests {
                                     + SubLevelLegs.collisionBounds(body));
                             SubLevelHealth.damage(body, 999, "test");
                             helper.assertTrue(
+                                !BrainMotorControls.groundPostureEnabled(body),
+                                "Dead compact creature retained standing control");
+                            helper.assertTrue(
                                 !BrainMotorControls.move(body, new Vec3(0, 0, 1), 0, 20),
                                 "Dead brain accepted control");
                             helper.succeed();

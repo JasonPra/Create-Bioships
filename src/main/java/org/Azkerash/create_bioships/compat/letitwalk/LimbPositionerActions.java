@@ -12,6 +12,8 @@ import org.Azkerash.create_bioships.equipment.LimbPositionerItem;
 
 /** Server-authoritative native rest-pose changes, restricted to our own limb components. */
 public final class LimbPositionerActions {
+  public static final int RESET = 4;
+
   private LimbPositionerActions() {}
 
   public static boolean holding(net.minecraft.world.entity.player.Player player) {
@@ -46,12 +48,24 @@ public final class LimbPositionerActions {
     boolean compact =
         state.is(org.Azkerash.create_bioships.components.ComponentRegistry.CRAB_LEG.get());
     if (!compact && !(level.getBlockEntity(pos) instanceof ModularJointEntity)) return false;
-    if (setting >= 2
+    if ((setting == 2 || setting == 3)
         && org.Azkerash.create_bioships.core.CoreAssemblyRules.containing(level, pos) == null)
       return false;
     var tuning = LimbTuning.get(level, pos);
     int direction = Integer.signum(delta);
-    if (setting == 0 && compact)
+    if (setting == RESET) {
+      LimbTuning.clear(level, pos);
+      if (compact)
+        level.setBlock(
+            pos,
+            state.setValue(
+                org.Azkerash.create_bioships.components.logic.legs.CrabLegBlock.HEIGHT, 1),
+            3);
+      else {
+        ((ModularJointEntity) level.getBlockEntity(pos)).setRestOffset(0);
+        BuiltLegAssembler.markEdited();
+      }
+    } else if (setting == 0 && compact)
       level.setBlock(
           pos,
           state.setValue(

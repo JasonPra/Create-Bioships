@@ -20,6 +20,41 @@ public record LimbTuning(int restAngle, double stiffness, double damping) {
         value.contains("Damping") ? bounded(value.getDouble("Damping")) : 1);
   }
 
+  /** Delete the component entry, rather than saving defaults at a now-empty position. */
+  public static void clear(ServerLevel level, BlockPos pos) {
+    var body = CoreAssemblyRules.containing(level, pos);
+    if (body != null) clear(body, pos);
+  }
+
+  private static void clear(dev.ryanhcode.sable.sublevel.ServerSubLevel body, BlockPos pos) {
+    if (body.getUserDataTag() == null) return;
+    var root = body.getUserDataTag().copy();
+    var values = root.getCompound(DATA).copy();
+    if (!values.contains(Long.toString(pos.asLong()))) return;
+    values.remove(Long.toString(pos.asLong()));
+    if (values.isEmpty()) root.remove(DATA);
+    else root.put(DATA, values);
+    body.setUserDataTag(root);
+  }
+
+  /** Height/rest-pose changes retain tuning; removal or replacement retires the old component. */
+  public static void changed(
+      dev.ryanhcode.sable.sublevel.ServerSubLevel body,
+      BlockPos pos,
+      net.minecraft.world.level.block.state.BlockState state) {
+    if (body.getUserDataTag() == null) return;
+    var value = body.getUserDataTag().getCompound(DATA).getCompound(Long.toString(pos.asLong()));
+    if (value.isEmpty()) return;
+    boolean limb =
+        state.getBlock() instanceof org.Azkerash.create_bioships.components.logic.legs.CrabLegBlock
+            || state.getBlock()
+                instanceof org.Azkerash.create_bioships.components.logic.legs.ModularJointBlock;
+    var id =
+        net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
+    if (!limb || (value.contains("Block") && !value.getString("Block").equals(id)))
+      clear(body, pos);
+  }
+
   private static double bounded(double n) {
     return Double.isFinite(n) ? Math.clamp(n, .25, 2) : 1;
   }
@@ -30,6 +65,11 @@ public record LimbTuning(int restAngle, double stiffness, double damping) {
     var root = body.getUserDataTag() == null ? new CompoundTag() : body.getUserDataTag().copy();
     var values = root.getCompound(DATA).copy();
     var value = new CompoundTag();
+    value.putString(
+        "Block",
+        net.minecraft.core.registries.BuiltInRegistries.BLOCK
+            .getKey(level.getBlockState(pos).getBlock())
+            .toString());
     value.putInt("RestAngle", Math.clamp(restAngle, -45, 45));
     value.putDouble("Stiffness", bounded(stiffness));
     value.putDouble("Damping", bounded(damping));

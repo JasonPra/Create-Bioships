@@ -49,8 +49,16 @@ public final class LimbPositionerScreen extends Screen {
                 .build());
     }
     addRenderableWidget(
+        Button.builder(
+                Component.literal("Reset"),
+                b ->
+                    PacketDistributor.sendToServer(
+                        new LimbPositionerPayload(state.pos(), LimbPositionerActions.RESET, 0)))
+            .bounds(x + 28, y + 169, 96, 20)
+            .build());
+    addRenderableWidget(
         Button.builder(Component.literal("Done"), b -> onClose())
-            .bounds(x + 78, y + 169, 96, 20)
+            .bounds(x + 128, y + 169, 96, 20)
             .build());
   }
 

@@ -16,7 +16,10 @@ public final class ModularFootBlock extends LegFootBlock {
 
   @Override
   protected VoxelShape getShape(BlockState s, BlockGetter l, BlockPos p, CollisionContext c) {
-    return net.minecraft.world.level.block.Block.box(1, 0, 1, 15, 6, 15);
+    return Shapes.or(
+        net.minecraft.world.level.block.Block.box(1, 0, 1, 15, 4, 15),
+        net.minecraft.world.level.block.Block.box(3, 4, 3, 13, 6, 13),
+        net.minecraft.world.level.block.Block.box(5, 5, 5, 11, 16, 11));
   }
 
   @Override

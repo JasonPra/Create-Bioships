@@ -52,6 +52,21 @@ public final class CompactLimbController {
         new net.minecraft.world.phys.BlockHitResult(Vec3.atCenterOf(socket), face, socket, false));
   }
 
+  /** Reject old streamed-in segments after their socket was broken and replaced. */
+  public static boolean ownsSavedSegment(ServerSubLevel owner, ServerSubLevel part) {
+    if (owner.getUserDataTag() == null || part.getUserDataTag() == null) return false;
+    long socket = part.getUserDataTag().getCompound(PART).getLong("Socket");
+    for (var raw : owner.getUserDataTag().getCompound(DATA).getList("Legs", 10)) {
+      var entry = (CompoundTag) raw;
+      if (entry.getLong("Socket") != socket) continue;
+      for (var segment : entry.getCompound("Leg").getList("segments", 10)) {
+        var tag = (CompoundTag) segment;
+        if (tag.hasUUID("id") && tag.getUUID("id").equals(part.getUniqueId())) return true;
+      }
+    }
+    return false;
+  }
+
   private static final class Context extends WalkerCoreBlockEntity {
     Context(ServerSubLevel body) {
       super(
@@ -101,6 +116,7 @@ public final class CompactLimbController {
   private final ServerSubLevel body;
   private final Context walker;
   private final Map<BlockPos, Limb> limbs = new LinkedHashMap<>();
+  private final Set<BlockPos> retiredSockets = new HashSet<>();
   private boolean dirty = true, hullContact;
   private int physicalContacts;
 
@@ -112,6 +128,12 @@ public final class CompactLimbController {
 
   public void changed() {
     dirty = true;
+  }
+
+  public void changed(BlockPos pos, net.minecraft.world.level.block.state.BlockState state) {
+    dirty = true;
+    if (limbs.containsKey(pos) && !state.is(ComponentRegistry.CRAB_LEG.get()))
+      retiredSockets.add(pos.immutable());
   }
 
   public boolean hasSocket(BlockPos pos) {
@@ -369,12 +391,14 @@ public final class CompactLimbController {
     var it = limbs.values().iterator();
     while (it.hasNext()) {
       var l = it.next();
-      if (!body.getLevel().getBlockState(l.socket).is(ComponentRegistry.CRAB_LEG.get())) {
+      if (retiredSockets.remove(l.socket)
+          || !body.getLevel().getBlockState(l.socket).is(ComponentRegistry.CRAB_LEG.get())) {
         destroy(l);
         it.remove();
         removed = true;
       }
     }
+    retiredSockets.clear();
     if (removed) {
       refreshLegs();
       save();
@@ -419,11 +443,8 @@ public final class CompactLimbController {
                 .sum();
   }
 
-  private boolean commanded() {
-    var r = BrainMotorControls.current(body);
-    return !SubLevelHealth.status(body).dead()
-        && r.expires() > body.getLevel().getGameTime()
-        && r.mode() == org.Azkerash.create_bioships.core.pathfinding.SubLevelPathfinder.Mode.GROUND;
+  private boolean postureEnabled() {
+    return BrainMotorControls.groundPostureEnabled(body);
   }
 
   /** Feed the native pose controls the stance implied by unequal socket lengths. */
@@ -484,7 +505,7 @@ public final class CompactLimbController {
             if (l.contact) physicalContacts++;
           }
           hullContact = LimbGroundContacts.touching(body, body);
-          if (commanded()) {
+          if (postureEnabled()) {
             var r = BrainMotorControls.current(body);
             var local = body.logicalPose().orientation().transformInverse(v(r.velocity()));
             int keys = 1 << WalkerBrain.GEAR_SHIFT | WalkerBrain.KEY_CRAB;
@@ -507,7 +528,7 @@ public final class CompactLimbController {
 
   public void physics(double dt) {
     discardRemoved();
-    boolean drive = commanded() && (physicalContacts > 0 || hullContact);
+    boolean drive = postureEnabled() && (physicalContacts > 0 || hullContact);
     for (var l : limbs.values()) {
       if (!loaded(l)) {
         releasePins(l);
@@ -613,6 +634,7 @@ public final class CompactLimbController {
 
   public void save() {
     if (body.isRemoved()) return;
+    if (!retiredSockets.isEmpty()) discardRemoved();
     var data = new CompoundTag();
     var list = new ListTag();
     for (var l : limbs.values()) {

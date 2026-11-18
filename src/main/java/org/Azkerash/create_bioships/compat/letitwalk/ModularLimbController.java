@@ -134,6 +134,29 @@ public final class ModularLimbController {
     return c == null ? 0 : c.nativeWalker.legs.size();
   }
 
+  /** Measured world-space pivot separation, for development diagnostics of real native joints. */
+  public static double maximumJointSeparation(ServerSubLevel body) {
+    var controller = CONTROLLERS.get(SubLevelCreatureParts.root(body));
+    if (controller == null) return 0;
+    var container = SubLevelContainer.getContainer(body.getLevel());
+    double gap = 0;
+    for (var runtime : controller.nativeWalker.legs)
+      for (var joint : runtime.built.joints) {
+        var parent = container.getSubLevel(joint.parent);
+        var child = container.getSubLevel(joint.child);
+        if (parent == null || child == null || parent.isRemoved() || child.isRemoved())
+          return Double.POSITIVE_INFINITY;
+        gap =
+            Math.max(
+                gap,
+                parent
+                    .logicalPose()
+                    .transformPosition(joint.parentPlot)
+                    .distanceTo(child.logicalPose().transformPosition(joint.childPlot)));
+      }
+    return gap;
+  }
+
   public static int jointCount(ServerSubLevel body) {
     var c = CONTROLLERS.get(SubLevelCreatureParts.root(body));
     return c == null ? 0 : c.pins.size();
@@ -244,11 +267,8 @@ public final class ModularLimbController {
     pins.clear();
   }
 
-  private boolean commanded() {
-    var request = BrainMotorControls.current(body);
-    return request.expires() > body.getLevel().getGameTime()
-        && request.mode()
-            == org.Azkerash.create_bioships.core.pathfinding.SubLevelPathfinder.Mode.GROUND;
+  private boolean postureEnabled() {
+    return BrainMotorControls.groundPostureEnabled(body);
   }
 
   private void update() {
@@ -272,7 +292,7 @@ public final class ModularLimbController {
           }
           hullContact = LimbGroundContacts.touching(body, body);
         });
-    if (!commanded()) return;
+    if (!postureEnabled()) return;
     var request = BrainMotorControls.current(body);
     var local = body.logicalPose().orientation().transformInverse(v(request.velocity()));
     int keys = 1 << WalkerBrain.GEAR_SHIFT | WalkerBrain.KEY_CRAB;
@@ -348,7 +368,7 @@ public final class ModularLimbController {
       if (c.body.isRemoved() || c.body.getLevel() != event.getPhysicsSystem().getLevel()) continue;
       c.ensurePins();
       boolean drive =
-          c.commanded()
+          c.postureEnabled()
               && !SubLevelHealth.status(c.body).dead()
               && (c.physicalContacts > 0 || c.hullContact);
       // Physical joint motors have finite torque and yield to real terrain collision.

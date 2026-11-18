@@ -50,8 +50,36 @@ public final class ModularLimbTests {
               SubLevelHealth.status(body).maximum() == capacity,
               "Assembly changed creature health capacity");
           h.runAfterDelay(
-              30,
+              100,
               () -> {
+                h.assertTrue(
+                    SubLevelBrains.get(body).inventory().isEmpty()
+                        && BrainMotorControls.current(body).expires() == 0,
+                    "Idle modular specimen unexpectedly has a card or movement request");
+                h.assertTrue(
+                    BrainMotorControls.groundPostureEnabled(body),
+                    "Empty brain did not enable posture");
+                var standing = body.logicalPose().position();
+                var up = body.logicalPose().orientation().transform(new org.joml.Vector3d(0, 1, 0));
+                System.out.println(
+                    "MODULAR_IDLE_STAND y="
+                        + standing.y()
+                        + " up="
+                        + up.y
+                        + " jointGap="
+                        + ModularLimbController.maximumJointSeparation(body));
+                h.assertTrue(
+                    ModularLimbController.maximumJointSeparation(body) < .08,
+                    "Native modular pivots separated while idle");
+                var foot = ComponentRegistry.LIMB_FOOT.get().defaultBlockState();
+                h.assertTrue(
+                    foot.getCollisionShape(level, body.getPlot().getCenterBlock())
+                            .max(Direction.Axis.Y)
+                        == 1,
+                    "Foot collision geometry does not reach the adjoining limb segment");
+                h.assertTrue(
+                    standing.y() > base.getY() + 1.2 && standing.y() < base.getY() + 5 && up.y > .8,
+                    "Modular legs did not stand without a behavior: " + standing);
                 h.assertTrue(
                     ModularLimbController.jointCount(body) == 8,
                     "Real articulated limb joints were not created");
@@ -93,9 +121,17 @@ public final class ModularLimbTests {
                       double yawDelta =
                           Math.atan2(turned.x, turned.z) - Math.atan2(facing.x, facing.z);
                       yawDelta = Math.atan2(Math.sin(yawDelta), Math.cos(yawDelta));
-                      System.out.println("MODULAR_YAW_DELTA=" + yawDelta);
+                      System.out.println(
+                          "MODULAR_YAW_DELTA="
+                              + yawDelta
+                              + " jointGap="
+                              + ModularLimbController.maximumJointSeparation(body));
+                      h.assertTrue(
+                          ModularLimbController.maximumJointSeparation(body) < .08,
+                          "Native modular pivots separated while walking");
                       h.assertTrue(
                           Math.abs(yawDelta) > .05, "Native yaw control did not turn the creature");
+                      BrainMotorControls.stop(body);
                       SubLevelData.trust(body, 12.5);
                       ModularLimbController.stopping(
                           new net.neoforged.neoforge.event.server.ServerStoppingEvent(
@@ -111,7 +147,17 @@ public final class ModularLimbTests {
                                 SubLevelData.trust(ModularLimbController.segments(body).getFirst())
                                     == 12.5,
                                 "Reloaded limb lost shared identity");
+                            h.assertTrue(
+                                BrainMotorControls.current(body).expires() == 0
+                                    && BrainMotorControls.groundPostureEnabled(body),
+                                "Stopping movement disabled modular standing");
+                            h.assertTrue(
+                                body.logicalPose().position().y() > base.getY() + 1.2,
+                                "Idle modular creature collapsed after reload");
                             SubLevelHealth.damage(body, 10000, "test_death");
+                            h.assertTrue(
+                                !BrainMotorControls.groundPostureEnabled(body),
+                                "Dead modular creature retained standing control");
                             h.assertTrue(
                                 ModularLimbController.segments(body).stream()
                                     .allMatch(p -> SubLevelHealth.status(p).dead()),

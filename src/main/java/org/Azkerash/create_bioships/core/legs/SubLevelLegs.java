@@ -57,7 +57,8 @@ public final class SubLevelLegs {
 
   public static void changed(ServerSubLevel body, BlockPos pos, BlockState state) {
     var c = CONTROLLERS.get(body);
-    if (c != null && (state.is(ComponentRegistry.CRAB_LEG.get()) || c.hasSocket(pos))) c.changed();
+    if (c != null && (state.is(ComponentRegistry.CRAB_LEG.get()) || c.hasSocket(pos)))
+      c.changed(pos, state);
     else if (state.is(ComponentRegistry.CRAB_LEG.get())) request(body);
   }
 
@@ -107,7 +108,8 @@ public final class SubLevelLegs {
                           .getCompound(CompactLimbController.PART)
                           .getLong("Socket"));
               if ((owner != body
-                      && !level.getBlockState(socket).is(ComponentRegistry.CRAB_LEG.get()))
+                      && (!level.getBlockState(socket).is(ComponentRegistry.CRAB_LEG.get())
+                          || !CompactLimbController.ownsSavedSegment(owner, body)))
                   || (!SubLevelCreatureParts.isPart(body) && SubLevelHealth.status(body).dead()))
                 container.removeSubLevel(
                     body, dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason.REMOVED);

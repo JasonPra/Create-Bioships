@@ -20,7 +20,8 @@ import org.Azkerash.create_bioships.core.legs.SubLevelLegs;
 @PrefixGameTestTemplate(false)
 public final class CompactNativeTests {
   @GameTest(template = "test_empty", timeoutTicks = 800, batch = "compact_native_sustained")
-  public static void small_four_leg_creature_stands_and_walks_without_sinking(GameTestHelper h) {
+  public static void empty_brain_stands_without_requests_and_after_movement_stops(
+      GameTestHelper h) {
     runSmall(h, 4096, 20);
   }
 
@@ -98,7 +99,23 @@ public final class CompactNativeTests {
 
             public void run() {
               tick += 5;
-              BrainMotorControls.move(body, tick < 360 ? Vec3.ZERO : new Vec3(.4, 0, 0), 0, 20);
+              if ((tick >= 360 && tick < 440) || tick == 520)
+                BrainMotorControls.move(body, new Vec3(.4, 0, 0), 0, 20);
+              if (tick == 440) BrainMotorControls.stop(body);
+              if (tick < 360 || (tick >= 440 && tick < 520) || tick >= 540)
+                h.assertTrue(
+                    BrainMotorControls.current(body).expires() == 0
+                        && BrainMotorControls.current(body).velocity().equals(Vec3.ZERO),
+                    "Standing invented or retained a movement request");
+              h.assertTrue(
+                  org.Azkerash.create_bioships
+                      .core
+                      .brain
+                      .SubLevelBrains
+                      .get(body)
+                      .inventory()
+                      .isEmpty(),
+                  "Standing regression unexpectedly contains a behavior card");
               if (tick == 40) {
                 var struckPart = SubLevelLegs.segments(body).getFirst();
                 double armor = SubLevelArmor.status(body).current();
@@ -240,17 +257,64 @@ public final class CompactNativeTests {
                         hand,
                         new BlockHitResult(Vec3.atCenterOf(cell), Direction.UP, cell, false));
                 var socket = CompactLimbController.socketContext(context).getClickedPos();
+                var oldState = level.getBlockState(socket);
+                var oldIds =
+                    SubLevelLegs.segments(body).stream()
+                        .map(dev.ryanhcode.sable.sublevel.ServerSubLevel::getUniqueId)
+                        .collect(java.util.stream.Collectors.toSet());
+                new org.Azkerash.create_bioships.compat.letitwalk.LimbTuning(15, 1.75, 1.5)
+                    .save(level, socket);
                 h.assertTrue(
                     Create_bioships.BIOSHIP_WRENCH.get().useOn(context).consumesAction()
                         && level.getBlockState(socket).isAir(),
                     "Wrench hit did not remove the owning socket");
+                h.assertTrue(
+                    org.Azkerash.create_bioships
+                        .compat
+                        .letitwalk
+                        .LimbTuning
+                        .get(level, socket)
+                        .equals(org.Azkerash.create_bioships.compat.letitwalk.LimbTuning.DEFAULT),
+                    "Wrench removal retained limb tuning");
+                // Replace immediately: even before the next physics step this must be a new
+                // component.
+                level.setBlock(
+                    socket,
+                    ComponentRegistry.CRAB_LEG
+                        .get()
+                        .defaultBlockState()
+                        .setValue(
+                            BlockStateProperties.HORIZONTAL_FACING,
+                            oldState.getValue(BlockStateProperties.HORIZONTAL_FACING)),
+                    3);
                 h.runAfterDelay(
                     10,
                     () -> {
                       h.assertTrue(
-                          SubLevelLegs.segments(body).size() == 9
-                              && SubLevelCreatureParts.members(body).size() == 10,
-                          "Socket removal left generated sublevels behind");
+                          SubLevelLegs.segments(body).size() == 12
+                              && SubLevelCreatureParts.members(body).size() == 13,
+                          "Replacement left stale or duplicate limb sublevels");
+                      long retained =
+                          SubLevelLegs.segments(body).stream()
+                              .filter(p -> oldIds.contains(p.getUniqueId()))
+                              .count();
+                      h.assertTrue(
+                          retained == 9,
+                          "Same-tick replacement reused the removed limb's native identities");
+                      h.assertTrue(
+                          level.getBlockState(socket).getValue(CrabLegBlock.HEIGHT) == 1
+                              && org.Azkerash.create_bioships
+                                  .compat
+                                  .letitwalk
+                                  .LimbTuning
+                                  .get(level, socket)
+                                  .equals(
+                                      org.Azkerash.create_bioships
+                                          .compat
+                                          .letitwalk
+                                          .LimbTuning
+                                          .DEFAULT),
+                          "Replacement inherited removed limb settings");
                       h.assertTrue(
                           SubLevelHealth.status(body).damage() == 0,
                           "Wrench removal injured the creature");
