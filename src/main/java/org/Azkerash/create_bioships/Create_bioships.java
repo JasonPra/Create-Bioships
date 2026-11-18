@@ -76,6 +76,14 @@ public final class Create_bioships {
       ITEMS.register(
           "bioship_wrench", () -> new BioshipWrenchItem(new Item.Properties().stacksTo(1)));
 
+  public static final DeferredItem<org.Azkerash.create_bioships.equipment.LimbPositionerItem>
+      LIMB_POSITIONER =
+          ITEMS.register(
+              "limb_positioner",
+              () ->
+                  new org.Azkerash.create_bioships.equipment.LimbPositionerItem(
+                      new Item.Properties().stacksTo(1)));
+
   static {
     TABS.register(
         "core",
@@ -88,6 +96,7 @@ public final class Create_bioships {
                       ComponentRegistry.addToCreative(output);
                       output.accept(BIOSHIP_GOGGLES.get());
                       output.accept(BIOSHIP_WRENCH.get());
+                      output.accept(LIMB_POSITIONER.get());
                     })
                 .build());
   }

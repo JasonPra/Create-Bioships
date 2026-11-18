@@ -37,3 +37,22 @@ Topology edits trigger rebuilding; state-only blinking and wounds do not. The st
 control origin is the creature's core, while brain blocks expose loading dependencies.
 Deletion records prevent unloaded limbs from becoming living orphans after their owner
 is permanently removed.
+
+## Positioner
+
+The Limb Positioner is a separate item, crafted from a native Let It Walk Positioner and
+Chitin Armor. It accepts our modular joints and compact Crab Legs only. It does not alter
+native Let It Walk joints or unrelated contraption blocks.
+
+Right-click to open controls. Modular joints retain native scroll adjustment (5 degrees,
+or 1 degree with Ctrl). Compact controls set height from 1 to 3 and leg sweep/rest pose.
+Both types expose bounded stiffness and damping multipliers. Suspension tuning requires
+an assembled sublevel. The Ossified Wrench retains its quick compact-height interaction.
+
+## Development exhibit
+
+The development navigator has a second row with the Modular Limbs exhibit. It is built
+at x=1024, z=0, using the preset floor height, bedrock flooring and development glass.
+`/modular_limb_test start` assembles the subject, links its native limb segments, pauses
+hunger and inserts Wander. `/modular_limb_test reset` removes the entire group and restores
+unassembled blocks. Buttons and a holographic explanation are in front of the enclosure.

@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "let_it_walk:leg_positioner"
+    },
+    {
+      "item": "create_bioships:chitin_armor"
+    }
+  ],
+  "result": {
+    "id": "create_bioships:limb_positioner",
+    "count": 1
+  }
+}
