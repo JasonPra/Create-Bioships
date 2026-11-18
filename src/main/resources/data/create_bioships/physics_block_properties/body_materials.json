@@ -1,0 +1,7 @@
+{
+  "selector": "#create_bioships:body_materials",
+  "priority": 100,
+  "properties": {
+    "sable:mass": 1.05
+  }
+}

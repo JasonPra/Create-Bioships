@@ -52,6 +52,7 @@ public final class DevelopmentWorldSetup {
     if (!state.visionBuilt) VisionFixture.reset(level);
     if (!state.membraneBuilt) MembraneFixture.reset(level);
     if (!state.brainBuilt) BrainFixture.reset(level);
+    if (!state.locomotionBuilt) LocomotionFixture.reset(level);
     if (!state.digestionBuilt) {
       state.digestionOrigin = new BlockPos(384, state.layout().base().getY(), 0);
       DigestionFixture.reset(level);

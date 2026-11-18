@@ -73,13 +73,18 @@ public final class DevelopmentNavigatorItem extends Item {
         icon(
             org.Azkerash.create_bioships.components.ComponentRegistry.BRAIN.get().asItem(),
             "Regression: Brain memory and chewing"));
+    entries.setItem(
+        8,
+        icon(
+            org.Azkerash.create_bioships.components.ComponentRegistry.CRAB_LEG.get().asItem(),
+            "Regression: Armored locomotion"));
     player.openMenu(
         new SimpleMenuProvider(
             (id, inventory, viewer) ->
                 new ChestMenu(MenuType.GENERIC_9x1, id, inventory, entries, 1) {
                   @Override
                   public void clicked(int slot, int button, ClickType type, Player clicking) {
-                    if (slot < 0 || slot > 7) return;
+                    if (slot < 0 || slot > 8) return;
                     var base =
                         slot == 0
                             ? state.layout().base()
@@ -95,7 +100,9 @@ public final class DevelopmentNavigatorItem extends Item {
                                                 ? VisionFixture.base(level)
                                                 : slot == 6
                                                     ? MembraneFixture.base(level)
-                                                    : BrainFixture.base(level);
+                                                    : slot == 7
+                                                        ? BrainFixture.base(level)
+                                                        : LocomotionFixture.base(level);
                     clicking.closeContainer();
                     if (clicking instanceof ServerPlayer server) {
                       server.teleportTo(

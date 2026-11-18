@@ -65,8 +65,9 @@ public final class WeakPointWoundTests {
           helper.assertTrue(
               CombatAdapter.hitTarget(body, core.east(), Direction.SOUTH) == normal,
               "Eye backing incorrectly receives critical damage");
+          // Wait for the native collider and falling body pose to settle before ray casting.
           helper.runAfterDelay(
-              5,
+              25,
               () -> {
                 var owner = helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL);
                 var arrow = new Arrow(level, owner, new ItemStack(Items.ARROW), null);
