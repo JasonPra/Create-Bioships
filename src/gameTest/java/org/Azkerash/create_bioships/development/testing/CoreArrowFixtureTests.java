@@ -10,6 +10,7 @@ import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
 import org.Azkerash.create_bioships.combat.*;
+import org.Azkerash.create_bioships.components.ComponentRegistry;
 import org.Azkerash.create_bioships.core.SubLevelHealth;
 
 @GameTestHolder(Create_bioships.MODID)
@@ -22,7 +23,7 @@ public final class CoreArrowFixtureTests {
     state.arrowOrigin = new BlockPos(224, 80, 128);
     CoreArrowFixture.reset(level);
     helper.assertTrue(
-        level.getBlockState(CoreArrowFixture.core(level)).is(Create_bioships.CORE.get()),
+        level.getBlockState(CoreArrowFixture.core(level)).is(ComponentRegistry.CORE.get()),
         "Reset did not restore core");
     helper.runAfterDelay(
         40,
@@ -80,7 +81,7 @@ public final class CoreArrowFixtureTests {
                 helper.assertTrue(
                     level
                         .getBlockState(CoreArrowFixture.core(level))
-                        .is(Create_bioships.CORE.get()),
+                        .is(ComponentRegistry.CORE.get()),
                     "Reset failed to restore unassembled fixture");
                 helper.assertTrue(CoreArrowFixture.start(level) == 1, "Fixture cannot run twice");
                 CoreArrowFixture.reset(level);

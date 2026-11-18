@@ -13,6 +13,7 @@ import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
 import org.Azkerash.create_bioships.combat.*;
+import org.Azkerash.create_bioships.components.ComponentRegistry;
 
 @GameTestHolder(Create_bioships.MODID)
 @PrefixGameTestTemplate(false)
@@ -22,8 +23,8 @@ public final class WrenchRemovalTests {
       GameTestHelper helper) {
     var level = helper.getLevel();
     var origin = new BlockPos(368, 80, 128);
-    level.setBlock(origin, Create_bioships.CORE.get().defaultBlockState(), 3);
-    level.setBlock(origin.east(), Create_bioships.LAND_EYE.get().defaultBlockState(), 3);
+    level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
+    level.setBlock(origin.east(), ComponentRegistry.LAND_EYE.get().defaultBlockState(), 3);
     level.setBlock(origin.west(), Blocks.CHEST.defaultBlockState(), 3);
     var flesh =
         net.minecraft.core.registries.BuiltInRegistries.BLOCK.get(
@@ -99,7 +100,7 @@ public final class WrenchRemovalTests {
     helper.assertTrue(
         SubLevelHealth.status(body).maximum() == 10, "Wrench removal did not update capacity");
     helper.assertTrue(
-        player.getInventory().countItem(Create_bioships.LAND_EYE.get().asItem()) == 1,
+        player.getInventory().countItem(ComponentRegistry.LAND_EYE.get().asItem()) == 1,
         "Create pickup lost eye item");
     helper.assertTrue(
         player.getInventory().countItem(Items.CHEST) == 1, "Create pickup lost chest item");
@@ -113,11 +114,11 @@ public final class WrenchRemovalTests {
             new BlockHitResult(Vec3.atCenterOf(core), Direction.NORTH, core, false));
     wrench.useOn(coreContext);
     helper.assertTrue(
-        level.getBlockState(core).is(Create_bioships.CORE.get()), "Wrench picked up living core");
+        level.getBlockState(core).is(ComponentRegistry.CORE.get()), "Wrench picked up living core");
     SubLevelHealth.damage(body, SubLevelHealth.status(body).current(), "test");
     wrench.useOn(coreContext);
     helper.assertTrue(
-        level.getBlockState(core).is(Create_bioships.CORE.get()), "Wrench picked up dead core");
+        level.getBlockState(core).is(ComponentRegistry.CORE.get()), "Wrench picked up dead core");
     level.setBlock(core.east(), eyeState, 3);
     player.gameMode.useItemOn(
         player,

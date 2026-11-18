@@ -1,9 +1,9 @@
-package org.Azkerash.create_bioships.components.eye;
+package org.Azkerash.create_bioships.components.logic.eye;
 
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import org.Azkerash.create_bioships.Create_bioships;
+import org.Azkerash.create_bioships.components.ComponentRegistry;
 
 /** Shared sensory weak-point rules; adding an eye type does not change combat damage routing. */
 public final class EyeWoundBehavior {
@@ -17,7 +17,7 @@ public final class EyeWoundBehavior {
   }
 
   public static boolean isWeakPoint(BlockState state, Direction face) {
-    return state.is(Create_bioships.CORE.get())
+    return state.is(ComponentRegistry.CORE.get())
         || isEye(state) && state.getValue(BlockStateProperties.FACING) == face;
   }
 }

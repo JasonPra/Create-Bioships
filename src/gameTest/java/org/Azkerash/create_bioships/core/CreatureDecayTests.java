@@ -14,6 +14,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
+import org.Azkerash.create_bioships.components.ComponentRegistry;
 
 @GameTestHolder(Create_bioships.MODID)
 @PrefixGameTestTemplate(false)
@@ -31,7 +32,7 @@ public final class CreatureDecayTests {
         () -> {
           // An ordinary inventory block and a newly registered future component surround the core.
           CreatureDecay.registerLastToRot(ResourceLocation.withDefaultNamespace("diamond_block"));
-          level.setBlock(origin, Create_bioships.CORE.get().defaultBlockState(), 3);
+          level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
           level.setBlock(origin.west(), Blocks.CHEST.defaultBlockState(), 3);
           level.setBlock(origin.east(), Blocks.DIAMOND_BLOCK.defaultBlockState(), 3);
           ((net.minecraft.world.level.block.entity.ChestBlockEntity)
@@ -46,8 +47,9 @@ public final class CreatureDecayTests {
           var core = parent.getPlot().getCenterBlock();
           CoreAssemblyRules.mark(level, core);
           var detached = origin.south(3);
-          level.setBlock(detached, Create_bioships.LAND_EYE.get().defaultBlockState(), 3);
-          level.setBlock(detached.east(), Create_bioships.AQUATIC_EYE.get().defaultBlockState(), 3);
+          level.setBlock(detached, ComponentRegistry.LAND_EYE.get().defaultBlockState(), 3);
+          level.setBlock(
+              detached.east(), ComponentRegistry.AQUATIC_EYE.get().defaultBlockState(), 3);
           var child =
               SubLevelAssemblyHelper.assembleBlocks(
                   level,
@@ -85,7 +87,7 @@ public final class CreatureDecayTests {
                 helper.assertTrue(
                     level.getBlockState(core.west()).isAir(), "Ordinary group did not rot first");
                 helper.assertTrue(
-                    level.getBlockState(core).is(Create_bioships.CORE.get())
+                    level.getBlockState(core).is(ComponentRegistry.CORE.get())
                         && level.getBlockState(core.east()).is(Blocks.DIAMOND_BLOCK),
                     "Registered group rotted too early");
                 helper.assertTrue(

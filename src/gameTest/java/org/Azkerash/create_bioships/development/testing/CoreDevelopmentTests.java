@@ -8,6 +8,8 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.CommandBlockEntity;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
+import org.Azkerash.create_bioships.components.ComponentRegistry;
+import org.Azkerash.create_bioships.components.logic.core.CoreBlock;
 import org.Azkerash.create_bioships.core.*;
 
 @GameTestHolder(Create_bioships.MODID)
@@ -26,7 +28,7 @@ public final class CoreDevelopmentTests {
     helper.assertTrue(layout.cores().size() == 49, "Unexpected pyramid size");
     for (var pos : layout.cores())
       helper.assertTrue(
-          level.getBlockState(pos).is(Create_bioships.CORE.get())
+          level.getBlockState(pos).is(ComponentRegistry.CORE.get())
               && level.getBlockState(pos).getValue(CoreBlock.BLINK),
           "Fixture core is not closed and unassembled");
     helper.assertTrue(

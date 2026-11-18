@@ -11,6 +11,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
+import org.Azkerash.create_bioships.components.ComponentRegistry;
 
 @GameTestHolder(Create_bioships.MODID)
 @PrefixGameTestTemplate(false)
@@ -24,7 +25,7 @@ public final class CapacityDamageTests {
         BuiltInRegistries.BLOCK.get(
             ResourceLocation.fromNamespaceAndPath("biomancy", "packed_flesh"));
     var cells = new ArrayList<BlockPos>();
-    level.setBlock(origin, Create_bioships.CORE.get().defaultBlockState(), 3);
+    level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
     cells.add(origin);
     for (int i = 1; i <= 5; i++) {
       level.setBlock(origin.east(i), flesh.defaultBlockState(), 3);

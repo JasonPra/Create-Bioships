@@ -33,7 +33,7 @@ public final class BioshipWrenchItem extends WrenchItem {
     var player = context.getPlayer();
     var pos = context.getClickedPos();
     var state = level.getBlockState(pos);
-    if (state.is(org.Azkerash.create_bioships.Create_bioships.CORE.get()))
+    if (state.is(org.Azkerash.create_bioships.components.ComponentRegistry.CORE.get()))
       return net.minecraft.world.InteractionResult.FAIL;
     if (level instanceof net.minecraft.server.level.ServerLevel server && player != null) {
       var body = org.Azkerash.create_bioships.core.CoreAssemblyRules.containing(server, pos);

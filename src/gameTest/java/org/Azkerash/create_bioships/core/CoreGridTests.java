@@ -15,6 +15,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
+import org.Azkerash.create_bioships.components.ComponentRegistry;
 
 @GameTestHolder(Create_bioships.MODID)
 @PrefixGameTestTemplate(false)
@@ -37,7 +38,7 @@ public final class CoreGridTests {
       }
     for (int x : new int[] {0, 4, 8}) {
       var pos = origin.offset(x, 1, 1);
-      level.setBlock(pos, Create_bioships.CORE.get().defaultBlockState(), 3);
+      level.setBlock(pos, ComponentRegistry.CORE.get().defaultBlockState(), 3);
       blocks.add(pos);
     }
     var parent =
@@ -80,7 +81,7 @@ public final class CoreGridTests {
     for (int x = -4; x <= 4; x++)
       for (int z = -4; z <= 4; z++)
         level.setBlock(origin.offset(x, -2, z), Blocks.STONE.defaultBlockState(), 3);
-    level.setBlock(origin, Create_bioships.CORE.get().defaultBlockState(), 3);
+    level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
     var parent =
         SubLevelAssemblyHelper.assembleBlocks(
             level, origin, List.of(origin), new BoundingBox3i(origin, origin));
@@ -89,8 +90,8 @@ public final class CoreGridTests {
     helper.runAfterDelay(
         8,
         () -> {
-          level.setBlock(original.east(), Create_bioships.CORE.get().defaultBlockState(), 3);
-          level.setBlock(original.west(), Create_bioships.CORE.get().defaultBlockState(), 3);
+          level.setBlock(original.east(), ComponentRegistry.CORE.get().defaultBlockState(), 3);
+          level.setBlock(original.west(), ComponentRegistry.CORE.get().defaultBlockState(), 3);
         });
     helper.runAfterDelay(12, () -> nearby(level, origin).forEach(body -> hold(level, body)));
     helper.runAfterDelay(
@@ -98,7 +99,7 @@ public final class CoreGridTests {
         () -> {
           verify(helper, origin, 3);
           helper.assertTrue(
-              level.getBlockState(original).is(Create_bioships.CORE.get())
+              level.getBlockState(original).is(ComponentRegistry.CORE.get())
                   && CoreAssemblyRules.cores(parent).equals(List.of(original)),
               "Original creature did not retain its original core");
           cleanup(level, origin);

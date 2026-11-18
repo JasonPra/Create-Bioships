@@ -10,7 +10,7 @@ import net.minecraft.world.level.block.entity.*;
 import net.minecraft.world.level.block.state.properties.*;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import org.Azkerash.create_bioships.Create_bioships;
+import org.Azkerash.create_bioships.components.ComponentRegistry;
 
 /** Visible fixture geometry only. Construction never uses player placement or assembles a core. */
 public final class CoreSplitFixture {
@@ -108,7 +108,7 @@ public final class CoreSplitFixture {
     for (int y = 0; y < 4; y++)
       level.setBlock(base.above(y), Blocks.OAK_LOG.defaultBlockState(), 3);
     for (var pos : layout.cores())
-      level.setBlock(pos, Create_bioships.CORE.get().defaultBlockState(), 3);
+      level.setBlock(pos, ComponentRegistry.CORE.get().defaultBlockState(), 3);
     var glue = new HoneyGlueEntity(level, layout.glue());
     level.addFreshEntity(glue);
     glue.setBoundsAndSync(layout.glue());

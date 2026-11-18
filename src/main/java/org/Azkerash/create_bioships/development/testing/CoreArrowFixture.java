@@ -17,7 +17,7 @@ import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.*;
 import net.minecraft.world.level.block.state.properties.*;
 import net.minecraft.world.phys.*;
-import org.Azkerash.create_bioships.Create_bioships;
+import org.Azkerash.create_bioships.components.ComponentRegistry;
 
 /** Native dispenser/arrow regression, available visibly with the other development fixtures. */
 public final class CoreArrowFixture {
@@ -76,7 +76,7 @@ public final class CoreArrowFixture {
                 "biomancy", "packed_flesh"));
     level.setBlock(base, flesh.defaultBlockState(), 3);
     level.setBlock(base.above(), flesh.defaultBlockState(), 3);
-    level.setBlock(core(level), Create_bioships.CORE.get().defaultBlockState(), 3);
+    level.setBlock(core(level), ComponentRegistry.CORE.get().defaultBlockState(), 3);
     level.setBlock(
         dispenser(level),
         Blocks.DISPENSER.defaultBlockState().setValue(DispenserBlock.FACING, Direction.SOUTH),

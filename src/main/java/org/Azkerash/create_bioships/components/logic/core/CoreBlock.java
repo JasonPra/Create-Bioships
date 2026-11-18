@@ -1,4 +1,4 @@
-package org.Azkerash.create_bioships.core;
+package org.Azkerash.create_bioships.components.logic.core;
 
 import com.mojang.serialization.MapCodec;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
@@ -12,6 +12,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.*;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import org.Azkerash.create_bioships.core.*;
 
 /** A blinking core with player-only assembly; inspection only; no limbs or creature behavior. */
 public final class CoreBlock extends Block
@@ -20,11 +21,11 @@ public final class CoreBlock extends Block
         net.minecraft.world.level.block.EntityBlock {
   public static final MapCodec<CoreBlock> CODEC = simpleCodec(CoreBlock::new);
   public static final BooleanProperty BLINK =
-      org.Azkerash.create_bioships.components.eye.EyeBlink.BLINK;
+      org.Azkerash.create_bioships.components.logic.eye.EyeBlink.BLINK;
   public static final IntegerProperty WAKE =
-      org.Azkerash.create_bioships.components.eye.EyeBlink.WAKE;
+      org.Azkerash.create_bioships.components.logic.eye.EyeBlink.WAKE;
   private static final IntegerProperty STAGE =
-      org.Azkerash.create_bioships.components.eye.EyeBlink.STAGE;
+      org.Azkerash.create_bioships.components.logic.eye.EyeBlink.STAGE;
 
   public CoreBlock(Properties properties) {
     super(properties);
@@ -115,7 +116,7 @@ public final class CoreBlock extends Block
       level.setBlock(pos, state.setValue(BLINK, true).setValue(WAKE, 0).setValue(STAGE, 0), 2);
       return;
     }
-    org.Azkerash.create_bioships.components.eye.EyeBlink.advance(this, state, level, pos);
+    org.Azkerash.create_bioships.components.logic.eye.EyeBlink.advance(this, state, level, pos);
   }
 
   @Override

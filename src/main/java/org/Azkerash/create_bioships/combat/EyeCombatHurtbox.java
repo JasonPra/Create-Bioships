@@ -6,7 +6,7 @@ import net.minecraft.world.entity.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import org.Azkerash.create_bioships.components.eye.*;
+import org.Azkerash.create_bioships.components.logic.eye.*;
 
 /** Reusable component weak point; front-facing eye hits share one grid-health pool. */
 public class EyeCombatHurtbox extends SubLevelCombatTarget {

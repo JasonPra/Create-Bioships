@@ -12,6 +12,7 @@ import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
 import org.Azkerash.create_bioships.combat.*;
+import org.Azkerash.create_bioships.components.ComponentRegistry;
 
 @GameTestHolder(Create_bioships.MODID)
 @PrefixGameTestTemplate(false)
@@ -37,7 +38,7 @@ public final class SwordSweepTests {
                     "Waiting for sweep chunks"))
         .thenExecute(
             () -> {
-              level.setBlock(origin, Create_bioships.CORE.get().defaultBlockState(), 3);
+              level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
               level.setBlock(origin.east(), Blocks.STONE.defaultBlockState(), 3);
               level.setBlock(origin.west(), Blocks.STONE.defaultBlockState(), 3);
               var body =
@@ -49,7 +50,7 @@ public final class SwordSweepTests {
               var core = body.getPlot().getCenterBlock();
               CoreAssemblyRules.mark(level, core);
               var otherPos = origin.south();
-              level.setBlock(otherPos, Create_bioships.CORE.get().defaultBlockState(), 3);
+              level.setBlock(otherPos, ComponentRegistry.CORE.get().defaultBlockState(), 3);
               var other =
                   SubLevelAssemblyHelper.assembleBlocks(
                       level, otherPos, List.of(otherPos), new BoundingBox3i(otherPos, otherPos));

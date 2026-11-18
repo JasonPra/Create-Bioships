@@ -2,13 +2,12 @@ package org.Azkerash.create_bioships;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.registries.*;
+import org.Azkerash.create_bioships.components.ComponentRegistry;
 import org.Azkerash.create_bioships.core.*;
 import org.Azkerash.create_bioships.equipment.*;
 
@@ -16,7 +15,6 @@ import org.Azkerash.create_bioships.equipment.*;
 @Mod(Create_bioships.MODID)
 public final class Create_bioships {
   public static final String MODID = "create_bioships";
-  private static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(MODID);
   private static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MODID);
   private static final DeferredRegister<net.minecraft.world.entity.EntityType<?>> ENTITIES =
       DeferredRegister.create(Registries.ENTITY_TYPE, MODID);
@@ -70,49 +68,6 @@ public final class Create_bioships {
                       .build("create_bioships:eye_hurtbox"));
   private static final DeferredRegister<CreativeModeTab> TABS =
       DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
-  private static final DeferredRegister<net.minecraft.world.level.block.entity.BlockEntityType<?>>
-      BLOCK_ENTITIES = DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, MODID);
-  public static final DeferredBlock<CoreBlock> CORE =
-      BLOCKS.register(
-          "living_core",
-          () -> new CoreBlock(BlockBehaviour.Properties.of().strength(2).noLootTable()));
-  public static final DeferredBlock<
-          org.Azkerash.create_bioships.components.readout.VitalReadoutBlock>
-      VITAL_READOUT =
-          BLOCKS.register(
-              "vital_readout",
-              () ->
-                  new org.Azkerash.create_bioships.components.readout.VitalReadoutBlock(
-                      BlockBehaviour.Properties.of().strength(1).noOcclusion()));
-  public static final DeferredItem<BlockItem> VITAL_READOUT_ITEM =
-      ITEMS.registerSimpleBlockItem(VITAL_READOUT);
-  public static final DeferredHolder<
-          net.minecraft.world.level.block.entity.BlockEntityType<?>,
-          net.minecraft.world.level.block.entity.BlockEntityType<CoreGogglesDisplay>>
-      CORE_DISPLAY =
-          BLOCK_ENTITIES.register(
-              "core_display",
-              () ->
-                  net.minecraft.world.level.block.entity.BlockEntityType.Builder.of(
-                          CoreGogglesDisplay::new, CORE.get(), VITAL_READOUT.get())
-                      .build(null));
-  public static final DeferredBlock<org.Azkerash.create_bioships.components.eye.EyeBlock> LAND_EYE =
-      BLOCKS.register(
-          "land_eye",
-          () ->
-              new org.Azkerash.create_bioships.components.eye.EyeBlock(
-                  BlockBehaviour.Properties.of().strength(1).noOcclusion()));
-  public static final DeferredBlock<org.Azkerash.create_bioships.components.eye.EyeBlock>
-      AQUATIC_EYE =
-          BLOCKS.register(
-              "aquatic_eye",
-              () ->
-                  new org.Azkerash.create_bioships.components.eye.EyeBlock(
-                      BlockBehaviour.Properties.of().strength(1).noOcclusion()));
-  public static final DeferredItem<BlockItem>
-      LAND_EYE_ITEM = ITEMS.registerSimpleBlockItem(LAND_EYE),
-      AQUATIC_EYE_ITEM = ITEMS.registerSimpleBlockItem(AQUATIC_EYE);
-  public static final DeferredItem<BlockItem> CORE_ITEM = ITEMS.registerSimpleBlockItem(CORE);
 
   public static final DeferredItem<BioshipGogglesItem> BIOSHIP_GOGGLES =
       ITEMS.register(
@@ -127,13 +82,10 @@ public final class Create_bioships {
         () ->
             CreativeModeTab.builder()
                 .title(Component.literal("Bioship Core"))
-                .icon(() -> CORE_ITEM.get().getDefaultInstance())
+                .icon(() -> ComponentRegistry.CORE_ITEM.get().getDefaultInstance())
                 .displayItems(
                     (parameters, output) -> {
-                      output.accept(CORE_ITEM.get());
-                      output.accept(VITAL_READOUT_ITEM.get());
-                      output.accept(LAND_EYE_ITEM.get());
-                      output.accept(AQUATIC_EYE_ITEM.get());
+                      ComponentRegistry.addToCreative(output);
                       output.accept(BIOSHIP_GOGGLES.get());
                       output.accept(BIOSHIP_WRENCH.get());
                     })
@@ -145,6 +97,7 @@ public final class Create_bioships {
         (net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent event) ->
             event.enqueueWork(
                 () -> {
+                  ComponentRegistry.initializeBehaviors();
                   BlockPlacementRules.refresh();
                   BlockHealthValues.registerBlocks();
                   com.simibubi.create.content.equipment.goggles.GogglesItem.addIsWearingPredicate(
@@ -169,8 +122,7 @@ public final class Create_bioships {
                 EYE_HURTBOX.get(),
                 org.Azkerash.create_bioships.combat.SubLevelCombatTarget.attributes().build()));
     ENTITIES.register(bus);
-    BLOCKS.register(bus);
-    BLOCK_ENTITIES.register(bus);
+    ComponentRegistry.register(bus);
     ITEMS.register(bus);
     TABS.register(bus);
   }

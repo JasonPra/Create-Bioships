@@ -11,6 +11,7 @@ import net.neoforged.neoforge.event.entity.ProjectileImpactEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import org.Azkerash.create_bioships.Create_bioships;
+import org.Azkerash.create_bioships.components.ComponentRegistry;
 import org.Azkerash.create_bioships.core.*;
 import org.Azkerash.create_bioships.mixin.ProjectileImpactInvoker;
 
@@ -27,7 +28,7 @@ public final class CombatAdapter {
     if (current != null && !current.isRemoved()) return current;
     var cell =
         SubLevelHealth.blocks(body).stream()
-            .filter(p -> body.getLevel().getBlockState(p).is(Create_bioships.CORE.get()))
+            .filter(p -> body.getLevel().getBlockState(p).is(ComponentRegistry.CORE.get()))
             .findFirst()
             .orElse(null);
     if (cell == null) return null;
@@ -58,8 +59,8 @@ public final class CombatAdapter {
   public static SubLevelCombatTarget hitTarget(
       ServerSubLevel body, net.minecraft.core.BlockPos cell, net.minecraft.core.Direction face) {
     var state = body.getLevel().getBlockState(cell);
-    if (org.Azkerash.create_bioships.components.eye.EyeWoundBehavior.isWeakPoint(state, face))
-      return state.is(Create_bioships.CORE.get()) ? coreTarget(body) : eyeTarget(body, cell);
+    if (org.Azkerash.create_bioships.components.logic.eye.EyeWoundBehavior.isWeakPoint(state, face))
+      return state.is(ComponentRegistry.CORE.get()) ? coreTarget(body) : eyeTarget(body, cell);
     return target(body);
   }
 
@@ -173,7 +174,7 @@ public final class CombatAdapter {
           target(server);
           coreTarget(server);
           for (var cell : SubLevelHealth.blocks(server))
-            if (org.Azkerash.create_bioships.components.eye.EyeWoundBehavior.isEye(
+            if (org.Azkerash.create_bioships.components.logic.eye.EyeWoundBehavior.isEye(
                 level.getBlockState(cell))) eyeTarget(server, cell);
         }
     }

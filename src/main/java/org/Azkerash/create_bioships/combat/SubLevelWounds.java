@@ -7,7 +7,8 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import org.Azkerash.create_bioships.Create_bioships;
-import org.Azkerash.create_bioships.components.eye.EyeWoundBehavior;
+import org.Azkerash.create_bioships.components.ComponentRegistry;
+import org.Azkerash.create_bioships.components.logic.eye.EyeWoundBehavior;
 import org.Azkerash.create_bioships.core.SurfaceWoundState;
 
 /** Wound state belongs to the grid and is replayed to new observers without resetting its age. */
@@ -34,7 +35,7 @@ public final class SubLevelWounds {
         wounds.removeIf(
             surface -> {
               var block = body.getLevel().getBlockState(surface.cell());
-              return block.is(Create_bioships.CORE.get()) || EyeWoundBehavior.isEye(block);
+              return block.is(ComponentRegistry.CORE.get()) || EyeWoundBehavior.isEye(block);
             });
     if (cleared.isEmpty()) return;
     var now = body.getLevel().getGameTime();
@@ -50,7 +51,7 @@ public final class SubLevelWounds {
 
   public static void hit(ServerSubLevel body, BlockPos cell, Direction face) {
     var block = body.getLevel().getBlockState(cell);
-    if (block.is(Create_bioships.CORE.get()) || EyeWoundBehavior.isEye(block)) {
+    if (block.is(ComponentRegistry.CORE.get()) || EyeWoundBehavior.isEye(block)) {
       var health = org.Azkerash.create_bioships.core.SubLevelHealth.status(body);
       if (!health.dead() && health.maximum() > 0 && health.current() == health.maximum()) return;
     }

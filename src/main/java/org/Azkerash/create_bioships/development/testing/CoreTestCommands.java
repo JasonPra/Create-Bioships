@@ -19,6 +19,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import org.Azkerash.create_bioships.*;
+import org.Azkerash.create_bioships.components.ComponentRegistry;
 import org.Azkerash.create_bioships.core.*;
 
 /** Native test execution and repeatable cleanup; no alternate creature behavior. */
@@ -38,7 +39,7 @@ public final class CoreTestCommands {
     if (!state.built || state.running) return 0;
     var layout = state.layout();
     if (layout.cores().stream()
-        .anyMatch(p -> !level.getBlockState(p).is(Create_bioships.CORE.get()))) return 0;
+        .anyMatch(p -> !level.getBlockState(p).is(ComponentRegistry.CORE.get()))) return 0;
     var result =
         SimAssemblyHelper.assembleFromSingleBlock(
             level, layout.tip().below(), layout.tip(), false, true);

@@ -8,6 +8,8 @@ import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
 import org.Azkerash.create_bioships.combat.CombatAdapter;
+import org.Azkerash.create_bioships.components.ComponentRegistry;
+import org.Azkerash.create_bioships.components.logic.core.CoreGogglesDisplay;
 import org.Azkerash.create_bioships.core.*;
 
 @GameTestHolder(Create_bioships.MODID)
@@ -101,7 +103,7 @@ public final class PotionFixtureTests {
         !state.potionRunning && state.potionBody == null,
         "Finished suite did not restore non-started state");
     helper.assertTrue(
-        level.getBlockState(PotionFixture.core(level)).is(Create_bioships.CORE.get()),
+        level.getBlockState(PotionFixture.core(level)).is(ComponentRegistry.CORE.get()),
         "Reset did not restore sleeping core");
     helper.assertTrue(
         level.getBlockState(PotionFixture.dispenser(level).north()).is(Blocks.AIR),

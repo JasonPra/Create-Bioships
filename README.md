@@ -146,7 +146,7 @@ exhausted the isolated server's heap. The temporary dependency, JARs, and test w
 
 The core and the exposed front of Land/Aquatic Eyes take **1.5×** incoming damage. Damage still
 uses the grid's shared health pool. Core and eye hurtboxes have additional F3+B outlines. Eye
-components share blink and wound behavior under `components.eye`; the aquatic variant changes
+components share blink and wound behavior under `components.logic.eye`; the aquatic variant changes
 only the eyeball palette and shape.
 
 Weapon and projectile hits leave a per-block, per-face wound. The struck eye remains visually
@@ -328,3 +328,21 @@ The separation, combat, arrow, and potion fixtures pause hunger on their subject
 `SubLevelHunger` owns the temporary timing policy, evaluated once per loaded second. A later
 saturation-based policy can replace it without moving shared data or display responsibilities.
 No mouths, stomachs, feeding, or saturation mechanics are included in this batch.
+
+
+## Components and stomach shell
+
+`components.ComponentRegistry` owns simple gameplay block, block-item, and block-entity
+registration. `ComponentDefinition` supplies a constructor and optional common-setup behavior
+steps through `withBehavior(...)`. Register a definition once: its item and creative entry are
+wired automatically. Model/blockstate assets retain their stable registry IDs and load on the
+client; optional gameplay setup runs after registry binding. Behavior implementations live
+under `components.logic.core`, `.eye`, `.readout`, and `.stomach`. Shared sublevel systems
+remain separate. Development-only fixture blocks retain their dedicated testing registry.
+
+`create_bioships:stomach` is a full-block internal-organ shell based on the old stomach's
+folded panel. It directly reuses Biomancy's packed-flesh and flesh textures, with the panel
+recessed within the block envelope so surrounding tissue can meet it flush. It supports six
+facing directions, native Create wrench rotation, ordinary self-drops, the component creative
+tab, and the existing 10-HP block contribution. It has no block entity, inventory, GUI,
+digestion, or hunger effects yet. No old digestion/growth implementation has been restored.

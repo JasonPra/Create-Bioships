@@ -12,6 +12,7 @@ import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
 import org.Azkerash.create_bioships.combat.*;
+import org.Azkerash.create_bioships.components.ComponentRegistry;
 
 @GameTestHolder(Create_bioships.MODID)
 @PrefixGameTestTemplate(false)
@@ -33,10 +34,13 @@ public final class EpicFightCompatibilityTests {
         10,
         () -> {
           var facing = net.minecraft.world.level.block.state.properties.BlockStateProperties.FACING;
-          level.setBlock(origin, Create_bioships.CORE.get().defaultBlockState(), 3);
+          level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
           level.setBlock(
               origin.east(),
-              Create_bioships.LAND_EYE.get().defaultBlockState().setValue(facing, Direction.NORTH),
+              ComponentRegistry.LAND_EYE
+                  .get()
+                  .defaultBlockState()
+                  .setValue(facing, Direction.NORTH),
               3);
           level.setBlock(origin.west(2), Blocks.STONE.defaultBlockState(), 3);
           level.setBlock(origin.south(), Blocks.STONE.defaultBlockState(), 3);

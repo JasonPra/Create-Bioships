@@ -8,6 +8,8 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.CommandBlockEntity;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
+import org.Azkerash.create_bioships.components.ComponentRegistry;
+import org.Azkerash.create_bioships.components.logic.core.CoreBlock;
 import org.Azkerash.create_bioships.core.*;
 
 @GameTestHolder(Create_bioships.MODID)
@@ -22,7 +24,7 @@ public final class CombatFixtureTests {
     CombatFixture.reset(level);
     var core = state.combatOrigin.above(9);
     helper.assertTrue(
-        level.getBlockState(core).is(Create_bioships.CORE.get())
+        level.getBlockState(core).is(ComponentRegistry.CORE.get())
             && level.getBlockState(core).getValue(CoreBlock.BLINK),
         "Reset assembled subject prematurely");
     helper.assertTrue(
@@ -77,7 +79,7 @@ public final class CombatFixtureTests {
               !state.combatRunning && state.combatBody == null,
               "Completed suite did not reset automatically");
           helper.assertTrue(
-              level.getBlockState(core).is(Create_bioships.CORE.get())
+              level.getBlockState(core).is(ComponentRegistry.CORE.get())
                   && level.getBlockState(core).getValue(CoreBlock.BLINK),
               "Final reset did not restore sleeping subject");
           helper.assertTrue(state.combatResults.size() == 2, "Reset discarded results");

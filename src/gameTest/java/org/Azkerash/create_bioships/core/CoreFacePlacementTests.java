@@ -15,6 +15,7 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
 import org.Azkerash.create_bioships.combat.*;
+import org.Azkerash.create_bioships.components.ComponentRegistry;
 
 @GameTestHolder(Create_bioships.MODID)
 @PrefixGameTestTemplate(false)
@@ -50,7 +51,7 @@ public final class CoreFacePlacementTests {
                   new net.neoforged.neoforge.common.util.FakePlayer(level, profile).connection;
               player.setPos(Vec3.atCenterOf(origin).add(0, 0, -4));
               player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(flesh.asItem(), 64));
-              level.setBlock(origin, Create_bioships.CORE.get().defaultBlockState(), 3);
+              level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
               for (var face : Direction.values()) {
                 player.gameMode.useItemOn(
                     player,

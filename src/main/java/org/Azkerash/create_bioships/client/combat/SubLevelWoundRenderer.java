@@ -16,7 +16,8 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import org.Azkerash.create_bioships.Create_bioships;
 import org.Azkerash.create_bioships.combat.*;
-import org.Azkerash.create_bioships.components.eye.*;
+import org.Azkerash.create_bioships.components.ComponentRegistry;
+import org.Azkerash.create_bioships.components.logic.eye.*;
 
 /** Material wounds fade/shrink independently; an injured eye stays visibly shut until healed. */
 @EventBusSubscriber(modid = Create_bioships.MODID, value = Dist.CLIENT)
@@ -89,7 +90,7 @@ public final class SubLevelWoundRenderer {
           wound.cell().getY() - t.rotationPoint().y(),
           wound.cell().getZ() - t.rotationPoint().z());
       int light = LevelRenderer.getLightColor(mc.level, wound.cell());
-      if (state.is(Create_bioships.CORE.get())) {
+      if (state.is(ComponentRegistry.CORE.get())) {
         var skin = buffers.getBuffer(RenderType.entityCutoutNoCull(SKIN));
         quad(
             pose,

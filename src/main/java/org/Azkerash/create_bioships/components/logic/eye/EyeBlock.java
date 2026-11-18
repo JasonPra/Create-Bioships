@@ -1,4 +1,4 @@
-package org.Azkerash.create_bioships.components.eye;
+package org.Azkerash.create_bioships.components.logic.eye;
 
 import com.mojang.serialization.MapCodec;
 import dev.ryanhcode.sable.api.block.BlockSubLevelAssemblyListener;

@@ -12,6 +12,7 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
 import org.Azkerash.create_bioships.combat.*;
+import org.Azkerash.create_bioships.components.ComponentRegistry;
 
 @GameTestHolder(Create_bioships.MODID)
 @PrefixGameTestTemplate(false)
@@ -25,7 +26,7 @@ public final class DragonContactTests {
     helper.runAfterDelay(
         10,
         () -> {
-          level.setBlock(origin, Create_bioships.CORE.get().defaultBlockState(), 3);
+          level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
           level.setBlock(origin.east(), Blocks.STONE.defaultBlockState(), 3);
           level.setBlock(origin.east(2), Blocks.STONE.defaultBlockState(), 3);
           var body =

@@ -8,6 +8,7 @@ import net.minecraft.gametest.framework.*;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
 import org.Azkerash.create_bioships.combat.CombatAdapter;
+import org.Azkerash.create_bioships.components.ComponentRegistry;
 
 @GameTestHolder(Create_bioships.MODID)
 @PrefixGameTestTemplate(false)
@@ -26,7 +27,7 @@ public final class SubLevelHungerTests {
     helper.runAfterDelay(
         10,
         () -> {
-          level.setBlock(origin, Create_bioships.CORE.get().defaultBlockState(), 3);
+          level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
           var body =
               SubLevelAssemblyHelper.assembleBlocks(
                   level, origin, List.of(origin), new BoundingBox3i(origin, origin));

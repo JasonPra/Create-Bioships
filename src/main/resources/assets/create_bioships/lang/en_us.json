@@ -7,5 +7,6 @@
   "block.create_bioships.land_eye": "Land Eye",
   "block.create_bioships.aquatic_eye": "Aquatic Eye",
   "block.create_bioships.vital_readout": "Vital Readout",
-  "block.create_bioships.development_glass_door": "Indestructible Glass Door"
+  "block.create_bioships.development_glass_door": "Indestructible Glass Door",
+  "block.create_bioships.stomach": "Stomach"
 }

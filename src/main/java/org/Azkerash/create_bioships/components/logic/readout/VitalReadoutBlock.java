@@ -1,4 +1,4 @@
-package org.Azkerash.create_bioships.components.readout;
+package org.Azkerash.create_bioships.components.logic.readout;
 
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.*;
@@ -9,7 +9,7 @@ import net.minecraft.world.level.block.entity.*;
 import net.minecraft.world.level.block.state.*;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.shapes.*;
-import org.Azkerash.create_bioships.core.CoreGogglesDisplay;
+import org.Azkerash.create_bioships.components.logic.core.CoreGogglesDisplay;
 
 /** A mounted inspection surface. All data and presentation are shared with the core. */
 public final class VitalReadoutBlock extends Block implements EntityBlock {

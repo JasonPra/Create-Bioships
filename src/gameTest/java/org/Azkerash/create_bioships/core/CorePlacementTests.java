@@ -20,6 +20,8 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
+import org.Azkerash.create_bioships.components.ComponentRegistry;
+import org.Azkerash.create_bioships.components.logic.core.CoreBlock;
 
 @GameTestHolder(Create_bioships.MODID)
 @PrefixGameTestTemplate(false)
@@ -31,21 +33,21 @@ public final class CorePlacementTests {
     level.getChunk(pos.getX() >> 4, pos.getZ() >> 4);
     level.setBlock(pos.below(), Blocks.STONE.defaultBlockState(), 3);
     var generated = pos.east(8);
-    level.setBlock(generated, Create_bioships.CORE.get().defaultBlockState(), 3);
+    level.setBlock(generated, ComponentRegistry.CORE.get().defaultBlockState(), 3);
     var player = helper.makeMockPlayer(GameType.SURVIVAL);
     player.setPos(pos.getX() + 2, pos.getY() + 1, pos.getZ() + 2);
-    var stack = new ItemStack(Create_bioships.CORE_ITEM.get(), 2);
+    var stack = new ItemStack(ComponentRegistry.CORE_ITEM.get(), 2);
     player.setItemInHand(InteractionHand.MAIN_HAND, stack);
     var hit =
         new BlockHitResult(
             Vec3.atCenterOf(pos.below()).add(0, .5, 0), Direction.UP, pos.below(), false);
     var result =
-        Create_bioships.CORE_ITEM
+        ComponentRegistry.CORE_ITEM
             .get()
             .useOn(new UseOnContext(player, InteractionHand.MAIN_HAND, hit));
     helper.assertTrue(result.consumesAction(), "Native player placement failed");
     helper.assertTrue(
-        level.getBlockState(pos).is(Create_bioships.CORE.get()),
+        level.getBlockState(pos).is(ComponentRegistry.CORE.get()),
         "Player item did not place a core at its target: " + level.getBlockState(pos));
     helper.runAfterDelay(
         2,
@@ -95,7 +97,7 @@ public final class CorePlacementTests {
                                   + CoreAssemblyRules.isCreature(b))
                       .toList());
           helper.assertTrue(
-              level.getBlockState(generated).is(Create_bioships.CORE.get())
+              level.getBlockState(generated).is(ComponentRegistry.CORE.get())
                   && level.getBlockState(generated).getValue(CoreBlock.BLINK),
               "Generated core auto-assembled or opened");
           helper.assertTrue(
@@ -124,7 +126,7 @@ public final class CorePlacementTests {
     var level = helper.getLevel();
     var pos = new BlockPos(416, 80, 32);
     level.getChunk(26, 2);
-    level.setBlock(pos, Create_bioships.CORE.get().defaultBlockState(), 3);
+    level.setBlock(pos, ComponentRegistry.CORE.get().defaultBlockState(), 3);
     var body =
         SubLevelAssemblyHelper.assembleBlocks(
             level, pos, java.util.List.of(pos), new BoundingBox3i(pos, pos));
@@ -141,7 +143,8 @@ public final class CorePlacementTests {
       NeoForge.EVENT_BUS.post(click);
       helper.assertTrue(click.isCanceled(), "Forbidden block reached placement: " + item);
     }
-    player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Create_bioships.CORE_ITEM.get()));
+    player.setItemInHand(
+        InteractionHand.MAIN_HAND, new ItemStack(ComponentRegistry.CORE_ITEM.get()));
     var allowed =
         new PlayerInteractEvent.RightClickBlock(player, InteractionHand.MAIN_HAND, logical, hit);
     NeoForge.EVENT_BUS.post(allowed);

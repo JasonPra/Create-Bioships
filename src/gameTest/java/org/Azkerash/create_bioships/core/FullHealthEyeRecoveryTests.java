@@ -9,6 +9,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
 import org.Azkerash.create_bioships.combat.SubLevelWounds;
+import org.Azkerash.create_bioships.components.ComponentRegistry;
 
 @GameTestHolder(Create_bioships.MODID)
 @PrefixGameTestTemplate(false)
@@ -17,9 +18,9 @@ public final class FullHealthEyeRecoveryTests {
   public static void full_health_clears_all_eye_types_and_saved_injuries(GameTestHelper helper) {
     var level = helper.getLevel();
     var origin = new BlockPos(656, 80, 128);
-    level.setBlock(origin, Create_bioships.CORE.get().defaultBlockState(), 3);
-    level.setBlock(origin.east(), Create_bioships.LAND_EYE.get().defaultBlockState(), 3);
-    level.setBlock(origin.west(), Create_bioships.AQUATIC_EYE.get().defaultBlockState(), 3);
+    level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
+    level.setBlock(origin.east(), ComponentRegistry.LAND_EYE.get().defaultBlockState(), 3);
+    level.setBlock(origin.west(), ComponentRegistry.AQUATIC_EYE.get().defaultBlockState(), 3);
     level.setBlock(origin.north(), Blocks.STONE.defaultBlockState(), 3);
     level.setBlock(origin.south(), Blocks.STONE.defaultBlockState(), 3);
     var body =

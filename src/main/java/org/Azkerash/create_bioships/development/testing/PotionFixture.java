@@ -23,8 +23,8 @@ import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.*;
 import net.minecraft.world.level.block.state.properties.*;
 import net.minecraft.world.phys.*;
-import org.Azkerash.create_bioships.Create_bioships;
 import org.Azkerash.create_bioships.combat.CombatAdapter;
+import org.Azkerash.create_bioships.components.ComponentRegistry;
 import org.Azkerash.create_bioships.core.*;
 
 /** Visible, repeatable native-dispenser checks. Each case gets a fresh damaged subject. */
@@ -135,10 +135,10 @@ public final class PotionFixture {
         BuiltInRegistries.BLOCK.get(
             ResourceLocation.fromNamespaceAndPath("biomancy", "packed_flesh"));
     for (var cell : subject(level)) level.setBlock(cell, flesh.defaultBlockState(), 3);
-    level.setBlock(core(level), Create_bioships.CORE.get().defaultBlockState(), 3);
+    level.setBlock(core(level), ComponentRegistry.CORE.get().defaultBlockState(), 3);
     level.setBlock(
         base(level).above().north(),
-        Create_bioships.VITAL_READOUT
+        ComponentRegistry.VITAL_READOUT
             .get()
             .defaultBlockState()
             .setValue(BlockStateProperties.FACING, Direction.NORTH),

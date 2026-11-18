@@ -1,0 +1,27 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "create_bioships:block/stomach"
+    },
+    "facing=east": {
+      "model": "create_bioships:block/stomach",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "create_bioships:block/stomach",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "create_bioships:block/stomach",
+      "y": 270
+    },
+    "facing=up": {
+      "model": "create_bioships:block/stomach",
+      "x": 270
+    },
+    "facing=down": {
+      "model": "create_bioships:block/stomach",
+      "x": 90
+    }
+  }
+}

@@ -12,7 +12,8 @@ import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
 import org.Azkerash.create_bioships.combat.*;
-import org.Azkerash.create_bioships.components.eye.*;
+import org.Azkerash.create_bioships.components.ComponentRegistry;
+import org.Azkerash.create_bioships.components.logic.eye.*;
 
 @GameTestHolder(Create_bioships.MODID)
 @PrefixGameTestTemplate(false)
@@ -30,13 +31,13 @@ public final class WeakPointWoundTests {
         10,
         () -> {
           var eyeState =
-              Create_bioships.LAND_EYE
+              ComponentRegistry.LAND_EYE
                   .get()
                   .defaultBlockState()
                   .setValue(
                       net.minecraft.world.level.block.state.properties.BlockStateProperties.FACING,
                       Direction.NORTH);
-          level.setBlock(origin, Create_bioships.CORE.get().defaultBlockState(), 3);
+          level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
           level.setBlock(origin.east(), eyeState, 3);
           level.setBlock(origin.west(), Blocks.STONE.defaultBlockState(), 3);
           var body =

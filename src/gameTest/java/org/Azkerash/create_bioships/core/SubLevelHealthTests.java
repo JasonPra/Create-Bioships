@@ -7,6 +7,8 @@ import net.minecraft.gametest.framework.*;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
+import org.Azkerash.create_bioships.components.ComponentRegistry;
+import org.Azkerash.create_bioships.components.logic.core.CoreGogglesDisplay;
 
 @GameTestHolder(Create_bioships.MODID)
 @PrefixGameTestTemplate(false)
@@ -15,7 +17,7 @@ public final class SubLevelHealthTests {
   public static void pooled_health_tracks_grid_and_persists_death(GameTestHelper helper) {
     var level = helper.getLevel();
     var origin = helper.absolutePos(new BlockPos(2, 3, 2));
-    level.setBlock(origin, Create_bioships.CORE.get().defaultBlockState(), 3);
+    level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
     level.setBlock(origin.east(), Blocks.STONE.defaultBlockState(), 3);
     var body =
         SubLevelAssemblyHelper.assembleBlocks(

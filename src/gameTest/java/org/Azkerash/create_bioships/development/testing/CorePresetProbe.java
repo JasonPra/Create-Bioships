@@ -6,6 +6,8 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import org.Azkerash.create_bioships.Create_bioships;
+import org.Azkerash.create_bioships.components.ComponentRegistry;
+import org.Azkerash.create_bioships.components.logic.core.CoreBlock;
 import org.Azkerash.create_bioships.core.*;
 
 /** Opt-in fresh-world startup check, excluded from the shipped JAR. */
@@ -28,7 +30,7 @@ public final class CorePresetProbe {
         || !level.getBlockState(new BlockPos(100, level.getMinBuildHeight(), 100)).isAir())
       throw new IllegalStateException("Raised superflat floor layers invalid");
     for (var pos : layout.cores())
-      if (!level.getBlockState(pos).is(Create_bioships.CORE.get())
+      if (!level.getBlockState(pos).is(ComponentRegistry.CORE.get())
           || !level.getBlockState(pos).getValue(CoreBlock.BLINK))
         throw new IllegalStateException("Generated core missing or assembled");
     if (!level
@@ -53,7 +55,7 @@ public final class CorePresetProbe {
     if (!state.combatBuilt || state.combatRunning)
       throw new IllegalStateException("Combat fixture not ready");
     var combatCore = state.combatOrigin.above(9);
-    if (!level.getBlockState(combatCore).is(Create_bioships.CORE.get())
+    if (!level.getBlockState(combatCore).is(ComponentRegistry.CORE.get())
         || !level.getBlockState(combatCore).getValue(CoreBlock.BLINK))
       throw new IllegalStateException("Combat fixture assembled before START");
     if (!level

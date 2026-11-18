@@ -6,7 +6,7 @@ import net.minecraft.world.entity.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import org.Azkerash.create_bioships.Create_bioships;
+import org.Azkerash.create_bioships.components.ComponentRegistry;
 
 /** Core-specific registration of the reusable sensory weak-point hurtbox. */
 public final class CoreCombatHurtbox extends EyeCombatHurtbox {
@@ -20,7 +20,7 @@ public final class CoreCombatHurtbox extends EyeCombatHurtbox {
 
   @Override
   protected boolean accepts(BlockState state) {
-    return state.is(Create_bioships.CORE.get());
+    return state.is(ComponentRegistry.CORE.get());
   }
 
   @Override

@@ -15,6 +15,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.level.BlockEvent;
 import org.Azkerash.create_bioships.Create_bioships;
+import org.Azkerash.create_bioships.components.ComponentRegistry;
 
 /** Persistent grid identity and player assembler restrictions; no creature behavior. */
 @EventBusSubscriber(modid = Create_bioships.MODID)
@@ -65,12 +66,12 @@ public final class CoreAssemblyRules {
       var sections = chunk.getSections();
       for (int index = 0; index < sections.length; index++) {
         var section = sections[index];
-        if (!section.maybeHas(state -> state.is(Create_bioships.CORE.get()))) continue;
+        if (!section.maybeHas(state -> state.is(ComponentRegistry.CORE.get()))) continue;
         int floor = chunk.getSectionYFromSectionIndex(index) << 4;
         for (int x = 0; x < 16; x++)
           for (int y = 0; y < 16; y++)
             for (int z = 0; z < 16; z++)
-              if (section.getBlockState(x, y, z).is(Create_bioships.CORE.get()))
+              if (section.getBlockState(x, y, z).is(ComponentRegistry.CORE.get()))
                 result.add(
                     new BlockPos(
                         chunk.getPos().getMinBlockX() + x,
@@ -110,7 +111,7 @@ public final class CoreAssemblyRules {
         var retry = body.getUserDataTag().copy();
         retry.putBoolean(CHECK, true);
         body.setUserDataTag(retry);
-        level.scheduleTick(keeper, Create_bioships.CORE.get(), 20);
+        level.scheduleTick(keeper, ComponentRegistry.CORE.get(), 20);
         return;
       }
       // Sable preserves the source pose and velocity. The new grid gets an independent identity.
@@ -137,7 +138,7 @@ public final class CoreAssemblyRules {
       var positions = PLAYER_PLACEMENTS.remove(level);
       if (positions == null) continue;
       for (var pos : positions) {
-        if (!level.getBlockState(pos).is(Create_bioships.CORE.get())) continue;
+        if (!level.getBlockState(pos).is(ComponentRegistry.CORE.get())) continue;
         if (containing(level, pos) != null) changed(level, pos);
         else
           SubLevelAssemblyHelper.assembleBlocks(
@@ -156,7 +157,7 @@ public final class CoreAssemblyRules {
     // The client can reject the click before item prediction using its loaded core geometry.
     for (var holder : plot.getLoadedChunks())
       for (var section : holder.getChunk().getSections())
-        if (section.maybeHas(state -> state.is(Create_bioships.CORE.get()))) return true;
+        if (section.maybeHas(state -> state.is(ComponentRegistry.CORE.get()))) return true;
     return false;
   }
 

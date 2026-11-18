@@ -22,6 +22,7 @@ import net.minecraft.world.level.block.entity.CommandBlockEntity;
 import net.minecraft.world.level.block.state.properties.*;
 import net.minecraft.world.phys.*;
 import org.Azkerash.create_bioships.Create_bioships;
+import org.Azkerash.create_bioships.components.ComponentRegistry;
 import org.Azkerash.create_bioships.core.*;
 
 /**
@@ -109,7 +110,7 @@ public final class CombatFixture {
         BuiltInRegistries.BLOCK.get(
             ResourceLocation.fromNamespaceAndPath("biomancy", "packed_flesh"));
     for (var pos : subject(base(level))) level.setBlock(pos, flesh.defaultBlockState(), 3);
-    level.setBlock(base(level).above(9), Create_bioships.CORE.get().defaultBlockState(), 3);
+    level.setBlock(base(level).above(9), ComponentRegistry.CORE.get().defaultBlockState(), 3);
   }
 
   public static void reset(ServerLevel level) {

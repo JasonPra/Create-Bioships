@@ -12,6 +12,9 @@ import net.minecraft.util.Unit;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
+import org.Azkerash.create_bioships.components.ComponentRegistry;
+import org.Azkerash.create_bioships.components.logic.core.CoreBlock;
+import org.Azkerash.create_bioships.components.logic.core.CoreGogglesDisplay;
 
 @GameTestHolder(Create_bioships.MODID)
 @PrefixGameTestTemplate(false)
@@ -25,8 +28,8 @@ public final class CoreBlinkTests {
     for (int x = -3; x <= 3; x++)
       for (int z = -3; z <= 3; z++)
         level.setBlock(pos.offset(x, -2, z), Blocks.STONE.defaultBlockState(), 3);
-    level.setBlock(idle, Create_bioships.CORE.get().defaultBlockState(), 3);
-    level.setBlock(pos, Create_bioships.CORE.get().defaultBlockState(), 3);
+    level.setBlock(idle, ComponentRegistry.CORE.get().defaultBlockState(), 3);
+    level.setBlock(pos, ComponentRegistry.CORE.get().defaultBlockState(), 3);
     helper.assertTrue(
         level.getBlockState(pos).getValue(CoreBlock.BLINK), "Unassembled core is not closed-eyed");
     helper.assertTrue(
@@ -74,10 +77,10 @@ public final class CoreBlinkTests {
     var level = helper.getLevel();
     var pos = new BlockPos(64, 80, 32);
     level.getChunk(4, 2);
-    var state = Create_bioships.CORE.get().defaultBlockState();
+    var state = ComponentRegistry.CORE.get().defaultBlockState();
     level.setBlock(pos, state, 3);
     helper.assertTrue(
-        Create_bioships.CORE.get().getCloneItemStack(level, pos, state).isEmpty(),
+        ComponentRegistry.CORE.get().getCloneItemStack(level, pos, state).isEmpty(),
         "Pick block yielded a core");
     for (var tool :
         java.util.List.of(
@@ -95,7 +98,7 @@ public final class CoreBlinkTests {
                     "create_bioships:bio_forging/living_core"))
             .orElseThrow();
     helper.assertTrue(
-        recipe.value().getResultItem(level.registryAccess()).is(Create_bioships.CORE_ITEM.get()),
+        recipe.value().getResultItem(level.registryAccess()).is(ComponentRegistry.CORE_ITEM.get()),
         "Bio-Forge recipe output is not the core");
     level.destroyBlock(pos, true);
     helper.assertTrue(
@@ -205,7 +208,7 @@ public final class CoreBlinkTests {
           helper.assertTrue(
               level.getBlockState(target).isAir()
                   && !body.isRemoved()
-                  && level.getBlockState(pos).is(Create_bioships.CORE.get()),
+                  && level.getBlockState(pos).is(ComponentRegistry.CORE.get()),
               "Native disassembly removed a grid with a core");
           if (!body.isRemoved())
             SubLevelContainer.getContainer(level)

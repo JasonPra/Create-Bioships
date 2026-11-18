@@ -13,6 +13,7 @@ import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
 import org.Azkerash.create_bioships.combat.*;
+import org.Azkerash.create_bioships.components.ComponentRegistry;
 import org.Azkerash.create_bioships.development.testing.PotionFixture;
 
 @GameTestHolder(Create_bioships.MODID)
@@ -30,9 +31,9 @@ public final class SharedPotionEffectsTests {
     helper.runAfterDelay(
         10,
         () -> {
-          level.setBlock(origin, Create_bioships.CORE.get().defaultBlockState(), 3);
-          level.setBlock(origin.east(), Create_bioships.LAND_EYE.get().defaultBlockState(), 3);
-          level.setBlock(origin.west(), Create_bioships.AQUATIC_EYE.get().defaultBlockState(), 3);
+          level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
+          level.setBlock(origin.east(), ComponentRegistry.LAND_EYE.get().defaultBlockState(), 3);
+          level.setBlock(origin.west(), ComponentRegistry.AQUATIC_EYE.get().defaultBlockState(), 3);
           var body =
               SubLevelAssemblyHelper.assembleBlocks(
                   level,

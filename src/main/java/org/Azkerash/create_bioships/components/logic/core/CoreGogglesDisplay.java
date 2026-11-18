@@ -1,4 +1,4 @@
-package org.Azkerash.create_bioships.core;
+package org.Azkerash.create_bioships.components.logic.core;
 
 import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
 import java.util.List;
@@ -10,20 +10,22 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.Azkerash.create_bioships.Create_bioships;
+import org.Azkerash.create_bioships.components.ComponentRegistry;
+import org.Azkerash.create_bioships.core.*;
 
 /** A synchronized inspection snapshot; all authoritative health belongs to the sublevel. */
 public final class CoreGogglesDisplay extends BlockEntity implements IHaveGoggleInformation {
   private CompoundTag inspection = new CompoundTag();
 
   public CoreGogglesDisplay(BlockPos pos, BlockState state) {
-    super(Create_bioships.CORE_DISPLAY.get(), pos, state);
+    super(ComponentRegistry.CORE_DISPLAY.get(), pos, state);
   }
 
   public static <T extends BlockEntity>
       net.minecraft.world.level.block.entity.BlockEntityTicker<T> ticker(
           net.minecraft.world.level.Level level,
           net.minecraft.world.level.block.entity.BlockEntityType<T> type) {
-    return level.isClientSide || type != Create_bioships.CORE_DISPLAY.get()
+    return level.isClientSide || type != ComponentRegistry.CORE_DISPLAY.get()
         ? null
         : (world, pos, state, entity) -> {
           if (world.getGameTime() % 10 == 0) ((CoreGogglesDisplay) entity).update();
