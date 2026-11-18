@@ -259,22 +259,30 @@ public final class CompactLegCollisions {
   public boolean grounded(BlockPos cell) {
     var limb = limbs.get(cell);
     if (limb == null || limb.segments.size() != 3) return false;
-    var foot = limb.segments.getLast();
-    if (foot.box.isRemoved()) return false;
-    foot.box.updatePose();
-    var pose = foot.box.getPose();
-    var offset = pose.orientation().transform(new Vector3d(0, foot.length / 2, 0));
-    var toe =
-        new Vec3(
-            pose.position().x() + offset.x,
-            pose.position().y() + offset.y,
-            pose.position().z() + offset.z);
-    if (!body.getLevel().hasChunkAt(BlockPos.containing(toe))) return false;
-    var ground =
-        dev.letitwalk.walker.TerrainProbe.down(body.getLevel(), toe.add(0, .15, 0), .4, body);
-    return ground != null
-        && dev.letitwalk.walker.TerrainProbe.standable(ground)
-        && Math.abs(toe.y - ground.point().y) < width(2, limb.height) / 2 + .12;
+    for (var segment : limb.segments) {
+      if (segment.box.isRemoved()) continue;
+      segment.box.updatePose();
+      var pose = segment.box.getPose();
+      var half = segment.box.getHalfExtents();
+      var q = pose.orientation();
+      var support = new Vector3d(pose.position());
+      var axes =
+          new Vector3d[] {
+            q.transform(new Vector3d(1, 0, 0)),
+            q.transform(new Vector3d(0, 1, 0)),
+            q.transform(new Vector3d(0, 0, 1))
+          };
+      for (int i = 0; i < 3; i++)
+        support.sub(new Vector3d(axes[i]).mul(Math.signum(axes[i].y) * half.get(i)));
+      var point = new Vec3(support.x, support.y, support.z);
+      if (!body.getLevel().hasChunkAt(BlockPos.containing(point))) continue;
+      var ground =
+          dev.letitwalk.walker.TerrainProbe.down(body.getLevel(), point.add(0, .15, 0), .35, body);
+      if (ground != null
+          && dev.letitwalk.walker.TerrainProbe.standable(ground)
+          && Math.abs(point.y - ground.point().y) < .13) return true;
+    }
+    return false;
   }
 
   public boolean overlaps(net.minecraft.world.phys.AABB obstacle, double tolerance) {
@@ -328,6 +336,31 @@ public final class CompactLegCollisions {
         result = result == null ? box : result.minmax(box);
       }
     return result;
+  }
+
+  /** Parallel-axis contribution of articulated bones to whole-creature turning inertia. */
+  public Vector3d inertia(Vec3 center) {
+    var result = new Vector3d();
+    for (var limb : limbs.values())
+      for (var segment : limb.segments) {
+        if (segment.box.isRemoved()) continue;
+        segment.box.updatePose();
+        var p = segment.box.getPose().position();
+        double x = p.x() - center.x,
+            y = p.y() - center.y,
+            z = p.z() - center.z,
+            m = segment.box.getMass();
+        result.add(m * (y * y + z * z), m * (x * x + z * z), m * (x * x + y * y));
+      }
+    return result;
+  }
+
+  public double mass() {
+    return limbs.values().stream()
+        .flatMap(l -> l.segments.stream())
+        .filter(s -> !s.box.isRemoved())
+        .mapToDouble(s -> s.box.getMass())
+        .sum();
   }
 
   public int count() {

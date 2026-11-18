@@ -27,7 +27,7 @@ public record LimbTuning(int restAngle, double stiffness, double damping) {
   public void save(ServerLevel level, BlockPos pos) {
     var body = CoreAssemblyRules.containing(level, pos);
     if (body == null) return;
-    var root = body.getUserDataTag().copy();
+    var root = body.getUserDataTag() == null ? new CompoundTag() : body.getUserDataTag().copy();
     var values = root.getCompound(DATA).copy();
     var value = new CompoundTag();
     value.putInt("RestAngle", Math.clamp(restAngle, -45, 45));

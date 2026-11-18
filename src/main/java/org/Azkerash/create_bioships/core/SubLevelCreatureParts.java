@@ -37,8 +37,11 @@ public final class SubLevelCreatureParts {
           local.remove(SubLevelData.PARTS);
           body.setUserDataTag(local);
           double maximum = SubLevelHealth.localMaximum(body);
+          var reason = pending.getCompound(body.getUniqueId().toString()).getString("Cause");
           SubLevelData.health(
-              body, new SubLevelData.Health(0, maximum, maximum, true, "owner_removed"));
+              body,
+              new SubLevelData.Health(
+                  0, maximum, maximum, true, reason.isEmpty() ? "owner_removed" : reason));
           retired.forget(tag.getUUID("Root"), body.getUniqueId());
         }
         return original;
@@ -73,6 +76,19 @@ public final class SubLevelCreatureParts {
 
   public static double extraHealth(ServerSubLevel root) {
     return finite(data(root).getDouble("Health"));
+  }
+
+  public static int extraStomachCapacity(ServerSubLevel owner) {
+    double capacity = 0;
+    var entries = data(owner).getCompound("Members");
+    for (var key : entries.getAllKeys())
+      capacity = Math.max(capacity, finite(entries.getCompound(key).getDouble("Hunger")));
+    return (int) Math.min(Integer.MAX_VALUE, capacity);
+  }
+
+  public static void stomachContribution(ServerSubLevel part, int capacity) {
+    contribution(part, "Hunger", capacity);
+    if (available(part)) SubLevelHunger.refreshCapacity(root(part));
   }
 
   public static double extraArmor(ServerSubLevel root) {
@@ -121,6 +137,7 @@ public final class SubLevelCreatureParts {
     contribution(part, "Armor", armor);
     org.Azkerash.create_bioships.core.access.SubLevelPermissions.forget(part);
     CreatureDecay.link(owner, part);
+    SubLevelHunger.refreshCapacity(part);
     org.Azkerash.create_bioships.core.locomotion.SubLevelLocomotion.refresh(part);
     SubLevelHealth.refreshCapacity(owner);
   }
@@ -192,6 +209,7 @@ public final class SubLevelCreatureParts {
       rootTag.put(SubLevelData.PARTS, group);
       owner.setUserDataTag(rootTag);
       SubLevelHealth.refreshCapacity(owner);
+      SubLevelHunger.refreshCapacity(owner);
     }
     org.Azkerash.create_bioships.core.access.SubLevelPermissions.forget(part);
     org.Azkerash.create_bioships.core.locomotion.SubLevelLocomotion.refresh(owner);
@@ -203,7 +221,16 @@ public final class SubLevelCreatureParts {
       part.setUserDataTag(remains);
     }
     double maximum = SubLevelHealth.localMaximum(part);
-    SubLevelData.health(part, new SubLevelData.Health(0, maximum, maximum, true, "detached_limb"));
+    SubLevelData.health(
+        part,
+        new SubLevelData.Health(
+            0,
+            maximum,
+            maximum,
+            true,
+            owner != part && SubLevelHealth.status(owner).dead()
+                ? SubLevelHealth.status(owner).causeOfDeath()
+                : "detached_limb"));
   }
 
   public static void sync(ServerSubLevel owner, Collection<ServerSubLevel> parts) {
@@ -219,7 +246,13 @@ public final class SubLevelCreatureParts {
       var pending = data(body).getCompound("Members");
       if (!pending.isEmpty()) {
         var retired = Retired.get(body.getLevel());
-        retired.roots.put(body.getUniqueId().toString(), pending.copy());
+        pending = pending.copy();
+        var health = SubLevelData.health(body);
+        for (var id : pending.getAllKeys())
+          pending
+              .getCompound(id)
+              .putString("Cause", health.dead() ? health.causeOfDeath() : "owner_removed");
+        retired.roots.put(body.getUniqueId().toString(), pending);
         retired.setDirty();
       }
       for (var part : members(body)) if (part != body) detach(part);

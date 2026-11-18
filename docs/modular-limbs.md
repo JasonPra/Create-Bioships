@@ -56,3 +56,12 @@ at x=1024, z=0, using the preset floor height, bedrock flooring and development 
 `/modular_limb_test start` assembles the subject, links its native limb segments, pauses
 hunger and inserts Wander. `/modular_limb_test reset` removes the entire group and restores
 unassembled blocks. Buttons and a holographic explanation are in front of the enclosure.
+
+## Validation
+
+Regression coverage includes native component registrations, Positioner restrictions and saved
+compact settings, four-limb assembly, shared health/armor/trust/ownership and stomach capacity,
+linear and yaw control, controller reconstruction from saved limb data, whole-creature death,
+and exhibit START/RESET cleanup. Native client checks cover both Positioner screens, server
+round trips, actual development commands, rendering through glass, and a world close/reopen
+with four limbs, eight joints and nine physical members restored.

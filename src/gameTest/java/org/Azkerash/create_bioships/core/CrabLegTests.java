@@ -234,7 +234,13 @@ public final class CrabLegTests {
                                 body.logicalPose().transformPosition(Vec3.atCenterOf(core.north()));
                             var back =
                                 body.logicalPose().transformPosition(Vec3.atCenterOf(core.south()));
-                            System.out.println("MIXED_LEG_TILT=" + (front.y - back.y));
+                            System.out.println(
+                                "MIXED_LEG_TILT="
+                                    + (front.y - back.y)
+                                    + " contacts="
+                                    + SubLevelLegs.contacts(body)
+                                    + " pose="
+                                    + body.logicalPose());
                             helper.assertTrue(
                                 front.y - back.y > .2, "Long front legs failed to tilt the body");
                             helper.runAfterDelay(
@@ -247,7 +253,8 @@ public final class CrabLegTests {
                                               Vec3.atLowerCornerOf(base.offset(-12, -1, -12)),
                                               Vec3.atLowerCornerOf(base.offset(13, 0, 13))),
                                           .08),
-                                      "Leg segment penetrated the floor");
+                                      "Leg segment penetrated the floor: "
+                                          + SubLevelLegs.collisionBounds(body));
                                   for (var pose : SubLevelLegs.poses(body))
                                     level.removeBlock(pose.cell(), false);
                                   helper.runAfterDelay(

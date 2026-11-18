@@ -54,6 +54,11 @@ public final class SubLevelHunger {
               : 0;
       capacity = Math.max(capacity, SubLevelData.STOMACH_HUNGER + bonus);
     }
+    if (SubLevelCreatureParts.isPart(body)) {
+      SubLevelCreatureParts.stomachContribution(body, capacity);
+      return;
+    }
+    capacity = Math.max(capacity, SubLevelCreatureParts.extraStomachCapacity(body));
     SubLevelData.maximumHunger(body, SubLevelData.BASE_HUNGER + capacity);
   }
 
@@ -71,8 +76,10 @@ public final class SubLevelHunger {
   }
 
   public static boolean hasStomach(ServerSubLevel body) {
+    body = SubLevelCreatureParts.root(body);
     SubLevelHealth.status(body);
-    return !STOMACHS.getOrDefault(body, java.util.Set.of()).isEmpty();
+    return !STOMACHS.getOrDefault(body, java.util.Set.of()).isEmpty()
+        || SubLevelCreatureParts.extraStomachCapacity(body) > 0;
   }
 
   public static int minimumHungerToHeal(ServerSubLevel body) {

@@ -59,12 +59,12 @@ public final class SubLevelHealth {
       }
     }
     CELLS.put(body, cells);
+    SubLevelHunger.initializeCapacity(body, cells.keySet());
     if (SubLevelCreatureParts.isPart(body)) {
       SubLevelCreatureParts.healthContribution(body, maximum);
       return;
     }
     maximum += SubLevelCreatureParts.extraHealth(body);
-    SubLevelHunger.initializeCapacity(body, cells.keySet());
     var old = SubLevelData.health(body);
     store(body, old.damage(), maximum, old.dead(), old.causeOfDeath());
   }
@@ -100,7 +100,7 @@ public final class SubLevelHealth {
   public static void blockChanged(ServerSubLevel body, BlockPos pos, BlockState state) {
     if ((!CoreAssemblyRules.isCreature(body) && !SubLevelData.isLiving(body))
         || !CELLS.containsKey(body)) return;
-    if (!SubLevelCreatureParts.isPart(body)) SubLevelHunger.blockChanged(body, pos, state);
+    SubLevelHunger.blockChanged(body, pos, state);
     var cells = CELLS.get(body);
     double previous = cells.getOrDefault(pos.asLong(), 0d), next = BlockHealthValues.health(state);
     if (previous == next) return;

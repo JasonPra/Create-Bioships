@@ -66,8 +66,10 @@ public final class ModularLimbController {
   private final ServerSubLevel body;
   private final Context nativeWalker;
   private final List<Pin> pins = new ArrayList<>();
-  private final Map<UUID, Map<Long, net.minecraft.world.level.block.Block>> blockTypes =
+  private final Map<UUID, Map<Long, net.minecraft.world.level.block.state.BlockState>> blockTypes =
       new HashMap<>();
+  private int physicalContacts;
+  private boolean hullContact;
   private boolean dirty;
   private long edit = -1;
 
@@ -89,19 +91,25 @@ public final class ModularLimbController {
     var cells =
         controller.blockTypes.computeIfAbsent(physical.getUniqueId(), ignored -> new HashMap<>());
     var previous = cells.get(pos.asLong());
-    var next = state.isAir() ? null : state.getBlock();
+    var next = structural(state);
     if (previous == next) return;
     if (next == null) cells.remove(pos.asLong());
     else cells.put(pos.asLong(), next);
     controller.dirty = true;
   }
 
+  private static net.minecraft.world.level.block.state.BlockState structural(
+      net.minecraft.world.level.block.state.BlockState state) {
+    if (state.isAir()) return null;
+    return state.getBlock() instanceof LegJointBlock ? state : state.getBlock().defaultBlockState();
+  }
+
   private void rememberTopology() {
     blockTypes.clear();
     for (var member : SubLevelCreatureParts.members(body)) {
-      var cells = new HashMap<Long, net.minecraft.world.level.block.Block>();
+      var cells = new HashMap<Long, net.minecraft.world.level.block.state.BlockState>();
       for (var pos : SubLevelHealth.blocks(member))
-        cells.put(pos.asLong(), member.getLevel().getBlockState(pos).getBlock());
+        cells.put(pos.asLong(), structural(member.getLevel().getBlockState(pos)));
       blockTypes.put(member.getUniqueId(), cells);
     }
   }
@@ -241,6 +249,25 @@ public final class ModularLimbController {
 
   private void update() {
     BuiltLegDriver.updateActualFeet(nativeWalker, body.getLevel());
+    physicalContacts = 0;
+    var ignoredBodies = new HashSet<UUID>();
+    for (var member : SubLevelCreatureParts.members(body)) ignoredBodies.add(member.getUniqueId());
+    TerrainProbe.withIgnored(
+        s -> ignoredBodies.contains(s.getUniqueId()),
+        () -> {
+          var container = SubLevelContainer.getContainer(body.getLevel());
+          for (var leg : nativeWalker.legs) {
+            if (leg.arm) continue;
+            for (var id : leg.built.segments) {
+              var entry = container.getSubLevel(id);
+              if (entry instanceof ServerSubLevel part && LimbGroundContacts.touching(part, body)) {
+                physicalContacts++;
+                break;
+              }
+            }
+          }
+          hullContact = LimbGroundContacts.touching(body, body);
+        });
     if (!commanded()) return;
     var request = BrainMotorControls.current(body);
     var local = body.logicalPose().orientation().transformInverse(v(request.velocity()));
@@ -251,7 +278,7 @@ public final class ModularLimbController {
     if (local.x > .05) keys |= WalkerBrain.KEY_RIGHT;
     nativeWalker.input = keys;
     nativeWalker.lastInputTime = body.getLevel().getGameTime();
-    nativeWalker.mouseTurnRate = request.yawRate();
+    nativeWalker.receiveTurn(request.yawRate() * .05);
     var ignored = new HashSet<UUID>();
     for (var member : SubLevelCreatureParts.members(body)) ignored.add(member.getUniqueId());
     TerrainProbe.withIgnored(
@@ -312,10 +339,14 @@ public final class ModularLimbController {
   @SubscribeEvent
   public static void physics(
       dev.ryanhcode.sable.neoforge.event.ForgeSablePrePhysicsTickEvent event) {
+    if (!(event.getTimeStep() > 0 && event.getTimeStep() <= .1)) return;
     for (var c : CONTROLLERS.values()) {
       if (c.body.isRemoved() || c.body.getLevel() != event.getPhysicsSystem().getLevel()) continue;
       c.ensurePins();
-      boolean drive = c.commanded() && !SubLevelHealth.status(c.body).dead();
+      boolean drive =
+          c.commanded()
+              && !SubLevelHealth.status(c.body).dead()
+              && (c.physicalContacts > 0 || c.hullContact);
       // Physical joint motors have finite torque and yield to real terrain collision.
       double torque = Math.clamp(c.body.getMassTracker().getMass() * 8, 20, 1000);
       for (var pin : c.pins) {
@@ -330,10 +361,14 @@ public final class ModularLimbController {
             true,
             drive ? torque : 1);
       }
-      if (drive && c.nativeWalker.stanceCount > 0) {
+      if (drive && c.physicalContacts > 0 && c.nativeWalker.stanceCount > 0) {
         var handle = RigidBodyHandle.of(c.body);
-        if (handle != null && handle.isValid())
+        if (handle != null && handle.isValid()) {
+          int planned = c.nativeWalker.stanceCount;
+          c.nativeWalker.stanceCount = Math.min(planned, c.physicalContacts);
           WalkerPhysics.substep(c.nativeWalker, c.body, handle, event.getTimeStep());
+          c.nativeWalker.stanceCount = planned;
+        }
       }
     }
   }

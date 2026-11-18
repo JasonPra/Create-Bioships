@@ -30,7 +30,6 @@ public final class SubLevelLegs {
     Vec3 planted, from, to, contact;
     boolean swing, grounded;
     long started;
-    double extensionPressure;
     List<Vec3> points = List.of();
 
     Leg(BlockPos cell, int height) {
@@ -45,6 +44,7 @@ public final class SubLevelLegs {
   private final Map<BlockPos, Leg> legs = new LinkedHashMap<>();
   private boolean dirty = true;
   private double phase;
+  private boolean hullContact;
   private long lastSent = Long.MIN_VALUE, lastContactUpdate = Long.MIN_VALUE;
 
   private SubLevelLegs(ServerSubLevel body) {
@@ -156,13 +156,22 @@ public final class SubLevelLegs {
                   ? ordinal != (int) Math.floor(phase) % legs.size() || phase % 1 > .4
                   : ((phase + (ordinal % 2) * .5) % 1) < .65);
       if (ground == null) {
-        leg.grounded = false;
+        leg.contact = null;
         leg.planted = null;
         leg.swing = false;
         leg.points = leg.solver.solve(root, face, desiredLocal);
         continue;
       }
-      var target = ground.point().add(0, .03, 0);
+      var target =
+          ground
+              .point()
+              .add(
+                  0,
+                  org.Azkerash.create_bioships.compat.letitwalk.CompactLegCollisions.width(
+                              2, leg.desiredHeight)
+                          * .75
+                      + .02,
+                  0);
       if (leg.planted == null) leg.planted = target;
       if (!stance && moving && !leg.swing) {
         leg.swing = true;
@@ -180,19 +189,10 @@ public final class SubLevelLegs {
           leg.planted = target;
         }
       } else if (!moving && leg.planted.distanceToSqr(target) > .64) leg.planted = target;
-      leg.grounded =
-          !leg.swing
-              && root.distanceTo(body.logicalPose().transformPositionInverse(leg.planted))
-                  < 2.4 * leg.solver.scale;
       leg.contact = target;
-      // Extend the native collision chain gradually against the ground, rather
-      // than locking its current folded pose and trying to lift through it.
+      // Contact is a surface target, never a point below the terrain. Suspension
+      // supplies body lift while finite motors articulate the physical bones.
       var foot = leg.planted;
-      if (alive && command.expires() > now && !leg.swing) {
-        double error = target.y - desired.y;
-        leg.extensionPressure = Math.clamp(leg.extensionPressure + error * .1, -.5, 1.0);
-        foot = foot.add(0, -leg.extensionPressure, 0);
-      } else leg.extensionPressure = 0;
       leg.points = leg.solver.solve(root, face, body.logicalPose().transformPositionInverse(foot));
     }
     if (lastSent == Long.MIN_VALUE || now - lastSent >= 4) {
@@ -276,12 +276,21 @@ public final class SubLevelLegs {
     if (!(dt > 0 && dt <= .1)) return;
     for (var c : CONTROLLERS.values()) {
       var body = c.body;
-      if (body.getLevel() != level || body.isRemoved()) continue;
+      if (body.getLevel() != level || body.isRemoved() || c.legs.isEmpty()) continue;
       var handle = RigidBodyHandle.of(body);
       if (handle == null || !handle.isValid()) continue;
       var command = BrainMotorControls.current(body);
       if (c.lastContactUpdate != body.getLevel().getGameTime()) {
-        for (var leg : c.legs.values()) leg.grounded = c.collisions.grounded(leg.cell);
+        var family = new HashSet<UUID>();
+        for (var member : SubLevelCreatureParts.members(body)) family.add(member.getUniqueId());
+        dev.letitwalk.walker.TerrainProbe.withIgnored(
+            part -> family.contains(part.getUniqueId()),
+            () -> {
+              for (var leg : c.legs.values()) leg.grounded = c.collisions.grounded(leg.cell);
+              c.hullContact =
+                  org.Azkerash.create_bioships.compat.letitwalk.LimbGroundContacts.touching(
+                      body, body);
+            });
         c.lastContactUpdate = body.getLevel().getGameTime();
       }
       int planted = contacts(body);
@@ -289,11 +298,11 @@ public final class SubLevelLegs {
           command.expires() > body.getLevel().getGameTime()
               && command.mode()
                   == org.Azkerash.create_bioships.core.pathfinding.SubLevelPathfinder.Mode.GROUND
-              && !SubLevelHealth.status(body).dead()
-              && planted >= 3;
+              && !SubLevelHealth.status(body).dead();
       for (var leg : c.legs.values())
-        c.collisions.update(leg.cell, leg.desiredHeight, leg.points, controlled);
-      if (!controlled) continue;
+        c.collisions.update(
+            leg.cell, leg.desiredHeight, leg.points, controlled && (planted > 0 || c.hullContact));
+      if (!controlled || planted < 3) continue;
       double mass = body.getMassTracker().getMass();
       if (!Double.isFinite(mass) || mass <= 0) continue;
       if (SubLevelHealth.status(body).dead()) continue;
@@ -318,8 +327,9 @@ public final class SubLevelLegs {
         double error = leg.contact.y - body.logicalPose().transformPosition(restFoot).y;
         double gravity =
             -dev.ryanhcode.sable.physics.config.dimension_physics.DimensionPhysicsData.getGravity(
-                    level)
-                .y;
+                        level)
+                    .y
+                * (1 + c.collisions.mass() / mass);
         var tuning = org.Azkerash.create_bioships.compat.letitwalk.LimbTuning.get(level, leg.cell);
         double lift =
             Math.clamp(
@@ -351,11 +361,17 @@ public final class SubLevelLegs {
       var axisAngle =
           new org.joml.Quaterniond().rotationTo(up, desiredUp).get(new org.joml.AxisAngle4d());
       var tilt = new org.joml.Vector3d(axisAngle.x, axisAngle.y, axisAngle.z).mul(axisAngle.angle);
-      double pitch = Math.clamp(tilt.x * 10 - angular.x() * 4, -20, 20) * mass * dt;
-      double roll = Math.clamp(tilt.z * 10 - angular.z() * 4, -20, 20) * mass * dt;
-      double torque = (command.yawRate() * load - angular.y()) * mass * dt * .6;
-      handle.applyAngularImpulse(
-          new org.joml.Vector3d(pitch, Math.clamp(torque, -mass * dt, mass * dt), roll));
+      var localCom = body.getMassTracker().getCenterOfMass();
+      var worldCom =
+          body.logicalPose().transformPosition(new Vec3(localCom.x(), localCom.y(), localCom.z()));
+      var inertia = c.collisions.inertia(worldCom);
+      var hull = body.getMassTracker().getInertiaTensor();
+      inertia.add(Math.max(1, hull.m00()), Math.max(1, hull.m11()), Math.max(1, hull.m22()));
+      double pitch = Math.clamp(tilt.x * 10 - angular.x() * 4, -20, 20) * inertia.x * dt;
+      double roll = Math.clamp(tilt.z * 10 - angular.z() * 4, -20, 20) * inertia.z * dt;
+      double torque =
+          Math.clamp((command.yawRate() * load - angular.y()) * 2, -2, 2) * inertia.y * dt;
+      handle.applyAngularImpulse(new org.joml.Vector3d(pitch, torque, roll));
     }
   }
 

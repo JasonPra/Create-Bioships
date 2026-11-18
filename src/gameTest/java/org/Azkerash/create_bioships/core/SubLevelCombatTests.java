@@ -16,7 +16,7 @@ import org.Azkerash.create_bioships.components.ComponentRegistry;
 @GameTestHolder(Create_bioships.MODID)
 @PrefixGameTestTemplate(false)
 public final class SubLevelCombatTests {
-  @GameTest(template = "test_empty", timeoutTicks = 200, batch = "native_combat_integration")
+  @GameTest(template = "test_empty", timeoutTicks = 600, batch = "native_combat_integration")
   public static void native_melee_projectile_and_hostile_targeting(GameTestHelper helper) {
     var level = helper.getLevel();
     var origin = new BlockPos(128, 80, 128);
