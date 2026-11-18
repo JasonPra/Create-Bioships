@@ -17,6 +17,30 @@ import org.Azkerash.create_bioships.core.*;
 public final class EpicFightBlockCollisions {
   private EpicFightBlockCollisions() {}
 
+  /**
+   * A swept collision with tissue remains valid when a charging attacker has entered that tissue.
+   */
+  public static boolean visibleContact(Entity target, Entity watcher) {
+    if (!(target instanceof SubLevelCombatTarget adapter)
+        || !(watcher.level() instanceof net.minecraft.server.level.ServerLevel level)) return false;
+    var body = adapter.body();
+    if (body == null) return false;
+    var hit =
+        level.clip(
+            new net.minecraft.world.level.ClipContext(
+                watcher.getEyePosition(),
+                target.getEyePosition(),
+                net.minecraft.world.level.ClipContext.Block.COLLIDER,
+                net.minecraft.world.level.ClipContext.Fluid.NONE,
+                watcher));
+    if (hit.getType() != HitResult.Type.BLOCK
+        || CoreAssemblyRules.containing(level, hit.getBlockPos()) != body) return false;
+    if (adapter instanceof EyeCombatHurtbox eye && !eye.cell().equals(hit.getBlockPos()))
+      return false;
+    adapter.impact(hit.getBlockPos(), hit.getDirection());
+    return true;
+  }
+
   public static List<Entity> collectSamples(
       Entity attacker, List<Entity> original, List<?> samples) {
     if (attacker.level().isClientSide) return original;

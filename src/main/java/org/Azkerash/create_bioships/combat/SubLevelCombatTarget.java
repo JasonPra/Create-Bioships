@@ -187,7 +187,9 @@ public class SubLevelCombatTarget extends LivingEntity {
                           threat))
                   .getType()
               != net.minecraft.world.phys.HitResult.Type.MISS) continue;
-          double distance = candidate.distanceToSqr(threat.getEyePosition());
+          // Anchor melee targets near the attacker's feet, not above its head. Epic Fight
+          // compares feet heights before choosing a swing; an eye-height anchor can prevent it.
+          double distance = candidate.distanceToSqr(threat.position());
           if (distance < best) {
             best = distance;
             point = candidate;

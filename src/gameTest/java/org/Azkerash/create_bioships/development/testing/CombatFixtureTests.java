@@ -53,6 +53,9 @@ public final class CombatFixtureTests {
           helper.assertTrue(
               state.combatRunning && !state.combatEnemies.isEmpty(),
               "Start did not enumerate enemies");
+          helper.assertTrue(
+              !state.combatEnemies.contains("biomancy:primordial_flesh_blob"),
+              "Passive blob remained in hostile combat trials");
           var body =
               (ServerSubLevel) SubLevelContainer.getContainer(level).getSubLevel(state.combatBody);
           helper.assertTrue(

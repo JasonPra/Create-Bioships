@@ -21,6 +21,8 @@ public final class CombatSuiteProbe {
       if (!DevelopmentWorldSetup.isDevelopment(level))
         throw new IllegalStateException("Not the development preset");
       CombatFixture.reset(level);
+      CoreTestState.get(level).combatTrialSeconds =
+          Integer.getInteger("core.combatProbeSeconds", 10);
       CombatFixture.start(level);
       event.getServer().tickRateManager().setTickRate(1000);
       System.out.println(
@@ -53,7 +55,20 @@ public final class CombatSuiteProbe {
                   + " at="
                   + mob.position()
                   + " target="
-                  + (target == null ? "none" : target.position());
+                  + (target == null ? "none" : target.position())
+                  + " los="
+                  + (target != null && mob.hasLineOfSight(target))
+                  + " phase="
+                  + (mob instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon d
+                      ? d.getPhaseManager().getCurrentPhase().getPhase()
+                      : "-")
+                  + " navDone="
+                  + mob.getNavigation().isDone()
+                  + " goals="
+                  + mob.goalSelector.getAvailableGoals().stream()
+                      .filter(g -> g.isRunning())
+                      .map(g -> g.getGoal().getClass().getSimpleName())
+                      .toList();
         }
       }
     if (ticks % 2000 == 0)

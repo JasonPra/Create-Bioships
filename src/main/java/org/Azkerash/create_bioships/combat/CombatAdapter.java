@@ -98,6 +98,67 @@ public final class CombatAdapter {
     return target;
   }
 
+  /** Route native dragon body-part contact against tissue, not just the small targeting proxy. */
+  @SubscribeEvent
+  public static void dragonContact(net.neoforged.neoforge.event.tick.EntityTickEvent.Post event) {
+    if (!(event.getEntity()
+            instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon dragon)
+        || !(dragon.level() instanceof ServerLevel level)
+        || dragon.getPhaseManager().getCurrentPhase().getPhase()
+            != net.minecraft.world.entity.boss.enderdragon.phases.EnderDragonPhase.CHARGING_PLAYER)
+      return;
+    // Epic Fight keeps hurtTime at 2 to suppress vanilla proxy contact during its boss phases.
+    if (dragon.hurtTime > 2) return;
+    var container = SubLevelContainer.getContainer(level);
+    if (container == null) return;
+    var head = dragon.head.getBoundingBox().inflate(1);
+    var neck =
+        Arrays.stream(dragon.getSubEntities())
+            .filter(part -> part.name.equals("neck"))
+            .findFirst()
+            .orElse(dragon.head)
+            .getBoundingBox()
+            .inflate(1);
+    var wings =
+        Arrays.stream(dragon.getSubEntities())
+            .filter(part -> part.name.equals("wing"))
+            .map(part -> part.getBoundingBox().inflate(4, 2, 4).move(0, -2, 0))
+            .toList();
+    var bounds = head.minmax(neck);
+    for (var wing : wings) bounds = bounds.minmax(wing);
+    for (var entry : container.getAllSubLevels()) {
+      if (!(entry instanceof ServerSubLevel body)
+          || body.isRemoved()
+          || !CoreAssemblyRules.isCreature(body)
+          || SubLevelHealth.status(body).dead()
+          || !body.boundingBox().toMojang().intersects(bounds)) continue;
+      net.minecraft.core.BlockPos contact = null;
+      float damage = 0;
+      for (var cell : SubLevelHealth.blocks(body)) {
+        for (var local : level.getBlockState(cell).getCollisionShape(level, cell).toAabbs()) {
+          var world = new dev.ryanhcode.sable.companion.math.BoundingBox3d(local.move(cell));
+          var box = world.transform(body.logicalPose(), world).toMojang();
+          float hit =
+              head.intersects(box) || neck.intersects(box)
+                  ? 10
+                  : wings.stream().anyMatch(wing -> wing.intersects(box)) ? 5 : 0;
+          if (hit > damage) {
+            damage = hit;
+            contact = cell;
+          }
+        }
+      }
+      if (contact != null) {
+        var point = body.logicalPose().transformPosition(Vec3.atCenterOf(contact));
+        var face =
+            net.minecraft.core.Direction.getNearest(
+                dragon.getX() - point.x, dragon.getY() - point.y, dragon.getZ() - point.z);
+        var target = hitTarget(body, contact, face);
+        if (target != null) target.hurt(level.damageSources().mobAttack(dragon), damage);
+      }
+    }
+  }
+
   @SubscribeEvent
   public static void tick(ServerTickEvent.Post event) {
     for (var level : event.getServer().getAllLevels()) {

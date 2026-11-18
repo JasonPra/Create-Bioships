@@ -30,7 +30,7 @@ import org.Azkerash.create_bioships.core.*;
 @net.neoforged.fml.common.EventBusSubscriber(modid = Create_bioships.MODID)
 public final class CombatFixture {
   private static final String MARK = "create_bioships.combat_fixture";
-  public static final int RADIUS = 12, HEIGHT = 16, TRIAL_TICKS = 200;
+  public static final int RADIUS = 12, HEIGHT = 64, TRIAL_TICKS = 200;
 
   private static final Set<ServerLevel> UI_READY = Collections.newSetFromMap(new WeakHashMap<>());
 
@@ -43,7 +43,7 @@ public final class CombatFixture {
   private static AABB bounds(ServerLevel level) {
     return new AABB(
         Vec3.atLowerCornerOf(base(level).offset(-14, 0, -19)),
-        Vec3.atLowerCornerOf(base(level).offset(15, 18, 15)));
+        Vec3.atLowerCornerOf(base(level).offset(15, HEIGHT + 2, 15)));
   }
 
   public static void relocate(ServerLevel level, BlockPos destination) {
@@ -100,7 +100,7 @@ public final class CombatFixture {
     state.combatAcquired = false;
     for (int x = -12; x <= 12; x++)
       for (int z = -12; z <= 12; z++)
-        for (int y = 0; y < 16; y++)
+        for (int y = 0; y < HEIGHT; y++)
           level.setBlock(base(level).offset(x, y, z), Blocks.AIR.defaultBlockState(), 2);
   }
 
@@ -114,6 +114,14 @@ public final class CombatFixture {
 
   public static void reset(ServerLevel level) {
     var state = CoreTestState.get(level);
+    // Below sea level a drowned's native, flagless SwimUpGoal continuously overwrites
+    // its attack navigation. A sea-level enclosure also gives phantoms a natural flight volume.
+    if (state.combatOrigin.getY() < level.getSeaLevel()) {
+      relocate(
+          level,
+          new BlockPos(state.combatOrigin.getX(), level.getSeaLevel(), state.combatOrigin.getZ()));
+      return;
+    }
     clearTrial(level);
     var b = base(level);
     for (int x = (b.getX() - 14) >> 4; x <= (b.getX() + 14) >> 4; x++)
@@ -197,6 +205,11 @@ public final class CombatFixture {
     state.combatIndex = 0;
     for (var type : BuiltInRegistries.ENTITY_TYPE) {
       if (type.getCategory() != MobCategory.MONSTER) continue;
+      // Biomancy categorizes its passive, item-eating blob as MONSTER; it has no attack goal.
+      if (BuiltInRegistries.ENTITY_TYPE
+          .getKey(type)
+          .toString()
+          .equals("biomancy:primordial_flesh_blob")) continue;
       try {
         if (type.create(level) instanceof Mob mob
             && org.Azkerash.create_bioships.combat.HostileCombatIntegration.isHostile(mob))
@@ -255,13 +268,24 @@ public final class CombatFixture {
       finishTrial(level, "SKIP (spawn unavailable)");
       return;
     }
+    if (enemy instanceof net.minecraft.world.entity.monster.Drowned) {
+      // Drowned do not attack dry-land targets during daytime. Give this aquatic trial
+      // water around the subject instead of changing the entire development world's clock.
+      for (int x = -10; x <= 10; x++)
+        for (int z = -10; z <= 10; z++)
+          for (int y = 0; y < 3; y++)
+            level.setBlock(base(level).offset(x, y, z), Blocks.WATER.defaultBlockState(), 2);
+    }
     enemy.setPos(
         Vec3.atLowerCornerOf(base(level))
             .add(
                 enemy instanceof net.minecraft.world.entity.monster.Slime
+                        || enemy instanceof net.minecraft.world.entity.monster.Drowned
                     ? 3.6
                     : enemy instanceof net.minecraft.world.entity.monster.Giant ? 5 : 7,
-                enemy instanceof net.minecraft.world.entity.monster.Vex ? 2 : 0,
+                enemy instanceof net.minecraft.world.entity.monster.Phantom
+                    ? 8
+                    : enemy instanceof net.minecraft.world.entity.monster.Vex ? 2 : 0,
                 .5));
     enemy.addTag(MARK);
     state.combatEnemy = enemy.getUUID();
@@ -277,6 +301,27 @@ public final class CombatFixture {
         hoglin.setImmuneToZombification(true);
       mob.setItemSlot(EquipmentSlot.HEAD, new ItemStack(Items.IRON_HELMET));
       mob.setDropChance(EquipmentSlot.HEAD, 0);
+    }
+    // Summoned attack entities (notably Epic Fight's ghost) start their animation on join.
+    // Orient and assign their real target before that event, matching their native constructors.
+    if (enemy instanceof Mob mob) {
+      var target = org.Azkerash.create_bioships.combat.CombatAdapter.target(body);
+      mob.setTarget(target);
+      if (target != null
+          && BuiltInRegistries.ENTITY_TYPE
+              .getKey(enemy.getType())
+              .toString()
+              .equals("epicfight:wither_ghost")) {
+        target.focusForAttack(Vec3.atLowerCornerOf(base(level)).add(2.55, 1.5, .5));
+        // Match Epic Fight's native summon: six blocks horizontally from the target's feet.
+        enemy.setPos(target.position().add(6, 0, 0));
+      }
+      if (target != null) {
+        mob.lookAt(
+            net.minecraft.commands.arguments.EntityAnchorArgument.Anchor.FEET, target.position());
+        mob.setYHeadRot(mob.getYRot());
+        mob.setYBodyRot(mob.getYRot());
+      }
     }
     level.addFreshEntity(enemy);
     state.setDirty();

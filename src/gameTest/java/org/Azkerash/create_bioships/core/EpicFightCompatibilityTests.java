@@ -107,6 +107,21 @@ public final class EpicFightCompatibilityTests {
                   helper.assertTrue(
                       eyeHits.contains(CombatAdapter.eyeTarget(body, core.east())),
                       "Epic Fight missed eye weak point");
+                  var tissue = body.logicalPose().transformPosition(Vec3.atCenterOf(core.west(2)));
+                  var adapter = CombatAdapter.target(body);
+                  adapter.focusForAttack(tissue);
+                  attacker.setPos(tissue.add(0, -attacker.getEyeHeight(), -4));
+                  helper.assertTrue(
+                      org.Azkerash.create_bioships.compat.epicfight.EpicFightBlockCollisions
+                          .visibleContact(adapter, attacker),
+                      "Swept contact rejected the struck creature's own tissue");
+                  var wall = BlockPos.containing(tissue.add(0, 0, -2));
+                  level.setBlock(wall, Blocks.STONE.defaultBlockState(), 3);
+                  helper.assertTrue(
+                      !org.Azkerash.create_bioships.compat.epicfight.EpicFightBlockCollisions
+                          .visibleContact(adapter, attacker),
+                      "Swept contact bypassed a world obstacle");
+                  level.removeBlock(wall, false);
                   var lookup = java.lang.invoke.MethodHandles.publicLookup();
                   var patchType =
                       Class.forName(

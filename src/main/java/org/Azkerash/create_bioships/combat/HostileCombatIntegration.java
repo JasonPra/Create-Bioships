@@ -73,12 +73,16 @@ public final class HostileCombatIntegration {
                 .orElse(null);
         dragon.setTarget(target);
         if (target != null
-            && (dragon.getPhaseManager().getCurrentPhase().getPhase()
-                    == EnderDragonPhase.HOLDING_PATTERN
-                || dragon.getPhaseManager().getCurrentPhase().getPhase()
-                    == EnderDragonPhase.HOVERING)) {
-          dragon.getPhaseManager().setPhase(EnderDragonPhase.STRAFE_PLAYER);
-          dragon.getPhaseManager().getPhase(EnderDragonPhase.STRAFE_PLAYER).setTarget(target);
+            && dragon.getPhaseManager().getCurrentPhase().getPhase()
+                != EnderDragonPhase.CHARGING_PLAYER
+            && dragon.getPhaseManager().getCurrentPhase().getPhase() != EnderDragonPhase.DYING) {
+          // Strafing uses the End fight's origin-centred orbit nodes, which do not follow
+          // a creature in another location/dimension. Native charging follows a world point.
+          dragon.getPhaseManager().setPhase(EnderDragonPhase.CHARGING_PLAYER);
+          dragon
+              .getPhaseManager()
+              .getPhase(EnderDragonPhase.CHARGING_PLAYER)
+              .setTarget(target.position());
         }
       }
   }

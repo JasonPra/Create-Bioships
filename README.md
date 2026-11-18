@@ -276,3 +276,30 @@ blocks remain outside the creative inventory.
 The fixture automatically returns to an unassembled state when finished and retains its results.
 Regression checks cover every dispenser case, shared core/readout data, one-dose routing across
 multiple hurtboxes, effect persistence, nonlethal poison, lethal wither, and permanent death.
+
+
+## Combat timeout corrections
+
+The ordinary `biomancy:primordial_flesh_blob` is excluded from combat trials because its
+native goals seek food and avoid threats rather than attacking. The hungry variant remains.
+With the supplied Epic Fight build this leaves 42 trials.
+
+- Melee targeting anchors near the attacker's feet on an exposed tissue face, avoiding a
+  floating target that prevents Epic Fight's wither-skeleton swing selection.
+- Summoned attackers receive their target and orientation before joining the world. The
+  wither ghost uses its native six-block horizontal summoning offset.
+- The enclosure resets at sea level or higher, with a 64-block ceiling. Phantoms start in
+  the air. This avoids their sea-level flight anchor colliding with the old low roof.
+- Drowned receive a water trial and start closer to the subject. Sea-level placement keeps
+  their native swim-up goal from replacing attack navigation; the world's clock is unchanged.
+- Dragons charge toward the creature using a native phase rather than following orbit nodes
+  centred on the End fight. Optional Epic Fight hooks allow that phase only for grid targets.
+  Native head/neck and wing attack boxes are checked against individual tissue collision
+  shapes, using vanilla contact damage through the normal damage adapter and cooldown.
+- Epic Fight swept weapon contact remains valid if its visibility ray first hits the same
+  creature's tissue after a charge enters it. World obstacles and other grids still block
+  the hit, and a covered eye/core is not granted a weak-point hit through other tissue.
+
+Use `/combat_test reset` to rebuild an existing enclosure at the corrected height. The
+navigation tool follows its saved position. The existing START/RESET and duration controls
+are unchanged; no extra debugging commands were added.
