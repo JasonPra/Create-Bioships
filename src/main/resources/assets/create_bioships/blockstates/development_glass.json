@@ -1,7 +1,7 @@
 {
   "variants": {
     "": {
-      "model": "minecraft:block/glass"
+      "model": "create_bioships:block/development_glass"
     }
   }
 }

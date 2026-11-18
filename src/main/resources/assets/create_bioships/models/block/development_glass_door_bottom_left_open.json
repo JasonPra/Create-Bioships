@@ -3,5 +3,6 @@
   "textures": {
     "top": "minecraft:block/glass",
     "bottom": "minecraft:block/glass"
-  }
+  },
+  "render_type": "minecraft:cutout"
 }
