@@ -1,0 +1,15 @@
+{
+  "selector": "create_bioships:crab_leg",
+  "priority": 300,
+  "properties": {
+    "sable:mass": 1.5
+  },
+  "overrides": {
+    "height=2": {
+      "sable:mass": 2.0
+    },
+    "height=3": {
+      "sable:mass": 2.5
+    }
+  }
+}

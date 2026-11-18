@@ -20,5 +20,6 @@
   "block.create_bioships.nerve_panel": "Nerve Panel",
   "block.create_bioships.brain": "Brain",
   "item.create_bioships.blank_behavior_card": "Blank Behavior Card",
-  "block.create_bioships.chitin_armor": "Chitin Armor"
+  "block.create_bioships.chitin_armor": "Chitin Armor",
+  "block.create_bioships.crab_leg": "Armored Crab Leg"
 }

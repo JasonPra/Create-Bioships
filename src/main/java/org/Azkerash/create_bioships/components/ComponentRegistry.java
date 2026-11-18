@@ -79,6 +79,18 @@ public final class ComponentRegistry {
                               .strength(3, 6)
                               .sound(SoundType.BONE_BLOCK))));
 
+  public static final DeferredBlock<org.Azkerash.create_bioships.components.logic.legs.CrabLegBlock>
+      CRAB_LEG =
+          component(
+              new ComponentDefinition<>(
+                  "crab_leg",
+                  () ->
+                      new org.Azkerash.create_bioships.components.logic.legs.CrabLegBlock(
+                          BlockBehaviour.Properties.of()
+                              .strength(2, 5)
+                              .noOcclusion()
+                              .sound(SoundType.BONE_BLOCK))));
+
   public static final DeferredBlock<CoreBlock> CORE =
       component(
           new ComponentDefinition<>(

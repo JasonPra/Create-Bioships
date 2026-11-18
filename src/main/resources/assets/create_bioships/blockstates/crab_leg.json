@@ -1,0 +1,52 @@
+{
+  "variants": {
+    "facing=north,height=1": {
+      "model": "create_bioships:block/crab_leg",
+      "y": 0
+    },
+    "facing=north,height=2": {
+      "model": "create_bioships:block/crab_leg",
+      "y": 0
+    },
+    "facing=north,height=3": {
+      "model": "create_bioships:block/crab_leg",
+      "y": 0
+    },
+    "facing=east,height=1": {
+      "model": "create_bioships:block/crab_leg",
+      "y": 90
+    },
+    "facing=east,height=2": {
+      "model": "create_bioships:block/crab_leg",
+      "y": 90
+    },
+    "facing=east,height=3": {
+      "model": "create_bioships:block/crab_leg",
+      "y": 90
+    },
+    "facing=south,height=1": {
+      "model": "create_bioships:block/crab_leg",
+      "y": 180
+    },
+    "facing=south,height=2": {
+      "model": "create_bioships:block/crab_leg",
+      "y": 180
+    },
+    "facing=south,height=3": {
+      "model": "create_bioships:block/crab_leg",
+      "y": 180
+    },
+    "facing=west,height=1": {
+      "model": "create_bioships:block/crab_leg",
+      "y": 270
+    },
+    "facing=west,height=2": {
+      "model": "create_bioships:block/crab_leg",
+      "y": 270
+    },
+    "facing=west,height=3": {
+      "model": "create_bioships:block/crab_leg",
+      "y": 270
+    }
+  }
+}
