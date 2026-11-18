@@ -26,6 +26,44 @@ public final class ComponentRegistry {
       DeferredRegister.createItems(Create_bioships.MODID);
   private static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES =
       DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, Create_bioships.MODID);
+  private static final DeferredRegister<com.github.elenterius.biomancy.api.serum.Serum>
+      GENE_SERUMS =
+          DeferredRegister.create(
+              com.github.elenterius.biomancy.init.ModSerums.REGISTRY, Create_bioships.MODID);
+  public static final DeferredHolder<
+          com.github.elenterius.biomancy.api.serum.Serum,
+          org.Azkerash.create_bioships.components.logic.serum.ComponentGeneSerum>
+      LONGEVITY_GENE =
+          GENE_SERUMS.register(
+              "longevity_gene",
+              () ->
+                  new org.Azkerash.create_bioships.components.logic.serum.ComponentGeneSerum(
+                      0xffba84cf));
+  public static final DeferredHolder<
+          com.github.elenterius.biomancy.api.serum.Serum,
+          org.Azkerash.create_bioships.components.logic.serum.ComponentGeneSerum>
+      EFFICIENCY_GENE =
+          GENE_SERUMS.register(
+              "efficiency_gene",
+              () ->
+                  new org.Azkerash.create_bioships.components.logic.serum.ComponentGeneSerum(
+                      0xffb4ca76));
+  public static final DeferredItem<com.github.elenterius.biomancy.item.SerumItem> LONGEVITY_SERUM =
+      ITEMS.register(
+          "longevity_gene_serum",
+          () ->
+              new com.github.elenterius.biomancy.item.SerumItem(
+                  new Item.Properties()
+                      .craftRemainder(com.github.elenterius.biomancy.init.ModItems.VIAL.get()),
+                  LONGEVITY_GENE));
+  public static final DeferredItem<com.github.elenterius.biomancy.item.SerumItem> EFFICIENCY_SERUM =
+      ITEMS.register(
+          "efficiency_gene_serum",
+          () ->
+              new com.github.elenterius.biomancy.item.SerumItem(
+                  new Item.Properties()
+                      .craftRemainder(com.github.elenterius.biomancy.init.ModItems.VIAL.get()),
+                  EFFICIENCY_GENE));
   private static final Map<String, DeferredItem<BlockItem>> BLOCK_ITEMS = new LinkedHashMap<>();
   private static final List<Runnable> SETUP = new ArrayList<>();
   private static boolean initialized;
@@ -160,6 +198,8 @@ public final class ComponentRegistry {
 
   public static void addToCreative(CreativeModeTab.Output output) {
     BLOCK_ITEMS.values().forEach(item -> output.accept(item.get()));
+    output.accept(LONGEVITY_SERUM.get());
+    output.accept(EFFICIENCY_SERUM.get());
   }
 
   public static void initializeBehaviors() {
@@ -171,6 +211,7 @@ public final class ComponentRegistry {
   public static void register(IEventBus bus) {
     BLOCKS.register(bus);
     ITEMS.register(bus);
+    GENE_SERUMS.register(bus);
     BLOCK_ENTITIES.register(bus);
     MENUS.register(bus);
   }

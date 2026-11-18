@@ -42,7 +42,13 @@ public final class StomachScreen extends AbstractContainerScreen<StomachMenu> {
     g.drawString(font, "Components / paste", x + 104, y + 83, 0xffd9c9b4, false);
     for (var slot : menu.slots) OrganScreenStyle.slot(g, x + slot.x, y + slot.y);
     OrganScreenStyle.divider(g, x + 12, y + 162, imageWidth - 24);
-    g.drawString(font, "Intake through mouth only", x + 12, y + 153, 0xffa79a91, false);
+    g.drawString(
+        font,
+        "Longevity " + menu.value(3) + "/1 · Efficiency " + menu.value(4) + "/3",
+        x + 12,
+        y + 153,
+        0xffa79a91,
+        false);
   }
 
   private void bar(GuiGraphics g, int x, int y, int width, int value, int max, int color) {

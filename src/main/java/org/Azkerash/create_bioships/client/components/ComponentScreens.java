@@ -14,4 +14,18 @@ public final class ComponentScreens {
     event.register(ComponentRegistry.STOMACH_MENU.get(), StomachScreen::new);
     event.register(ComponentRegistry.MOUTH_MENU.get(), MouthScreen::new);
   }
+
+  @SubscribeEvent
+  public static void colors(
+      net.neoforged.neoforge.client.event.RegisterColorHandlersEvent.Item event) {
+    event.register(
+        (stack, tint) ->
+            tint == 1
+                    && stack.getItem()
+                        instanceof com.github.elenterius.biomancy.api.serum.SerumContainer serum
+                ? serum.getSerumColor(stack)
+                : 0xffffffff,
+        ComponentRegistry.LONGEVITY_SERUM.get(),
+        ComponentRegistry.EFFICIENCY_SERUM.get());
+  }
 }

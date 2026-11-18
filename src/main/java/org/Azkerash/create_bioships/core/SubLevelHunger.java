@@ -43,8 +43,24 @@ public final class SubLevelHunger {
   }
 
   private static void capacityChanged(ServerSubLevel body, java.util.Set<Long> stomachs) {
-    SubLevelData.maximumHunger(
-        body, SubLevelData.BASE_HUNGER + (stomachs.isEmpty() ? 0 : SubLevelData.STOMACH_HUNGER));
+    int capacity = 0;
+    for (long cell : stomachs) {
+      var be = body.getLevel().getBlockEntity(net.minecraft.core.BlockPos.of(cell));
+      int bonus =
+          be
+                  instanceof
+                  org.Azkerash.create_bioships.components.logic.stomach.StomachBlockEntity stomach
+              ? stomach.genes().capacityBonus()
+              : 0;
+      capacity = Math.max(capacity, SubLevelData.STOMACH_HUNGER + bonus);
+    }
+    SubLevelData.maximumHunger(body, SubLevelData.BASE_HUNGER + capacity);
+  }
+
+  public static void refreshCapacity(ServerSubLevel body) {
+    SubLevelHealth.status(body);
+    var stomachs = STOMACHS.get(body);
+    if (stomachs != null) capacityChanged(body, stomachs);
   }
 
   public static boolean hasStomach(ServerSubLevel body) {

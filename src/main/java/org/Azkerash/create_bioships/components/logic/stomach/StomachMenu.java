@@ -18,7 +18,7 @@ public final class StomachMenu extends AbstractContainerMenu {
 
   public static StomachMenu fromNetwork(
       int id, Inventory inventory, RegistryFriendlyByteBuf buffer) {
-    return new StomachMenu(id, inventory, new SimpleContainer(27), new SimpleContainerData(3));
+    return new StomachMenu(id, inventory, new SimpleContainer(27), new SimpleContainerData(5));
   }
 
   private StomachMenu(int id, Inventory inventory, Container stomach, ContainerData data) {

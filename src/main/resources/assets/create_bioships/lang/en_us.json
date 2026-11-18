@@ -10,5 +10,11 @@
   "block.create_bioships.development_glass_door": "Indestructible Glass Door",
   "block.create_bioships.stomach": "Stomach",
   "block.create_bioships.feeding_mouth": "Feeding Mouth",
-  "block.create_bioships.fleshy_intestine": "Fleshy Intestine"
+  "block.create_bioships.fleshy_intestine": "Fleshy Intestine",
+  "item.create_bioships.longevity_gene_serum": "Longevity Gene Serum",
+  "item.create_bioships.efficiency_gene_serum": "Efficiency Gene Serum",
+  "serum.create_bioships.longevity_gene": "Longevity Gene Serum",
+  "serum.create_bioships.efficiency_gene": "Efficiency Gene Serum",
+  "serum.create_bioships.longevity_gene.tooltip": "Stomach gene: +5 maximum hunger. One dose per stomach.",
+  "serum.create_bioships.efficiency_gene.tooltip": "Stomach gene: more paste each meal and a chance for one extra component. Three tiers."
 }

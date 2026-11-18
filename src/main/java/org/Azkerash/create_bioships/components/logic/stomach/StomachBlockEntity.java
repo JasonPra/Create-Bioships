@@ -33,6 +33,7 @@ public final class StomachBlockEntity extends OrganInventory implements IHaveGog
   public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
     var tag = new CompoundTag();
     tag.putInt("Acid", acid);
+    tag.put("Genes", genes.save());
     tag.putInt("Progress", progress);
     tag.putInt("Duration", duration);
     tag.putInt("Queued", queued());
@@ -45,6 +46,22 @@ public final class StomachBlockEntity extends OrganInventory implements IHaveGog
     progress = tag.getInt("Progress");
     duration = tag.getInt("Duration");
     clientQueued = tag.getInt("Queued");
+    genes.load(tag.getCompound("Genes"));
+  }
+
+  private final StomachGenes genes = new StomachGenes(this);
+
+  public StomachGenes genes() {
+    return genes;
+  }
+
+  @Override
+  public void onLoad() {
+    super.onLoad();
+    if (level instanceof ServerLevel server) {
+      var body = CoreAssemblyRules.containing(server, worldPosition);
+      if (body != null) SubLevelHunger.refreshCapacity(body);
+    }
   }
 
   private int clientQueued;
@@ -145,8 +162,9 @@ public final class StomachBlockEntity extends OrganInventory implements IHaveGog
           var result = output.getItemStack(level.random);
           if (!result.isEmpty()) pending.add(result.copy());
         }
+        genes.addExtraComponent(pending, level.random);
         if (items.get(slot).has(DataComponents.FOOD) && !items.get(slot).is(paste()))
-          pending.add(new ItemStack(paste(), 1));
+          pending.add(new ItemStack(paste(), genes.pastePerMeal()));
         setChanged();
         break;
       }
@@ -203,6 +221,8 @@ public final class StomachBlockEntity extends OrganInventory implements IHaveGog
           case 0 -> acid;
           case 1 -> progress;
           case 2 -> duration;
+          case 3 -> genes.longevity() ? 1 : 0;
+          case 4 -> genes.efficiency();
           default -> 0;
         };
       }
@@ -210,7 +230,7 @@ public final class StomachBlockEntity extends OrganInventory implements IHaveGog
       public void set(int index, int value) {}
 
       public int getCount() {
-        return 3;
+        return 5;
       }
     };
   }
@@ -219,12 +239,17 @@ public final class StomachBlockEntity extends OrganInventory implements IHaveGog
     tooltip.add(Component.literal("Stomach acid: " + acid + " / " + MAX_ACID));
     tooltip.add(Component.literal("Digestion: " + progress + " / " + duration));
     tooltip.add(Component.literal("Queued food: " + queued() + " / 576"));
+    tooltip.add(
+        Component.literal(
+            "Longevity gene: " + (genes.longevity() ? "installed (+5 capacity)" : "none")));
+    tooltip.add(Component.literal("Efficiency gene: " + genes.efficiency() + " / 3"));
     return true;
   }
 
   protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
     super.saveAdditional(tag, registries);
     tag.putInt("Acid", acid);
+    tag.put("Genes", genes.save());
     tag.putInt("Progress", progress);
     tag.putInt("Duration", duration);
     tag.putInt("ActiveSlot", activeSlot);
@@ -239,6 +264,7 @@ public final class StomachBlockEntity extends OrganInventory implements IHaveGog
   protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
     super.loadAdditional(tag, registries);
     clientQueued = tag.getInt("Queued");
+    genes.load(tag.getCompound("Genes"));
     acid = tag.contains("Acid") ? Math.clamp(tag.getInt("Acid"), 0, MAX_ACID) : 200;
     progress = Math.max(0, tag.getInt("Progress"));
     duration = Math.max(0, tag.getInt("Duration"));

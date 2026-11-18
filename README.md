@@ -437,3 +437,25 @@ menus so Create rotation remains available.
 Validation: 34 native regression tests passed with Let it Walk installed, including the
 optional Epic Fight run; a final run without Epic Fight also passed all 34. Both themed
 menus and the front-facing arrow fixture were inspected in the Minecraft client.
+
+## Stomach gene serums
+
+Load **Longevity Gene Serum** or **Efficiency Gene Serum** into Biomancy's Bio-Injector, then
+right-click a stomach on an alive, living-creature-flagged grid. Injection works from any face;
+only opening the inventory requires the panel face. These gene serums reject mob/self injection.
+They are available in the component creative tab (`longevity_gene_serum`, `efficiency_gene_serum`);
+crafting recipes have not yet been specified.
+
+- Longevity: one dose per stomach adds 5 hunger capacity. Current food is retained, not refilled.
+- Efficiency: three doses yield 2, 3, and 4 nutrient paste per food meal, respectively, plus a
+  20%, 30%, or 35% chance of one additional native recipe component. Ordinary outputs stay intact.
+- Native Bio-Injector consumption, vial returns, cooldown, and injection animation are reused.
+  Incompatible, maxed, unassembled, and dead targets consume no dose.
+- `StomachGenes` owns compatibility, saved gene state, and effects; `BioInjectorIntegration` owns
+  tool mechanics. Simple serum identities/items are registered through `ComponentRegistry`.
+  Genes are saved with stomach inventory and processing state in block-item drops. The stomach
+  menu and symbiotic-goggles tooltip show installed genes.
+
+Gene validation: all 39 regression tests passed, including native injector doses/vials, capacity
+without free food, rejected duplicate/dead/world injections, gene persistence, guaranteed paste
+yields, and deterministic statistical checks of the one-component bonus.

@@ -69,6 +69,9 @@ public final class StomachBlock extends DirectionalBlock
       net.minecraft.world.entity.player.Player player,
       net.minecraft.world.InteractionHand hand,
       net.minecraft.world.phys.BlockHitResult hit) {
+    if (stack.getItem() instanceof com.github.elenterius.biomancy.item.injector.InjectorItem
+        && level.getBlockEntity(pos) instanceof StomachBlockEntity stomach)
+      return stomach.genes().inject(player, stack);
     return stack.getItem() instanceof com.simibubi.create.content.equipment.wrench.WrenchItem
         ? net.minecraft.world.ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION
         : net.minecraft.world.ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
