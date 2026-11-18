@@ -260,6 +260,23 @@ public final class CoreTestCommands {
                     return 1;
                   }));
     event.getDispatcher().register(potions);
+    var vision = Commands.literal("vision_test").requires(source -> source.hasPermission(2));
+    for (var action : List.of("start", "reset", "status"))
+      vision.then(
+          Commands.literal(action)
+              .executes(
+                  ctx -> {
+                    var level = ctx.getSource().getLevel();
+                    if (action.equals("reset")) {
+                      VisionFixture.reset(level);
+                      return 1;
+                    }
+                    if (action.equals("start")) return VisionFixture.start(level);
+                    ctx.getSource()
+                        .sendSuccess(() -> Component.literal(VisionFixture.status(level)), false);
+                    return 1;
+                  }));
+    event.getDispatcher().register(vision);
     var digestion = Commands.literal("digestion_test").requires(source -> source.hasPermission(2));
     for (var action : List.of("start", "reset", "status"))
       digestion.then(

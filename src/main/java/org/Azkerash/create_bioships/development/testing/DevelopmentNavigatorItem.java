@@ -62,13 +62,14 @@ public final class DevelopmentNavigatorItem extends Item {
         icon(
             org.Azkerash.create_bioships.components.ComponentRegistry.STOMACH_ITEM.get(),
             "Regression: Digestion and food intake"));
+    entries.setItem(5, icon(Items.ENDER_EYE, "Regression: Vision in air and water"));
     player.openMenu(
         new SimpleMenuProvider(
             (id, inventory, viewer) ->
                 new ChestMenu(MenuType.GENERIC_9x1, id, inventory, entries, 1) {
                   @Override
                   public void clicked(int slot, int button, ClickType type, Player clicking) {
-                    if (slot < 0 || slot > 4) return;
+                    if (slot < 0 || slot > 5) return;
                     var base =
                         slot == 0
                             ? state.layout().base()
@@ -76,14 +77,18 @@ public final class DevelopmentNavigatorItem extends Item {
                                 ? state.combatOrigin
                                 : slot == 2
                                     ? state.arrowOrigin
-                                    : slot == 3 ? state.potionOrigin : state.digestionOrigin;
+                                    : slot == 3
+                                        ? state.potionOrigin
+                                        : slot == 4
+                                            ? state.digestionOrigin
+                                            : VisionFixture.base(level);
                     clicking.closeContainer();
                     if (clicking instanceof ServerPlayer server) {
                       server.teleportTo(
                           level,
                           base.getX() + .5,
                           base.getY() + 1,
-                          base.getZ() + (slot == 0 ? -15 : slot == 1 ? -18 : -10),
+                          base.getZ() + (slot == 0 ? -15 : slot == 1 ? -18 : slot == 5 ? -12 : -10),
                           0,
                           0);
                       server.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);

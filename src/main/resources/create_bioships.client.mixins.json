@@ -6,7 +6,8 @@
   "client": [
     "StatusEffectTooltipMixin",
     "SymbioticGogglesOverlayMixin",
-    "IntestineDebugKeyMixin"
+    "IntestineDebugKeyMixin",
+    "VisionDebugKeyMixin"
   ],
   "mixins": [],
   "injectors": {

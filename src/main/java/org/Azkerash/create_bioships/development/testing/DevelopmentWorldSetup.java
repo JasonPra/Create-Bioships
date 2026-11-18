@@ -49,6 +49,7 @@ public final class DevelopmentWorldSetup {
       state.arrowOrigin = new BlockPos(128, state.layout().base().getY(), 0);
       CoreArrowFixture.reset(level);
     }
+    if (!state.visionBuilt) VisionFixture.reset(level);
     if (!state.digestionBuilt) {
       state.digestionOrigin = new BlockPos(384, state.layout().base().getY(), 0);
       DigestionFixture.reset(level);

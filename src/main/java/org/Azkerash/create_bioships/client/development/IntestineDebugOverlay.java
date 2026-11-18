@@ -68,7 +68,7 @@ public final class IntestineDebugOverlay {
     var container = SubLevelContainer.getContainer(mc.level);
     if (container == null) return;
     var buffers = mc.renderBuffers().bufferSource();
-    var lines = buffers.getBuffer(IntestineDebugRenderType.LINES);
+    var lines = buffers.getBuffer(DevelopmentDebugRenderType.LINES);
     var pose = event.getPoseStack();
     var camera = event.getCamera().getPosition();
     for (var graph : GRAPHS.values()) {
@@ -131,7 +131,7 @@ public final class IntestineDebugOverlay {
       }
       pose.popPose();
     }
-    buffers.endBatch(IntestineDebugRenderType.LINES);
+    buffers.endBatch(DevelopmentDebugRenderType.LINES);
   }
 
   @SubscribeEvent

@@ -4,8 +4,8 @@ import com.mojang.blaze3d.vertex.*;
 import net.minecraft.client.renderer.RenderType;
 
 /** Debug lines remain visible inside opaque tissue without writing into the world's depth. */
-final class IntestineDebugRenderType extends RenderType {
-  private IntestineDebugRenderType() {
+final class DevelopmentDebugRenderType extends RenderType {
+  private DevelopmentDebugRenderType() {
     super(
         "unused",
         DefaultVertexFormat.POSITION_COLOR_NORMAL,
@@ -18,7 +18,7 @@ final class IntestineDebugRenderType extends RenderType {
   }
 
   private static final DepthTestStateShard SEE_THROUGH =
-      new DepthTestStateShard("intestine_see_through", 519) {
+      new DepthTestStateShard("development_see_through", 519) {
         @Override
         public void setupRenderState() {
           com.mojang.blaze3d.systems.RenderSystem.disableDepthTest();
@@ -31,7 +31,7 @@ final class IntestineDebugRenderType extends RenderType {
       };
   static final RenderType LINES =
       create(
-          "intestine_debug",
+          "development_debug",
           DefaultVertexFormat.POSITION_COLOR_NORMAL,
           VertexFormat.Mode.LINES,
           1536,
