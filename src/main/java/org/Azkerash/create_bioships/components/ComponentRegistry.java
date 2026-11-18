@@ -93,6 +93,88 @@ public final class ComponentRegistry {
                   .withBehavior(
                       org.Azkerash.create_bioships.components.logic.legs.CrabLegBlock::initialize));
 
+  public static final DeferredBlock<
+          org.Azkerash.create_bioships.components.logic.legs.ModularJointBlock>
+      LIMB_JOINT =
+          component(
+              new ComponentDefinition<>(
+                  "limb_joint",
+                  () ->
+                      new org.Azkerash.create_bioships.components.logic.legs.ModularJointBlock(
+                          false,
+                          BlockBehaviour.Properties.of()
+                              .strength(3, 6)
+                              .noOcclusion()
+                              .sound(SoundType.BONE_BLOCK))));
+  public static final DeferredBlock<
+          org.Azkerash.create_bioships.components.logic.legs.ModularJointBlock>
+      LIMB_SWIVEL =
+          component(
+              new ComponentDefinition<>(
+                  "limb_swivel",
+                  () ->
+                      new org.Azkerash.create_bioships.components.logic.legs.ModularJointBlock(
+                          true,
+                          BlockBehaviour.Properties.of()
+                              .strength(3, 6)
+                              .noOcclusion()
+                              .sound(SoundType.BONE_BLOCK))));
+  public static final DeferredBlock<
+          org.Azkerash.create_bioships.components.logic.legs.ModularSegmentBlock>
+      LIMB_SEGMENT =
+          component(
+              new ComponentDefinition<>(
+                  "limb_segment",
+                  () ->
+                      new org.Azkerash.create_bioships.components.logic.legs.ModularSegmentBlock(
+                          BlockBehaviour.Properties.of()
+                              .strength(3, 6)
+                              .noOcclusion()
+                              .sound(SoundType.BONE_BLOCK))));
+  public static final DeferredBlock<
+          org.Azkerash.create_bioships.components.logic.legs.ModularFootBlock>
+      LIMB_FOOT =
+          component(
+              new ComponentDefinition<>(
+                  "limb_foot",
+                  () ->
+                      new org.Azkerash.create_bioships.components.logic.legs.ModularFootBlock(
+                          BlockBehaviour.Properties.of()
+                              .strength(3, 6)
+                              .noOcclusion()
+                              .sound(SoundType.BONE_BLOCK))));
+  public static final DeferredHolder<
+          BlockEntityType<?>,
+          BlockEntityType<org.Azkerash.create_bioships.components.logic.legs.ModularJointEntity>>
+      MODULAR_JOINT_ENTITY =
+          BLOCK_ENTITIES.register(
+              "limb_joint",
+              () ->
+                  BlockEntityType.Builder.of(
+                          org.Azkerash.create_bioships.components.logic.legs.ModularJointEntity
+                              ::new,
+                          LIMB_JOINT.get(),
+                          LIMB_SWIVEL.get())
+                      .build(null));
+  public static final DeferredHolder<
+          BlockEntityType<?>,
+          BlockEntityType<
+              org.Azkerash.create_bioships.components.logic.legs.ModularFootBlock.FootEntity>>
+      MODULAR_FOOT_ENTITY =
+          BLOCK_ENTITIES.register(
+              "limb_foot",
+              () ->
+                  BlockEntityType.Builder.of(
+                          org.Azkerash.create_bioships
+                                  .components
+                                  .logic
+                                  .legs
+                                  .ModularFootBlock
+                                  .FootEntity
+                              ::new,
+                          LIMB_FOOT.get())
+                      .build(null));
+
   public static final DeferredBlock<CoreBlock> CORE =
       component(
           new ComponentDefinition<>(
@@ -256,6 +338,20 @@ public final class ComponentRegistry {
               () ->
                   net.neoforged.neoforge.common.extensions.IMenuTypeExtension.create(
                       org.Azkerash.create_bioships.components.logic.brain.BrainMenu::fromNetwork));
+
+  public static final DeferredHolder<
+          BlockEntityType<?>,
+          BlockEntityType<
+              org.Azkerash.create_bioships.components.logic.brain.BrainLimbDependencies>>
+      BRAIN_LIMB_ENTITY =
+          BLOCK_ENTITIES.register(
+              "brain_limb_dependencies",
+              () ->
+                  BlockEntityType.Builder.of(
+                          org.Azkerash.create_bioships.components.logic.brain.BrainLimbDependencies
+                              ::new,
+                          BRAIN.get())
+                      .build(null));
 
   private ComponentRegistry() {}
 

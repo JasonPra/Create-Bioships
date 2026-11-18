@@ -1,0 +1,30 @@
+{
+  "variants": {
+    "facing=down": {
+      "model": "create_bioships:block/limb_joint"
+    },
+    "facing=up": {
+      "model": "create_bioships:block/limb_joint",
+      "x": 180
+    },
+    "facing=north": {
+      "model": "create_bioships:block/limb_joint",
+      "x": 90
+    },
+    "facing=south": {
+      "model": "create_bioships:block/limb_joint",
+      "x": 90,
+      "y": 180
+    },
+    "facing=east": {
+      "model": "create_bioships:block/limb_joint",
+      "x": 90,
+      "y": 90
+    },
+    "facing=west": {
+      "model": "create_bioships:block/limb_joint",
+      "x": 90,
+      "y": 270
+    }
+  }
+}

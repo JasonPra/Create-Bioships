@@ -23,5 +23,11 @@
   "block.create_bioships.chitin_armor": "Chitin Armor",
   "block.create_bioships.crab_leg": "Armored Crab Leg",
   "item.create_bioships.wander_behavior_card": "Wander Behavior Card",
-  "item.create_bioships.wander_behavior_card.tooltip": "Brain program: short routes with pauses. Requires suitable locomotion appendages."
+  "item.create_bioships.wander_behavior_card.tooltip": "Brain program: short routes with pauses. Requires suitable locomotion appendages.",
+  "block.create_bioships.limb_joint": "Armored Limb Joint",
+  "block.create_bioships.limb_swivel": "Armored Swivel Joint",
+  "block.create_bioships.limb_segment": "Chitin Limb Segment",
+  "block.create_bioships.limb_foot": "Armored Foot",
+  "item.create_bioships.limb_positioner": "Limb Positioner",
+  "item.create_bioships.limb_positioner.hint": "Rest angle: %s\u00b0 \u00b7 Scroll: 5\u00b0 \u00b7 Ctrl: 1\u00b0 \u00b7 Sneak-use: lock mount"
 }

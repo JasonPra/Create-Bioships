@@ -18,7 +18,8 @@ import org.Azkerash.create_bioships.core.brain.SubLevelBrains;
 
 /** Brain tissue and its movable access face. The block stores no inventory or behavior data. */
 public final class BrainBlock extends Block
-    implements BlockSubLevelAssemblyListener,
+    implements net.minecraft.world.level.block.EntityBlock,
+        BlockSubLevelAssemblyListener,
         com.simibubi.create.content.equipment.wrench.IWrenchable {
   public enum Port implements StringRepresentable {
     NONE(null),
@@ -52,6 +53,12 @@ public final class BrainBlock extends Block
   public BrainBlock(Properties properties) {
     super(properties);
     registerDefaultState(stateDefinition.any().setValue(PORT, Port.NONE).setValue(FORMED, false));
+  }
+
+  @Override
+  public net.minecraft.world.level.block.entity.BlockEntity newBlockEntity(
+      BlockPos pos, BlockState state) {
+    return new BrainLimbDependencies(pos, state);
   }
 
   @Override

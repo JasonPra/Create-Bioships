@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "create_bioships:chitin_armor"
+    },
+    {
+      "item": "minecraft:bone"
+    }
+  ],
+  "result": {
+    "id": "create_bioships:limb_segment",
+    "count": 1
+  }
+}

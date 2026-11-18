@@ -12,3 +12,14 @@ so protected components wait for ordinary material across physical bodies.
 
 Factory behavior and hunger tick once on the root. Navigation includes linked physical bounds.
 Vanilla sweep and Epic Fight collisions select at most one damage target per creature.
+
+## Components
+
+- Armored Limb Joint: native hinge, facing toward its child segment.
+- Armored Swivel Joint: native swivel, for another articulation axis.
+- Chitin Limb Segment: build the bone between joints using connected blocks.
+- Armored Foot: ends a leg; normal terrain collision, without climbing anchors.
+
+Each modular component contributes 10 armor points and uses the moderately heavy armored
+material. Shell models tile the core's lower plum skin pixels at normal block density.
+Brain blocks expose passive Sable loading dependencies for their linked limb bodies.

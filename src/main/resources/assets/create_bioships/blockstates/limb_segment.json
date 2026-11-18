@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "axis=y": {
+      "model": "create_bioships:block/limb_segment"
+    },
+    "axis=x": {
+      "model": "create_bioships:block/limb_segment",
+      "x": 90,
+      "y": 90
+    },
+    "axis=z": {
+      "model": "create_bioships:block/limb_segment",
+      "x": 90
+    }
+  }
+}

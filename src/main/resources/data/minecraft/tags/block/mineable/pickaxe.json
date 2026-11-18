@@ -7,6 +7,10 @@
     "create_bioships:vital_readout",
     "create_bioships:stomach",
     "create_bioships:feeding_mouth",
-    "create_bioships:fleshy_intestine"
+    "create_bioships:fleshy_intestine",
+    "create_bioships:limb_joint",
+    "create_bioships:limb_swivel",
+    "create_bioships:limb_segment",
+    "create_bioships:limb_foot"
   ]
 }

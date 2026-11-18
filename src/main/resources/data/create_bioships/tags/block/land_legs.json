@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "create_bioships:crab_leg"
+    "create_bioships:crab_leg",
+    "create_bioships:limb_foot"
   ]
 }
