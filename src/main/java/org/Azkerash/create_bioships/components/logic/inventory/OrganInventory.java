@@ -1,0 +1,103 @@
+package org.Azkerash.create_bioships.components.logic.inventory;
+
+import net.minecraft.core.*;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.*;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.entity.*;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
+import org.Azkerash.create_bioships.core.CoreAssemblyRules;
+
+/** Saved inventory and moving-grid interaction distance shared by organ containers. */
+public abstract class OrganInventory extends BlockEntity implements Container, MenuProvider {
+  protected final NonNullList<ItemStack> items;
+
+  protected OrganInventory(BlockEntityType<?> type, BlockPos pos, BlockState state, int size) {
+    super(type, pos, state);
+    items = NonNullList.withSize(size, ItemStack.EMPTY);
+  }
+
+  public int getContainerSize() {
+    return items.size();
+  }
+
+  public boolean isEmpty() {
+    return items.stream().allMatch(ItemStack::isEmpty);
+  }
+
+  public ItemStack getItem(int slot) {
+    return items.get(slot);
+  }
+
+  public ItemStack removeItem(int slot, int count) {
+    var result = ContainerHelper.removeItem(items, slot, count);
+    if (!result.isEmpty()) setChanged();
+    return result;
+  }
+
+  public ItemStack removeItemNoUpdate(int slot) {
+    return ContainerHelper.takeItem(items, slot);
+  }
+
+  public void setItem(int slot, ItemStack stack) {
+    items.set(slot, stack);
+    stack.limitSize(getMaxStackSize(stack));
+    setChanged();
+  }
+
+  public void clearContent() {
+    items.clear();
+    setChanged();
+  }
+
+  public boolean stillValid(Player player) {
+    if (level == null || level.getBlockEntity(worldPosition) != this) return false;
+    var target = Vec3.atCenterOf(worldPosition);
+    if (level instanceof ServerLevel server) {
+      var body = CoreAssemblyRules.containing(server, worldPosition);
+      if (body != null) target = body.logicalPose().transformPosition(target);
+    }
+    return player.getEyePosition().distanceToSqr(target) <= 64;
+  }
+
+  public boolean canPlaceItem(int slot, ItemStack stack) {
+    return false;
+  }
+
+  protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+    super.saveAdditional(tag, registries);
+    ContainerHelper.saveAllItems(tag, items, registries);
+  }
+
+  protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+    super.loadAdditional(tag, registries);
+    items.clear();
+    ContainerHelper.loadAllItems(tag, items, registries);
+  }
+
+  /** One insertion implementation for transport, with an explicit simulation phase. */
+  public ItemStack insert(ItemStack incoming, int first, int end, boolean simulate) {
+    var rest = incoming.copy();
+    for (int pass = 0; pass < 2; pass++)
+      for (int i = first; i < end && !rest.isEmpty(); i++) {
+        var current = items.get(i);
+        if (pass == 0 && current.isEmpty() || pass == 1 && !current.isEmpty()) continue;
+        if (!current.isEmpty() && !ItemStack.isSameItemSameComponents(current, rest)) continue;
+        int amount =
+            Math.min(
+                rest.getCount(),
+                Math.min(rest.getMaxStackSize(), getMaxStackSize()) - current.getCount());
+        if (amount <= 0) continue;
+        if (!simulate) {
+          if (current.isEmpty()) items.set(i, rest.copyWithCount(amount));
+          else current.grow(amount);
+          setChanged();
+        }
+        rest.shrink(amount);
+      }
+    return rest;
+  }
+}

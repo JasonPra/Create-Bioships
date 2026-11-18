@@ -49,12 +49,12 @@ public final class ComponentRegistryTests {
       helper.assertTrue(
           display
                   instanceof
-                  org.Azkerash.create_bioships.components.logic.stomach.StomachGogglesDisplay
-              && !((org.Azkerash.create_bioships.components.logic.stomach.StomachGogglesDisplay)
+                  org.Azkerash.create_bioships.components.logic.stomach.StomachBlockEntity
+              && ((org.Azkerash.create_bioships.components.logic.stomach.StomachBlockEntity)
                       display)
                   .addToGoggleTooltip(tooltip, false)
-              && tooltip.isEmpty(),
-          "Stomach inspection hook is not empty");
+              && !tooltip.isEmpty(),
+          "Stomach inspection hook lost its data");
       helper.assertTrue(
           state.isCollisionShapeFullBlock(helper.getLevel(), pos),
           "Stomach does not fit a full flesh block");

@@ -75,21 +75,30 @@ public final class ComponentRegistry {
 
   public static final DeferredHolder<
           BlockEntityType<?>,
-          BlockEntityType<
-              org.Azkerash.create_bioships.components.logic.stomach.StomachGogglesDisplay>>
+          BlockEntityType<org.Azkerash.create_bioships.components.logic.stomach.StomachBlockEntity>>
       STOMACH_DISPLAY =
           BLOCK_ENTITIES.register(
               "stomach_display",
               () ->
                   BlockEntityType.Builder.of(
-                          org.Azkerash.create_bioships
-                                  .components
-                                  .logic
-                                  .stomach
-                                  .StomachGogglesDisplay
+                          org.Azkerash.create_bioships.components.logic.stomach.StomachBlockEntity
                               ::new,
                           STOMACH.get())
                       .build(null));
+
+  private static final DeferredRegister<net.minecraft.world.inventory.MenuType<?>> MENUS =
+      DeferredRegister.create(Registries.MENU, Create_bioships.MODID);
+  public static final DeferredHolder<
+          net.minecraft.world.inventory.MenuType<?>,
+          net.minecraft.world.inventory.MenuType<
+              org.Azkerash.create_bioships.components.logic.stomach.StomachMenu>>
+      STOMACH_MENU =
+          MENUS.register(
+              "stomach",
+              () ->
+                  net.neoforged.neoforge.common.extensions.IMenuTypeExtension.create(
+                      org.Azkerash.create_bioships.components.logic.stomach.StomachMenu
+                          ::fromNetwork));
 
   private ComponentRegistry() {}
 
@@ -118,5 +127,6 @@ public final class ComponentRegistry {
     BLOCKS.register(bus);
     ITEMS.register(bus);
     BLOCK_ENTITIES.register(bus);
+    MENUS.register(bus);
   }
 }

@@ -6,10 +6,7 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.*;
 
-/**
- * Internal organ: one capacity bonus per creature and an empty inspection hook; no digestion or
- * GUI.
- */
+/** Internal organ with autonomous digestion and an inspect-only inventory. */
 public final class StomachBlock extends DirectionalBlock
     implements com.simibubi.create.content.equipment.wrench.IWrenchable,
         net.minecraft.world.level.block.EntityBlock {
@@ -47,7 +44,46 @@ public final class StomachBlock extends DirectionalBlock
   @Override
   public net.minecraft.world.level.block.entity.BlockEntity newBlockEntity(
       net.minecraft.core.BlockPos pos, BlockState state) {
-    return new StomachGogglesDisplay(pos, state);
+    return new StomachBlockEntity(pos, state);
+  }
+
+  @Override
+  public <T extends net.minecraft.world.level.block.entity.BlockEntity>
+      net.minecraft.world.level.block.entity.BlockEntityTicker<T> getTicker(
+          net.minecraft.world.level.Level level,
+          BlockState state,
+          net.minecraft.world.level.block.entity.BlockEntityType<T> type) {
+    return !level.isClientSide
+            && type
+                == org.Azkerash.create_bioships.components.ComponentRegistry.STOMACH_DISPLAY.get()
+        ? (l, p, s, be) -> StomachBlockEntity.tick(l, p, s, (StomachBlockEntity) be)
+        : null;
+  }
+
+  @Override
+  protected net.minecraft.world.InteractionResult useWithoutItem(
+      BlockState state,
+      net.minecraft.world.level.Level level,
+      net.minecraft.core.BlockPos pos,
+      net.minecraft.world.entity.player.Player player,
+      net.minecraft.world.phys.BlockHitResult hit) {
+    if (player instanceof net.minecraft.server.level.ServerPlayer server
+        && level.getBlockEntity(pos) instanceof StomachBlockEntity stomach)
+      server.openMenu(stomach);
+    return net.minecraft.world.InteractionResult.sidedSuccess(level.isClientSide);
+  }
+
+  @Override
+  protected java.util.List<net.minecraft.world.item.ItemStack> getDrops(
+      BlockState state, net.minecraft.world.level.storage.loot.LootParams.Builder builder) {
+    var drops = super.getDrops(state, builder);
+    var be =
+        builder.getOptionalParameter(
+            net.minecraft.world.level.storage.loot.parameters.LootContextParams.BLOCK_ENTITY);
+    if (be instanceof StomachBlockEntity stomach)
+      for (var stack : drops)
+        if (stack.is(asItem())) stomach.saveToItem(stack, builder.getLevel().registryAccess());
+    return drops;
   }
 
   @Override
