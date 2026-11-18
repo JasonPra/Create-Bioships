@@ -101,6 +101,7 @@ public final class DigestionFixture {
     state.digestionBuilt = true;
     state.digestionRunning = false;
     state.digestionBody = null;
+    state.digestionControl = null;
     state.digestionResult = "Ready";
     state.setDirty();
     explain(level);
@@ -140,8 +141,30 @@ public final class DigestionFixture {
     SubLevelData.hunger(body, 0);
     ((MouthBlockEntity) level.getBlockEntity(core.north().west(3)))
         .feed(new ItemStack(Items.PORKCHOP, 4), false);
-    ((StomachBlockEntity) level.getBlockEntity(isolated(level)))
+    var controlPos = isolated(level);
+    level.setBlock(controlPos.south(), ComponentRegistry.CORE.get().defaultBlockState(), 3);
+    var controlBody =
+        SubLevelAssemblyHelper.assembleBlocks(
+            level,
+            controlPos.south(),
+            List.of(controlPos, controlPos.south()),
+            new BoundingBox3i(controlPos, controlPos.south()));
+    if (controlBody == null) {
+      reset(level);
+      return 0;
+    }
+    var controlCore = controlBody.getPlot().getCenterBlock();
+    CoreAssemblyRules.changed(level, controlCore);
+    var controlTag = controlBody.getUserDataTag().copy();
+    controlTag.putBoolean(MARK, true);
+    controlBody.setUserDataTag(controlTag);
+    SubLevelContainer.getContainer(level)
+        .addForceLoadTicket(controlBody, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
+    SubLevelData.hungerPaused(controlBody, true);
+    SubLevelData.hunger(controlBody, SubLevelData.maximumHunger(controlBody));
+    ((StomachBlockEntity) level.getBlockEntity(controlCore.north()))
         .enqueue(new ItemStack(Items.PORKCHOP), false);
+    state.digestionControl = controlBody.getUniqueId();
     state.digestionBody = body.getUniqueId();
     state.digestionRunning = true;
     state.digestionDeadline = level.getGameTime() + 2400;
@@ -160,9 +183,18 @@ public final class DigestionFixture {
       return;
     }
     var core = body.getPlot().getCenterBlock();
+    var controlEntry =
+        state.digestionControl == null
+            ? null
+            : SubLevelContainer.getContainer(level).getSubLevel(state.digestionControl);
+    if (!(controlEntry instanceof ServerSubLevel controlBody) || controlBody.isRemoved()) {
+      finish(level, "FAIL: reset required for living control");
+      return;
+    }
     if (level.getBlockEntity(core.north().west(3)) instanceof MouthBlockEntity mouth
         && level.getBlockEntity(core.north()) instanceof StomachBlockEntity stomach
-        && level.getBlockEntity(isolated(level)) instanceof StomachBlockEntity control) {
+        && level.getBlockEntity(controlBody.getPlot().getCenterBlock().north())
+            instanceof StomachBlockEntity control) {
       boolean isolatedPassed =
           control.queued() == 0 && components(control) > 0 && paste(control) > 0;
       if (mouth.isEmpty()
@@ -221,7 +253,7 @@ public final class DigestionFixture {
                 "DIGESTION REGRESSION\n"
                     + "Left: START · Right: RESET\n"
                     + "Mouth → intestines → stomach; four pork chops.\n"
-                    + "Separate seeded stomach verifies passive digestion.\n"
+                    + "Seeded living control has no mouth or intestines.\n"
                     + "Inspect acid, digestion, components and hunger.\n"
                     + state.digestionResult),
             level.registryAccess()));

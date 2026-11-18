@@ -18,6 +18,16 @@ public final class StomachDigestionTests {
     var pos = helper.absolutePos(new BlockPos(1, 2, 1));
     var state = ComponentRegistry.STOMACH.get().defaultBlockState();
     level.setBlock(pos, state, 3);
+    var body =
+        dev.ryanhcode.sable.api.SubLevelAssemblyHelper.assembleBlocks(
+            level,
+            pos,
+            java.util.List.of(pos),
+            new dev.ryanhcode.sable.companion.math.BoundingBox3i(pos, pos));
+    SubLevelData.living(body, true);
+    SubLevelData.hungerPaused(body, true);
+    SubLevelData.hunger(body, SubLevelData.maximumHunger(body));
+    pos = body.getPlot().getCenterBlock();
     var stomach = (StomachBlockEntity) level.getBlockEntity(pos);
     int acid = stomach.acid();
     stomach.advance();
@@ -68,6 +78,16 @@ public final class StomachDigestionTests {
     var pos = helper.absolutePos(new BlockPos(1, 2, 1));
     var state = ComponentRegistry.STOMACH.get().defaultBlockState();
     level.setBlock(pos, state, 3);
+    var body =
+        dev.ryanhcode.sable.api.SubLevelAssemblyHelper.assembleBlocks(
+            level,
+            pos,
+            java.util.List.of(pos),
+            new dev.ryanhcode.sable.companion.math.BoundingBox3i(pos, pos));
+    SubLevelData.living(body, true);
+    SubLevelData.hungerPaused(body, true);
+    SubLevelData.hunger(body, SubLevelData.maximumHunger(body));
+    pos = body.getPlot().getCenterBlock();
     var stomach = (StomachBlockEntity) level.getBlockEntity(pos);
     for (int slot = 9; slot < 27; slot++) stomach.setItem(slot, new ItemStack(Items.STONE, 64));
     stomach.enqueue(new ItemStack(Items.PORKCHOP), false);

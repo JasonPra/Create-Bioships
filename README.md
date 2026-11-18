@@ -386,8 +386,9 @@ dropping, death, and `/clear` preserve it. `DevelopmentLoadout` owns these prote
 
 ## Passive digestion and intake
 
-- Stomachs generate 1 acid per loaded tick, up to 1,000, starting with 200. They require no
-  mouth, intestine, or core connection to digest existing input. Dead creature organs stop.
+- Stomachs generate 1 acid per loaded tick, up to 1,000, starting with 200. They require a living-creature-flagged Sable sublevel that is alive, but no
+  mouth or intestine connection to digest existing input. World blocks, ordinary grids, and
+  dead creature organs remain inactive and retain inventory, acid, and processing progress.
 - Native Biomancy decomposing recipes supply component outputs, ingredient quantities, and
   processing times. Acid costs 100 times the recipe's nutrient cost, clamped to 50–1,000.
   Food items also produce one nutrient paste per recipe.
@@ -411,7 +412,7 @@ The development preset adds a digestion enclosure at x=384, z=0, with indestruct
 a double door, START/RESET command buttons, an explanation hologram, and a navigator entry.
 `/digestion_test start`, `/digestion_test reset`, and `/digestion_test status` control it.
 START assembles the subject, seeds four pork chops in its mouth, and seeds one isolated
-stomach as a disconnected control. PASS requires transported digestion, component/paste
+living stomach/core grid as a control without mouth or intestine connections. PASS requires transported digestion, component/paste
 production, and hunger reaching capacity. RESET restores the unassembled setup.
 
 ### Eye support and corpse feedback

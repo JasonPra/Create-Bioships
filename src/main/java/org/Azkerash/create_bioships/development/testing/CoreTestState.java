@@ -28,7 +28,7 @@ public final class CoreTestState extends SavedData {
   final List<String> potionResults = new ArrayList<>();
   boolean digestionBuilt, digestionRunning;
   BlockPos digestionOrigin = new BlockPos(384, DevelopmentWorldSetup.DEFAULT_TEST_Y, 0);
-  UUID digestionBody;
+  UUID digestionBody, digestionControl;
   long digestionDeadline;
   String digestionResult = "Ready";
   boolean arrowBuilt, arrowRunning;
@@ -79,6 +79,8 @@ public final class CoreTestState extends SavedData {
                   state.digestionRunning = tag.getBoolean("DigestionRunning");
                   if (tag.contains("DigestionOrigin"))
                     state.digestionOrigin = BlockPos.of(tag.getLong("DigestionOrigin"));
+                  if (tag.hasUUID("DigestionControl"))
+                    state.digestionControl = tag.getUUID("DigestionControl");
                   if (tag.hasUUID("DigestionBody"))
                     state.digestionBody = tag.getUUID("DigestionBody");
                   state.digestionDeadline = tag.getLong("DigestionDeadline");
@@ -145,6 +147,7 @@ public final class CoreTestState extends SavedData {
     tag.putBoolean("DigestionRunning", digestionRunning);
     tag.putLong("DigestionOrigin", digestionOrigin.asLong());
     if (digestionBody != null) tag.putUUID("DigestionBody", digestionBody);
+    if (digestionControl != null) tag.putUUID("DigestionControl", digestionControl);
     tag.putLong("DigestionDeadline", digestionDeadline);
     tag.putString("DigestionResult", digestionResult);
     tag.putBoolean("ArrowBuilt", arrowBuilt);

@@ -106,14 +106,12 @@ public final class StomachBlockEntity extends OrganInventory implements IHaveGog
     if (level.getGameTime() % 20 == 0)
       level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 2);
     var body = CoreAssemblyRules.containing(server, worldPosition);
-    if (body != null && SubLevelData.isLiving(body) && SubLevelHealth.status(body).dead()) return;
+    if (body == null || !SubLevelData.isLiving(body) || SubLevelHealth.status(body).dead()) return;
     if (acid < MAX_ACID) {
       acid++;
       setChanged();
     }
-    if (body != null
-        && SubLevelData.isLiving(body)
-        && SubLevelData.hunger(body) < SubLevelData.maximumHunger(body)) {
+    if (SubLevelData.hunger(body) < SubLevelData.maximumHunger(body)) {
       int pasteSlot = -1;
       for (int i = INPUT_SLOTS; i < items.size(); i++)
         if (items.get(i).is(paste())) {
