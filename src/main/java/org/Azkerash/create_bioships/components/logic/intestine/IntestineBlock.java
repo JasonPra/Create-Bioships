@@ -35,7 +35,9 @@ public final class IntestineBlock extends Block
   }
 
   public static boolean compatible(BlockState state) {
-    return state.is(ComponentRegistry.INTESTINE.get())
+    return state.getBlock()
+            instanceof com.github.elenterius.biomancy.block.storagesac.StorageSacBlock
+        || state.is(ComponentRegistry.INTESTINE.get())
         || state.is(ComponentRegistry.MOUTH.get())
         || state.is(ComponentRegistry.STOMACH.get());
   }

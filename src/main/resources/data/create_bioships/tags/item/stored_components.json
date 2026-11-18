@@ -1,0 +1,33 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "biomancy:flesh_bits",
+      "required": false
+    },
+    {
+      "id": "biomancy:bone_fragments",
+      "required": false
+    },
+    {
+      "id": "biomancy:elastic_fibers",
+      "required": false
+    },
+    {
+      "id": "biomancy:exotic_dust",
+      "required": false
+    },
+    {
+      "id": "biomancy:organic_matter",
+      "required": false
+    },
+    {
+      "id": "biomancy:minerals",
+      "required": false
+    },
+    {
+      "id": "biomancy:nutrients",
+      "required": false
+    }
+  ]
+}

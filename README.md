@@ -483,3 +483,17 @@ core data when reassembled. Ordinary core drops remain empty.
 Refactor validation: all 40 tests passed, including actual wrench removal and native placement
 onto another living grid, stable component identity, old-owner release, continued digestion,
 and recovered dead-core persistence. The development biome's empty natural spawn list is unchanged.
+
+## Connected storage sacs
+
+Biomancy storage sacs connect to intestine branches from any of the six faces. The sublevel's
+existing cached graph discovers sacs as endpoints. `StomachStorageRouting` owns intake/overflow
+policy; the sublevel schedules it, while Biomancy retains its native sac inventory and UI APIs.
+Food goes to available stomach input first, then to connected sacs. Full/blocked stomach output
+can export components to sacs, preserving a local paste reserve; hungry stomachs can retrieve
+paste and food. `create_bioships:stored_components` excludes building materials from automatic
+food retrieval. Blocked/full destinations leave source items intact.
+
+Storage searches use rotating windows of at most eight sacs and a bounded per-grid service
+budget. Pipe blocks have no item-processing tickers. All 42 regression tests passed, including
+six-face branch visuals, overflow, retrieval, component preservation, and broken-line rejection.

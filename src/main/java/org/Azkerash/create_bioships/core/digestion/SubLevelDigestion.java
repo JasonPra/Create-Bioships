@@ -21,7 +21,7 @@ public final class SubLevelDigestion {
   public static final int TRANSFER_INTERVAL = 8, MAX_TRANSFERS = 64;
   private static final Map<ServerSubLevel, Network> NETWORKS = new IdentityHashMap<>();
 
-  public record Group(List<BlockPos> mouths, List<BlockPos> stomachs) {}
+  public record Group(List<BlockPos> mouths, List<BlockPos> stomachs, List<BlockPos> sacs) {}
 
   private static final class Network {
     final ServerSubLevel body;
@@ -46,6 +46,7 @@ public final class SubLevelDigestion {
         var queue = new ArrayDeque<BlockPos>();
         var mouths = new ArrayList<BlockPos>();
         var stomachs = new ArrayList<BlockPos>();
+        var sacs = new ArrayList<BlockPos>();
         var first = unseen.iterator().next();
         unseen.remove(first);
         queue.add(first);
@@ -54,6 +55,7 @@ public final class SubLevelDigestion {
           int role = nodes.get(pos);
           if (role == 2) mouths.add(pos);
           if (role == 3) stomachs.add(pos);
+          if (role == 4) sacs.add(pos);
           for (var direction : Direction.values()) {
             var next = pos.relative(direction);
             if (unseen.remove(next)) queue.add(next);
@@ -61,7 +63,8 @@ public final class SubLevelDigestion {
         }
         mouths.sort(BlockPos::compareTo);
         stomachs.sort(BlockPos::compareTo);
-        result.add(new Group(List.copyOf(mouths), List.copyOf(stomachs)));
+        sacs.sort(BlockPos::compareTo);
+        result.add(new Group(List.copyOf(mouths), List.copyOf(stomachs), List.copyOf(sacs)));
       }
       groups = List.copyOf(result);
       dirty = false;
@@ -71,6 +74,8 @@ public final class SubLevelDigestion {
   private SubLevelDigestion() {}
 
   private static int role(BlockState state) {
+    if (state.getBlock() instanceof com.github.elenterius.biomancy.block.storagesac.StorageSacBlock)
+      return 4;
     return state.is(ComponentRegistry.INTESTINE.get())
         ? 1
         : state.is(ComponentRegistry.MOUTH.get())
@@ -99,20 +104,19 @@ public final class SubLevelDigestion {
     var body = CoreAssemblyRules.containing(level, mouth.getBlockPos());
     if (body == null || !SubLevelData.isLiving(body) || SubLevelHealth.status(body).dead())
       return 0;
+    var network = NETWORKS.get(body);
     for (var group : groups(body))
       if (group.mouths.contains(mouth.getBlockPos()))
-        for (var pos : group.stomachs)
-          if (level.getBlockEntity(pos) instanceof StomachBlockEntity stomach)
-            for (int slot = 0; slot < mouth.getContainerSize(); slot++) {
-              var stack = mouth.getItem(slot);
-              if (stack.isEmpty()) continue;
-              var one = stack.copyWithCount(1);
-              if (stomach.enqueue(one, true).isEmpty() && stomach.enqueue(one, false).isEmpty()) {
-                mouth.removeItem(slot, 1);
-                return 1;
-              }
-            }
+        return StomachStorageRouting.intake(
+            mouth, group.stomachs, storageWindow(group.sacs, network == null ? 0 : network.cursor));
     return 0;
+  }
+
+  private static List<BlockPos> storageWindow(List<BlockPos> sacs, int cursor) {
+    if (sacs.size() <= 8) return sacs;
+    var result = new ArrayList<BlockPos>();
+    for (int i = 0; i < 8; i++) result.add(sacs.get(Math.floorMod(cursor + i, sacs.size())));
+    return result;
   }
 
   @SubscribeEvent
@@ -140,6 +144,17 @@ public final class SubLevelDigestion {
               var pos = mouths.get(Math.floorMod(network.cursor++, mouths.size()));
               if (level.getBlockEntity(pos) instanceof MouthBlockEntity mouth) transfer(mouth);
             }
+            int remaining = MAX_TRANSFERS;
+            for (var group : groups)
+              for (var pos : group.stomachs)
+                if (remaining > 0
+                    && level.getBlockEntity(pos) instanceof StomachBlockEntity stomach) {
+                  remaining -=
+                      Math.max(
+                          1,
+                          StomachStorageRouting.service(
+                              stomach, storageWindow(group.sacs, network.cursor++), remaining));
+                }
           }
         }
     }
