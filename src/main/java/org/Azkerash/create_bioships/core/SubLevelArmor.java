@@ -73,6 +73,16 @@ public final class SubLevelArmor {
       ServerSubLevel body, BlockPos cell, DamageSource source, double damage) {
     if (!Double.isFinite(damage) || damage <= 0) return 0;
     if (!SubLevelCreatureParts.available(body)) return damage;
+    var compact =
+        body.getUserDataTag() == null
+            ? new CompoundTag()
+            : body.getUserDataTag()
+                .getCompound(
+                    org.Azkerash.create_bioships.compat.letitwalk.CompactLimbController.PART);
+    if (!compact.isEmpty() && SubLevelCreatureParts.isPart(body)) {
+      cell = BlockPos.of(compact.getLong("Socket"));
+      body = SubLevelCreatureParts.root(body);
+    }
     if (cell == null
         || source.is(DamageTypeTags.BYPASSES_ARMOR)
         || ArmorValues.points(body.getLevel().getBlockState(cell)) == 0

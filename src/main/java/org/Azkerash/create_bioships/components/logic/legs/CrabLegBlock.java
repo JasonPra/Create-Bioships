@@ -14,7 +14,10 @@ import net.minecraft.world.phys.shapes.*;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
 import org.Azkerash.create_bioships.core.legs.SubLevelLegs;
 
-/** Passive horizontal socket. The owning grid supplies gait, contact forces and joint poses. */
+/**
+ * Passive horizontal socket. The owning grid connects generated limb sublevels to native Let It
+ * Walk controls.
+ */
 public final class CrabLegBlock extends Block
     implements BlockSubLevelAssemblyListener,
         com.simibubi.create.content.equipment.wrench.IWrenchable {

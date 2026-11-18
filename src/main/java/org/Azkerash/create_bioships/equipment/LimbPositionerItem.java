@@ -12,6 +12,7 @@ public final class LimbPositionerItem extends Item {
 
   @Override
   public InteractionResult useOn(UseOnContext context) {
-    return org.Azkerash.create_bioships.compat.letitwalk.LimbPositionerActions.use(context);
+    return org.Azkerash.create_bioships.compat.letitwalk.LimbPositionerActions.use(
+        org.Azkerash.create_bioships.compat.letitwalk.CompactLimbController.socketContext(context));
   }
 }

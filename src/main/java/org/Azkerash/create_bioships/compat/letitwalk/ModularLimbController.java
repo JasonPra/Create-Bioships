@@ -167,7 +167,11 @@ public final class ModularLimbController {
             c.edit = BuiltLegAssembler.edits();
             return false;
           }
-          SubLevelCreatureParts.sync(owner, segments(owner));
+          var members = new ArrayList<>(segments(owner));
+          for (var member : SubLevelCreatureParts.members(owner))
+            if (member != owner && member.getUserDataTag().contains(CompactLimbController.PART))
+              members.add(member);
+          SubLevelCreatureParts.sync(owner, members);
           c.rememberTopology();
           c.dirty = false;
           c.edit = BuiltLegAssembler.edits();

@@ -55,6 +55,9 @@ public final class BioshipWrenchItem extends WrenchItem {
   @Override
   public net.minecraft.world.InteractionResult useOn(
       net.minecraft.world.item.context.UseOnContext context) {
+    var socketContext =
+        org.Azkerash.create_bioships.compat.letitwalk.CompactLimbController.socketContext(context);
+    if (socketContext != context) return useOn(socketContext);
     var level = context.getLevel();
     var player = context.getPlayer();
     var pos = context.getClickedPos();

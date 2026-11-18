@@ -18,6 +18,8 @@ public final class BlockHealthValues {
 
   public static double health(BlockState state) {
     return state.isAir()
+            || state.getBlock()
+                instanceof org.Azkerash.create_bioships.components.logic.legs.CompactLimbBlock
         ? 0
         : VALUES.getOrDefault(BuiltInRegistries.BLOCK.getKey(state.getBlock()), 10d);
   }

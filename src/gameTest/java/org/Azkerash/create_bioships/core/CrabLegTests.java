@@ -106,27 +106,37 @@ public final class CrabLegTests {
     helper.runAfterDelay(
         20,
         () -> {
-          var pose = new dev.ryanhcode.sable.companion.math.Pose3d();
-          pose.position().set(pos.getX() + .5, pos.getY() + 5, pos.getZ() + .5);
-          pose.orientation().rotationZ(Math.PI / 2);
-          var box =
-              new dev.ryanhcode.sable.api.physics.object.box.BoxPhysicsObject(
-                  pose, new org.joml.Vector3d(.15, 1.5, .15), .25) {
-                @Override
-                public void getBoundingBox(
-                    dev.ryanhcode.sable.companion.math.BoundingBox3d bounds) {
-                  if (isActive()) updatePose();
-                  super.getBoundingBox(bounds);
-                }
-              };
-          var physics = dev.ryanhcode.sable.sublevel.system.SubLevelPhysicsSystem.require(level);
-          physics.addObject(box);
+          var cells = List.of(pos.above(5), pos.above(6), pos.above(7));
+          for (var cell : cells)
+            level.setBlock(
+                cell,
+                org.Azkerash.create_bioships
+                    .components
+                    .ComponentRegistry
+                    .COMPACT_LIMB
+                    .get()
+                    .defaultBlockState(),
+                3);
+          var segment =
+              SubLevelAssemblyHelper.assembleBlocks(
+                  level,
+                  cells.getFirst(),
+                  cells,
+                  new BoundingBox3i(cells.getFirst(), cells.getLast()));
+          var rotation = new org.joml.Quaterniond().rotationZ(Math.PI / 2);
+          var handle = dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle.of(segment);
+          handle.teleport(
+              new org.joml.Vector3d(pos.getX() + .5, pos.getY() + 5, pos.getZ() + .5), rotation);
+          dev.ryanhcode.sable.sublevel.system.SubLevelPhysicsSystem.require(level)
+              .updatePose(segment);
           helper.runAfterDelay(
               70,
               () -> {
-                box.updatePose();
-                double y = box.getPose().position().y();
-                physics.removeObject(box);
+                double y = segment.logicalPose().position().y();
+                dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(level)
+                    .removeSubLevel(
+                        segment,
+                        dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason.REMOVED);
                 System.out.println("NATIVE_SEGMENT_POST_Y=" + y);
                 helper.assertTrue(
                     y > pos.getY() + 2.05 && y < pos.getY() + 2.4,
@@ -375,7 +385,8 @@ public final class CrabLegTests {
                                         base.getY(),
                                         base.getZ() + 21),
                                     .08),
-                                "Extended leg segment penetrated the floor");
+                                "Extended leg segment penetrated the floor: "
+                                    + SubLevelLegs.collisionBounds(body));
                             SubLevelHealth.damage(body, 999, "test");
                             helper.assertTrue(
                                 !BrainMotorControls.move(body, new Vec3(0, 0, 1), 0, 20),

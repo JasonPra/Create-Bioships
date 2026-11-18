@@ -1,389 +1,123 @@
 package org.Azkerash.create_bioships.compat.letitwalk;
 
-import dev.ryanhcode.sable.api.physics.constraint.*;
-import dev.ryanhcode.sable.api.physics.object.box.BoxPhysicsObject;
-import dev.ryanhcode.sable.companion.math.Pose3d;
+import dev.letitwalk.walker.TerrainProbe;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
-import dev.ryanhcode.sable.sublevel.system.SubLevelPhysicsSystem;
 import java.util.*;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.*;
+import org.Azkerash.create_bioships.components.logic.legs.CrabLegBlock;
+import org.Azkerash.create_bioships.core.legs.SubLevelLegs;
+import org.joml.Intersectiond;
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
 
-/** Native oriented collision boxes following the same three segments as the compact-leg mesh. */
+/** Queries the actual native segment poses. Physics and contact resolution belong to Sable. */
 public final class CompactLegCollisions {
-  private record Segment(BoxPhysicsObject box, GenericConstraintHandle attachment, double length) {}
+  private CompactLegCollisions() {}
 
   private static final double[] WIDTHS = {.23, .17, .09};
-
-  private static final class Limb {
-    final List<Segment> segments = new ArrayList<>();
-    final List<GenericConstraintHandle> filters = new ArrayList<>();
-    int height;
-    boolean powered;
-  }
-
-  private final ServerSubLevel body;
-  private final Map<BlockPos, Limb> limbs = new HashMap<>();
-
-  public CompactLegCollisions(ServerSubLevel body) {
-    this.body = body;
-  }
-
-  private static Quaterniond orientation(Vec3 delta) {
-    return new Quaterniond().rotationTo(new Vector3d(0, 1, 0), vector(delta).normalize());
-  }
 
   public static double width(int segment, int height) {
     return WIDTHS[segment] * CrabLegKinematics.thickness(height);
   }
 
-  public void retain(Set<BlockPos> cells) {
-    limbs
-        .entrySet()
-        .removeIf(
-            e -> {
-              if (cells.contains(e.getKey())) return false;
-              remove(e.getValue());
-              return true;
-            });
-  }
-
-  public void update(BlockPos cell, int height, List<Vec3> joints, boolean powered) {
-    if (joints.size() != 4) return;
-    var system = SubLevelPhysicsSystem.get(body.getLevel());
-    if (system == null || body.isRemoved()) return;
-    var limb = limbs.get(cell);
-    var previousPoses = new ArrayList<Pose3d>();
-    var previousLengths = new ArrayList<Double>();
-    if (limb != null)
-      for (var segment : limb.segments) {
-        if (segment.box.isRemoved()) {
-          previousPoses.clear();
-          break;
-        }
-        segment.box.updatePose();
-        previousPoses.add(new Pose3d(segment.box.getPose()));
-        previousLengths.add(segment.length);
-      }
-    if (limb != null
-        && (limb.height != height
-            || java.util.stream.IntStream.range(0, 3)
-                .anyMatch(
-                    i ->
-                        Math.abs(limbLength(cell, i) - joints.get(i).distanceTo(joints.get(i + 1)))
-                            > .035)
-            || limb.segments.stream()
-                .anyMatch(s -> s.box.isRemoved() || !s.attachment.isValid()))) {
-      remove(limb);
-      limbs.remove(cell);
-      limb = null;
-    }
-    if (limb == null) {
-      limb = new Limb();
-      limb.height = height;
-      limbs.put(cell.immutable(), limb);
-      for (int i = 0; i < 3; i++) {
-        var a = joints.get(i);
-        var b = joints.get(i + 1);
-        var delta = b.subtract(a);
-        double length = delta.length();
-        if (length < .001) {
-          remove(limb);
-          limbs.remove(cell);
-          return;
-        }
-        var center = a.add(b).scale(.5);
-        var orientation =
-            new Quaterniond().rotationTo(new Vector3d(0, 1, 0), vector(delta).normalize());
-        var world = body.logicalPose().transformPosition(center);
-        var pose = previousPoses.size() == 3 ? previousPoses.get(i) : new Pose3d();
-        if (previousPoses.size() == 3) {
-          // Growing a bone must not instantiate its enlarged lower end inside terrain.
-          var down = pose.orientation().transform(new Vector3d(0, 1, 0));
-          pose.position().y += Math.abs(down.y) * Math.max(0, length - previousLengths.get(i)) / 2;
-        }
-        if (previousPoses.size() != 3) {
-          pose.position().set(world.x, world.y, world.z);
-          pose.orientation().set(body.logicalPose().orientation()).mul(orientation);
-        }
-        var box =
-            new BoxPhysicsObject(
-                pose, new Vector3d(width(i, height) / 2, length / 2, width(i, height) / 2), .75) {
-              @Override
-              public void getBoundingBox(dev.ryanhcode.sable.companion.math.BoundingBox3d bounds) {
-                if (isActive()) updatePose();
-                super.getBoundingBox(bounds);
-              }
-            };
-        system.addObject(box);
-        var attachment =
-            system
-                .getPipeline()
-                .addConstraint(
-                    body,
-                    box,
-                    new GenericConstraintConfiguration(
-                        vector(center),
-                        new Vector3d(),
-                        orientation,
-                        new Quaterniond(),
-                        EnumSet.noneOf(ConstraintJointAxis.class)));
-        if (attachment == null) {
-          system.removeObject(box);
-          remove(limb);
-          limbs.remove(cell);
-          return;
-        }
-        attachment.setContactsEnabled(false);
-        limb.segments.add(new Segment(box, attachment, length));
-      }
-      // Bounded articulated joints retain an exoskeleton even without motor power.
-      // No joint is anchored to the world.
-      var mount =
-          system
-              .getPipeline()
-              .addConstraint(
-                  body,
-                  limb.segments.getFirst().box,
-                  new GenericConstraintConfiguration(
-                      vector(joints.getFirst()),
-                      new Vector3d(0, -limb.segments.getFirst().length / 2, 0),
-                      new Quaterniond(),
-                      new Quaterniond(),
-                      EnumSet.copyOf(Arrays.asList(ConstraintJointAxis.LINEAR))));
-      if (mount != null) {
-        mount.setContactsEnabled(false);
-        var rest = orientation(joints.get(1).subtract(joints.get(0)));
-        mount.setFrame1(vector(joints.getFirst()), rest);
-        mount.setLimit(ConstraintJointAxis.ANGULAR_X, -1.2, 1.2);
-        mount.setLimit(ConstraintJointAxis.ANGULAR_Y, -1.2, 1.2);
-        mount.setLimit(ConstraintJointAxis.ANGULAR_Z, -.8, .8);
-        for (var axis : ConstraintJointAxis.ANGULAR) mount.setMotor(axis, 0, 1.5, 3, true, 1);
-
-        limb.filters.add(mount);
-      }
-      for (int i = 0; i < 2; i++) {
-        var first = limb.segments.get(i);
-        var second = limb.segments.get(i + 1);
-        var joint =
-            system
-                .getPipeline()
-                .addConstraint(
-                    first.box,
-                    second.box,
-                    new GenericConstraintConfiguration(
-                        new Vector3d(0, first.length / 2, 0),
-                        new Vector3d(0, -second.length / 2, 0),
-                        new Quaterniond(),
-                        new Quaterniond(),
-                        EnumSet.copyOf(Arrays.asList(ConstraintJointAxis.LINEAR))));
-        if (joint != null) {
-          joint.setContactsEnabled(false);
-          var qa = orientation(joints.get(i + 1).subtract(joints.get(i)));
-          var qb = orientation(joints.get(i + 2).subtract(joints.get(i + 1)));
-          var normal =
-              vector(joints.get(i + 1).subtract(joints.get(i)))
-                  .cross(vector(joints.get(i + 2).subtract(joints.get(i + 1))));
-          if (normal.lengthSquared() < .0001) normal.set(1, 0, 0);
-          normal.normalize();
-          var frame = new Quaterniond().rotationTo(new Vector3d(1, 0, 0), normal);
-          joint.setFrame1(
-              new Vector3d(0, first.length / 2, 0), new Quaterniond(qa).conjugate().mul(frame));
-          joint.setFrame2(
-              new Vector3d(0, -second.length / 2, 0), new Quaterniond(qb).conjugate().mul(frame));
-          joint.lockAxes(ConstraintJointAxis.ANGULAR_Y, ConstraintJointAxis.ANGULAR_Z);
-          joint.setLimit(ConstraintJointAxis.ANGULAR_X, -1.5, 1.5);
-          joint.setMotor(ConstraintJointAxis.ANGULAR_X, 0, 2, 4, true, 1);
-
-          limb.filters.add(joint);
-        }
-      }
-    }
-    if (limb.powered != powered) {
-      double torque = Math.clamp(body.getMassTracker().getMass() * (height + .5) * 1.5, 8, 120);
-      for (var segment : limb.segments)
-        for (var axis : ConstraintJointAxis.ANGULAR)
-          segment.attachment.setMotor(
-              axis, 0, powered ? 1000 : 0, powered ? 50 : 0, true, powered ? torque : 0);
-      limb.powered = powered;
-    }
-    for (int i = 0; i < 3; i++) {
-      limb.segments.get(i).box.updatePose();
-      var a = joints.get(i);
-      var b = joints.get(i + 1);
-      var delta = b.subtract(a);
-      if (delta.lengthSqr() < .000001) continue;
-      var orientation =
-          new Quaterniond().rotationTo(new Vector3d(0, 1, 0), vector(delta).normalize());
-      limb.segments.get(i).attachment.setFrame1(vector(a.add(b).scale(.5)), orientation);
-    }
-  }
-
-  /** Actual native centers/axes, rather than an animation target which terrain may block. */
-  public List<Vec3> endpoints(BlockPos cell, List<Vec3> fallback) {
-    var limb = limbs.get(cell);
-    if (limb == null
-        || limb.segments.size() != 3
-        || limb.segments.stream().anyMatch(s -> s.box.isRemoved())) {
-      var result = new ArrayList<Vec3>();
-      for (int i = 0; i < 3; i++) {
-        result.add(fallback.get(i));
-        result.add(fallback.get(i + 1));
-      }
-      return List.copyOf(result);
-    }
-    var result = new ArrayList<Vec3>();
-    for (var segment : limb.segments) {
-      segment.box.updatePose();
-      var pose = segment.box.getPose();
-      var offset = pose.orientation().transform(new Vector3d(0, segment.length / 2, 0));
-      var center = pose.position();
-      result.add(
-          body.logicalPose()
-              .transformPositionInverse(
-                  new Vec3(center.x() - offset.x, center.y() - offset.y, center.z() - offset.z)));
-      result.add(
-          body.logicalPose()
-              .transformPositionInverse(
-                  new Vec3(center.x() + offset.x, center.y() + offset.y, center.z() + offset.z)));
-    }
-    return List.copyOf(result);
-  }
-
-  private double limbLength(BlockPos cell, int i) {
-    return limbs.get(cell).segments.get(i).length;
-  }
-
-  public boolean grounded(BlockPos cell) {
-    var limb = limbs.get(cell);
-    if (limb == null || limb.segments.size() != 3) return false;
-    for (var segment : limb.segments) {
-      if (segment.box.isRemoved()) continue;
-      segment.box.updatePose();
-      var pose = segment.box.getPose();
-      var half = segment.box.getHalfExtents();
-      var q = pose.orientation();
-      var support = new Vector3d(pose.position());
-      var axes =
-          new Vector3d[] {
-            q.transform(new Vector3d(1, 0, 0)),
-            q.transform(new Vector3d(0, 1, 0)),
-            q.transform(new Vector3d(0, 0, 1))
-          };
-      for (int i = 0; i < 3; i++)
-        support.sub(new Vector3d(axes[i]).mul(Math.signum(axes[i].y) * half.get(i)));
-      var point = new Vec3(support.x, support.y, support.z);
-      if (!body.getLevel().hasChunkAt(BlockPos.containing(point))) continue;
-      var ground =
-          dev.letitwalk.walker.TerrainProbe.down(body.getLevel(), point.add(0, .15, 0), .35, body);
+  public static boolean grounded(
+      ServerSubLevel owner, List<ServerSubLevel> parts, double[] lengths) {
+    for (int i = 0; i < parts.size(); i++) {
+      var p = parts.get(i);
+      var q = p.logicalPose().orientation();
+      var base = Vec3.atLowerCornerOf(p.getPlot().getCenterBlock()).add(.5, 0, .5);
+      var point =
+          p.logicalPose()
+              .transformPosition(
+                  base.add(0, q.transform(new Vector3d(0, 1, 0)).y >= 0 ? 0 : lengths[i], 0));
+      // Probe the lower envelope, not the planned foot target.
+      var state = p.getLevel().getBlockState(p.getPlot().getCenterBlock());
+      int height =
+          state.hasProperty(
+                  org.Azkerash.create_bioships.components.logic.legs.CompactLimbBlock.HEIGHT)
+              ? state.getValue(
+                  org.Azkerash.create_bioships.components.logic.legs.CompactLimbBlock.HEIGHT)
+              : 1;
+      var x = q.transform(new Vector3d(1, 0, 0));
+      var z = q.transform(new Vector3d(0, 0, 1));
+      double half = width(i, height) / 2;
+      point =
+          point.add(
+              -Math.signum(x.y) * x.x * half - Math.signum(z.y) * z.x * half,
+              -Math.abs(x.y) * half - Math.abs(z.y) * half,
+              -Math.signum(x.y) * x.z * half - Math.signum(z.y) * z.z * half);
+      if (!owner.getLevel().hasChunkAt(BlockPos.containing(point))) continue;
+      var ground = TerrainProbe.down(owner.getLevel(), point.add(0, .15, 0), .35, owner);
       if (ground != null
-          && dev.letitwalk.walker.TerrainProbe.standable(ground)
-          && Math.abs(point.y - ground.point().y) < .13) return true;
+          && TerrainProbe.standable(ground)
+          && Math.abs(point.y - ground.point().y) < .15) return true;
     }
     return false;
   }
 
-  public boolean overlaps(net.minecraft.world.phys.AABB obstacle, double tolerance) {
-    var test = obstacle.deflate(tolerance);
-    var center =
-        new Vector3d(
-            (test.minX + test.maxX) / 2, (test.minY + test.maxY) / 2, (test.minZ + test.maxZ) / 2);
-    var extent = new Vector3d(test.getXsize() / 2, test.getYsize() / 2, test.getZsize() / 2);
-    for (var limb : limbs.values())
-      for (var segment : limb.segments) {
-        if (segment.box.isRemoved()) continue;
-        segment.box.updatePose();
-        var pose = segment.box.getPose();
-        var q = pose.orientation();
-        if (org.joml.Intersectiond.testObOb(
-            new Vector3d(pose.position()),
-            q.transform(new Vector3d(1, 0, 0)),
-            q.transform(new Vector3d(0, 1, 0)),
-            q.transform(new Vector3d(0, 0, 1)),
-            new Vector3d(segment.box.getHalfExtents()),
-            center,
-            new Vector3d(1, 0, 0),
-            new Vector3d(0, 1, 0),
-            new Vector3d(0, 0, 1),
-            extent)) {
-          return true;
-        }
+  private record Box(Vector3d center, Vector3d extent, Quaterniond rotation) {}
+
+  private static List<Box> boxes(ServerSubLevel body, List<SubLevelLegs.Pose> poses) {
+    var result = new ArrayList<Box>();
+    for (var pose : poses) {
+      var state = body.getLevel().getBlockState(pose.cell());
+      if (!state.hasProperty(CrabLegBlock.HEIGHT)) continue;
+      int height = state.getValue(CrabLegBlock.HEIGHT);
+      for (int i = 0; i < 3; i++) {
+        var a = body.logicalPose().transformPosition(pose.collisionEndpoints().get(i * 2));
+        var b = body.logicalPose().transformPosition(pose.collisionEndpoints().get(i * 2 + 1));
+        var d = b.subtract(a);
+        if (d.lengthSqr() < 1e-8) continue;
+        var c = a.add(b).scale(.5);
+        result.add(
+            new Box(
+                new Vector3d(c.x, c.y, c.z),
+                new Vector3d(width(i, height) / 2, d.length() / 2, width(i, height) / 2),
+                new Quaterniond()
+                    .rotationTo(new Vector3d(0, 1, 0), new Vector3d(d.x, d.y, d.z).normalize())));
       }
-    return false;
-  }
-
-  public net.minecraft.world.phys.AABB bounds() {
-    net.minecraft.world.phys.AABB result = null;
-    for (var limb : limbs.values())
-      for (var segment : limb.segments) {
-        if (segment.box.isRemoved()) continue;
-        segment.box.updatePose();
-        var pose = segment.box.getPose();
-        var q = pose.orientation();
-        var h = segment.box.getHalfExtents();
-        var c = pose.position();
-        var x = q.transform(new Vector3d(1, 0, 0));
-        var y = q.transform(new Vector3d(0, 1, 0));
-        var z = q.transform(new Vector3d(0, 0, 1));
-        double ex = Math.abs(x.x) * h.x() + Math.abs(y.x) * h.y() + Math.abs(z.x) * h.z();
-        double ey = Math.abs(x.y) * h.x() + Math.abs(y.y) * h.y() + Math.abs(z.y) * h.z();
-        double ez = Math.abs(x.z) * h.x() + Math.abs(y.z) * h.y() + Math.abs(z.z) * h.z();
-        var box =
-            new net.minecraft.world.phys.AABB(
-                c.x() - ex, c.y() - ey, c.z() - ez, c.x() + ex, c.y() + ey, c.z() + ez);
-        result = result == null ? box : result.minmax(box);
-      }
-    return result;
-  }
-
-  /** Parallel-axis contribution of articulated bones to whole-creature turning inertia. */
-  public Vector3d inertia(Vec3 center) {
-    var result = new Vector3d();
-    for (var limb : limbs.values())
-      for (var segment : limb.segments) {
-        if (segment.box.isRemoved()) continue;
-        segment.box.updatePose();
-        var p = segment.box.getPose().position();
-        double x = p.x() - center.x,
-            y = p.y() - center.y,
-            z = p.z() - center.z,
-            m = segment.box.getMass();
-        result.add(m * (y * y + z * z), m * (x * x + z * z), m * (x * x + y * y));
-      }
-    return result;
-  }
-
-  public double mass() {
-    return limbs.values().stream()
-        .flatMap(l -> l.segments.stream())
-        .filter(s -> !s.box.isRemoved())
-        .mapToDouble(s -> s.box.getMass())
-        .sum();
-  }
-
-  public int count() {
-    return limbs.values().stream().mapToInt(l -> l.segments.size()).sum();
-  }
-
-  public void close() {
-    limbs.values().forEach(this::remove);
-    limbs.clear();
-  }
-
-  private void remove(Limb limb) {
-    for (var filter : limb.filters) if (filter.isValid()) filter.remove();
-    for (var segment : limb.segments) {
-      if (segment.attachment.isValid()) segment.attachment.remove();
-      if (!segment.box.isRemoved())
-        SubLevelPhysicsSystem.require(body.getLevel()).removeObject(segment.box);
     }
-    limb.filters.clear();
-    limb.segments.clear();
+    return result;
   }
 
-  private static Vector3d vector(Vec3 p) {
-    return new Vector3d(p.x, p.y, p.z);
+  public static AABB bounds(ServerSubLevel body, List<SubLevelLegs.Pose> poses) {
+    AABB result = null;
+    for (var b : boxes(body, poses)) {
+      var q = b.rotation;
+      var h = b.extent;
+      var x = q.transform(new Vector3d(1, 0, 0));
+      var y = q.transform(new Vector3d(0, 1, 0));
+      var z = q.transform(new Vector3d(0, 0, 1));
+      double ex = Math.abs(x.x) * h.x + Math.abs(y.x) * h.y + Math.abs(z.x) * h.z,
+          ey = Math.abs(x.y) * h.x + Math.abs(y.y) * h.y + Math.abs(z.y) * h.z,
+          ez = Math.abs(x.z) * h.x + Math.abs(y.z) * h.y + Math.abs(z.z) * h.z;
+      var c = b.center;
+      var a = new AABB(c.x - ex, c.y - ey, c.z - ez, c.x + ex, c.y + ey, c.z + ez);
+      result = result == null ? a : result.minmax(a);
+    }
+    return result;
+  }
+
+  public static boolean overlaps(
+      ServerSubLevel body, List<SubLevelLegs.Pose> poses, AABB obstacle, double tolerance) {
+    var t = obstacle.deflate(tolerance);
+    var c = new Vector3d((t.minX + t.maxX) / 2, (t.minY + t.maxY) / 2, (t.minZ + t.maxZ) / 2);
+    var e = new Vector3d(t.getXsize() / 2, t.getYsize() / 2, t.getZsize() / 2);
+    for (var b : boxes(body, poses)) {
+      var q = b.rotation;
+      if (Intersectiond.testObOb(
+          b.center,
+          q.transform(new Vector3d(1, 0, 0)),
+          q.transform(new Vector3d(0, 1, 0)),
+          q.transform(new Vector3d(0, 0, 1)),
+          b.extent,
+          c,
+          new Vector3d(1, 0, 0),
+          new Vector3d(0, 1, 0),
+          new Vector3d(0, 0, 1),
+          e)) return true;
+    }
+    return false;
   }
 }

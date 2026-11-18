@@ -79,6 +79,18 @@ public final class ComponentRegistry {
                               .strength(3, 6)
                               .sound(SoundType.BONE_BLOCK))));
 
+  public static final DeferredBlock<
+          org.Azkerash.create_bioships.components.logic.legs.CompactLimbBlock>
+      COMPACT_LIMB =
+          BLOCKS.register(
+              "compact_limb",
+              () ->
+                  new org.Azkerash.create_bioships.components.logic.legs.CompactLimbBlock(
+                      BlockBehaviour.Properties.of()
+                          .strength(-1, 3600000)
+                          .noLootTable()
+                          .noOcclusion()));
+
   public static final DeferredBlock<org.Azkerash.create_bioships.components.logic.legs.CrabLegBlock>
       CRAB_LEG =
           component(

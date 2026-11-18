@@ -118,7 +118,7 @@ public final class LocomotionFixture {
             Component.literal(
                 "ARMORED LOCOMOTION\n"
                     + "Left: START · Right: RESET\n"
-                    + "Six attachable legs · native Let It Walk IK\n"
+                    + "Six attachable legs · native gait / IK / suspension\n"
                     + "Wander card in brain · local ground routes.\n"
                     + "Armor absorbs only hits on armored parts."),
             level.registryAccess()));
