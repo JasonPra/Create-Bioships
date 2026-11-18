@@ -29,7 +29,20 @@ public final class SubLevelCreatureParts {
       if (!tag.hasUUID("Root")) return body;
       if (!seen.add(body.getUniqueId()) || container == null) return original;
       var found = container.getSubLevel(tag.getUUID("Root"));
-      if (!(found instanceof ServerSubLevel parent) || parent.isRemoved()) return original;
+      if (!(found instanceof ServerSubLevel parent) || parent.isRemoved()) {
+        var retired = Retired.get(body.getLevel());
+        var pending = retired.roots.getCompound(tag.getUUID("Root").toString());
+        if (pending.contains(body.getUniqueId().toString())) {
+          var local = body.getUserDataTag().copy();
+          local.remove(SubLevelData.PARTS);
+          body.setUserDataTag(local);
+          double maximum = SubLevelHealth.localMaximum(body);
+          SubLevelData.health(
+              body, new SubLevelData.Health(0, maximum, maximum, true, "owner_removed"));
+          retired.forget(tag.getUUID("Root"), body.getUniqueId());
+        }
+        return original;
+      }
       body = parent;
     }
     return original;
@@ -49,8 +62,10 @@ public final class SubLevelCreatureParts {
     for (String key : data(owner).getCompound("Members").getAllKeys())
       try {
         var entry = container.getSubLevel(UUID.fromString(key));
-        if (entry instanceof ServerSubLevel part && !part.isRemoved() && data(part).hasUUID("Root") && data(part).getUUID("Root").equals(owner.getUniqueId()))
-          result.add(part);
+        if (entry instanceof ServerSubLevel part
+            && !part.isRemoved()
+            && data(part).hasUUID("Root")
+            && data(part).getUUID("Root").equals(owner.getUniqueId())) result.add(part);
       } catch (IllegalArgumentException ignored) {
       }
     return List.copyOf(result);
@@ -78,7 +93,11 @@ public final class SubLevelCreatureParts {
             p ->
                 part.getLevel()
                     .getBlockState(p)
-                    .is(org.Azkerash.create_bioships.components.ComponentRegistry.CORE.get())))
+                    .is(
+                        net.minecraft.tags.TagKey.create(
+                            net.minecraft.core.registries.Registries.BLOCK,
+                            net.minecraft.resources.ResourceLocation.parse(
+                                "create_bioships:creature_cores")))))
       throw new IllegalArgumentException("A living core cannot become a limb");
     if (isPart(part) && root(part) == owner) return;
     if (!data(part).getCompound("Members").isEmpty())
@@ -109,7 +128,8 @@ public final class SubLevelCreatureParts {
   public static int extraLocomotion(ServerSubLevel owner) {
     int mask = 0;
     var entries = data(owner).getCompound("Members");
-    for (var key : entries.getAllKeys()) mask |= (int) entries.getCompound(key).getDouble("Locomotion");
+    for (var key : entries.getAllKeys())
+      mask |= (int) entries.getCompound(key).getDouble("Locomotion");
     return mask;
   }
 
@@ -152,6 +172,8 @@ public final class SubLevelCreatureParts {
   public static void detach(ServerSubLevel part) {
     if (!isPart(part)) return;
     var owner = root(part);
+    if (!isPart(part)) return;
+    var previousRoot = data(part).getUUID("Root");
     var tag = part.getUserDataTag().copy();
     tag.remove(SubLevelData.PARTS);
     part.setUserDataTag(tag);
@@ -173,6 +195,13 @@ public final class SubLevelCreatureParts {
     }
     org.Azkerash.create_bioships.core.access.SubLevelPermissions.forget(part);
     org.Azkerash.create_bioships.core.locomotion.SubLevelLocomotion.refresh(owner);
+    Retired.get(part.getLevel()).forget(previousRoot, part.getUniqueId());
+    if (owner != part && !SubLevelHealth.status(owner).dead()) {
+      CreatureDecay.removed(part);
+      var remains = part.getUserDataTag().copy();
+      remains.putUUID(CreatureDecay.FAMILY, part.getUniqueId());
+      part.setUserDataTag(remains);
+    }
     double maximum = SubLevelHealth.localMaximum(part);
     SubLevelData.health(part, new SubLevelData.Health(0, maximum, maximum, true, "detached_limb"));
   }
@@ -186,7 +215,15 @@ public final class SubLevelCreatureParts {
 
   public static void removed(ServerSubLevel body) {
     if (isPart(body)) detach(body);
-    else for (var part : members(body)) if (part != body) detach(part);
+    else {
+      var pending = data(body).getCompound("Members");
+      if (!pending.isEmpty()) {
+        var retired = Retired.get(body.getLevel());
+        retired.roots.put(body.getUniqueId().toString(), pending.copy());
+        retired.setDirty();
+      }
+      for (var part : members(body)) if (part != body) detach(part);
+    }
   }
 
   public static void died(ServerSubLevel owner) {
@@ -198,5 +235,40 @@ public final class SubLevelCreatureParts {
         tag.put(SubLevelData.STATE, source.getCompound(SubLevelData.STATE).copy());
         part.setUserDataTag(tag);
       }
+  }
+
+  /** Deletion differs from unloading: a later-loaded orphan remains a corpse. */
+  private static final class Retired extends net.minecraft.world.level.saveddata.SavedData {
+    private final CompoundTag roots;
+
+    private Retired() {
+      roots = new CompoundTag();
+    }
+
+    private Retired(CompoundTag tag) {
+      roots = tag.getCompound("Roots").copy();
+    }
+
+    static Retired get(net.minecraft.server.level.ServerLevel level) {
+      return level
+          .getDataStorage()
+          .computeIfAbsent(
+              new Factory<>(Retired::new, (tag, registries) -> new Retired(tag)),
+              "create_bioships_retired_creatures");
+    }
+
+    void forget(UUID root, UUID member) {
+      var pending = roots.getCompound(root.toString());
+      if (!pending.contains(member.toString())) return;
+      pending.remove(member.toString());
+      if (pending.isEmpty()) roots.remove(root.toString());
+      setDirty();
+    }
+
+    @Override
+    public CompoundTag save(CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries) {
+      tag.put("Roots", roots.copy());
+      return tag;
+    }
   }
 }

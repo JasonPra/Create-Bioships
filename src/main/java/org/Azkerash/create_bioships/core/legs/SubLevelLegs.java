@@ -137,6 +137,13 @@ public final class SubLevelLegs {
       var side = Vec3.atLowerCornerOf(face.getNormal());
       // Socket root is flush to its supporting face; feet project outward and down.
       var root = Vec3.atCenterOf(leg.cell).subtract(side.scale(.25));
+      var tuning =
+          org.Azkerash.create_bioships.compat.letitwalk.LimbTuning.get(body.getLevel(), leg.cell);
+      var adjustedSide =
+          new org.joml.Quaterniond()
+              .rotationY(Math.toRadians(tuning.restAngle()))
+              .transform(new org.joml.Vector3d(side.x, side.y, side.z));
+      side = new Vec3(adjustedSide.x, adjustedSide.y, adjustedSide.z);
       var desiredLocal =
           root.add(side.scale(1.45 * leg.solver.scale)).add(0, -leg.solver.standingHeight(), 0);
       var desired =
@@ -313,7 +320,12 @@ public final class SubLevelLegs {
             -dev.ryanhcode.sable.physics.config.dimension_physics.DimensionPhysicsData.getGravity(
                     level)
                 .y;
-        double lift = Math.clamp(gravity + 20 * error - 7 * velocity.y(), 0, gravity * 2.5 + 4);
+        var tuning = org.Azkerash.create_bioships.compat.letitwalk.LimbTuning.get(level, leg.cell);
+        double lift =
+            Math.clamp(
+                gravity + 20 * tuning.stiffness() * error - 7 * tuning.damping() * velocity.y(),
+                0,
+                gravity * 2.5 + 4);
         var impulse =
             new Vec3(
                     Math.clamp((desired.x - velocity.x()) * 4, -8 * load, 8 * load),

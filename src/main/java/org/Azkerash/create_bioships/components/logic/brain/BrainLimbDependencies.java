@@ -23,8 +23,9 @@ public final class BrainLimbDependencies extends BlockEntity implements BlockEnt
     var body = CoreAssemblyRules.containing(server, worldPosition);
     if (body == null || body.getUserDataTag() == null) return List.of();
     var data = body.getUserDataTag().getCompound("create_bioships:modular_limbs");
-    if (!data.contains("Anchor") || data.getLong("Anchor") != worldPosition.asLong())
-      return List.of();
+    if (data.isEmpty()
+        || body.getUserDataTag().getCompound(SubLevelData.BRAIN).getLong("Anchor")
+            != worldPosition.asLong()) return List.of();
     var container = SubLevelContainer.getContainer(server);
     if (container == null) return List.of();
     var result = new ArrayList<SubLevel>();

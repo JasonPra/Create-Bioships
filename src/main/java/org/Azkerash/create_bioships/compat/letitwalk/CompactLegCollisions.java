@@ -31,6 +31,10 @@ public final class CompactLegCollisions {
     this.body = body;
   }
 
+  private static Quaterniond orientation(Vec3 delta) {
+    return new Quaterniond().rotationTo(new Vector3d(0, 1, 0), vector(delta).normalize());
+  }
+
   public static double width(int segment, int height) {
     return WIDTHS[segment] * CrabLegKinematics.thickness(height);
   }
@@ -52,6 +56,7 @@ public final class CompactLegCollisions {
     if (system == null || body.isRemoved()) return;
     var limb = limbs.get(cell);
     var previousPoses = new ArrayList<Pose3d>();
+    var previousLengths = new ArrayList<Double>();
     if (limb != null)
       for (var segment : limb.segments) {
         if (segment.box.isRemoved()) {
@@ -60,6 +65,7 @@ public final class CompactLegCollisions {
         }
         segment.box.updatePose();
         previousPoses.add(new Pose3d(segment.box.getPose()));
+        previousLengths.add(segment.length);
       }
     if (limb != null
         && (limb.height != height
@@ -93,13 +99,24 @@ public final class CompactLegCollisions {
             new Quaterniond().rotationTo(new Vector3d(0, 1, 0), vector(delta).normalize());
         var world = body.logicalPose().transformPosition(center);
         var pose = previousPoses.size() == 3 ? previousPoses.get(i) : new Pose3d();
+        if (previousPoses.size() == 3) {
+          // Growing a bone must not instantiate its enlarged lower end inside terrain.
+          var down = pose.orientation().transform(new Vector3d(0, 1, 0));
+          pose.position().y += Math.abs(down.y) * Math.max(0, length - previousLengths.get(i)) / 2;
+        }
         if (previousPoses.size() != 3) {
           pose.position().set(world.x, world.y, world.z);
           pose.orientation().set(body.logicalPose().orientation()).mul(orientation);
         }
         var box =
             new BoxPhysicsObject(
-                pose, new Vector3d(width(i, height) / 2, length / 2, width(i, height) / 2), .25);
+                pose, new Vector3d(width(i, height) / 2, length / 2, width(i, height) / 2), .75) {
+              @Override
+              public void getBoundingBox(dev.ryanhcode.sable.companion.math.BoundingBox3d bounds) {
+                if (isActive()) updatePose();
+                super.getBoundingBox(bounds);
+              }
+            };
         system.addObject(box);
         var attachment =
             system
@@ -122,8 +139,8 @@ public final class CompactLegCollisions {
         attachment.setContactsEnabled(false);
         limb.segments.add(new Segment(box, attachment, length));
       }
-      // Actual ball joints keep the bones connected. Angular servos can yield
-      // to terrain contacts instead of forcing a rigid animation through rock.
+      // Bounded articulated joints retain an exoskeleton even without motor power.
+      // No joint is anchored to the world.
       var mount =
           system
               .getPipeline()
@@ -138,6 +155,13 @@ public final class CompactLegCollisions {
                       EnumSet.copyOf(Arrays.asList(ConstraintJointAxis.LINEAR))));
       if (mount != null) {
         mount.setContactsEnabled(false);
+        var rest = orientation(joints.get(1).subtract(joints.get(0)));
+        mount.setFrame1(vector(joints.getFirst()), rest);
+        mount.setLimit(ConstraintJointAxis.ANGULAR_X, -1.2, 1.2);
+        mount.setLimit(ConstraintJointAxis.ANGULAR_Y, -1.2, 1.2);
+        mount.setLimit(ConstraintJointAxis.ANGULAR_Z, -.8, .8);
+        for (var axis : ConstraintJointAxis.ANGULAR) mount.setMotor(axis, 0, 1.5, 3, true, 1);
+
         limb.filters.add(mount);
       }
       for (int i = 0; i < 2; i++) {
@@ -157,12 +181,28 @@ public final class CompactLegCollisions {
                         EnumSet.copyOf(Arrays.asList(ConstraintJointAxis.LINEAR))));
         if (joint != null) {
           joint.setContactsEnabled(false);
+          var qa = orientation(joints.get(i + 1).subtract(joints.get(i)));
+          var qb = orientation(joints.get(i + 2).subtract(joints.get(i + 1)));
+          var normal =
+              vector(joints.get(i + 1).subtract(joints.get(i)))
+                  .cross(vector(joints.get(i + 2).subtract(joints.get(i + 1))));
+          if (normal.lengthSquared() < .0001) normal.set(1, 0, 0);
+          normal.normalize();
+          var frame = new Quaterniond().rotationTo(new Vector3d(1, 0, 0), normal);
+          joint.setFrame1(
+              new Vector3d(0, first.length / 2, 0), new Quaterniond(qa).conjugate().mul(frame));
+          joint.setFrame2(
+              new Vector3d(0, -second.length / 2, 0), new Quaterniond(qb).conjugate().mul(frame));
+          joint.lockAxes(ConstraintJointAxis.ANGULAR_Y, ConstraintJointAxis.ANGULAR_Z);
+          joint.setLimit(ConstraintJointAxis.ANGULAR_X, -1.5, 1.5);
+          joint.setMotor(ConstraintJointAxis.ANGULAR_X, 0, 2, 4, true, 1);
+
           limb.filters.add(joint);
         }
       }
     }
     if (limb.powered != powered) {
-      double torque = Math.clamp(body.getMassTracker().getMass() * (height + .5) * 4, 30, 600);
+      double torque = Math.clamp(body.getMassTracker().getMass() * (height + .5) * 1.5, 8, 120);
       for (var segment : limb.segments)
         for (var axis : ConstraintJointAxis.ANGULAR)
           segment.attachment.setMotor(
@@ -259,7 +299,9 @@ public final class CompactLegCollisions {
             new Vector3d(1, 0, 0),
             new Vector3d(0, 1, 0),
             new Vector3d(0, 0, 1),
-            extent)) return true;
+            extent)) {
+          return true;
+        }
       }
     return false;
   }

@@ -23,3 +23,17 @@ Vanilla sweep and Epic Fight collisions select at most one damage target per cre
 Each modular component contributes 10 armor points and uses the moderately heavy armored
 material. Shell models tile the core's lower plum skin pixels at normal block density.
 Brain blocks expose passive Sable loading dependencies for their linked limb bodies.
+
+## Motor control
+
+`ModularLimbController` uses Let It Walk's assembler, gait, IK and suspension through a
+transient API context. It saves limb references on the creature, without placing a hidden
+walker core or attaching a kinetic network. Sable hinge constraints connect the actual
+block-built segment bodies. Finite joint motors follow IK angles; native forced-pose
+teleports are not used. Uncommanded and dead creatures retain bounded, damped joints and
+can tumble. Normal feet never receive world anchors. Jumping remains disabled.
+
+Topology edits trigger rebuilding; state-only blinking and wounds do not. The stable
+control origin is the creature's core, while brain blocks expose loading dependencies.
+Deletion records prevent unloaded limbs from becoming living orphans after their owner
+is permanently removed.
