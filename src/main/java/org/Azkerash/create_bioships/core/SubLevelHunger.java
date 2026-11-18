@@ -107,7 +107,7 @@ public final class SubLevelHunger {
 
   /** Advances loaded simulation time only; paused/unloaded creatures accrue no catch-up debt. */
   public static void advance(ServerSubLevel body, int ticks) {
-    if (ticks <= 0 || body.isRemoved()) return;
+    if (ticks <= 0 || body.isRemoved() || SubLevelCreatureParts.isPart(body)) return;
     var state = SubLevelData.hungerState(body);
     if (state.paused() || SubLevelHealth.status(body).dead()) return;
     int value = state.value();

@@ -32,13 +32,18 @@ public final class SubLevelLocomotion {
   }
 
   public static net.minecraft.world.phys.AABB bounds(ServerSubLevel body) {
+    body = SubLevelCreatureParts.root(body);
     var b = body.boundingBox();
     var result =
         new net.minecraft.world.phys.AABB(
             b.minX(), b.minY(), b.minZ(), b.maxX(), b.maxY(), b.maxZ());
-    for (var provider : BOUNDS.values()) {
-      var extra = provider.apply(body);
-      if (extra != null) result = result.minmax(extra);
+    for (var member : SubLevelCreatureParts.members(body)) {
+      var box = member.boundingBox();
+      result = result.minmax(new net.minecraft.world.phys.AABB(box.minX(), box.minY(), box.minZ(), box.maxX(), box.maxY(), box.maxZ()));
+      for (var provider : BOUNDS.values()) {
+        var extra = provider.apply(member);
+        if (extra != null) result = result.minmax(extra);
+      }
     }
     return result;
   }
@@ -65,8 +70,9 @@ public final class SubLevelLocomotion {
   }
 
   public static SubLevelData.Locomotion get(ServerSubLevel body) {
-    CENSUSES.computeIfAbsent(body, SubLevelLocomotion::new);
-    return SubLevelData.locomotion(body);
+    var owner = SubLevelCreatureParts.root(body);
+    CENSUSES.computeIfAbsent(owner, SubLevelLocomotion::new);
+    return SubLevelData.locomotion(owner);
   }
 
   public static void changed(ServerSubLevel body, BlockPos pos, BlockState state) {
@@ -80,9 +86,24 @@ public final class SubLevelLocomotion {
     census.save();
   }
 
+  public static void refresh(ServerSubLevel body) {
+    var census = CENSUSES.get(body);
+    if (census == null) {
+      census = new SubLevelLocomotion(body);
+      CENSUSES.put(body, census);
+    } else census.save();
+  }
+
   private void save() {
     int types = 0;
     for (int value : appendages.values()) types |= value;
+    var owner = SubLevelCreatureParts.root(body);
+    if (owner != body) {
+      SubLevelCreatureParts.locomotionContribution(body, types);
+      refresh(owner);
+      return;
+    }
+    types |= SubLevelCreatureParts.extraLocomotion(owner);
     SubLevelData.locomotion(
         body, new SubLevelData.Locomotion((types & 1) != 0, (types & 2) != 0, (types & 4) != 0));
   }

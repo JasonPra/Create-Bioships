@@ -156,6 +156,8 @@ public final class EpicFightBlockCollisions {
       if (selected != null) {
         selected.impact(selectedCell, selectedFace);
         selected.focusForAttack(selectedAim);
+        var owner = org.Azkerash.create_bioships.core.SubLevelCreatureParts.root(body);
+        result.removeIf(e -> e instanceof org.Azkerash.create_bioships.combat.SubLevelCombatTarget t && org.Azkerash.create_bioships.core.SubLevelCreatureParts.root(t.body()) == owner);
         result.add(selected);
       }
     }

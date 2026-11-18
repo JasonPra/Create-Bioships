@@ -47,6 +47,7 @@ public final class SubLevelBrains {
   }
 
   public static SubLevelBrains get(ServerSubLevel body) {
+    body = SubLevelCreatureParts.root(body);
     var result = BRAINS.computeIfAbsent(body, SubLevelBrains::new);
     result.rebuild();
     return result;

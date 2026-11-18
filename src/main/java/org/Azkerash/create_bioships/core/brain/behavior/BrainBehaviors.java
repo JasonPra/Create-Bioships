@@ -35,11 +35,17 @@ public final class BrainBehaviors {
   }
 
   public static ResourceLocation active(ServerSubLevel body) {
-    var value = ACTIVE.get(body);
+    var value = ACTIVE.get(SubLevelCreatureParts.root(body));
     return value == null ? null : value.id;
   }
 
+  public static void discard(ServerSubLevel body) {
+    var previous = ACTIVE.remove(body);
+    if (previous != null) previous.behavior.stop(body);
+  }
+
   public static void advance(ServerSubLevel body) {
+    if (SubLevelCreatureParts.isPart(body)) return;
     ResourceLocation selected = null;
     if (!body.isRemoved() && SubLevelData.isLiving(body) && !SubLevelHealth.status(body).dead()) {
       var brain = SubLevelBrains.get(body);

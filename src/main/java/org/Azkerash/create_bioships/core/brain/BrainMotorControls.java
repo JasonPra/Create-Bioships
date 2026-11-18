@@ -40,6 +40,7 @@ public final class BrainMotorControls {
       double yawRate,
       int leaseTicks,
       org.Azkerash.create_bioships.core.pathfinding.SubLevelPathfinder.Mode mode) {
+    body = SubLevelCreatureParts.root(body);
     if (!active(body)
         || !org.Azkerash.create_bioships.core.pathfinding.SubLevelPathfinder.allowed(body, mode)
         || !Double.isFinite(velocity.x)
@@ -62,6 +63,8 @@ public final class BrainMotorControls {
   }
 
   public static boolean active(ServerSubLevel body) {
+    if (!SubLevelCreatureParts.available(body)) return false;
+    body = SubLevelCreatureParts.root(body);
     return !body.isRemoved()
         && SubLevelData.isLiving(body)
         && !SubLevelHealth.status(body).dead()
@@ -69,6 +72,7 @@ public final class BrainMotorControls {
   }
 
   public static Request current(ServerSubLevel body) {
+    body = SubLevelCreatureParts.root(body);
     var request = REQUESTS.get(body);
     if (!active(body)
         || request == null
@@ -82,6 +86,6 @@ public final class BrainMotorControls {
   }
 
   public static void stop(ServerSubLevel body) {
-    REQUESTS.remove(body);
+    REQUESTS.remove(SubLevelCreatureParts.root(body));
   }
 }

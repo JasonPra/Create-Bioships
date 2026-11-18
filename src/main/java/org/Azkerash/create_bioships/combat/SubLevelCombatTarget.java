@@ -21,7 +21,7 @@ public class SubLevelCombatTarget extends LivingEntity {
   private static final net.minecraft.network.syncher.EntityDataAccessor<Float> POOL_MAXIMUM =
       net.minecraft.network.syncher.SynchedEntityData.defineId(
           SubLevelCombatTarget.class, net.minecraft.network.syncher.EntityDataSerializers.FLOAT);
-  private UUID bodyId, anchorThreat;
+  private UUID bodyId, anchorThreat, anchorBody;
   protected net.minecraft.core.BlockPos impactCell;
   protected net.minecraft.core.Direction impactFace = net.minecraft.core.Direction.NORTH;
   private Vec3 anchor;
@@ -77,7 +77,9 @@ public class SubLevelCombatTarget extends LivingEntity {
 
   private SubLevelCombatTarget effectOwner() {
     var body = body();
-    return body != null && this instanceof EyeCombatHurtbox ? CombatAdapter.target(body) : this;
+    if (body == null) return this;
+    var owner = org.Azkerash.create_bioships.core.SubLevelCreatureParts.root(body);
+    return owner != body || this instanceof EyeCombatHurtbox ? CombatAdapter.target(owner) : this;
   }
 
   @Override
@@ -164,45 +166,52 @@ public class SubLevelCombatTarget extends LivingEntity {
             .min(Comparator.comparingDouble(m -> m.position().distanceToSqr(center)))
             .orElse(null);
     Vec3 point = center;
+    var members = org.Azkerash.create_bioships.core.SubLevelCreatureParts.members(body);
+    var anchored =
+        members.stream().filter(m -> m.getUniqueId().equals(anchorBody)).findFirst().orElse(body);
+    ServerSubLevel contactBody = body;
     if (threat != null
         && anchor != null
         && threat.getUUID().equals(anchorThreat)
         && tickCount - anchorTick < 40) {
-      point = body.logicalPose().transformPosition(anchor);
+      point = anchored.logicalPose().transformPosition(anchor);
+      contactBody = anchored;
     } else if (threat != null) {
-      var cells = new java.util.HashSet<>(SubLevelHealth.blocks(body));
       double best = Double.POSITIVE_INFINITY;
-      for (var cell : cells)
-        for (var face : net.minecraft.core.Direction.values()) {
-          if (cells.contains(cell.relative(face))) continue;
-          var candidate =
-              body.logicalPose().transformPosition(Vec3.atCenterOf(cell).relative(face, .55));
-          if (level()
-                  .clip(
-                      new net.minecraft.world.level.ClipContext(
-                          threat.getEyePosition(),
-                          candidate,
-                          net.minecraft.world.level.ClipContext.Block.COLLIDER,
-                          net.minecraft.world.level.ClipContext.Fluid.NONE,
-                          threat))
-                  .getType()
-              != net.minecraft.world.phys.HitResult.Type.MISS) continue;
-          // Anchor melee targets near the attacker's feet, not above its head. Epic Fight
-          // compares feet heights before choosing a swing; an eye-height anchor can prevent it.
-          double distance = candidate.distanceToSqr(threat.position());
-          if (distance < best) {
-            best = distance;
-            point = candidate;
-            impactCell = cell;
-            impactFace = face;
+      for (var physical : members) {
+        var cells = new java.util.HashSet<>(SubLevelHealth.blocks(physical));
+        for (var cell : cells)
+          for (var face : net.minecraft.core.Direction.values()) {
+            if (cells.contains(cell.relative(face))) continue;
+            var candidate =
+                physical.logicalPose().transformPosition(Vec3.atCenterOf(cell).relative(face, .55));
+            if (level()
+                    .clip(
+                        new net.minecraft.world.level.ClipContext(
+                            threat.getEyePosition(),
+                            candidate,
+                            net.minecraft.world.level.ClipContext.Block.COLLIDER,
+                            net.minecraft.world.level.ClipContext.Fluid.NONE,
+                            threat))
+                    .getType()
+                != net.minecraft.world.phys.HitResult.Type.MISS) continue;
+            double distance = candidate.distanceToSqr(threat.position());
+            if (distance < best) {
+              best = distance;
+              point = candidate;
+              contactBody = physical;
+              impactCell = cell;
+              impactFace = face;
+            }
           }
-        }
+      }
     }
     if (threat != null
         && (anchor == null
             || !threat.getUUID().equals(anchorThreat)
             || tickCount - anchorTick >= 40)) {
-      anchor = body.logicalPose().transformPositionInverse(point);
+      anchor = contactBody.logicalPose().transformPositionInverse(point);
+      anchorBody = contactBody.getUniqueId();
       anchorThreat = threat.getUUID();
       anchorTick = tickCount;
     }
@@ -243,15 +252,25 @@ public class SubLevelCombatTarget extends LivingEntity {
     double damage = damageContainers.peek().getNewDamage() * damageMultiplier();
     var body = body();
     if (body != null && damage > 0) {
+      var physical =
+          impactCell == null
+              ? body
+              : org.Azkerash.create_bioships.core.CoreAssemblyRules.containing(
+                  (ServerLevel) level(), impactCell);
+      if (physical == null
+          || org.Azkerash.create_bioships.core.SubLevelCreatureParts.root(physical)
+              != org.Azkerash.create_bioships.core.SubLevelCreatureParts.root(body))
+        physical = body;
       double remaining =
-          org.Azkerash.create_bioships.core.SubLevelArmor.absorb(body, impactCell, source, damage);
+          org.Azkerash.create_bioships.core.SubLevelArmor.absorb(
+              physical, impactCell, source, damage);
       SubLevelHealth.damage(body, remaining, source);
       CombatAdapter.hurtFlash(body);
       if (impactCell != null
           && (source.getDirectEntity() instanceof LivingEntity
               || source.getDirectEntity()
                   instanceof net.minecraft.world.entity.projectile.Projectile))
-        SubLevelWounds.hit(body, impactCell, impactFace);
+        SubLevelWounds.hit(physical, impactCell, impactFace);
     }
     // This entity is an adapter, never a second health pool or loot-bearing creature.
     if (body != null) syncPool(body);

@@ -36,16 +36,20 @@ public final class SubLevelPathfinder {
   private SubLevelPathfinder() {}
 
   public static boolean allowed(ServerSubLevel body, Mode mode) {
+    if (!SubLevelCreatureParts.available(body)) return false;
+    body = SubLevelCreatureParts.root(body);
     if (body.isRemoved() || SubLevelHealth.status(body).dead()) return false;
     var flags = SubLevelLocomotion.get(body);
     return mode == Mode.GROUND ? flags.hasLegs() : flags.hasFins();
   }
 
   public static Vec3 position(ServerSubLevel body) {
+    body = SubLevelCreatureParts.root(body);
     return body.logicalPose().transformPosition(Vec3.atCenterOf(body.getPlot().getCenterBlock()));
   }
 
   public static Route find(ServerSubLevel body, Vec3 destination, Mode mode) {
+    body = SubLevelCreatureParts.root(body);
     if (!allowed(body, mode)) return new Route(mode, List.of());
     var level = body.getLevel();
     var here = position(body);

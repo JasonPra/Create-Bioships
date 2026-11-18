@@ -46,11 +46,18 @@ public final class SubLevelImpactAdapter {
 
   /** Visual impact feedback belongs to grid lifetime, not the living mob target. */
   public void flash() {
+    var owner = SubLevelCreatureParts.root(body);
+    if (owner != body) {
+      var target = get(owner);
+      if (target != null) target.flash();
+      return;
+    }
     long now = body.getLevel().getGameTime();
     if (lastFlash != Long.MIN_VALUE && now - lastFlash < 10) return;
     lastFlash = now;
-    net.neoforged.neoforge.network.PacketDistributor.sendToPlayersInDimension(
-        body.getLevel(), new HurtFlashPayload(body.getUniqueId()));
+    for (var member : SubLevelCreatureParts.members(body))
+      net.neoforged.neoforge.network.PacketDistributor.sendToPlayersInDimension(
+          body.getLevel(), new HurtFlashPayload(member.getUniqueId()));
   }
 
   public void wound(BlockPos cell, Direction face) {

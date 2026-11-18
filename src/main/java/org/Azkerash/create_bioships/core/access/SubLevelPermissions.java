@@ -5,6 +5,7 @@ import java.util.*;
 import net.minecraft.nbt.*;
 import net.minecraft.world.entity.Entity;
 import org.Azkerash.create_bioships.core.SubLevelData;
+import org.Azkerash.create_bioships.core.SubLevelCreatureParts;
 
 /** Grid-owned identity permissions. Names are labels; identity is always a UUID. */
 public final class SubLevelPermissions {
@@ -23,6 +24,8 @@ public final class SubLevelPermissions {
   private SubLevelPermissions() {}
 
   public static Access get(ServerSubLevel body) {
+    if (!SubLevelCreatureParts.available(body)) return new Access(null, List.of());
+    body = SubLevelCreatureParts.root(body);
     return CACHE.computeIfAbsent(
         body,
         b -> {
@@ -42,6 +45,8 @@ public final class SubLevelPermissions {
   }
 
   private static void save(ServerSubLevel body, Access access) {
+    if (!SubLevelCreatureParts.available(body)) return;
+    body = SubLevelCreatureParts.root(body);
     var root = body.getUserDataTag() == null ? new CompoundTag() : body.getUserDataTag().copy();
     var tag = new CompoundTag();
     if (access.owner != null) tag.putUUID("owner", access.owner);
@@ -60,6 +65,7 @@ public final class SubLevelPermissions {
   }
 
   public static boolean assignIfUnowned(ServerSubLevel body, UUID owner) {
+    if (!SubLevelCreatureParts.available(body)) return false;
     var current = get(body);
     if (owner == null || current.owner != null) return false;
     save(body, new Access(owner, current.allowed));
@@ -67,6 +73,7 @@ public final class SubLevelPermissions {
   }
 
   public static boolean add(ServerSubLevel body, UUID actor, Entity entity) {
+    if (!SubLevelCreatureParts.available(body)) return false;
     var current = get(body);
     boolean player = entity instanceof net.minecraft.world.entity.player.Player;
     if (!actor.equals(current.owner)
@@ -81,6 +88,7 @@ public final class SubLevelPermissions {
   }
 
   public static boolean remove(ServerSubLevel body, UUID actor, UUID target) {
+    if (!SubLevelCreatureParts.available(body)) return false;
     var current = get(body);
     if (!actor.equals(current.owner)) return false;
     var entries = current.allowed.stream().filter(e -> !e.id.equals(target)).toList();
@@ -90,6 +98,7 @@ public final class SubLevelPermissions {
   }
 
   public static boolean transfer(ServerSubLevel body, UUID actor, UUID target) {
+    if (!SubLevelCreatureParts.available(body)) return false;
     var current = get(body);
     if (target == null || !actor.equals(current.owner) || actor.equals(target)) return false;
     save(

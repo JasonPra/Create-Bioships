@@ -89,6 +89,8 @@ public final class CombatAdapter {
   private CombatAdapter() {}
 
   public static SubLevelCombatTarget target(ServerSubLevel body) {
+    if (!SubLevelCreatureParts.available(body)) return null;
+    body = SubLevelCreatureParts.root(body);
     if (SubLevelHealth.status(body).dead()) return null;
     var old = TARGETS.get(body);
     if (old != null && !old.isRemoved()) return old;
@@ -216,7 +218,7 @@ public final class CombatAdapter {
         var target = target(body);
         if (target != null) {
           target.setPos(nearest);
-          result.add(target);
+          if (!result.contains(target)) result.add(target);
         }
       }
     }
@@ -232,12 +234,12 @@ public final class CombatAdapter {
     if (!(player.level() instanceof ServerLevel level)) return nativeTargets;
     var result = new java.util.ArrayList<>(nativeTargets);
     result.removeIf(e -> e instanceof SubLevelCombatTarget);
-    var primaryBody = primary instanceof SubLevelCombatTarget target ? target.body() : null;
+    var primaryBody = primary instanceof SubLevelCombatTarget target ? SubLevelCreatureParts.root(target.body()) : null;
     var container = SubLevelContainer.getContainer(level);
     if (container == null) return result;
     for (var entry : container.getAllSubLevels()) {
       if (!(entry instanceof ServerSubLevel body)
-          || body == primaryBody
+          || SubLevelCreatureParts.root(body) == primaryBody
           || body.isRemoved()
           || !CoreAssemblyRules.isCreature(body)
           || SubLevelHealth.status(body).dead()
@@ -277,6 +279,8 @@ public final class CombatAdapter {
       if (selected != null) {
         selected.impact(selectedCell, selectedFace);
         selected.focusForAttack(aim);
+        var owner = SubLevelCreatureParts.root(body);
+        result.removeIf(e -> e instanceof SubLevelCombatTarget t && SubLevelCreatureParts.root(t.body()) == owner);
         result.add(selected);
       }
     }

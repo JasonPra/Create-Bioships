@@ -12,6 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class CreatureDecayRemovalMixin {
   @Inject(method = "queueDeletion", at = @At("HEAD"), remap = false)
   private void core$forgetDeletedRemains(ServerSubLevel body, CallbackInfo callback) {
+    org.Azkerash.create_bioships.core.SubLevelCreatureParts.removed(body);
     CreatureDecay.removed(body);
   }
 }

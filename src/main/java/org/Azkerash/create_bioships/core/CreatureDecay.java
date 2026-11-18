@@ -52,6 +52,19 @@ public final class CreatureDecay {
     return body.getUniqueId();
   }
 
+  /** Associate living physical limbs without copying inventories or behavior state. */
+  public static void link(ServerSubLevel parent, ServerSubLevel child) {
+    var id = familyId(parent);
+    var tag = child.getUserDataTag().copy();
+    tag.putUUID(FAMILY, id);
+    child.setUserDataTag(tag);
+    var world = WorldState.get(parent.getLevel());
+    var family = world.families.computeIfAbsent(id, ignored -> new Family());
+    family.members.putIfAbsent(parent.getUniqueId(), null);
+    family.members.putIfAbsent(child.getUniqueId(), null);
+    world.setDirty();
+  }
+
   /** Native Sable split notification; physics separates, corpse identity and death do not. */
   public static void inherit(ServerSubLevel parent, ServerSubLevel child) {
     if (!CoreAssemblyRules.isCreature(parent) || !SubLevelHealth.status(parent).dead()) return;

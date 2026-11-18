@@ -33,6 +33,7 @@ public final class SubLevelArmor {
     }
     var result = new Capacity(cells, total);
     CAPACITY.put(body, result);
+    if (SubLevelCreatureParts.isPart(body)) SubLevelCreatureParts.armorContribution(body, total);
     return result;
   }
 
@@ -43,8 +44,14 @@ public final class SubLevelArmor {
     return Double.isFinite(value) ? Math.max(0, value) : 0;
   }
 
+  public static double localMaximum(ServerSubLevel body) {
+    return capacity(body).total;
+  }
+
   public static Status status(ServerSubLevel body) {
-    double maximum = capacity(body).total;
+    if (!SubLevelCreatureParts.available(body)) return new Status(0, 0);
+    body = SubLevelCreatureParts.root(body);
+    double maximum = capacity(body).total + SubLevelCreatureParts.extraArmor(body);
     return new Status(Math.max(0, maximum - spent(body)), maximum);
   }
 
@@ -56,19 +63,24 @@ public final class SubLevelArmor {
     if (previous == next) return;
     if (next == 0) cached.cells.remove(pos.asLong());
     else cached.cells.put(pos.asLong(), next);
-    CAPACITY.put(body, new Capacity(cached.cells, Math.max(0, cached.total + next - previous)));
+    double total = Math.max(0, cached.total + next - previous);
+    CAPACITY.put(body, new Capacity(cached.cells, total));
+    if (SubLevelCreatureParts.isPart(body)) SubLevelCreatureParts.armorContribution(body, total);
   }
 
   /** Returns health damage remaining after a hit on an actual armored cell. */
   public static double absorb(
       ServerSubLevel body, BlockPos cell, DamageSource source, double damage) {
     if (!Double.isFinite(damage) || damage <= 0) return 0;
+    if (!SubLevelCreatureParts.available(body)) return damage;
     if (cell == null
         || source.is(DamageTypeTags.BYPASSES_ARMOR)
         || ArmorValues.points(body.getLevel().getBlockState(cell)) == 0
         || SubLevelHealth.status(body).dead()) return damage;
+    if (SubLevelCreatureParts.isPart(body)) capacity(body);
     double absorbed = Math.min(damage, status(body).current);
     if (absorbed > 0) {
+      body = SubLevelCreatureParts.root(body);
       var root = body.getUserDataTag() == null ? new CompoundTag() : body.getUserDataTag().copy();
       var tag = root.getCompound(SubLevelData.ARMOR).copy();
       tag.putDouble("spent", spent(body) + absorbed);

@@ -26,6 +26,7 @@ public final class SubLevelHealth {
   }
 
   public static SubLevelData.Health status(ServerSubLevel body) {
+    if (!SubLevelCreatureParts.available(body)) return SubLevelData.health(body);
     initialize(body);
     return SubLevelData.health(body);
   }
@@ -58,6 +59,11 @@ public final class SubLevelHealth {
       }
     }
     CELLS.put(body, cells);
+    if (SubLevelCreatureParts.isPart(body)) {
+      SubLevelCreatureParts.healthContribution(body, maximum);
+      return;
+    }
+    maximum += SubLevelCreatureParts.extraHealth(body);
     SubLevelHunger.initializeCapacity(body, cells.keySet());
     var old = SubLevelData.health(body);
     store(body, old.damage(), maximum, old.dead(), old.causeOfDeath());
@@ -70,6 +76,7 @@ public final class SubLevelHealth {
   /** Create owns pickup/drops; suppress only damage from the resulting capacity change. */
   public static <T> T withoutRemovalDamage(
       ServerSubLevel body, java.util.function.Supplier<T> removal) {
+    body = SubLevelCreatureParts.root(body);
     var before = status(body);
     double beforeDamage = damageTaken(body);
     var active = SAFE_REMOVALS.get();
@@ -93,12 +100,17 @@ public final class SubLevelHealth {
   public static void blockChanged(ServerSubLevel body, BlockPos pos, BlockState state) {
     if ((!CoreAssemblyRules.isCreature(body) && !SubLevelData.isLiving(body))
         || !CELLS.containsKey(body)) return;
-    SubLevelHunger.blockChanged(body, pos, state);
+    if (!SubLevelCreatureParts.isPart(body)) SubLevelHunger.blockChanged(body, pos, state);
     var cells = CELLS.get(body);
     double previous = cells.getOrDefault(pos.asLong(), 0d), next = BlockHealthValues.health(state);
     if (previous == next) return;
     if (next == 0) cells.remove(pos.asLong());
     else cells.put(pos.asLong(), next);
+    if (SubLevelCreatureParts.isPart(body)) {
+      SubLevelCreatureParts.healthContribution(
+          body, cells.values().stream().mapToDouble(Double::doubleValue).sum());
+      return;
+    }
     var old = status(body);
     double delta = next - previous;
     store(
@@ -114,6 +126,8 @@ public final class SubLevelHealth {
   }
 
   public static boolean damage(ServerSubLevel body, double amount, String cause) {
+    if (!SubLevelCreatureParts.available(body)) return false;
+    body = SubLevelCreatureParts.root(body);
     if (!Double.isFinite(amount) || amount <= 0) return false;
     var old = status(body);
     if (old.dead()) return false;
@@ -123,11 +137,30 @@ public final class SubLevelHealth {
 
   /** Explicit healing reduces injury; changing block capacity never calls this. */
   public static boolean heal(ServerSubLevel body, double amount) {
+    if (!SubLevelCreatureParts.available(body)) return false;
+    body = SubLevelCreatureParts.root(body);
     if (!Double.isFinite(amount) || amount <= 0) return false;
     var old = status(body);
     if (old.dead()) return false;
     store(body, Math.max(0, damageTaken(body) - amount), old.maximum(), false, old.causeOfDeath());
     return true;
+  }
+
+  public static double localMaximum(ServerSubLevel body) {
+    initialize(body);
+    return CELLS.get(body).values().stream().mapToDouble(Double::doubleValue).sum();
+  }
+
+  public static void refreshCapacity(ServerSubLevel body) {
+    body = SubLevelCreatureParts.root(body);
+    initialize(body);
+    var old = SubLevelData.health(body);
+    store(
+        body,
+        old.damage(),
+        localMaximum(body) + SubLevelCreatureParts.extraHealth(body),
+        old.dead(),
+        "component_loss");
   }
 
   private static void store(
@@ -144,6 +177,7 @@ public final class SubLevelHealth {
             : died ? cause.isEmpty() ? "component_loss" : cause : "";
     SubLevelData.health(
         body, new SubLevelData.Health(died ? 0 : current, maximum, injury, died, deathCause));
+    if (died && !previous.dead()) SubLevelCreatureParts.died(body);
     if (!died && injury == 0 && maximum > 0 && !transaction)
       org.Azkerash.create_bioships.combat.SubLevelWounds.healEyes(body);
   }

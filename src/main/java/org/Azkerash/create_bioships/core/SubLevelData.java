@@ -8,6 +8,7 @@ import net.minecraft.nbt.CompoundTag;
  */
 public final class SubLevelData {
   public static final String BEHAVIOR = "create_bioships:behavior";
+  public static final String PARTS = "create_bioships:parts";
   public static final String ARMOR = "create_bioships:armor";
   public static final String BRAIN = "create_bioships:brain";
   public static final String ACCESS = "create_bioships:access";
@@ -47,6 +48,7 @@ public final class SubLevelData {
   private SubLevelData() {}
 
   public static CompoundTag coreSnapshot(ServerSubLevel body) {
+    body = SubLevelCreatureParts.root(body);
     initialize(body);
     var result = new CompoundTag();
     var root = body.getUserDataTag();
@@ -56,6 +58,8 @@ public final class SubLevelData {
   }
 
   public static void restoreDeadCore(ServerSubLevel body, CompoundTag snapshot) {
+    if (!SubLevelCreatureParts.available(body)) return;
+    body = SubLevelCreatureParts.root(body);
     var health = SubLevelHealth.status(body);
     if (health.dead()) return;
     var old = snapshot.getCompound(HEALTH);
@@ -78,6 +82,8 @@ public final class SubLevelData {
   }
 
   public static void initialize(ServerSubLevel body) {
+    if (!SubLevelCreatureParts.available(body)) return;
+    body = SubLevelCreatureParts.root(body);
     var existing = body.getUserDataTag();
     if (existing != null
         && existing.contains(HEALTH)
@@ -158,6 +164,7 @@ public final class SubLevelData {
   public record Locomotion(boolean hasLegs, boolean hasFins, boolean hasWallClimbers) {}
 
   public static Locomotion locomotion(ServerSubLevel body) {
+    body = SubLevelCreatureParts.root(body);
     initialize(body);
     var state = body.getUserDataTag().getCompound(STATE);
     return new Locomotion(
@@ -167,6 +174,8 @@ public final class SubLevelData {
   }
 
   public static void locomotion(ServerSubLevel body, Locomotion value) {
+    if (!SubLevelCreatureParts.available(body)) return;
+    body = SubLevelCreatureParts.root(body);
     if (value.equals(locomotion(body))) return;
     var root = body.getUserDataTag().copy();
     var state = root.getCompound(STATE);
@@ -177,6 +186,7 @@ public final class SubLevelData {
   }
 
   public static Health health(ServerSubLevel body) {
+    body = SubLevelCreatureParts.root(body);
     initialize(body);
     var value = body.getUserDataTag().getCompound(HEALTH);
     return new Health(
@@ -188,6 +198,8 @@ public final class SubLevelData {
   }
 
   static void health(ServerSubLevel body, Health value) {
+    if (!SubLevelCreatureParts.available(body)) return;
+    body = SubLevelCreatureParts.root(body);
     initialize(body);
     var root = body.getUserDataTag().copy();
     var data = new CompoundTag();
@@ -201,17 +213,21 @@ public final class SubLevelData {
   }
 
   public static int hunger(ServerSubLevel body) {
+    body = SubLevelCreatureParts.root(body);
     initialize(body);
     return body.getUserDataTag().getCompound(STATE).getInt("hunger");
   }
 
   public static int maximumHunger(ServerSubLevel body) {
+    body = SubLevelCreatureParts.root(body);
     SubLevelHealth.status(
         body); // Initializes the event-driven component census once after loading.
     return body.getUserDataTag().getCompound(STATE).getInt("maximumHunger");
   }
 
   static void maximumHunger(ServerSubLevel body, int capacity) {
+    if (!SubLevelCreatureParts.available(body)) return;
+    body = SubLevelCreatureParts.root(body);
     initialize(body);
     var current = body.getUserDataTag().getCompound(STATE);
     if (current.getInt("maximumHunger") == capacity && current.getInt("hunger") <= capacity) return;
@@ -223,20 +239,26 @@ public final class SubLevelData {
   }
 
   public static int regenerationTicks(ServerSubLevel body) {
+    body = SubLevelCreatureParts.root(body);
     initialize(body);
     return body.getUserDataTag().getCompound(STATE).getInt("regenerationTicks");
   }
 
   static void regenerationTicks(ServerSubLevel body, int ticks) {
+    if (!SubLevelCreatureParts.available(body)) return;
+    body = SubLevelCreatureParts.root(body);
     variable(body, "regenerationTicks", Math.max(0, ticks));
   }
 
   public static double trust(ServerSubLevel body) {
+    body = SubLevelCreatureParts.root(body);
     initialize(body);
     return body.getUserDataTag().getCompound(STATE).getDouble("trust");
   }
 
   public static void hunger(ServerSubLevel body, int value) {
+    if (!SubLevelCreatureParts.available(body)) return;
+    body = SubLevelCreatureParts.root(body);
     var old = hungerState(body);
     hungerState(
         body,
@@ -244,6 +266,7 @@ public final class SubLevelData {
   }
 
   public static Hunger hungerState(ServerSubLevel body) {
+    body = SubLevelCreatureParts.root(body);
     initialize(body);
     var state = body.getUserDataTag().getCompound(STATE);
     return new Hunger(
@@ -254,12 +277,16 @@ public final class SubLevelData {
   }
 
   public static void hungerPaused(ServerSubLevel body, boolean paused) {
+    if (!SubLevelCreatureParts.available(body)) return;
+    body = SubLevelCreatureParts.root(body);
     var old = hungerState(body);
     if (old.paused() != paused)
       hungerState(body, new Hunger(old.value(), paused, old.drainTicks(), old.starvationTicks()));
   }
 
   static void hungerState(ServerSubLevel body, Hunger value) {
+    if (!SubLevelCreatureParts.available(body)) return;
+    body = SubLevelCreatureParts.root(body);
     initialize(body);
     int maximum = maximumHunger(body);
     var root = body.getUserDataTag().copy();
@@ -272,6 +299,8 @@ public final class SubLevelData {
   }
 
   public static void trust(ServerSubLevel body, double value) {
+    if (!SubLevelCreatureParts.available(body)) return;
+    body = SubLevelCreatureParts.root(body);
     if (!Double.isFinite(value)) return;
     initialize(body);
     var root = body.getUserDataTag().copy();
@@ -280,6 +309,8 @@ public final class SubLevelData {
   }
 
   private static void variable(ServerSubLevel body, String name, int value) {
+    if (!SubLevelCreatureParts.available(body)) return;
+    body = SubLevelCreatureParts.root(body);
     initialize(body);
     var root = body.getUserDataTag().copy();
     root.getCompound(STATE).putInt(name, value);
