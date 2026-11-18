@@ -60,4 +60,38 @@ public final class StomachDigestionTests {
           "Stomach GUI changed internal inventory");
     helper.succeed();
   }
+
+  @GameTest(template = "test_empty", batch = "passive_stomach")
+  public static void full_outputs_preserve_input_and_do_not_reroll_saved_meals(
+      GameTestHelper helper) {
+    var level = helper.getLevel();
+    var pos = helper.absolutePos(new BlockPos(1, 2, 1));
+    var state = ComponentRegistry.STOMACH.get().defaultBlockState();
+    level.setBlock(pos, state, 3);
+    var stomach = (StomachBlockEntity) level.getBlockEntity(pos);
+    for (int slot = 9; slot < 27; slot++) stomach.setItem(slot, new ItemStack(Items.STONE, 64));
+    stomach.enqueue(new ItemStack(Items.PORKCHOP), false);
+    for (int tick = 0; tick < 500; tick++) stomach.advance();
+    helper.assertTrue(
+        stomach.queued() == 1 && stomach.progress() == stomach.duration(),
+        "Full output storage lost input or failed to pause");
+    var saved = stomach.saveWithFullMetadata(level.registryAccess());
+    var restored =
+        (StomachBlockEntity) BlockEntity.loadStatic(pos, state, saved, level.registryAccess());
+    restored.setLevel(level);
+    restored.setItem(9, ItemStack.EMPTY);
+    restored.advance();
+    helper.assertTrue(
+        restored.queued() == 1 && restored.getItem(9).isEmpty(),
+        "Partial output insertion was not rolled back");
+    helper.assertTrue(
+        saved
+            .getCompound("Pending")
+            .equals(restored.saveWithFullMetadata(level.registryAccess()).getCompound("Pending")),
+        "Blocked meal rerolled outputs after loading");
+    for (int slot = 9; slot < 27; slot++) restored.setItem(slot, ItemStack.EMPTY);
+    restored.advance();
+    helper.assertTrue(restored.queued() == 0, "Freed storage did not finish the pending meal");
+    helper.succeed();
+  }
 }

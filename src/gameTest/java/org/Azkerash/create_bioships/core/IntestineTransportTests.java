@@ -72,6 +72,29 @@ public final class IntestineTransportTests {
         menu.getSlot(0).mayPlace(new ItemStack(Items.PORKCHOP))
             && !menu.getSlot(0).mayPlace(new ItemStack(Items.STONE)),
         "Mouth GUI has wrong intake filter");
+    player.setItemInHand(
+        InteractionHand.MAIN_HAND, Create_bioships.BIOSHIP_WRENCH.get().getDefaultInstance());
+    player.setPos(Vec3.atCenterOf(pos).add(0, 0, -2));
+    for (var organ : List.of(pos, pos.east(2))) {
+      var before =
+          level
+              .getBlockState(organ)
+              .getValue(
+                  net.minecraft.world.level.block.state.properties.BlockStateProperties.FACING);
+      player.gameMode.useItemOn(
+          player,
+          level,
+          player.getMainHandItem(),
+          InteractionHand.MAIN_HAND,
+          new BlockHitResult(Vec3.atCenterOf(organ), Direction.UP, organ, false));
+      helper.assertTrue(
+          level
+                  .getBlockState(organ)
+                  .getValue(
+                      net.minecraft.world.level.block.state.properties.BlockStateProperties.FACING)
+              != before,
+          "Organ UI intercepted normal wrench rotation");
+    }
     helper.succeed();
   }
 

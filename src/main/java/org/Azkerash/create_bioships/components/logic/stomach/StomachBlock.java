@@ -61,6 +61,20 @@ public final class StomachBlock extends DirectionalBlock
   }
 
   @Override
+  protected net.minecraft.world.ItemInteractionResult useItemOn(
+      net.minecraft.world.item.ItemStack stack,
+      BlockState state,
+      net.minecraft.world.level.Level level,
+      net.minecraft.core.BlockPos pos,
+      net.minecraft.world.entity.player.Player player,
+      net.minecraft.world.InteractionHand hand,
+      net.minecraft.world.phys.BlockHitResult hit) {
+    return stack.getItem() instanceof com.simibubi.create.content.equipment.wrench.WrenchItem
+        ? net.minecraft.world.ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION
+        : net.minecraft.world.ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+  }
+
+  @Override
   protected net.minecraft.world.InteractionResult useWithoutItem(
       BlockState state,
       net.minecraft.world.level.Level level,

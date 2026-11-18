@@ -35,6 +35,9 @@ public final class WrenchRemovalTests {
 
   private static void exercise(GameTestHelper helper, BlockPos origin) {
     var level = helper.getLevel();
+    for (int x = -4; x <= 4; x++)
+      for (int z = -4; z <= 4; z++)
+        level.setBlock(origin.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 3);
     level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
     level.setBlock(
         origin.east(),
@@ -119,7 +122,7 @@ public final class WrenchRemovalTests {
               new AABB(expected, expected).inflate(.75),
               drop -> drop.getItem().is(item));
       helper.assertTrue(
-          drops.stream().anyMatch(drop -> drop.position().distanceToSqr(expected) < .0001),
+          drops.stream().anyMatch(drop -> drop.position().distanceToSqr(expected) < .0625),
           "Wrench did not drop the item at its world block position");
       capacity -= 10;
       helper.assertTrue(

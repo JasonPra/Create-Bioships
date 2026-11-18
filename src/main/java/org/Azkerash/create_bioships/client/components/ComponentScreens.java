@@ -12,5 +12,6 @@ public final class ComponentScreens {
   @SubscribeEvent
   public static void register(RegisterMenuScreensEvent event) {
     event.register(ComponentRegistry.STOMACH_MENU.get(), StomachScreen::new);
+    event.register(ComponentRegistry.MOUTH_MENU.get(), MouthScreen::new);
   }
 }

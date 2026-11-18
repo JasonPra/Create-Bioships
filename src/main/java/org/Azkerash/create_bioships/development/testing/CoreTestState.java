@@ -26,6 +26,11 @@ public final class CoreTestState extends SavedData {
   long potionDeadline;
   double potionBefore;
   final List<String> potionResults = new ArrayList<>();
+  boolean digestionBuilt, digestionRunning;
+  BlockPos digestionOrigin = new BlockPos(384, DevelopmentWorldSetup.DEFAULT_TEST_Y, 0);
+  UUID digestionBody;
+  long digestionDeadline;
+  String digestionResult = "Ready";
   boolean arrowBuilt, arrowRunning;
   BlockPos arrowOrigin = new BlockPos(128, DevelopmentWorldSetup.DEFAULT_TEST_Y, 0);
   UUID arrowBody;
@@ -70,6 +75,15 @@ public final class CoreTestState extends SavedData {
                   if (tag.hasUUID("PotionBody")) state.potionBody = tag.getUUID("PotionBody");
                   tag.getList("PotionResults", 8)
                       .forEach(e -> state.potionResults.add(e.getAsString()));
+                  state.digestionBuilt = tag.getBoolean("DigestionBuilt");
+                  state.digestionRunning = tag.getBoolean("DigestionRunning");
+                  if (tag.contains("DigestionOrigin"))
+                    state.digestionOrigin = BlockPos.of(tag.getLong("DigestionOrigin"));
+                  if (tag.hasUUID("DigestionBody"))
+                    state.digestionBody = tag.getUUID("DigestionBody");
+                  state.digestionDeadline = tag.getLong("DigestionDeadline");
+                  if (tag.contains("DigestionResult"))
+                    state.digestionResult = tag.getString("DigestionResult");
                   state.arrowBuilt = tag.getBoolean("ArrowBuilt");
                   state.arrowRunning = tag.getBoolean("ArrowRunning");
                   state.arrowPhase = tag.getInt("ArrowPhase");
@@ -127,6 +141,12 @@ public final class CoreTestState extends SavedData {
     var potionEntries = new ListTag();
     potionResults.forEach(e -> potionEntries.add(StringTag.valueOf(e)));
     tag.put("PotionResults", potionEntries);
+    tag.putBoolean("DigestionBuilt", digestionBuilt);
+    tag.putBoolean("DigestionRunning", digestionRunning);
+    tag.putLong("DigestionOrigin", digestionOrigin.asLong());
+    if (digestionBody != null) tag.putUUID("DigestionBody", digestionBody);
+    tag.putLong("DigestionDeadline", digestionDeadline);
+    tag.putString("DigestionResult", digestionResult);
     tag.putBoolean("ArrowBuilt", arrowBuilt);
     tag.putBoolean("ArrowRunning", arrowRunning);
     tag.putInt("ArrowPhase", arrowPhase);

@@ -49,6 +49,10 @@ public final class DevelopmentWorldSetup {
       state.arrowOrigin = new BlockPos(128, state.layout().base().getY(), 0);
       CoreArrowFixture.reset(level);
     }
+    if (!state.digestionBuilt) {
+      state.digestionOrigin = new BlockPos(384, state.layout().base().getY(), 0);
+      DigestionFixture.reset(level);
+    }
     if (!state.combatBuilt) {
       state.combatOrigin = new BlockPos(1024, state.layout().base().getY(), 1024);
       CombatFixture.reset(level);

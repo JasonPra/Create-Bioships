@@ -330,7 +330,7 @@ The separation, combat, arrow, and potion fixtures pause hunger on their subject
 
 `SubLevelHunger` owns the temporary timing policy, evaluated once per loaded second. A later
 saturation-based policy can replace it without moving shared data or display responsibilities.
-No mouths, stomachs, feeding, or saturation mechanics are included in this batch.
+Saturation remains future work; mouth/stomach feeding is described below.
 
 
 ## Components and stomach shell
@@ -347,8 +347,8 @@ remain separate. Development-only fixture blocks retain their dedicated testing 
 folded panel. It directly reuses Biomancy's packed-flesh and flesh textures, with the panel
 recessed within the block envelope so surrounding tissue can meet it flush. It supports six
 facing directions, native Create wrench rotation, ordinary self-drops, the component creative
-tab, and the existing 10-HP block contribution. It has no inventory or GUI. Its empty inspection hook and hunger-capacity contribution
-are described below; digestion is not implemented. No old digestion/growth implementation has been restored.
+tab, and the existing 10-HP block contribution. Its passive digestion and inspection inventory
+are described below.
 
 
 ## Stomach capacity, healing, and inspection access
@@ -366,8 +366,8 @@ Potion healing/regeneration remain independent of hunger, as in vanilla. Hunger 
 passive regeneration as well as drain/starvation. Regeneration progress is saved. Saturation
 and additional food costs remain future work.
 
-The stomach now has a Create inspection block entity, deliberately returning no tooltip
-content and exposing no inventory/menu. This mod's core/readout/stomach and future Create
+The stomach has a Create inspection block entity showing acid, digestion, and queued food.
+Its inventory menu is inspect-only. This mod's core/readout/stomach and future Create
 inspection displays require the exact symbiotic-goggles item worn in the head slot. A shared
 whitelist check is applied only to our block entities in Create's client overlay pipeline;
 engineer/aviator goggles are not permitted for these displays, while other mods' displays
@@ -383,3 +383,55 @@ adapter is removed. Legacy amoeba grids acquire the flag automatically.
 The development preset equips Symbiotic Goggles and grants a wrench on first entry. Its
 navigator is hidden from the creative tab and pinned to the rightmost hotbar slot; moving,
 dropping, death, and `/clear` preserve it. `DevelopmentLoadout` owns these protections.
+
+## Passive digestion and intake
+
+- Stomachs generate 1 acid per loaded tick, up to 1,000, starting with 200. They require no
+  mouth, intestine, or core connection to digest existing input. Dead creature organs stop.
+- Native Biomancy decomposing recipes supply component outputs, ingredient quantities, and
+  processing times. Acid costs 100 times the recipe's nutrient cost, clamped to 50–1,000.
+  Food items also produce one nutrient paste per recipe.
+- The stomach contains 9 queued-food slots and 18 component/paste slots. Its GUI shows acid,
+  digestion progress, and inventory. Players and hoppers cannot insert food directly into it.
+  Full output storage stalls completion without consuming the input or rerolling output.
+- A hungry living creature consumes one stored paste over 32 loaded ticks, restoring 4 hunger
+  up to capacity. Full creatures retain paste. Hunger capacity remains 5 base plus 5 for one stomach.
+- Feeding Mouth (`feeding_mouth`): right-click with food to feed one item; sneak-right-click
+  offers the held stack. Empty-hand right-click opens its 9-slot intake UI. Native hopper
+  insertion is supported; server slots reject non-digestible inputs.
+- Fleshy Intestine (`fleshy_intestine`) joins directly touching faces in all six directions.
+  Cached, bounded routes deliver one item per mouth every 8 ticks. Broken pipes and full
+  destinations preserve food at the source. Routes never cross between separate Sable grids.
+- Mouth/stomach item drops preserve their inventories and stomach processing state through
+  vanilla block-entity item data, including wrench removal.
+
+### Visible digestion test
+
+The development preset adds a digestion enclosure at x=384, z=0, with indestructible glass,
+a double door, START/RESET command buttons, an explanation hologram, and a navigator entry.
+`/digestion_test start`, `/digestion_test reset`, and `/digestion_test status` control it.
+START assembles the subject, seeds four pork chops in its mouth, and seeds one isolated
+stomach as a disconnected control. PASS requires transported digestion, component/paste
+production, and hunger reaching capacity. RESET restores the unassembled setup.
+
+### Eye support and corpse feedback
+
+Both eye variants require a full solid block behind their mounting face; the shared exclusion
+array rejects eye components as supports. Placement, assembly, and support changes enforce this.
+Wounds force eye blocks closed and pause their blinking until healed or expired. Corpse hits
+retain the red impact flash as well as wounds and embedded projectiles.
+The arrow fixture now fires from the front at visible, front-mounted eyes; dispensers clear
+away after each round for inspection. Existing worlds can apply that layout with `/arrow_test reset`.
+
+Let it Walk! is pinned to CurseForge file **9540966** (project 1780503), version **0.1.5**,
+for NeoForge 1.21.1. It is included as a required runtime dependency; no creature walking
+behavior is wired to it in this batch.
+
+The mouth and stomach screens share `client.components.OrganScreenStyle`: Biomancy flesh
+texturing and ornamental frame details, recessed tissue-colored slots, bone text, and bordered
+acid/digestion gauges. Each screen owns its layout. Normal wrench clicks bypass the organ
+menus so Create rotation remains available.
+
+Validation: 34 native regression tests passed with Let it Walk installed, including the
+optional Epic Fight run; a final run without Epic Fight also passed all 34. Both themed
+menus and the front-facing arrow fixture were inspected in the Minecraft client.

@@ -17,8 +17,16 @@ public final class StomachScreen extends AbstractContainerScreen<StomachMenu> {
 
   protected void renderBg(GuiGraphics g, float partial, int mouseX, int mouseY) {
     int x = leftPos, y = topPos;
-    g.fill(x, y, x + imageWidth, y + imageHeight, 0xff482635);
-    g.fill(x + 3, y + 3, x + imageWidth - 3, y + imageHeight - 3, 0xff22171c);
+    OrganScreenStyle.panel(g, x, y, imageWidth, imageHeight);
+    g.renderItem(
+        org.Azkerash.create_bioships
+            .components
+            .ComponentRegistry
+            .STOMACH_ITEM
+            .get()
+            .getDefaultInstance(),
+        x + imageWidth - 28,
+        y + 8);
     g.drawString(
         font, "Stomach acid: " + menu.value(0) + " / 1000", x + 12, y + 26, 0xffd9c9b4, false);
     bar(g, x + 12, y + 39, 204, menu.value(0), 1000, 0xff96ad5d);
@@ -32,14 +40,13 @@ public final class StomachScreen extends AbstractContainerScreen<StomachMenu> {
     bar(g, x + 12, y + 69, 204, menu.value(1), Math.max(1, menu.value(2)), 0xffc98860);
     g.drawString(font, "Food queue", x + 12, y + 83, 0xffd9c9b4, false);
     g.drawString(font, "Components / paste", x + 104, y + 83, 0xffd9c9b4, false);
-    for (var slot : menu.slots)
-      g.fill(x + slot.x - 1, y + slot.y - 1, x + slot.x + 17, y + slot.y + 17, 0xff635049);
+    for (var slot : menu.slots) OrganScreenStyle.slot(g, x + slot.x, y + slot.y);
+    OrganScreenStyle.divider(g, x + 12, y + 162, imageWidth - 24);
     g.drawString(font, "Intake through mouth only", x + 12, y + 153, 0xffa79a91, false);
   }
 
   private void bar(GuiGraphics g, int x, int y, int width, int value, int max, int color) {
-    g.fill(x, y, x + width, y + 10, 0xff483d32);
-    g.fill(x + 1, y + 1, x + 1 + (width - 2) * Math.clamp(value, 0, max) / max, y + 9, color);
+    OrganScreenStyle.gauge(g, x, y, width, value, max, color);
   }
 
   @Override

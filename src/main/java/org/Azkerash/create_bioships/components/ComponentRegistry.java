@@ -134,6 +134,17 @@ public final class ComponentRegistry {
                       org.Azkerash.create_bioships.components.logic.stomach.StomachMenu
                           ::fromNetwork));
 
+  public static final DeferredHolder<
+          net.minecraft.world.inventory.MenuType<?>,
+          net.minecraft.world.inventory.MenuType<
+              org.Azkerash.create_bioships.components.logic.mouth.MouthMenu>>
+      MOUTH_MENU =
+          MENUS.register(
+              "feeding_mouth",
+              () ->
+                  net.neoforged.neoforge.common.extensions.IMenuTypeExtension.create(
+                      org.Azkerash.create_bioships.components.logic.mouth.MouthMenu::fromNetwork));
+
   private ComponentRegistry() {}
 
   private static <B extends Block> DeferredBlock<B> component(ComponentDefinition<B> definition) {

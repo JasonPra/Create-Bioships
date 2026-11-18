@@ -60,6 +60,8 @@ public final class MouthBlock extends DirectionalBlock
       Player player,
       InteractionHand hand,
       BlockHitResult hit) {
+    if (stack.getItem() instanceof com.simibubi.create.content.equipment.wrench.WrenchItem)
+      return ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION;
     if (level.getBlockEntity(pos) instanceof MouthBlockEntity mouth
         && mouth.canPlaceItem(0, stack)) {
       if (!level.isClientSide) {

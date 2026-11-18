@@ -118,3 +118,10 @@ type = "required"
 versionRange = "[5.11.7]"
 ordering = "AFTER"
 side = "BOTH"
+
+[[dependencies."${mod_id}"]]
+modId = "let_it_walk"
+type = "required"
+versionRange = "[0.1.5]"
+ordering = "AFTER"
+side = "BOTH"

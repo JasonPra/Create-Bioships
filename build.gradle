@@ -114,6 +114,7 @@ dependencies {
     dependencyMods "curse.maven:create-328085:${create_file_id}"
     dependencyMods "curse.maven:biomancy-reforged-1782601:${biomancy_file_id}"
     dependencyMods "curse.maven:create-big-cannons-646668:${big_cannons_file_id}"
+    dependencyMods "curse.maven:let-it-walk-1780503:${let_it_walk_file_id}"
     implementation "curse.maven:geckolib-388172:${geckolib_file_id}"
     implementation "curse.maven:ritchies-projectile-library-1279407:${projectile_library_file_id}"
 }
