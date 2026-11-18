@@ -44,12 +44,14 @@ public final class BrainBlock extends Block
     }
   }
 
+  public static final net.minecraft.world.level.block.state.properties.BooleanProperty FORMED =
+      net.minecraft.world.level.block.state.properties.BooleanProperty.create("formed");
   public static final EnumProperty<Port> PORT = EnumProperty.create("port", Port.class);
   public static final MapCodec<BrainBlock> CODEC = simpleCodec(BrainBlock::new);
 
   public BrainBlock(Properties properties) {
     super(properties);
-    registerDefaultState(stateDefinition.any().setValue(PORT, Port.NONE));
+    registerDefaultState(stateDefinition.any().setValue(PORT, Port.NONE).setValue(FORMED, false));
   }
 
   @Override
@@ -59,7 +61,7 @@ public final class BrainBlock extends Block
 
   @Override
   protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-    builder.add(PORT);
+    builder.add(PORT, FORMED);
   }
 
   @Override

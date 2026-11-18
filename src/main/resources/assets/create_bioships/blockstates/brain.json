@@ -1,68 +1,19 @@
 {
   "multipart": [
     {
+      "when": {
+        "formed": "false"
+      },
       "apply": {
         "model": "create_bioships:block/brain"
       }
     },
     {
       "when": {
-        "port": "north"
+        "formed": "true"
       },
       "apply": {
-        "model": "create_bioships:block/brain_port",
-        "x": 0,
-        "y": 0
-      }
-    },
-    {
-      "when": {
-        "port": "south"
-      },
-      "apply": {
-        "model": "create_bioships:block/brain_port",
-        "x": 0,
-        "y": 180
-      }
-    },
-    {
-      "when": {
-        "port": "east"
-      },
-      "apply": {
-        "model": "create_bioships:block/brain_port",
-        "x": 0,
-        "y": 90
-      }
-    },
-    {
-      "when": {
-        "port": "west"
-      },
-      "apply": {
-        "model": "create_bioships:block/brain_port",
-        "x": 0,
-        "y": 270
-      }
-    },
-    {
-      "when": {
-        "port": "up"
-      },
-      "apply": {
-        "model": "create_bioships:block/brain_port",
-        "x": 270,
-        "y": 0
-      }
-    },
-    {
-      "when": {
-        "port": "down"
-      },
-      "apply": {
-        "model": "create_bioships:block/brain_port",
-        "x": 90,
-        "y": 0
+        "model": "create_bioships:block/brain_empty"
       }
     }
   ]

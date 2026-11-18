@@ -25,6 +25,16 @@ public final class SubLevelHurtRenderer {
 
   private SubLevelHurtRenderer() {}
 
+  public static boolean flashing(UUID body) {
+    var level = Minecraft.getInstance().level;
+    return level != null && level == world && FLASHES.getOrDefault(body, 0L) > level.getGameTime();
+  }
+
+  /** Share the existing hurt shader with procedural component meshes and their own textures. */
+  public static RenderType hurtType(ResourceLocation texture) {
+    return shader == null ? null : HurtType.TEXTURED.computeIfAbsent(texture, HurtType::textured);
+  }
+
   public static void flash(UUID body) {
     var level = Minecraft.getInstance().level;
     if (level == null) return;
@@ -127,6 +137,26 @@ public final class SubLevelHurtRenderer {
           false,
           () -> {},
           () -> {});
+    }
+
+    private static final Map<ResourceLocation, RenderType> TEXTURED = new HashMap<>();
+
+    private static RenderType textured(ResourceLocation texture) {
+      return create(
+          "sublevel_hurt_component",
+          DefaultVertexFormat.BLOCK,
+          VertexFormat.Mode.QUADS,
+          65536,
+          false,
+          true,
+          CompositeState.builder()
+              .setShaderState(new ShaderStateShard(() -> shader))
+              .setTextureState(new TextureStateShard(texture, false, false))
+              .setLightmapState(LIGHTMAP)
+              .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+              .setLayeringState(POLYGON_OFFSET_LAYERING)
+              .setWriteMaskState(COLOR_WRITE)
+              .createCompositeState(false));
     }
 
     private static final RenderType TYPE =

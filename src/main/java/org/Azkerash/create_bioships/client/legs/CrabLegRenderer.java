@@ -68,6 +68,12 @@ public final class CrabLegRenderer {
                   / 4d,
               0,
               1);
+      var hurt =
+          org.Azkerash.create_bioships.client.combat.SubLevelHurtRenderer.flashing(
+                  snapshot.current.body())
+              ? org.Azkerash.create_bioships.client.combat.SubLevelHurtRenderer.hurtType(
+                  net.minecraft.world.inventory.InventoryMenu.BLOCK_ATLAS)
+              : null;
       var previousPoses =
           new HashMap<
               net.minecraft.core.BlockPos,
@@ -95,7 +101,8 @@ public final class CrabLegRenderer {
                                       .logic
                                       .legs
                                       .CrabLegBlock
-                                      .HEIGHT)));
+                                      .HEIGHT)),
+              hurt);
         }
       }
       stack.popPose();
@@ -104,7 +111,12 @@ public final class CrabLegRenderer {
   }
 
   private static void segment(
-      com.mojang.blaze3d.vertex.PoseStack stack, Minecraft mc, Vec3 from, Vec3 to, float width) {
+      com.mojang.blaze3d.vertex.PoseStack stack,
+      Minecraft mc,
+      Vec3 from,
+      Vec3 to,
+      float width,
+      net.minecraft.client.renderer.RenderType hurt) {
     var delta = to.subtract(from);
     if (delta.lengthSqr() < .00001) return;
     stack.pushPose();
@@ -123,6 +135,25 @@ public final class CrabLegRenderer {
             mc.renderBuffers().bufferSource(),
             light,
             OverlayTexture.NO_OVERLAY);
+    if (hurt != null) {
+      mc.renderBuffers()
+          .bufferSource()
+          .endBatch(net.minecraft.client.renderer.Sheets.cutoutBlockSheet());
+      mc.getBlockRenderer()
+          .getModelRenderer()
+          .renderModel(
+              stack.last(),
+              mc.renderBuffers().bufferSource().getBuffer(hurt),
+              ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState(),
+              mc.getBlockRenderer()
+                  .getBlockModel(ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState()),
+              1,
+              1,
+              1,
+              light,
+              OverlayTexture.NO_OVERLAY);
+      mc.renderBuffers().bufferSource().endBatch(hurt);
+    }
     stack.popPose();
   }
 }

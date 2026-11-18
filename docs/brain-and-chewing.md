@@ -73,3 +73,9 @@ port movement, one active group, card filtering, saved graph/port state, overflo
 retrieval and data retention after removal. Native client checks cover the animated
 mouth, eating-sound events, card insertion through the actual menu, exact port
 relocation and client-side maximum-size prediction.
+
+## Connected brain appearance
+
+The grid's brain controller synchronizes the active group and its access face. A cached client mesh draws a continuous folded surface over the connected cells, with a central fissure and Biomancy's fibrous-flesh material. World-placed inactive blocks keep a normal tissue model. Internal faces are omitted; topology is rebuilt only when the group changes.
+
+The single port uses the cleaned administrative panel's flesh and bone frame, with a dark programming display, blinking `>_` cursor and logic glyph. Moving the port preserves the existing wrench and inventory behavior. Procedural surfaces share the existing hurt shader, and wound decals are projected onto the rounded surface.

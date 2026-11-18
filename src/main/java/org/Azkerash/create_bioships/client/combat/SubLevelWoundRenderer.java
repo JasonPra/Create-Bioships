@@ -89,6 +89,12 @@ public final class SubLevelWoundRenderer {
           wound.cell().getX() - t.rotationPoint().x(),
           wound.cell().getY() - t.rotationPoint().y(),
           wound.cell().getZ() - t.rotationPoint().z());
+      if (state.is(ComponentRegistry.BRAIN.get())) {
+        var offset =
+            org.Azkerash.create_bioships.client.components.BrainSurfaceRenderer.surfaceOffset(
+                wound.body(), wound.cell(), wound.face());
+        pose.translate(offset.x, offset.y, offset.z);
+      }
       int light = LevelRenderer.getLightColor(mc.level, wound.cell());
       if (state.is(ComponentRegistry.CORE.get())) {
         var skin = buffers.getBuffer(RenderType.entityCutoutNoCull(SKIN));

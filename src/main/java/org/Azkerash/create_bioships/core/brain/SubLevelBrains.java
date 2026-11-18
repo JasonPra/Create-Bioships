@@ -173,8 +173,11 @@ public final class SubLevelBrains {
       var state = body.getLevel().getBlockState(p);
       if (!state.is(ComponentRegistry.BRAIN.get())) continue;
       var desired = p.equals(port) ? BrainBlock.Port.of(face) : BrainBlock.Port.NONE;
-      if (state.getValue(BrainBlock.PORT) != desired)
-        body.getLevel().setBlock(p, state.setValue(BrainBlock.PORT, desired), 2);
+      boolean formed = active.contains(p);
+      if (state.getValue(BrainBlock.PORT) != desired || state.getValue(BrainBlock.FORMED) != formed)
+        body.getLevel()
+            .setBlock(
+                p, state.setValue(BrainBlock.PORT, desired).setValue(BrainBlock.FORMED, formed), 2);
     }
   }
 
@@ -188,6 +191,25 @@ public final class SubLevelBrains {
     var root = body.getUserDataTag() == null ? new CompoundTag() : body.getUserDataTag().copy();
     root.put(SubLevelData.BRAIN, tag);
     body.setUserDataTag(root);
+    appearance();
+  }
+
+  private void appearance() {
+    if (body.isRemoved()) return;
+    var point =
+        body.logicalPose()
+            .transformPosition(
+                net.minecraft.world.phys.Vec3.atCenterOf(body.getPlot().getCenterBlock()));
+    var payload =
+        new BrainAppearancePayload(
+            body.getUniqueId(),
+            List.copyOf(active),
+            port,
+            face,
+            !SubLevelHealth.status(body).dead());
+    for (var player : body.getLevel().players())
+      if (player.position().distanceToSqr(point) < 192 * 192)
+        net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, payload);
   }
 
   public static void forget(ServerSubLevel body) {
@@ -199,8 +221,21 @@ public final class SubLevelBrains {
     for (var body : new ArrayList<>(PENDING))
       if (!body.isRemoved() && SubLevelData.isLiving(body)) get(body);
     PENDING.clear();
-    if (event.getServer().getTickCount() % 20 == 0)
+    if (event.getServer().getTickCount() % 20 == 0) {
+      for (var level : event.getServer().getAllLevels()) {
+        var container = dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(level);
+        if (container != null)
+          for (var entry : container.getAllSubLevels())
+            if (entry instanceof ServerSubLevel body
+                && SubLevelData.isLiving(body)
+                && !BRAINS.containsKey(body)
+                && SubLevelHealth.blocks(body).stream()
+                    .anyMatch(p -> level.getBlockState(p).is(ComponentRegistry.BRAIN.get())))
+              get(body);
+      }
       BRAINS.keySet().removeIf(ServerSubLevel::isRemoved);
+      for (var brain : BRAINS.values()) if (!brain.active.isEmpty()) brain.appearance();
+    }
   }
 
   @SubscribeEvent
