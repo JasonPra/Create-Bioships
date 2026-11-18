@@ -24,7 +24,9 @@
     [],
     [],
     [],
-    []
+    [
+      "create_bioships:development_floor"
+    ]
   ],
   "has_precipitation": false,
   "spawn_costs": {},

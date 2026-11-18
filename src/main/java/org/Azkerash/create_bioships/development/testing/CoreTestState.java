@@ -9,7 +9,7 @@ import net.minecraft.world.level.saveddata.SavedData;
 /** Persistent fixture state and exact Sable identities, independent of rendering/geometry. */
 public final class CoreTestState extends SavedData {
   boolean built, running, combatBuilt, combatRunning;
-  BlockPos combatOrigin = new BlockPos(1024, -63, 1024);
+  BlockPos combatOrigin = new BlockPos(1024, DevelopmentWorldSetup.DEFAULT_TEST_Y, 1024);
   boolean combatFailuresExpanded;
   int combatFailurePage;
   int combatIndex;
@@ -18,7 +18,7 @@ public final class CoreTestState extends SavedData {
   UUID combatBody, combatEnemy;
   boolean combatAcquired;
   boolean potionBuilt, potionRunning, potionResistanceHit;
-  BlockPos potionOrigin = new BlockPos(256, -63, 0);
+  BlockPos potionOrigin = new BlockPos(256, DevelopmentWorldSetup.DEFAULT_TEST_Y, 0);
   UUID potionBody, potionZombie;
   int potionResistancePhase;
   double potionBaselineDamage, potionProtectedDamage, potionHitBefore;
@@ -27,10 +27,10 @@ public final class CoreTestState extends SavedData {
   double potionBefore;
   final List<String> potionResults = new ArrayList<>();
   boolean arrowBuilt, arrowRunning;
-  BlockPos arrowOrigin = new BlockPos(128, -63, 0);
+  BlockPos arrowOrigin = new BlockPos(128, DevelopmentWorldSetup.DEFAULT_TEST_Y, 0);
   UUID arrowBody;
   final List<String> combatEnemies = new ArrayList<>(), combatResults = new ArrayList<>();
-  BlockPos origin = new BlockPos(0, -63, 0);
+  BlockPos origin = new BlockPos(0, DevelopmentWorldSetup.DEFAULT_TEST_Y, 0);
   final Set<UUID> owned = new HashSet<>();
 
   public CoreSplitFixture.Layout layout() {

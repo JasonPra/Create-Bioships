@@ -20,8 +20,13 @@ public final class CorePresetProbe {
     var layout = CoreTestState.get(level).layout();
     if (!CoreTestCommands.development(level))
       throw new IllegalStateException("Wrong development preset generator");
-    if (!level.getBlockState(new BlockPos(100, level.getMinBuildHeight(), 100)).is(Blocks.BEDROCK))
-      throw new IllegalStateException("Superflat bedrock layer missing");
+    if (layout.base().getY() != 64 || level.getSharedSpawnPos().getY() != 64)
+      throw new IllegalStateException("New world fixtures/spawn are not at sea-level ground");
+    if (!level.getBlockState(new BlockPos(100, 62, 100)).is(Blocks.BEDROCK)
+        || !DevelopmentTestBlocks.protectedBlock(level.getBlockState(new BlockPos(100, 63, 100)))
+        || !level.getBlockState(new BlockPos(100, 64, 100)).isAir()
+        || !level.getBlockState(new BlockPos(100, level.getMinBuildHeight(), 100)).isAir())
+      throw new IllegalStateException("Raised superflat floor layers invalid");
     for (var pos : layout.cores())
       if (!level.getBlockState(pos).is(Create_bioships.CORE.get())
           || !level.getBlockState(pos).getValue(CoreBlock.BLINK))
@@ -37,6 +42,14 @@ public final class CorePresetProbe {
     if (glue.size() != 1 || glue.getFirst().contains(layout.tip().below()))
       throw new IllegalStateException("Native fixture glue invalid: " + glue.size());
     var state = CoreTestState.get(level);
+    if (state.combatOrigin.getY() != 64
+        || state.arrowOrigin.getY() != 64
+        || state.potionOrigin.getY() != 64)
+      throw new IllegalStateException("Fixture elevations disagree");
+    for (var origin :
+        java.util.List.of(state.combatOrigin, state.arrowOrigin, state.potionOrigin, layout.base()))
+      if (!level.getBlockState(origin.below()).is(Blocks.BEDROCK))
+        throw new IllegalStateException("Fixture floor missing at " + origin);
     if (!state.combatBuilt || state.combatRunning)
       throw new IllegalStateException("Combat fixture not ready");
     var combatCore = state.combatOrigin.above(9);
@@ -48,10 +61,10 @@ public final class CorePresetProbe {
         .is(DevelopmentTestBlocks.GLASS.get()))
       throw new IllegalStateException("Combat glass missing");
     var decoration = new java.util.HashSet<net.minecraft.world.level.block.Block>();
-    for (int x = 11; x < 15; x++)
-      for (int z = -5; z <= 5; z++)
-        decoration.add(
-            level.getBlockState(new BlockPos(x, level.getMinBuildHeight() + 1, z)).getBlock());
+    // Sample a generated chunk far from every fixture, not a startup decoration patch.
+    for (int x = 160; x < 176; x++)
+      for (int z = 160; z < 176; z++)
+        decoration.add(level.getBlockState(new BlockPos(x, 63, z)).getBlock());
     if (decoration.size() < 5
         || !decoration.containsAll(
             DevelopmentTestBlocks.FLOOR.values().stream().map(h -> h.get()).toList()))
@@ -93,7 +106,7 @@ public final class CorePresetProbe {
     System.out.println(
         "COMBAT_PRESET_PASS unassembled=true glass=true decoration=" + decoration.size());
     System.out.println(
-        "CORE_PRESET_PASS cores="
+        "CORE_PRESET_PASS groundY=64 cores="
             + layout.cores().size()
             + " bedrock=true roof=true assembled=false commandBlocks="
             + event.getServer().isCommandBlockEnabled());

@@ -33,7 +33,12 @@ initial multi-core assembly and adding cores to an existing creature. It is excl
 
 ## Development world and repeatable regression fixture
 
-Create a world with the **Core Development (Bedrock Superflat)** world type. A roofed glass enclosure
+Create a world with the **Core Development (Bedrock Superflat)** world type. New worlds have
+sea-level ground: bedrock at Y=62, a noise pattern of the five indestructible brick/cobblestone
+variants at Y=63, and spawn/test bases at Y=64. The pattern is a per-chunk world-generation
+feature across the entire floor, including newly explored areas. Fixtures replace their own
+flooring with bedrock. Existing saved worlds retain their generator and fixture elevations.
+ A roofed glass enclosure
 is generated automatically near spawn. A hollow inverted pyramid of 49 closed, unassembled cores
 balances on a narrow oak pole. Native Honey Glue joins the pyramid only; the pole is excluded.
 

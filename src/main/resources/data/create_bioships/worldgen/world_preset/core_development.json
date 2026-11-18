@@ -6,9 +6,13 @@
         "type": "minecraft:flat",
         "settings": {
           "biome": "create_bioships:core_development",
-          "features": false,
+          "features": true,
           "lakes": false,
           "layers": [
+            {
+              "height": 126,
+              "block": "minecraft:air"
+            },
             {
               "height": 1,
               "block": "minecraft:bedrock"

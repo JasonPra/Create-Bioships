@@ -12,6 +12,7 @@ import org.Azkerash.create_bioships.Create_bioships;
 /** Lifecycle setup for the data-driven bedrock-superflat development world preset. */
 @EventBusSubscriber(modid = Create_bioships.MODID)
 public final class DevelopmentWorldSetup {
+  public static final int DEFAULT_TEST_Y = 64;
   private static final ResourceKey<net.minecraft.world.level.biome.Biome> BIOME =
       ResourceKey.create(
           Registries.BIOME,
@@ -31,8 +32,9 @@ public final class DevelopmentWorldSetup {
     if (!isDevelopment(level)) return;
     var state = CoreTestState.get(level);
     if (!state.built) {
-      decorateNewWorld(level);
-      var layout = new CoreSplitFixture.Layout(new BlockPos(0, level.getMinBuildHeight() + 2, 0));
+      var layout =
+          new CoreSplitFixture.Layout(
+              new BlockPos(0, level.getChunkSource().getGenerator().getSpawnHeight(level), 0));
       CoreTestCommands.reset(level, layout);
       level.setDefaultSpawnPos(layout.base().offset(0, 0, -15), 0);
     }
@@ -51,22 +53,5 @@ public final class DevelopmentWorldSetup {
       state.combatOrigin = new BlockPos(1024, state.layout().base().getY(), 1024);
       CombatFixture.reset(level);
     }
-  }
-
-  private static void decorateNewWorld(ServerLevel level) {
-    var palette =
-        DevelopmentTestBlocks.FLOOR.values().stream()
-            .map(h -> h.get())
-            .toArray(net.minecraft.world.level.block.Block[]::new);
-    var random = net.minecraft.util.RandomSource.create(level.getSeed());
-    for (int center : new int[] {0, 1024})
-      for (int x = center - 16; x <= center + 16; x++)
-        for (int z = center - 21; z <= center + 17; z++) {
-          var bottom = new BlockPos(x, level.getMinBuildHeight(), z);
-          level.setBlock(
-              bottom, net.minecraft.world.level.block.Blocks.BEDROCK.defaultBlockState(), 2);
-          level.setBlock(
-              bottom.above(), palette[random.nextInt(palette.length)].defaultBlockState(), 2);
-        }
   }
 }
