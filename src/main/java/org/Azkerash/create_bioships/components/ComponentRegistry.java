@@ -134,6 +134,7 @@ public final class ComponentRegistry {
                       new org.Azkerash.create_bioships.components.logic.brain.BrainBlock(
                           BlockBehaviour.Properties.of()
                               .strength(1)
+                              .noOcclusion()
                               .sound(SoundType.SLIME_BLOCK))));
   public static final DeferredItem<
           org.Azkerash.create_bioships.components.logic.brain.BehaviorCardItem>

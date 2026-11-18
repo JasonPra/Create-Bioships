@@ -18,6 +18,35 @@ import org.Azkerash.create_bioships.core.brain.*;
 @GameTestHolder("create_bioships")
 @PrefixGameTestTemplate(false)
 public final class BrainFoundationTests {
+  @GameTest(template = "test_empty", batch = "brain_foundation", timeoutTicks = 20)
+  public static void rounded_brain_does_not_hide_neighbor_faces(GameTestHelper helper) {
+    var level = helper.getLevel();
+    var pos = helper.absolutePos(new BlockPos(2, 2, 2));
+    for (boolean formed : new boolean[] {false, true}) {
+      var brain =
+          ComponentRegistry.BRAIN.get().defaultBlockState().setValue(BrainBlock.FORMED, formed);
+      level.setBlock(pos, brain, 3);
+      for (var face : Direction.values()) {
+        var neighbor = pos.relative(face.getOpposite());
+        for (var block :
+            new net.minecraft.world.level.block.Block[] {
+              ComponentRegistry.CORE.get(),
+              ComponentRegistry.CHITIN_ARMOR.get(),
+              net.minecraft.world.level.block.Blocks.STONE
+            }) {
+          var state = block.defaultBlockState();
+          level.setBlock(neighbor, state, 3);
+          helper.assertTrue(
+              net.minecraft.world.level.block.Block.shouldRenderFace(
+                  state, level, neighbor, face, pos),
+              "Brain hid adjacent " + block + " face " + face + "; formed=" + formed);
+          level.removeBlock(neighbor, false);
+        }
+      }
+    }
+    helper.succeed();
+  }
+
   @GameTest(template = "test_empty", batch = "brain_foundation", timeoutTicks = 120)
   public static void one_grid_inventory_centered_port_exact_wrench_move_and_capacity(
       GameTestHelper helper) {

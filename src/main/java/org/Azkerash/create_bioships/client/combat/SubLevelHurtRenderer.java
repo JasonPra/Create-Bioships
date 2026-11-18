@@ -47,7 +47,7 @@ public final class SubLevelHurtRenderer {
 
   @SubscribeEvent
   public static void render(RenderLevelStageEvent event) {
-    if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS || shader == null)
+    if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_BLOCK_ENTITIES || shader == null)
       return;
     var mc = Minecraft.getInstance();
     if (mc.level == null || mc.level != world) {

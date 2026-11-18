@@ -58,7 +58,7 @@ public final class SubLevelWoundRenderer {
 
   @SubscribeEvent
   public static void render(RenderLevelStageEvent event) {
-    if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) return;
+    if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_BLOCK_ENTITIES) return;
     var mc = Minecraft.getInstance();
     if (mc.level == null || mc.level != world) {
       WOUNDS.clear();

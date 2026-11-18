@@ -38,7 +38,7 @@ public final class CrabLegRenderer {
 
   @SubscribeEvent
   public static void render(RenderLevelStageEvent event) {
-    if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) return;
+    if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_BLOCK_ENTITIES) return;
     var mc = Minecraft.getInstance();
     if (world != mc.level) {
       POSES.clear();
