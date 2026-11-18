@@ -113,7 +113,7 @@ public final class WeakPointWoundTests {
                 var hit =
                     new BlockHitResult(
                         Vec3.atCenterOf(core).add(0, 0, .5), Direction.SOUTH, core, false);
-                CombatAdapter.projectile(
+                SubLevelImpactAdapter.projectile(
                     new net.neoforged.neoforge.event.entity.ProjectileImpactEvent(trident, hit));
                 helper.assertTrue(
                     !trident.isRemoved() && ProjectileAttachment.attached(trident),

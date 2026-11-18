@@ -29,6 +29,9 @@ public final class CoreTestState extends SavedData {
   boolean arrowBuilt, arrowRunning;
   BlockPos arrowOrigin = new BlockPos(128, DevelopmentWorldSetup.DEFAULT_TEST_Y, 0);
   UUID arrowBody;
+  int arrowPhase;
+  long arrowDeadline, arrowShotAt, arrowNextAction;
+  String arrowResult = "Ready";
   final List<String> combatEnemies = new ArrayList<>(), combatResults = new ArrayList<>();
   BlockPos origin = new BlockPos(0, DevelopmentWorldSetup.DEFAULT_TEST_Y, 0);
   final Set<UUID> owned = new HashSet<>();
@@ -69,6 +72,11 @@ public final class CoreTestState extends SavedData {
                       .forEach(e -> state.potionResults.add(e.getAsString()));
                   state.arrowBuilt = tag.getBoolean("ArrowBuilt");
                   state.arrowRunning = tag.getBoolean("ArrowRunning");
+                  state.arrowPhase = tag.getInt("ArrowPhase");
+                  state.arrowDeadline = tag.getLong("ArrowDeadline");
+                  state.arrowShotAt = tag.getLong("ArrowShotAt");
+                  state.arrowNextAction = tag.getLong("ArrowNextAction");
+                  if (tag.contains("ArrowResult")) state.arrowResult = tag.getString("ArrowResult");
                   if (tag.contains("ArrowOrigin"))
                     state.arrowOrigin = BlockPos.of(tag.getLong("ArrowOrigin"));
                   if (tag.hasUUID("ArrowBody")) state.arrowBody = tag.getUUID("ArrowBody");
@@ -121,6 +129,11 @@ public final class CoreTestState extends SavedData {
     tag.put("PotionResults", potionEntries);
     tag.putBoolean("ArrowBuilt", arrowBuilt);
     tag.putBoolean("ArrowRunning", arrowRunning);
+    tag.putInt("ArrowPhase", arrowPhase);
+    tag.putLong("ArrowDeadline", arrowDeadline);
+    tag.putLong("ArrowShotAt", arrowShotAt);
+    tag.putLong("ArrowNextAction", arrowNextAction);
+    tag.putString("ArrowResult", arrowResult);
     tag.putLong("ArrowOrigin", arrowOrigin.asLong());
     if (arrowBody != null) tag.putUUID("ArrowBody", arrowBody);
     tag.putBoolean("CombatBuilt", combatBuilt);

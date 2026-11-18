@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "create_bioships:living_core",
+    "create_bioships:land_eye",
+    "create_bioships:aquatic_eye",
+    "create_bioships:vital_readout",
+    "create_bioships:stomach"
+  ]
+}

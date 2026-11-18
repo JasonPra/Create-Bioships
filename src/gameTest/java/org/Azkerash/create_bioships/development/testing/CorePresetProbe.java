@@ -94,6 +94,58 @@ public final class CorePresetProbe {
             return java.util.OptionalInt.of(1);
           }
         };
+    DevelopmentLoadout.prepare(navigatorPlayer);
+    DevelopmentLoadout.prepare(navigatorPlayer);
+    if (!navigatorPlayer
+            .getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD)
+            .is(Create_bioships.BIOSHIP_GOGGLES.get())
+        || navigatorPlayer.getInventory().countItem(Create_bioships.BIOSHIP_WRENCH.get()) != 1
+        || !DevelopmentLoadout.navigator(
+            navigatorPlayer.getInventory().getItem(DevelopmentLoadout.NAVIGATOR_SLOT)))
+      throw new IllegalStateException("Development kit missing, duplicated, or not equipped");
+    navigatorPlayer.inventoryMenu.clicked(
+        DevelopmentLoadout.NAVIGATOR_MENU_SLOT,
+        0,
+        net.minecraft.world.inventory.ClickType.PICKUP,
+        navigatorPlayer);
+    if (!navigatorPlayer.inventoryMenu.getCarried().isEmpty()
+        || !DevelopmentLoadout.navigator(
+            navigatorPlayer.getInventory().getItem(DevelopmentLoadout.NAVIGATOR_SLOT)))
+      throw new IllegalStateException("Navigator could move out of its pinned slot");
+    level
+        .getServer()
+        .getCommands()
+        .performPrefixedCommand(
+            navigatorPlayer.createCommandSourceStack().withPermission(4), "clear @s");
+    if (!DevelopmentLoadout.navigator(
+            navigatorPlayer.getInventory().getItem(DevelopmentLoadout.NAVIGATOR_SLOT))
+        || navigatorPlayer.getInventory().countItem(Create_bioships.BIOSHIP_WRENCH.get()) != 0)
+      throw new IllegalStateException("Clear did not preserve only the navigator");
+    if (navigatorPlayer.drop(
+            new net.minecraft.world.item.ItemStack(DevelopmentNavigatorItem.ITEM.get()), false)
+        != null) throw new IllegalStateException("Navigator could be dropped");
+    navigatorPlayer.getInventory().dropAll();
+    if (!DevelopmentLoadout.navigator(
+        navigatorPlayer.getInventory().getItem(DevelopmentLoadout.NAVIGATOR_SLOT)))
+      throw new IllegalStateException("Death inventory drop lost navigator");
+    navigatorPlayer.getInventory().clearContent();
+    if (!DevelopmentLoadout.navigator(
+        navigatorPlayer.getInventory().getItem(DevelopmentLoadout.NAVIGATOR_SLOT)))
+      throw new IllegalStateException("Inventory clearing lost navigator");
+    var respawned =
+        new net.neoforged.neoforge.common.util.FakePlayer(
+            level,
+            new com.mojang.authlib.GameProfile(java.util.UUID.randomUUID(), "DevRespawnProbe"));
+    DevelopmentLoadout.clone(
+        new net.neoforged.neoforge.event.entity.player.PlayerEvent.Clone(
+            respawned, navigatorPlayer, true));
+    DevelopmentLoadout.prepare(respawned);
+    if (!DevelopmentLoadout.navigator(
+            respawned.getInventory().getItem(DevelopmentLoadout.NAVIGATOR_SLOT))
+        || respawned.getInventory().countItem(Create_bioships.BIOSHIP_WRENCH.get()) != 0)
+      throw new IllegalStateException("Respawn lost navigator or duplicated starting kit");
+    System.out.println(
+        "DEVELOPMENT_LOADOUT_PASS equipped=true pinned=true clear=true drops=true respawn=true");
     DevelopmentNavigatorItem.open(navigatorPlayer);
     if (!(navigatorPlayer.containerMenu instanceof net.minecraft.world.inventory.ChestMenu))
       throw new IllegalStateException("Navigator menu failed");

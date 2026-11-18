@@ -172,6 +172,15 @@ public final class EpicFightCompatibilityTests {
                   helper.assertTrue(
                       SubLevelHealth.status(body).current() == before - 3,
                       "Epic Fight core damage failed to use shared 1.5x weak-point rule");
+                  SubLevelHealth.damage(body, SubLevelHealth.status(body).current(), "test_corpse");
+                  var corpseHits = collide(attacker, tissue);
+                  helper.assertTrue(
+                      corpseHits.stream().noneMatch(e -> e instanceof SubLevelCombatTarget),
+                      "Corpse collider retained a living mob target");
+                  helper.assertTrue(
+                      SubLevelWounds.state(body)
+                          .active(core.west(2), Direction.NORTH, level.getGameTime()),
+                      "Epic Fight collider failed to wound corpse tissue");
                   attacker.discard();
                   System.out.println(
                       "EPICFIGHT_PRESENT_OK core=true eye=true ordinary=true emptyGap=false"

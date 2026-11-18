@@ -37,6 +37,8 @@ public final class CoreAssemblyRules {
   public static void mark(ServerLevel level, BlockPos core) {
     var body = containing(level, core);
     if (body == null) return;
+    if (body.getUserDataTag() == null || !body.getUserDataTag().contains(SubLevelData.LIVING))
+      SubLevelData.living(body, true);
     var old = body.getUserDataTag();
     if (old != null
         && "amoeba".equals(old.getString(TYPE))

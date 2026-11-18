@@ -12,7 +12,6 @@ import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.registries.*;
 import org.Azkerash.create_bioships.Create_bioships;
 
@@ -31,15 +30,6 @@ public final class DevelopmentNavigatorItem extends Item {
   @SubscribeEvent
   public static void register(RegisterEvent event) {
     event.register(Registries.ITEM, h -> h.register(ITEM.getId(), new DevelopmentNavigatorItem()));
-  }
-
-  @SubscribeEvent
-  public static void tab(BuildCreativeModeTabContentsEvent event) {
-    if (event
-        .getTabKey()
-        .location()
-        .equals(ResourceLocation.fromNamespaceAndPath(Create_bioships.MODID, "core")))
-      event.accept(ITEM.get());
   }
 
   @Override
@@ -100,17 +90,5 @@ public final class DevelopmentNavigatorItem extends Item {
                   }
                 },
             Component.literal("Development Tests · Regression")));
-  }
-
-  @EventBusSubscriber(modid = Create_bioships.MODID)
-  public static final class Provision {
-    @SubscribeEvent
-    public static void login(
-        net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent event) {
-      if (event.getEntity() instanceof ServerPlayer player
-          && DevelopmentWorldSetup.isDevelopment(player.serverLevel())
-          && !player.getInventory().contains(new ItemStack(ITEM.get())))
-        player.addItem(new ItemStack(ITEM.get()));
-    }
   }
 }

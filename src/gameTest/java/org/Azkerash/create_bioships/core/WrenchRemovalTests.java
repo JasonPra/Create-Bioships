@@ -23,6 +23,18 @@ public final class WrenchRemovalTests {
       GameTestHelper helper) {
     var level = helper.getLevel();
     var origin = new BlockPos(368, 80, 128);
+    for (int x = 22; x <= 23; x++) for (int z = 7; z <= 8; z++) level.setChunkForced(x, z, true);
+    helper
+        .startSequence()
+        .thenWaitUntil(
+            () ->
+                helper.assertTrue(
+                    level.isPositionEntityTicking(origin), "Waiting for world-drop chunks"))
+        .thenExecute(() -> exercise(helper, origin));
+  }
+
+  private static void exercise(GameTestHelper helper, BlockPos origin) {
+    var level = helper.getLevel();
     level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
     level.setBlock(origin.east(), ComponentRegistry.LAND_EYE.get().defaultBlockState(), 3);
     level.setBlock(origin.west(), Blocks.CHEST.defaultBlockState(), 3);
@@ -80,6 +92,8 @@ public final class WrenchRemovalTests {
         "Wrench rollback healed the creature");
     int capacity = 40;
     for (var pos : List.of(core.east(), core.west(), core.north())) {
+      var item = level.getBlockState(pos).getBlock().asItem();
+      var expected = body.logicalPose().transformPosition(Vec3.atCenterOf(pos));
       var result =
           player.gameMode.useItemOn(
               player,
@@ -91,6 +105,14 @@ public final class WrenchRemovalTests {
           result.consumesAction(), "Normal player Shift-wrench pickup was not handled");
       helper.assertTrue(
           level.getBlockState(pos).isAir(), "Wrench failed to remove non-core component");
+      var drops =
+          level.getEntitiesOfClass(
+              net.minecraft.world.entity.item.ItemEntity.class,
+              new AABB(expected, expected).inflate(.75),
+              drop -> drop.getItem().is(item));
+      helper.assertTrue(
+          drops.stream().anyMatch(drop -> drop.position().distanceToSqr(expected) < .0001),
+          "Wrench did not drop the item at its world block position");
       capacity -= 10;
       helper.assertTrue(
           SubLevelHealth.status(body).current() == capacity - 1.5
@@ -100,13 +122,14 @@ public final class WrenchRemovalTests {
     helper.assertTrue(
         SubLevelHealth.status(body).maximum() == 10, "Wrench removal did not update capacity");
     helper.assertTrue(
-        player.getInventory().countItem(ComponentRegistry.LAND_EYE.get().asItem()) == 1,
-        "Create pickup lost eye item");
+        player.getInventory().countItem(ComponentRegistry.LAND_EYE.get().asItem()) == 0,
+        "Wrench inserted eye directly into inventory");
     helper.assertTrue(
-        player.getInventory().countItem(Items.CHEST) == 1, "Create pickup lost chest item");
+        player.getInventory().countItem(Items.CHEST) == 0,
+        "Wrench inserted chest directly into inventory");
     helper.assertTrue(
-        player.getInventory().countItem(flesh.asItem()) == 1,
-        "Create pickup lost packed flesh block");
+        player.getInventory().countItem(flesh.asItem()) == 0,
+        "Wrench inserted flesh directly into inventory");
     var coreContext =
         new UseOnContext(
             player,
@@ -181,9 +204,13 @@ public final class WrenchRemovalTests {
     CombatAdapter.punch(click);
     helper.assertTrue(!click.isCanceled(), "Dead core still intercepts hand breaking as combat");
     var state = level.getBlockState(core);
+    float handProgress = state.getDestroyProgress(player, level, core);
+    helper.assertTrue(handProgress > 0 && handProgress < 1, "Dead core has no normal mining time");
+    player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.DIAMOND_PICKAXE));
     helper.assertTrue(
-        state.getDestroyProgress(player, level, core) >= 1,
-        "Dead core cannot be broken immediately by hand");
+        state.getDestroyProgress(player, level, core) > handProgress,
+        "Pickaxe does not speed up mining the dead core");
+    player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
     helper.assertTrue(
         Block.getDrops(state, level, core, level.getBlockEntity(core), player, ItemStack.EMPTY)
             .isEmpty(),

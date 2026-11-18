@@ -58,7 +58,7 @@ public final class SharedPotionEffectsTests {
                 var harming = new ThrownPotion(level, point.x, point.y, point.z);
                 harming.setItem(PotionFixture.potion(MobEffects.HARM));
                 target.invulnerableTime = 0;
-                CombatAdapter.projectile(
+                SubLevelImpactAdapter.projectile(
                     new net.neoforged.neoforge.event.entity.ProjectileImpactEvent(harming, hit));
                 helper.assertTrue(
                     SubLevelHealth.status(body).current() == 14,
@@ -66,7 +66,7 @@ public final class SharedPotionEffectsTests {
                         + SubLevelHealth.status(body));
                 var healing = new ThrownPotion(level, point.x, point.y, point.z);
                 healing.setItem(PotionFixture.potion(MobEffects.HEAL));
-                CombatAdapter.projectile(
+                SubLevelImpactAdapter.projectile(
                     new net.neoforged.neoforge.event.entity.ProjectileImpactEvent(healing, hit));
                 helper.assertTrue(
                     SubLevelHealth.status(body).current() == 18,

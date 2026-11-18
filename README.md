@@ -156,9 +156,10 @@ moving grid, retaining their item data. Attachment data survives entity saves an
 observers. Tridents eligible for pickup are returned as their original item when the attachment expires.
 
 The navigator now includes the **Core Arrow Regression** enclosure at x=128, z=0. Its native
-dispenser fires at an assembled core. `/arrow_test start`, `/arrow_test reset`, and
+three native dispensers wait for wake-up, then fire at the core, land eye, and aquatic eye.
+The fixture repeats those impacts after death to verify corpse wounds. `/arrow_test start`, `/arrow_test reset`, and
 `/arrow_test status` control it; START/RESET command-block buttons and an explanation hologram
-are provided. Reset restores the sleeping, unassembled fixture and refills the dispenser.
+are provided. Reset restores the sleeping, unassembled fixture and refills all three dispensers.
 
 Symbiotic Goggles use their own tooltip icon with room above the text. Both their inventory sprite
 and dedicated worn-model texture are **16×16**, matching Create's original goggles textures.
@@ -186,12 +187,14 @@ and eye adapters cannot multiply the hit. Normal entity victims keep vanilla swe
 Damage adapters stay anchored to tissue rather than drifting under vanilla knockback.
 
 Shift-right-click with the **Symbiotic Wrench** extends Create's normal pickup interaction to
-non-core blocks on a creature grid. Create owns removal, drops, and pickup; capacity updates do
-not count as damage. Current health is preserved up to the reduced maximum. Existing Create
+non-core blocks on a creature grid. Create owns removal and loot; removed items pop into the
+world at the struck block instead of entering the inventory directly. Capacity updates preserve
+existing damage, so removing too much capacity can kill the creature. Existing Create
 block interactions outside creature grids are unchanged. The core cannot be collected with a wrench.
 
-After death, ordinary block breaking is allowed again and the core can be removed immediately
-by hand. **The core never drops an item**, alive or dead. Other components keep their normal drops.
+After death, ordinary block breaking is allowed again and the core can be removed
+by hand with its normal mining time; axes and pickaxes mine our components faster.
+**The core never drops an item**, alive or dead. Other components keep their normal drops.
 
 ### Corpse decay and linked fragments
 
@@ -369,3 +372,14 @@ inspection displays require the exact symbiotic-goggles item worn in the head sl
 whitelist check is applied only to our block entities in Create's client overlay pipeline;
 engineer/aviator goggles are not permitted for these displays, while other mods' displays
 retain their normal access rules. Core/readout bars show the current capacity dynamically.
+
+### Persistent impact routing and development kit
+
+`SubLevelImpactAdapter` routes wounds and projectile contacts using the persistent
+`create_bioships:living` identity flag, independently of core presence. Health death does not
+clear this flag: corpse wounds and embedded projectiles remain supported while the mob-target
+adapter is removed. Legacy amoeba grids acquire the flag automatically.
+
+The development preset equips Symbiotic Goggles and grants a wrench on first entry. Its
+navigator is hidden from the creative tab and pinned to the rightmost hotbar slot; moving,
+dropping, death, and `/clear` preserve it. `DevelopmentLoadout` owns these protections.

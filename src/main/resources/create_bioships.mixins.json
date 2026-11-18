@@ -16,7 +16,12 @@
     "CreatureDecaySplitMixin",
     "CreatureDecayRemovalMixin",
     "PotionSplashTargetsMixin",
-    "PotionCloudTargetsMixin"
+    "PotionCloudTargetsMixin",
+    "WrenchDropDeliveryMixin",
+    "DevelopmentInventoryMixin",
+    "DevelopmentMenuMixin",
+    "DevelopmentPlayerDropsMixin",
+    "DevelopmentCreativeSlotMixin"
   ],
   "client": [],
   "injectors": {

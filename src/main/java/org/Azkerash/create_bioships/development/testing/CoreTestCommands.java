@@ -108,6 +108,7 @@ public final class CoreTestCommands {
     observe(event.getServer().overworld());
     CombatFixture.tick(event.getServer().overworld());
     PotionFixture.tick(event.getServer().overworld());
+    CoreArrowFixture.tick(event.getServer().overworld());
   }
 
   public static void reset(ServerLevel level, CoreSplitFixture.Layout layout) {
@@ -271,11 +272,7 @@ public final class CoreTestCommands {
                     if (action.equals("reset")) CoreArrowFixture.reset(level);
                     ctx.getSource()
                         .sendSuccess(
-                            () ->
-                                Component.literal(
-                                    "Core arrow test: "
-                                        + (state.arrowRunning ? "running" : "ready")),
-                            false);
+                            () -> Component.literal(CoreArrowFixture.status(level)), false);
                     return 1;
                   }));
     event.getDispatcher().register(arrow);

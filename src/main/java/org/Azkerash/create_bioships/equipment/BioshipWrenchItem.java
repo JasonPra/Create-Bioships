@@ -6,6 +6,32 @@ import com.simibubi.create.content.equipment.wrench.WrenchItem;
 @net.neoforged.fml.common.EventBusSubscriber(
     modid = org.Azkerash.create_bioships.Create_bioships.MODID)
 public final class BioshipWrenchItem extends WrenchItem {
+  private record DropContext(
+      net.minecraft.server.level.ServerLevel level,
+      java.util.UUID player,
+      net.minecraft.world.phys.Vec3 position) {}
+
+  private static final ThreadLocal<DropContext> GROUND_DROPS = new ThreadLocal<>();
+
+  /**
+   * Called at Create's inventory delivery point; native removal, loot/NBT and protection stay
+   * intact.
+   */
+  public static boolean dropRemovalStack(
+      net.minecraft.world.entity.player.Player player, net.minecraft.world.item.ItemStack stack) {
+    var context = GROUND_DROPS.get();
+    if (context == null || stack.isEmpty() || !context.player().equals(player.getUUID()))
+      return false;
+    var point = context.position();
+    var drop =
+        new net.minecraft.world.entity.item.ItemEntity(
+            context.level(), point.x, point.y, point.z, stack.copy());
+    drop.setDefaultPickUpDelay();
+    if (!context.level().addFreshEntity(drop)) return false;
+    stack.setCount(0);
+    return true;
+  }
+
   /** Handle supported grid wrench actions before normal block-use handlers consume the click. */
   @net.neoforged.bus.api.SubscribeEvent(priority = net.neoforged.bus.api.EventPriority.HIGHEST)
   public static void pickupGridBlock(
@@ -45,9 +71,22 @@ public final class BioshipWrenchItem extends WrenchItem {
                             instanceof com.simibubi.create.content.equipment.wrench.IWrenchable
                     ? super.useOn(context)
                     : PICKUP.onSneakWrenched(state, context);
-        return org.Azkerash.create_bioships.core.CoreAssemblyRules.isCreature(body)
-            ? org.Azkerash.create_bioships.core.SubLevelHealth.withoutRemovalDamage(body, action)
-            : action.get();
+        var previous = GROUND_DROPS.get();
+        if (player.isShiftKeyDown())
+          GROUND_DROPS.set(
+              new DropContext(
+                  server,
+                  player.getUUID(),
+                  body.logicalPose()
+                      .transformPosition(net.minecraft.world.phys.Vec3.atCenterOf(pos))));
+        try {
+          return org.Azkerash.create_bioships.core.CoreAssemblyRules.isCreature(body)
+              ? org.Azkerash.create_bioships.core.SubLevelHealth.withoutRemovalDamage(body, action)
+              : action.get();
+        } finally {
+          if (previous == null) GROUND_DROPS.remove();
+          else GROUND_DROPS.set(previous);
+        }
       }
     }
     return super.useOn(context);

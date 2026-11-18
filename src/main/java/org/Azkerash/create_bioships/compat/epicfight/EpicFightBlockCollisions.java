@@ -79,8 +79,7 @@ public final class EpicFightBlockCollisions {
     for (var entry : container.getAllSubLevels()) {
       if (!(entry instanceof ServerSubLevel body)
           || body.isRemoved()
-          || !CoreAssemblyRules.isCreature(body)
-          || SubLevelHealth.status(body).dead()) continue;
+          || !SubLevelData.isLiving(body)) continue;
       if (!body.boundingBox().toMojang().intersects(attackBox)) continue;
       SubLevelCombatTarget selected = null;
       Vec3 selectedAim = null;
@@ -88,8 +87,10 @@ public final class EpicFightBlockCollisions {
       Direction selectedFace = null;
       double nearest = Double.POSITIVE_INFINITY;
       boolean weak = false;
-      var probe = CombatAdapter.target(body);
-      if (probe == null) continue;
+      var impacts = SubLevelImpactAdapter.get(body);
+      if (impacts == null) continue;
+      boolean dead = SubLevelHealth.status(body).dead();
+      var probe = impacts.collisionProbe();
       var oldBox = probe.getBoundingBox();
       try {
         for (var cell : SubLevelHealth.blocks(body)) {
@@ -105,11 +106,33 @@ public final class EpicFightBlockCollisions {
             var from = body.logicalPose().transformPositionInverse(attacker.getEyePosition());
             var delta = from.subtract(logical.getCenter());
             var face = Direction.getNearest(delta.x, delta.y, delta.z);
-            var target = CombatAdapter.hitTarget(body, cell, face);
-            boolean critical = target instanceof EyeCombatHurtbox;
+            if (dead) {
+              var aim =
+                  body.logicalPose().transformPosition(logical.getCenter().relative(face, .53));
+              var visible =
+                  attacker
+                      .level()
+                      .clip(
+                          new net.minecraft.world.level.ClipContext(
+                              attacker.getEyePosition(),
+                              aim,
+                              net.minecraft.world.level.ClipContext.Block.COLLIDER,
+                              net.minecraft.world.level.ClipContext.Fluid.NONE,
+                              attacker));
+              if (visible.getType() == HitResult.Type.BLOCK
+                  && (CoreAssemblyRules.containing(
+                              (net.minecraft.server.level.ServerLevel) attacker.level(),
+                              visible.getBlockPos())
+                          != body
+                      || !visible.getBlockPos().equals(cell))) continue;
+            }
+            var target = dead ? null : CombatAdapter.hitTarget(body, cell, face);
+            boolean critical =
+                org.Azkerash.create_bioships.components.logic.eye.EyeWoundBehavior.isWeakPoint(
+                    state, face);
             double distance = world.distanceToSqr(attacker.getEyePosition());
-            if (selected != null && (!critical && weak || critical == weak && distance >= nearest))
-              continue;
+            if (selectedCell != null
+                && (!critical && weak || critical == weak && distance >= nearest)) continue;
             selected = target;
             selectedCell = cell;
             selectedFace = face;
@@ -129,6 +152,7 @@ public final class EpicFightBlockCollisions {
       } finally {
         probe.setBoundingBox(oldBox);
       }
+      if (dead && selectedCell != null) impacts.wound(selectedCell, selectedFace);
       if (selected != null) {
         selected.impact(selectedCell, selectedFace);
         selected.focusForAttack(selectedAim);

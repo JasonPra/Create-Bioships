@@ -3,16 +3,11 @@ package org.Azkerash.create_bioships.combat;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import java.util.*;
 import net.minecraft.core.*;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.entity.player.PlayerEvent;
-import org.Azkerash.create_bioships.Create_bioships;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
 import org.Azkerash.create_bioships.components.logic.eye.EyeWoundBehavior;
 import org.Azkerash.create_bioships.core.SurfaceWoundState;
 
 /** Wound state belongs to the grid and is replayed to new observers without resetting its age. */
-@EventBusSubscriber(modid = Create_bioships.MODID)
 public final class SubLevelWounds {
   private static final String DATA = "create_bioships:wounds";
   private static final Map<ServerSubLevel, SurfaceWoundState> STATES = new WeakHashMap<>();
@@ -50,6 +45,11 @@ public final class SubLevelWounds {
   }
 
   public static void hit(ServerSubLevel body, BlockPos cell, Direction face) {
+    var impact = SubLevelImpactAdapter.get(body);
+    if (impact != null) impact.wound(cell, face);
+  }
+
+  static void record(ServerSubLevel body, BlockPos cell, Direction face) {
     var block = body.getLevel().getBlockState(cell);
     if (block.is(ComponentRegistry.CORE.get()) || EyeWoundBehavior.isEye(block)) {
       var health = org.Azkerash.create_bioships.core.SubLevelHealth.status(body);
@@ -67,19 +67,5 @@ public final class SubLevelWounds {
     net.neoforged.neoforge.network.PacketDistributor.sendToPlayersInDimension(
         body.getLevel(),
         new WoundPayload(body.getUniqueId(), cell, face, now, EyeWoundBehavior.WOUND_TICKS));
-  }
-
-  @SubscribeEvent
-  public static void tracking(PlayerEvent.StartTracking event) {
-    if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player
-        && event.getTarget() instanceof SubLevelCombatTarget target) {
-      var body = target.body();
-      if (body == null) return;
-      for (var w : state(body).active(body.getLevel().getGameTime()))
-        net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(
-            player,
-            new WoundPayload(
-                body.getUniqueId(), w.surface().cell(), w.surface().face(), w.at(), w.duration()));
-    }
   }
 }

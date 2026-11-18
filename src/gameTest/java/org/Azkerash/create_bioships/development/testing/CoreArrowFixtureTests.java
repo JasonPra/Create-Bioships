@@ -1,8 +1,8 @@
 package org.Azkerash.create_bioships.development.testing;
 
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
+import dev.ryanhcode.sable.sublevel.ServerSubLevel;
+import net.minecraft.core.*;
 import net.minecraft.gametest.framework.*;
 import net.minecraft.world.entity.projectile.Arrow;
 import net.minecraft.world.level.block.Blocks;
@@ -11,82 +11,87 @@ import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
 import org.Azkerash.create_bioships.combat.*;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
-import org.Azkerash.create_bioships.core.SubLevelHealth;
+import org.Azkerash.create_bioships.core.*;
 
 @GameTestHolder(Create_bioships.MODID)
 @PrefixGameTestTemplate(false)
 public final class CoreArrowFixtureTests {
-  @GameTest(template = "test_empty", timeoutTicks = 180, batch = "visible_arrow_fixture")
-  public static void dispenser_fixture_can_start_and_reset(GameTestHelper helper) {
+  @GameTest(template = "test_empty", timeoutTicks = 500, batch = "visible_arrow_fixture")
+  public static void three_awake_eyes_and_corpse_keep_native_arrows_and_wounds(
+      GameTestHelper helper) {
     var level = helper.getLevel();
     var state = CoreTestState.get(level);
     state.arrowOrigin = new BlockPos(224, 80, 128);
     CoreArrowFixture.reset(level);
-    helper.assertTrue(
-        level.getBlockState(CoreArrowFixture.core(level)).is(ComponentRegistry.CORE.get()),
-        "Reset did not restore core");
-    helper.runAfterDelay(
-        40,
-        () -> {
-          helper.assertTrue(CoreArrowFixture.start(level) == 1, "Fixture failed to start");
-          helper.runAfterDelay(
-              25,
-              () -> {
-                var body =
-                    (dev.ryanhcode.sable.sublevel.ServerSubLevel)
-                        SubLevelContainer.getContainer(level).getSubLevel(state.arrowBody);
-                helper.assertTrue(body != null, "Fixture lost assembled grid");
-                var arrows =
-                    level.getEntitiesOfClass(
-                        Arrow.class,
-                        new AABB(state.arrowOrigin).inflate(10),
-                        ProjectileAttachment::attached);
+    helper
+        .startSequence()
+        .thenWaitUntil(
+            () ->
                 helper.assertTrue(
-                    arrows.size() == 1,
-                    "Native dispenser did not leave one embedded arrow: "
-                        + arrows.size()
-                        + " all="
-                        + level
-                            .getEntitiesOfClass(
-                                Arrow.class, new AABB(state.arrowOrigin).inflate(20))
-                            .stream()
-                            .map(a -> a.position() + ":" + ProjectileAttachment.attached(a))
-                            .toList()
-                        + " core="
-                        + body.logicalPose()
-                            .transformPosition(
-                                net.minecraft.world.phys.Vec3.atCenterOf(
-                                    body.getPlot().getCenterBlock()))
-                        + " signal="
-                        + level.hasNeighborSignal(CoreArrowFixture.dispenser(level))
-                        + " state="
-                        + level.getBlockState(CoreArrowFixture.dispenser(level))
-                        + " inventory="
-                        + ((net.minecraft.world.level.block.entity.DispenserBlockEntity)
-                                level.getBlockEntity(CoreArrowFixture.dispenser(level)))
-                            .getItem(0));
-                var core = body.getPlot().getCenterBlock();
+                    CoreArrowFixture.dispensers(level).stream()
+                        .allMatch(level::isPositionEntityTicking),
+                    "Waiting for dispenser chunks"))
+        .thenExecute(
+            () -> {
+              helper.assertTrue(CoreArrowFixture.start(level) == 1, "Fixture failed to start");
+              helper.assertTrue(
+                  CoreArrowFixture.dispensers(level).stream().noneMatch(level::hasNeighborSignal),
+                  "Dispensers fired before wake-up");
+            })
+        .thenWaitUntil(
+            () ->
                 helper.assertTrue(
-                    SubLevelWounds.state(body).active(core, Direction.NORTH, level.getGameTime()),
-                    "Dispenser failed to wound struck core face");
+                    state.arrowPhase == 3,
+                    "Waiting for living/corpse rounds: " + state.arrowResult))
+        .thenExecute(
+            () -> {
+              var body =
+                  (ServerSubLevel)
+                      SubLevelContainer.getContainer(level).getSubLevel(state.arrowBody);
+              helper.assertTrue(
+                  body != null && SubLevelHealth.status(body).dead(), "Corpse round did not run");
+              helper.assertTrue(
+                  SubLevelImpactAdapter.get(body) != null && CombatAdapter.target(body) == null,
+                  "Persistent impacts depended on a living mob adapter");
+              var arrows =
+                  level.getEntitiesOfClass(
+                      Arrow.class,
+                      new AABB(state.arrowOrigin).inflate(12),
+                      ProjectileAttachment::attached);
+              helper.assertTrue(
+                  arrows.size() == 6, "Expected two native arrows per eye, got " + arrows.size());
+              for (var cell : CoreArrowFixture.targets(body)) {
                 helper.assertTrue(
-                    SubLevelHealth.status(body).current() < SubLevelHealth.status(body).maximum(),
-                    "Dispenser caused no health damage");
-                CoreArrowFixture.reset(level);
+                    SubLevelWounds.state(body).active(cell, Direction.UP, level.getGameTime()),
+                    "Eye has no corpse wound: " + cell);
                 helper.assertTrue(
-                    !state.arrowRunning && state.arrowBody == null, "Reset retained running state");
+                    arrows.stream()
+                            .filter(
+                                arrow ->
+                                    arrow
+                                            .getPersistentData()
+                                            .getCompound("create_bioships:embedded_projectile")
+                                            .getLong("cell")
+                                        == cell.asLong())
+                            .count()
+                        == 2,
+                    "Eye lacks a living and corpse embedded arrow: " + cell);
+              }
+              CoreArrowFixture.reset(level);
+              helper.assertTrue(
+                  !state.arrowRunning && state.arrowBody == null, "Reset retained subject");
+              for (var pos : CoreArrowFixture.dispensers(level))
                 helper.assertTrue(
-                    level.getBlockState(CoreArrowFixture.dispenser(level).north()).is(Blocks.AIR),
+                    level.getBlockState(pos.north()).is(Blocks.AIR),
                     "Reset retained dispenser power");
-                helper.assertTrue(
-                    level
-                        .getBlockState(CoreArrowFixture.core(level))
-                        .is(ComponentRegistry.CORE.get()),
-                    "Reset failed to restore unassembled fixture");
-                helper.assertTrue(CoreArrowFixture.start(level) == 1, "Fixture cannot run twice");
-                CoreArrowFixture.reset(level);
-                helper.succeed();
-              });
-        });
+              helper.assertTrue(
+                  level
+                      .getBlockState(CoreArrowFixture.core(level))
+                      .is(ComponentRegistry.CORE.get()),
+                  "Reset failed to restore sleeping core");
+              helper.assertTrue(CoreArrowFixture.start(level) == 1, "Fixture cannot run twice");
+              CoreArrowFixture.reset(level);
+            })
+        .thenExecuteAfter(10, helper::succeed);
   }
 }

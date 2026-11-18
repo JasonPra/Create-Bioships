@@ -7,13 +7,11 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.*;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.entity.ProjectileImpactEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import org.Azkerash.create_bioships.Create_bioships;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
 import org.Azkerash.create_bioships.core.*;
-import org.Azkerash.create_bioships.mixin.ProjectileImpactInvoker;
 
 /** Minecraft targeting and attack transport, independent of health definitions and rendering. */
 @EventBusSubscriber(modid = Create_bioships.MODID)
@@ -286,8 +284,13 @@ public final class CombatAdapter {
   public static void punch(PlayerInteractEvent.LeftClickBlock event) {
     if (!(event.getLevel() instanceof ServerLevel level)) return;
     var body = CoreAssemblyRules.containing(level, event.getPos());
-    if (body == null || !CoreAssemblyRules.isCreature(body)) return;
-    if (SubLevelHealth.status(body).dead()) return;
+    var impact = body == null ? null : SubLevelImpactAdapter.get(body);
+    if (impact == null) return;
+    if (SubLevelHealth.status(body).dead()) {
+      if (event.getAction() == PlayerInteractEvent.LeftClickBlock.Action.START)
+        impact.wound(event.getPos(), event.getFace());
+      return; // Keep ordinary corpse mining intact.
+    }
     event.setCanceled(true);
     if (event.getAction() != PlayerInteractEvent.LeftClickBlock.Action.START) return;
     var target = hitTarget(body, event.getPos(), event.getFace());
@@ -300,37 +303,6 @@ public final class CombatAdapter {
                       .relative(event.getFace(), .55)));
       event.getEntity().attack(target);
     }
-  }
-
-  @SubscribeEvent
-  public static void projectile(ProjectileImpactEvent event) {
-    if (!(event.getProjectile().level() instanceof ServerLevel level)
-        || !(event.getRayTraceResult() instanceof BlockHitResult hit)) return;
-    var body = CoreAssemblyRules.containing(level, hit.getBlockPos());
-    if (body == null || !CoreAssemblyRules.isCreature(body)) return;
-    var target =
-        event.getProjectile() instanceof net.minecraft.world.entity.projectile.ThrownPotion
-            ? target(body)
-            : hitTarget(body, hit.getBlockPos(), hit.getDirection());
-    if (target == null) return;
-    target.impact(hit.getBlockPos(), hit.getDirection());
-    // Collision has already been resolved against Sable's actual block shapes. Never use an
-    // enclosing AABB as a substitute, which would count arrows passing through empty grid space.
-    var projectile = event.getProjectile();
-    var incoming = projectile.getDeltaMovement();
-    boolean embedded = projectile instanceof net.minecraft.world.entity.projectile.AbstractArrow;
-    if (embedded)
-      ProjectileAttachment.begin((net.minecraft.world.entity.projectile.AbstractArrow) projectile);
-    try {
-      ((ProjectileImpactInvoker) projectile)
-          .core$hitEntity(new EntityHitResult(target, hit.getLocation()));
-    } finally {
-      if (embedded) ProjectileAttachment.end();
-    }
-    if (embedded && !projectile.isRemoved())
-      ProjectileAttachment.attach(
-          (net.minecraft.world.entity.projectile.AbstractArrow) projectile, body, hit, incoming);
-    event.setCanceled(true);
   }
 
   public static void hurtFlash(ServerSubLevel body) {

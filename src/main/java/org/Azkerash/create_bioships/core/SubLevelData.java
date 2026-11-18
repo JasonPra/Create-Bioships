@@ -7,6 +7,26 @@ import net.minecraft.nbt.CompoundTag;
  * Saved variable definitions and defaults. Gameplay systems supply changes, never duplicate them.
  */
 public final class SubLevelData {
+  public static final String LIVING = "create_bioships:living";
+
+  public static boolean isLiving(dev.ryanhcode.sable.sublevel.SubLevel entry) {
+    if (!(entry instanceof ServerSubLevel body) || body.getUserDataTag() == null) return false;
+    var root = body.getUserDataTag();
+    // Migrate the old amoeba identity once; an explicit false flag remains authoritative.
+    if (!root.contains(LIVING) && "amoeba".equals(root.getString(CoreAssemblyRules.TYPE))) {
+      root = root.copy();
+      root.putBoolean(LIVING, true);
+      body.setUserDataTag(root);
+    }
+    return root.getBoolean(LIVING);
+  }
+
+  public static void living(ServerSubLevel body, boolean living) {
+    var root = body.getUserDataTag() == null ? new CompoundTag() : body.getUserDataTag().copy();
+    root.putBoolean(LIVING, living);
+    body.setUserDataTag(root);
+  }
+
   public static final String EFFECTS = "create_bioships:effects";
   public static final String HEALTH = "create_bioships:health", STATE = "create_bioships:state";
   public static final int BASE_HUNGER = 5,
