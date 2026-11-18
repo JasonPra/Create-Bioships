@@ -120,6 +120,21 @@ public final class BrainBlock extends Block
   }
 
   @Override
+  protected ItemInteractionResult useItemOn(
+      net.minecraft.world.item.ItemStack stack,
+      BlockState state,
+      Level level,
+      BlockPos pos,
+      Player player,
+      InteractionHand hand,
+      BlockHitResult hit) {
+    return stack.getItem() instanceof net.minecraft.world.item.BlockItem
+            || stack.getItem() instanceof com.simibubi.create.content.equipment.wrench.WrenchItem
+        ? ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION
+        : ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+  }
+
+  @Override
   protected InteractionResult useWithoutItem(
       BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
     if (state.getValue(PORT).face != hit.getDirection()) return InteractionResult.PASS;

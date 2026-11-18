@@ -261,6 +261,24 @@ public final class CoreTestCommands {
                     return 1;
                   }));
     event.getDispatcher().register(potions);
+    var brain = Commands.literal("brain_test").requires(source -> source.hasPermission(2));
+    for (var action : List.of("start", "reset", "feed", "status"))
+      brain.then(
+          Commands.literal(action)
+              .executes(
+                  ctx -> {
+                    var level = ctx.getSource().getLevel();
+                    if (action.equals("reset")) {
+                      BrainFixture.reset(level);
+                      return 1;
+                    }
+                    if (action.equals("start")) return BrainFixture.start(level);
+                    if (action.equals("feed")) return BrainFixture.feed(level);
+                    ctx.getSource()
+                        .sendSuccess(() -> Component.literal(BrainFixture.status(level)), false);
+                    return 1;
+                  }));
+    event.getDispatcher().register(brain);
     var membrane = Commands.literal("membrane_test").requires(source -> source.hasPermission(2));
     for (var action : List.of("start", "reset", "status"))
       membrane.then(

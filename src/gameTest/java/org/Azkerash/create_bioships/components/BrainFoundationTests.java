@@ -60,6 +60,31 @@ public final class BrainFoundationTests {
             level, new com.mojang.authlib.GameProfile(UUID.randomUUID(), "BrainWrench"));
     player.setItemInHand(
         InteractionHand.MAIN_HAND, Create_bioships.BIOSHIP_WRENCH.get().getDefaultInstance());
+    var placement =
+        new net.minecraft.world.item.context.BlockPlaceContext(
+            player,
+            InteractionHand.MAIN_HAND,
+            ComponentRegistry.BRAIN.get().asItem().getDefaultInstance(),
+            new BlockHitResult(
+                Vec3.atCenterOf(core.offset(3, 1, 1)),
+                Direction.EAST,
+                core.offset(3, 1, 1),
+                false));
+    helper.assertTrue(
+        ComponentRegistry.BRAIN.get().getStateForPlacement(placement) == null,
+        "Native placement allowed a 28th brain block");
+    helper.assertTrue(
+        level
+                .getBlockState(brain.port())
+                .useItemOn(
+                    player.getMainHandItem(),
+                    level,
+                    player,
+                    InteractionHand.MAIN_HAND,
+                    new BlockHitResult(
+                        Vec3.atCenterOf(brain.port()), brain.face(), brain.port(), false))
+            == ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION,
+        "Brain GUI consumed the wrench interaction");
     var chosen = core.offset(1, 2, 0);
     var result =
         Create_bioships.BIOSHIP_WRENCH

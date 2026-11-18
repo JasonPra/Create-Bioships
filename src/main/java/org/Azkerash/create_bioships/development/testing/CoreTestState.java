@@ -9,7 +9,7 @@ import net.minecraft.world.level.saveddata.SavedData;
 /** Persistent fixture state and exact Sable identities, independent of rendering/geometry. */
 public final class CoreTestState extends SavedData {
   boolean built, running, combatBuilt, combatRunning;
-  boolean visionBuilt, membraneBuilt;
+  boolean visionBuilt, membraneBuilt, brainBuilt;
   UUID developmentOwner;
   BlockPos combatOrigin = new BlockPos(1024, DevelopmentWorldSetup.DEFAULT_TEST_Y, 1024);
   boolean combatFailuresExpanded;
@@ -63,6 +63,7 @@ public final class CoreTestState extends SavedData {
                     state.developmentOwner = tag.getUUID("DevelopmentOwner");
                   state.visionBuilt = tag.getBoolean("VisionBuilt");
                   state.membraneBuilt = tag.getBoolean("MembraneBuilt");
+                  state.brainBuilt = tag.getBoolean("BrainBuilt");
                   state.combatFailuresExpanded = tag.getBoolean("CombatFailuresExpanded");
                   state.combatFailurePage = tag.getInt("CombatFailurePage");
                   state.potionBuilt = tag.getBoolean("PotionBuilt");
@@ -134,6 +135,7 @@ public final class CoreTestState extends SavedData {
     if (developmentOwner != null) tag.putUUID("DevelopmentOwner", developmentOwner);
     tag.putBoolean("VisionBuilt", visionBuilt);
     tag.putBoolean("MembraneBuilt", membraneBuilt);
+    tag.putBoolean("BrainBuilt", brainBuilt);
     tag.putBoolean("CombatFailuresExpanded", combatFailuresExpanded);
     tag.putInt("CombatFailurePage", combatFailurePage);
     tag.putBoolean("PotionBuilt", potionBuilt);
