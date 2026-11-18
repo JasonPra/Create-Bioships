@@ -52,7 +52,7 @@ public final class DevelopmentNavigatorItem extends Item {
       return;
     }
     var state = CoreTestState.get(level);
-    var entries = new SimpleContainer(9);
+    var entries = new SimpleContainer(18);
     entries.setItem(0, icon(Items.GLASS, "Regression: Core separation"));
     entries.setItem(1, icon(Items.DIAMOND_SWORD, "Regression: Hostile combat arena"));
     entries.setItem(2, icon(Items.DISPENSER, "Regression: Core arrow wound"));
@@ -78,13 +78,18 @@ public final class DevelopmentNavigatorItem extends Item {
         icon(
             org.Azkerash.create_bioships.components.ComponentRegistry.CRAB_LEG.get().asItem(),
             "Regression: Armored locomotion"));
+    entries.setItem(
+        9,
+        icon(
+            org.Azkerash.create_bioships.components.ComponentRegistry.LIMB_JOINT.get().asItem(),
+            "Regression: Modular limbs and Positioner"));
     player.openMenu(
         new SimpleMenuProvider(
             (id, inventory, viewer) ->
-                new ChestMenu(MenuType.GENERIC_9x1, id, inventory, entries, 1) {
+                new ChestMenu(MenuType.GENERIC_9x2, id, inventory, entries, 2) {
                   @Override
                   public void clicked(int slot, int button, ClickType type, Player clicking) {
-                    if (slot < 0 || slot > 8) return;
+                    if (slot < 0 || slot > 9) return;
                     var base =
                         slot == 0
                             ? state.layout().base()
@@ -102,7 +107,9 @@ public final class DevelopmentNavigatorItem extends Item {
                                                     ? MembraneFixture.base(level)
                                                     : slot == 7
                                                         ? BrainFixture.base(level)
-                                                        : LocomotionFixture.base(level);
+                                                        : slot == 8
+                                                            ? LocomotionFixture.base(level)
+                                                            : ModularLimbFixture.base(level);
                     clicking.closeContainer();
                     if (clicking instanceof ServerPlayer server) {
                       server.teleportTo(
