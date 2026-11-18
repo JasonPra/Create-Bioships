@@ -148,6 +148,7 @@ public final class CoreArrowFixture {
     body.setUserDataTag(tag);
     SubLevelContainer.getContainer(level)
         .addForceLoadTicket(body, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
+    org.Azkerash.create_bioships.core.SubLevelData.hungerPaused(body, true);
     state.arrowBody = body.getUniqueId();
     state.arrowRunning = true;
     state.setDirty();

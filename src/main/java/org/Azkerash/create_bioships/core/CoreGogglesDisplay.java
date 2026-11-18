@@ -45,6 +45,7 @@ public final class CoreGogglesDisplay extends BlockEntity implements IHaveGoggle
       next.putBoolean("dead", status.dead());
       next.putString("cause", status.causeOfDeath());
       next.putInt("hunger", SubLevelData.hunger(body));
+      next.putBoolean("hungerPaused", SubLevelData.hungerState(body).paused());
       next.putInt("trust", SubLevelData.trust(body));
       var effects = new net.minecraft.nbt.ListTag();
       var owner =
@@ -82,12 +83,18 @@ public final class CoreGogglesDisplay extends BlockEntity implements IHaveGoggle
       tooltip.add(
           Component.literal("Hunger: ")
               .append(
-                  Component.literal("                      ")
+                  Component.literal("           ")
                       .withStyle(
                           style ->
                               style.withInsertion(
                                   "create_bioships:hunger/" + inspection.getInt("hunger"))))
-              .append(Component.literal(" " + inspection.getInt("hunger") + "/20")));
+              .append(
+                  Component.literal(
+                      " "
+                          + inspection.getInt("hunger")
+                          + "/"
+                          + SubLevelData.MAX_HUNGER
+                          + (inspection.getBoolean("hungerPaused") ? " (paused)" : ""))));
       tooltip.add(Component.literal("Trust: " + inspection.getInt("trust") + "/100"));
       for (var entry : inspection.getList("effects", 10)) {
         var effect = net.minecraft.world.effect.MobEffectInstance.load((CompoundTag) entry);

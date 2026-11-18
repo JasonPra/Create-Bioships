@@ -51,6 +51,7 @@ public final class CoreTestCommands {
   }
 
   private static void own(ServerLevel level, CoreTestState state, ServerSubLevel body) {
+    org.Azkerash.create_bioships.core.SubLevelData.hungerPaused(body, true);
     if (state.owned.add(body.getUniqueId())) state.setDirty();
     var data = body.getUserDataTag();
     if (data == null || !"core_split".equals(data.getString(FIXTURE))) {

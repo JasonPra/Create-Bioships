@@ -78,7 +78,9 @@ public final class PotionFixtureTests {
                   .equals(readout.getUpdateTag(level.registryAccess())),
               "Core and Vital Readout snapshots disagree");
           helper.assertTrue(
-              SubLevelData.hunger(body) == 20 && SubLevelData.trust(body) == 0,
+              SubLevelData.hunger(body) == 5
+                  && SubLevelData.hungerState(body).paused()
+                  && SubLevelData.trust(body) == 0,
               "Placeholder defaults changed");
           for (int tick = 0; tick < 200; tick++) target.tick();
           state.potionDeadline = level.getGameTime();

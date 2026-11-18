@@ -245,8 +245,8 @@ full-health eye recovery; capacity changes do not count as healing.
 ## Shared state, potions, and Vital Readout
 
 `core.SubLevelData` defines and initializes saved grid variables, including health state,
-hunger (20/20 initially), and trust (0/100 initially). Hunger and trust are placeholders;
-there is no automatic consumption or trust behavior yet. Health calculations and changes
+hunger (5/5 initially), and trust (0/100 initially). Trust remains a placeholder;
+hunger uses the temporary fixed-rate metabolism described below. Health calculations and changes
 remain in `SubLevelHealth`. Changing block capacity preserves accumulated damage and can
 kill a creature if its remaining capacity cannot sustain that damage. Dead grids cannot revive.
 
@@ -308,3 +308,23 @@ With the supplied Epic Fight build this leaves 42 trials.
 Use `/combat_test reset` to rebuild an existing enclosure at the corrected height. The
 navigation tool follows its saved position. The existing START/RESET and duration controls
 are unchanged; no extra debugging commands were added.
+
+
+## Bare-bones hunger
+
+Living creature grids start at **5/5 hunger**, lose **1 point per 1,200 loaded game ticks**
+(one in-game minute), and at zero take **1 HP of native starvation damage every 80 ticks**
+(four seconds). Starvation is lethal on every difficulty, records `starve` as the cause of
+death, and never revives a dead grid when hunger is changed. Raising hunger above zero stops
+starvation. Existing hunger values above five are clamped during migration without changing
+health, trust, or effects.
+
+`SubLevelData` owns the saved value, `hungerPaused`, `hungerDrainTicks`, and `starvationTicks`
+inside `create_bioships:state`. `SubLevelData.hungerPaused(body, true)` freezes both timers;
+setting it to false resumes the saved remainder without offline/catch-up damage. The core
+and Vital Readout show five food icons, the numeric value, and a paused label when applicable.
+The separation, combat, arrow, and potion fixtures pause hunger on their subjects.
+
+`SubLevelHunger` owns the temporary timing policy, evaluated once per loaded second. A later
+saturation-based policy can replace it without moving shared data or display responsibilities.
+No mouths, stomachs, feeding, or saturation mechanics are included in this batch.

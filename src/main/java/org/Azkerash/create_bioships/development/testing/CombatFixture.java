@@ -255,6 +255,7 @@ public final class CombatFixture {
     body.setUserDataTag(tag);
     SubLevelContainer.getContainer(level)
         .addForceLoadTicket(body, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
+    org.Azkerash.create_bioships.core.SubLevelData.hungerPaused(body, true);
     state.combatBody = body.getUniqueId();
     var health = SubLevelHealth.status(body);
     SubLevelHealth.damage(body, health.current() - 1, "test_setup");

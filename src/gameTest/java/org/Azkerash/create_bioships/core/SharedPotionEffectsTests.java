@@ -41,7 +41,7 @@ public final class SharedPotionEffectsTests {
                   new BoundingBox3i(origin.west(), origin.east()));
           var core = body.getPlot().getCenterBlock();
           CoreAssemblyRules.mark(level, core);
-          SubLevelData.hunger(body, 12);
+          SubLevelData.hunger(body, 3);
           SubLevelData.trust(body, 42);
           SubLevelHealth.damage(body, 10, "test");
           helper.runAfterDelay(
@@ -125,7 +125,7 @@ public final class SharedPotionEffectsTests {
                     restored.hasEffect(MobEffects.DAMAGE_RESISTANCE),
                     "Recreated adapter lost persisted potion state");
                 helper.assertTrue(
-                    SubLevelData.hunger(body) == 12 && SubLevelData.trust(body) == 42,
+                    SubLevelData.hunger(body) == 3 && SubLevelData.trust(body) == 42,
                     "Health/effect updates overwrote shared placeholders");
                 restored.removeAllEffects();
                 SubLevelHealth.damage(body, SubLevelHealth.status(body).current() - 1, "test");
