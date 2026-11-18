@@ -91,7 +91,7 @@ public final class CoreBlock extends Block
     if (level instanceof ServerLevel server
         && placer instanceof net.minecraft.world.entity.player.Player
         && !(placer instanceof net.neoforged.neoforge.common.util.FakePlayer))
-      CoreAssemblyRules.playerPlaced(server, pos);
+      CoreAssemblyRules.playerPlaced(server, pos, placer.getUUID());
   }
 
   static boolean assembled(ServerLevel level, BlockPos pos) {

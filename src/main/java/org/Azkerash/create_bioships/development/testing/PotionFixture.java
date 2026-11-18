@@ -186,6 +186,7 @@ public final class PotionFixture {
     SubLevelContainer.getContainer(level)
         .addForceLoadTicket(body, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
     org.Azkerash.create_bioships.core.SubLevelData.hungerPaused(body, true);
+    DevelopmentTestOwnership.assign(body);
     state.potionBody = body.getUniqueId();
     var health = SubLevelHealth.status(body);
     SubLevelHealth.damage(body, health.current() - health.maximum() * .6, "test_setup");

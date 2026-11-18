@@ -157,6 +157,7 @@ public final class DigestionFixture {
     SubLevelContainer.getContainer(level)
         .addForceLoadTicket(body, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
     SubLevelData.hungerPaused(body, true);
+    DevelopmentTestOwnership.assign(body);
     SubLevelData.hunger(body, 0);
     ((MouthBlockEntity) level.getBlockEntity(core.north().west(3)))
         .feed(new ItemStack(Items.PORKCHOP, 4), false);
@@ -180,6 +181,7 @@ public final class DigestionFixture {
     SubLevelContainer.getContainer(level)
         .addForceLoadTicket(controlBody, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
     SubLevelData.hungerPaused(controlBody, true);
+    DevelopmentTestOwnership.assign(controlBody);
     SubLevelData.hunger(controlBody, SubLevelData.maximumHunger(controlBody));
     ((StomachBlockEntity) level.getBlockEntity(controlCore.north()))
         .enqueue(new ItemStack(Items.PORKCHOP), false);

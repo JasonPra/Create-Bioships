@@ -10,6 +10,7 @@ import net.minecraft.world.level.saveddata.SavedData;
 public final class CoreTestState extends SavedData {
   boolean built, running, combatBuilt, combatRunning;
   boolean visionBuilt;
+  UUID developmentOwner;
   BlockPos combatOrigin = new BlockPos(1024, DevelopmentWorldSetup.DEFAULT_TEST_Y, 1024);
   boolean combatFailuresExpanded;
   int combatFailurePage;
@@ -58,6 +59,8 @@ public final class CoreTestState extends SavedData {
                 CoreTestState::new,
                 (tag, registries) -> {
                   var state = new CoreTestState();
+                  if (tag.hasUUID("DevelopmentOwner"))
+                    state.developmentOwner = tag.getUUID("DevelopmentOwner");
                   state.visionBuilt = tag.getBoolean("VisionBuilt");
                   state.combatFailuresExpanded = tag.getBoolean("CombatFailuresExpanded");
                   state.combatFailurePage = tag.getInt("CombatFailurePage");
@@ -127,6 +130,7 @@ public final class CoreTestState extends SavedData {
   }
 
   public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
+    if (developmentOwner != null) tag.putUUID("DevelopmentOwner", developmentOwner);
     tag.putBoolean("VisionBuilt", visionBuilt);
     tag.putBoolean("CombatFailuresExpanded", combatFailuresExpanded);
     tag.putInt("CombatFailurePage", combatFailurePage);

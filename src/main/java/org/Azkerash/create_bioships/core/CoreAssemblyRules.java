@@ -118,6 +118,7 @@ public final class CoreAssemblyRules {
       }
       // Sable preserves the source pose and velocity. The new grid gets an independent identity.
       changed(level, child.getPlot().getCenterBlock());
+      org.Azkerash.create_bioships.core.access.SubLevelPermissions.inherit(body, child);
     }
   }
 
@@ -133,18 +134,31 @@ public final class CoreAssemblyRules {
     PLAYER_PLACEMENTS.computeIfAbsent(level, ignored -> new LinkedHashSet<>()).add(pos.immutable());
   }
 
+  private static final Map<ServerLevel, Map<BlockPos, UUID>> PLACERS = new WeakHashMap<>();
+
+  public static void playerPlaced(ServerLevel level, BlockPos pos, UUID player) {
+    playerPlaced(level, pos);
+    PLACERS.computeIfAbsent(level, l -> new HashMap<>()).put(pos.immutable(), player);
+  }
+
   @SubscribeEvent
   public static void assemblePlayerPlacements(
       net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) {
     for (var level : event.getServer().getAllLevels()) {
       var positions = PLAYER_PLACEMENTS.remove(level);
       if (positions == null) continue;
+      var owners = PLACERS.remove(level);
       for (var pos : positions) {
         if (!level.getBlockState(pos).is(ComponentRegistry.CORE.get())) continue;
-        if (containing(level, pos) != null) changed(level, pos);
+        var body = containing(level, pos);
+        if (body != null) changed(level, pos);
         else
-          SubLevelAssemblyHelper.assembleBlocks(
-              level, pos, List.of(pos), new BoundingBox3i(pos, pos));
+          body =
+              SubLevelAssemblyHelper.assembleBlocks(
+                  level, pos, List.of(pos), new BoundingBox3i(pos, pos));
+        if (body != null && owners != null)
+          org.Azkerash.create_bioships.core.access.SubLevelPermissions.assignIfUnowned(
+              body, owners.get(pos));
       }
     }
   }

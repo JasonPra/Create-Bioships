@@ -211,6 +211,7 @@ public final class CoreArrowFixture {
     SubLevelContainer.getContainer(level)
         .addForceLoadTicket(body, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
     SubLevelData.hungerPaused(body, true);
+    DevelopmentTestOwnership.assign(body);
     state.arrowBody = body.getUniqueId();
     state.arrowRunning = true;
     state.arrowPhase = 0;

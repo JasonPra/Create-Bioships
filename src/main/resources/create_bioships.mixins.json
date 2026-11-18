@@ -22,7 +22,8 @@
     "DevelopmentMenuMixin",
     "DevelopmentPlayerDropsMixin",
     "DevelopmentCreativeSlotMixin",
-    "ComponentStoreSaveMixin"
+    "ComponentStoreSaveMixin",
+    "BiometricMembraneAccessMixin"
   ],
   "client": [],
   "injectors": {

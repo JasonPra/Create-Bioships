@@ -155,6 +155,7 @@ public final class VisionFixture {
       tag.putBoolean(MARK, true);
       body.setUserDataTag(tag);
       SubLevelData.hungerPaused(body, true);
+      DevelopmentTestOwnership.assign(body);
       container.addForceLoadTicket(body, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
     }
     explain(level, "Running: F3+V shows actual cached collision rays");
