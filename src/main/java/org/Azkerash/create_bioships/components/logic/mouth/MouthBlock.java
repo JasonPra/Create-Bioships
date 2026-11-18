@@ -11,7 +11,6 @@ import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.*;
 import net.minecraft.world.level.block.state.*;
 import net.minecraft.world.phys.BlockHitResult;
-import org.Azkerash.create_bioships.components.ComponentRegistry;
 
 public final class MouthBlock extends DirectionalBlock
     implements EntityBlock, com.simibubi.create.content.equipment.wrench.IWrenchable {
@@ -36,13 +35,6 @@ public final class MouthBlock extends DirectionalBlock
 
   public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
     return new MouthBlockEntity(pos, state);
-  }
-
-  public <T extends BlockEntity> BlockEntityTicker<T> getTicker(
-      Level level, BlockState state, BlockEntityType<T> type) {
-    return !level.isClientSide && type == ComponentRegistry.MOUTH_ENTITY.get()
-        ? (l, p, s, be) -> MouthBlockEntity.tick(l, p, s, (MouthBlockEntity) be)
-        : null;
   }
 
   protected InteractionResult useWithoutItem(

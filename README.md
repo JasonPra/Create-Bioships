@@ -402,7 +402,7 @@ dropping, death, and `/clear` preserve it. `DevelopmentLoadout` owns these prote
   offers the held stack. Empty-hand right-click opens its 9-slot intake UI. Native hopper
   insertion is supported; server slots reject non-digestible inputs.
 - Fleshy Intestine (`fleshy_intestine`) joins directly touching faces in all six directions.
-  Cached, bounded routes deliver one item per mouth every 8 ticks. Broken pipes and full
+  One sublevel controller uses a cached graph and a bounded transfer budget every 8 ticks. Broken pipes and full
   destinations preserve food at the source. Routes never cross between separate Sable grids.
 - Mouth/stomach item drops preserve their inventories and stomach processing state through
   vanilla block-entity item data, including wrench removal.
@@ -459,3 +459,27 @@ crafting recipes have not yet been specified.
 Gene validation: all 39 regression tests passed, including native injector doses/vials, capacity
 without free food, rejected duplicate/dead/world injections, gene persistence, guaranteed paste
 yields, and deterministic statistical checks of the one-component bonus.
+
+## Sublevel-owned component simulation
+
+`core.component.SubLevelComponentStore` owns each attached organ's inventory and typed state,
+keyed by a stable `ComponentInstance` UUID with grid-local position and block type. The stomach's
+`StomachState` includes acid, digestion, pending rolled outputs, eating progress, and genes.
+Organ block entities expose views into that store; detached world blocks/items carry portable
+snapshots. Removal releases the old grid's entry; placement imports it into the new grid.
+Legacy block-entity snapshots migrate on first binding. Native Sable serialization flushes dirty
+store data before save/unload, while full block snapshots remain available for native moves.
+
+`core.digestion.SubLevelDigestion` is the single simulation dispatcher per loaded living grid.
+It caches face-connected mouth/stomach/intestine groups and updates topology only when node
+roles change. Mouth/stomach block tickers have been removed; digestion is dispatched centrally,
+and transfers have a per-grid budget of 64 mouths per 8-tick cycle with a rotating cursor.
+`StomachDigestion` retains stomach-specific policy, independently of connection presence.
+
+Core inspection remains a view of grid data. A core exported through block-entity item data is
+marked terminally dead when detached from a creature; recovered dead cores retain death and saved
+core data when reassembled. Ordinary core drops remain empty.
+
+Refactor validation: all 40 tests passed, including actual wrench removal and native placement
+onto another living grid, stable component identity, old-owner release, continued digestion,
+and recovered dead-core persistence. The development biome's empty natural spawn list is unchanged.

@@ -15,7 +15,47 @@ import org.Azkerash.create_bioships.core.*;
 
 /** A synchronized inspection snapshot; all authoritative health belongs to the sublevel. */
 public final class CoreGogglesDisplay extends BlockEntity implements IHaveGoggleInformation {
-  private CompoundTag inspection = new CompoundTag();
+  private CompoundTag inspection = new CompoundTag(), coreSnapshot = new CompoundTag();
+  private boolean recoveredDead;
+
+  public void restoreRecoveredCore() {
+    if (!getBlockState().is(ComponentRegistry.CORE.get()) || !(level instanceof ServerLevel server))
+      return;
+    var body = CoreAssemblyRules.containing(server, worldPosition);
+    if (body != null
+        && SubLevelHealth.blocks(body).stream()
+                .filter(pos -> server.getBlockState(pos).is(ComponentRegistry.CORE.get()))
+                .count()
+            == 1
+        && (recoveredDead || coreSnapshot.getCompound(SubLevelData.HEALTH).getBoolean("dead")))
+      SubLevelData.restoreDeadCore(body, coreSnapshot);
+  }
+
+  @Override
+  public void onLoad() {
+    super.onLoad();
+    restoreRecoveredCore();
+  }
+
+  @Override
+  public void saveToItem(
+      net.minecraft.world.item.ItemStack stack, HolderLookup.Provider registries) {
+    super.saveToItem(stack, registries);
+    if (!getBlockState().is(ComponentRegistry.CORE.get())) return;
+    var body =
+        level instanceof ServerLevel server
+            ? CoreAssemblyRules.containing(server, worldPosition)
+            : null;
+    if (recoveredDead || body != null && SubLevelData.isLiving(body))
+      stack.update(
+          net.minecraft.core.component.DataComponents.BLOCK_ENTITY_DATA,
+          net.minecraft.world.item.component.CustomData.EMPTY,
+          data -> {
+            var tag = data.copyTag();
+            tag.putBoolean("RecoveredDeadCore", true);
+            return net.minecraft.world.item.component.CustomData.of(tag);
+          });
+  }
 
   public CoreGogglesDisplay(BlockPos pos, BlockState state) {
     super(ComponentRegistry.CORE_DISPLAY.get(), pos, state);
@@ -130,17 +170,28 @@ public final class CoreGogglesDisplay extends BlockEntity implements IHaveGoggle
   protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
     super.saveAdditional(tag, registries);
     tag.put("inspection", inspection);
+    if (getBlockState().is(ComponentRegistry.CORE.get()) && level instanceof ServerLevel server) {
+      var body = CoreAssemblyRules.containing(server, worldPosition);
+      if (body != null) coreSnapshot = SubLevelData.coreSnapshot(body);
+    }
+    tag.put("CoreSnapshot", coreSnapshot);
+    tag.putBoolean("RecoveredDeadCore", recoveredDead);
   }
 
   @Override
   protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
     super.loadAdditional(tag, registries);
     inspection = tag.getCompound("inspection");
+    coreSnapshot = tag.getCompound("CoreSnapshot");
+    recoveredDead = tag.getBoolean("RecoveredDeadCore");
+    restoreRecoveredCore();
   }
 
   @Override
   public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
-    return saveWithoutMetadata(registries);
+    var tag = new CompoundTag();
+    tag.put("inspection", inspection.copy());
+    return tag;
   }
 
   @Override

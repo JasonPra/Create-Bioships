@@ -21,7 +21,8 @@
     "DevelopmentInventoryMixin",
     "DevelopmentMenuMixin",
     "DevelopmentPlayerDropsMixin",
-    "DevelopmentCreativeSlotMixin"
+    "DevelopmentCreativeSlotMixin",
+    "ComponentStoreSaveMixin"
   ],
   "client": [],
   "injectors": {

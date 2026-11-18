@@ -15,36 +15,35 @@ public final class StomachGenes {
   public static final int LONGEVITY_CAPACITY = 5, MAX_EFFICIENCY = 3;
   private static final int[] EXTRA_COMPONENT_CHANCE = {0, 20, 30, 35};
   private final StomachBlockEntity stomach;
-  private boolean longevity;
-  private int efficiency;
 
   StomachGenes(StomachBlockEntity stomach) {
     this.stomach = stomach;
   }
 
   public boolean longevity() {
-    return longevity;
+    return stomach.state().longevity;
   }
 
   public int efficiency() {
-    return efficiency;
+    return stomach.state().efficiency;
   }
 
   public int capacityBonus() {
-    return longevity ? LONGEVITY_CAPACITY : 0;
+    return stomach.state().longevity ? LONGEVITY_CAPACITY : 0;
   }
 
   public int pastePerMeal() {
-    return 1 + efficiency;
+    return 1 + stomach.state().efficiency;
   }
 
   public int extraComponentChance() {
-    return EXTRA_COMPONENT_CHANCE[efficiency];
+    return EXTRA_COMPONENT_CHANCE[stomach.state().efficiency];
   }
 
   public boolean accepts(Serum serum) {
-    return serum == ComponentRegistry.LONGEVITY_GENE.get() && !longevity
-        || serum == ComponentRegistry.EFFICIENCY_GENE.get() && efficiency < MAX_EFFICIENCY;
+    return serum == ComponentRegistry.LONGEVITY_GENE.get() && !stomach.state().longevity
+        || serum == ComponentRegistry.EFFICIENCY_GENE.get()
+            && stomach.state().efficiency < MAX_EFFICIENCY;
   }
 
   public ItemInteractionResult inject(Player player, ItemStack injector) {
@@ -58,8 +57,8 @@ public final class StomachGenes {
   }
 
   private void apply(Serum serum) {
-    if (serum == ComponentRegistry.LONGEVITY_GENE.get()) longevity = true;
-    else efficiency++;
+    if (serum == ComponentRegistry.LONGEVITY_GENE.get()) stomach.state().longevity = true;
+    else stomach.state().efficiency++;
     stomach.setChanged();
     if (stomach.getLevel() instanceof ServerLevel level) {
       var body = CoreAssemblyRules.containing(level, stomach.getBlockPos());
@@ -73,7 +72,7 @@ public final class StomachGenes {
    * Called once when the meal is rolled; pending outputs persist across blocked storage/reloads.
    */
   public void addExtraComponent(java.util.List<ItemStack> outputs, RandomSource random) {
-    if (efficiency == 0 || random.nextInt(100) >= extraComponentChance()) return;
+    if (stomach.state().efficiency == 0 || random.nextInt(100) >= extraComponentChance()) return;
     var eligible =
         outputs.stream()
             .filter(stack -> !stack.isEmpty() && !stack.is(StomachBlockEntity.paste()))
@@ -84,13 +83,13 @@ public final class StomachGenes {
 
   public CompoundTag save() {
     var tag = new CompoundTag();
-    tag.putBoolean("Longevity", longevity);
-    tag.putInt("Efficiency", efficiency);
+    tag.putBoolean("Longevity", stomach.state().longevity);
+    tag.putInt("Efficiency", stomach.state().efficiency);
     return tag;
   }
 
   public void load(CompoundTag tag) {
-    longevity = tag.getBoolean("Longevity");
-    efficiency = Math.clamp(tag.getInt("Efficiency"), 0, MAX_EFFICIENCY);
+    stomach.state().longevity = tag.getBoolean("Longevity");
+    stomach.state().efficiency = Math.clamp(tag.getInt("Efficiency"), 0, MAX_EFFICIENCY);
   }
 }

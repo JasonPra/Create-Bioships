@@ -143,6 +143,8 @@ public final class CoreBlock extends Block
             .setValue(WAKE, assembled(destination, to) ? 1 : 0),
         2);
     CoreAssemblyRules.changed(destination, to);
+    if (destination.getBlockEntity(to) instanceof CoreGogglesDisplay display)
+      display.restoreRecoveredCore();
     destination.scheduleTick(to, this, 1);
   }
 }

@@ -11,9 +11,9 @@ import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
-import org.Azkerash.create_bioships.components.logic.intestine.IntestineTransport;
 import org.Azkerash.create_bioships.components.logic.mouth.MouthBlockEntity;
 import org.Azkerash.create_bioships.components.logic.stomach.StomachBlockEntity;
+import org.Azkerash.create_bioships.core.digestion.SubLevelDigestion;
 
 @GameTestHolder(Create_bioships.MODID)
 @PrefixGameTestTemplate(false)
@@ -26,6 +26,12 @@ public final class IntestineTransportTests {
     level.setBlock(pos, ComponentRegistry.MOUTH.get().defaultBlockState(), 3);
     level.setBlock(pos.east(), ComponentRegistry.INTESTINE.get().defaultBlockState(), 3);
     level.setBlock(pos.east(2), ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
+    var grid =
+        SubLevelAssemblyHelper.assembleBlocks(
+            level, pos, List.of(pos, pos.east(), pos.east(2)), new BoundingBox3i(pos, pos.east(2)));
+    SubLevelData.living(grid, true);
+    SubLevelData.hungerPaused(grid, true);
+    pos = grid.getPlot().getCenterBlock();
     var mouth = (MouthBlockEntity) level.getBlockEntity(pos);
     var stomach = (StomachBlockEntity) level.getBlockEntity(pos.east(2));
     var player =
@@ -49,17 +55,17 @@ public final class IntestineTransportTests {
         mouth.feed(new ItemStack(Items.STONE), false).getCount() == 1,
         "Mouth accepted non-digestible stone");
     helper.assertTrue(
-        IntestineTransport.transfer(mouth) == 1 && mouth.isEmpty() && stomach.queued() == 1,
+        SubLevelDigestion.transfer(mouth) == 1 && mouth.isEmpty() && stomach.queued() == 1,
         "Food did not follow face-connected intestine route");
     mouth.feed(new ItemStack(Items.PORKCHOP, 2), false);
     level.removeBlock(pos.east(), false);
     helper.assertTrue(
-        IntestineTransport.transfer(mouth) == 0 && mouth.getItem(0).getCount() == 2,
+        SubLevelDigestion.transfer(mouth) == 0 && mouth.getItem(0).getCount() == 2,
         "Cached route crossed broken intestine");
     level.setBlock(pos.east(), ComponentRegistry.INTESTINE.get().defaultBlockState(), 3);
     for (int i = 0; i < 9; i++) stomach.setItem(i, new ItemStack(Items.PORKCHOP, 64));
     helper.assertTrue(
-        IntestineTransport.transfer(mouth) == 0 && mouth.getItem(0).getCount() == 2,
+        SubLevelDigestion.transfer(mouth) == 0 && mouth.getItem(0).getCount() == 2,
         "Full stomach consumed intake items");
     var drop =
         net.minecraft.world.level.block.Block.getDrops(level.getBlockState(pos), level, pos, mouth)

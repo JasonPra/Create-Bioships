@@ -1,0 +1,153 @@
+package org.Azkerash.create_bioships.core.digestion;
+
+import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
+import dev.ryanhcode.sable.sublevel.ServerSubLevel;
+import java.util.*;
+import net.minecraft.core.*;
+import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import org.Azkerash.create_bioships.Create_bioships;
+import org.Azkerash.create_bioships.components.ComponentRegistry;
+import org.Azkerash.create_bioships.components.logic.mouth.MouthBlockEntity;
+import org.Azkerash.create_bioships.components.logic.stomach.*;
+import org.Azkerash.create_bioships.core.*;
+
+/**
+ * One cached topology and simulation dispatcher per living grid. No pipe or organ block tickers.
+ */
+@EventBusSubscriber(modid = Create_bioships.MODID)
+public final class SubLevelDigestion {
+  public static final int TRANSFER_INTERVAL = 8, MAX_TRANSFERS = 64;
+  private static final Map<ServerSubLevel, Network> NETWORKS = new IdentityHashMap<>();
+
+  public record Group(List<BlockPos> mouths, List<BlockPos> stomachs) {}
+
+  private static final class Network {
+    final ServerSubLevel body;
+    final Map<BlockPos, Integer> nodes = new HashMap<>();
+    List<Group> groups = List.of();
+    boolean dirty = true;
+    int cursor;
+
+    Network(ServerSubLevel body) {
+      this.body = body;
+      for (var pos : SubLevelHealth.blocks(body)) {
+        int role = role(body.getLevel().getBlockState(pos));
+        if (role != 0) nodes.put(pos.immutable(), role);
+      }
+    }
+
+    void rebuild() {
+      if (!dirty) return;
+      var unseen = new HashSet<>(nodes.keySet());
+      var result = new ArrayList<Group>();
+      while (!unseen.isEmpty()) {
+        var queue = new ArrayDeque<BlockPos>();
+        var mouths = new ArrayList<BlockPos>();
+        var stomachs = new ArrayList<BlockPos>();
+        var first = unseen.iterator().next();
+        unseen.remove(first);
+        queue.add(first);
+        while (!queue.isEmpty()) {
+          var pos = queue.removeFirst();
+          int role = nodes.get(pos);
+          if (role == 2) mouths.add(pos);
+          if (role == 3) stomachs.add(pos);
+          for (var direction : Direction.values()) {
+            var next = pos.relative(direction);
+            if (unseen.remove(next)) queue.add(next);
+          }
+        }
+        mouths.sort(BlockPos::compareTo);
+        stomachs.sort(BlockPos::compareTo);
+        result.add(new Group(List.copyOf(mouths), List.copyOf(stomachs)));
+      }
+      groups = List.copyOf(result);
+      dirty = false;
+    }
+  }
+
+  private SubLevelDigestion() {}
+
+  private static int role(BlockState state) {
+    return state.is(ComponentRegistry.INTESTINE.get())
+        ? 1
+        : state.is(ComponentRegistry.MOUTH.get())
+            ? 2
+            : state.is(ComponentRegistry.STOMACH.get()) ? 3 : 0;
+  }
+
+  public static void changed(ServerSubLevel body, BlockPos pos, BlockState state) {
+    var network = NETWORKS.get(body);
+    if (network == null) return;
+    int role = role(state), old = network.nodes.getOrDefault(pos, 0);
+    if (role == old) return;
+    if (role == 0) network.nodes.remove(pos);
+    else network.nodes.put(pos.immutable(), role);
+    network.dirty = true;
+  }
+
+  public static List<Group> groups(ServerSubLevel body) {
+    var network = NETWORKS.computeIfAbsent(body, Network::new);
+    network.rebuild();
+    return network.groups;
+  }
+
+  public static int transfer(MouthBlockEntity mouth) {
+    if (!(mouth.getLevel() instanceof net.minecraft.server.level.ServerLevel level)) return 0;
+    var body = CoreAssemblyRules.containing(level, mouth.getBlockPos());
+    if (body == null || !SubLevelData.isLiving(body) || SubLevelHealth.status(body).dead())
+      return 0;
+    for (var group : groups(body))
+      if (group.mouths.contains(mouth.getBlockPos()))
+        for (var pos : group.stomachs)
+          if (level.getBlockEntity(pos) instanceof StomachBlockEntity stomach)
+            for (int slot = 0; slot < mouth.getContainerSize(); slot++) {
+              var stack = mouth.getItem(slot);
+              if (stack.isEmpty()) continue;
+              var one = stack.copyWithCount(1);
+              if (stomach.enqueue(one, true).isEmpty() && stomach.enqueue(one, false).isEmpty()) {
+                mouth.removeItem(slot, 1);
+                return 1;
+              }
+            }
+    return 0;
+  }
+
+  @SubscribeEvent
+  public static void tick(net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) {
+    var active = Collections.newSetFromMap(new IdentityHashMap<ServerSubLevel, Boolean>());
+    for (var level : event.getServer().getAllLevels()) {
+      var container = SubLevelContainer.getContainer(level);
+      if (container == null) continue;
+      for (var entry : container.getAllSubLevels())
+        if (entry instanceof ServerSubLevel body
+            && SubLevelData.isLiving(body)
+            && !body.isRemoved()
+            && !SubLevelHealth.status(body).dead()) {
+          active.add(body);
+          var groups = groups(body);
+          for (var group : groups)
+            for (var pos : group.stomachs)
+              if (level.getBlockEntity(pos) instanceof StomachBlockEntity stomach)
+                StomachDigestion.advance(stomach);
+          if (level.getGameTime() % TRANSFER_INTERVAL == 0) {
+            var mouths = groups.stream().flatMap(g -> g.mouths.stream()).toList();
+            var network = NETWORKS.get(body);
+            int count = Math.min(MAX_TRANSFERS, mouths.size());
+            for (int i = 0; i < count; i++) {
+              var pos = mouths.get(Math.floorMod(network.cursor++, mouths.size()));
+              if (level.getBlockEntity(pos) instanceof MouthBlockEntity mouth) transfer(mouth);
+            }
+          }
+        }
+    }
+    NETWORKS.keySet().retainAll(active);
+  }
+
+  @SubscribeEvent
+  public static void stopped(net.neoforged.neoforge.event.server.ServerStoppedEvent event) {
+    NETWORKS.clear();
+  }
+}

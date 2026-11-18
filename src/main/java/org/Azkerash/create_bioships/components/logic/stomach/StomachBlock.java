@@ -48,19 +48,6 @@ public final class StomachBlock extends DirectionalBlock
   }
 
   @Override
-  public <T extends net.minecraft.world.level.block.entity.BlockEntity>
-      net.minecraft.world.level.block.entity.BlockEntityTicker<T> getTicker(
-          net.minecraft.world.level.Level level,
-          BlockState state,
-          net.minecraft.world.level.block.entity.BlockEntityType<T> type) {
-    return !level.isClientSide
-            && type
-                == org.Azkerash.create_bioships.components.ComponentRegistry.STOMACH_DISPLAY.get()
-        ? (l, p, s, be) -> StomachBlockEntity.tick(l, p, s, (StomachBlockEntity) be)
-        : null;
-  }
-
-  @Override
   protected net.minecraft.world.ItemInteractionResult useItemOn(
       net.minecraft.world.item.ItemStack stack,
       BlockState state,

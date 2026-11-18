@@ -104,6 +104,7 @@ public final class StomachLifecycleTests {
               player.setItemInHand(
                   InteractionHand.MAIN_HAND,
                   Create_bioships.BIOSHIP_WRENCH.get().getDefaultInstance());
+              var componentId = stomach.componentId();
               var point = body.logicalPose().transformPosition(Vec3.atCenterOf(core.east()));
               player.gameMode.useItemOn(
                   player,
@@ -125,9 +126,29 @@ public final class StomachLifecycleTests {
               helper.assertTrue(
                   carried.has(DataComponents.BLOCK_ENTITY_DATA), "Wrench drop lost stomach data");
               drop.discard();
-              var placed = origin.south(4);
+              helper.assertTrue(
+                  !org.Azkerash.create_bioships
+                      .core
+                      .component
+                      .SubLevelComponentStore
+                      .get(body)
+                      .contains(componentId),
+                  "Old grid retained removed inventory ownership");
+              var destination = origin.south(4);
+              level.setBlock(destination, ComponentRegistry.CORE.get().defaultBlockState(), 3);
+              var target =
+                  SubLevelAssemblyHelper.assembleBlocks(
+                      level,
+                      destination,
+                      java.util.List.of(destination),
+                      new BoundingBox3i(destination, destination));
+              var targetCore = target.getPlot().getCenterBlock();
+              CoreAssemblyRules.mark(level, targetCore);
+              SubLevelData.hungerPaused(target, true);
+              var placed = targetCore.east();
               player.setShiftKeyDown(false);
-              player.setPos(Vec3.atCenterOf(placed).add(0, 0, -2));
+              player.setPos(
+                  target.logicalPose().transformPosition(Vec3.atCenterOf(placed).add(0, 0, -2)));
               player.setItemInHand(InteractionHand.MAIN_HAND, carried);
               var result =
                   ((BlockItem) carried.getItem())
@@ -137,9 +158,9 @@ public final class StomachLifecycleTests {
                                   player,
                                   InteractionHand.MAIN_HAND,
                                   new BlockHitResult(
-                                      Vec3.atCenterOf(placed.below()).add(0, .5, 0),
-                                      Direction.UP,
-                                      placed.below(),
+                                      Vec3.atCenterOf(targetCore).add(.5, 0, 0),
+                                      Direction.EAST,
+                                      targetCore,
                                       false))));
               helper.assertTrue(
                   result.consumesAction()
@@ -152,7 +173,28 @@ public final class StomachLifecycleTests {
                       && restored.acid() == acid
                       && restored.progress() == progress,
                   "Wrench/placement lost inventory or digestion progress");
-              frozen(helper, restored, "Replaced world stomach continued processing");
+              helper.assertTrue(
+                  restored.componentId().equals(componentId)
+                      && org.Azkerash.create_bioships
+                          .core
+                          .component
+                          .SubLevelComponentStore
+                          .get(target)
+                          .contains(componentId),
+                  "New grid failed to adopt stable component inventory");
+              int before = restored.progress();
+              restored.advance();
+              helper.assertTrue(
+                  restored.progress() == before + 1,
+                  "Transferred stomach did not resume on new living grid");
+              org.Azkerash.create_bioships.core.component.SubLevelComponentStore.flush(target);
+              helper.assertTrue(
+                  target
+                      .getUserDataTag()
+                      .getCompound(
+                          org.Azkerash.create_bioships.core.component.SubLevelComponentStore.KEY)
+                      .contains(componentId.toString()),
+                  "Sublevel did not persist component inventory");
             })
         .thenExecuteAfter(10, helper::succeed);
   }

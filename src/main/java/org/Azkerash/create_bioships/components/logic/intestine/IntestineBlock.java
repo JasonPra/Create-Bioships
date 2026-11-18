@@ -69,7 +69,6 @@ public final class IntestineBlock extends Block
       BlockState state, Level level, BlockPos pos, BlockState old, boolean moved) {
     super.onPlace(state, level, pos, old, moved);
     if (!level.isClientSide) {
-      IntestineTransport.invalidate(level);
       var next = state;
       for (var e : CONNECTIONS.entrySet())
         next =
@@ -80,7 +79,6 @@ public final class IntestineBlock extends Block
 
   protected void onRemove(
       BlockState state, Level level, BlockPos pos, BlockState next, boolean moved) {
-    if (!next.is(this)) IntestineTransport.invalidate(level);
     super.onRemove(state, level, pos, next, moved);
   }
 

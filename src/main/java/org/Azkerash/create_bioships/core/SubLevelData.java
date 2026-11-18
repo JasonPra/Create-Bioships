@@ -42,6 +42,37 @@ public final class SubLevelData {
 
   private SubLevelData() {}
 
+  public static CompoundTag coreSnapshot(ServerSubLevel body) {
+    initialize(body);
+    var result = new CompoundTag();
+    var root = body.getUserDataTag();
+    result.put(HEALTH, root.getCompound(HEALTH).copy());
+    result.put(STATE, root.getCompound(STATE).copy());
+    return result;
+  }
+
+  public static void restoreDeadCore(ServerSubLevel body, CompoundTag snapshot) {
+    var health = SubLevelHealth.status(body);
+    if (health.dead()) return;
+    var old = snapshot.getCompound(HEALTH);
+    String cause = old.getString("cause");
+    health(
+        body,
+        new Health(
+            0,
+            health.maximum(),
+            Math.max(health.maximum(), old.getDouble("damage")),
+            true,
+            cause.isEmpty() ? "detached_core" : cause));
+    var saved = snapshot.getCompound(STATE);
+    if (!saved.isEmpty()) {
+      var root = body.getUserDataTag().copy();
+      root.put(STATE, saved.copy());
+      body.setUserDataTag(root);
+      SubLevelHunger.refreshCapacity(body);
+    }
+  }
+
   public static void initialize(ServerSubLevel body) {
     var existing = body.getUserDataTag();
     if (existing != null

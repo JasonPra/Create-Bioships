@@ -13,43 +13,99 @@ import org.Azkerash.create_bioships.core.CoreAssemblyRules;
 
 /** Saved inventory and moving-grid interaction distance shared by organ containers. */
 public abstract class OrganInventory extends BlockEntity implements Container, MenuProvider {
-  protected final NonNullList<ItemStack> items;
+  private final NonNullList<ItemStack> localItems;
+  private java.util.UUID componentId = java.util.UUID.randomUUID();
+  private org.Azkerash.create_bioships.core.component.SubLevelComponentStore.Entry binding;
+  private dev.ryanhcode.sable.sublevel.ServerSubLevel owner;
+
+  public java.util.UUID componentId() {
+    return componentId;
+  }
+
+  protected org.Azkerash.create_bioships.core.component.ComponentState localState() {
+    return null;
+  }
+
+  protected final org.Azkerash.create_bioships.core.component.ComponentState ownedState() {
+    bind();
+    return binding == null ? localState() : binding.state;
+  }
+
+  public final NonNullList<ItemStack> items() {
+    bind();
+    return binding == null ? localItems : binding.items;
+  }
+
+  private void bind() {
+    if (isRemoved() || !(level instanceof ServerLevel server)) return;
+    var body = CoreAssemblyRules.containing(server, worldPosition);
+    if (body == null || body == owner && binding != null) return;
+    binding =
+        org.Azkerash.create_bioships
+            .core
+            .component
+            .SubLevelComponentStore
+            .get(body)
+            .bind(
+                componentId,
+                worldPosition,
+                net.minecraft.core.registries.BuiltInRegistries.BLOCK
+                    .getKey(getBlockState().getBlock())
+                    .toString(),
+                binding == null ? localItems : binding.items,
+                localState());
+    owner = body;
+    componentId = binding.id;
+  }
+
+  @Override
+  public void onLoad() {
+    super.onLoad();
+    bind();
+  }
+
+  @Override
+  public void setChanged() {
+    super.setChanged();
+    if (owner != null && !owner.isRemoved())
+      org.Azkerash.create_bioships.core.component.SubLevelComponentStore.get(owner).dirty();
+  }
 
   protected OrganInventory(BlockEntityType<?> type, BlockPos pos, BlockState state, int size) {
     super(type, pos, state);
-    items = NonNullList.withSize(size, ItemStack.EMPTY);
+    localItems = NonNullList.withSize(size, ItemStack.EMPTY);
   }
 
   public int getContainerSize() {
-    return items.size();
+    return items().size();
   }
 
   public boolean isEmpty() {
-    return items.stream().allMatch(ItemStack::isEmpty);
+    return items().stream().allMatch(ItemStack::isEmpty);
   }
 
   public ItemStack getItem(int slot) {
-    return items.get(slot);
+    return items().get(slot);
   }
 
   public ItemStack removeItem(int slot, int count) {
-    var result = ContainerHelper.removeItem(items, slot, count);
+    var result = ContainerHelper.removeItem(items(), slot, count);
     if (!result.isEmpty()) setChanged();
     return result;
   }
 
   public ItemStack removeItemNoUpdate(int slot) {
-    return ContainerHelper.takeItem(items, slot);
+    return ContainerHelper.takeItem(items(), slot);
   }
 
   public void setItem(int slot, ItemStack stack) {
-    items.set(slot, stack);
+    items().set(slot, stack);
     stack.limitSize(getMaxStackSize(stack));
     setChanged();
   }
 
   public void clearContent() {
-    items.clear();
+    items().clear();
     setChanged();
   }
 
@@ -69,13 +125,22 @@ public abstract class OrganInventory extends BlockEntity implements Container, M
 
   protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
     super.saveAdditional(tag, registries);
-    ContainerHelper.saveAllItems(tag, items, registries);
+    ContainerHelper.saveAllItems(tag, items(), registries);
+    tag.putUUID("ComponentInstance", componentId);
   }
 
   protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
     super.loadAdditional(tag, registries);
-    items.clear();
-    ContainerHelper.loadAllItems(tag, items, registries);
+    if (tag.hasUUID("ComponentInstance") && !componentId.equals(tag.getUUID("ComponentInstance"))) {
+      if (owner != null && binding != null)
+        org.Azkerash.create_bioships.core.component.SubLevelComponentStore.release(
+            owner, binding.id, worldPosition);
+      binding = null;
+      owner = null;
+      componentId = tag.getUUID("ComponentInstance");
+    }
+    (binding == null ? localItems : binding.items).clear();
+    ContainerHelper.loadAllItems(tag, binding == null ? localItems : binding.items, registries);
   }
 
   /** One insertion implementation for transport, with an explicit simulation phase. */
@@ -83,7 +148,7 @@ public abstract class OrganInventory extends BlockEntity implements Container, M
     var rest = incoming.copy();
     for (int pass = 0; pass < 2; pass++)
       for (int i = first; i < end && !rest.isEmpty(); i++) {
-        var current = items.get(i);
+        var current = items().get(i);
         if (pass == 0 && current.isEmpty() || pass == 1 && !current.isEmpty()) continue;
         if (!current.isEmpty() && !ItemStack.isSameItemSameComponents(current, rest)) continue;
         int amount =
@@ -92,7 +157,7 @@ public abstract class OrganInventory extends BlockEntity implements Container, M
                 Math.min(rest.getMaxStackSize(), getMaxStackSize()) - current.getCount());
         if (amount <= 0) continue;
         if (!simulate) {
-          if (current.isEmpty()) items.set(i, rest.copyWithCount(amount));
+          if (current.isEmpty()) items().set(i, rest.copyWithCount(amount));
           else current.grow(amount);
           setChanged();
         }

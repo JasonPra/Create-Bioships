@@ -5,10 +5,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.*;
 import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
-import org.Azkerash.create_bioships.components.logic.intestine.IntestineTransport;
 import org.Azkerash.create_bioships.components.logic.inventory.OrganInventory;
 import org.Azkerash.create_bioships.components.logic.stomach.StomachBlockEntity;
 
@@ -32,9 +30,5 @@ public final class MouthBlockEntity extends OrganInventory {
 
   public AbstractContainerMenu createMenu(int id, Inventory inventory, Player player) {
     return new MouthMenu(id, inventory, this);
-  }
-
-  public static void tick(Level level, BlockPos pos, BlockState state, MouthBlockEntity mouth) {
-    if (!level.isClientSide && level.getGameTime() % 8 == 0) IntestineTransport.transfer(mouth);
   }
 }
