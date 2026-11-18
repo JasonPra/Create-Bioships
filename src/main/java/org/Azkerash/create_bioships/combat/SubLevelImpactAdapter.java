@@ -26,6 +26,7 @@ public final class SubLevelImpactAdapter {
   private final Entity collisionProbe;
   private final Set<SurfaceWoundState.Surface> contacted = new HashSet<>();
   private long contactTick = Long.MIN_VALUE;
+  private long lastFlash = Long.MIN_VALUE;
 
   private SubLevelImpactAdapter(ServerSubLevel body) {
     this.body = body;
@@ -43,11 +44,21 @@ public final class SubLevelImpactAdapter {
     return collisionProbe;
   }
 
+  /** Visual impact feedback belongs to grid lifetime, not the living mob target. */
+  public void flash() {
+    long now = body.getLevel().getGameTime();
+    if (lastFlash != Long.MIN_VALUE && now - lastFlash < 10) return;
+    lastFlash = now;
+    net.neoforged.neoforge.network.PacketDistributor.sendToPlayersInDimension(
+        body.getLevel(), new HurtFlashPayload(body.getUniqueId()));
+  }
+
   public void wound(BlockPos cell, Direction face) {
     if (body.isRemoved()
         || !SubLevelData.isLiving(body)
         || face == null
         || body.getLevel().getBlockState(cell).isAir()) return;
+    if (SubLevelHealth.status(body).dead()) flash();
     long now = body.getLevel().getGameTime();
     if (contactTick != now) {
       contactTick = now;

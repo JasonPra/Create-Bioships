@@ -306,7 +306,7 @@ public final class CombatAdapter {
   }
 
   public static void hurtFlash(ServerSubLevel body) {
-    net.neoforged.neoforge.network.PacketDistributor.sendToPlayersInDimension(
-        body.getLevel(), new HurtFlashPayload(body.getUniqueId()));
+    var impacts = SubLevelImpactAdapter.get(body);
+    if (impacts != null) impacts.flash();
   }
 }
