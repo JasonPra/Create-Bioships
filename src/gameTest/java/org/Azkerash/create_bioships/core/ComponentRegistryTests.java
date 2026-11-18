@@ -44,9 +44,17 @@ public final class ComponentRegistryTests {
               .defaultBlockState()
               .setValue(StomachBlock.FACING, direction);
       helper.getLevel().setBlock(pos, state, 3);
+      var display = helper.getLevel().getBlockEntity(pos);
+      var tooltip = new java.util.ArrayList<net.minecraft.network.chat.Component>();
       helper.assertTrue(
-          helper.getLevel().getBlockEntity(pos) == null && !state.hasBlockEntity(),
-          "Shell-only stomach unexpectedly has a block entity/GUI backing");
+          display
+                  instanceof
+                  org.Azkerash.create_bioships.components.logic.stomach.StomachGogglesDisplay
+              && !((org.Azkerash.create_bioships.components.logic.stomach.StomachGogglesDisplay)
+                      display)
+                  .addToGoggleTooltip(tooltip, false)
+              && tooltip.isEmpty(),
+          "Stomach inspection hook is not empty");
       helper.assertTrue(
           state.isCollisionShapeFullBlock(helper.getLevel(), pos),
           "Stomach does not fit a full flesh block");

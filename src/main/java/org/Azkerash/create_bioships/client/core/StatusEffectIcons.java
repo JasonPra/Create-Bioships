@@ -46,8 +46,10 @@ public final class StatusEffectIcons {
                                 matrix,
                                 buffers));
             } else if (marker.startsWith("create_bioships:hunger/")) {
-              int hunger = Integer.parseInt(marker.substring("create_bioships:hunger/".length()));
-              for (int i = 0; i < org.Azkerash.create_bioships.core.SubLevelData.MAX_HUNGER; i++) {
+              var values = marker.substring("create_bioships:hunger/".length()).split("/");
+              int hunger = Integer.parseInt(values[0]);
+              int maximum = values.length > 1 ? Integer.parseInt(values[1]) : 5;
+              for (int i = 0; i < maximum; i++) {
                 var name = hunger > i ? "food_full" : "food_empty";
                 draw(
                     mc.getGuiSprites()

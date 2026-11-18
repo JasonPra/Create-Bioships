@@ -11,7 +11,55 @@ import org.Azkerash.create_bioships.combat.CombatAdapter;
 /** Temporary fixed-rate metabolism; saved state belongs to SubLevelData, not the timing policy. */
 @EventBusSubscriber(modid = Create_bioships.MODID)
 public final class SubLevelHunger {
-  public static final int DRAIN_INTERVAL = 20 * 60, STARVATION_INTERVAL = 20 * 4;
+  public static final int DRAIN_INTERVAL = 20 * 60,
+      STARVATION_INTERVAL = 20 * 4,
+      REGENERATION_INTERVAL = 20 * 4;
+
+  private static final java.util.Map<ServerSubLevel, java.util.Set<Long>> STOMACHS =
+      new java.util.WeakHashMap<>();
+
+  static void initializeCapacity(ServerSubLevel body, java.util.Collection<Long> cells) {
+    var stomachs = new java.util.HashSet<Long>();
+    for (long cell : cells)
+      if (body.getLevel()
+          .getBlockState(net.minecraft.core.BlockPos.of(cell))
+          .is(org.Azkerash.create_bioships.components.ComponentRegistry.STOMACH.get()))
+        stomachs.add(cell);
+    STOMACHS.put(body, stomachs);
+    capacityChanged(body, stomachs);
+  }
+
+  static void blockChanged(
+      ServerSubLevel body,
+      net.minecraft.core.BlockPos pos,
+      net.minecraft.world.level.block.state.BlockState state) {
+    var stomachs = STOMACHS.get(body);
+    if (stomachs == null) return;
+    boolean changed =
+        state.is(org.Azkerash.create_bioships.components.ComponentRegistry.STOMACH.get())
+            ? stomachs.add(pos.asLong())
+            : stomachs.remove(pos.asLong());
+    if (changed) capacityChanged(body, stomachs);
+  }
+
+  private static void capacityChanged(ServerSubLevel body, java.util.Set<Long> stomachs) {
+    SubLevelData.maximumHunger(
+        body, SubLevelData.BASE_HUNGER + (stomachs.isEmpty() ? 0 : SubLevelData.STOMACH_HUNGER));
+  }
+
+  public static boolean hasStomach(ServerSubLevel body) {
+    SubLevelHealth.status(body);
+    return !STOMACHS.getOrDefault(body, java.util.Set.of()).isEmpty();
+  }
+
+  public static int minimumHungerToHeal(ServerSubLevel body) {
+    return (SubLevelData.maximumHunger(body) * 9 + 9) / 10;
+  }
+
+  public static boolean canRegenerate(ServerSubLevel body) {
+    return !SubLevelHealth.status(body).dead()
+        && SubLevelData.hunger(body) >= minimumHungerToHeal(body);
+  }
 
   private SubLevelHunger() {}
 
@@ -35,27 +83,39 @@ public final class SubLevelHunger {
     int value = state.value();
     int drain = Math.clamp(state.drainTicks(), 0, DRAIN_INTERVAL - 1);
     int starvation = Math.clamp(state.starvationTicks(), 0, STARVATION_INTERVAL - 1);
+    int regeneration =
+        Math.clamp(SubLevelData.regenerationTicks(body), 0, REGENERATION_INTERVAL - 1);
     while (ticks > 0 && !SubLevelHealth.status(body).dead()) {
+      int step = Math.min(20, ticks);
+      ticks -= step;
       if (value > 0) {
-        int spent = Math.min(ticks, DRAIN_INTERVAL - drain);
-        ticks -= spent;
-        drain += spent;
+        drain += step;
         starvation = 0;
         if (drain >= DRAIN_INTERVAL) {
           value--;
-          drain = 0;
+          drain -= DRAIN_INTERVAL;
         }
       } else {
-        int spent = Math.min(ticks, STARVATION_INTERVAL - starvation);
-        ticks -= spent;
-        starvation += spent;
+        starvation += step;
         if (starvation >= STARVATION_INTERVAL) {
-          starvation = 0;
+          starvation -= STARVATION_INTERVAL;
           var target = CombatAdapter.target(body);
           if (target != null) target.hurt(body.getLevel().damageSources().starve(), 1);
         }
       }
+      var health = SubLevelHealth.status(body);
+      if (!health.dead()
+          && value >= minimumHungerToHeal(body)
+          && health.current() < health.maximum()) {
+        regeneration += step;
+        if (regeneration >= REGENERATION_INTERVAL) {
+          regeneration -= REGENERATION_INTERVAL;
+          var target = CombatAdapter.target(body);
+          if (target != null) target.heal(1);
+        }
+      } else regeneration = 0;
     }
+    SubLevelData.regenerationTicks(body, regeneration);
     SubLevelData.hungerState(body, new SubLevelData.Hunger(value, false, drain, starvation));
   }
 }

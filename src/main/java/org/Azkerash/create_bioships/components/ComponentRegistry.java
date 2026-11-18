@@ -73,6 +73,24 @@ public final class ComponentRegistry {
                           CoreGogglesDisplay::new, CORE.get(), VITAL_READOUT.get())
                       .build(null));
 
+  public static final DeferredHolder<
+          BlockEntityType<?>,
+          BlockEntityType<
+              org.Azkerash.create_bioships.components.logic.stomach.StomachGogglesDisplay>>
+      STOMACH_DISPLAY =
+          BLOCK_ENTITIES.register(
+              "stomach_display",
+              () ->
+                  BlockEntityType.Builder.of(
+                          org.Azkerash.create_bioships
+                                  .components
+                                  .logic
+                                  .stomach
+                                  .StomachGogglesDisplay
+                              ::new,
+                          STOMACH.get())
+                      .build(null));
+
   private ComponentRegistry() {}
 
   private static <B extends Block> DeferredBlock<B> component(ComponentDefinition<B> definition) {

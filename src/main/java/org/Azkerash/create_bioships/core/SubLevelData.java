@@ -9,7 +9,11 @@ import net.minecraft.nbt.CompoundTag;
 public final class SubLevelData {
   public static final String EFFECTS = "create_bioships:effects";
   public static final String HEALTH = "create_bioships:health", STATE = "create_bioships:state";
-  public static final int MAX_HUNGER = 5, DEFAULT_HUNGER = 5, MAX_TRUST = 100, DEFAULT_TRUST = 0;
+  public static final int BASE_HUNGER = 5,
+      STOMACH_HUNGER = 5,
+      DEFAULT_HUNGER = 5,
+      MAX_TRUST = 100,
+      DEFAULT_TRUST = 0;
 
   public record Health(
       double current, double maximum, double damage, boolean dead, String causeOfDeath) {}
@@ -22,7 +26,7 @@ public final class SubLevelData {
     var existing = body.getUserDataTag();
     if (existing != null
         && existing.contains(HEALTH)
-        && existing.getCompound(STATE).getInt("version") == 2) return;
+        && existing.getCompound(STATE).getInt("version") == 3) return;
     var root = existing == null ? new CompoundTag() : existing.copy();
     var health = root.getCompound(HEALTH);
     var state = root.getCompound(STATE);
@@ -52,8 +56,12 @@ public final class SubLevelData {
       state.putInt("hunger", DEFAULT_HUNGER);
       changed = true;
     }
-    if (state.getInt("hunger") < 0 || state.getInt("hunger") > MAX_HUNGER) {
-      state.putInt("hunger", Math.clamp(state.getInt("hunger"), 0, MAX_HUNGER));
+    if (!state.contains("maximumHunger")) {
+      state.putInt("maximumHunger", BASE_HUNGER);
+      changed = true;
+    }
+    if (state.getInt("hunger") < 0 || state.getInt("hunger") > state.getInt("maximumHunger")) {
+      state.putInt("hunger", Math.clamp(state.getInt("hunger"), 0, state.getInt("maximumHunger")));
       changed = true;
     }
     if (!state.contains("hungerPaused")) {
@@ -68,12 +76,16 @@ public final class SubLevelData {
       state.putInt("starvationTicks", 0);
       changed = true;
     }
+    if (!state.contains("regenerationTicks")) {
+      state.putInt("regenerationTicks", 0);
+      changed = true;
+    }
     if (!state.contains("trust")) {
       state.putInt("trust", DEFAULT_TRUST);
       changed = true;
     }
-    if (state.getInt("version") != 2) {
-      state.putInt("version", 2);
+    if (state.getInt("version") != 3) {
+      state.putInt("version", 3);
       changed = true;
     }
     if (changed) {
@@ -112,6 +124,32 @@ public final class SubLevelData {
     return body.getUserDataTag().getCompound(STATE).getInt("hunger");
   }
 
+  public static int maximumHunger(ServerSubLevel body) {
+    SubLevelHealth.status(
+        body); // Initializes the event-driven component census once after loading.
+    return body.getUserDataTag().getCompound(STATE).getInt("maximumHunger");
+  }
+
+  static void maximumHunger(ServerSubLevel body, int capacity) {
+    initialize(body);
+    var current = body.getUserDataTag().getCompound(STATE);
+    if (current.getInt("maximumHunger") == capacity && current.getInt("hunger") <= capacity) return;
+    var root = body.getUserDataTag().copy();
+    var state = root.getCompound(STATE);
+    state.putInt("maximumHunger", capacity);
+    state.putInt("hunger", Math.clamp(state.getInt("hunger"), 0, capacity));
+    body.setUserDataTag(root);
+  }
+
+  public static int regenerationTicks(ServerSubLevel body) {
+    initialize(body);
+    return body.getUserDataTag().getCompound(STATE).getInt("regenerationTicks");
+  }
+
+  static void regenerationTicks(ServerSubLevel body, int ticks) {
+    variable(body, "regenerationTicks", Math.max(0, ticks));
+  }
+
   public static int trust(ServerSubLevel body) {
     initialize(body);
     return body.getUserDataTag().getCompound(STATE).getInt("trust");
@@ -120,7 +158,8 @@ public final class SubLevelData {
   public static void hunger(ServerSubLevel body, int value) {
     var old = hungerState(body);
     hungerState(
-        body, new Hunger(Math.clamp(value, 0, MAX_HUNGER), old.paused(), old.drainTicks(), 0));
+        body,
+        new Hunger(Math.clamp(value, 0, maximumHunger(body)), old.paused(), old.drainTicks(), 0));
   }
 
   public static Hunger hungerState(ServerSubLevel body) {
@@ -141,9 +180,10 @@ public final class SubLevelData {
 
   static void hungerState(ServerSubLevel body, Hunger value) {
     initialize(body);
+    int maximum = maximumHunger(body);
     var root = body.getUserDataTag().copy();
     var state = root.getCompound(STATE);
-    state.putInt("hunger", Math.clamp(value.value(), 0, MAX_HUNGER));
+    state.putInt("hunger", Math.clamp(value.value(), 0, maximum));
     state.putBoolean("hungerPaused", value.paused());
     state.putInt("hungerDrainTicks", Math.max(0, value.drainTicks()));
     state.putInt("starvationTicks", Math.max(0, value.starvationTicks()));

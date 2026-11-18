@@ -344,5 +344,28 @@ remain separate. Development-only fixture blocks retain their dedicated testing 
 folded panel. It directly reuses Biomancy's packed-flesh and flesh textures, with the panel
 recessed within the block envelope so surrounding tissue can meet it flush. It supports six
 facing directions, native Create wrench rotation, ordinary self-drops, the component creative
-tab, and the existing 10-HP block contribution. It has no block entity, inventory, GUI,
-digestion, or hunger effects yet. No old digestion/growth implementation has been restored.
+tab, and the existing 10-HP block contribution. It has no inventory or GUI. Its empty inspection hook and hunger-capacity contribution
+are described below; digestion is not implemented. No old digestion/growth implementation has been restored.
+
+
+## Stomach capacity, healing, and inspection access
+
+A creature has 5 base hunger capacity. One stomach adds 5 capacity, for a maximum of 10,
+without supplying food. Placing a second stomach on that creature is rejected. Existing or
+command-assembled extra stomachs do not stack capacity; no imported blocks are deleted.
+Capacity is initialized from the block census and updated on component changes, including
+same-health block replacements. Losing the last stomach clamps excess food to the new limit;
+replacing it never refills food.
+
+Passive regeneration requires `ceil(maximum hunger × 0.90)`: 5/5 without a stomach, 9/10
+with one. While damaged and above that threshold, it restores 1 HP per 80 loaded ticks.
+Potion healing/regeneration remain independent of hunger, as in vanilla. Hunger pause freezes
+passive regeneration as well as drain/starvation. Regeneration progress is saved. Saturation
+and additional food costs remain future work.
+
+The stomach now has a Create inspection block entity, deliberately returning no tooltip
+content and exposing no inventory/menu. This mod's core/readout/stomach and future Create
+inspection displays require the exact symbiotic-goggles item worn in the head slot. A shared
+whitelist check is applied only to our block entities in Create's client overlay pipeline;
+engineer/aviator goggles are not permitted for these displays, while other mods' displays
+retain their normal access rules. Core/readout bars show the current capacity dynamically.

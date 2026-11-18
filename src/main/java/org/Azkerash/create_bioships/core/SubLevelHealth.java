@@ -54,6 +54,7 @@ public final class SubLevelHealth {
       }
     }
     CELLS.put(body, cells);
+    SubLevelHunger.initializeCapacity(body, cells.keySet());
     var old = SubLevelData.health(body);
     store(body, old.damage(), maximum, old.dead(), old.causeOfDeath());
   }
@@ -87,6 +88,7 @@ public final class SubLevelHealth {
   /** Called by Sable after a plot block changes. State-only animations cost no health work. */
   public static void blockChanged(ServerSubLevel body, BlockPos pos, BlockState state) {
     if (!CoreAssemblyRules.isCreature(body) || !CELLS.containsKey(body)) return;
+    SubLevelHunger.blockChanged(body, pos, state);
     var cells = CELLS.get(body);
     double previous = cells.getOrDefault(pos.asLong(), 0d), next = BlockHealthValues.health(state);
     if (previous == next) return;
