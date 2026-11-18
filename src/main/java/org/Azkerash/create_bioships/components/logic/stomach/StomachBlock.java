@@ -81,6 +81,8 @@ public final class StomachBlock extends DirectionalBlock
       net.minecraft.core.BlockPos pos,
       net.minecraft.world.entity.player.Player player,
       net.minecraft.world.phys.BlockHitResult hit) {
+    if (hit.getDirection() != state.getValue(FACING))
+      return net.minecraft.world.InteractionResult.PASS;
     if (player instanceof net.minecraft.server.level.ServerPlayer server
         && level.getBlockEntity(pos) instanceof StomachBlockEntity stomach)
       server.openMenu(stomach);

@@ -367,7 +367,8 @@ passive regeneration as well as drain/starvation. Regeneration progress is saved
 and additional food costs remain future work.
 
 The stomach has a Create inspection block entity showing acid, digestion, and queued food.
-Its inventory menu is inspect-only. This mod's core/readout/stomach and future Create
+Its inventory menu is inspect-only and opens only from the panel face (`facing`);
+other faces remain available for ordinary block interactions. This mod's core/readout/stomach and future Create
 inspection displays require the exact symbiotic-goggles item worn in the head slot. A shared
 whitelist check is applied only to our block entities in Create's client overlay pipeline;
 engineer/aviator goggles are not permitted for these displays, while other mods' displays
