@@ -1,0 +1,117 @@
+package org.Azkerash.create_bioships.components.logic.nerve;
+
+import dev.ryanhcode.sable.sublevel.ServerSubLevel;
+import java.util.*;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.phys.*;
+import net.neoforged.neoforge.network.PacketDistributor;
+import org.Azkerash.create_bioships.components.ComponentRegistry;
+import org.Azkerash.create_bioships.core.*;
+import org.Azkerash.create_bioships.core.access.SubLevelPermissions;
+
+/** Server-validated panel interactions; a remote/stale screen never grants editing rights. */
+public final class NervePanelControl {
+  public static final int CANDIDATE_LIMIT = 128;
+
+  private NervePanelControl() {}
+
+  public static boolean usable(ServerPlayer player, ServerSubLevel body, BlockPos panel) {
+    return !body.isRemoved()
+        && player.level() == body.getLevel()
+        && SubLevelData.isLiving(body)
+        && CoreAssemblyRules.containing(body.getLevel(), panel) == body
+        && body.getLevel().getBlockState(panel).is(ComponentRegistry.NERVE_PANEL.get())
+        && player
+                .getEyePosition()
+                .distanceToSqr(body.logicalPose().transformPosition(Vec3.atCenterOf(panel)))
+            <= 64;
+  }
+
+  public static void open(ServerPlayer player, ServerSubLevel body, BlockPos panel) {
+    if (!usable(player, body, panel)) return;
+    var access = SubLevelPermissions.get(body);
+    boolean editable = player.getUUID().equals(access.owner());
+    var candidates = new ArrayList<SubLevelPermissions.Entry>();
+    if (editable) {
+      for (var other : player.getServer().getPlayerList().getPlayers())
+        if (!access.permits(other.getUUID()) && candidates.size() < CANDIDATE_LIMIT)
+          candidates.add(
+              new SubLevelPermissions.Entry(
+                  other.getUUID(), other.getGameProfile().getName(), true));
+      var center = body.logicalPose().transformPosition(Vec3.atCenterOf(panel));
+      var mobs =
+          body.getLevel()
+              .getEntitiesOfClass(
+                  Mob.class,
+                  new AABB(center, center).inflate(32),
+                  e -> e.isAlive() && e.hasCustomName());
+      mobs.sort(Comparator.comparingDouble(e -> e.position().distanceToSqr(center)));
+      for (var mob : mobs)
+        if (!access.permits(mob.getUUID()) && candidates.size() < CANDIDATE_LIMIT)
+          candidates.add(
+              new SubLevelPermissions.Entry(mob.getUUID(), mob.getName().getString(), false));
+      // Allowed players may still be selected as the next owner.
+      for (var other : player.getServer().getPlayerList().getPlayers())
+        if (!other.getUUID().equals(access.owner())
+            && candidates.stream().noneMatch(e -> e.id().equals(other.getUUID()))
+            && candidates.size() < CANDIDATE_LIMIT)
+          candidates.add(
+              new SubLevelPermissions.Entry(
+                  other.getUUID(), other.getGameProfile().getName(), true));
+    }
+    String ownerName = "Unassigned";
+    if (access.owner() != null) {
+      var online = player.getServer().getPlayerList().getPlayer(access.owner());
+      var cache = player.getServer().getProfileCache();
+      ownerName =
+          editable
+              ? player.getGameProfile().getName()
+              : online != null
+                  ? online.getGameProfile().getName()
+                  : cache != null
+                      ? cache
+                          .get(access.owner())
+                          .map(com.mojang.authlib.GameProfile::getName)
+                          .orElse(access.owner().toString().substring(0, 8))
+                      : access.owner().toString().substring(0, 8);
+    }
+    PacketDistributor.sendToPlayer(
+        player,
+        new NervePanelPayload(
+            body.getUniqueId(),
+            panel,
+            ownerName,
+            editable,
+            access.allowed(),
+            List.copyOf(candidates)));
+  }
+
+  public static boolean handle(ServerPlayer player, NervePanelAction action) {
+    var body = CoreAssemblyRules.containing(player.serverLevel(), action.panel());
+    if (body == null
+        || !body.getUniqueId().equals(action.grid())
+        || !usable(player, body, action.panel())) return false;
+    if (!player.getUUID().equals(SubLevelPermissions.get(body).owner())) return false;
+    boolean changed = false;
+    if (action.action() == 1) {
+      var target = player.getServer().getPlayerList().getPlayer(action.target());
+      net.minecraft.world.entity.Entity entity =
+          target == null ? body.getLevel().getEntity(action.target()) : target;
+      var center = body.logicalPose().transformPosition(Vec3.atCenterOf(action.panel()));
+      if (entity instanceof ServerPlayer
+          || entity instanceof Mob
+              && entity.isAlive()
+              && entity.hasCustomName()
+              && entity.position().distanceToSqr(center) <= 32 * 32)
+        changed = SubLevelPermissions.add(body, player.getUUID(), entity);
+    } else if (action.action() == 2)
+      changed = SubLevelPermissions.remove(body, player.getUUID(), action.target());
+    else if (action.action() == 3
+        && player.getServer().getPlayerList().getPlayer(action.target()) != null)
+      changed = SubLevelPermissions.transfer(body, player.getUUID(), action.target());
+    open(player, body, action.panel());
+    return changed;
+  }
+}

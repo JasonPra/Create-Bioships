@@ -79,6 +79,19 @@ public final class ComponentRegistry {
               "vital_readout",
               () ->
                   new VitalReadoutBlock(BlockBehaviour.Properties.of().strength(1).noOcclusion())));
+  public static final DeferredBlock<
+          org.Azkerash.create_bioships.components.logic.nerve.NervePanelBlock>
+      NERVE_PANEL =
+          component(
+              new ComponentDefinition<>(
+                  "nerve_panel",
+                  () ->
+                      new org.Azkerash.create_bioships.components.logic.nerve.NervePanelBlock(
+                          BlockBehaviour.Properties.of()
+                              .strength(1)
+                              .noOcclusion()
+                              .sound(SoundType.SLIME_BLOCK)
+                              .lightLevel(state -> 3))));
   public static final DeferredBlock<EyeBlock> LAND_EYE =
       component(
           new ComponentDefinition<>(
