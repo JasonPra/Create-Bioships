@@ -1,0 +1,63 @@
+{
+  "textures": {
+    "skin": "biomancy:block/packed_flesh",
+    "screen": "create_bioships:block/brain_port"
+  },
+  "elements": [
+    {
+      "from": [
+        3,
+        3,
+        -0.8
+      ],
+      "to": [
+        13,
+        13,
+        0
+      ],
+      "faces": {
+        "north": {
+          "texture": "#skin"
+        },
+        "south": {
+          "texture": "#skin"
+        },
+        "up": {
+          "texture": "#skin"
+        },
+        "down": {
+          "texture": "#skin"
+        },
+        "west": {
+          "texture": "#skin"
+        },
+        "east": {
+          "texture": "#skin"
+        }
+      }
+    },
+    {
+      "from": [
+        4,
+        4,
+        -0.85
+      ],
+      "to": [
+        12,
+        12,
+        -0.8
+      ],
+      "faces": {
+        "north": {
+          "texture": "#screen",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    }
+  ]
+}

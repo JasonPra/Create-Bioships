@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "FFF",
+    "FRF",
+    "FBF"
+  ],
+  "key": {
+    "F": {
+      "item": "biomancy:packed_flesh"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "B": {
+      "item": "minecraft:bone"
+    }
+  },
+  "result": {
+    "id": "create_bioships:brain",
+    "count": 1
+  }
+}

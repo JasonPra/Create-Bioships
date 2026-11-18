@@ -7,6 +7,7 @@ import net.minecraft.nbt.CompoundTag;
  * Saved variable definitions and defaults. Gameplay systems supply changes, never duplicate them.
  */
 public final class SubLevelData {
+  public static final String BRAIN = "create_bioships:brain";
   public static final String ACCESS = "create_bioships:access";
   public static final String LIVING = "create_bioships:living";
 

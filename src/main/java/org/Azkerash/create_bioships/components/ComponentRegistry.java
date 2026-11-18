@@ -102,6 +102,22 @@ public final class ComponentRegistry {
           new ComponentDefinition<>(
               "aquatic_eye",
               () -> new EyeBlock(BlockBehaviour.Properties.of().strength(1).noOcclusion())));
+  public static final DeferredBlock<org.Azkerash.create_bioships.components.logic.brain.BrainBlock>
+      BRAIN =
+          component(
+              new ComponentDefinition<>(
+                  "brain",
+                  () ->
+                      new org.Azkerash.create_bioships.components.logic.brain.BrainBlock(
+                          BlockBehaviour.Properties.of()
+                              .strength(1)
+                              .sound(SoundType.SLIME_BLOCK))));
+  public static final DeferredItem<
+          org.Azkerash.create_bioships.components.logic.brain.BehaviorCardItem>
+      BLANK_BEHAVIOR_CARD =
+          ITEMS.register(
+              "blank_behavior_card",
+              org.Azkerash.create_bioships.components.logic.brain.BehaviorCardItem::new);
   public static final DeferredBlock<StomachBlock> STOMACH =
       component(
           new ComponentDefinition<>(
@@ -196,6 +212,17 @@ public final class ComponentRegistry {
                   net.neoforged.neoforge.common.extensions.IMenuTypeExtension.create(
                       org.Azkerash.create_bioships.components.logic.mouth.MouthMenu::fromNetwork));
 
+  public static final DeferredHolder<
+          net.minecraft.world.inventory.MenuType<?>,
+          net.minecraft.world.inventory.MenuType<
+              org.Azkerash.create_bioships.components.logic.brain.BrainMenu>>
+      BRAIN_MENU =
+          MENUS.register(
+              "brain",
+              () ->
+                  net.neoforged.neoforge.common.extensions.IMenuTypeExtension.create(
+                      org.Azkerash.create_bioships.components.logic.brain.BrainMenu::fromNetwork));
+
   private ComponentRegistry() {}
 
   private static <B extends Block> DeferredBlock<B> component(ComponentDefinition<B> definition) {
@@ -211,6 +238,7 @@ public final class ComponentRegistry {
 
   public static void addToCreative(CreativeModeTab.Output output) {
     BLOCK_ITEMS.values().forEach(item -> output.accept(item.get()));
+    output.accept(BLANK_BEHAVIOR_CARD.get());
     output.accept(LONGEVITY_SERUM.get());
     output.accept(EFFICIENCY_SERUM.get());
   }

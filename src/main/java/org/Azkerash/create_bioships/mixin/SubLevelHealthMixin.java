@@ -15,6 +15,7 @@ public abstract class SubLevelHealthMixin {
   private void core$blockChanged(BlockPos pos, BlockState state, CallbackInfo callback) {
     var body = ((ServerLevelPlot) (Object) this).getSubLevel();
     SubLevelHealth.blockChanged(body, pos, state);
+    org.Azkerash.create_bioships.core.brain.SubLevelBrains.changed(body, pos, state);
     org.Azkerash.create_bioships.core.vision.SubLevelVision.changed(body, pos, state);
     org.Azkerash.create_bioships.core.digestion.SubLevelDigestion.changed(body, pos, state);
     org.Azkerash.create_bioships.core.component.SubLevelComponentStore.changed(body, pos, state);

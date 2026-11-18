@@ -17,5 +17,7 @@
   "serum.create_bioships.efficiency_gene": "Efficiency Gene Serum",
   "serum.create_bioships.longevity_gene.tooltip": "Stomach gene: +5 maximum hunger. One dose per stomach.",
   "serum.create_bioships.efficiency_gene.tooltip": "Stomach gene: more paste each meal and a chance for one extra component. Three tiers.",
-  "block.create_bioships.nerve_panel": "Nerve Panel"
+  "block.create_bioships.nerve_panel": "Nerve Panel",
+  "block.create_bioships.brain": "Brain",
+  "item.create_bioships.blank_behavior_card": "Blank Behavior Card"
 }

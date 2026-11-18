@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "minecraft:paper"
+    },
+    {
+      "item": "minecraft:redstone"
+    },
+    {
+      "item": "biomancy:packed_flesh"
+    }
+  ],
+  "result": {
+    "id": "create_bioships:blank_behavior_card",
+    "count": 1
+  }
+}
