@@ -16,6 +16,10 @@ public final class SubLevelHealth {
 
   private SubLevelHealth() {}
 
+  public static boolean initialized(ServerSubLevel body) {
+    return CELLS.containsKey(body);
+  }
+
   public static java.util.List<BlockPos> blocks(ServerSubLevel body) {
     initialize(body);
     return CELLS.get(body).keySet().stream().map(BlockPos::of).toList();
@@ -87,7 +91,8 @@ public final class SubLevelHealth {
 
   /** Called by Sable after a plot block changes. State-only animations cost no health work. */
   public static void blockChanged(ServerSubLevel body, BlockPos pos, BlockState state) {
-    if (!CoreAssemblyRules.isCreature(body) || !CELLS.containsKey(body)) return;
+    if ((!CoreAssemblyRules.isCreature(body) && !SubLevelData.isLiving(body))
+        || !CELLS.containsKey(body)) return;
     SubLevelHunger.blockChanged(body, pos, state);
     var cells = CELLS.get(body);
     double previous = cells.getOrDefault(pos.asLong(), 0d), next = BlockHealthValues.health(state);

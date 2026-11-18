@@ -57,7 +57,14 @@ public final class SubLevelHunger {
     SubLevelData.maximumHunger(body, SubLevelData.BASE_HUNGER + capacity);
   }
 
+  private static final java.util.Set<ServerSubLevel> PENDING_CAPACITY =
+      java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+
   public static void refreshCapacity(ServerSubLevel body) {
+    if (!SubLevelHealth.initialized(body)) {
+      PENDING_CAPACITY.add(body);
+      return;
+    }
     SubLevelHealth.status(body);
     var stomachs = STOMACHS.get(body);
     if (stomachs != null) capacityChanged(body, stomachs);
@@ -81,6 +88,13 @@ public final class SubLevelHunger {
 
   @SubscribeEvent
   public static void tick(ServerTickEvent.Post event) {
+    var pending = java.util.List.copyOf(PENDING_CAPACITY);
+    PENDING_CAPACITY.clear();
+    for (var body : pending)
+      if (!body.isRemoved()) {
+        SubLevelHealth.status(body);
+        refreshCapacity(body);
+      }
     for (var level : event.getServer().getAllLevels()) {
       if (level.getGameTime() % 20 != 0) continue;
       var container = SubLevelContainer.getContainer(level);

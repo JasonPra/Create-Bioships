@@ -19,6 +19,7 @@ import org.Azkerash.create_bioships.core.*;
 @EventBusSubscriber(modid = Create_bioships.MODID)
 public final class SubLevelDigestion {
   public static final int TRANSFER_INTERVAL = 8, MAX_TRANSFERS = 64;
+  private static int nextVersion;
   private static final Map<ServerSubLevel, Network> NETWORKS = new IdentityHashMap<>();
 
   public record Group(List<BlockPos> mouths, List<BlockPos> stomachs, List<BlockPos> sacs) {}
@@ -28,7 +29,7 @@ public final class SubLevelDigestion {
     final Map<BlockPos, Integer> nodes = new HashMap<>();
     List<Group> groups = List.of();
     boolean dirty = true;
-    int cursor;
+    int cursor, version = ++nextVersion;
 
     Network(ServerSubLevel body) {
       this.body = body;
@@ -91,12 +92,23 @@ public final class SubLevelDigestion {
     if (role == 0) network.nodes.remove(pos);
     else network.nodes.put(pos.immutable(), role);
     network.dirty = true;
+    network.version = ++nextVersion;
   }
 
   public static List<Group> groups(ServerSubLevel body) {
     var network = NETWORKS.computeIfAbsent(body, Network::new);
     network.rebuild();
     return network.groups;
+  }
+
+  public static int topologyVersion(ServerSubLevel body) {
+    groups(body);
+    return NETWORKS.get(body).version;
+  }
+
+  public static Map<BlockPos, Integer> debugNodes(ServerSubLevel body) {
+    groups(body);
+    return Map.copyOf(NETWORKS.get(body).nodes);
   }
 
   public static int transfer(MouthBlockEntity mouth) {
@@ -128,10 +140,10 @@ public final class SubLevelDigestion {
       for (var entry : container.getAllSubLevels())
         if (entry instanceof ServerSubLevel body
             && SubLevelData.isLiving(body)
-            && !body.isRemoved()
-            && !SubLevelHealth.status(body).dead()) {
+            && !body.isRemoved()) {
           active.add(body);
           var groups = groups(body);
+          if (SubLevelHealth.status(body).dead()) continue;
           for (var group : groups)
             for (var pos : group.stomachs)
               if (level.getBlockEntity(pos) instanceof StomachBlockEntity stomach)

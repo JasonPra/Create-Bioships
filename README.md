@@ -497,3 +497,27 @@ food retrieval. Blocked/full destinations leave source items intact.
 Storage searches use rotating windows of at most eight sacs and a bounded per-grid service
 budget. Pipe blocks have no item-processing tickers. All 42 regression tests passed, including
 six-face branch visuals, overflow, retrieval, component preservation, and broken-line rejection.
+
+## F3+I intestine graph debugger
+
+Press **F3+I** in-game to toggle the nearby sublevel intestine graph (within 128 blocks). It
+shows blue connection lines, red open branch ends, green component connection ports, and
+colored endpoint boxes: pink mouths, purple stomachs, cyan storage sacs. Lines draw through
+opaque tissue without writing world depth. F3+I replaces vanilla's copy-target-data shortcut
+while this mod is installed. It adds no per-pipe simulation and transmits no inventory contents.
+
+The client subscribes only while enabled. The server sends cached topology when it changes,
+with a 4,096-node limit per grid. The digestion fixture now includes a connected sac branch
+and a deliberate open branch for inspection. Use `/digestion_test reset` then START to rebuild
+that layout in existing development worlds. Native F3+I key input, graph delivery, through-tissue
+rendering, and the installed-gene stomach UI were checked in the Minecraft client.
+
+The debugger regression also verifies the graph wire codec, branch removal, stable revisions,
+and corpse inspection. Initial component census is deferred until assembly has finished;
+generic living-flag grids receive the same component-change accounting as amoeba cores.
+
+Final verification: all 43 required tests passed in the final build. The 43-test optional
+Epic Fight run also passed. Native client QA confirmed injector effects/installed-gene UI
+and actual F3+I input with graph delivery, through-tissue lines, connected ports and open ends.
+Temporary client QA probes are excluded from the shipped JAR. Gene yield changes affect meals
+started after injection; meals already in progress retain their saved rolled outputs.

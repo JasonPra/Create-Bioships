@@ -28,6 +28,7 @@ public final class BioInjectorIntegration {
     if (level.isClientSide) return ItemInteractionResult.SUCCESS;
     apply.accept(serum);
     injector.consumeSerum(stack, player);
+    injector.setInjectionSuccess(stack, true);
     player.getCooldowns().addCooldown(injector, InjectorItem.COOL_DOWN_TICKS);
     level.playSound(
         null,

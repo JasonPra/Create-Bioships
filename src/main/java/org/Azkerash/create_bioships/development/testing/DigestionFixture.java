@@ -39,7 +39,15 @@ public final class DigestionFixture {
 
   private static List<BlockPos> cells(ServerLevel level) {
     var m = mouth(level);
-    return List.of(m, m.east(), m.east(2), m.east(3), m.east(3).south());
+    return List.of(
+        m,
+        m.east(),
+        m.east(2),
+        m.east(3),
+        m.east(3).south(),
+        m.east().south(),
+        m.east().south(2),
+        m.east(2).north());
   }
 
   public static void reset(ServerLevel level) {
@@ -95,6 +103,14 @@ public final class DigestionFixture {
     level.setBlock(m.east(2), ComponentRegistry.INTESTINE.get().defaultBlockState(), 3);
     level.setBlock(m.east(3), ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
     level.setBlock(m.east(3).south(), ComponentRegistry.CORE.get().defaultBlockState(), 3);
+    level.setBlock(m.east().south(), ComponentRegistry.INTESTINE.get().defaultBlockState(), 3);
+    level.setBlock(m.east(2).north(), ComponentRegistry.INTESTINE.get().defaultBlockState(), 3);
+    level.setBlock(
+        m.east().south(2),
+        net.minecraft.core.registries.BuiltInRegistries.BLOCK
+            .get(net.minecraft.resources.ResourceLocation.parse("biomancy:storage_sac"))
+            .defaultBlockState(),
+        3);
     level.setBlock(isolated(level), ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
     control(level, base.offset(-3, 0, -7), "digestion_test start");
     control(level, base.offset(3, 0, -7), "digestion_test reset");
@@ -128,7 +144,10 @@ public final class DigestionFixture {
     var m = mouth(level);
     var body =
         SubLevelAssemblyHelper.assembleBlocks(
-            level, m.east(3).south(), cells(level), new BoundingBox3i(m, m.east(3).south()));
+            level,
+            m.east(3).south(),
+            cells(level),
+            new BoundingBox3i(m.north(), m.east(3).south(2)));
     if (body == null) return 0;
     var core = body.getPlot().getCenterBlock();
     CoreAssemblyRules.changed(level, core);
@@ -255,6 +274,7 @@ public final class DigestionFixture {
                     + "Mouth → intestines → stomach; four pork chops.\n"
                     + "Seeded living control has no mouth or intestines.\n"
                     + "Inspect acid, digestion, components and hunger.\n"
+                    + "F3+I: connected sac branch and open-end debug lines.\n"
                     + state.digestionResult),
             level.registryAccess()));
     tag.putString("billboard", "center");
