@@ -14,11 +14,13 @@ import net.minecraft.world.phys.BlockHitResult;
 
 public final class MouthBlock extends DirectionalBlock
     implements EntityBlock, com.simibubi.create.content.equipment.wrench.IWrenchable {
+  public static final net.minecraft.world.level.block.state.properties.IntegerProperty CHEW =
+      net.minecraft.world.level.block.state.properties.IntegerProperty.create("chew", 0, 3);
   public static final MapCodec<MouthBlock> CODEC = simpleCodec(MouthBlock::new);
 
   public MouthBlock(Properties properties) {
     super(properties);
-    registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
+    registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(CHEW, 0));
   }
 
   protected MapCodec<? extends DirectionalBlock> codec() {
@@ -26,7 +28,7 @@ public final class MouthBlock extends DirectionalBlock
   }
 
   protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-    builder.add(FACING);
+    builder.add(FACING, CHEW);
   }
 
   public BlockState getStateForPlacement(BlockPlaceContext context) {
@@ -64,6 +66,34 @@ public final class MouthBlock extends DirectionalBlock
       return ItemInteractionResult.sidedSuccess(level.isClientSide);
     }
     return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+  }
+
+  static void chewingSound(net.minecraft.server.level.ServerLevel level, BlockPos pos) {
+    level.playSound(
+        null,
+        pos,
+        net.minecraft.sounds.SoundEvents.GENERIC_EAT,
+        net.minecraft.sounds.SoundSource.BLOCKS,
+        .45f,
+        .8f + level.random.nextFloat() * .15f);
+  }
+
+  @Override
+  protected void tick(
+      BlockState state,
+      net.minecraft.server.level.ServerLevel level,
+      BlockPos pos,
+      net.minecraft.util.RandomSource random) {
+    if (!(level.getBlockEntity(pos) instanceof MouthBlockEntity mouth)) return;
+    int remaining = mouth.chewRemaining();
+    if (!mouth.active() || remaining == 0) {
+      if (state.getValue(CHEW) != 0) level.setBlock(pos, state.setValue(CHEW, 0), 2);
+      return;
+    }
+    int phase = state.getValue(CHEW) % 3 + 1;
+    level.setBlock(pos, state.setValue(CHEW, phase), 2);
+    if ((MouthBlockEntity.CHEW_TICKS - remaining) % 9 == 0) chewingSound(level, pos);
+    level.scheduleTick(pos, this, Math.min(3, remaining));
   }
 
   protected BlockState rotate(BlockState state, Rotation rotation) {

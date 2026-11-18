@@ -12,6 +12,121 @@ import org.Azkerash.create_bioships.components.logic.stomach.StomachBlockEntity;
 
 /** Food intake only. Digestion belongs to stomachs, routing to intestine transport. */
 public final class MouthBlockEntity extends OrganInventory {
+  public static final int CHEW_TICKS = 60;
+  private final ChewingState detachedState = new ChewingState();
+  private java.util.List<ItemStack> observed = java.util.List.of();
+  private boolean observing;
+
+  /** Only animation timing; inventory remains in the same grid-owned component entry. */
+  private static final class ChewingState
+      implements org.Azkerash.create_bioships.core.component.ComponentState {
+    long until;
+
+    public net.minecraft.nbt.CompoundTag save(net.minecraft.core.HolderLookup.Provider registries) {
+      var tag = new net.minecraft.nbt.CompoundTag();
+      tag.putLong("ChewUntil", until);
+      return tag;
+    }
+
+    public void load(
+        net.minecraft.nbt.CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries) {
+      until = tag.getLong("ChewUntil");
+    }
+  }
+
+  @Override
+  protected org.Azkerash.create_bioships.core.component.ComponentState localState() {
+    return detachedState;
+  }
+
+  private ChewingState chewing() {
+    return (ChewingState) ownedState();
+  }
+
+  public int chewRemaining() {
+    return level == null
+        ? 0
+        : (int) Math.clamp(chewing().until - level.getGameTime(), 0, CHEW_TICKS);
+  }
+
+  public boolean active() {
+    if (!(level instanceof net.minecraft.server.level.ServerLevel server)) return false;
+    var body =
+        org.Azkerash.create_bioships.core.CoreAssemblyRules.containing(server, worldPosition);
+    return body != null
+        && org.Azkerash.create_bioships.core.SubLevelData.isLiving(body)
+        && !org.Azkerash.create_bioships.core.SubLevelHealth.status(body).dead();
+  }
+
+  private void remember() {
+    observed = items().stream().map(ItemStack::copy).toList();
+  }
+
+  @Override
+  public void onLoad() {
+    super.onLoad();
+    remember();
+    if (level instanceof net.minecraft.server.level.ServerLevel server && chewRemaining() > 0) {
+      chewing().until = Math.min(chewing().until, server.getGameTime() + CHEW_TICKS);
+      server.scheduleTick(worldPosition, getBlockState().getBlock(), 1);
+    }
+  }
+
+  @Override
+  public void setChanged() {
+    super.setChanged();
+    if (observing || !(level instanceof net.minecraft.server.level.ServerLevel server)) return;
+    observing = true;
+    try {
+      boolean added = false;
+      for (var stack : items())
+        if (!stack.isEmpty() && canPlaceItem(0, stack)) {
+          int now =
+              items().stream()
+                  .filter(other -> ItemStack.isSameItemSameComponents(stack, other))
+                  .mapToInt(ItemStack::getCount)
+                  .sum();
+          int before =
+              observed.stream()
+                  .filter(other -> ItemStack.isSameItemSameComponents(stack, other))
+                  .mapToInt(ItemStack::getCount)
+                  .sum();
+          if (now > before) {
+            added = true;
+            break;
+          }
+        }
+      remember();
+      if (added && active()) {
+        boolean starting = chewRemaining() == 0;
+        chewing().until = server.getGameTime() + CHEW_TICKS;
+        super.setChanged();
+        if (starting) {
+          server.setBlock(worldPosition, getBlockState().setValue(MouthBlock.CHEW, 1), 2);
+          MouthBlock.chewingSound(server, worldPosition);
+        }
+        server.scheduleTick(worldPosition, getBlockState().getBlock(), 3);
+      }
+    } finally {
+      observing = false;
+    }
+  }
+
+  @Override
+  protected void saveAdditional(
+      net.minecraft.nbt.CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries) {
+    super.saveAdditional(tag, registries);
+    tag.merge(chewing().save(registries));
+  }
+
+  @Override
+  protected void loadAdditional(
+      net.minecraft.nbt.CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries) {
+    super.loadAdditional(tag, registries);
+    chewing().load(tag, registries);
+    remember();
+  }
+
   public MouthBlockEntity(BlockPos pos, BlockState state) {
     super(ComponentRegistry.MOUTH_ENTITY.get(), pos, state, 9);
   }
