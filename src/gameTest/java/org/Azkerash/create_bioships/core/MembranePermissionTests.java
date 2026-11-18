@@ -51,6 +51,36 @@ public final class MembranePermissionTests {
         state.getCollisionShape(level, pos, CollisionContext.of(owner)).isEmpty()
             && !state.getCollisionShape(level, pos, CollisionContext.of(guest)).isEmpty(),
         "Native membrane did not distinguish owner and denied guest");
+    try {
+      var movementShape =
+          dev.ryanhcode.sable.sublevel.entity_collision.SubLevelEntityCollision.class
+              .getDeclaredMethod(
+                  "getSubLevelEntityCollisionShape",
+                  net.minecraft.world.entity.Entity.class,
+                  org.joml.Vector3dc.class,
+                  dev.ryanhcode.sable.companion.math.Pose3dc.class,
+                  net.minecraft.world.level.block.state.BlockState.class,
+                  dev.ryanhcode.sable.util.LevelAccelerator.class,
+                  BlockPos.class,
+                  dev.ryanhcode.sable.api.math.LevelReusedVectors.class);
+      movementShape.setAccessible(true);
+      var query = new dev.ryanhcode.sable.util.LevelAccelerator(level);
+      var vectors = new dev.ryanhcode.sable.api.math.LevelReusedVectors();
+      var center = new org.joml.Vector3d();
+      var pass =
+          (net.minecraft.world.phys.shapes.VoxelShape)
+              movementShape.invoke(
+                  null, owner, center, body.logicalPose(), state, query, pos, vectors);
+      var deny =
+          (net.minecraft.world.phys.shapes.VoxelShape)
+              movementShape.invoke(
+                  null, guest, center, body.logicalPose(), state, query, pos, vectors);
+      helper.assertTrue(
+          pass.isEmpty() && !deny.isEmpty(),
+          "Sable movement bypassed entity-aware membrane permissions");
+    } catch (ReflectiveOperationException error) {
+      throw new IllegalStateException(error);
+    }
     helper.assertTrue(
         !SubLevelPermissions.add(body, intruder.getUUID(), guest)
             && SubLevelPermissions.add(body, owner.getUUID(), guest),

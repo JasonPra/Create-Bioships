@@ -23,7 +23,8 @@
     "DevelopmentPlayerDropsMixin",
     "DevelopmentCreativeSlotMixin",
     "ComponentStoreSaveMixin",
-    "BiometricMembraneAccessMixin"
+    "BiometricMembraneAccessMixin",
+    "SableMembraneCollisionMixin"
   ],
   "client": [],
   "injectors": {

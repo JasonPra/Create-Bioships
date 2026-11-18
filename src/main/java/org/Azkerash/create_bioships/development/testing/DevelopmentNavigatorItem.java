@@ -63,13 +63,18 @@ public final class DevelopmentNavigatorItem extends Item {
             org.Azkerash.create_bioships.components.ComponentRegistry.STOMACH_ITEM.get(),
             "Regression: Digestion and food intake"));
     entries.setItem(5, icon(Items.ENDER_EYE, "Regression: Vision in air and water"));
+    entries.setItem(
+        6,
+        icon(
+            org.Azkerash.create_bioships.components.ComponentRegistry.NERVE_PANEL.get().asItem(),
+            "Regression: Biometric membrane access"));
     player.openMenu(
         new SimpleMenuProvider(
             (id, inventory, viewer) ->
                 new ChestMenu(MenuType.GENERIC_9x1, id, inventory, entries, 1) {
                   @Override
                   public void clicked(int slot, int button, ClickType type, Player clicking) {
-                    if (slot < 0 || slot > 5) return;
+                    if (slot < 0 || slot > 6) return;
                     var base =
                         slot == 0
                             ? state.layout().base()
@@ -81,7 +86,9 @@ public final class DevelopmentNavigatorItem extends Item {
                                         ? state.potionOrigin
                                         : slot == 4
                                             ? state.digestionOrigin
-                                            : VisionFixture.base(level);
+                                            : slot == 5
+                                                ? VisionFixture.base(level)
+                                                : MembraneFixture.base(level);
                     clicking.closeContainer();
                     if (clicking instanceof ServerPlayer server) {
                       server.teleportTo(

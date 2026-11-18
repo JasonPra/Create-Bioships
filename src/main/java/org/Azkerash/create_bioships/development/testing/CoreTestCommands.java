@@ -261,6 +261,23 @@ public final class CoreTestCommands {
                     return 1;
                   }));
     event.getDispatcher().register(potions);
+    var membrane = Commands.literal("membrane_test").requires(source -> source.hasPermission(2));
+    for (var action : List.of("start", "reset", "status"))
+      membrane.then(
+          Commands.literal(action)
+              .executes(
+                  ctx -> {
+                    var level = ctx.getSource().getLevel();
+                    if (action.equals("reset")) {
+                      MembraneFixture.reset(level);
+                      return 1;
+                    }
+                    if (action.equals("start")) return MembraneFixture.start(level);
+                    ctx.getSource()
+                        .sendSuccess(() -> Component.literal(MembraneFixture.status(level)), false);
+                    return 1;
+                  }));
+    event.getDispatcher().register(membrane);
     var vision = Commands.literal("vision_test").requires(source -> source.hasPermission(2));
     for (var action : List.of("start", "reset", "status"))
       vision.then(

@@ -47,17 +47,23 @@ public final class NervePanelScreen extends Screen {
     for (int i = 0; i < 3; i++) {
       final int value = i;
       addRenderableWidget(
-          Button.builder(
-                  Component.literal(tabs[i]),
+          new OrganButton(
+                  x + 12 + i * 113,
+                  y + 52,
+                  109,
+                  18,
+                  tabs[i],
                   b -> {
                     tab = value;
                     page = 0;
                     rebuildRows();
                   })
-              .bounds(x + 12 + i * 113, y + 52, 109, 18)
-              .build());
+              .selected(() -> tab == value)
+              .accent(0xffc9aa76));
     }
-    var filter = new EditBox(font, x + 14, y + 78, 332, 18, Component.literal("Filter names"));
+    var filter = new EditBox(font, x + 32, y + 82, 308, 14, Component.literal("Filter names"));
+    filter.setBordered(false);
+    filter.setTextColor(OrganScreenStyle.TEXT);
     filter.setMaxLength(80);
     filter.setHint(Component.literal("Filter by name…"));
     filter.setValue(search);
@@ -70,33 +76,33 @@ public final class NervePanelScreen extends Screen {
     addRenderableWidget(filter);
     previous =
         addRenderableWidget(
-            Button.builder(
-                    Component.literal("<"),
-                    b -> {
-                      page--;
-                      rebuildRows();
-                    })
-                .bounds(x + 12, y + 232, 24, 18)
-                .build());
+            new OrganButton(
+                x + 12,
+                y + 232,
+                24,
+                18,
+                "<",
+                b -> {
+                  page--;
+                  rebuildRows();
+                }));
     next =
         addRenderableWidget(
-            Button.builder(
-                    Component.literal(">"),
-                    b -> {
-                      page++;
-                      rebuildRows();
-                    })
-                .bounds(x + 40, y + 232, 24, 18)
-                .build());
+            new OrganButton(
+                x + 40,
+                y + 232,
+                24,
+                18,
+                ">",
+                b -> {
+                  page++;
+                  rebuildRows();
+                }));
     refresh =
         addRenderableWidget(
-            Button.builder(Component.literal("Refresh"), b -> send(0, new UUID(0, 0)))
-                .bounds(x + 190, y + 232, 74, 18)
-                .build());
+            new OrganButton(x + 190, y + 232, 74, 18, "Refresh", b -> send(0, new UUID(0, 0))));
     addRenderableWidget(
-        Button.builder(Component.literal("Done"), b -> onClose())
-            .bounds(x + 274, y + 232, 74, 18)
-            .build());
+        new OrganButton(x + 274, y + 232, 74, 18, "Done", b -> onClose()).accent(0xffa8bc8b));
     rebuildRows();
   }
 
@@ -116,58 +122,148 @@ public final class NervePanelScreen extends Screen {
     for (var button : rows) removeWidget(button);
     rows.clear();
     var entries = entries();
-    page = Math.clamp(page, 0, Math.max(0, (entries.size() - 1) / 7));
-    for (int i = 0; i < 7 && page * 7 + i < entries.size(); i++) {
-      var entry = entries.get(page * 7 + i);
-      int rowY = y + 104 + i * 17;
-      String label = font.plainSubstrByWidth(entry.name(), 208);
-      var info =
-          Button.builder(Component.literal(label), b -> {})
-              .bounds(x + 12, rowY, 216, 16)
-              .tooltip(
-                  Tooltip.create(
-                      Component.literal(
-                          (entry.player() ? "Player: " : "Named mob: ")
-                              + entry.name()
-                              + "\n"
-                              + entry.id())))
-              .build();
+    page = Math.clamp(page, 0, Math.max(0, (entries.size() - 1) / 5));
+    for (int i = 0; i < 5 && page * 5 + i < entries.size(); i++) {
+      var entry = entries.get(page * 5 + i);
+      int rowY = y + 103 + i * 25;
+      boolean allowed = data.allowed().stream().anyMatch(e -> e.id().equals(entry.id()));
+      var info = new AccessCard(x + 12, rowY, entry, allowed);
+      info.setTooltip(
+          Tooltip.create(
+              Component.literal(
+                  (entry.player() ? "Player: " : "Named mob: ")
+                      + entry.name()
+                      + "\n"
+                      + entry.id())));
       addRenderableWidget(info);
       rows.add(info);
-      boolean allowed = data.allowed().stream().anyMatch(e -> e.id().equals(entry.id()));
       var action =
-          Button.builder(
-                  Component.literal(tab == 0 ? "Remove" : allowed ? "Added" : "Add"),
+          new OrganButton(
+                  x + 232,
+                  rowY + 2,
+                  48,
+                  20,
+                  tab == 0 ? "Remove" : allowed ? "Added" : "Add",
                   b -> send(tab == 0 ? 2 : 1, entry.id()))
-              .bounds(x + 232, rowY, 48, 16)
-              .build();
+              .accent(tab == 0 ? 0xffcb8583 : 0xffb5c690);
       action.active = data.editable() && (tab == 0 || !allowed);
       addRenderableWidget(action);
       rows.add(action);
       if (tab == 1) {
         var transfer =
-            Button.builder(Component.literal("Owner"), b -> confirmTransfer(entry))
-                .bounds(x + 284, rowY, 64, 16)
-                .build();
+            new OrganButton(x + 284, rowY + 2, 64, 20, "Owner", b -> confirmTransfer(entry))
+                .accent(0xffd5bb83);
         transfer.active = data.editable();
         addRenderableWidget(transfer);
         rows.add(transfer);
       }
     }
     previous.active = page > 0;
-    next.active = (page + 1) * 7 < entries.size();
+    next.active = (page + 1) * 5 < entries.size();
     refresh.active = data.editable();
   }
 
   private void confirmTransfer(Entry entry) {
-    minecraft.setScreen(
-        new ConfirmScreen(
-            yes -> {
-              minecraft.setScreen(this);
-              if (yes) send(3, entry.id());
-            },
-            Component.literal("Transfer ownership to " + entry.name() + "?"),
-            Component.literal("You will lose owner access. Existing guests will keep access.")));
+    minecraft.setScreen(new OwnershipConfirmation(entry));
+  }
+
+  private final class OwnershipConfirmation extends Screen {
+    private final Entry target;
+
+    OwnershipConfirmation(Entry target) {
+      super(Component.literal("Transfer ownership"));
+      this.target = target;
+    }
+
+    @Override
+    public boolean isPauseScreen() {
+      return false;
+    }
+
+    @Override
+    protected void init() {
+      int left = (width - 304) / 2, top = (height - 146) / 2;
+      addRenderableWidget(new OrganButton(left + 16, top + 112, 126, 20, "Cancel", b -> onClose()));
+      addRenderableWidget(
+          new OrganButton(
+                  left + 162,
+                  top + 112,
+                  126,
+                  20,
+                  "Transfer",
+                  b -> {
+                    minecraft.setScreen(NervePanelScreen.this);
+                    send(3, target.id());
+                  })
+              .accent(0xffd5bb83));
+    }
+
+    @Override
+    public void onClose() {
+      minecraft.setScreen(NervePanelScreen.this);
+    }
+
+    @Override
+    public void render(GuiGraphics g, int mx, int my, float partial) {
+      renderBackground(g, mx, my, partial);
+      int left = (width - 304) / 2, top = (height - 146) / 2;
+      OrganScreenStyle.panel(g, left, top, 304, 146);
+      g.drawCenteredString(font, title, left + 152, top + 11, OrganScreenStyle.TEXT);
+      g.drawCenteredString(font, "New owner: " + target.name(), left + 152, top + 42, 0xffe8cd97);
+      g.drawCenteredString(
+          font, "You will lose owner access.", left + 152, top + 65, OrganScreenStyle.TEXT);
+      g.drawCenteredString(
+          font, "Existing guests will keep access.", left + 152, top + 81, OrganScreenStyle.MUTED);
+      for (var widget : renderables) widget.render(g, mx, my, partial);
+    }
+  }
+
+  private static final class AccessCard extends Button {
+    private final Entry entry;
+    private final boolean allowed;
+
+    AccessCard(int x, int y, Entry entry, boolean allowed) {
+      super(x, y, 216, 24, Component.literal(entry.name()), b -> {}, DEFAULT_NARRATION);
+      this.entry = entry;
+      this.allowed = allowed;
+    }
+
+    @Override
+    protected void renderWidget(GuiGraphics g, int mx, int my, float partial) {
+      int x = getX(), y = getY();
+      var font = Minecraft.getInstance().font;
+      inset(g, x, y, 216, 24, isHoveredOrFocused() ? 0xff926078 : 0xff563044);
+      g.fill(x + 2, y + 3, x + 4, y + 21, allowed ? 0xffa1ba88 : 0xffb18b71);
+      g.renderItem(
+          (entry.player()
+                  ? net.minecraft.world.item.Items.PLAYER_HEAD
+                  : net.minecraft.world.item.Items.NAME_TAG)
+              .getDefaultInstance(),
+          x + 8,
+          y + 4);
+      g.drawString(
+          font,
+          font.plainSubstrByWidth(entry.name(), 180),
+          x + 30,
+          y + 3,
+          OrganScreenStyle.TEXT,
+          false);
+      g.drawString(
+          font,
+          (entry.player() ? "Player" : "Named mob")
+              + " · "
+              + (allowed ? "Access granted" : "Not authorized"),
+          x + 30,
+          y + 13,
+          allowed ? 0xffafc699 : OrganScreenStyle.MUTED,
+          false);
+    }
+  }
+
+  private static void inset(GuiGraphics g, int x, int y, int w, int h, int edge) {
+    g.fill(x, y, x + w, y + h, edge);
+    g.fillGradient(x + 1, y + 1, x + w - 1, y + h - 1, 0xff24141f, 0xff160f19);
+    g.fill(x + 2, y + h - 2, x + w - 2, y + h - 1, 0xff422438);
   }
 
   private void send(int action, UUID target) {
@@ -178,32 +274,53 @@ public final class NervePanelScreen extends Screen {
   public void render(GuiGraphics g, int mouseX, int mouseY, float partial) {
     renderBackground(g, mouseX, mouseY, partial);
     OrganScreenStyle.panel(g, x, y, 360, 258);
-    g.drawCenteredString(font, title, x + 180, y + 10, OrganScreenStyle.TEXT);
+    g.fillGradient(x + 8, y + 6, x + 352, y + 44, 0xff482334, 0xff25141f);
+    g.renderItem(
+        org.Azkerash.create_bioships
+            .components
+            .ComponentRegistry
+            .NERVE_PANEL
+            .get()
+            .asItem()
+            .getDefaultInstance(),
+        x + 16,
+        y + 13);
+    g.drawString(font, title, x + 42, y + 11, OrganScreenStyle.TEXT, false);
+    String description =
+        !data.editable()
+            ? "Read only · owner access required"
+            : tab == 0
+                ? "Authorized membrane guests"
+                : tab == 1 ? "Online players" : "Nearby named guests · 32 blocks";
+    g.drawString(font, description, x + 42, y + 27, OrganScreenStyle.MUTED, false);
+    inset(g, x + 246, y + 9, 100, 31, 0xff876549);
+    int pulse = data.editable() ? 0xffb7c68c : 0xffbc8298;
+    g.fill(x + 253, y + 16, x + 258, y + 21, pulse);
+    g.drawString(font, "OWNER", x + 264, y + 14, 0xffc9b185, false);
     g.drawString(
         font,
-        "Owner: " + font.plainSubstrByWidth(data.owner(), 250),
-        x + 14,
-        y + 29,
+        font.plainSubstrByWidth(data.owner(), 86),
+        x + 253,
+        y + 26,
         OrganScreenStyle.TEXT,
         false);
-    g.drawString(
-        font,
-        data.editable()
-            ? "Membrane permissions · named mobs within 32 blocks"
-            : "Read-only · only the owner can manage access",
-        x + 14,
-        y + 40,
-        OrganScreenStyle.MUTED,
-        false);
+    OrganScreenStyle.divider(g, x + 12, y + 47, 336);
+    inset(g, x + 12, y + 77, 336, 20, 0xff7d4861);
+    g.fill(x + 20, y + 83, x + 25, y + 84, 0xffb78b9d);
+    g.fill(x + 19, y + 84, x + 20, y + 88, 0xffb78b9d);
+    g.fill(x + 25, y + 84, x + 26, y + 88, 0xffb78b9d);
+    g.fill(x + 20, y + 88, x + 25, y + 89, 0xffb78b9d);
+    g.fill(x + 25, y + 89, x + 28, y + 91, 0xffb78b9d);
+    inset(g, x + 10, y + 100, 340, 129, 0xff5d344b);
     if (entries().isEmpty())
       g.drawCenteredString(font, "No matching entries", x + 180, y + 147, OrganScreenStyle.MUTED);
     g.drawString(
         font,
-        "Page " + (page + 1) + " / " + Math.max(1, (entries().size() + 6) / 7),
+        "Page " + (page + 1) + " / " + Math.max(1, (entries().size() + 4) / 5),
         x + 74,
         y + 237,
         OrganScreenStyle.MUTED,
         false);
-    super.render(g, mouseX, mouseY, partial);
+    for (var widget : renderables) widget.render(g, mouseX, mouseY, partial);
   }
 }
