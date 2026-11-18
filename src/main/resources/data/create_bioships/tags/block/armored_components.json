@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "create_bioships:chitin_armor",
+    {
+      "id": "create_bioships:crab_leg",
+      "required": false
+    }
+  ]
+}

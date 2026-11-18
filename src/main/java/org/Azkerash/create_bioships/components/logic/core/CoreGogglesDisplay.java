@@ -84,6 +84,9 @@ public final class CoreGogglesDisplay extends BlockEntity implements IHaveGoggle
       var status = SubLevelHealth.status(body);
       next.putDouble("current", status.current());
       next.putDouble("maximum", status.maximum());
+      var armor = SubLevelArmor.status(body);
+      next.putDouble("armor", armor.current());
+      next.putDouble("maximumArmor", armor.maximum());
       next.putBoolean("dead", status.dead());
       next.putString("cause", status.causeOfDeath());
       next.putInt("hunger", SubLevelData.hunger(body));
@@ -123,6 +126,14 @@ public final class CoreGogglesDisplay extends BlockEntity implements IHaveGoggle
                   "Health: %.1f / %.1f",
                   inspection.getDouble("current"),
                   inspection.getDouble("maximum"))));
+      if (inspection.getDouble("maximumArmor") > 0)
+        tooltip.add(
+            Component.literal(
+                String.format(
+                    java.util.Locale.ROOT,
+                    "Armor: %.1f / %.1f",
+                    inspection.getDouble("armor"),
+                    inspection.getDouble("maximumArmor"))));
       tooltip.add(
           Component.literal("Hunger: ")
               .append(

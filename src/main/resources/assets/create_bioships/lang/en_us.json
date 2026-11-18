@@ -19,5 +19,6 @@
   "serum.create_bioships.efficiency_gene.tooltip": "Stomach gene: more paste each meal and a chance for one extra component. Three tiers.",
   "block.create_bioships.nerve_panel": "Nerve Panel",
   "block.create_bioships.brain": "Brain",
-  "item.create_bioships.blank_behavior_card": "Blank Behavior Card"
+  "item.create_bioships.blank_behavior_card": "Blank Behavior Card",
+  "block.create_bioships.chitin_armor": "Chitin Armor"
 }

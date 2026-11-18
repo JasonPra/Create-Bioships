@@ -243,7 +243,9 @@ public class SubLevelCombatTarget extends LivingEntity {
     double damage = damageContainers.peek().getNewDamage() * damageMultiplier();
     var body = body();
     if (body != null && damage > 0) {
-      SubLevelHealth.damage(body, damage, source);
+      double remaining =
+          org.Azkerash.create_bioships.core.SubLevelArmor.absorb(body, impactCell, source, damage);
+      SubLevelHealth.damage(body, remaining, source);
       CombatAdapter.hurtFlash(body);
       if (impactCell != null
           && (source.getDirectEntity() instanceof LivingEntity

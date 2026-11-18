@@ -57,9 +57,12 @@ public final class CombatAdapter {
   public static SubLevelCombatTarget hitTarget(
       ServerSubLevel body, net.minecraft.core.BlockPos cell, net.minecraft.core.Direction face) {
     var state = body.getLevel().getBlockState(cell);
-    if (org.Azkerash.create_bioships.components.logic.eye.EyeWoundBehavior.isWeakPoint(state, face))
-      return state.is(ComponentRegistry.CORE.get()) ? coreTarget(body) : eyeTarget(body, cell);
-    return target(body);
+    var result =
+        org.Azkerash.create_bioships.components.logic.eye.EyeWoundBehavior.isWeakPoint(state, face)
+            ? state.is(ComponentRegistry.CORE.get()) ? coreTarget(body) : eyeTarget(body, cell)
+            : target(body);
+    if (result != null) result.impact(cell, face);
+    return result;
   }
 
   public static void saveEffects(ServerSubLevel body, SubLevelCombatTarget target) {

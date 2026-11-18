@@ -1,0 +1,7 @@
+{
+  "selector": "#create_bioships:armored_components",
+  "priority": 200,
+  "properties": {
+    "sable:mass": 1.5
+  }
+}
