@@ -92,7 +92,7 @@ public final class CoreGogglesDisplay extends BlockEntity implements IHaveGoggle
       next.putInt("hunger", SubLevelData.hunger(body));
       next.putInt("maximumHunger", SubLevelData.maximumHunger(body));
       next.putBoolean("hungerPaused", SubLevelData.hungerState(body).paused());
-      next.putInt("trust", SubLevelData.trust(body));
+      next.putDouble("trust", SubLevelData.trust(body));
       var effects = new net.minecraft.nbt.ListTag();
       var owner =
           CoreAssemblyRules.isCreature(body)
@@ -152,7 +152,10 @@ public final class CoreGogglesDisplay extends BlockEntity implements IHaveGoggle
                           + "/"
                           + inspection.getInt("maximumHunger")
                           + (inspection.getBoolean("hungerPaused") ? " (paused)" : ""))));
-      tooltip.add(Component.literal("Trust: " + inspection.getInt("trust") + "/100"));
+      tooltip.add(
+          Component.literal(
+              String.format(
+                  java.util.Locale.ROOT, "Trust: %.1f/100", inspection.getDouble("trust"))));
       for (var entry : inspection.getList("effects", 10)) {
         var effect = net.minecraft.world.effect.MobEffectInstance.load((CompoundTag) entry);
         if (effect == null) continue;

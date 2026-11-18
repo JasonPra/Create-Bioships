@@ -204,9 +204,9 @@ public final class SubLevelData {
     variable(body, "regenerationTicks", Math.max(0, ticks));
   }
 
-  public static int trust(ServerSubLevel body) {
+  public static double trust(ServerSubLevel body) {
     initialize(body);
-    return body.getUserDataTag().getCompound(STATE).getInt("trust");
+    return body.getUserDataTag().getCompound(STATE).getDouble("trust");
   }
 
   public static void hunger(ServerSubLevel body, int value) {
@@ -244,8 +244,12 @@ public final class SubLevelData {
     body.setUserDataTag(root);
   }
 
-  public static void trust(ServerSubLevel body, int value) {
-    variable(body, "trust", Math.clamp(value, 0, MAX_TRUST));
+  public static void trust(ServerSubLevel body, double value) {
+    if (!Double.isFinite(value)) return;
+    initialize(body);
+    var root = body.getUserDataTag().copy();
+    root.getCompound(STATE).putDouble("trust", Math.clamp(value, 0, MAX_TRUST));
+    body.setUserDataTag(root);
   }
 
   private static void variable(ServerSubLevel body, String name, int value) {

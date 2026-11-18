@@ -16,11 +16,18 @@ public final class MouthBlock extends DirectionalBlock
     implements EntityBlock, com.simibubi.create.content.equipment.wrench.IWrenchable {
   public static final net.minecraft.world.level.block.state.properties.IntegerProperty CHEW =
       net.minecraft.world.level.block.state.properties.IntegerProperty.create("chew", 0, 3);
+  public static final net.minecraft.world.level.block.state.properties.IntegerProperty BREATH =
+      net.minecraft.world.level.block.state.properties.IntegerProperty.create("breath", 0, 2);
   public static final MapCodec<MouthBlock> CODEC = simpleCodec(MouthBlock::new);
 
   public MouthBlock(Properties properties) {
     super(properties);
-    registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(CHEW, 0));
+    registerDefaultState(
+        stateDefinition
+            .any()
+            .setValue(FACING, Direction.NORTH)
+            .setValue(CHEW, 0)
+            .setValue(BREATH, 0));
   }
 
   protected MapCodec<? extends DirectionalBlock> codec() {
@@ -28,7 +35,7 @@ public final class MouthBlock extends DirectionalBlock
   }
 
   protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-    builder.add(FACING, CHEW);
+    builder.add(FACING, CHEW, BREATH);
   }
 
   public BlockState getStateForPlacement(BlockPlaceContext context) {
@@ -61,7 +68,11 @@ public final class MouthBlock extends DirectionalBlock
       if (!level.isClientSide) {
         var offering = stack.copyWithCount(player.isShiftKeyDown() ? stack.getCount() : 1);
         var rest = mouth.feed(offering, false);
-        if (!player.getAbilities().instabuild) stack.shrink(offering.getCount() - rest.getCount());
+        int accepted = offering.getCount() - rest.getCount();
+        if (!player.getAbilities().instabuild) stack.shrink(accepted);
+        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer)
+          org.Azkerash.create_bioships.core.FeedingTrust.hand(
+              serverPlayer, pos, offering, accepted);
       }
       return ItemInteractionResult.sidedSuccess(level.isClientSide);
     }
@@ -86,14 +97,31 @@ public final class MouthBlock extends DirectionalBlock
       net.minecraft.util.RandomSource random) {
     if (!(level.getBlockEntity(pos) instanceof MouthBlockEntity mouth)) return;
     int remaining = mouth.chewRemaining();
-    if (!mouth.active() || remaining == 0) {
-      if (state.getValue(CHEW) != 0) level.setBlock(pos, state.setValue(CHEW, 0), 2);
+    if (!mouth.active()) {
+      if (state.getValue(CHEW) != 0 || state.getValue(BREATH) != 0)
+        level.setBlock(pos, state.setValue(CHEW, 0).setValue(BREATH, 0), 2);
+      return;
+    }
+    if (remaining == 0) {
+      int step = (int) ((level.getGameTime() / 8 + Math.floorMod(pos.asLong(), 8)) % 8);
+      int breath = new int[] {0, 0, 1, 2, 2, 1, 0, 0}[step];
+      if (state.getValue(CHEW) != 0 || state.getValue(BREATH) != breath)
+        level.setBlock(pos, state.setValue(CHEW, 0).setValue(BREATH, breath), 2);
+      level.scheduleTick(pos, this, 8);
       return;
     }
     int phase = state.getValue(CHEW) % 3 + 1;
-    level.setBlock(pos, state.setValue(CHEW, phase), 2);
-    if ((MouthBlockEntity.CHEW_TICKS - remaining) % 9 == 0) chewingSound(level, pos);
+    level.setBlock(pos, state.setValue(CHEW, phase).setValue(BREATH, 0), 2);
+    if (phase == 1) mouth.chewingParticles();
+    if (phase == 1) chewingSound(level, pos);
     level.scheduleTick(pos, this, Math.min(3, remaining));
+  }
+
+  @Override
+  protected void onPlace(
+      BlockState state, Level level, BlockPos pos, BlockState old, boolean moved) {
+    super.onPlace(state, level, pos, old, moved);
+    if (!old.is(this) && !level.isClientSide) level.scheduleTick(pos, this, 8);
   }
 
   protected BlockState rotate(BlockState state, Rotation rotation) {

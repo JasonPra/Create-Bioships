@@ -24,7 +24,9 @@
     "DevelopmentCreativeSlotMixin",
     "ComponentStoreSaveMixin",
     "BiometricMembraneAccessMixin",
-    "SableMembraneCollisionMixin"
+    "SableMembraneCollisionMixin",
+    "StorageSacMenuAccess",
+    "FeedingMenuMixin"
   ],
   "client": [],
   "injectors": {

@@ -21,16 +21,22 @@ public final class MouthBlockEntity extends OrganInventory {
   private static final class ChewingState
       implements org.Azkerash.create_bioships.core.component.ComponentState {
     long until;
+    ItemStack food = ItemStack.EMPTY;
 
     public net.minecraft.nbt.CompoundTag save(net.minecraft.core.HolderLookup.Provider registries) {
       var tag = new net.minecraft.nbt.CompoundTag();
       tag.putLong("ChewUntil", until);
+      if (!food.isEmpty()) tag.put("ChewFood", food.save(registries));
       return tag;
     }
 
     public void load(
         net.minecraft.nbt.CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries) {
       until = tag.getLong("ChewUntil");
+      food =
+          tag.contains("ChewFood")
+              ? ItemStack.parseOptional(registries, tag.getCompound("ChewFood"))
+              : ItemStack.EMPTY;
     }
   }
 
@@ -66,7 +72,7 @@ public final class MouthBlockEntity extends OrganInventory {
   public void onLoad() {
     super.onLoad();
     remember();
-    if (level instanceof net.minecraft.server.level.ServerLevel server && chewRemaining() > 0) {
+    if (level instanceof net.minecraft.server.level.ServerLevel server) {
       chewing().until = Math.min(chewing().until, server.getGameTime() + CHEW_TICKS);
       server.scheduleTick(worldPosition, getBlockState().getBlock(), 1);
     }
@@ -93,6 +99,7 @@ public final class MouthBlockEntity extends OrganInventory {
                   .sum();
           if (now > before) {
             added = true;
+            chewing().food = stack.copyWithCount(1);
             break;
           }
         }
@@ -102,7 +109,10 @@ public final class MouthBlockEntity extends OrganInventory {
         chewing().until = server.getGameTime() + CHEW_TICKS;
         super.setChanged();
         if (starting) {
-          server.setBlock(worldPosition, getBlockState().setValue(MouthBlock.CHEW, 1), 2);
+          server.setBlock(
+              worldPosition,
+              getBlockState().setValue(MouthBlock.CHEW, 1).setValue(MouthBlock.BREATH, 0),
+              2);
           MouthBlock.chewingSound(server, worldPosition);
         }
         server.scheduleTick(worldPosition, getBlockState().getBlock(), 3);
@@ -110,6 +120,29 @@ public final class MouthBlockEntity extends OrganInventory {
     } finally {
       observing = false;
     }
+  }
+
+  public void chewingParticles() {
+    if (!(level instanceof net.minecraft.server.level.ServerLevel server)
+        || chewing().food.isEmpty()
+        || !active()) return;
+    var body =
+        org.Azkerash.create_bioships.core.CoreAssemblyRules.containing(server, worldPosition);
+    if (body == null) return;
+    var face = getBlockState().getValue(MouthBlock.FACING);
+    var logical = net.minecraft.world.phys.Vec3.atCenterOf(worldPosition).relative(face, .65);
+    var at = body.logicalPose().transformPosition(logical);
+    server.sendParticles(
+        new net.minecraft.core.particles.ItemParticleOption(
+            net.minecraft.core.particles.ParticleTypes.ITEM, chewing().food),
+        at.x,
+        at.y,
+        at.z,
+        3,
+        .10,
+        .10,
+        .10,
+        .025);
   }
 
   @Override

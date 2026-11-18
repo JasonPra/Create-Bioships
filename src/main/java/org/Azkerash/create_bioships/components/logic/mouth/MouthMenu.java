@@ -37,6 +37,10 @@ public final class MouthMenu extends AbstractContainerMenu {
     for (int col = 0; col < 9; col++) addSlot(new Slot(inventory, col, 33 + col * 18, 198));
   }
 
+  public Container intake() {
+    return mouth;
+  }
+
   public boolean stillValid(Player player) {
     return mouth.stillValid(player);
   }
