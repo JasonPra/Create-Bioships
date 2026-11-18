@@ -14,11 +14,17 @@ public final class CrabLegKinematics {
   public static final LegGait GAIT = new LegGait(false, 2.4, 1.45, .8, .35, 1);
   public final int height;
   public final double scale;
+  public final double extension;
   private final JointChain chain;
 
   public CrabLegKinematics(int height) {
-    this.height = Math.clamp(height, 1, 3);
-    this.scale = (this.height + .5) / 1.45;
+    this((double) height);
+  }
+
+  public CrabLegKinematics(double extension) {
+    this.extension = Math.clamp(extension, 1, 3);
+    this.height = (int) Math.round(this.extension);
+    this.scale = (this.extension + .5) / 1.45;
     chain =
         JointChain.forLeg(
             new double[][] {
@@ -31,7 +37,7 @@ public final class CrabLegKinematics {
   }
 
   public double standingHeight() {
-    return height + .5;
+    return extension + .5;
   }
 
   public static double thickness(int height) {
@@ -45,7 +51,7 @@ public final class CrabLegKinematics {
     var tangent = side.cross(new Vec3(0, 1, 0));
     var relative = foot.subtract(root);
     chain.solveRobust(
-        angles, new double[] {relative.dot(side), relative.y, relative.dot(tangent)}, 10, .025);
+        new double[] {relative.dot(side), relative.y, relative.dot(tangent)}, angles, 10, .025);
     var points = chain.forward(angles, null);
     var result = new ArrayList<Vec3>();
     for (var p : points)

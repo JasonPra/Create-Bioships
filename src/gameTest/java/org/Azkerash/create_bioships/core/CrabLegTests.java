@@ -16,8 +16,141 @@ import org.Azkerash.create_bioships.development.testing.LocomotionFixture;
 @GameTestHolder(Create_bioships.MODID)
 @PrefixGameTestTemplate(false)
 public final class CrabLegTests {
-  @GameTest(template = "test_empty", timeoutTicks = 240, batch = "crab_activation")
-  public static void passive_support_and_adding_brain_preserve_position(GameTestHelper helper) {
+  @GameTest(template = "test_empty", timeoutTicks = 160, batch = "compact_ragdoll")
+  public static void one_uncommanded_leg_falls_and_ragdolls(GameTestHelper helper) {
+    var level = helper.getLevel();
+    var base = new BlockPos(2560, 80, 128);
+    for (int cx = 159; cx <= 161; cx++)
+      for (int cz = 7; cz <= 9; cz++) level.setChunkForced(cx, cz, true);
+    for (int x = -8; x <= 8; x++)
+      for (int z = -8; z <= 8; z++)
+        level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 3);
+    helper.runAfterDelay(
+        20,
+        () -> {
+          var core = base.above(8);
+          var armor = core.east();
+          var leg = core.east(2);
+          level.setBlock(
+              core,
+              org.Azkerash.create_bioships
+                  .components
+                  .ComponentRegistry
+                  .CORE
+                  .get()
+                  .defaultBlockState(),
+              3);
+          level.setBlock(
+              armor,
+              org.Azkerash.create_bioships
+                  .components
+                  .ComponentRegistry
+                  .CHITIN_ARMOR
+                  .get()
+                  .defaultBlockState(),
+              3);
+          level.setBlock(
+              leg,
+              org.Azkerash.create_bioships
+                  .components
+                  .ComponentRegistry
+                  .CRAB_LEG
+                  .get()
+                  .defaultBlockState()
+                  .setValue(
+                      net.minecraft.world.level.block.state.properties.BlockStateProperties
+                          .HORIZONTAL_FACING,
+                      Direction.EAST),
+              3);
+          var body =
+              SubLevelAssemblyHelper.assembleBlocks(
+                  level, core, List.of(core, armor, leg), new BoundingBox3i(core, leg));
+          var logical = body.getPlot().getCenterBlock();
+          CoreAssemblyRules.mark(level, logical);
+          SubLevelData.hungerPaused(body, true);
+          SubLevelLegs.request(body);
+          var initial = body.logicalPose().transformPosition(Vec3.atCenterOf(logical));
+          helper.runAfterDelay(
+              20,
+              () -> {
+                var falling = body.logicalPose().transformPosition(Vec3.atCenterOf(logical));
+                helper.assertTrue(falling.y < initial.y - 1, "An airborne leg held its body up");
+                helper.runAfterDelay(
+                    65,
+                    () -> {
+                      var landed = body.logicalPose().transformPosition(Vec3.atCenterOf(logical));
+                      helper.assertTrue(
+                          landed.y < base.getY() + 2.5,
+                          "One uncommanded leg hovered above the floor");
+                      var pose = SubLevelLegs.poses(body).getFirst();
+                      helper.assertTrue(
+                          pose.collisionEndpoints().getLast().distanceTo(pose.joints().getLast())
+                              > .15,
+                          "Uncommanded physical leg remained rigid in its animation pose");
+                      helper.succeed();
+                    });
+              });
+        });
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 160, batch = "native_box_terrain")
+  public static void native_segment_box_collides_with_world_floor(GameTestHelper helper) {
+    var level = helper.getLevel();
+    var pos = new BlockPos(2432, 80, 128);
+    level.setChunkForced(152, 8, true);
+    for (int x = -3; x <= 3; x++)
+      for (int z = -3; z <= 3; z++)
+        level.setBlock(pos.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 3);
+    helper.runAfterDelay(
+        20,
+        () -> {
+          var pose = new dev.ryanhcode.sable.companion.math.Pose3d();
+          pose.position().set(pos.getX() + .5, pos.getY() + 3, pos.getZ() + .5);
+          var box =
+              new dev.ryanhcode.sable.api.physics.object.box.BoxPhysicsObject(
+                  pose, new org.joml.Vector3d(.15, .5, .15), .25) {
+                @Override
+                public void getBoundingBox(
+                    dev.ryanhcode.sable.companion.math.BoundingBox3d bounds) {
+                  if (isActive()) updatePose();
+                  super.getBoundingBox(bounds);
+                }
+              };
+          var physics = dev.ryanhcode.sable.sublevel.system.SubLevelPhysicsSystem.require(level);
+          physics.addObject(box);
+          helper.runAfterDelay(
+              70,
+              () -> {
+                box.updatePose();
+                double y = box.getPose().position().y();
+                physics.removeObject(box);
+                System.out.println("NATIVE_BOX_FLOOR_Y=" + y);
+                helper.assertTrue(
+                    y > pos.getY() + .35 && y < pos.getY() + .7,
+                    "Native box failed terrain collision: " + y);
+                helper.succeed();
+              });
+        });
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 20, batch = "compact_ik")
+  public static void native_ik_reaches_distinct_foot_targets(GameTestHelper helper) {
+    var solver = new org.Azkerash.create_bioships.compat.letitwalk.CrabLegKinematics(1);
+    var root = Vec3.ZERO;
+    var a = new Vec3(1.4, -1.4, .15);
+    var b = new Vec3(1.1, -.8, -.2);
+    var first = solver.solve(root, Direction.EAST, a).getLast();
+    var second = solver.solve(root, Direction.EAST, b).getLast();
+    helper.assertTrue(
+        first.distanceTo(a) < .15 && second.distanceTo(b) < .15,
+        "Native IK did not follow target: " + first + " / " + second);
+    helper.assertTrue(first.distanceTo(second) > .3, "IK remained in its rest pose");
+    helper.succeed();
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 480, batch = "crab_activation")
+  public static void uncommanded_legs_ragdoll_and_brain_placement_preserves_position(
+      GameTestHelper helper) {
     var level = helper.getLevel();
     var base = new BlockPos(2304, 80, 128);
     for (int x = 143; x <= 145; x++) for (int z = 7; z <= 9; z++) level.setChunkForced(x, z, true);
@@ -57,7 +190,8 @@ public final class CrabLegTests {
               () -> {
                 var before = body.logicalPose().transformPosition(Vec3.atCenterOf(core));
                 helper.assertTrue(
-                    before.y - .5 > base.getY() + .5, "Brain-free legs did not support the body");
+                    before.y - .5 < base.getY() + .4,
+                    "Uncommanded legs held the body above the ground");
                 level.setBlock(
                     core.above(),
                     org.Azkerash.create_bioships
@@ -74,7 +208,65 @@ public final class CrabLegTests {
                       helper.assertTrue(
                           Double.isFinite(after.lengthSqr()) && after.distanceTo(before) < 3,
                           "Adding brain launched asymmetric creature: " + after.subtract(before));
-                      helper.succeed();
+                      BrainMotorControls.move(body, Vec3.ZERO, 0, 200);
+                      for (var pose : SubLevelLegs.poses(body))
+                        if (pose.cell().getZ() < core.getZ())
+                          level.setBlock(
+                              pose.cell(),
+                              level
+                                  .getBlockState(pose.cell())
+                                  .setValue(
+                                      org.Azkerash.create_bioships
+                                          .components
+                                          .logic
+                                          .legs
+                                          .CrabLegBlock
+                                          .HEIGHT,
+                                      3),
+                              3);
+                      helper.runAfterDelay(
+                          130,
+                          () -> {
+                            var front =
+                                body.logicalPose().transformPosition(Vec3.atCenterOf(core.north()));
+                            var back =
+                                body.logicalPose().transformPosition(Vec3.atCenterOf(core.south()));
+                            System.out.println("MIXED_LEG_TILT=" + (front.y - back.y));
+                            helper.assertTrue(
+                                front.y - back.y > .2, "Long front legs failed to tilt the body");
+                            var joints = SubLevelLegs.poses(body).getLast().collisionEndpoints();
+                            var middle =
+                                body.logicalPose()
+                                    .transformPosition(joints.get(2).add(joints.get(3)).scale(.5));
+                            var obstacle = BlockPos.containing(middle);
+                            level.setBlock(obstacle, Blocks.BEDROCK.defaultBlockState(), 3);
+                            helper.runAfterDelay(
+                                70,
+                                () -> {
+                                  helper.assertTrue(
+                                      !SubLevelLegs.collisionOverlaps(
+                                          body, new net.minecraft.world.phys.AABB(obstacle), .08),
+                                      "Middle leg segment remained inside an obstacle");
+                                  helper.assertTrue(
+                                      !SubLevelLegs.collisionOverlaps(
+                                          body,
+                                          new net.minecraft.world.phys.AABB(
+                                              Vec3.atLowerCornerOf(base.offset(-12, -1, -12)),
+                                              Vec3.atLowerCornerOf(base.offset(13, 0, 13))),
+                                          .08),
+                                      "Leg segment penetrated the floor");
+                                  for (var pose : SubLevelLegs.poses(body))
+                                    level.removeBlock(pose.cell(), false);
+                                  helper.runAfterDelay(
+                                      10,
+                                      () -> {
+                                        helper.assertTrue(
+                                            SubLevelLegs.collisionShapes(body) == 0,
+                                            "Removed legs left native collision shapes behind");
+                                        helper.succeed();
+                                      });
+                                });
+                          });
                     });
               });
         });
@@ -120,6 +312,9 @@ public final class CrabLegTests {
                         + " poses="
                         + SubLevelLegs.poses(body).size());
                 helper.assertTrue(SubLevelLegs.poses(body).size() == 6, "Missing native IK poses");
+                helper.assertTrue(
+                    SubLevelLegs.collisionShapes(body) == 18,
+                    "Every leg segment needs a native collision shape");
                 for (var pose : SubLevelLegs.poses(body))
                   for (var point : pose.joints())
                     helper.assertTrue(
@@ -138,6 +333,7 @@ public final class CrabLegTests {
                       helper.assertTrue(
                           BrainMotorControls.current(body).velocity().equals(Vec3.ZERO),
                           "Expired request persisted");
+                      BrainMotorControls.move(body, Vec3.ZERO, 0, 200);
                       for (var pose : SubLevelLegs.poses(body)) {
                         var state = level.getBlockState(pose.cell());
                         level.setBlock(
@@ -153,17 +349,33 @@ public final class CrabLegTests {
                             3);
                       }
                       helper.runAfterDelay(
-                          80,
+                          120,
                           () -> {
                             double clearance =
                                 body.logicalPose().transformPosition(Vec3.atCenterOf(core)).y
                                     - .5
                                     - base.getY();
-                            System.out.println("CRAB_EXTENDED_CLEARANCE=" + clearance);
+                            System.out.println(
+                                "CRAB_EXTENDED_CLEARANCE="
+                                    + clearance
+                                    + " contacts="
+                                    + SubLevelLegs.contacts(body));
                             helper.assertTrue(
                                 clearance > 2.5 && clearance < 3.5,
                                 "Extended legs failed to reach three-block clearance: "
                                     + clearance);
+                            helper.assertTrue(
+                                !SubLevelLegs.collisionOverlaps(
+                                    body,
+                                    new net.minecraft.world.phys.AABB(
+                                        base.getX() - 15,
+                                        base.getY() - 1,
+                                        base.getZ() - 15,
+                                        base.getX() + 16,
+                                        base.getY(),
+                                        base.getZ() + 21),
+                                    .08),
+                                "Extended leg segment penetrated the floor");
                             SubLevelHealth.damage(body, 999, "test");
                             helper.assertTrue(
                                 !BrainMotorControls.move(body, new Vec3(0, 0, 1), 0, 20),

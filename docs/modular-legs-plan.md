@@ -14,3 +14,5 @@ Dependency order and working estimates:
 The user approved associating limb sublevels with the main creature to share brain, health, armor, trust and death state. Component registration stays in ComponentRegistry; native hooks stay in compat.letitwalk. The setup tool has its own item class under equipment and delegates native actions to compatibility code.
 
 Trust loss remains future work; remind the user when the overall batch is finished.
+
+The current priority is to finish the compact-leg collision/ragdoll and glass/texture repairs, then add the first Wander behavior card with a shared ground/water pathfinder and grid-owned hasLegs/hasFins/hasWallClimbers capability flags. The locomotion exhibit will start with that card installed. The six modular-leg tasks resume after that.

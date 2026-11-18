@@ -4,7 +4,6 @@ import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.sublevel.ClientSubLevel;
 import java.util.*;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -83,25 +82,33 @@ public final class CrabLegRenderer {
         if (!mc.level.getBlockState(pose.cell()).is(ComponentRegistry.CRAB_LEG.get())) continue;
         var previous = previousPoses.getOrDefault(pose.cell(), pose);
         for (int i = 0; i < 3; i++) {
-          var from = previous.joints().get(i).lerp(pose.joints().get(i), mix);
-          var to = previous.joints().get(i + 1).lerp(pose.joints().get(i + 1), mix);
+          var from =
+              previous
+                  .collisionEndpoints()
+                  .get(i * 2)
+                  .lerp(pose.collisionEndpoints().get(i * 2), mix);
+          var to =
+              previous
+                  .collisionEndpoints()
+                  .get(i * 2 + 1)
+                  .lerp(pose.collisionEndpoints().get(i * 2 + 1), mix);
           segment(
               stack,
               mc,
               from.subtract(pivot),
               to.subtract(pivot),
-              new float[] {.23f, .17f, .09f}[i]
-                  * (float)
-                      org.Azkerash.create_bioships.compat.letitwalk.CrabLegKinematics.thickness(
-                          mc.level
-                              .getBlockState(pose.cell())
-                              .getValue(
-                                  org.Azkerash.create_bioships
-                                      .components
-                                      .logic
-                                      .legs
-                                      .CrabLegBlock
-                                      .HEIGHT)),
+              (float)
+                  org.Azkerash.create_bioships.compat.letitwalk.CompactLegCollisions.width(
+                      i,
+                      mc.level
+                          .getBlockState(pose.cell())
+                          .getValue(
+                              org.Azkerash.create_bioships
+                                  .components
+                                  .logic
+                                  .legs
+                                  .CrabLegBlock
+                                  .HEIGHT)),
               hurt);
         }
       }
@@ -124,36 +131,25 @@ public final class CrabLegRenderer {
     var direction =
         new org.joml.Vector3f((float) delta.x, (float) delta.y, (float) delta.z).normalize();
     stack.mulPose(new org.joml.Quaternionf().rotationTo(new org.joml.Vector3f(0, 1, 0), direction));
-    stack.scale(width, (float) delta.length(), width);
-    stack.translate(-.5, 0, -.5);
     var world = mc.gameRenderer.getMainCamera().getBlockPosition();
     int light = net.minecraft.client.renderer.LevelRenderer.getLightColor(mc.level, world);
-    mc.getBlockRenderer()
-        .renderSingleBlock(
-            ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState(),
-            stack,
-            mc.renderBuffers().bufferSource(),
-            light,
-            OverlayTexture.NO_OVERLAY);
-    if (hurt != null) {
-      mc.renderBuffers()
-          .bufferSource()
-          .endBatch(net.minecraft.client.renderer.Sheets.cutoutBlockSheet());
-      mc.getBlockRenderer()
-          .getModelRenderer()
-          .renderModel(
-              stack.last(),
-              mc.renderBuffers().bufferSource().getBuffer(hurt),
-              ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState(),
-              mc.getBlockRenderer()
-                  .getBlockModel(ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState()),
-              1,
-              1,
-              1,
-              light,
-              OverlayTexture.NO_OVERLAY);
-      mc.renderBuffers().bufferSource().endBatch(hurt);
-    }
+    CrabLegMesh.render(stack, mc, width, delta.length(), light, hurt);
+    if (mc.getEntityRenderDispatcher().shouldRenderHitBoxes())
+      net.minecraft.client.renderer.LevelRenderer.renderLineBox(
+          stack,
+          mc.renderBuffers()
+              .bufferSource()
+              .getBuffer(net.minecraft.client.renderer.RenderType.lines()),
+          -width / 2,
+          0,
+          -width / 2,
+          width / 2,
+          delta.length(),
+          width / 2,
+          1,
+          1,
+          1,
+          1);
     stack.popPose();
   }
 }

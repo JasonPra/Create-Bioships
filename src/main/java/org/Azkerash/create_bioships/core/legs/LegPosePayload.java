@@ -21,7 +21,10 @@ public record LegPosePayload(UUID body, List<SubLevelLegs.Pose> poses)
             b.writeVarInt(p.poses.size());
             for (var pose : p.poses) {
               b.writeBlockPos(pose.cell());
-              for (var v : pose.joints()) {
+              for (var v :
+                  java.util.stream.Stream.concat(
+                          pose.joints().stream(), pose.collisionEndpoints().stream())
+                      .toList()) {
                 b.writeDouble(v.x);
                 b.writeDouble(v.y);
                 b.writeDouble(v.z);
@@ -38,7 +41,10 @@ public record LegPosePayload(UUID body, List<SubLevelLegs.Pose> poses)
               var points = new ArrayList<Vec3>();
               for (int j = 0; j < 4; j++)
                 points.add(new Vec3(b.readDouble(), b.readDouble(), b.readDouble()));
-              poses.add(new SubLevelLegs.Pose(cell, List.copyOf(points)));
+              var endpoints = new ArrayList<Vec3>();
+              for (int j = 0; j < 6; j++)
+                endpoints.add(new Vec3(b.readDouble(), b.readDouble(), b.readDouble()));
+              poses.add(new SubLevelLegs.Pose(cell, List.copyOf(points), List.copyOf(endpoints)));
             }
             return new LegPosePayload(id, List.copyOf(poses));
           });
@@ -52,7 +58,7 @@ public record LegPosePayload(UUID body, List<SubLevelLegs.Pose> poses)
   public static void register(
       net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent event) {
     event
-        .registrar("1")
+        .registrar("2")
         .playToClient(
             TYPE,
             CODEC,

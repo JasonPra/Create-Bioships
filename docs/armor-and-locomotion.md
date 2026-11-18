@@ -10,7 +10,11 @@ Sable's native block-property resource sets armored material mass to 1.5, relati
 
 Armored Crab Legs are separate horizontal attachment blocks. They need a full solid backing block; the living core and other leg sockets cannot support them. The owning grid caches sockets, calls Let It Walk's `JointChain` IK and `TerrainProbe`, and applies native Sable contact impulses. No hidden Let It Walk core or per-leg block ticker is used.
 
-A brain exposes `BrainMotorControls.move(grid, worldVelocity, yawRate, leaseTicks)` and `stop(grid)`. Requests expire and are rejected after death or without an active brain. This is a control surface for future behavior cards, not a behavior executor.
+A brain exposes `BrainMotorControls.move(grid, worldVelocity, yawRate, leaseTicks)` and `stop(grid)`. Requests expire and are rejected after death or without an active brain. A zero-velocity request explicitly requests standing; simply adding a brain does not activate the legs. Uncommanded, airborne, and dead creatures have passive articulated legs and ragdoll normally.
+
+`CompactLegCollisions` owns three native oriented box bodies per limb, connected to the creature and each other with physical ball joints. Angular servos activate only with an explicit brain request and sufficient actual ground contacts. No joints attach these crab legs to the world. Terrain anchoring is reserved for future climbing appendages. Step clearance rises for higher landing surfaces; jumping is not implemented.
+
+The renderer follows refreshed native body poses and F3+B outlines the entire segments. Length changes grow gradually and rebuild collision shapes from their previous physical poses, avoiding insertion below the floor. Native joints and objects are removed with their sockets or owner. Core-shell pixels tile at their original density rather than stretching along the bones.
 
 Normal right-click with the **Ossified Wrench** extends a compact leg through heights 1, 2, and 3. Facing stays unchanged. Thickness and actual segment lengths increase together. The third setting provides approximately three blocks of clearance when sockets are attached on the lowest body row. Further clicks do nothing. Create's standard wrench does not extend the leg; shift-wrench still removes it.
 

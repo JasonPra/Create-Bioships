@@ -19,32 +19,37 @@ import org.Azkerash.create_bioships.core.brain.BrainMotorControls;
 /** One topology cache, gait and contact-force controller per creature, never per-block tickers. */
 @EventBusSubscriber(modid = "create_bioships")
 public final class SubLevelLegs {
-  public record Pose(BlockPos cell, List<Vec3> joints) {}
+  public record Pose(BlockPos cell, List<Vec3> joints, List<Vec3> collisionEndpoints) {}
 
   private static final Map<ServerSubLevel, SubLevelLegs> CONTROLLERS = new IdentityHashMap<>();
 
   private static final class Leg {
     final BlockPos cell;
-    final CrabLegKinematics solver;
+    CrabLegKinematics solver;
+    int desiredHeight;
     Vec3 planted, from, to, contact;
     boolean swing, grounded;
     long started;
+    double extensionPressure;
     List<Vec3> points = List.of();
 
     Leg(BlockPos cell, int height) {
-      this.solver = new CrabLegKinematics(height);
+      this.solver = new CrabLegKinematics(1);
+      this.desiredHeight = height;
       this.cell = cell.immutable();
     }
   }
 
   private final ServerSubLevel body;
+  private final org.Azkerash.create_bioships.compat.letitwalk.CompactLegCollisions collisions;
   private final Map<BlockPos, Leg> legs = new LinkedHashMap<>();
   private boolean dirty = true;
   private double phase;
-  private long lastSent = Long.MIN_VALUE;
+  private long lastSent = Long.MIN_VALUE, lastContactUpdate = Long.MIN_VALUE;
 
   private SubLevelLegs(ServerSubLevel body) {
     this.body = body;
+    this.collisions = new org.Azkerash.create_bioships.compat.letitwalk.CompactLegCollisions(body);
   }
 
   public static void request(ServerSubLevel body) {
@@ -67,13 +72,15 @@ public final class SubLevelLegs {
       if (state.is(ComponentRegistry.CRAB_LEG.get())) present.add(pos);
     }
     legs.keySet().retainAll(present);
+    collisions.retain(present);
     for (var pos : present) {
       int height =
           body.getLevel()
               .getBlockState(pos)
               .getValue(org.Azkerash.create_bioships.components.logic.legs.CrabLegBlock.HEIGHT);
       var old = legs.get(pos);
-      if (old == null || old.solver.height != height) legs.put(pos, new Leg(pos, height));
+      if (old == null) legs.put(pos, new Leg(pos, height));
+      else old.desiredHeight = height;
     }
   }
 
@@ -82,8 +89,19 @@ public final class SubLevelLegs {
     if (c == null) return List.of();
     return c.legs.values().stream()
         .filter(l -> l.points.size() == 4)
-        .map(l -> new Pose(l.cell, l.points))
+        .map(l -> new Pose(l.cell, l.points, c.collisions.endpoints(l.cell, l.points)))
         .toList();
+  }
+
+  public static int collisionShapes(ServerSubLevel body) {
+    var c = CONTROLLERS.get(body);
+    return c == null ? 0 : c.collisions.count();
+  }
+
+  public static boolean collisionOverlaps(
+      ServerSubLevel body, net.minecraft.world.phys.AABB box, double tolerance) {
+    var c = CONTROLLERS.get(body);
+    return c != null && c.collisions.overlaps(box, tolerance);
   }
 
   public static int contacts(ServerSubLevel body) {
@@ -102,6 +120,11 @@ public final class SubLevelLegs {
     long now = body.getLevel().getGameTime();
     int index = 0;
     for (var leg : legs.values()) {
+      if (Math.abs(leg.solver.extension - leg.desiredHeight) > .001)
+        leg.solver =
+            new CrabLegKinematics(
+                leg.solver.extension
+                    + Math.clamp(leg.desiredHeight - leg.solver.extension, -.05, .05));
       var state = body.getLevel().getBlockState(leg.cell);
       var face = state.getValue(BlockStateProperties.HORIZONTAL_FACING);
       var side = Vec3.atLowerCornerOf(face.getNormal());
@@ -112,7 +135,12 @@ public final class SubLevelLegs {
       var desired =
           body.logicalPose().transformPosition(desiredLocal).add(command.velocity().scale(.25));
       var ground = alive ? leg.solver.ground(body, desired) : null;
-      boolean stance = !moving || ((phase + (index++ % 2) * .5) % 1) < .65;
+      int ordinal = index++;
+      boolean stance =
+          !moving
+              || (legs.size() < 6
+                  ? ordinal != (int) Math.floor(phase) % legs.size() || phase % 1 > .4
+                  : ((phase + (ordinal % 2) * .5) % 1) < .65);
       if (ground == null) {
         leg.grounded = false;
         leg.planted = null;
@@ -131,7 +159,8 @@ public final class SubLevelLegs {
       if (leg.swing) {
         double t = Math.clamp((now - leg.started) / 6d, 0, 1);
         double smooth = t * t * (3 - 2 * t);
-        leg.planted = leg.from.lerp(leg.to, smooth).add(0, Math.sin(t * Math.PI) * .35, 0);
+        double clearance = .35 + Math.max(0, leg.to.y - leg.from.y);
+        leg.planted = leg.from.lerp(leg.to, smooth).add(0, Math.sin(t * Math.PI) * clearance, 0);
         if (t >= 1) {
           leg.swing = false;
           leg.planted = target;
@@ -142,8 +171,15 @@ public final class SubLevelLegs {
               && root.distanceTo(body.logicalPose().transformPositionInverse(leg.planted))
                   < 2.4 * leg.solver.scale;
       leg.contact = target;
-      leg.points =
-          leg.solver.solve(root, face, body.logicalPose().transformPositionInverse(leg.planted));
+      // Extend the native collision chain gradually against the ground, rather
+      // than locking its current folded pose and trying to lift through it.
+      var foot = leg.planted;
+      if (alive && command.expires() > now && !leg.swing) {
+        double error = target.y - desired.y;
+        leg.extensionPressure = Math.clamp(leg.extensionPressure + error * .1, -.5, 1.0);
+        foot = foot.add(0, -leg.extensionPressure, 0);
+      } else leg.extensionPressure = 0;
+      leg.points = leg.solver.solve(root, face, body.logicalPose().transformPositionInverse(foot));
     }
     if (lastSent == Long.MIN_VALUE || now - lastSent >= 4) {
       lastSent = now;
@@ -159,6 +195,41 @@ public final class SubLevelLegs {
     }
   }
 
+  private org.joml.Vector3d supportNormal() {
+    if (legs.isEmpty()) return new org.joml.Vector3d(0, 1, 0);
+    var center = Vec3.atCenterOf(body.getPlot().getCenterBlock());
+    double sx = 0, sz = 0, sh = 0;
+    int n = 0;
+    for (var leg : legs.values())
+      if (leg.contact != null) {
+        sx += leg.cell.getX() - center.x;
+        sz += leg.cell.getZ() - center.z;
+        sh += leg.contact.y + leg.solver.standingHeight() - (leg.cell.getY() - center.y);
+        n++;
+      }
+    if (n < 2) return new org.joml.Vector3d(0, 1, 0);
+    sx /= n;
+    sz /= n;
+    sh /= n;
+    double xx = 0, zz = 0, xz = 0, xh = 0, zh = 0;
+    for (var leg : legs.values())
+      if (leg.contact != null) {
+        double x = leg.cell.getX() - center.x - sx, z = leg.cell.getZ() - center.z - sz;
+        double h = leg.contact.y + leg.solver.standingHeight() - (leg.cell.getY() - center.y) - sh;
+        xx += x * x;
+        zz += z * z;
+        xz += x * z;
+        xh += x * h;
+        zh += z * h;
+      }
+    double det = xx * zz - xz * xz;
+    double slopeX = det > 1e-6 ? (xh * zz - zh * xz) / det : (xx > 1e-6 ? xh / xx : 0);
+    double slopeZ = det > 1e-6 ? (zh * xx - xh * xz) / det : (zz > 1e-6 ? zh / zz : 0);
+    var normal = new org.joml.Vector3d(-slopeX, 1, -slopeZ).normalize();
+    double yaw = body.logicalPose().orientation().getEulerAnglesYXZ(new org.joml.Vector3d()).y;
+    return new org.joml.Quaterniond().rotationY(yaw).transform(normal);
+  }
+
   @SubscribeEvent
   public static void tick(net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) {
     // Discover pre-existing saved creatures as well as newly assembled sockets.
@@ -171,7 +242,14 @@ public final class SubLevelLegs {
                 && SubLevelData.isLiving(body)
                 && !CONTROLLERS.containsKey(body)) request(body);
       }
-    CONTROLLERS.keySet().removeIf(ServerSubLevel::isRemoved);
+    CONTROLLERS
+        .entrySet()
+        .removeIf(
+            e -> {
+              if (!e.getKey().isRemoved()) return false;
+              e.getValue().collisions.close();
+              return true;
+            });
     if (event.getServer().getTickCount() % 2 == 0)
       for (var controller : CONTROLLERS.values()) controller.update();
   }
@@ -187,45 +265,82 @@ public final class SubLevelLegs {
       if (body.getLevel() != level || body.isRemoved()) continue;
       var handle = RigidBodyHandle.of(body);
       if (handle == null || !handle.isValid()) continue;
+      var command = BrainMotorControls.current(body);
+      if (c.lastContactUpdate != body.getLevel().getGameTime()) {
+        for (var leg : c.legs.values()) leg.grounded = c.collisions.grounded(leg.cell);
+        c.lastContactUpdate = body.getLevel().getGameTime();
+      }
+      int planted = contacts(body);
+      boolean controlled =
+          command.expires() > body.getLevel().getGameTime()
+              && !SubLevelHealth.status(body).dead()
+              && planted >= 3;
+      for (var leg : c.legs.values())
+        c.collisions.update(leg.cell, leg.desiredHeight, leg.points, controlled);
+      if (!controlled) continue;
       double mass = body.getMassTracker().getMass();
       if (!Double.isFinite(mass) || mass <= 0) continue;
       if (SubLevelHealth.status(body).dead()) continue;
       int contacts = contacts(body);
       if (contacts == 0) continue;
       var velocity = handle.getLinearVelocity();
-      var gravity =
-          dev.ryanhcode.sable.physics.config.dimension_physics.DimensionPhysicsData.getGravity(
-              level);
-      var command = BrainMotorControls.current(body);
       // Fixed force per appendage: extra shell mass has a real locomotion cost.
       double load = Math.min(1, c.legs.size() * 3d / mass);
       var desired = command.velocity().scale(load);
       for (var leg : c.legs.values()) {
         if (!leg.grounded || leg.contact == null) continue;
         var root = body.logicalPose().transformPosition(leg.points.getFirst());
-        double heightError = leg.solver.standingHeight() - (root.y - leg.contact.y);
-        double lift =
-            Math.clamp(
-                -gravity.y + 20 * heightError - 7 * velocity.y(), 0, Math.abs(gravity.y) * 2.5 + 4);
+        var face =
+            body.getLevel()
+                .getBlockState(leg.cell)
+                .getValue(BlockStateProperties.HORIZONTAL_FACING);
+        var restFoot =
+            leg.points
+                .getFirst()
+                .add(Vec3.atLowerCornerOf(face.getNormal()).scale(1.45 * leg.solver.scale))
+                .add(0, -leg.solver.standingHeight(), 0);
+        double error = leg.contact.y - body.logicalPose().transformPosition(restFoot).y;
+        double gravity =
+            -dev.ryanhcode.sable.physics.config.dimension_physics.DimensionPhysicsData.getGravity(
+                    level)
+                .y;
+        double lift = Math.clamp(gravity + 20 * error - 7 * velocity.y(), 0, gravity * 2.5 + 4);
         var impulse =
             new Vec3(
                     Math.clamp((desired.x - velocity.x()) * 4, -8 * load, 8 * load),
                     lift,
                     Math.clamp((desired.z - velocity.z()) * 4, -8 * load, 8 * load))
                 .scale(mass * dt / contacts);
-        // Support acts on the body COM; gait contacts must not inject a
-        // plot-space lever arm or tip the body when one stance foot lifts.
-        handle.applyLinearImpulse(new org.joml.Vector3d(impulse.x, impulse.y, impulse.z));
+        var com = body.getMassTracker().getCenterOfMass();
+        var worldCom = body.logicalPose().transformPosition(new Vec3(com.x(), com.y(), com.z()));
+        var moment = root.subtract(worldCom).cross(impulse);
+        double limit = mass * dt * 10 / contacts;
+        handle.applyLinearAndAngularImpulse(
+            new org.joml.Vector3d(impulse.x, impulse.y, impulse.z),
+            new org.joml.Vector3d(
+                Math.clamp(moment.x, -limit, limit),
+                Math.clamp(moment.y, -limit, limit),
+                Math.clamp(moment.z, -limit, limit)));
       }
       var angular = handle.getAngularVelocity();
-      // Bounded upright suspension torque, with brain-controlled yaw only.
+      // Stabilize toward the support plane implied by the leg lengths, rather
+      // than toward global level. Unequal legs therefore retain their tilt.
+      var desiredUp = c.supportNormal();
       var up = body.logicalPose().orientation().transform(new org.joml.Vector3d(0, 1, 0));
-      double pitch = Math.clamp(-up.z * 8 - angular.x() * 3, -8, 8) * mass * dt;
-      double roll = Math.clamp(up.x * 8 - angular.z() * 3, -8, 8) * mass * dt;
+      var axisAngle =
+          new org.joml.Quaterniond().rotationTo(up, desiredUp).get(new org.joml.AxisAngle4d());
+      var tilt = new org.joml.Vector3d(axisAngle.x, axisAngle.y, axisAngle.z).mul(axisAngle.angle);
+      double pitch = Math.clamp(tilt.x * 10 - angular.x() * 4, -20, 20) * mass * dt;
+      double roll = Math.clamp(tilt.z * 10 - angular.z() * 4, -20, 20) * mass * dt;
       double torque = (command.yawRate() * load - angular.y()) * mass * dt * .6;
       handle.applyAngularImpulse(
           new org.joml.Vector3d(pitch, Math.clamp(torque, -mass * dt, mass * dt), roll));
     }
+  }
+
+  @SubscribeEvent
+  public static void stopping(net.neoforged.neoforge.event.server.ServerStoppingEvent event) {
+    CONTROLLERS.values().forEach(c -> c.collisions.close());
   }
 
   @SubscribeEvent
