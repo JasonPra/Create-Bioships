@@ -12,6 +12,7 @@ import net.neoforged.neoforge.client.event.*;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.Azkerash.create_bioships.development.testing.DevelopmentToolkitItem;
 import org.Azkerash.create_bioships.development.testing.network.*;
+import org.Azkerash.create_bioships.equipment.DiagnosticAccess;
 
 /** Client-only arrows follow the current render pose of authorized creature roots. */
 @EventBusSubscriber(modid = "create_bioships", value = Dist.CLIENT)
@@ -34,7 +35,7 @@ public final class FacingDebugOverlay {
 
   public static void toggle() {
     var mc = Minecraft.getInstance();
-    if (mc.player == null || mc.level == null || !DevelopmentToolkitItem.allowed(mc.player)) return;
+    if (mc.player == null || mc.level == null || !DiagnosticAccess.allowed(mc.player)) return;
     enabled = !enabled;
     world = mc.level;
     ROUTES.clear();
@@ -53,7 +54,7 @@ public final class FacingDebugOverlay {
   @SubscribeEvent
   public static void tick(ClientTickEvent.Post e) {
     var mc = Minecraft.getInstance();
-    if (enabled && (mc.player == null || !DevelopmentToolkitItem.allowed(mc.player))) {
+    if (enabled && (mc.player == null || !DiagnosticAccess.allowed(mc.player))) {
       enabled = false;
       ROUTES.clear();
       if (mc.getConnection() != null) PacketDistributor.sendToServer(new FacingDebugRequest(false));
@@ -129,6 +130,8 @@ public final class FacingDebugOverlay {
 
   @SubscribeEvent
   public static void legend(RenderGuiEvent.Post e) {
+    if (Minecraft.getInstance().screen
+        instanceof org.Azkerash.create_bioships.client.equipment.SomaticResonatorScreen) return;
     if (!enabled) return;
     var mc = Minecraft.getInstance();
     int y = mc.getWindow().getGuiScaledHeight() - 102;
@@ -137,7 +140,9 @@ public final class FacingDebugOverlay {
     e.getGuiGraphics()
         .drawString(
             mc.font,
-            "Facing: cyan arrow = front · Shift-use toolkit on a body side to set front",
+            DevelopmentToolkitItem.allowed(mc.player)
+                ? "Facing: cyan arrow = front · Shift-use toolkit to set front"
+                : "Facing: cyan arrow marks the creature’s front",
             8,
             y,
             0xffc5e8ea);

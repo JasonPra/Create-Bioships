@@ -15,6 +15,7 @@ import org.Azkerash.create_bioships.core.*;
 import org.Azkerash.create_bioships.core.access.SubLevelPermissions;
 import org.Azkerash.create_bioships.core.locomotion.SubLevelFacing;
 import org.Azkerash.create_bioships.development.testing.DevelopmentToolkitItem;
+import org.Azkerash.create_bioships.equipment.DiagnosticAccess;
 
 /** Per-viewer permission-filtered front markers; nothing is spawned into the shared world. */
 @EventBusSubscriber(modid = "create_bioships")
@@ -33,7 +34,7 @@ public final class FacingDebugSync {
             c.enqueueWork(
                 () -> {
                   if (c.player() instanceof ServerPlayer player) {
-                    if (p.enabled() && DevelopmentToolkitItem.allowed(player))
+                    if (p.enabled() && DiagnosticAccess.allowed(player))
                       VIEWERS.put(player, new HashSet<>());
                     else VIEWERS.remove(player);
                   }
@@ -93,7 +94,7 @@ public final class FacingDebugSync {
       var viewer = it.next();
       var player = viewer.getKey();
       if (!e.getServer().getPlayerList().getPlayers().contains(player)
-          || !DevelopmentToolkitItem.allowed(player)) {
+          || !DiagnosticAccess.allowed(player)) {
         it.remove();
         continue;
       }
@@ -105,7 +106,7 @@ public final class FacingDebugSync {
               && !body.isRemoved()
               && SubLevelData.isLiving(body)
               && !SubLevelCreatureParts.isPart(body)
-              && SubLevelPermissions.canInspect(body, player.getUUID())) {
+              && DiagnosticAccess.canInspect(body, player)) {
             var box = body.getPlot().getBoundingBox();
             var origin =
                 new Vec3(

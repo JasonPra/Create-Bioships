@@ -14,8 +14,11 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.*;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.Azkerash.create_bioships.development.testing.network.*;
+import org.Azkerash.create_bioships.equipment.DiagnosticAccess;
 
-/** The toolkit draws the authoritative server graph in the grid's interpolated coordinate frame. */
+/**
+ * Diagnostic tools draw the authoritative server graph in the grid's interpolated coordinate frame.
+ */
 @EventBusSubscriber(modid = "create_bioships", value = Dist.CLIENT)
 public final class IntestineDebugOverlay {
   private static boolean enabled;
@@ -39,10 +42,7 @@ public final class IntestineDebugOverlay {
 
   public static void toggle() {
     var mc = Minecraft.getInstance();
-    if (mc.level == null
-        || mc.player == null
-        || !org.Azkerash.create_bioships.development.testing.DevelopmentToolkitItem.allowed(
-            mc.player)) return;
+    if (mc.level == null || mc.player == null || !DiagnosticAccess.allowed(mc.player)) return;
     enabled = !enabled;
     GRAPHS.clear();
     world = mc.level;
@@ -68,10 +68,7 @@ public final class IntestineDebugOverlay {
   @SubscribeEvent
   public static void changedLevel(ClientTickEvent.Post event) {
     var mc = Minecraft.getInstance();
-    if (enabled
-        && mc.player != null
-        && !org.Azkerash.create_bioships.development.testing.DevelopmentToolkitItem.allowed(
-            mc.player)) {
+    if (enabled && mc.player != null && !DiagnosticAccess.allowed(mc.player)) {
       toggleOff();
     }
     if (world == mc.level) return;
@@ -262,8 +259,7 @@ public final class IntestineDebugOverlay {
       }
 
     int y = mc.getWindow().getGuiScaledHeight() - 57;
-    String label =
-        "Toolkit: intestine graph · red=open · green=connected · " + GRAPHS.size() + " grids";
+    String label = "Digestion · red=open · green=connected · " + GRAPHS.size() + " creatures";
     g.fill(5, y - 3, Math.min(mc.getWindow().getGuiScaledWidth() - 5, 420), y + 24, 0x99000000);
     g.drawString(mc.font, label, 8, y, 0xffc5e8ea);
     g.drawString(mc.font, "Pink: mouth · purple: stomach · cyan: sac", 8, y + 12, 0xffc5e8ea);

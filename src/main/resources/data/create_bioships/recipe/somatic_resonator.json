@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    " B ",
+    "CRC",
+    " F "
+  ],
+  "key": {
+    "B": {
+      "item": "minecraft:bone"
+    },
+    "C": {
+      "item": "create_bioships:chitin_armor"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "F": {
+      "item": "biomancy:packed_flesh"
+    }
+  },
+  "result": {
+    "id": "create_bioships:somatic_resonator",
+    "count": 1
+  }
+}

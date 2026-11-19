@@ -84,6 +84,12 @@ public final class Create_bioships {
                   new org.Azkerash.create_bioships.equipment.LimbPositionerItem(
                       new Item.Properties().stacksTo(1)));
 
+  public static final DeferredItem<org.Azkerash.create_bioships.equipment.SomaticResonatorItem>
+      SOMATIC_RESONATOR =
+          ITEMS.register(
+              "somatic_resonator",
+              org.Azkerash.create_bioships.equipment.SomaticResonatorItem::new);
+
   static {
     TABS.register(
         "core",
@@ -97,6 +103,7 @@ public final class Create_bioships {
                       output.accept(BIOSHIP_GOGGLES.get());
                       output.accept(BIOSHIP_WRENCH.get());
                       output.accept(LIMB_POSITIONER.get());
+                      output.accept(SOMATIC_RESONATOR.get());
                     })
                 .build());
   }

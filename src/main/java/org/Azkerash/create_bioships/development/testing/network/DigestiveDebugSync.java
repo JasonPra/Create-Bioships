@@ -10,8 +10,11 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.Azkerash.create_bioships.core.SubLevelData;
 import org.Azkerash.create_bioships.core.digestion.SubLevelDigestion;
+import org.Azkerash.create_bioships.equipment.DiagnosticAccess;
 
-/** Opt-in nearby topology only: no inventories, no per-pipe packets, no background subscribers. */
+/**
+ * Opt-in nearby topology and inventory summaries; no per-pipe packets or background subscribers.
+ */
 @EventBusSubscriber(modid = "create_bioships")
 public final class DigestiveDebugSync {
   private static final Map<ServerPlayer, Map<UUID, Integer>> VIEWERS = new WeakHashMap<>();
@@ -29,9 +32,8 @@ public final class DigestiveDebugSync {
             c.enqueueWork(
                 () -> {
                   if (c.player() instanceof ServerPlayer player) {
-                    if (p.enabled()
-                        && org.Azkerash.create_bioships.development.testing.DevelopmentToolkitItem
-                            .allowed(player)) VIEWERS.put(player, new HashMap<>());
+                    if (p.enabled() && DiagnosticAccess.allowed(player))
+                      VIEWERS.put(player, new HashMap<>());
                     else VIEWERS.remove(player);
                   }
                 }));
@@ -53,8 +55,7 @@ public final class DigestiveDebugSync {
       var viewer = iterator.next();
       var player = viewer.getKey();
       if (!event.getServer().getPlayerList().getPlayers().contains(player)
-          || !org.Azkerash.create_bioships.development.testing.DevelopmentToolkitItem.allowed(
-              player)) {
+          || !DiagnosticAccess.allowed(player)) {
         iterator.remove();
         continue;
       }
@@ -66,8 +67,7 @@ public final class DigestiveDebugSync {
         if (entry instanceof ServerSubLevel body
             && !body.isRemoved()
             && SubLevelData.isLiving(body)) {
-          if (!org.Azkerash.create_bioships.core.access.SubLevelPermissions.canInspect(
-              body, player.getUUID())) continue;
+          if (!DiagnosticAccess.canInspect(body, player)) continue;
           var center =
               body.logicalPose()
                   .transformPosition(Vec3.atCenterOf(body.getPlot().getCenterBlock()));
