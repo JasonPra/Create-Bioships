@@ -90,6 +90,18 @@ public final class ArmoredMawTests {
     h.assertTrue(SubLevelArmor.status(body).maximum() == 0, "Removed maw left armor capacity");
     level.setBlock(at, ComponentRegistry.ARMORED_MAW.get().defaultBlockState(), 3);
     h.assertTrue(SubLevelArmor.status(body).current() == 16, "Replacement refilled spent armor");
+    h.assertTrue(
+        ((MouthBlockEntity) level.getBlockEntity(at)).salivaParticles(),
+        "Living Eldritch Maw did not emit saliva");
+    level.setBlock(at, ComponentRegistry.MOUTH.get().defaultBlockState(), 3);
+    h.assertTrue(
+        !((MouthBlockEntity) level.getBlockEntity(at)).salivaParticles(),
+        "Ordinary Feeder Mouth emitted Eldritch saliva");
+    level.setBlock(at, ComponentRegistry.ARMORED_MAW.get().defaultBlockState(), 3);
+    SubLevelHealth.damage(body, 10000, "test");
+    h.assertTrue(
+        !((MouthBlockEntity) level.getBlockEntity(at)).salivaParticles(),
+        "Dead Eldritch Maw kept salivating");
     h.succeed();
   }
 }

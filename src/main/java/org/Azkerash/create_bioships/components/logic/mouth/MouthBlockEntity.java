@@ -1,6 +1,7 @@
 package org.Azkerash.create_bioships.components.logic.mouth;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.*;
 import net.minecraft.world.inventory.*;
@@ -120,6 +121,38 @@ public final class MouthBlockEntity extends OrganInventory {
     } finally {
       observing = false;
     }
+  }
+
+  /** One cosmetic droplet at the lower lip, transformed with the physical creature. */
+  public boolean salivaParticles() {
+    if (!(level instanceof net.minecraft.server.level.ServerLevel server)
+        || !getBlockState().is(ComponentRegistry.ARMORED_MAW.get())
+        || !active()) return false;
+    var body =
+        org.Azkerash.create_bioships.core.CoreAssemblyRules.containing(server, worldPosition);
+    if (body == null) return false;
+    var face = getBlockState().getValue(MouthBlock.FACING);
+    var chin =
+        face == Direction.UP
+            ? Direction.SOUTH
+            : face == Direction.DOWN ? Direction.NORTH : Direction.DOWN;
+    var at =
+        body.logicalPose()
+            .transformPosition(
+                net.minecraft.world.phys.Vec3.atCenterOf(worldPosition)
+                    .relative(face, .69)
+                    .relative(chin, .3));
+    server.sendParticles(
+        net.minecraft.core.particles.ParticleTypes.DRIPPING_WATER,
+        at.x,
+        at.y,
+        at.z,
+        1,
+        .035,
+        .005,
+        .035,
+        0);
+    return true;
   }
 
   public void chewingParticles() {

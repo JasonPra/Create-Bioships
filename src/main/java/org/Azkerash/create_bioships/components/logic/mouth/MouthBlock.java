@@ -11,6 +11,7 @@ import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.*;
 import net.minecraft.world.level.block.state.*;
 import net.minecraft.world.phys.BlockHitResult;
+import org.Azkerash.create_bioships.components.ComponentRegistry;
 
 public final class MouthBlock extends DirectionalBlock
     implements EntityBlock, com.simibubi.create.content.equipment.wrench.IWrenchable {
@@ -102,6 +103,8 @@ public final class MouthBlock extends DirectionalBlock
         level.setBlock(pos, state.setValue(CHEW, 0).setValue(BREATH, 0), 2);
       return;
     }
+    if (state.is(ComponentRegistry.ARMORED_MAW.get()) && level.random.nextInt(4) == 0)
+      mouth.salivaParticles();
     if (remaining == 0) {
       int step = (int) ((level.getGameTime() / 8 + Math.floorMod(pos.asLong(), 8)) % 8);
       int breath = new int[] {0, 0, 1, 2, 2, 1, 0, 0}[step];
