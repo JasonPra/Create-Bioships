@@ -260,7 +260,7 @@ public final class SubLevelCreatureParts {
   }
 
   public static void died(ServerSubLevel owner) {
-    FeedingTrust.cancelParticles(owner);
+    org.Azkerash.create_bioships.core.trust.SubLevelTrustGains.cancelParticles(owner);
     var source = owner.getUserDataTag();
     for (var part : members(owner))
       if (part != owner) {

@@ -23,4 +23,24 @@ public abstract class PotionSplashTargetsMixin {
       Level level, Class<LivingEntity> type, AABB bounds, Operation<List<LivingEntity>> original) {
     return CombatAdapter.potionTargets(level, bounds, original.call(level, type, bounds));
   }
+
+  @WrapOperation(
+      method = "applySplash",
+      at =
+          @At(
+              value = "INVOKE",
+              target =
+                  "Lnet/minecraft/world/entity/LivingEntity;addEffect(Lnet/minecraft/world/effect/MobEffectInstance;Lnet/minecraft/world/entity/Entity;)Z"))
+  private boolean core$regenerationCare(
+      LivingEntity recipient,
+      net.minecraft.world.effect.MobEffectInstance effect,
+      net.minecraft.world.entity.Entity source,
+      Operation<Boolean> original) {
+    boolean alreadyRegenerating =
+        recipient.hasEffect(net.minecraft.world.effect.MobEffects.REGENERATION);
+    boolean accepted = original.call(recipient, effect, source);
+    org.Azkerash.create_bioships.core.trust.RegenerationTrust.applied(
+        (ThrownPotion) (Object) this, recipient, effect, accepted, alreadyRegenerating);
+    return accepted;
+  }
 }

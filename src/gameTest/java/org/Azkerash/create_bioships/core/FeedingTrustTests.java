@@ -79,15 +79,57 @@ public final class FeedingTrustTests {
     sacMenu.clicked(inventorySlot, 0, ClickType.QUICK_MOVE, player);
     helper.assertTrue(
         Math.abs(SubLevelData.trust(body) - .8) < 1e-8, "Connected sac feeding count incorrect");
+    for (int repeat = 0; repeat < 3; repeat++) {
+      menu.clicked(0, 0, ClickType.PICKUP, player);
+      helper.assertTrue(
+          Math.abs(SubLevelData.trust(body) - .7) < 1e-8,
+          "Picking up meat did not reverse its feeding trust");
+      menu.clicked(0, 0, ClickType.PICKUP, player);
+      helper.assertTrue(
+          Math.abs(SubLevelData.trust(body) - .8) < 1e-8, "Repeated take/return farmed trust");
+    }
+    menu.clicked(1, 0, ClickType.QUICK_MOVE, player);
+    helper.assertTrue(
+        Math.abs(SubLevelData.trust(body) - .4) < 1e-8,
+        "Shift-clicking a whole meat slot did not remove proportional trust");
+    int sacSlot = -1;
+    for (int i = 0; i < sacMenu.slots.size(); i++)
+      if (sacMenu.slots.get(i).container != player.getInventory()
+          && sacMenu.slots.get(i).getItem().is(Items.BEEF)) {
+        sacSlot = i;
+        break;
+      }
+    helper.assertTrue(sacSlot >= 0, "Deposited sac meat was not found");
+    sacMenu.clicked(sacSlot, 0, ClickType.QUICK_MOVE, player);
+    helper.assertTrue(
+        Math.abs(SubLevelData.trust(body) - .1) < 1e-8,
+        "Connected sac withdrawal did not reverse trust for its entire stack");
+    // Disconnecting the storage port must not turn withdrawals into free trust farming.
+    sac.getInventory().insertItem(0, new ItemStack(Items.BEEF), false);
+    level.removeBlock(core.east(2), false);
+    double beforeDisconnected = SubLevelData.trust(body);
+    int detachedSlot = -1;
+    for (int i = 0; i < sacMenu.slots.size(); i++)
+      if (sacMenu.slots.get(i).container != player.getInventory()
+          && sacMenu.slots.get(i).getItem().is(Items.BEEF)) {
+        detachedSlot = i;
+        break;
+      }
+    helper.assertTrue(detachedSlot >= 0, "Disconnected sac meat missing");
+    sacMenu.clicked(detachedSlot, 0, ClickType.QUICK_MOVE, player);
+    helper.assertTrue(
+        Math.abs(SubLevelData.trust(body) - Math.max(0, beforeDisconnected - .1)) < 1e-8,
+        "Disconnecting a sac bypassed withdrawal penalties");
     var unconnected =
         (com.github.elenterius.biomancy.block.storagesac.StorageSacBlockEntity)
             level.getBlockEntity(core.east(6));
     helper.assertTrue(
         FeedingTrust.snapshot(
-                com.github.elenterius.biomancy.menu.StorageSacMenu.createServerMenu(
-                    3, player.getInventory(), unconnected))
-            == null,
-        "Disconnected sac earned trust");
+                    com.github.elenterius.biomancy.menu.StorageSacMenu.createServerMenu(
+                        3, player.getInventory(), unconnected))
+                .earnsTrust()
+            == false,
+        "Disconnected sac is eligible for feeding rewards");
     double trust = SubLevelData.trust(body);
     mouth.feed(new ItemStack(Items.BEEF, 2), false);
     helper.assertTrue(SubLevelData.trust(body) == trust, "Autonomous feeding earned trust");

@@ -345,6 +345,21 @@ public final class SubLevelData {
     body.setUserDataTag(root);
   }
 
+  public static long regenerationTrustUntil(ServerSubLevel body) {
+    body = SubLevelCreatureParts.root(body);
+    initialize(body);
+    return body.getUserDataTag().getCompound(STATE).getLong("regenerationTrustUntil");
+  }
+
+  public static void regenerationTrustUntil(ServerSubLevel body, long until) {
+    if (!SubLevelCreatureParts.available(body)) return;
+    body = SubLevelCreatureParts.root(body);
+    initialize(body);
+    var tag = body.getUserDataTag().copy();
+    tag.getCompound(STATE).putLong("regenerationTrustUntil", until);
+    body.setUserDataTag(tag);
+  }
+
   public static void trust(ServerSubLevel body, double value) {
     if (!SubLevelCreatureParts.available(body)) return;
     body = SubLevelCreatureParts.root(body);
