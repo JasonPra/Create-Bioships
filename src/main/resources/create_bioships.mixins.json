@@ -26,7 +26,8 @@
     "BiometricMembraneAccessMixin",
     "SableMembraneCollisionMixin",
     "StorageSacMenuAccess",
-    "FeedingMenuMixin"
+    "FeedingMenuMixin",
+    "WalkerSnapInvoker"
   ],
   "client": [],
   "injectors": {

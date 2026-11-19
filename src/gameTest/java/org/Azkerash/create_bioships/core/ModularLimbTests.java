@@ -82,7 +82,7 @@ public final class ModularLimbTests {
                     "Modular legs did not stand without a behavior: " + standing);
                 h.assertTrue(
                     ModularLimbController.jointCount(body) == 8,
-                    "Real articulated limb joints were not created");
+                    "Native articulated limb chain was not created");
                 for (var part : ModularLimbController.segments(body)) {
                   h.assertTrue(
                       SubLevelCreatureParts.root(part) == body,
@@ -162,7 +162,14 @@ public final class ModularLimbTests {
                                 ModularLimbController.segments(body).stream()
                                     .allMatch(p -> SubLevelHealth.status(p).dead()),
                                 "Linked limbs survived creature death");
-                            h.succeed();
+                            h.runAfterDelay(
+                                10,
+                                () -> {
+                                  h.assertTrue(
+                                      ModularLimbController.passiveJointCount(body) == 8,
+                                      "Death did not restore physical ragdoll joints");
+                                  h.succeed();
+                                });
                           });
                     });
               });

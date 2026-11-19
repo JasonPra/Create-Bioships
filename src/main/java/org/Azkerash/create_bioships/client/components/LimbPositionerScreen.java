@@ -8,7 +8,7 @@ import net.minecraft.network.chat.Component;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.Azkerash.create_bioships.compat.letitwalk.*;
 
-/** Rest-pose and suspension controls for our compact and modular limbs only. */
+/** Rest-pose and passive articulation controls for our compact and modular limbs only. */
 public final class LimbPositionerScreen extends Screen {
   private LimbPositionerState state;
 
@@ -78,9 +78,9 @@ public final class LimbPositionerScreen extends Screen {
       state.compact() ? "Height: " + state.height() + " blocks" : "Height: built from segments",
       "Rest pose: " + state.angle() + "°",
       state.assembled()
-          ? String.format(java.util.Locale.ROOT, "Spring stiffness: %.2f×", state.stiffness())
-          : "Assemble to tune suspension",
-      String.format(java.util.Locale.ROOT, "Damping: %.2f×", state.damping())
+          ? String.format(java.util.Locale.ROOT, "Passive stiffness: %.2f×", state.stiffness())
+          : "Assemble to tune joints",
+      String.format(java.util.Locale.ROOT, "Passive damping: %.2f×", state.damping())
     };
     for (int row = 0; row < 4; row++)
       g.drawString(font, labels[row], x + 12, y + 48 + row * 30, OrganScreenStyle.TEXT, false);

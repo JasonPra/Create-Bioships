@@ -224,8 +224,8 @@ public final class WanderTests {
               var tuning =
                   org.Azkerash.create_bioships.compat.letitwalk.LimbTuning.get(level, cell);
               helper.assertTrue(
-                  tuning.damping() == 1.5 && tuning.stiffness() == 1,
-                  "Exhibit tuning changed global stiffness or omitted higher damping");
+                  tuning.equals(org.Azkerash.create_bioships.compat.letitwalk.LimbTuning.DEFAULT),
+                  "Native exhibit unexpectedly overrides default articulation tuning");
             }
           helper.runAfterDelay(
               20,

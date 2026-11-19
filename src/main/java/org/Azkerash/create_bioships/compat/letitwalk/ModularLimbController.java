@@ -19,7 +19,8 @@ import org.joml.Quaterniond;
 import org.joml.Vector3d;
 
 /**
- * One native assembly/gait context per creature. Limb bodies remain collision-driven rigid bodies.
+ * One native assembly/gait context per creature. Powered poses use the native BuiltLegDriver;
+ * passive bodies retain physical hinges for ragdoll collision.
  */
 @EventBusSubscriber(modid = "create_bioships")
 public final class ModularLimbController {
@@ -69,7 +70,6 @@ public final class ModularLimbController {
   private final Map<UUID, Map<Long, net.minecraft.world.level.block.state.BlockState>> blockTypes =
       new HashMap<>();
   private int physicalContacts;
-  private boolean hullContact;
   private boolean dirty;
   private long edit = -1;
 
@@ -157,9 +157,17 @@ public final class ModularLimbController {
     return gap;
   }
 
+  /**
+   * Native chain joints, independent of whether powered pose driving or passive hinges are active.
+   */
   public static int jointCount(ServerSubLevel body) {
     var c = CONTROLLERS.get(SubLevelCreatureParts.root(body));
-    return c == null ? 0 : c.pins.size();
+    return c == null ? 0 : c.nativeWalker.legs.stream().mapToInt(l -> l.built.joints.size()).sum();
+  }
+
+  public static int passiveJointCount(ServerSubLevel body) {
+    var c = CONTROLLERS.get(SubLevelCreatureParts.root(body));
+    return c == null ? 0 : (int) c.pins.stream().filter(p -> p.handle.isValid()).count();
   }
 
   public static List<ServerSubLevel> segments(ServerSubLevel body) {
@@ -290,7 +298,6 @@ public final class ModularLimbController {
               }
             }
           }
-          hullContact = LimbGroundContacts.touching(body, body);
         });
     if (!postureEnabled()) return;
     var request = BrainMotorControls.current(body);
@@ -366,33 +373,32 @@ public final class ModularLimbController {
     if (!(event.getTimeStep() > 0 && event.getTimeStep() <= .1)) return;
     for (var c : CONTROLLERS.values()) {
       if (c.body.isRemoved() || c.body.getLevel() != event.getPhysicsSystem().getLevel()) continue;
-      c.ensurePins();
-      boolean drive =
-          c.postureEnabled()
-              && !SubLevelHealth.status(c.body).dead()
-              && (c.physicalContacts > 0 || c.hullContact);
-      // Physical joint motors have finite torque and yield to real terrain collision.
-      double torque = Math.clamp(c.body.getMassTracker().getMass() * 8, 20, 1000);
-      for (var pin : c.pins) {
-        var tuning =
-            LimbTuning.get(
-                c.body.getLevel(), BlockPos.containing(pin.leg.joints.get(pin.index).parentPlot));
-        pin.handle.setMotor(
-            ConstraintJointAxis.ANGULAR_X,
-            pin.leg.angles[pin.index],
-            drive ? 300 * tuning.stiffness() : 2,
-            drive ? 30 * tuning.damping() : 4,
-            true,
-            drive ? torque : 1);
-      }
-      if (drive && c.physicalContacts > 0 && c.nativeWalker.stanceCount > 0) {
-        var handle = RigidBodyHandle.of(c.body);
-        if (handle != null && handle.isValid()) {
-          int planned = c.nativeWalker.stanceCount;
-          c.nativeWalker.stanceCount = Math.min(planned, c.physicalContacts);
-          WalkerPhysics.substep(c.nativeWalker, c.body, handle, event.getTimeStep());
-          c.nativeWalker.stanceCount = planned;
+      if (!c.postureEnabled()) {
+        c.ensurePins();
+        for (var pin : c.pins) {
+          var tuning =
+              LimbTuning.get(
+                  c.body.getLevel(), BlockPos.containing(pin.leg.joints.get(pin.index).parentPlot));
+          pin.handle.setMotor(
+              ConstraintJointAxis.ANGULAR_X,
+              0,
+              2 * tuning.stiffness(),
+              4 * tuning.damping(),
+              true,
+              1);
         }
+        continue;
+      }
+      c.releasePins();
+      var handle = RigidBodyHandle.of(c.body);
+      if (handle != null && handle.isValid()) {
+        WalkerPhysics.substep(c.nativeWalker, c.body, handle, event.getTimeStep());
+        BuiltLegDriver.solve(c.nativeWalker, c.body, c.body.getLevel().getGameTime());
+        WalkerCargo.substep(
+            c.nativeWalker,
+            c.body,
+            BuiltLegDriver.substep(c.nativeWalker, c.body, event.getTimeStep()),
+            event.getTimeStep());
       }
     }
   }

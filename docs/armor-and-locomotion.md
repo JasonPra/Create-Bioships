@@ -8,13 +8,13 @@ Sable's native block-property resource sets armored material mass to 1.5, relati
 
 ## Compact legs
 
-Armored Crab Legs are separate horizontal attachment blocks. They need a full solid backing block; the living core and other leg sockets cannot support them. The owning grid caches sockets, calls Let It Walk's `JointChain` IK and `TerrainProbe`, and applies native Sable contact impulses. No hidden Let It Walk core or per-leg block ticker is used.
+Armored Crab Legs are separate horizontal attachment blocks. They need a full solid backing block; the living core and other leg sockets cannot support them. Each socket owns three real Sable collision sublevels. The owning grid runs Let It Walk's native gait, IK, suspension and powered pose driver. No hidden Let It Walk core block or per-leg block ticker is used. See [compact-native-limbs.md](compact-native-limbs.md) for the API boundary and saved-state responsibilities.
 
-A brain exposes `BrainMotorControls.move(grid, worldVelocity, yawRate, leaseTicks)` and `stop(grid)`. Requests expire and are rejected after death or without an active brain. A zero-velocity request explicitly requests standing; simply adding a brain does not activate the legs. Uncommanded, airborne, and dead creatures have passive articulated legs and ragdoll normally.
+A brain exposes `BrainMotorControls.move(grid, worldVelocity, yawRate, leaseTicks)` and `stop(grid)`. Requests expire and are rejected after death or without an active brain. A living creature with a brain maintains standing without a behavior card or movement request. Stopping or expiring movement returns to standing. Brainless and dead creatures have passive articulated legs and ragdoll normally.
 
-`CompactLegCollisions` owns three native oriented box bodies per limb, connected to the creature and each other with bounded articulated joints. Joint motors require an explicit brain request and terrain contact by the hull or limbs, allowing recovery from a collapsed pose. Suspension lift additionally requires multiple actual supporting limbs. No joints attach these crab legs to the world. Terrain anchoring is reserved for future climbing appendages. Step clearance rises for higher landing surfaces; jumping is not implemented.
+The native driver determines support and applies its built-in suspension. `CompactLegCollisions` queries the actual narrow collision bones along the entire leg; it does not implement a second suspension system. Crab legs never anchor to the world. Terrain anchoring remains reserved for future climbing appendages. Jumping is not implemented.
 
-The renderer follows refreshed native body poses and F3+B outlines the entire segments. Length changes grow gradually and rebuild collision shapes from their previous physical poses, preserving the lower surface during growth. Toes target the terrain surface; they are never driven below it to generate lift. Suspension accounts for bone mass and turning inertia. Native joints and objects are removed with their sockets or owner. Core-shell pixels tile at their original density rather than stretching along the bones.
+The renderer follows refreshed native body poses and F3+B outlines the entire segments. Length changes grow gradually and preserve socket/foot continuity. Native segment objects are removed with their sockets or owner. Core-shell pixels tile at their original density rather than stretching along the bones.
 
 Normal right-click with the **Ossified Wrench** extends a compact leg through heights 1, 2, and 3. Facing stays unchanged. Thickness and actual segment lengths increase together. The third setting provides approximately three blocks of clearance when sockets are attached on the lowest body row. Further clicks do nothing. Create's standard wrench does not extend the leg; shift-wrench still removes it.
 
@@ -34,6 +34,4 @@ Physics prunes removed sockets before applying limb forces, and uses the facing 
 validated socket states. Removing a leg between the scheduled gait update and physics no
 longer reads block properties from air or leaves that leg's collision bodies active.
 
-The compact-leg development exhibit starts at 1.5× damping with unchanged stiffness. Existing
-exhibit subjects receive this adjustment once; higher user-selected damping is preserved.
-Subsequent Positioner adjustments are respected. Global limb tuning defaults are unchanged.
+The compact-leg development exhibit uses default native powered stance. It no longer applies a custom 1.5× damping override. Positioner stiffness and damping adjust passive ragdoll articulation only; powered walking and suspension use upstream pose driving. Reset restores component defaults, and removal clears component tuning without clearing shared health, armor or trust ledgers.

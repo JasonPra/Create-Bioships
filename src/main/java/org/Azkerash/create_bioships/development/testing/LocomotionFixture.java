@@ -27,7 +27,6 @@ import org.Azkerash.create_bioships.core.brain.SubLevelBrains;
 @EventBusSubscriber(modid = "create_bioships")
 public final class LocomotionFixture {
   private static final String MARK = "create_bioships:locomotion_fixture";
-  private static final String DAMPING_VERSION = "create_bioships:locomotion_damping";
   private static final String WANDER_VERSION = "create_bioships:locomotion_wander";
 
   private LocomotionFixture() {}
@@ -161,7 +160,6 @@ public final class LocomotionFixture {
     SubLevelContainer.getContainer(level)
         .addForceLoadTicket(
             body, SubLevelLoadingTicketType.COMMAND_FORCED, net.minecraft.util.Unit.INSTANCE);
-    installDamping(body);
     installWander(body);
     return 1;
   }
@@ -210,19 +208,6 @@ public final class LocomotionFixture {
                             })));
   }
 
-  private static void installDamping(ServerSubLevel body) {
-    for (var cell : SubLevelHealth.blocks(body)) {
-      if (!body.getLevel().getBlockState(cell).is(ComponentRegistry.CRAB_LEG.get())) continue;
-      var old = org.Azkerash.create_bioships.compat.letitwalk.LimbTuning.get(body.getLevel(), cell);
-      new org.Azkerash.create_bioships.compat.letitwalk.LimbTuning(
-              old.restAngle(), old.stiffness(), Math.max(1.5, old.damping()))
-          .save(body.getLevel(), cell);
-    }
-    var tag = body.getUserDataTag().copy();
-    tag.putBoolean(DAMPING_VERSION, true);
-    body.setUserDataTag(tag);
-  }
-
   private static void installWander(ServerSubLevel body) {
     var brain = SubLevelBrains.get(body);
     if (brain.capacity() == 0) return;
@@ -238,8 +223,6 @@ public final class LocomotionFixture {
     for (var level : event.getServer().getAllLevels()) {
       if (!DevelopmentWorldSetup.isDevelopment(level)) continue;
       var subject = body(level);
-      if (subject != null && !subject.getUserDataTag().getBoolean(DAMPING_VERSION))
-        installDamping(subject);
       if (subject != null && !subject.getUserDataTag().getBoolean(WANDER_VERSION))
         installWander(subject);
     }

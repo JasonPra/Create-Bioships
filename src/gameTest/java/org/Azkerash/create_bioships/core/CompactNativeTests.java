@@ -22,20 +22,50 @@ public final class CompactNativeTests {
   @GameTest(template = "test_empty", timeoutTicks = 800, batch = "compact_native_sustained")
   public static void empty_brain_stands_without_requests_and_after_movement_stops(
       GameTestHelper h) {
-    runSmall(h, 4096, 20);
+    runSmall(h, 4096, 20, 3, false, true);
   }
 
   @GameTest(template = "test_empty", timeoutTicks = 800, batch = "compact_native_sustained")
   public static void small_creature_survives_second_physics_spawn_phase(GameTestHelper h) {
-    runSmall(h, 4160, 21);
+    runSmall(h, 4160, 21, 3);
   }
 
   @GameTest(template = "test_empty", timeoutTicks = 800, batch = "compact_native_sustained")
   public static void small_creature_survives_third_physics_spawn_phase(GameTestHelper h) {
-    runSmall(h, 4224, 22);
+    runSmall(h, 4224, 22, 3);
   }
 
-  private static void runSmall(GameTestHelper h, int baseX, int delay) {
+  @GameTest(template = "test_empty", timeoutTicks = 800, batch = "compact_native_sustained")
+  public static void minimum_height_default_tuning_supports_small_creature(GameTestHelper h) {
+    runSmall(h, 4288, 20, 1);
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 800, batch = "compact_native_sustained")
+  public static void medium_height_default_tuning_supports_small_creature(GameTestHelper h) {
+    runSmall(h, 4352, 21, 2);
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 800, batch = "compact_native_sustained")
+  public static void minimum_height_native_suspension_handles_armored_load(GameTestHelper h) {
+    runSmall(h, 4416, 20, 1, true);
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 800, batch = "compact_native_sustained")
+  public static void maximum_height_native_suspension_handles_armored_load(GameTestHelper h) {
+    runSmall(h, 4480, 21, 3, true);
+  }
+
+  private static void runSmall(GameTestHelper h, int baseX, int delay, int height) {
+    runSmall(h, baseX, delay, height, false);
+  }
+
+  private static void runSmall(
+      GameTestHelper h, int baseX, int delay, int height, boolean armored) {
+    runSmall(h, baseX, delay, height, armored, false);
+  }
+
+  private static void runSmall(
+      GameTestHelper h, int baseX, int delay, int height, boolean armored, boolean editRestPose) {
     var level = h.getLevel();
     var base = new BlockPos(baseX, 80, 128);
     for (int x = (baseX >> 4) - 2; x <= (baseX >> 4) + 2; x++)
@@ -76,19 +106,28 @@ public final class CompactNativeTests {
                   ComponentRegistry.CRAB_LEG
                       .get()
                       .defaultBlockState()
-                      .setValue(CrabLegBlock.HEIGHT, 3)
+                      .setValue(CrabLegBlock.HEIGHT, height)
                       .setValue(
                           BlockStateProperties.HORIZONTAL_FACING,
                           z < 0 ? Direction.NORTH : Direction.SOUTH),
                   3);
               cells.add(p);
             }
+          if (armored) {
+            for (int x = -1; x <= 1; x++)
+              for (int z = -1; z <= 1; z++)
+                for (int y = 3; y <= 4; y++) {
+                  var cell = base.offset(x, y, z);
+                  level.setBlock(cell, ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState(), 3);
+                  cells.add(cell);
+                }
+          }
           var body =
               SubLevelAssemblyHelper.assembleBlocks(
                   level,
                   core,
                   cells,
-                  new BoundingBox3i(base.offset(-1, 1, -1), base.offset(1, 2, 1)));
+                  new BoundingBox3i(base.offset(-1, 1, -1), base.offset(1, armored ? 4 : 2, 1)));
           var logical = body.getPlot().getCenterBlock();
           CoreAssemblyRules.mark(level, logical);
           SubLevelData.hungerPaused(body, true);
@@ -96,6 +135,8 @@ public final class CompactNativeTests {
           double capacity = SubLevelHealth.status(body).maximum();
           class Sample implements Runnable {
             int tick;
+            BlockPos tuned;
+            Set<UUID> originalSegments;
 
             public void run() {
               tick += 5;
@@ -152,7 +193,11 @@ public final class CompactNativeTests {
                 double clearance = center.y - .5 - base.getY();
                 if (tick % 40 == 0)
                   System.out.println(
-                      "COMPACT_NATIVE_SOAK tick="
+                      "COMPACT_NATIVE_SOAK height="
+                          + height
+                          + " armored="
+                          + armored
+                          + " tick="
                           + tick
                           + " up="
                           + up.y
@@ -163,7 +208,7 @@ public final class CompactNativeTests {
                 h.assertTrue(
                     up.y > .85, "Small creature lost upright stance at " + tick + ": " + up.y);
                 h.assertTrue(
-                    clearance > 2.2 && clearance < 4.2,
+                    clearance > height - .8 && clearance < height + 1.2,
                     "Small creature collapsed/launched at " + tick + ": " + clearance);
                 h.assertTrue(
                     !SubLevelLegs.collisionOverlaps(
@@ -180,6 +225,39 @@ public final class CompactNativeTests {
                         + tick
                         + ": "
                         + SubLevelLegs.collisionBounds(body));
+              }
+              if (editRestPose && tick == 240) {
+                tuned = SubLevelLegs.poses(body).getFirst().cell();
+                originalSegments =
+                    SubLevelLegs.segments(body).stream()
+                        .map(p -> p.getUniqueId())
+                        .collect(java.util.stream.Collectors.toSet());
+                new org.Azkerash.create_bioships.compat.letitwalk.LimbTuning(20, 1, 1)
+                    .save(level, tuned);
+              }
+              if (editRestPose && (tick == 280 || tick == 320)) {
+                var saved =
+                    body
+                        .getUserDataTag()
+                        .getCompound(CompactLimbController.DATA)
+                        .getList("Legs", 10)
+                        .stream()
+                        .map(t -> (net.minecraft.nbt.CompoundTag) t)
+                        .filter(t -> t.getLong("Socket") == tuned.asLong())
+                        .findFirst()
+                        .orElseThrow();
+                h.assertTrue(
+                    saved.getInt("RestAngle") == (tick == 280 ? 20 : 0),
+                    "Native chain ignored compact rest-pose editing/reset");
+                h.assertTrue(
+                    originalSegments.equals(
+                        SubLevelLegs.segments(body).stream()
+                            .map(p -> p.getUniqueId())
+                            .collect(java.util.stream.Collectors.toSet())),
+                    "Native rest-pose change replaced physical segments");
+                if (tick == 280)
+                  org.Azkerash.create_bioships.compat.letitwalk.LimbTuning.DEFAULT.save(
+                      level, tuned);
               }
               if (tick == 350) {
                 var ids =
