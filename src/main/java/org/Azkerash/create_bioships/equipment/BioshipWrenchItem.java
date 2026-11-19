@@ -67,6 +67,23 @@ public final class BioshipWrenchItem extends WrenchItem {
     if (level instanceof net.minecraft.server.level.ServerLevel server && player != null) {
       var body = org.Azkerash.create_bioships.core.CoreAssemblyRules.containing(server, pos);
       if (supportsGridBlock(body, state)) {
+        if (player.isShiftKeyDown()
+            && org.Azkerash.create_bioships.core.SubLevelData.isLiving(body)
+            && !player
+                .getUUID()
+                .equals(
+                    org.Azkerash.create_bioships
+                        .core
+                        .access
+                        .SubLevelPermissions
+                        .get(body)
+                        .owner())) {
+          player.displayClientMessage(
+              net.minecraft.network.chat.Component.literal(
+                  "Only the creature's owner can remove its components."),
+              true);
+          return net.minecraft.world.InteractionResult.FAIL;
+        }
         java.util.function.Supplier<net.minecraft.world.InteractionResult> action =
             () ->
                 !player.isShiftKeyDown()

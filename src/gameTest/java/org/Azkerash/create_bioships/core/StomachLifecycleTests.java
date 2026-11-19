@@ -101,6 +101,8 @@ public final class StomachLifecycleTests {
                           java.util.UUID.randomUUID(), "StomachWrench"));
               player.setPos(
                   body.logicalPose().transformPosition(Vec3.atCenterOf(core).add(0, 0, -2)));
+              org.Azkerash.create_bioships.core.access.SubLevelPermissions.assignIfUnowned(
+                  body, player.getUUID());
               player.setShiftKeyDown(true);
               player.setItemInHand(
                   InteractionHand.MAIN_HAND,

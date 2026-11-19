@@ -48,6 +48,8 @@ public final class CapacityDamageTests {
             net.minecraft.server.level.ClientInformation.createDefault());
     player.connection =
         new net.neoforged.neoforge.common.util.FakePlayer(level, profile).connection;
+    org.Azkerash.create_bioships.core.access.SubLevelPermissions.assignIfUnowned(
+        body, player.getUUID());
     player.setShiftKeyDown(true);
     player.setItemInHand(
         InteractionHand.MAIN_HAND, Create_bioships.BIOSHIP_WRENCH.get().getDefaultInstance());

@@ -11,7 +11,8 @@ public final class CoreTestState extends SavedData {
   boolean built, running, combatBuilt, combatRunning;
   boolean visionBuilt, membraneBuilt, brainBuilt, locomotionBuilt, modularLimbsBuilt;
   int legChamberVersion;
-  boolean waterloggingBuilt;
+  boolean waterloggingBuilt, aquariumBuilt, juniorHabitatBuilt;
+  BlockPos juniorHabitatOrigin = BlockPos.ZERO;
   int waterloggingCatalogSize;
   UUID developmentOwner;
   BlockPos combatOrigin = new BlockPos(1024, DevelopmentWorldSetup.DEFAULT_TEST_Y, 1024);
@@ -68,6 +69,9 @@ public final class CoreTestState extends SavedData {
                   state.membraneBuilt = tag.getBoolean("MembraneBuilt");
                   state.brainBuilt = tag.getBoolean("BrainBuilt");
                   state.waterloggingBuilt = tag.getBoolean("WaterloggingBuilt");
+                  state.aquariumBuilt = tag.getBoolean("AquariumBuilt");
+                  state.juniorHabitatBuilt = tag.getBoolean("JuniorHabitatBuilt");
+                  state.juniorHabitatOrigin = BlockPos.of(tag.getLong("JuniorHabitatOrigin"));
                   state.waterloggingCatalogSize = tag.getInt("WaterloggingCatalogSize");
                   state.legChamberVersion = tag.getInt("LegChamberVersion");
                   state.locomotionBuilt = tag.getBoolean("LocomotionBuilt");
@@ -145,6 +149,9 @@ public final class CoreTestState extends SavedData {
     tag.putBoolean("MembraneBuilt", membraneBuilt);
     tag.putBoolean("BrainBuilt", brainBuilt);
     tag.putBoolean("WaterloggingBuilt", waterloggingBuilt);
+    tag.putBoolean("AquariumBuilt", aquariumBuilt);
+    tag.putBoolean("JuniorHabitatBuilt", juniorHabitatBuilt);
+    tag.putLong("JuniorHabitatOrigin", juniorHabitatOrigin.asLong());
     tag.putInt("WaterloggingCatalogSize", waterloggingCatalogSize);
     tag.putInt("LegChamberVersion", legChamberVersion);
     tag.putBoolean("LocomotionBuilt", locomotionBuilt);

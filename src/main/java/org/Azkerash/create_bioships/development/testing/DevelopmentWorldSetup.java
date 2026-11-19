@@ -69,6 +69,7 @@ public final class DevelopmentWorldSetup {
     if (!state.waterloggingBuilt
         || state.waterloggingCatalogSize != WaterloggingFixture.catalog().size())
       WaterloggingFixture.install(level);
+    DevelopmentHabitatFixtures.installAquarium(level);
     if (!state.combatBuilt) {
       state.combatOrigin = new BlockPos(1024, state.layout().base().getY(), 1024);
       CombatFixture.reset(level);

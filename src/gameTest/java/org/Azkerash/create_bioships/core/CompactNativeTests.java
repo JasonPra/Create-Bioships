@@ -394,6 +394,8 @@ public final class CompactNativeTests {
                 player.setItemInHand(
                     hand,
                     new net.minecraft.world.item.ItemStack(Create_bioships.BIOSHIP_WRENCH.get()));
+                org.Azkerash.create_bioships.core.access.SubLevelPermissions.assignIfUnowned(
+                    body, player.getUUID());
                 player.setShiftKeyDown(true);
                 var cell = part.getPlot().getCenterBlock();
                 var context =

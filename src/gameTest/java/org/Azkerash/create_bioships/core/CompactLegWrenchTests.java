@@ -72,6 +72,8 @@ public final class CompactLegWrenchTests {
         "Extended legs did not get taller and thicker");
     helper.assertTrue(
         SubLevelArmor.status(body).maximum() == 10, "Extension changed armor capacity");
+    org.Azkerash.create_bioships.core.access.SubLevelPermissions.assignIfUnowned(
+        body, player.getUUID());
     player.setShiftKeyDown(true);
     player.gameMode.useItemOn(
         player, level, player.getMainHandItem(), InteractionHand.MAIN_HAND, hit);

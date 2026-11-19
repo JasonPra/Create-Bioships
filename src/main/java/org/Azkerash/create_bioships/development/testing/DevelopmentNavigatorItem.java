@@ -84,47 +84,45 @@ public final class DevelopmentNavigatorItem extends Item {
             org.Azkerash.create_bioships.components.ComponentRegistry.LIMB_JOINT.get().asItem(),
             "Regression: Modular limbs and Synaptic Calibrator"));
     entries.setItem(10, icon(Items.WATER_BUCKET, "Regression: Waterlogging catalogue"));
+    entries.setItem(11, icon(Items.KELP, "Habitat: Aquatic homunculus aquarium"));
+    if (state.juniorHabitatBuilt)
+      entries.setItem(12, icon(Items.POPPY, "Habitat: Junior’s garden"));
     player.openMenu(
         new SimpleMenuProvider(
             (id, inventory, viewer) ->
                 new ChestMenu(MenuType.GENERIC_9x2, id, inventory, entries, 2) {
                   @Override
                   public void clicked(int slot, int button, ClickType type, Player clicking) {
-                    if (slot < 0 || slot > 10) return;
+                    if (slot < 0 || slot > 12 || slot == 12 && !state.juniorHabitatBuilt) return;
                     var base =
-                        slot == 0
-                            ? state.layout().base()
-                            : slot == 1
-                                ? state.combatOrigin
-                                : slot == 2
-                                    ? state.arrowOrigin
-                                    : slot == 3
-                                        ? state.potionOrigin
-                                        : slot == 4
-                                            ? state.digestionOrigin
-                                            : slot == 5
-                                                ? VisionFixture.base(level)
-                                                : slot == 6
-                                                    ? MembraneFixture.base(level)
-                                                    : slot == 7
-                                                        ? BrainFixture.base(level)
-                                                        : slot == 8
-                                                            ? LocomotionFixture.base(level)
-                                                            : slot == 9
-                                                                ? ModularLimbFixture.base(level)
-                                                                : WaterloggingFixture.base(level);
+                        switch (slot) {
+                          case 0 -> state.layout().base();
+                          case 1 -> state.combatOrigin;
+                          case 2 -> state.arrowOrigin;
+                          case 3 -> state.potionOrigin;
+                          case 4 -> state.digestionOrigin;
+                          case 5 -> VisionFixture.base(level);
+                          case 6 -> MembraneFixture.base(level);
+                          case 7 -> BrainFixture.base(level);
+                          case 8 -> LocomotionFixture.base(level);
+                          case 9 -> ModularLimbFixture.base(level);
+                          case 10 -> WaterloggingFixture.base(level);
+                          case 11 -> DevelopmentHabitatFixtures.aquariumBase(level);
+                          default -> state.juniorHabitatOrigin;
+                        };
+                    int approach =
+                        switch (slot) {
+                          case 0 -> -15;
+                          case 1 -> -18;
+                          case 5, 7 -> -12;
+                          case 11 -> -24;
+                          case 12 -> -21;
+                          default -> -10;
+                        };
                     clicking.closeContainer();
                     if (clicking instanceof ServerPlayer server) {
                       server.teleportTo(
-                          level,
-                          base.getX() + .5,
-                          base.getY() + 1,
-                          base.getZ()
-                              + (slot == 0
-                                  ? -15
-                                  : slot == 1 ? -18 : slot == 5 || slot == 7 ? -12 : -10),
-                          0,
-                          0);
+                          level, base.getX() + .5, base.getY() + 1, base.getZ() + approach, 0, 0);
                       server.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
                       server.fallDistance = 0;
                     }

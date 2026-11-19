@@ -76,6 +76,8 @@ public final class WrenchRemovalTests {
     player.connection =
         new net.neoforged.neoforge.common.util.FakePlayer(level, profile).connection;
     player.setPos(body.logicalPose().transformPosition(Vec3.atCenterOf(core).add(0, 0, -2)));
+    org.Azkerash.create_bioships.core.access.SubLevelPermissions.assignIfUnowned(
+        body, player.getUUID());
     player.setShiftKeyDown(true);
     player.setItemInHand(
         InteractionHand.MAIN_HAND, Create_bioships.BIOSHIP_WRENCH.get().getDefaultInstance());
