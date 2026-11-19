@@ -82,14 +82,15 @@ public final class DevelopmentNavigatorItem extends Item {
         9,
         icon(
             org.Azkerash.create_bioships.components.ComponentRegistry.LIMB_JOINT.get().asItem(),
-            "Regression: Modular limbs and Positioner"));
+            "Regression: Modular limbs and Synaptic Calibrator"));
+    entries.setItem(10, icon(Items.WATER_BUCKET, "Regression: Waterlogging catalogue"));
     player.openMenu(
         new SimpleMenuProvider(
             (id, inventory, viewer) ->
                 new ChestMenu(MenuType.GENERIC_9x2, id, inventory, entries, 2) {
                   @Override
                   public void clicked(int slot, int button, ClickType type, Player clicking) {
-                    if (slot < 0 || slot > 9) return;
+                    if (slot < 0 || slot > 10) return;
                     var base =
                         slot == 0
                             ? state.layout().base()
@@ -109,7 +110,9 @@ public final class DevelopmentNavigatorItem extends Item {
                                                         ? BrainFixture.base(level)
                                                         : slot == 8
                                                             ? LocomotionFixture.base(level)
-                                                            : ModularLimbFixture.base(level);
+                                                            : slot == 9
+                                                                ? ModularLimbFixture.base(level)
+                                                                : WaterloggingFixture.base(level);
                     clicking.closeContainer();
                     if (clicking instanceof ServerPlayer server) {
                       server.teleportTo(

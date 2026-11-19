@@ -11,6 +11,7 @@ public final class CoreTestState extends SavedData {
   boolean built, running, combatBuilt, combatRunning;
   boolean visionBuilt, membraneBuilt, brainBuilt, locomotionBuilt, modularLimbsBuilt;
   int legChamberVersion;
+  boolean waterloggingBuilt;
   UUID developmentOwner;
   BlockPos combatOrigin = new BlockPos(1024, DevelopmentWorldSetup.DEFAULT_TEST_Y, 1024);
   boolean combatFailuresExpanded;
@@ -65,6 +66,7 @@ public final class CoreTestState extends SavedData {
                   state.visionBuilt = tag.getBoolean("VisionBuilt");
                   state.membraneBuilt = tag.getBoolean("MembraneBuilt");
                   state.brainBuilt = tag.getBoolean("BrainBuilt");
+                  state.waterloggingBuilt = tag.getBoolean("WaterloggingBuilt");
                   state.legChamberVersion = tag.getInt("LegChamberVersion");
                   state.locomotionBuilt = tag.getBoolean("LocomotionBuilt");
                   state.modularLimbsBuilt = tag.getBoolean("ModularLimbsBuilt");
@@ -140,6 +142,7 @@ public final class CoreTestState extends SavedData {
     tag.putBoolean("VisionBuilt", visionBuilt);
     tag.putBoolean("MembraneBuilt", membraneBuilt);
     tag.putBoolean("BrainBuilt", brainBuilt);
+    tag.putBoolean("WaterloggingBuilt", waterloggingBuilt);
     tag.putInt("LegChamberVersion", legChamberVersion);
     tag.putBoolean("LocomotionBuilt", locomotionBuilt);
     tag.putBoolean("ModularLimbsBuilt", modularLimbsBuilt);
