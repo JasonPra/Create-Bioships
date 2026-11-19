@@ -85,7 +85,9 @@ public final class IntestineDebugOverlay {
     if (container == null) return;
     var buffers = mc.renderBuffers().bufferSource();
     var lines = buffers.getBuffer(DevelopmentDebugRenderType.LINES);
-    var pose = event.getPoseStack();
+    // AFTER_LEVEL supplies no populated pose stack; retain the world camera transform.
+    var pose = new com.mojang.blaze3d.vertex.PoseStack();
+    pose.mulPose(event.getModelViewMatrix());
     var camera = event.getCamera().getPosition();
     record Label(Vec3 at, String text) {}
     var labels = new ArrayList<Label>();
@@ -177,27 +179,34 @@ public final class IntestineDebugOverlay {
     }
     buffers.endBatch(DevelopmentDebugRenderType.LINES);
     // Fonts may switch/flush BufferSource's shared builder. Finish ALL geometry first.
-    for (var label : labels) {
-      var at = label.at();
-      var text = label.text();
-      pose.pushPose();
-      pose.translate(at.x, at.y, at.z);
-      pose.mulPose(mc.getEntityRenderDispatcher().cameraOrientation());
-      pose.scale(.02f, -.02f, .02f);
-      mc.font.drawInBatch(
-          text,
-          -mc.font.width(text) / 2f,
-          0,
-          0xffbbffff,
-          false,
-          pose.last().pose(),
-          buffers,
-          net.minecraft.client.gui.Font.DisplayMode.SEE_THROUGH,
-          0x66000000,
-          LightTexture.FULL_BRIGHT);
-      pose.popPose();
+    // Vanilla's SEE_THROUGH depth shard is a no-op when world depth testing is enabled.
+    // Disable it explicitly through the font flush, then restore the world render state.
+    com.mojang.blaze3d.systems.RenderSystem.disableDepthTest();
+    try {
+      for (var label : labels) {
+        var at = label.at();
+        var text = label.text();
+        pose.pushPose();
+        pose.translate(at.x, at.y, at.z);
+        pose.mulPose(mc.getEntityRenderDispatcher().cameraOrientation());
+        pose.scale(.02f, -.02f, .02f);
+        mc.font.drawInBatch(
+            text,
+            -mc.font.width(text) / 2f,
+            0,
+            0xffbbffff,
+            false,
+            pose.last().pose(),
+            buffers,
+            net.minecraft.client.gui.Font.DisplayMode.SEE_THROUGH,
+            0x66000000,
+            LightTexture.FULL_BRIGHT);
+        pose.popPose();
+      }
+      buffers.endBatch();
+    } finally {
+      com.mojang.blaze3d.systems.RenderSystem.enableDepthTest();
     }
-    buffers.endBatch();
   }
 
   @SubscribeEvent
