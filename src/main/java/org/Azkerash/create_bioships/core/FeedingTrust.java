@@ -90,7 +90,12 @@ public final class FeedingTrust {
     if (accepted > 0) gain(after.body, accepted);
   }
 
+  public static void cancelParticles(ServerSubLevel body) {
+    PARTICLES.remove(SubLevelCreatureParts.root(body));
+  }
+
   private static void gain(ServerSubLevel body, int count) {
+    if (body.isRemoved() || SubLevelHealth.status(body).dead()) return;
     double before = SubLevelData.trust(body);
     SubLevelData.trust(body, before + count * PER_ITEM);
     if (SubLevelData.trust(body) > before)
