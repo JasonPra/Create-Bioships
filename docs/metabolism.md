@@ -37,3 +37,15 @@ Players may place multiple stomachs and mouths on a living creature. Each stomac
 keeps its own inventory and digestion state; connected mouths can route into the
 same intestine network. Hunger capacity continues to use the strongest stomach's
 capacity contribution, rather than multiplying capacity by the number of stomachs.
+
+The stomach's existing bottom-right output cell (slot 26) is reserved for nutrient
+paste and outlined in green. The inventory remains 27 slots. Player clicks and
+shift-clicks can insert/retrieve paste there; food and component cells remain
+inspect-only. Routing and digestion prefer the reserved cell for paste and exclude
+it from component insertion. Extra paste may still overflow into general output
+cells. Component overflow checks count the 17 general output cells independently
+of the reserved paste cell.
+
+Older non-paste contents in that cell are preserved and relocated when general
+output space becomes available, or sent through normal connected-sac overflow.
+No items are discarded to enforce the new restriction.

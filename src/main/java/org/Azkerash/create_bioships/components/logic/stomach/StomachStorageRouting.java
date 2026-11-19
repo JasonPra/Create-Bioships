@@ -89,13 +89,18 @@ public final class StomachStorageRouting {
     if (sacs.isEmpty() || budget <= 0) return 0;
     int moved = 0;
     boolean full = true;
-    for (int slot = 9; slot < 27; slot++)
+    for (int slot = 9; slot < StomachBlockEntity.PASTE_SLOT; slot++)
       if (stomach.getItem(slot).isEmpty()) {
         full = false;
         break;
       }
     if (full || stomach.progress() > 0 && stomach.progress() >= stomach.duration()) {
-      int candidate = -1, pasteStacks = 0;
+      var legacy = stomach.getItem(StomachBlockEntity.PASTE_SLOT);
+      int candidate =
+          !legacy.isEmpty() && !legacy.is(StomachBlockEntity.paste())
+              ? StomachBlockEntity.PASTE_SLOT
+              : -1;
+      int pasteStacks = 0;
       for (int slot = 9; slot < 27; slot++) {
         var stack = stomach.getItem(slot);
         if (stack.isEmpty()) continue;

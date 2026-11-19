@@ -7,7 +7,7 @@ import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.ItemStack;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
 
-/** Internal slots are inspect-only; neither clicks nor shift-click can feed the stomach. */
+/** Food and component slots are inspect-only; the reserved paste cell is player-accessible. */
 public final class StomachMenu extends AbstractContainerMenu {
   private final Container stomach;
   private final ContainerData data;
@@ -32,11 +32,12 @@ public final class StomachMenu extends AbstractContainerMenu {
       addSlot(
           new Slot(stomach, i, x, y) {
             public boolean mayPlace(ItemStack stack) {
-              return false;
+              return getContainerSlot() == StomachBlockEntity.PASTE_SLOT
+                  && stack.is(StomachBlockEntity.paste());
             }
 
             public boolean mayPickup(Player player) {
-              return false;
+              return getContainerSlot() == StomachBlockEntity.PASTE_SLOT;
             }
           });
     }
@@ -51,7 +52,22 @@ public final class StomachMenu extends AbstractContainerMenu {
   }
 
   public ItemStack quickMoveStack(Player player, int slot) {
-    return ItemStack.EMPTY;
+    if (slot < 0 || slot >= slots.size()) return ItemStack.EMPTY;
+    var source = slots.get(slot);
+    if (!source.hasItem()) return ItemStack.EMPTY;
+    var current = source.getItem();
+    var original = current.copy();
+    if (slot == StomachBlockEntity.PASTE_SLOT) {
+      if (!moveItemStackTo(current, 27, slots.size(), true)) return ItemStack.EMPTY;
+    } else if (slot >= 27 && current.is(StomachBlockEntity.paste())) {
+      if (!moveItemStackTo(
+          current, StomachBlockEntity.PASTE_SLOT, StomachBlockEntity.PASTE_SLOT + 1, false))
+        return ItemStack.EMPTY;
+    } else return ItemStack.EMPTY;
+    if (current.isEmpty()) source.setByPlayer(ItemStack.EMPTY);
+    else source.setChanged();
+    source.onTake(player, current);
+    return original;
   }
 
   public boolean stillValid(Player player) {

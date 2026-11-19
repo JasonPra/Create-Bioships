@@ -61,12 +61,14 @@ public final class StomachBlockEntity extends OrganInventory implements IHaveGog
     super.onLoad();
     if (level instanceof ServerLevel server) {
       var body = CoreAssemblyRules.containing(server, worldPosition);
+      normalizePasteSlot();
       if (body != null) SubLevelHunger.refreshCapacity(body);
     }
   }
 
   private int clientQueued;
   public static final int INPUT_SLOTS = 9,
+      PASTE_SLOT = 26,
       MAX_ACID = 1000,
       EAT_TICKS = 32,
       PASTE_PER_MEAL = 1,
@@ -103,6 +105,37 @@ public final class StomachBlockEntity extends OrganInventory implements IHaveGog
     return level != null && accepts(level, stack)
         ? insert(stack, 0, INPUT_SLOTS, simulate)
         : stack.copy();
+  }
+
+  @Override
+  public boolean canPlaceItem(int slot, ItemStack stack) {
+    return slot == PASTE_SLOT && stack.is(paste());
+  }
+
+  @Override
+  public ItemStack insert(ItemStack incoming, int first, int end, boolean simulate) {
+    if (first <= PASTE_SLOT && end > PASTE_SLOT) {
+      if (!incoming.is(paste()))
+        return first < PASTE_SLOT
+            ? super.insert(incoming, first, PASTE_SLOT, simulate)
+            : incoming.copy();
+      var rest = super.insert(incoming, PASTE_SLOT, PASTE_SLOT + 1, simulate);
+      return rest.isEmpty() || first >= PASTE_SLOT
+          ? rest
+          : super.insert(rest, first, PASTE_SLOT, simulate);
+    }
+    return super.insert(incoming, first, end, simulate);
+  }
+
+  /** Preserve old inventories while moving a pre-existing component out of the reserved cell. */
+  public void normalizePasteSlot() {
+    var current = getItem(PASTE_SLOT);
+    if (current.isEmpty() || current.is(paste())) return;
+    var remainder = super.insert(current, INPUT_SLOTS, PASTE_SLOT, false);
+    if (remainder.getCount() != current.getCount()) {
+      items().set(PASTE_SLOT, remainder);
+      setChanged();
+    }
   }
 
   public int acid() {
@@ -181,6 +214,7 @@ public final class StomachBlockEntity extends OrganInventory implements IHaveGog
     state().load(tag, registries);
     if (level instanceof ServerLevel server) {
       var body = CoreAssemblyRules.containing(server, worldPosition);
+      normalizePasteSlot();
       if (body != null) SubLevelHunger.refreshCapacity(body);
     }
   }

@@ -66,7 +66,7 @@ public final class StomachDigestionTests {
     for (int i = 0; i < 27; i++)
       helper.assertTrue(
           !menu.getSlot(i).mayPlace(new ItemStack(Items.PORKCHOP))
-              && !menu.getSlot(i).mayPickup(player),
+              && menu.getSlot(i).mayPickup(player) == (i == StomachBlockEntity.PASTE_SLOT),
           "Stomach GUI changed internal inventory");
     helper.succeed();
   }
@@ -89,7 +89,9 @@ public final class StomachDigestionTests {
     SubLevelData.hunger(body, SubLevelData.maximumHunger(body));
     pos = body.getPlot().getCenterBlock();
     var stomach = (StomachBlockEntity) level.getBlockEntity(pos);
-    for (int slot = 9; slot < 27; slot++) stomach.setItem(slot, new ItemStack(Items.STONE, 64));
+    for (int slot = 9; slot < StomachBlockEntity.PASTE_SLOT; slot++)
+      stomach.setItem(slot, new ItemStack(Items.STONE, 64));
+    stomach.setItem(StomachBlockEntity.PASTE_SLOT, new ItemStack(StomachBlockEntity.paste(), 64));
     stomach.enqueue(new ItemStack(Items.PORKCHOP), false);
     for (int tick = 0; tick < 500; tick++) stomach.advance();
     helper.assertTrue(

@@ -30,6 +30,7 @@ public final class StomachDigestion {
       level.sendBlockUpdated(worldPosition, stomach.getBlockState(), stomach.getBlockState(), 2);
     var body = CoreAssemblyRules.containing(server, worldPosition);
     if (body == null || !SubLevelData.isLiving(body) || SubLevelHealth.status(body).dead()) return;
+    stomach.normalizePasteSlot();
     if (state.acid < MAX_ACID) {
       state.acid++;
       stomach.setChanged();
@@ -38,7 +39,8 @@ public final class StomachDigestion {
       if (pasteCount(stomach) >= PASTE_PER_MEAL) {
         if (++state.eating >= EAT_TICKS) {
           int remaining = PASTE_PER_MEAL;
-          for (int i = INPUT_SLOTS; i < items.size() && remaining > 0; i++) {
+          for (int offset = 0; offset < items.size() - INPUT_SLOTS && remaining > 0; offset++) {
+            int i = offset == 0 ? PASTE_SLOT : INPUT_SLOTS + offset - 1;
             var stack = items.get(i);
             if (!stack.is(paste())) continue;
             int consumed = Math.min(remaining, stack.getCount());

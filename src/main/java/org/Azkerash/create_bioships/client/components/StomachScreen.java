@@ -41,6 +41,14 @@ public final class StomachScreen extends AbstractContainerScreen<StomachMenu> {
     g.drawString(font, "Food queue", x + 12, y + 83, 0xffd9c9b4, false);
     g.drawString(font, "Components / paste", x + 104, y + 83, 0xffd9c9b4, false);
     for (var slot : menu.slots) OrganScreenStyle.slot(g, x + slot.x, y + slot.y);
+    var paste =
+        menu.getSlot(
+            org.Azkerash.create_bioships.components.logic.stomach.StomachBlockEntity.PASTE_SLOT);
+    int px = x + paste.x, py = y + paste.y;
+    g.fill(px - 3, py - 3, px + 19, py - 2, 0xffb2c47f);
+    g.fill(px - 3, py + 18, px + 19, py + 19, 0xffb2c47f);
+    g.fill(px - 3, py - 2, px - 2, py + 18, 0xffb2c47f);
+    g.fill(px + 18, py - 2, px + 19, py + 18, 0xffb2c47f);
     OrganScreenStyle.divider(g, x + 12, y + 162, imageWidth - 24);
     g.drawString(
         font,
@@ -64,5 +72,10 @@ public final class StomachScreen extends AbstractContainerScreen<StomachMenu> {
   public void render(GuiGraphics g, int mouseX, int mouseY, float partial) {
     super.render(g, mouseX, mouseY, partial);
     renderTooltip(g, mouseX, mouseY);
+    if (hoveredSlot
+            == menu.getSlot(
+                org.Azkerash.create_bioships.components.logic.stomach.StomachBlockEntity.PASTE_SLOT)
+        && !hoveredSlot.hasItem())
+      g.renderTooltip(font, Component.literal("Nutrient paste only"), mouseX, mouseY);
   }
 }

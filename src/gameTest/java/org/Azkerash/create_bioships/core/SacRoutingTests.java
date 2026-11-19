@@ -86,7 +86,9 @@ public final class SacRoutingTests {
             && count(inventory, Items.PORKCHOP) == 1,
         "Full stomach lost food instead of overflowing it");
     var flesh = BuiltInRegistries.ITEM.get(ResourceLocation.parse("biomancy:flesh_bits"));
-    for (int slot = 9; slot < 27; slot++) stomach.setItem(slot, new ItemStack(flesh, 64));
+    for (int slot = 9; slot < StomachBlockEntity.PASTE_SLOT; slot++)
+      stomach.setItem(slot, new ItemStack(flesh, 64));
+    stomach.setItem(StomachBlockEntity.PASTE_SLOT, new ItemStack(StomachBlockEntity.paste(), 64));
     StomachStorageRouting.service(stomach, List.of(sac.getBlockPos()), 3);
     helper.assertTrue(
         count(inventory, flesh) == 64 && stomach.getItem(9).isEmpty(),
