@@ -60,6 +60,7 @@ public final class SubLevelHealth {
     }
     CELLS.put(body, cells);
     SubLevelHunger.initializeCapacity(body, cells.keySet());
+    SubLevelOxygen.initialize(body, cells.keySet());
     if (SubLevelCreatureParts.isPart(body)) {
       SubLevelCreatureParts.healthContribution(body, maximum);
       return;
@@ -101,6 +102,7 @@ public final class SubLevelHealth {
     if ((!CoreAssemblyRules.isCreature(body) && !SubLevelData.isLiving(body))
         || !CELLS.containsKey(body)) return;
     SubLevelHunger.blockChanged(body, pos, state);
+    SubLevelOxygen.changed(body, pos, state);
     var cells = CELLS.get(body);
     double previous = cells.getOrDefault(pos.asLong(), 0d), next = BlockHealthValues.health(state);
     if (previous == next) return;

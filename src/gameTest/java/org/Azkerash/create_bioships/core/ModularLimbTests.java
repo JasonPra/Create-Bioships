@@ -12,6 +12,7 @@ import org.Azkerash.create_bioships.compat.letitwalk.*;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
 import org.Azkerash.create_bioships.components.logic.legs.*;
 import org.Azkerash.create_bioships.core.brain.*;
+import org.Azkerash.create_bioships.development.testing.DevelopmentLifeSupport;
 import org.Azkerash.create_bioships.development.testing.ModularLimbFixture;
 
 @GameTestHolder("create_bioships")
@@ -37,7 +38,7 @@ public final class ModularLimbTests {
                   cells,
                   new BoundingBox3i(base.offset(-4, 1, -2), base.offset(4, 5, 2)));
           CoreAssemblyRules.mark(level, body.getPlot().getCenterBlock());
-          SubLevelData.hungerPaused(body, true);
+          DevelopmentLifeSupport.pause(body);
           double capacity = SubLevelHealth.status(body).maximum();
           h.assertTrue(
               ModularLimbController.assemble(body),
@@ -217,7 +218,7 @@ public final class ModularLimbTests {
         SubLevelAssemblyHelper.assembleBlocks(
             level, core, List.of(core, armor, socket), new BoundingBox3i(socket, core));
     CoreAssemblyRules.mark(level, body.getPlot().getCenterBlock());
-    SubLevelData.hungerPaused(body, true);
+    DevelopmentLifeSupport.pause(body);
     var logical = body.getPlot().getCenterBlock().north(2);
     player.setPos(body.logicalPose().transformPosition(Vec3.atCenterOf(logical)));
     h.assertTrue(

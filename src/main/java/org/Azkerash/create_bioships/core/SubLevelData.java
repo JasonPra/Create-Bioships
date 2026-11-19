@@ -345,6 +345,42 @@ public final class SubLevelData {
     body.setUserDataTag(root);
   }
 
+  public record Oxygen(double value, int suffocationTicks, boolean paused) {}
+
+  public static Oxygen oxygen(ServerSubLevel body) {
+    body = SubLevelCreatureParts.root(body);
+    initialize(body);
+    var tag = body.getUserDataTag().getCompound(STATE);
+    double value = tag.contains("oxygen") ? tag.getDouble("oxygen") : SubLevelOxygen.MAXIMUM;
+    return new Oxygen(
+        Double.isFinite(value)
+            ? Math.clamp(value, 0, SubLevelOxygen.MAXIMUM)
+            : SubLevelOxygen.MAXIMUM,
+        Math.clamp(tag.getInt("suffocationTicks"), 0, SubLevelOxygen.SUFFOCATION_INTERVAL - 1),
+        tag.getBoolean("oxygenPaused"));
+  }
+
+  public static void oxygenPaused(ServerSubLevel body, boolean paused) {
+    var old = oxygen(body);
+    oxygen(body, new Oxygen(old.value(), old.suffocationTicks(), paused));
+  }
+
+  public static void oxygen(ServerSubLevel body, Oxygen value) {
+    if (!SubLevelCreatureParts.available(body)) return;
+    body = SubLevelCreatureParts.root(body);
+    initialize(body);
+    var root = body.getUserDataTag().copy();
+    var tag = root.getCompound(STATE);
+    tag.putDouble(
+        "oxygen",
+        Double.isFinite(value.value()) ? Math.clamp(value.value(), 0, SubLevelOxygen.MAXIMUM) : 0);
+    tag.putInt(
+        "suffocationTicks",
+        Math.clamp(value.suffocationTicks(), 0, SubLevelOxygen.SUFFOCATION_INTERVAL - 1));
+    tag.putBoolean("oxygenPaused", value.paused());
+    body.setUserDataTag(root);
+  }
+
   public record DigestiveSickness(long until, long nextEpisode) {}
 
   public static DigestiveSickness digestiveSickness(ServerSubLevel body) {

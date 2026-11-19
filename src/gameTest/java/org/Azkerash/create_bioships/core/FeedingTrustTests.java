@@ -13,6 +13,7 @@ import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
 import org.Azkerash.create_bioships.components.logic.mouth.*;
+import org.Azkerash.create_bioships.development.testing.DevelopmentLifeSupport;
 
 @GameTestHolder(Create_bioships.MODID)
 @PrefixGameTestTemplate(false)
@@ -44,7 +45,7 @@ public final class FeedingTrustTests {
             new BoundingBox3i(origin, origin.east(6).above()));
     var core = body.getPlot().getCenterBlock();
     CoreAssemblyRules.mark(level, core);
-    SubLevelData.hungerPaused(body, true);
+    DevelopmentLifeSupport.pause(body);
     var player =
         new net.neoforged.neoforge.common.util.FakePlayer(
             level, new com.mojang.authlib.GameProfile(UUID.randomUUID(), "FeedingTest"));

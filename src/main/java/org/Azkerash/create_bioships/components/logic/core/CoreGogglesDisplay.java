@@ -93,6 +93,8 @@ public final class CoreGogglesDisplay extends BlockEntity implements IHaveGoggle
       next.putInt("maximumHunger", SubLevelData.maximumHunger(body));
       next.putBoolean("hungerPaused", SubLevelData.hungerState(body).paused());
       next.putDouble("trust", SubLevelData.trust(body));
+      next.putDouble("oxygen", SubLevelData.oxygen(body).value());
+      next.putBoolean("oxygenPaused", SubLevelData.oxygen(body).paused());
       next.putInt(
           "sicknessTicks",
           org.Azkerash.create_bioships.core.digestion.SubLevelSickness.remaining(body));
@@ -152,6 +154,24 @@ public final class CoreGogglesDisplay extends BlockEntity implements IHaveGoggle
                           + "/"
                           + inspection.getInt("maximumHunger")
                           + (inspection.getBoolean("hungerPaused") ? " (paused)" : ""))));
+      tooltip.add(
+          Component.literal("Air:    ")
+              .append(
+                  Component.literal(" ".repeat(28))
+                      .withStyle(
+                          style ->
+                              style.withInsertion(
+                                  "create_bioships:oxygen/"
+                                      + inspection.getDouble("oxygen")
+                                      + "/"
+                                      + SubLevelOxygen.MAXIMUM)))
+              .append(
+                  Component.literal(
+                      " "
+                          + Math.round(
+                              100 * inspection.getDouble("oxygen") / SubLevelOxygen.MAXIMUM)
+                          + "%"
+                          + (inspection.getBoolean("oxygenPaused") ? " (paused)" : ""))));
       tooltip.add(meter("Trust", "trust", inspection.getDouble("trust"), 100));
       if (inspection.getInt("sicknessTicks") > 0)
         tooltip.add(

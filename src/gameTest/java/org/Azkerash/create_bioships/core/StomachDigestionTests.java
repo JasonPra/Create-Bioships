@@ -8,6 +8,7 @@ import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
 import org.Azkerash.create_bioships.components.logic.stomach.*;
+import org.Azkerash.create_bioships.development.testing.DevelopmentLifeSupport;
 
 @GameTestHolder(Create_bioships.MODID)
 @PrefixGameTestTemplate(false)
@@ -25,7 +26,7 @@ public final class StomachDigestionTests {
             java.util.List.of(pos),
             new dev.ryanhcode.sable.companion.math.BoundingBox3i(pos, pos));
     SubLevelData.living(body, true);
-    SubLevelData.hungerPaused(body, true);
+    DevelopmentLifeSupport.pause(body);
     SubLevelData.hunger(body, SubLevelData.maximumHunger(body));
     pos = body.getPlot().getCenterBlock();
     var stomach = (StomachBlockEntity) level.getBlockEntity(pos);
@@ -85,7 +86,7 @@ public final class StomachDigestionTests {
             java.util.List.of(pos),
             new dev.ryanhcode.sable.companion.math.BoundingBox3i(pos, pos));
     SubLevelData.living(body, true);
-    SubLevelData.hungerPaused(body, true);
+    DevelopmentLifeSupport.pause(body);
     SubLevelData.hunger(body, SubLevelData.maximumHunger(body));
     pos = body.getPlot().getCenterBlock();
     var stomach = (StomachBlockEntity) level.getBlockEntity(pos);
@@ -129,7 +130,7 @@ public final class StomachDigestionTests {
             java.util.List.of(cell),
             new dev.ryanhcode.sable.companion.math.BoundingBox3i(cell, cell));
     SubLevelData.living(body, true);
-    SubLevelData.hungerPaused(body, true);
+    DevelopmentLifeSupport.pause(body);
     SubLevelData.hunger(body, 2);
     var stomach = (StomachBlockEntity) level.getBlockEntity(body.getPlot().getCenterBlock());
     for (int i = 0; i < StomachBlockEntity.EAT_TICKS * 2; i++) stomach.advance();

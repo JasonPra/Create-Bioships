@@ -11,6 +11,7 @@ import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
 import org.Azkerash.create_bioships.core.brain.BrainMotorControls;
 import org.Azkerash.create_bioships.core.legs.SubLevelLegs;
+import org.Azkerash.create_bioships.development.testing.DevelopmentLifeSupport;
 import org.Azkerash.create_bioships.development.testing.LocomotionFixture;
 
 @GameTestHolder(Create_bioships.MODID)
@@ -67,7 +68,7 @@ public final class CrabLegTests {
                   level, core, List.of(core, armor, leg), new BoundingBox3i(core, leg));
           var logical = body.getPlot().getCenterBlock();
           CoreAssemblyRules.mark(level, logical);
-          SubLevelData.hungerPaused(body, true);
+          DevelopmentLifeSupport.pause(body);
           SubLevelLegs.request(body);
           var initial = body.logicalPose().transformPosition(Vec3.atCenterOf(logical));
           helper.runAfterDelay(
@@ -196,7 +197,7 @@ public final class CrabLegTests {
                   new BoundingBox3i(base.offset(-2, 2, -1), base.offset(2, 3, 2)));
           var core = body.getPlot().getCenterBlock();
           CoreAssemblyRules.mark(level, core);
-          SubLevelData.hungerPaused(body, true);
+          DevelopmentLifeSupport.pause(body);
           SubLevelLegs.request(body);
           helper.runAfterDelay(
               80,
@@ -302,7 +303,7 @@ public final class CrabLegTests {
                   new BoundingBox3i(base.offset(-2, 2, -1), base.offset(2, 3, 1)));
           var core = body.getPlot().getCenterBlock();
           CoreAssemblyRules.mark(level, core);
-          SubLevelData.hungerPaused(body, true);
+          DevelopmentLifeSupport.pause(body);
           SubLevelLegs.request(body);
           helper.assertTrue(
               SubLevelArmor.status(body).maximum() == 220, "Armor/leg capacity incorrect");
@@ -422,7 +423,7 @@ public final class CrabLegTests {
                   cells,
                   new BoundingBox3i(base.offset(-2, 2, -1), base.offset(2, 3, 1)));
           CoreAssemblyRules.mark(level, body.getPlot().getCenterBlock());
-          SubLevelData.hungerPaused(body, true);
+          DevelopmentLifeSupport.pause(body);
           SubLevelLegs.request(body);
           BrainMotorControls.move(body, Vec3.ZERO, 0, 200);
           helper.runAfterDelay(

@@ -156,7 +156,7 @@ public final class DigestionFixture {
     body.setUserDataTag(tag);
     SubLevelContainer.getContainer(level)
         .addForceLoadTicket(body, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
-    SubLevelData.hungerPaused(body, true);
+    DevelopmentLifeSupport.pause(body);
     DevelopmentTestOwnership.assign(body);
     SubLevelData.hunger(body, SubLevelData.maximumHunger(body) - 1);
     ((MouthBlockEntity) level.getBlockEntity(core.north().west(3)))
@@ -180,7 +180,7 @@ public final class DigestionFixture {
     controlBody.setUserDataTag(controlTag);
     SubLevelContainer.getContainer(level)
         .addForceLoadTicket(controlBody, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
-    SubLevelData.hungerPaused(controlBody, true);
+    DevelopmentLifeSupport.pause(controlBody);
     DevelopmentTestOwnership.assign(controlBody);
     SubLevelData.hunger(controlBody, SubLevelData.maximumHunger(controlBody));
     ((StomachBlockEntity) level.getBlockEntity(controlCore.north()))

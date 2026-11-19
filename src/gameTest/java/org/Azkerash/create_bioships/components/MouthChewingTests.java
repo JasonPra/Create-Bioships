@@ -9,6 +9,7 @@ import net.minecraft.world.item.*;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.components.logic.mouth.*;
 import org.Azkerash.create_bioships.core.*;
+import org.Azkerash.create_bioships.development.testing.DevelopmentLifeSupport;
 
 @GameTestHolder("create_bioships")
 @PrefixGameTestTemplate(false)
@@ -27,7 +28,7 @@ public final class MouthChewingTests {
             new BoundingBox3i(origin, origin.east()));
     var core = body.getPlot().getCenterBlock();
     CoreAssemblyRules.mark(level, core);
-    SubLevelData.hungerPaused(body, true);
+    DevelopmentLifeSupport.pause(body);
     var pos = core.east();
     var mouth = (MouthBlockEntity) level.getBlockEntity(pos);
     mouth.feed(new ItemStack(Items.PORKCHOP), true);

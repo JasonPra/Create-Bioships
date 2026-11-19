@@ -11,6 +11,7 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
 import org.Azkerash.create_bioships.core.vision.*;
+import org.Azkerash.create_bioships.development.testing.DevelopmentLifeSupport;
 
 @GameTestHolder("create_bioships")
 @PrefixGameTestTemplate(false)
@@ -73,7 +74,7 @@ public final class VisionTests {
                   level, origin, cells, new BoundingBox3i(origin.west(2), origin.east(2)));
           var core = body.getPlot().getCenterBlock();
           CoreAssemblyRules.mark(level, core);
-          SubLevelData.hungerPaused(body, true);
+          DevelopmentLifeSupport.pause(body);
           helper.assertTrue(
               SubLevelVision.refresh(body, 2) == 2 && SubLevelVision.sights(body).size() == 2,
               "Per-refresh sensor budget ignored");

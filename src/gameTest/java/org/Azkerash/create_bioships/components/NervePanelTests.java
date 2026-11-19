@@ -14,6 +14,7 @@ import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.components.logic.nerve.*;
 import org.Azkerash.create_bioships.core.*;
 import org.Azkerash.create_bioships.core.access.SubLevelPermissions;
+import org.Azkerash.create_bioships.development.testing.DevelopmentLifeSupport;
 
 @GameTestHolder("create_bioships")
 @PrefixGameTestTemplate(false)
@@ -42,7 +43,7 @@ public final class NervePanelTests {
                   new BoundingBox3i(origin, origin.east()));
           var core = body.getPlot().getCenterBlock();
           CoreAssemblyRules.mark(level, core);
-          SubLevelData.hungerPaused(body, true);
+          DevelopmentLifeSupport.pause(body);
           var panel = core.east();
           var world = body.logicalPose().transformPosition(Vec3.atCenterOf(panel));
           var owner =

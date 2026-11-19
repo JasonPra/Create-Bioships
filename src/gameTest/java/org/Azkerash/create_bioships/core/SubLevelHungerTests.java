@@ -9,6 +9,7 @@ import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
 import org.Azkerash.create_bioships.combat.CombatAdapter;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
+import org.Azkerash.create_bioships.development.testing.DevelopmentLifeSupport;
 
 @GameTestHolder(Create_bioships.MODID)
 @PrefixGameTestTemplate(false)
@@ -35,7 +36,7 @@ public final class SubLevelHungerTests {
           helper.assertTrue(SubLevelData.hunger(body) == 5, "New grid did not start at 5 hunger");
           SubLevelHunger.advance(body, SubLevelHunger.DRAIN_INTERVAL - 1);
           helper.assertTrue(SubLevelData.hunger(body) == 5, "Hunger drained before one minute");
-          SubLevelData.hungerPaused(body, true);
+          DevelopmentLifeSupport.pause(body);
           var paused = SubLevelData.hungerState(body);
           var saved = body.getUserDataTag().copy();
           body.setUserDataTag(saved.copy());
@@ -52,7 +53,7 @@ public final class SubLevelHungerTests {
           helper.assertTrue(
               SubLevelData.hunger(body) == 0 && SubLevelHealth.status(body).current() == 10,
               "Empty hunger damaged early or failed to clamp");
-          SubLevelData.hungerPaused(body, true);
+          DevelopmentLifeSupport.pause(body);
           SubLevelHunger.advance(body, 100000);
           helper.assertTrue(
               SubLevelHealth.status(body).current() == 10, "Pause did not stop starvation");

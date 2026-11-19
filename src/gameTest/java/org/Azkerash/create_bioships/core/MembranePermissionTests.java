@@ -11,6 +11,7 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
 import org.Azkerash.create_bioships.core.access.SubLevelPermissions;
+import org.Azkerash.create_bioships.development.testing.DevelopmentLifeSupport;
 
 @GameTestHolder("create_bioships")
 @PrefixGameTestTemplate(false)
@@ -31,7 +32,7 @@ public final class MembranePermissionTests {
             new BoundingBox3i(origin, origin.east()));
     var core = body.getPlot().getCenterBlock();
     CoreAssemblyRules.mark(level, core);
-    SubLevelData.hungerPaused(body, true);
+    DevelopmentLifeSupport.pause(body);
     var owner =
         new net.neoforged.neoforge.common.util.FakePlayer(
             level, new com.mojang.authlib.GameProfile(UUID.randomUUID(), "Owner"));

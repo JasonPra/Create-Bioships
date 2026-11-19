@@ -13,6 +13,7 @@ import org.Azkerash.create_bioships.components.ComponentRegistry;
 import org.Azkerash.create_bioships.components.logic.mouth.*;
 import org.Azkerash.create_bioships.components.logic.stomach.StomachBlockEntity;
 import org.Azkerash.create_bioships.core.digestion.SubLevelDigestion;
+import org.Azkerash.create_bioships.development.testing.DevelopmentLifeSupport;
 
 @GameTestHolder("create_bioships")
 @PrefixGameTestTemplate(false)
@@ -32,7 +33,7 @@ public final class ArmoredMawTests {
     var core = body.getPlot().getCenterBlock();
     var at = core.east(3);
     CoreAssemblyRules.mark(level, core);
-    SubLevelData.hungerPaused(body, true);
+    DevelopmentLifeSupport.pause(body);
     var mouth = (MouthBlockEntity) level.getBlockEntity(at);
     var player =
         new net.neoforged.neoforge.common.util.FakePlayer(

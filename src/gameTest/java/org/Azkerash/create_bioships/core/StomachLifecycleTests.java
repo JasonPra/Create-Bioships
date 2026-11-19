@@ -14,6 +14,7 @@ import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
 import org.Azkerash.create_bioships.components.logic.stomach.StomachBlockEntity;
+import org.Azkerash.create_bioships.development.testing.DevelopmentLifeSupport;
 
 @GameTestHolder(Create_bioships.MODID)
 @PrefixGameTestTemplate(false)
@@ -35,7 +36,7 @@ public final class StomachLifecycleTests {
     stomach = (StomachBlockEntity) level.getBlockEntity(body.getPlot().getCenterBlock());
     frozen(helper, stomach, "Unflagged grid stomach ran");
     SubLevelData.living(body, true);
-    SubLevelData.hungerPaused(body, true);
+    DevelopmentLifeSupport.pause(body);
     SubLevelData.hunger(body, SubLevelData.maximumHunger(body));
     for (int i = 0; i < 25; i++) stomach.advance();
     helper.assertTrue(
@@ -86,7 +87,7 @@ public final class StomachLifecycleTests {
                       new BoundingBox3i(origin, origin.east()));
               var core = body.getPlot().getCenterBlock();
               CoreAssemblyRules.mark(level, core);
-              SubLevelData.hungerPaused(body, true);
+              DevelopmentLifeSupport.pause(body);
               SubLevelData.hunger(body, SubLevelData.maximumHunger(body));
               var stomach = (StomachBlockEntity) level.getBlockEntity(core.east());
               stomach.enqueue(new ItemStack(Items.PORKCHOP, 3), false);
@@ -144,7 +145,7 @@ public final class StomachLifecycleTests {
                       new BoundingBox3i(destination, destination));
               var targetCore = target.getPlot().getCenterBlock();
               CoreAssemblyRules.mark(level, targetCore);
-              SubLevelData.hungerPaused(target, true);
+              DevelopmentLifeSupport.pause(target);
               var placed = targetCore.east();
               player.setShiftKeyDown(false);
               player.setPos(

@@ -136,7 +136,7 @@ public final class BrainFixture {
     tag.putBoolean(MARK, true);
     body.setUserDataTag(tag);
     DevelopmentTestOwnership.assign(body);
-    SubLevelData.hungerPaused(body, true);
+    DevelopmentLifeSupport.pause(body);
     SubLevelContainer.getContainer(level)
         .addForceLoadTicket(body, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
     var brain = org.Azkerash.create_bioships.core.brain.SubLevelBrains.get(body);

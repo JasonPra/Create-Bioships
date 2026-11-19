@@ -10,6 +10,7 @@ import net.minecraft.world.item.*;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
 import org.Azkerash.create_bioships.components.logic.stomach.*;
+import org.Azkerash.create_bioships.development.testing.DevelopmentLifeSupport;
 
 @GameTestHolder("create_bioships")
 @PrefixGameTestTemplate(false)
@@ -28,7 +29,7 @@ public final class StomachPasteSlotTests {
             List.of(origin, origin.east()),
             new BoundingBox3i(origin, origin.east()));
     CoreAssemblyRules.mark(level, body.getPlot().getCenterBlock());
-    SubLevelData.hungerPaused(body, true);
+    DevelopmentLifeSupport.pause(body);
     var stomach = (StomachBlockEntity) level.getBlockEntity(body.getPlot().getCenterBlock().east());
     int reserved = StomachBlockEntity.PASTE_SLOT;
     h.assertTrue(

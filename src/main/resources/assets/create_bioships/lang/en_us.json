@@ -32,5 +32,8 @@
   "item.create_bioships.limb_positioner.hint": "Rest angle: %s\u00b0 \u00b7 Scroll: 5\u00b0 \u00b7 Ctrl: 1\u00b0 \u00b7 Sneak-use: lock mount",
   "block.create_bioships.limb_socket": "Synovial Socket",
   "item.create_bioships.development_toolkit": "Development Toolkit",
-  "block.create_bioships.armored_maw": "Eldritch Maw"
+  "block.create_bioships.armored_maw": "Eldritch Maw",
+  "block.create_bioships.lung": "Lung",
+  "block.create_bioships.gills": "Gills",
+  "block.create_bioships.armored_gills": "Armored Gills"
 }

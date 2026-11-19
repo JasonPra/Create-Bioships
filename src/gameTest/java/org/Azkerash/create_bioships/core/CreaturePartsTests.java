@@ -10,6 +10,7 @@ import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
 import org.Azkerash.create_bioships.core.access.SubLevelPermissions;
 import org.Azkerash.create_bioships.core.locomotion.SubLevelLocomotion;
+import org.Azkerash.create_bioships.development.testing.DevelopmentLifeSupport;
 
 @GameTestHolder("create_bioships")
 @PrefixGameTestTemplate(false)
@@ -31,7 +32,7 @@ public final class CreaturePartsTests {
             level, p, List.of(p, p.above()), new BoundingBox3i(p, p.above()));
     if (core) {
       CoreAssemblyRules.mark(level, body.getPlot().getCenterBlock());
-      SubLevelData.hungerPaused(body, true);
+      DevelopmentLifeSupport.pause(body);
     }
     return body;
   }

@@ -15,6 +15,7 @@ import org.Azkerash.create_bioships.core.brain.behavior.*;
 import org.Azkerash.create_bioships.core.legs.SubLevelLegs;
 import org.Azkerash.create_bioships.core.locomotion.SubLevelLocomotion;
 import org.Azkerash.create_bioships.core.pathfinding.SubLevelPathfinder;
+import org.Azkerash.create_bioships.development.testing.DevelopmentLifeSupport;
 import org.Azkerash.create_bioships.development.testing.LocomotionFixture;
 
 @GameTestHolder("create_bioships")
@@ -39,7 +40,7 @@ public final class WanderTests {
               SubLevelAssemblyHelper.assembleBlocks(
                   level, base, List.of(base, base.above()), new BoundingBox3i(base, base.above()));
           CoreAssemblyRules.mark(level, body.getPlot().getCenterBlock());
-          SubLevelData.hungerPaused(body, true);
+          DevelopmentLifeSupport.pause(body);
           var actual = SubLevelLocomotion.get(body);
           var destination = SubLevelPathfinder.position(body).add(2, 2, 2);
           helper.assertTrue(
@@ -133,7 +134,7 @@ public final class WanderTests {
                   new BoundingBox3i(base.offset(-2, 2, -1), base.offset(2, 3, 1)));
           var core = body.getPlot().getCenterBlock();
           CoreAssemblyRules.mark(level, core);
-          SubLevelData.hungerPaused(body, true);
+          DevelopmentLifeSupport.pause(body);
           SubLevelLegs.request(body);
           var flags = SubLevelLocomotion.get(body);
           helper.assertTrue(

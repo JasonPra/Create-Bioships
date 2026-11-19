@@ -10,6 +10,7 @@ import net.minecraft.world.entity.*;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
 import org.Azkerash.create_bioships.core.vision.*;
+import org.Azkerash.create_bioships.development.testing.DevelopmentLifeSupport;
 
 @GameTestHolder("create_bioships")
 @PrefixGameTestTemplate(false)
@@ -38,7 +39,7 @@ public final class VisionDetectionTests {
                   SubLevelAssemblyHelper.assembleBlocks(
                       level, base, List.of(base), new BoundingBox3i(base, base));
               CoreAssemblyRules.mark(level, subject[0].getPlot().getCenterBlock());
-              SubLevelData.hungerPaused(subject[0], true);
+              DevelopmentLifeSupport.pause(subject[0]);
               var cow = EntityType.COW.create(level);
               cow.setNoAi(true);
               cow.setNoGravity(true);

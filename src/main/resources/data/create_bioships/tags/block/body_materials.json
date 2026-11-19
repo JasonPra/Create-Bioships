@@ -97,6 +97,9 @@
     "create_bioships:feeding_mouth",
     "create_bioships:fleshy_intestine",
     "create_bioships:limb_socket",
-    "create_bioships:armored_maw"
+    "create_bioships:armored_maw",
+    "create_bioships:lung",
+    "create_bioships:gills",
+    "create_bioships:armored_gills"
   ]
 }

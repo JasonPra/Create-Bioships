@@ -167,7 +167,7 @@ public final class VisionFixture {
       var tag = body.getUserDataTag().copy();
       tag.putBoolean(MARK, true);
       body.setUserDataTag(tag);
-      SubLevelData.hungerPaused(body, true);
+      DevelopmentLifeSupport.pause(body);
       DevelopmentTestOwnership.assign(body);
       container.addForceLoadTicket(body, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
     }

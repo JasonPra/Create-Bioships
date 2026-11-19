@@ -9,6 +9,7 @@ import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.core.brain.BrainMotorControls;
 import org.Azkerash.create_bioships.core.legs.SubLevelLegs;
+import org.Azkerash.create_bioships.development.testing.DevelopmentLifeSupport;
 import org.Azkerash.create_bioships.development.testing.LocomotionFixture;
 
 @GameTestHolder("create_bioships")
@@ -37,7 +38,7 @@ public final class SocketTerrainTests {
                   new BoundingBox3i(base.offset(-2, 2, -1), base.offset(2, 3, 1)));
           var core = body.getPlot().getCenterBlock();
           CoreAssemblyRules.mark(level, core);
-          SubLevelData.hungerPaused(body, true);
+          DevelopmentLifeSupport.pause(body);
           SubLevelLegs.request(body);
           class Trial implements Runnable {
             int tick;

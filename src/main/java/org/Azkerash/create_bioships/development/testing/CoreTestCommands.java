@@ -52,7 +52,7 @@ public final class CoreTestCommands {
   }
 
   private static void own(ServerLevel level, CoreTestState state, ServerSubLevel body) {
-    org.Azkerash.create_bioships.core.SubLevelData.hungerPaused(body, true);
+    DevelopmentLifeSupport.pause(body);
     DevelopmentTestOwnership.assign(body);
     if (state.owned.add(body.getUniqueId())) state.setDirty();
     var data = body.getUserDataTag();

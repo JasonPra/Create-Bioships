@@ -96,6 +96,7 @@ public final class SubLevelHunger {
 
   public static boolean canRegenerate(ServerSubLevel body) {
     return !SubLevelHealth.status(body).dead()
+        && SubLevelData.oxygen(body).value() > 0
         && SubLevelData.hunger(body) >= minimumHungerToHeal(body);
   }
 
@@ -178,6 +179,7 @@ public final class SubLevelHunger {
       }
       var health = SubLevelHealth.status(body);
       if (!health.dead()
+          && SubLevelData.oxygen(body).value() > 0
           && value >= minimumHungerToHeal(body)
           && health.current() < health.maximum()) {
         regeneration += step;

@@ -137,6 +137,7 @@ public final class WaterloggingFixture {
         350);
     var saved = CoreTestState.get(level);
     saved.waterloggingBuilt = true;
+    saved.waterloggingCatalogSize = entries.size();
     saved.setDirty();
   }
 

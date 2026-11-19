@@ -10,6 +10,7 @@ import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.compat.letitwalk.*;
 import org.Azkerash.create_bioships.core.brain.*;
 import org.Azkerash.create_bioships.core.pathfinding.SubLevelPathfinder;
+import org.Azkerash.create_bioships.development.testing.DevelopmentLifeSupport;
 import org.Azkerash.create_bioships.development.testing.ModularLimbFixture;
 
 @GameTestHolder("create_bioships")
@@ -38,7 +39,7 @@ public final class LocomotionWallTests {
                     cells,
                     new BoundingBox3i(base.offset(-4, 1, -2), base.offset(4, 5, 2)));
             CoreAssemblyRules.mark(level, body.getPlot().getCenterBlock());
-            SubLevelData.hungerPaused(body, true);
+            DevelopmentLifeSupport.pause(body);
             h.assertTrue(ModularLimbController.assemble(body), "Assembly failed");
             subject[0] = body;
           }

@@ -194,7 +194,7 @@ public final class ModularLimbFixture {
             cells,
             new BoundingBox3i(base.offset(-4, 1, -2), base.offset(4, 5, 2)));
     CoreAssemblyRules.mark(level, body.getPlot().getCenterBlock());
-    SubLevelData.hungerPaused(body, true);
+    DevelopmentLifeSupport.pause(body);
     DevelopmentTestOwnership.assign(body);
     var tag = body.getUserDataTag().copy();
     tag.putBoolean(MARK, true);

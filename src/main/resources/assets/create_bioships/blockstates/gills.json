@@ -1,0 +1,484 @@
+{
+  "variants": {
+    "facing=north,waterlogged=false,gasping=false,breath=0": {
+      "model": "create_bioships:block/gills",
+      "x": 0,
+      "y": 0
+    },
+    "facing=north,waterlogged=false,gasping=false,breath=1": {
+      "model": "create_bioships:block/gills_breath_1",
+      "x": 0,
+      "y": 0
+    },
+    "facing=north,waterlogged=false,gasping=false,breath=2": {
+      "model": "create_bioships:block/gills_breath_2",
+      "x": 0,
+      "y": 0
+    },
+    "facing=north,waterlogged=false,gasping=false,breath=3": {
+      "model": "create_bioships:block/gills_breath_3",
+      "x": 0,
+      "y": 0
+    },
+    "facing=north,waterlogged=false,gasping=true,breath=0": {
+      "model": "create_bioships:block/gills_gasp_0",
+      "x": 0,
+      "y": 0
+    },
+    "facing=north,waterlogged=false,gasping=true,breath=1": {
+      "model": "create_bioships:block/gills_gasp_1",
+      "x": 0,
+      "y": 0
+    },
+    "facing=north,waterlogged=false,gasping=true,breath=2": {
+      "model": "create_bioships:block/gills_gasp_2",
+      "x": 0,
+      "y": 0
+    },
+    "facing=north,waterlogged=false,gasping=true,breath=3": {
+      "model": "create_bioships:block/gills_gasp_3",
+      "x": 0,
+      "y": 0
+    },
+    "facing=north,waterlogged=true,gasping=false,breath=0": {
+      "model": "create_bioships:block/gills",
+      "x": 0,
+      "y": 0
+    },
+    "facing=north,waterlogged=true,gasping=false,breath=1": {
+      "model": "create_bioships:block/gills_breath_1",
+      "x": 0,
+      "y": 0
+    },
+    "facing=north,waterlogged=true,gasping=false,breath=2": {
+      "model": "create_bioships:block/gills_breath_2",
+      "x": 0,
+      "y": 0
+    },
+    "facing=north,waterlogged=true,gasping=false,breath=3": {
+      "model": "create_bioships:block/gills_breath_3",
+      "x": 0,
+      "y": 0
+    },
+    "facing=north,waterlogged=true,gasping=true,breath=0": {
+      "model": "create_bioships:block/gills_gasp_0",
+      "x": 0,
+      "y": 0
+    },
+    "facing=north,waterlogged=true,gasping=true,breath=1": {
+      "model": "create_bioships:block/gills_gasp_1",
+      "x": 0,
+      "y": 0
+    },
+    "facing=north,waterlogged=true,gasping=true,breath=2": {
+      "model": "create_bioships:block/gills_gasp_2",
+      "x": 0,
+      "y": 0
+    },
+    "facing=north,waterlogged=true,gasping=true,breath=3": {
+      "model": "create_bioships:block/gills_gasp_3",
+      "x": 0,
+      "y": 0
+    },
+    "facing=east,waterlogged=false,gasping=false,breath=0": {
+      "model": "create_bioships:block/gills",
+      "x": 0,
+      "y": 90
+    },
+    "facing=east,waterlogged=false,gasping=false,breath=1": {
+      "model": "create_bioships:block/gills_breath_1",
+      "x": 0,
+      "y": 90
+    },
+    "facing=east,waterlogged=false,gasping=false,breath=2": {
+      "model": "create_bioships:block/gills_breath_2",
+      "x": 0,
+      "y": 90
+    },
+    "facing=east,waterlogged=false,gasping=false,breath=3": {
+      "model": "create_bioships:block/gills_breath_3",
+      "x": 0,
+      "y": 90
+    },
+    "facing=east,waterlogged=false,gasping=true,breath=0": {
+      "model": "create_bioships:block/gills_gasp_0",
+      "x": 0,
+      "y": 90
+    },
+    "facing=east,waterlogged=false,gasping=true,breath=1": {
+      "model": "create_bioships:block/gills_gasp_1",
+      "x": 0,
+      "y": 90
+    },
+    "facing=east,waterlogged=false,gasping=true,breath=2": {
+      "model": "create_bioships:block/gills_gasp_2",
+      "x": 0,
+      "y": 90
+    },
+    "facing=east,waterlogged=false,gasping=true,breath=3": {
+      "model": "create_bioships:block/gills_gasp_3",
+      "x": 0,
+      "y": 90
+    },
+    "facing=east,waterlogged=true,gasping=false,breath=0": {
+      "model": "create_bioships:block/gills",
+      "x": 0,
+      "y": 90
+    },
+    "facing=east,waterlogged=true,gasping=false,breath=1": {
+      "model": "create_bioships:block/gills_breath_1",
+      "x": 0,
+      "y": 90
+    },
+    "facing=east,waterlogged=true,gasping=false,breath=2": {
+      "model": "create_bioships:block/gills_breath_2",
+      "x": 0,
+      "y": 90
+    },
+    "facing=east,waterlogged=true,gasping=false,breath=3": {
+      "model": "create_bioships:block/gills_breath_3",
+      "x": 0,
+      "y": 90
+    },
+    "facing=east,waterlogged=true,gasping=true,breath=0": {
+      "model": "create_bioships:block/gills_gasp_0",
+      "x": 0,
+      "y": 90
+    },
+    "facing=east,waterlogged=true,gasping=true,breath=1": {
+      "model": "create_bioships:block/gills_gasp_1",
+      "x": 0,
+      "y": 90
+    },
+    "facing=east,waterlogged=true,gasping=true,breath=2": {
+      "model": "create_bioships:block/gills_gasp_2",
+      "x": 0,
+      "y": 90
+    },
+    "facing=east,waterlogged=true,gasping=true,breath=3": {
+      "model": "create_bioships:block/gills_gasp_3",
+      "x": 0,
+      "y": 90
+    },
+    "facing=south,waterlogged=false,gasping=false,breath=0": {
+      "model": "create_bioships:block/gills",
+      "x": 0,
+      "y": 180
+    },
+    "facing=south,waterlogged=false,gasping=false,breath=1": {
+      "model": "create_bioships:block/gills_breath_1",
+      "x": 0,
+      "y": 180
+    },
+    "facing=south,waterlogged=false,gasping=false,breath=2": {
+      "model": "create_bioships:block/gills_breath_2",
+      "x": 0,
+      "y": 180
+    },
+    "facing=south,waterlogged=false,gasping=false,breath=3": {
+      "model": "create_bioships:block/gills_breath_3",
+      "x": 0,
+      "y": 180
+    },
+    "facing=south,waterlogged=false,gasping=true,breath=0": {
+      "model": "create_bioships:block/gills_gasp_0",
+      "x": 0,
+      "y": 180
+    },
+    "facing=south,waterlogged=false,gasping=true,breath=1": {
+      "model": "create_bioships:block/gills_gasp_1",
+      "x": 0,
+      "y": 180
+    },
+    "facing=south,waterlogged=false,gasping=true,breath=2": {
+      "model": "create_bioships:block/gills_gasp_2",
+      "x": 0,
+      "y": 180
+    },
+    "facing=south,waterlogged=false,gasping=true,breath=3": {
+      "model": "create_bioships:block/gills_gasp_3",
+      "x": 0,
+      "y": 180
+    },
+    "facing=south,waterlogged=true,gasping=false,breath=0": {
+      "model": "create_bioships:block/gills",
+      "x": 0,
+      "y": 180
+    },
+    "facing=south,waterlogged=true,gasping=false,breath=1": {
+      "model": "create_bioships:block/gills_breath_1",
+      "x": 0,
+      "y": 180
+    },
+    "facing=south,waterlogged=true,gasping=false,breath=2": {
+      "model": "create_bioships:block/gills_breath_2",
+      "x": 0,
+      "y": 180
+    },
+    "facing=south,waterlogged=true,gasping=false,breath=3": {
+      "model": "create_bioships:block/gills_breath_3",
+      "x": 0,
+      "y": 180
+    },
+    "facing=south,waterlogged=true,gasping=true,breath=0": {
+      "model": "create_bioships:block/gills_gasp_0",
+      "x": 0,
+      "y": 180
+    },
+    "facing=south,waterlogged=true,gasping=true,breath=1": {
+      "model": "create_bioships:block/gills_gasp_1",
+      "x": 0,
+      "y": 180
+    },
+    "facing=south,waterlogged=true,gasping=true,breath=2": {
+      "model": "create_bioships:block/gills_gasp_2",
+      "x": 0,
+      "y": 180
+    },
+    "facing=south,waterlogged=true,gasping=true,breath=3": {
+      "model": "create_bioships:block/gills_gasp_3",
+      "x": 0,
+      "y": 180
+    },
+    "facing=west,waterlogged=false,gasping=false,breath=0": {
+      "model": "create_bioships:block/gills",
+      "x": 0,
+      "y": 270
+    },
+    "facing=west,waterlogged=false,gasping=false,breath=1": {
+      "model": "create_bioships:block/gills_breath_1",
+      "x": 0,
+      "y": 270
+    },
+    "facing=west,waterlogged=false,gasping=false,breath=2": {
+      "model": "create_bioships:block/gills_breath_2",
+      "x": 0,
+      "y": 270
+    },
+    "facing=west,waterlogged=false,gasping=false,breath=3": {
+      "model": "create_bioships:block/gills_breath_3",
+      "x": 0,
+      "y": 270
+    },
+    "facing=west,waterlogged=false,gasping=true,breath=0": {
+      "model": "create_bioships:block/gills_gasp_0",
+      "x": 0,
+      "y": 270
+    },
+    "facing=west,waterlogged=false,gasping=true,breath=1": {
+      "model": "create_bioships:block/gills_gasp_1",
+      "x": 0,
+      "y": 270
+    },
+    "facing=west,waterlogged=false,gasping=true,breath=2": {
+      "model": "create_bioships:block/gills_gasp_2",
+      "x": 0,
+      "y": 270
+    },
+    "facing=west,waterlogged=false,gasping=true,breath=3": {
+      "model": "create_bioships:block/gills_gasp_3",
+      "x": 0,
+      "y": 270
+    },
+    "facing=west,waterlogged=true,gasping=false,breath=0": {
+      "model": "create_bioships:block/gills",
+      "x": 0,
+      "y": 270
+    },
+    "facing=west,waterlogged=true,gasping=false,breath=1": {
+      "model": "create_bioships:block/gills_breath_1",
+      "x": 0,
+      "y": 270
+    },
+    "facing=west,waterlogged=true,gasping=false,breath=2": {
+      "model": "create_bioships:block/gills_breath_2",
+      "x": 0,
+      "y": 270
+    },
+    "facing=west,waterlogged=true,gasping=false,breath=3": {
+      "model": "create_bioships:block/gills_breath_3",
+      "x": 0,
+      "y": 270
+    },
+    "facing=west,waterlogged=true,gasping=true,breath=0": {
+      "model": "create_bioships:block/gills_gasp_0",
+      "x": 0,
+      "y": 270
+    },
+    "facing=west,waterlogged=true,gasping=true,breath=1": {
+      "model": "create_bioships:block/gills_gasp_1",
+      "x": 0,
+      "y": 270
+    },
+    "facing=west,waterlogged=true,gasping=true,breath=2": {
+      "model": "create_bioships:block/gills_gasp_2",
+      "x": 0,
+      "y": 270
+    },
+    "facing=west,waterlogged=true,gasping=true,breath=3": {
+      "model": "create_bioships:block/gills_gasp_3",
+      "x": 0,
+      "y": 270
+    },
+    "facing=up,waterlogged=false,gasping=false,breath=0": {
+      "model": "create_bioships:block/gills",
+      "x": 270,
+      "y": 0
+    },
+    "facing=up,waterlogged=false,gasping=false,breath=1": {
+      "model": "create_bioships:block/gills_breath_1",
+      "x": 270,
+      "y": 0
+    },
+    "facing=up,waterlogged=false,gasping=false,breath=2": {
+      "model": "create_bioships:block/gills_breath_2",
+      "x": 270,
+      "y": 0
+    },
+    "facing=up,waterlogged=false,gasping=false,breath=3": {
+      "model": "create_bioships:block/gills_breath_3",
+      "x": 270,
+      "y": 0
+    },
+    "facing=up,waterlogged=false,gasping=true,breath=0": {
+      "model": "create_bioships:block/gills_gasp_0",
+      "x": 270,
+      "y": 0
+    },
+    "facing=up,waterlogged=false,gasping=true,breath=1": {
+      "model": "create_bioships:block/gills_gasp_1",
+      "x": 270,
+      "y": 0
+    },
+    "facing=up,waterlogged=false,gasping=true,breath=2": {
+      "model": "create_bioships:block/gills_gasp_2",
+      "x": 270,
+      "y": 0
+    },
+    "facing=up,waterlogged=false,gasping=true,breath=3": {
+      "model": "create_bioships:block/gills_gasp_3",
+      "x": 270,
+      "y": 0
+    },
+    "facing=up,waterlogged=true,gasping=false,breath=0": {
+      "model": "create_bioships:block/gills",
+      "x": 270,
+      "y": 0
+    },
+    "facing=up,waterlogged=true,gasping=false,breath=1": {
+      "model": "create_bioships:block/gills_breath_1",
+      "x": 270,
+      "y": 0
+    },
+    "facing=up,waterlogged=true,gasping=false,breath=2": {
+      "model": "create_bioships:block/gills_breath_2",
+      "x": 270,
+      "y": 0
+    },
+    "facing=up,waterlogged=true,gasping=false,breath=3": {
+      "model": "create_bioships:block/gills_breath_3",
+      "x": 270,
+      "y": 0
+    },
+    "facing=up,waterlogged=true,gasping=true,breath=0": {
+      "model": "create_bioships:block/gills_gasp_0",
+      "x": 270,
+      "y": 0
+    },
+    "facing=up,waterlogged=true,gasping=true,breath=1": {
+      "model": "create_bioships:block/gills_gasp_1",
+      "x": 270,
+      "y": 0
+    },
+    "facing=up,waterlogged=true,gasping=true,breath=2": {
+      "model": "create_bioships:block/gills_gasp_2",
+      "x": 270,
+      "y": 0
+    },
+    "facing=up,waterlogged=true,gasping=true,breath=3": {
+      "model": "create_bioships:block/gills_gasp_3",
+      "x": 270,
+      "y": 0
+    },
+    "facing=down,waterlogged=false,gasping=false,breath=0": {
+      "model": "create_bioships:block/gills",
+      "x": 90,
+      "y": 0
+    },
+    "facing=down,waterlogged=false,gasping=false,breath=1": {
+      "model": "create_bioships:block/gills_breath_1",
+      "x": 90,
+      "y": 0
+    },
+    "facing=down,waterlogged=false,gasping=false,breath=2": {
+      "model": "create_bioships:block/gills_breath_2",
+      "x": 90,
+      "y": 0
+    },
+    "facing=down,waterlogged=false,gasping=false,breath=3": {
+      "model": "create_bioships:block/gills_breath_3",
+      "x": 90,
+      "y": 0
+    },
+    "facing=down,waterlogged=false,gasping=true,breath=0": {
+      "model": "create_bioships:block/gills_gasp_0",
+      "x": 90,
+      "y": 0
+    },
+    "facing=down,waterlogged=false,gasping=true,breath=1": {
+      "model": "create_bioships:block/gills_gasp_1",
+      "x": 90,
+      "y": 0
+    },
+    "facing=down,waterlogged=false,gasping=true,breath=2": {
+      "model": "create_bioships:block/gills_gasp_2",
+      "x": 90,
+      "y": 0
+    },
+    "facing=down,waterlogged=false,gasping=true,breath=3": {
+      "model": "create_bioships:block/gills_gasp_3",
+      "x": 90,
+      "y": 0
+    },
+    "facing=down,waterlogged=true,gasping=false,breath=0": {
+      "model": "create_bioships:block/gills",
+      "x": 90,
+      "y": 0
+    },
+    "facing=down,waterlogged=true,gasping=false,breath=1": {
+      "model": "create_bioships:block/gills_breath_1",
+      "x": 90,
+      "y": 0
+    },
+    "facing=down,waterlogged=true,gasping=false,breath=2": {
+      "model": "create_bioships:block/gills_breath_2",
+      "x": 90,
+      "y": 0
+    },
+    "facing=down,waterlogged=true,gasping=false,breath=3": {
+      "model": "create_bioships:block/gills_breath_3",
+      "x": 90,
+      "y": 0
+    },
+    "facing=down,waterlogged=true,gasping=true,breath=0": {
+      "model": "create_bioships:block/gills_gasp_0",
+      "x": 90,
+      "y": 0
+    },
+    "facing=down,waterlogged=true,gasping=true,breath=1": {
+      "model": "create_bioships:block/gills_gasp_1",
+      "x": 90,
+      "y": 0
+    },
+    "facing=down,waterlogged=true,gasping=true,breath=2": {
+      "model": "create_bioships:block/gills_gasp_2",
+      "x": 90,
+      "y": 0
+    },
+    "facing=down,waterlogged=true,gasping=true,breath=3": {
+      "model": "create_bioships:block/gills_gasp_3",
+      "x": 90,
+      "y": 0
+    }
+  }
+}

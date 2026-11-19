@@ -11,6 +11,7 @@ import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.combat.*;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
 import org.Azkerash.create_bioships.core.access.SubLevelPermissions;
+import org.Azkerash.create_bioships.development.testing.DevelopmentLifeSupport;
 
 @GameTestHolder("create_bioships")
 @PrefixGameTestTemplate(false)
@@ -31,7 +32,7 @@ public final class TrustLossTests {
             List.of(origin, origin.east()),
             new BoundingBox3i(origin, origin.east()));
     CoreAssemblyRules.mark(level, result.getPlot().getCenterBlock());
-    SubLevelData.hungerPaused(result, true);
+    DevelopmentLifeSupport.pause(result);
     return result;
   }
 
@@ -181,7 +182,7 @@ public final class TrustLossTests {
     SubLevelHunger.advance(root, 80);
     near(h, SubLevelData.trust(root), 97.7, "Recurring starvation loss did not escalate");
     h.assertTrue(SubLevelData.ownerHits(root).isEmpty(), "Starvation consumed owner-attack grace");
-    SubLevelData.hungerPaused(root, true);
+    DevelopmentLifeSupport.pause(root);
     SubLevelHunger.advance(root, 10000);
     near(h, SubLevelData.trust(root), 97.7, "Paused hunger reduced trust");
     SubLevelHealth.damage(root, 17, "setup");

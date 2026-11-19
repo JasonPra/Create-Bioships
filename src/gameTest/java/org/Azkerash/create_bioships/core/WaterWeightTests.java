@@ -11,6 +11,7 @@ import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
 import org.Azkerash.create_bioships.core.legs.SubLevelLegs;
+import org.Azkerash.create_bioships.development.testing.DevelopmentLifeSupport;
 
 @GameTestHolder(Create_bioships.MODID)
 @PrefixGameTestTemplate(false)
@@ -47,7 +48,7 @@ public final class WaterWeightTests {
                 SubLevelAssemblyHelper.assembleBlocks(
                     level, at, List.of(at, at.east()), new BoundingBox3i(at, at.east()));
             CoreAssemblyRules.mark(level, body.getPlot().getCenterBlock());
-            SubLevelData.hungerPaused(body, true);
+            DevelopmentLifeSupport.pause(body);
             SubLevelLegs.request(body);
             level.setBlock(at, Blocks.WATER.defaultBlockState(), 2);
             level.setBlock(at.east(), Blocks.WATER.defaultBlockState(), 2);

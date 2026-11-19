@@ -15,6 +15,7 @@ import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
+import org.Azkerash.create_bioships.development.testing.DevelopmentLifeSupport;
 import org.Azkerash.create_bioships.equipment.SymbioticGogglesAccess;
 
 @GameTestHolder(Create_bioships.MODID)
@@ -42,7 +43,7 @@ public final class StomachCapacityTests {
                   new BoundingBox3i(origin, origin.east(2)));
           var core = body.getPlot().getCenterBlock();
           CoreAssemblyRules.mark(level, core);
-          SubLevelData.hungerPaused(body, true);
+          DevelopmentLifeSupport.pause(body);
           helper.assertTrue(
               SubLevelData.maximumHunger(body) == 10 && SubLevelData.hunger(body) == 5,
               "Stomach failed to add capacity without filling hunger");
@@ -134,7 +135,7 @@ public final class StomachCapacityTests {
           helper.assertTrue(
               SubLevelHealth.status(body).current() == before + 1,
               "Failed to regenerate at 90% hunger");
-          SubLevelData.hungerPaused(body, true);
+          DevelopmentLifeSupport.pause(body);
           SubLevelHunger.advance(body, 10000);
           helper.assertTrue(
               SubLevelHealth.status(body).current() == before + 1,

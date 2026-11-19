@@ -15,6 +15,7 @@ import org.Azkerash.create_bioships.Create_bioships;
 import org.Azkerash.create_bioships.compat.letitwalk.CrabLegKinematics;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
 import org.Azkerash.create_bioships.components.logic.legs.CrabLegBlock;
+import org.Azkerash.create_bioships.development.testing.DevelopmentLifeSupport;
 
 @GameTestHolder(Create_bioships.MODID)
 @PrefixGameTestTemplate(false)
@@ -38,7 +39,7 @@ public final class CompactLegWrenchTests {
             level, at, List.of(at, at.east(), at.east(2)), new BoundingBox3i(at, at.east(2)));
     var core = body.getPlot().getCenterBlock();
     CoreAssemblyRules.mark(level, core);
-    SubLevelData.hungerPaused(body, true);
+    DevelopmentLifeSupport.pause(body);
     var pos = core.east(2);
     var player =
         new net.neoforged.neoforge.common.util.FakePlayer(

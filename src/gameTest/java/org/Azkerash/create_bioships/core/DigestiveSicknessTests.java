@@ -17,6 +17,7 @@ import org.Azkerash.create_bioships.components.ComponentRegistry;
 import org.Azkerash.create_bioships.components.logic.mouth.*;
 import org.Azkerash.create_bioships.components.logic.stomach.*;
 import org.Azkerash.create_bioships.core.digestion.*;
+import org.Azkerash.create_bioships.development.testing.DevelopmentLifeSupport;
 
 @GameTestHolder("create_bioships")
 @PrefixGameTestTemplate(false)
@@ -48,7 +49,7 @@ public final class DigestiveSicknessTests {
             l, origin, cells, new BoundingBox3i(origin, origin.east(3).above()));
     var core = body.getPlot().getCenterBlock();
     CoreAssemblyRules.mark(l, core);
-    SubLevelData.hungerPaused(body, true);
+    DevelopmentLifeSupport.pause(body);
     SubLevelData.hunger(body, SubLevelData.maximumHunger(body));
     SubLevelData.trust(body, 20);
     var player =

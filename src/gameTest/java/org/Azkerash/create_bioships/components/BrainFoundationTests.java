@@ -14,6 +14,7 @@ import org.Azkerash.create_bioships.Create_bioships;
 import org.Azkerash.create_bioships.components.logic.brain.*;
 import org.Azkerash.create_bioships.core.*;
 import org.Azkerash.create_bioships.core.brain.*;
+import org.Azkerash.create_bioships.development.testing.DevelopmentLifeSupport;
 
 @GameTestHolder("create_bioships")
 @PrefixGameTestTemplate(false)
@@ -67,7 +68,7 @@ public final class BrainFoundationTests {
             level, origin, cells, new BoundingBox3i(origin, origin.offset(3, 2, 2)));
     var core = body.getPlot().getCenterBlock();
     CoreAssemblyRules.mark(level, core);
-    SubLevelData.hungerPaused(body, true);
+    DevelopmentLifeSupport.pause(body);
     var brain = SubLevelBrains.get(body);
     helper.assertTrue(
         brain.capacity() == 27
@@ -189,7 +190,7 @@ public final class BrainFoundationTests {
             List.of(origin, origin.east(), origin.south()),
             new BoundingBox3i(origin, origin.east().south()));
     CoreAssemblyRules.mark(level, body.getPlot().getCenterBlock());
-    SubLevelData.hungerPaused(body, true);
+    DevelopmentLifeSupport.pause(body);
     var brain = SubLevelBrains.get(body);
     helper.assertTrue(
         brain.capacity() == 1 && brain.cells().size() == 2,

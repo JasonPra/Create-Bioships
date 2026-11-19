@@ -12,6 +12,9 @@
     "create_bioships:limb_swivel",
     "create_bioships:limb_segment",
     "create_bioships:limb_foot",
-    "create_bioships:armored_maw"
+    "create_bioships:armored_maw",
+    "create_bioships:lung",
+    "create_bioships:gills",
+    "create_bioships:armored_gills"
   ]
 }

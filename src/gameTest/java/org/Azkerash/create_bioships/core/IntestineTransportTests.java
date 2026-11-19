@@ -14,6 +14,7 @@ import org.Azkerash.create_bioships.components.ComponentRegistry;
 import org.Azkerash.create_bioships.components.logic.mouth.MouthBlockEntity;
 import org.Azkerash.create_bioships.components.logic.stomach.StomachBlockEntity;
 import org.Azkerash.create_bioships.core.digestion.SubLevelDigestion;
+import org.Azkerash.create_bioships.development.testing.DevelopmentLifeSupport;
 
 @GameTestHolder(Create_bioships.MODID)
 @PrefixGameTestTemplate(false)
@@ -30,7 +31,7 @@ public final class IntestineTransportTests {
         SubLevelAssemblyHelper.assembleBlocks(
             level, pos, List.of(pos, pos.east(), pos.east(2)), new BoundingBox3i(pos, pos.east(2)));
     SubLevelData.living(grid, true);
-    SubLevelData.hungerPaused(grid, true);
+    DevelopmentLifeSupport.pause(grid);
     pos = grid.getPlot().getCenterBlock();
     var mouth = (MouthBlockEntity) level.getBlockEntity(pos);
     var stomach = (StomachBlockEntity) level.getBlockEntity(pos.east(2));
@@ -124,7 +125,7 @@ public final class IntestineTransportTests {
                   new BoundingBox3i(pos.west(), pos.east()));
           var core = body.getPlot().getCenterBlock();
           CoreAssemblyRules.mark(level, core);
-          SubLevelData.hungerPaused(body, true);
+          DevelopmentLifeSupport.pause(body);
           SubLevelData.hunger(body, 1);
           var stomach = (StomachBlockEntity) level.getBlockEntity(core.east());
           stomach.setItem(9, new ItemStack(StomachBlockEntity.paste(), 3));

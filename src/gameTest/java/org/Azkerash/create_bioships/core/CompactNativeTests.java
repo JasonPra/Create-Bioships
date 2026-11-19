@@ -15,6 +15,7 @@ import org.Azkerash.create_bioships.components.ComponentRegistry;
 import org.Azkerash.create_bioships.components.logic.legs.CrabLegBlock;
 import org.Azkerash.create_bioships.core.brain.BrainMotorControls;
 import org.Azkerash.create_bioships.core.legs.SubLevelLegs;
+import org.Azkerash.create_bioships.development.testing.DevelopmentLifeSupport;
 
 @GameTestHolder(Create_bioships.MODID)
 @PrefixGameTestTemplate(false)
@@ -130,7 +131,7 @@ public final class CompactNativeTests {
                   new BoundingBox3i(base.offset(-1, 1, -1), base.offset(1, armored ? 4 : 2, 1)));
           var logical = body.getPlot().getCenterBlock();
           CoreAssemblyRules.mark(level, logical);
-          SubLevelData.hungerPaused(body, true);
+          DevelopmentLifeSupport.pause(body);
           SubLevelLegs.request(body);
           double capacity = SubLevelHealth.status(body).maximum();
           class Sample implements Runnable {

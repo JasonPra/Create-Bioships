@@ -263,6 +263,55 @@ public final class ComponentRegistry {
           ITEMS.register(
               "blank_behavior_card",
               org.Azkerash.create_bioships.components.logic.brain.BehaviorCardItem::new);
+  public static final DeferredBlock<
+          org.Azkerash.create_bioships.components.logic.respiration.RespiratoryBlock>
+      LUNG =
+          component(
+              new ComponentDefinition<>(
+                  "lung",
+                  () ->
+                      new org.Azkerash.create_bioships
+                          .components
+                          .logic
+                          .respiration
+                          .RespiratoryBlock(
+                          BlockBehaviour.Properties.of()
+                              .strength(1)
+                              .sound(SoundType.SLIME_BLOCK)
+                              .noOcclusion(),
+                          false))),
+      GILLS =
+          component(
+              new ComponentDefinition<>(
+                  "gills",
+                  () ->
+                      new org.Azkerash.create_bioships
+                          .components
+                          .logic
+                          .respiration
+                          .RespiratoryBlock(
+                          BlockBehaviour.Properties.of()
+                              .strength(1)
+                              .sound(SoundType.SLIME_BLOCK)
+                              .noOcclusion(),
+                          true)));
+  public static final DeferredBlock<
+          org.Azkerash.create_bioships.components.logic.respiration.RespiratoryBlock>
+      ARMORED_GILLS =
+          component(
+              new ComponentDefinition<>(
+                  "armored_gills",
+                  () ->
+                      new org.Azkerash.create_bioships
+                          .components
+                          .logic
+                          .respiration
+                          .RespiratoryBlock(
+                          BlockBehaviour.Properties.of()
+                              .strength(1)
+                              .sound(SoundType.SLIME_BLOCK)
+                              .noOcclusion(),
+                          true)));
   public static final DeferredBlock<StomachBlock> STOMACH =
       component(
           new ComponentDefinition<>(

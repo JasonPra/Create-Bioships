@@ -13,6 +13,7 @@ import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.combat.*;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
 import org.Azkerash.create_bioships.core.trust.RegenerationTrust;
+import org.Azkerash.create_bioships.development.testing.DevelopmentLifeSupport;
 import org.Azkerash.create_bioships.development.testing.PotionFixture;
 
 @GameTestHolder("create_bioships")
@@ -28,7 +29,7 @@ public final class RegenerationTrustTests {
         SubLevelAssemblyHelper.assembleBlocks(
             level, origin, List.of(origin), new BoundingBox3i(origin, origin));
     CoreAssemblyRules.mark(level, body.getPlot().getCenterBlock());
-    SubLevelData.hungerPaused(body, true);
+    DevelopmentLifeSupport.pause(body);
     SubLevelData.trust(body, 10);
     h.onEachTick(
         () -> {

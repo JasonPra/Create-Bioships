@@ -9,6 +9,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
+import org.Azkerash.create_bioships.development.testing.DevelopmentLifeSupport;
 
 @GameTestHolder(Create_bioships.MODID)
 @PrefixGameTestTemplate(false)
@@ -28,7 +29,7 @@ public final class ArmorTests {
             new BoundingBox3i(origin, origin.east(2)));
     var core = body.getPlot().getCenterBlock();
     CoreAssemblyRules.mark(level, core);
-    SubLevelData.hungerPaused(body, true);
+    DevelopmentLifeSupport.pause(body);
     var attacker =
         new net.neoforged.neoforge.common.util.FakePlayer(
             level, new com.mojang.authlib.GameProfile(java.util.UUID.randomUUID(), "ArmorTest"));

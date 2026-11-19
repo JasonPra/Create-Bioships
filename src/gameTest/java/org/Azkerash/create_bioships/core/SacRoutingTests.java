@@ -15,6 +15,7 @@ import org.Azkerash.create_bioships.components.logic.intestine.IntestineBlock;
 import org.Azkerash.create_bioships.components.logic.mouth.MouthBlockEntity;
 import org.Azkerash.create_bioships.components.logic.stomach.*;
 import org.Azkerash.create_bioships.core.digestion.SubLevelDigestion;
+import org.Azkerash.create_bioships.development.testing.DevelopmentLifeSupport;
 
 @GameTestHolder(Create_bioships.MODID)
 @PrefixGameTestTemplate(false)
@@ -63,7 +64,7 @@ public final class SacRoutingTests {
             level, origin, cells, new BoundingBox3i(origin, origin.east(3).above()));
     var core = body.getPlot().getCenterBlock();
     CoreAssemblyRules.mark(level, core);
-    SubLevelData.hungerPaused(body, true);
+    DevelopmentLifeSupport.pause(body);
     SubLevelData.hunger(body, SubLevelData.maximumHunger(body));
     var mouth = (MouthBlockEntity) level.getBlockEntity(core.east());
     var stomach = (StomachBlockEntity) level.getBlockEntity(core.east(3));
@@ -135,7 +136,7 @@ public final class SacRoutingTests {
             l, o, cells, new BoundingBox3i(o, o.east(3).above(2).south()));
     var core = body.getPlot().getCenterBlock();
     CoreAssemblyRules.mark(l, core);
-    SubLevelData.hungerPaused(body, true);
+    DevelopmentLifeSupport.pause(body);
     SubLevelData.hunger(body, SubLevelData.maximumHunger(body));
     var stomach = (StomachBlockEntity) l.getBlockEntity(core.east(3));
     var lower =

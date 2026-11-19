@@ -66,7 +66,9 @@ public final class DevelopmentWorldSetup {
       state.digestionOrigin = new BlockPos(384, state.layout().base().getY(), 0);
       DigestionFixture.reset(level);
     }
-    if (!state.waterloggingBuilt) WaterloggingFixture.install(level);
+    if (!state.waterloggingBuilt
+        || state.waterloggingCatalogSize != WaterloggingFixture.catalog().size())
+      WaterloggingFixture.install(level);
     if (!state.combatBuilt) {
       state.combatOrigin = new BlockPos(1024, state.layout().base().getY(), 1024);
       CombatFixture.reset(level);

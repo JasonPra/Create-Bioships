@@ -149,7 +149,7 @@ public final class MembraneFixture {
     tag.putBoolean(MARK, true);
     body.setUserDataTag(tag);
     DevelopmentTestOwnership.assign(body);
-    SubLevelData.hungerPaused(body, true);
+    DevelopmentLifeSupport.pause(body);
     SubLevelContainer.getContainer(level)
         .addForceLoadTicket(body, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
     var cow = EntityType.COW.create(level);

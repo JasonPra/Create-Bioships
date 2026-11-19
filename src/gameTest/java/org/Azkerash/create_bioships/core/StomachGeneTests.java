@@ -16,6 +16,7 @@ import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
 import org.Azkerash.create_bioships.components.logic.stomach.*;
+import org.Azkerash.create_bioships.development.testing.DevelopmentLifeSupport;
 
 @GameTestHolder(Create_bioships.MODID)
 @PrefixGameTestTemplate(false)
@@ -70,7 +71,7 @@ public final class StomachGeneTests {
             new BoundingBox3i(origin.west(), origin));
     var core = body.getPlot().getCenterBlock();
     CoreAssemblyRules.mark(level, core);
-    SubLevelData.hungerPaused(body, true);
+    DevelopmentLifeSupport.pause(body);
     SubLevelData.hunger(body, 7);
     stomach = (StomachBlockEntity) level.getBlockEntity(core.east());
     helper.assertTrue(
@@ -175,7 +176,7 @@ public final class StomachGeneTests {
         SubLevelAssemblyHelper.assembleBlocks(
             level, origin, List.of(origin), new BoundingBox3i(origin, origin));
     SubLevelData.living(body, true);
-    SubLevelData.hungerPaused(body, true);
+    DevelopmentLifeSupport.pause(body);
     SubLevelData.hunger(body, SubLevelData.maximumHunger(body));
     var stomach = (StomachBlockEntity) level.getBlockEntity(body.getPlot().getCenterBlock());
     var player =

@@ -9,6 +9,7 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
+import org.Azkerash.create_bioships.development.testing.DevelopmentLifeSupport;
 
 @GameTestHolder("create_bioships")
 @PrefixGameTestTemplate(false)
@@ -21,6 +22,9 @@ public final class ComponentWaterloggingTests {
     var types =
         List.of(
             ComponentRegistry.BRAIN.get(),
+            ComponentRegistry.LUNG.get(),
+            ComponentRegistry.GILLS.get(),
+            ComponentRegistry.ARMORED_GILLS.get(),
             ComponentRegistry.INTESTINE.get(),
             ComponentRegistry.NERVE_PANEL.get(),
             ComponentRegistry.VITAL_READOUT.get(),
@@ -134,7 +138,7 @@ public final class ComponentWaterloggingTests {
                   new dev.ryanhcode.sable.companion.math.BoundingBox3i(base.north(), base.east(3)));
           var core = body.getPlot().getCenterBlock();
           CoreAssemblyRules.mark(l, core);
-          SubLevelData.hungerPaused(body, true);
+          DevelopmentLifeSupport.pause(body);
           var from = cells.stream().map(p -> p.subtract(base).offset(core)).toList();
           h.runAfterDelay(
               40,

@@ -1,0 +1,442 @@
+{
+  "textures": {
+    "flesh": "biomancy:block/packed_flesh",
+    "tissue": "biomancy:block/flesh",
+    "dark": "minecraft:block/black_terracotta",
+    "particle": "biomancy:block/packed_flesh",
+    "chitin": "create_bioships:block/living_core"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        1
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#chitin",
+          "uv": [
+            0,
+            12,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#flesh"
+        },
+        "east": {
+          "texture": "#flesh"
+        },
+        "west": {
+          "texture": "#flesh"
+        },
+        "up": {
+          "texture": "#flesh"
+        },
+        "down": {
+          "texture": "#flesh"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        0,
+        0.82
+      ],
+      "to": [
+        16,
+        16,
+        0.94
+      ],
+      "faces": {
+        "north": {
+          "texture": "#dark"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        0.45,
+        -0.6000000000000001
+      ],
+      "to": [
+        16,
+        1.05,
+        1
+      ],
+      "faces": {
+        "north": {
+          "texture": "#chitin",
+          "uv": [
+            0,
+            14.95,
+            16,
+            15.55
+          ]
+        },
+        "south": {
+          "texture": "#tissue"
+        },
+        "east": {
+          "texture": "#tissue"
+        },
+        "west": {
+          "texture": "#tissue"
+        },
+        "up": {
+          "texture": "#tissue"
+        },
+        "down": {
+          "texture": "#tissue"
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          0.75,
+          0.19999999999999996
+        ],
+        "axis": "x",
+        "angle": 45
+      }
+    },
+    {
+      "from": [
+        0,
+        2.45,
+        -0.6000000000000001
+      ],
+      "to": [
+        16,
+        3.05,
+        1
+      ],
+      "faces": {
+        "north": {
+          "texture": "#chitin",
+          "uv": [
+            0,
+            12.95,
+            16,
+            13.55
+          ]
+        },
+        "south": {
+          "texture": "#tissue"
+        },
+        "east": {
+          "texture": "#tissue"
+        },
+        "west": {
+          "texture": "#tissue"
+        },
+        "up": {
+          "texture": "#tissue"
+        },
+        "down": {
+          "texture": "#tissue"
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          2.75,
+          0.19999999999999996
+        ],
+        "axis": "x",
+        "angle": 45
+      }
+    },
+    {
+      "from": [
+        0,
+        4.45,
+        -0.6000000000000001
+      ],
+      "to": [
+        16,
+        5.05,
+        1
+      ],
+      "faces": {
+        "north": {
+          "texture": "#chitin",
+          "uv": [
+            0,
+            12.45,
+            16,
+            13.05
+          ]
+        },
+        "south": {
+          "texture": "#tissue"
+        },
+        "east": {
+          "texture": "#tissue"
+        },
+        "west": {
+          "texture": "#tissue"
+        },
+        "up": {
+          "texture": "#tissue"
+        },
+        "down": {
+          "texture": "#tissue"
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          4.75,
+          0.19999999999999996
+        ],
+        "axis": "x",
+        "angle": 45
+      }
+    },
+    {
+      "from": [
+        0,
+        6.45,
+        -0.6000000000000001
+      ],
+      "to": [
+        16,
+        7.05,
+        1
+      ],
+      "faces": {
+        "north": {
+          "texture": "#chitin",
+          "uv": [
+            0,
+            14.45,
+            16,
+            15.05
+          ]
+        },
+        "south": {
+          "texture": "#tissue"
+        },
+        "east": {
+          "texture": "#tissue"
+        },
+        "west": {
+          "texture": "#tissue"
+        },
+        "up": {
+          "texture": "#tissue"
+        },
+        "down": {
+          "texture": "#tissue"
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          6.75,
+          0.19999999999999996
+        ],
+        "axis": "x",
+        "angle": 45
+      }
+    },
+    {
+      "from": [
+        0,
+        8.45,
+        -0.6000000000000001
+      ],
+      "to": [
+        16,
+        9.05,
+        1
+      ],
+      "faces": {
+        "north": {
+          "texture": "#chitin",
+          "uv": [
+            0,
+            14.95,
+            16,
+            15.55
+          ]
+        },
+        "south": {
+          "texture": "#tissue"
+        },
+        "east": {
+          "texture": "#tissue"
+        },
+        "west": {
+          "texture": "#tissue"
+        },
+        "up": {
+          "texture": "#tissue"
+        },
+        "down": {
+          "texture": "#tissue"
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          8.75,
+          0.19999999999999996
+        ],
+        "axis": "x",
+        "angle": 45
+      }
+    },
+    {
+      "from": [
+        0,
+        10.45,
+        -0.6000000000000001
+      ],
+      "to": [
+        16,
+        11.05,
+        1
+      ],
+      "faces": {
+        "north": {
+          "texture": "#chitin",
+          "uv": [
+            0,
+            12.95,
+            16,
+            13.55
+          ]
+        },
+        "south": {
+          "texture": "#tissue"
+        },
+        "east": {
+          "texture": "#tissue"
+        },
+        "west": {
+          "texture": "#tissue"
+        },
+        "up": {
+          "texture": "#tissue"
+        },
+        "down": {
+          "texture": "#tissue"
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          10.75,
+          0.19999999999999996
+        ],
+        "axis": "x",
+        "angle": 45
+      }
+    },
+    {
+      "from": [
+        0,
+        12.45,
+        -0.6000000000000001
+      ],
+      "to": [
+        16,
+        13.05,
+        1
+      ],
+      "faces": {
+        "north": {
+          "texture": "#chitin",
+          "uv": [
+            0,
+            12.45,
+            16,
+            13.05
+          ]
+        },
+        "south": {
+          "texture": "#tissue"
+        },
+        "east": {
+          "texture": "#tissue"
+        },
+        "west": {
+          "texture": "#tissue"
+        },
+        "up": {
+          "texture": "#tissue"
+        },
+        "down": {
+          "texture": "#tissue"
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          12.75,
+          0.19999999999999996
+        ],
+        "axis": "x",
+        "angle": 45
+      }
+    },
+    {
+      "from": [
+        0,
+        14.45,
+        -0.6000000000000001
+      ],
+      "to": [
+        16,
+        15.05,
+        1
+      ],
+      "faces": {
+        "north": {
+          "texture": "#chitin",
+          "uv": [
+            0,
+            14.45,
+            16,
+            15.05
+          ]
+        },
+        "south": {
+          "texture": "#tissue"
+        },
+        "east": {
+          "texture": "#tissue"
+        },
+        "west": {
+          "texture": "#tissue"
+        },
+        "up": {
+          "texture": "#tissue"
+        },
+        "down": {
+          "texture": "#tissue"
+        }
+      },
+      "rotation": {
+        "origin": [
+          8,
+          14.75,
+          0.19999999999999996
+        ],
+        "axis": "x",
+        "angle": 45
+      }
+    }
+  ]
+}

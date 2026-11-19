@@ -56,6 +56,22 @@ public final class StatusEffectIcons {
                     y,
                     matrix,
                     buffers);
+            } else if (marker.startsWith("create_bioships:oxygen/")) {
+              var values = marker.substring("create_bioships:oxygen/".length()).split("/");
+              double air = Double.parseDouble(values[0]), maximum = Double.parseDouble(values[1]);
+              double bubbles = maximum > 0 ? Math.clamp(air / maximum, 0, 1) * 10 : 0;
+              for (int i = 0; i < 10; i++) {
+                if (bubbles <= i) continue;
+                var sprite = bubbles >= i + 1 ? "air" : "air_bursting";
+                draw(
+                    mc.getGuiSprites()
+                        .getSprite(ResourceLocation.withDefaultNamespace("hud/" + sprite)),
+                    x + offset[0] + i * 8,
+                    y,
+                    9,
+                    matrix,
+                    buffers);
+              }
             } else if (marker.startsWith("create_bioships:hunger/")) {
               var values = marker.substring("create_bioships:hunger/".length()).split("/");
               int hunger = Integer.parseInt(values[0]);

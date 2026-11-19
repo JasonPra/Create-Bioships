@@ -10,6 +10,7 @@ import org.Azkerash.create_bioships.Create_bioships;
 import org.Azkerash.create_bioships.combat.SubLevelWounds;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
 import org.Azkerash.create_bioships.components.logic.eye.*;
+import org.Azkerash.create_bioships.development.testing.DevelopmentLifeSupport;
 
 @GameTestHolder(Create_bioships.MODID)
 @PrefixGameTestTemplate(false)
@@ -42,7 +43,7 @@ public final class EyeSupportTests {
                   new BoundingBox3i(origin.west(), origin.east()));
           var core = body.getPlot().getCenterBlock();
           CoreAssemblyRules.mark(level, core);
-          SubLevelData.hungerPaused(body, true);
+          DevelopmentLifeSupport.pause(body);
           SubLevelHealth.damage(body, 10, "test");
           for (var cell : java.util.List.of(core.east(), core.west())) {
             SubLevelWounds.hit(body, cell, level.getBlockState(cell).getValue(facing));

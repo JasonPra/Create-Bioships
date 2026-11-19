@@ -8,6 +8,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.*;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
+import org.Azkerash.create_bioships.development.testing.DevelopmentLifeSupport;
 import org.Azkerash.create_bioships.development.testing.network.*;
 
 @GameTestHolder("create_bioships")
@@ -29,7 +30,7 @@ public final class MassHungerTests {
                   SubLevelAssemblyHelper.assembleBlocks(
                       level, at, List.of(at), new BoundingBox3i(at, at));
               CoreAssemblyRules.mark(level, bodies[0].getPlot().getCenterBlock());
-              SubLevelData.hungerPaused(bodies[0], true);
+              DevelopmentLifeSupport.pause(bodies[0]);
               var cells = new ArrayList<BlockPos>();
               for (int x = 0; x < 20; x++) {
                 var p = at.offset(x + 32, 0, 0);
@@ -72,7 +73,7 @@ public final class MassHungerTests {
               h.assertTrue(
                   Math.abs(SubLevelData.hungerState(body).drainTicks() - fraction) < 1e-6,
                   "Reload lost fractional metabolic progress");
-              SubLevelData.hungerPaused(body, true);
+              DevelopmentLifeSupport.pause(body);
               var paused = SubLevelData.hungerState(body);
               SubLevelHunger.advance(body, 10000);
               SubLevelHunger.advance(part, 10000);
