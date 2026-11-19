@@ -18,13 +18,13 @@ public final class VisionTests {
   @GameTest(template = "test_empty", batch = "vision", timeoutTicks = 120)
   public static void profiles_and_cone_geometry(GameTestHelper helper) {
     helper.assertTrue(
-        EyeVisionProfile.LAND.range(false, 15) == 24
-            && EyeVisionProfile.LAND.range(true, 15) == 12
-            && EyeVisionProfile.AQUATIC.range(true, 15) == 24
-            && EyeVisionProfile.AQUATIC.range(false, 15) == 12,
+        EyeVisionProfile.LAND.range(false, 15) == 128
+            && EyeVisionProfile.LAND.range(true, 15) == 64
+            && EyeVisionProfile.AQUATIC.range(true, 15) == 128
+            && EyeVisionProfile.AQUATIC.range(false, 15) == 64,
         "Environment ranges reversed");
     helper.assertTrue(
-        EyeVisionProfile.LAND.range(false, 0) < 24
+        EyeVisionProfile.LAND.range(false, 0) < 128
             && EyeVisionProfile.AQUATIC.range(true, 0) > EyeVisionProfile.LAND.range(true, 0),
         "Darkness and underwater advantage missing");
     for (var face : Direction.values()) {

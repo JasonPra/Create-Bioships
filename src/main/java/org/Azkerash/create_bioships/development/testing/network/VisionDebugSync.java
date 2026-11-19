@@ -73,7 +73,14 @@ public final class VisionDebugSync {
             if (rays.isEmpty()) continue;
             present.add(body.getUniqueId());
             PacketDistributor.sendToPlayer(
-                player, new VisionDebugPayload(body.getUniqueId(), rays));
+                player,
+                new VisionDebugPayload(
+                    body.getUniqueId(),
+                    rays,
+                    SubLevelVision.detected(body).stream()
+                        .map(t -> t.point())
+                        .limit(128)
+                        .toList()));
           }
       for (var id : viewer.getValue())
         if (!present.contains(id))

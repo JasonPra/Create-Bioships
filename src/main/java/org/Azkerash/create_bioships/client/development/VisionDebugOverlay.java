@@ -104,6 +104,11 @@ public final class VisionDebugOverlay {
             .setNormal(pose.last(), (float) normal.x, (float) normal.y, (float) normal.z);
         LevelRenderer.renderLineBox(pose, lines, new AABB(to, to).inflate(.045), r, g, b, 1);
       }
+    for (var snapshot : SAMPLES.values())
+      for (var target : snapshot.payload.targets()) {
+        var at = target.subtract(camera);
+        LevelRenderer.renderLineBox(pose, lines, new AABB(at, at).inflate(.2), .25f, 1f, .35f, 1f);
+      }
     buffers.endBatch(DevelopmentDebugRenderType.LINES);
   }
 
@@ -117,7 +122,7 @@ public final class VisionDebugOverlay {
     g.fill(5, y - 3, Math.min(mc.getWindow().getGuiScaledWidth() - 5, 450), y + 12, 0x99000000);
     g.drawString(
         mc.font,
-        "Toolkit: vision · cyan=clear · red=blocked · yellow=unloaded · "
+        "Toolkit: vision · cyan=clear · red=blocked · yellow=unloaded · green=seen · "
             + SAMPLES.size()
             + " grids",
         8,

@@ -28,7 +28,8 @@ public final class SubLevelVision {
       double range,
       int light,
       boolean underwater,
-      List<VisionRaycaster.Ray> rays) {}
+      List<VisionRaycaster.Ray> rays,
+      List<VisionDetection.Observation> detected) {}
 
   private static final Map<ServerSubLevel, Controller> CONTROLLERS = new IdentityHashMap<>();
   private static int gridCursor;
@@ -36,6 +37,7 @@ public final class SubLevelVision {
   private static final class Controller {
     final Map<BlockPos, BlockState> organs = new HashMap<>();
     final Map<Eye, Sight> cache = new LinkedHashMap<>();
+    final Map<Eye, Integer> targets = new HashMap<>();
     List<Eye> eyes = List.of();
     boolean dirty = true;
     int cursor;
@@ -62,6 +64,7 @@ public final class SubLevelVision {
               });
       eyes = List.copyOf(result);
       cache.keySet().retainAll(eyes);
+      targets.keySet().retainAll(eyes);
       dirty = false;
     }
   }
@@ -103,6 +106,17 @@ public final class SubLevelVision {
     return controller.cache.values().stream()
         .filter(s -> now - s.tick <= 40 && !injured(body, s.eye, now))
         .toList();
+  }
+
+  public static List<VisionDetection.Observation> detected(ServerSubLevel body) {
+    var seen = new LinkedHashMap<UUID, VisionDetection.Observation>();
+    long now = body.getLevel().getGameTime();
+    for (var member : SubLevelCreatureParts.members(body))
+      for (var sight : sights(member))
+        for (var target : sight.detected())
+          if (now - target.tick() <= 40)
+            seen.merge(target.key(), target, (a, b) -> a.tick() > b.tick() ? a : b);
+    return List.copyOf(seen.values());
   }
 
   private static boolean injured(ServerSubLevel body, Eye eye, long now) {
@@ -162,12 +176,25 @@ public final class SubLevelVision {
           Math.max(
               level.getBrightness(LightLayer.BLOCK, physical),
               Math.max(0, level.getBrightness(LightLayer.SKY, physical) - level.getSkyDarken()));
-      double range = EyeVisionProfile.of(state).range(water, light);
+      double range =
+          EyeVisionProfile.of(state)
+              .range(water, light, level.getServer().getPlayerList().getViewDistance() * 16d);
       var rays =
           VisionRaycaster.directions(forward, up).stream()
               .map(direction -> VisionRaycaster.cast(body, origin, direction, range))
               .toList();
-      controller.cache.put(eye, new Sight(eye, now, range, light, water, rays));
+      var previous = controller.cache.get(eye);
+      var scan =
+          VisionDetection.scan(
+              body,
+              origin,
+              forward,
+              range,
+              controller.targets.getOrDefault(eye, 0),
+              previous == null ? List.of() : previous.detected());
+      controller.targets.put(eye, scan.next());
+      controller.cache.put(
+          eye, new Sight(eye, now, range, light, water, rays, scan.observations()));
     }
     return count;
   }

@@ -111,12 +111,22 @@ public final class CreatureStatsSync {
             text(
                 "Healing needs %d hunger (90%%): %s",
                 SubLevelHunger.minimumHungerToHeal(body),
-                SubLevelHunger.canRegenerate(body) ? "eligible" : "blocked")));
+                food.paused()
+                    ? "paused"
+                    : hp.current() >= hp.maximum()
+                        ? "full health"
+                        : SubLevelHunger.canRegenerate(body) ? "eligible" : "blocked")));
     rows.add(
         row(
-            text(
-                "Starvation: 1 HP / 4s; next in %.1fs",
-                (SubLevelHunger.STARVATION_INTERVAL - food.starvationTicks()) / 20d)));
+            hp.dead()
+                ? "Starvation inactive: dead"
+                : food.paused()
+                    ? "Starvation paused"
+                    : food.value() > 0
+                        ? "Starvation inactive: hunger above zero"
+                        : text(
+                            "Starvation: 1 HP / 4s; next in %.1fs",
+                            (SubLevelHunger.STARVATION_INTERVAL - food.starvationTicks()) / 20d)));
     rows.add(
         bar(
             text("Trust %.1f / 100", SubLevelData.trust(body)),
@@ -137,6 +147,10 @@ public final class CreatureStatsSync {
             text(
                 "Motion: %s %.2f m/s; yaw %.2f",
                 motion.mode(), motion.velocity().length(), motion.yawRate())));
+    rows.add(
+        row(
+            "Visible targets: "
+                + org.Azkerash.create_bioships.core.vision.SubLevelVision.detected(body).size()));
     var center =
         body.logicalPose().transformPosition(Vec3.atCenterOf(body.getPlot().getCenterBlock()));
     var bounds = SubLevelLocomotion.bounds(body);

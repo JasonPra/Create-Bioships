@@ -12,7 +12,11 @@ import org.Azkerash.create_bioships.core.CoreAssemblyRules;
 public final class VisionRaycaster {
   public static final int RAYS_PER_EYE = 13;
 
-  public record Ray(Vec3 from, Vec3 to, boolean blocked, boolean unloaded) {}
+  public record Ray(Vec3 from, Vec3 to, boolean blocked, boolean unloaded, java.util.UUID hitBody) {
+    public Ray(Vec3 from, Vec3 to, boolean blocked, boolean unloaded) {
+      this(from, to, blocked, unloaded, null);
+    }
+  }
 
   private VisionRaycaster() {}
 
@@ -72,9 +76,28 @@ public final class VisionRaycaster {
       dev.ryanhcode.sable.sublevel.ServerSubLevel body, Vec3 from, Vec3 direction, double range) {
     var level = body.getLevel();
     var world = cast(level, from, direction, range);
+    // Work in the current logical frame, not cached physics bounds: eyes can rotate or
+    // assemble before the next physics step. Clip only the occupied plot extent.
     var pose = body.logicalPose();
     var start = pose.transformPositionInverse(from);
-    var end = pose.transformPositionInverse(world.to());
+    var delta = pose.transformPositionInverse(world.to()).subtract(start);
+    var bounds = body.getPlot().getBoundingBox();
+    double entry = 0, exit = 1;
+    for (int axis = 0; axis < 3; axis++) {
+      double origin = axis == 0 ? start.x : axis == 1 ? start.y : start.z;
+      double velocity = axis == 0 ? delta.x : axis == 1 ? delta.y : delta.z;
+      double min = axis == 0 ? bounds.minX() : axis == 1 ? bounds.minY() : bounds.minZ();
+      double max = 1 + (axis == 0 ? bounds.maxX() : axis == 1 ? bounds.maxY() : bounds.maxZ());
+      if (Math.abs(velocity) < 1e-9) {
+        if (origin < min || origin > max) return world;
+      } else {
+        double a = (min - origin) / velocity, b = (max - origin) / velocity;
+        entry = Math.max(entry, Math.min(a, b));
+        exit = Math.min(exit, Math.max(a, b));
+        if (exit < entry) return world;
+      }
+    }
+    var end = start.add(delta.scale(Math.max(entry, exit - 1e-7)));
     var context =
         new ClipContext(
             start,
@@ -88,7 +111,7 @@ public final class VisionRaycaster {
     if (own.getType() == HitResult.Type.BLOCK) {
       var point = pose.transformPosition(own.getLocation());
       if (point.distanceToSqr(from) <= world.to().distanceToSqr(from))
-        return new Ray(from, point, true, false);
+        return new Ray(from, point, true, false, body.getUniqueId());
     }
     return world;
   }
@@ -106,14 +129,16 @@ public final class VisionRaycaster {
                 ClipContext.Fluid.NONE,
                 CollisionContext.empty()));
     boolean blocked = hit.getType() == HitResult.Type.BLOCK;
+    java.util.UUID hitBody = null;
     if (blocked) {
       // Native Sable clips return logical plot coordinates for a grid hit.
       var struck = CoreAssemblyRules.containing(level, hit.getBlockPos());
+      if (struck != null) hitBody = struck.getUniqueId();
       end =
           struck == null
               ? hit.getLocation()
               : struck.logicalPose().transformPosition(hit.getLocation());
     }
-    return new Ray(from, end, blocked, !blocked && distance < range);
+    return new Ray(from, end, blocked, !blocked && distance < range, hitBody);
   }
 }
