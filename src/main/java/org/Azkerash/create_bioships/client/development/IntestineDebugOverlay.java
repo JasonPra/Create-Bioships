@@ -190,12 +190,13 @@ public final class IntestineDebugOverlay {
               float scale = event.getProjectionMatrix().m11() * height * .01f / clip.w;
               float x = (clip.x / clip.w + 1) * mc.getWindow().getGuiScaledWidth() / 2f;
               float y = (1 - clip.y / clip.w) * height / 2f;
+              int width =
+                  node.contents().stream()
+                      .mapToInt(
+                          item -> Math.max(20, mc.font.width(Integer.toString(item.count())) + 4))
+                      .sum();
               ITEM_STRIPS.add(
-                  new ItemStrip(
-                      x + (mc.font.width(text) / 2f + 6) * scale,
-                      y - 4 * scale,
-                      scale,
-                      node.contents()));
+                  new ItemStrip(x - width * scale / 2f, y - 22 * scale, scale, node.contents()));
             }
           }
         }
