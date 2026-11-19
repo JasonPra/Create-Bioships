@@ -1,0 +1,80 @@
+{
+  "renderer": "minecraft:base",
+  "force_vanilla_first_person": true,
+  "alwaysInHand": true,
+  "appeared_in_afterimage": false,
+  "transforms": {
+    "mainhand": {
+      "Tool_R": {
+        "translation": [
+          0,
+          0,
+          -0.13
+        ],
+        "rotation": [
+          -112.5,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "Tool_L": {
+        "translation": [
+          0,
+          0,
+          -0.13
+        ],
+        "rotation": [
+          -112.5,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    "offhand": {
+      "Tool_L": {
+        "translation": [
+          0,
+          0,
+          -0.13
+        ],
+        "rotation": [
+          -112.5,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "Tool_R": {
+        "translation": [
+          0,
+          0,
+          -0.13
+        ],
+        "rotation": [
+          -112.5,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      }
+    }
+  }
+}
