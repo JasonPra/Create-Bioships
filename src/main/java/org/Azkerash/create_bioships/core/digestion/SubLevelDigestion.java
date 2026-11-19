@@ -173,6 +173,7 @@ public final class SubLevelDigestion {
             for (var pos : group.stomachs)
               if (level.getBlockEntity(pos) instanceof StomachBlockEntity stomach)
                 StomachDigestion.advance(stomach);
+          if (!SubLevelCreatureParts.isPart(body)) SubLevelSickness.advance(body);
           if (level.getGameTime() % TRANSFER_INTERVAL == 0) {
             var mouths = groups.stream().flatMap(g -> g.mouths.stream()).toList();
             var network = NETWORKS.get(body);

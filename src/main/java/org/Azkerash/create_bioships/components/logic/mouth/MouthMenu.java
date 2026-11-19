@@ -6,7 +6,6 @@ import net.minecraft.world.entity.player.*;
 import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.ItemStack;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
-import org.Azkerash.create_bioships.components.logic.stomach.StomachBlockEntity;
 
 /** Nine food intake slots and native player inventory, validated on both sides. */
 public final class MouthMenu extends AbstractContainerMenu {
@@ -28,7 +27,7 @@ public final class MouthMenu extends AbstractContainerMenu {
         addSlot(
             new Slot(mouth, row * 3 + col, 87 + col * 18, 54 + row * 18) {
               public boolean mayPlace(ItemStack stack) {
-                return StomachBlockEntity.accepts(inventory.player.level(), stack);
+                return MouthBlockEntity.accepts(inventory.player.level(), stack);
               }
             });
     for (int row = 0; row < 3; row++)
@@ -53,7 +52,7 @@ public final class MouthMenu extends AbstractContainerMenu {
     var original = current.copy();
     if (index < 9) {
       if (!moveItemStackTo(current, 9, slots.size(), true)) return ItemStack.EMPTY;
-    } else if (!StomachBlockEntity.accepts(player.level(), current)
+    } else if (!MouthBlockEntity.accepts(player.level(), current)
         || !moveItemStackTo(current, 0, 9, false)) return ItemStack.EMPTY;
     if (current.isEmpty()) slot.setByPlayer(ItemStack.EMPTY);
     else slot.setChanged();

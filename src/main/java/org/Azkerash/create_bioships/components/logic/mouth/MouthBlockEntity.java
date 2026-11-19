@@ -164,8 +164,12 @@ public final class MouthBlockEntity extends OrganInventory {
     super(ComponentRegistry.MOUTH_ENTITY.get(), pos, state, 9);
   }
 
+  public static boolean accepts(net.minecraft.world.level.Level level, ItemStack stack) {
+    return stack.is(StomachBlockEntity.paste()) || StomachBlockEntity.accepts(level, stack);
+  }
+
   public boolean canPlaceItem(int slot, ItemStack stack) {
-    return level != null && StomachBlockEntity.accepts(level, stack);
+    return level != null && accepts(level, stack);
   }
 
   public ItemStack feed(ItemStack stack, boolean simulate) {

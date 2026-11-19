@@ -47,6 +47,10 @@ public final class StomachMenu extends AbstractContainerMenu {
     for (int col = 0; col < 9; col++) addSlot(new Slot(inventory, col, 40 + col * 18, 234));
   }
 
+  public Container pasteIntake() {
+    return stomach;
+  }
+
   public int value(int index) {
     return data.get(index);
   }

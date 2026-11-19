@@ -111,7 +111,9 @@ public final class StomachDigestion {
       for (int i = 0; i < items.size(); i++) items.set(i, snapshot.get(i));
       return;
     }
+    boolean rotten = items.get(state.activeSlot).is(Items.ROTTEN_FLESH);
     items.get(state.activeSlot).shrink(match.get().value().getIngredientQuantity().count());
+    if (rotten) org.Azkerash.create_bioships.core.digestion.SubLevelSickness.infect(body);
     state.activeSlot = -1;
     state.progress = state.duration = 0;
     state.pending = NonNullList.create();

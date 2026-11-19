@@ -45,8 +45,8 @@ public final class StomachStorageRouting {
       var one = source.copyWithCount(1);
       for (var pos : stomachs)
         if (level.getBlockEntity(pos) instanceof StomachBlockEntity stomach
-            && stomach.enqueue(one, true).isEmpty()
-            && stomach.enqueue(one, false).isEmpty()) {
+            && receive(stomach, one, true).isEmpty()
+            && receive(stomach, one, false).isEmpty()) {
           mouth.removeItem(slot, 1);
           return 1;
         }
@@ -56,6 +56,12 @@ public final class StomachStorageRouting {
       }
     }
     return 0;
+  }
+
+  private static ItemStack receive(StomachBlockEntity stomach, ItemStack item, boolean simulate) {
+    return item.is(StomachBlockEntity.paste())
+        ? stomach.insert(item, StomachBlockEntity.INPUT_SLOTS, stomach.getContainerSize(), simulate)
+        : stomach.enqueue(item, simulate);
   }
 
   /** Move a bounded number of native stacks downward; no per-sac ticker or duplicate inventory. */

@@ -93,6 +93,9 @@ public final class CoreGogglesDisplay extends BlockEntity implements IHaveGoggle
       next.putInt("maximumHunger", SubLevelData.maximumHunger(body));
       next.putBoolean("hungerPaused", SubLevelData.hungerState(body).paused());
       next.putDouble("trust", SubLevelData.trust(body));
+      next.putInt(
+          "sicknessTicks",
+          org.Azkerash.create_bioships.core.digestion.SubLevelSickness.remaining(body));
       var effects = new net.minecraft.nbt.ListTag();
       var owner =
           CoreAssemblyRules.isCreature(body)
@@ -150,6 +153,10 @@ public final class CoreGogglesDisplay extends BlockEntity implements IHaveGoggle
                           + inspection.getInt("maximumHunger")
                           + (inspection.getBoolean("hungerPaused") ? " (paused)" : ""))));
       tooltip.add(meter("Trust", "trust", inspection.getDouble("trust"), 100));
+      if (inspection.getInt("sicknessTicks") > 0)
+        tooltip.add(
+            Component.literal(
+                "Digestive sickness: " + (inspection.getInt("sicknessTicks") + 19) / 20 + "s"));
       for (var entry : inspection.getList("effects", 10)) {
         var effect = net.minecraft.world.effect.MobEffectInstance.load((CompoundTag) entry);
         if (effect == null) continue;

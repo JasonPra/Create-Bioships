@@ -345,6 +345,26 @@ public final class SubLevelData {
     body.setUserDataTag(root);
   }
 
+  public record DigestiveSickness(long until, long nextEpisode) {}
+
+  public static DigestiveSickness digestiveSickness(ServerSubLevel body) {
+    body = SubLevelCreatureParts.root(body);
+    initialize(body);
+    var state = body.getUserDataTag().getCompound(STATE);
+    return new DigestiveSickness(
+        state.getLong("digestiveSicknessUntil"), state.getLong("digestiveSicknessNext"));
+  }
+
+  public static void digestiveSickness(ServerSubLevel body, DigestiveSickness value) {
+    if (!SubLevelCreatureParts.available(body)) return;
+    body = SubLevelCreatureParts.root(body);
+    initialize(body);
+    var tag = body.getUserDataTag().copy();
+    tag.getCompound(STATE).putLong("digestiveSicknessUntil", Math.max(0, value.until()));
+    tag.getCompound(STATE).putLong("digestiveSicknessNext", Math.max(0, value.nextEpisode()));
+    body.setUserDataTag(tag);
+  }
+
   public static long regenerationTrustUntil(ServerSubLevel body) {
     body = SubLevelCreatureParts.root(body);
     initialize(body);
