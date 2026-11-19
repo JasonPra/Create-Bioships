@@ -1,0 +1,33 @@
+# Creature metabolism and developer statistics
+
+`SubLevelData` owns saved hunger and fractional drain progress. `SubLevelHunger`
+advances metabolism once per root each second. It sums Sable's cached mass trackers
+for the root and its linked physical bodies, without scanning their blocks.
+
+The initial balance is `max(1, total mass / 10)` hunger per minute. A small creature
+retains the previous one-minute rate; 20 native mass units drain 2 hunger/minute.
+`SubLevelData.HUNGER_REFERENCE_MASS` defines the reference for future balance changes.
+Fractional work survives saving and mass changes. Pausing freezes the timers and
+unloaded creatures accrue no catch-up debt. Corpses never metabolize.
+
+At zero hunger, starvation still deals 1 HP every four seconds until death. Passive
+regeneration still requires at least 90% hunger. Healing potions remain independent.
+These damage/healing timers are separate from the mass-scaled hunger drain.
+
+Every stomach consumes exactly three nutrient paste for one hunger in a 32-tick
+(1.6-second) eating cycle, at all upgrade tiers. A portion can span output slots;
+incomplete portions are retained, and full hunger never wastes paste. Storage routing
+can replenish a partial portion from connected sacs. Efficiency only changes paste
+production (2/3/4 at tiers 1/2/3) and the existing extra-component chances.
+
+The Development Toolkit's **Creature statistics** toggle subscribes to read-only
+holograms for the nearest four creature roots within 64 blocks. Snapshots refresh
+at 2 Hz and expire when the subject leaves range. They show health, armor, hunger,
+mass and linked-body count, the drain formula/progress, healing eligibility, starvation
+timing, trust, paste conversion, appendage flags and movement requests. Subscriptions
+require the development preset and its protected toolkit; the display does not drive
+simulation or change hunger.
+
+Regression coverage includes linked mass without double counting, fractional save/load,
+pause behavior, rate reduction on detachment, fixed paste conversion at every Efficiency
+tier, incomplete portions, full-hunger preservation and the bounded statistics codec.

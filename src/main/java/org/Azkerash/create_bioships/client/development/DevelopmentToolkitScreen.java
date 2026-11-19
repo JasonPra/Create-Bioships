@@ -29,7 +29,7 @@ public final class DevelopmentToolkitScreen extends Screen {
                   action.run();
                   rebuildWidgets();
                 })
-            .bounds((width - 244) / 2, (height - 195) / 2 + 37 + row * 27, 244, 22)
+            .bounds((width - 244) / 2, (height - 222) / 2 + 37 + row * 27, 244, 22)
             .build());
   }
 
@@ -49,13 +49,17 @@ public final class DevelopmentToolkitScreen extends Screen {
         "Hitboxes: " + (renderer.shouldRenderHitBoxes() ? "ON" : "OFF"),
         () -> renderer.setRenderHitBoxes(!renderer.shouldRenderHitBoxes()),
         3);
-    control("Done", this::onClose, 4);
+    control(
+        "Creature statistics: " + (CreatureStatsOverlay.enabled() ? "ON" : "OFF"),
+        CreatureStatsOverlay::toggle,
+        4);
+    control("Done", this::onClose, 5);
   }
 
   @Override
   public void render(GuiGraphics g, int mx, int my, float partial) {
     g.fill(0, 0, width, height, 0x99000000);
-    int y = (height - 195) / 2;
+    int y = (height - 222) / 2;
     g.drawCenteredString(font, title, width / 2, y + 12, 0xffffffff);
     for (var widget : renderables) widget.render(g, mx, my, partial);
   }

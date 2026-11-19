@@ -8,7 +8,7 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import org.Azkerash.create_bioships.Create_bioships;
 import org.Azkerash.create_bioships.combat.CombatAdapter;
 
-/** Temporary fixed-rate metabolism; saved state belongs to SubLevelData, not the timing policy. */
+/** Mass-scaled metabolism; saved state belongs to SubLevelData, not the timing policy. */
 @EventBusSubscriber(modid = Create_bioships.MODID)
 public final class SubLevelHunger {
   public static final int DRAIN_INTERVAL = 20 * 60,
@@ -91,6 +91,25 @@ public final class SubLevelHunger {
         && SubLevelData.hunger(body) >= minimumHungerToHeal(body);
   }
 
+  public record Metabolism(double mass, double multiplier) {
+    public double hungerPerMinute() {
+      return multiplier;
+    }
+  }
+
+  /**
+   * Sable already maintains each body's mass; sum physical members once, without scanning blocks.
+   */
+  public static Metabolism metabolism(ServerSubLevel body) {
+    body = SubLevelCreatureParts.root(body);
+    double mass = 0;
+    for (var part : SubLevelCreatureParts.members(body)) {
+      double value = part.getMassTracker().getMass();
+      if (Double.isFinite(value) && value > 0) mass += value;
+    }
+    return new Metabolism(mass, Math.max(1, mass / SubLevelData.HUNGER_REFERENCE_MASS));
+  }
+
   private SubLevelHunger() {}
 
   @SubscribeEvent
@@ -118,7 +137,11 @@ public final class SubLevelHunger {
     var state = SubLevelData.hungerState(body);
     if (state.paused() || SubLevelHealth.status(body).dead()) return;
     int value = state.value();
-    int drain = Math.clamp(state.drainTicks(), 0, DRAIN_INTERVAL - 1);
+    double drain =
+        Double.isFinite(state.drainTicks())
+            ? Math.clamp(state.drainTicks(), 0, Math.nextDown((double) DRAIN_INTERVAL))
+            : 0;
+    double drainRate = metabolism(body).multiplier();
     int starvation = Math.clamp(state.starvationTicks(), 0, STARVATION_INTERVAL - 1);
     int regeneration =
         Math.clamp(SubLevelData.regenerationTicks(body), 0, REGENERATION_INTERVAL - 1);
@@ -126,11 +149,12 @@ public final class SubLevelHunger {
       int step = Math.min(20, ticks);
       ticks -= step;
       if (value > 0) {
-        drain += step;
+        drain += step * drainRate;
         starvation = 0;
         if (drain >= DRAIN_INTERVAL) {
-          value--;
-          drain -= DRAIN_INTERVAL;
+          int consumed = (int) Math.min(value, Math.floor(drain / DRAIN_INTERVAL));
+          value -= consumed;
+          drain %= DRAIN_INTERVAL;
         }
       } else {
         starvation += step;

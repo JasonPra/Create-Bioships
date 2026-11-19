@@ -43,7 +43,10 @@ public final class SubLevelData {
   public record Health(
       double current, double maximum, double damage, boolean dead, String causeOfDeath) {}
 
-  public record Hunger(int value, boolean paused, int drainTicks, int starvationTicks) {}
+  /** Mass units are Sable's native units (one packed-flesh block is approximately one unit). */
+  public static final double HUNGER_REFERENCE_MASS = 10;
+
+  public record Hunger(int value, boolean paused, double drainTicks, int starvationTicks) {}
 
   private SubLevelData() {}
 
@@ -272,7 +275,7 @@ public final class SubLevelData {
     return new Hunger(
         state.getInt("hunger"),
         state.getBoolean("hungerPaused"),
-        state.getInt("hungerDrainTicks"),
+        state.getDouble("hungerDrainTicks"),
         state.getInt("starvationTicks"));
   }
 
@@ -293,7 +296,9 @@ public final class SubLevelData {
     var state = root.getCompound(STATE);
     state.putInt("hunger", Math.clamp(value.value(), 0, maximum));
     state.putBoolean("hungerPaused", value.paused());
-    state.putInt("hungerDrainTicks", Math.max(0, value.drainTicks()));
+    state.putDouble(
+        "hungerDrainTicks",
+        Double.isFinite(value.drainTicks()) ? Math.max(0, value.drainTicks()) : 0);
     state.putInt("starvationTicks", Math.max(0, value.starvationTicks()));
     body.setUserDataTag(root);
   }
