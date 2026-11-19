@@ -23,11 +23,8 @@ public final class BrainMotorControls {
 
   private static final Map<ServerSubLevel, Request> REQUESTS = new WeakHashMap<>();
 
-  private static final Map<ServerSubLevel, Long> OBSTRUCTED = new WeakHashMap<>();
-
+  /** Cancel the unsafe lease without locking out a later collision-clear escape request. */
   public static void obstructed(ServerSubLevel body) {
-    body = SubLevelCreatureParts.root(body);
-    OBSTRUCTED.put(body, body.getLevel().getGameTime() + 20);
     stop(body);
   }
 
@@ -60,10 +57,8 @@ public final class BrainMotorControls {
             ? velocity
             : new Vec3(velocity.x, 0, velocity.z);
     if (movement.lengthSqr() > 4) movement = movement.normalize().scale(2);
-    if ((movement.lengthSqr() > 1e-8
-            && body.getLevel().getGameTime() < OBSTRUCTED.getOrDefault(body, 0L))
-        || !org.Azkerash.create_bioships.core.pathfinding.SubLevelPathfinder.movementClear(
-            body, movement, yawRate)) {
+    if (!org.Azkerash.create_bioships.core.pathfinding.SubLevelPathfinder.movementClear(
+        body, movement, yawRate)) {
       stop(body);
       return false;
     }

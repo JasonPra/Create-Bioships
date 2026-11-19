@@ -99,3 +99,7 @@ The refined shell meshes use the correct U/V axes on side faces and align each U
 span with its model-space span. All 4,446 visible limb quads retain one texture pixel
 per model pixel; increasing segment length no longer stretches a side-face patch.
 Socket cups are hollow around smaller rounded knuckles, with tapered continuous bones.
+
+A rejected pose does not apply a global movement cooldown: collision-clear escape
+requests remain active. The final wall regression keeps requesting pressure against
+glass, then requests a real walk away and checks displacement and connected pivots.

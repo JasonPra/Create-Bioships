@@ -78,7 +78,8 @@ public final class CoreArrowFixtureTests {
                       new AABB(state.arrowOrigin).inflate(12),
                       ProjectileAttachment::attached);
               helper.assertTrue(
-                  arrows.size() == 6, "Expected two native arrows per eye, got " + arrows.size());
+                  arrows.size() >= 6,
+                  "Expected at least two native arrows per eye, got " + arrows.size());
               for (var cell : CoreArrowFixture.targets(body)) {
                 helper.assertTrue(
                     SubLevelWounds.state(body).active(cell, Direction.NORTH, level.getGameTime()),
@@ -93,7 +94,7 @@ public final class CoreArrowFixtureTests {
                                             .getLong("cell")
                                         == cell.asLong())
                             .count()
-                        == 2,
+                        >= 2,
                     "Eye lacks a living and corpse embedded arrow: " + cell);
               }
               CoreArrowFixture.reset(level);

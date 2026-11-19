@@ -79,3 +79,19 @@ and custom creature surfaces have finished, before translucent glass. Their tran
 backgrounds no longer write depth ahead of limb/brain geometry. A frame-local queue only
 handles Bioships-tagged text, retains the vanilla billboard/interpolation behavior, and
 clears after replay. Client checks cover both ordinary and Epic Fight rendering.
+
+## Metabolism diagnostics
+
+**Creature statistics** opens read-only holograms of nearby creatures' mass, hunger,
+drain formula/progress, healing eligibility, starvation timing, health, armor, trust,
+appendages, movement and actual visible-target count. See [metabolism.md](metabolism.md).
+The compass remains the sole exhibit navigator; its redundant toolkit menu entry is gone.
+
+Final branch validation passed all 103 required GameTests both without Epic Fight and
+with Epic Fight 21.17.3.1. Client checks exercised equipment models/grips, inventory
+previews, transparent exhibit panels and the new vision/statistics payloads. Temporary
+client QA probes are removed before building the final jar.
+
+The native arrow fixture retries only lanes whose eye wound has not registered yet.
+Its regression permits extra native retry arrows while requiring a living and corpse
+arrow on every eye; random dispenser spread is not treated as a combat failure.

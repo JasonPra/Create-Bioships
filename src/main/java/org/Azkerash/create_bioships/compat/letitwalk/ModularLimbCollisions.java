@@ -36,7 +36,9 @@ public final class ModularLimbCollisions {
             leg.built.prevDesired = null;
             leg.built.prevDesiredRot = null;
             BLOCKED.put(owner, owner.getLevel().getGameTime() + 20);
-            BrainMotorControls.obstructed(owner);
+            var request = BrainMotorControls.current(owner);
+            if (!org.Azkerash.create_bioships.core.pathfinding.SubLevelPathfinder.movementClear(
+                owner, request.velocity(), request.yawRate())) BrainMotorControls.obstructed(owner);
             return true;
           });
       return BuiltLegDriver.substep(walker, owner, dt);

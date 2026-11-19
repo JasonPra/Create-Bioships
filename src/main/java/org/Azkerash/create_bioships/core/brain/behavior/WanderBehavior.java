@@ -114,8 +114,8 @@ public final class WanderBehavior implements BrainBehavior {
     var facing = body.logicalPose().orientation().transform(new org.joml.Vector3d(0, 0, 1));
     double angle = Math.atan2(direction.x, direction.z) - Math.atan2(facing.x, facing.z);
     angle = Math.atan2(Math.sin(angle), Math.cos(angle));
-    if (!BrainMotorControls.move(
-        body, direction.scale(.65), Math.clamp(angle, -.6, .6), 20, mode)) {
+    if (!BrainMotorControls.move(body, direction.scale(.65), Math.clamp(angle, -.6, .6), 20, mode)
+        && !BrainMotorControls.move(body, direction.scale(.65), 0, 20, mode)) {
       pause(body, now + 60);
       return;
     }

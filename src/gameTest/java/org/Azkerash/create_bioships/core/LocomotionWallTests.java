@@ -111,8 +111,23 @@ public final class LocomotionWallTests {
             h.assertTrue(
                 ModularLimbController.maximumJointSeparation(body) < .1,
                 "Blocked movement separated native joints");
+            BrainMotorControls.obstructed(body);
+            initial[0] = body.logicalPose().position().x();
+            h.assertTrue(
+                BrainMotorControls.move(body, new Vec3(-.6, 0, 0), 0, 100),
+                "A blocked step locked out a collision-clear escape request");
+          }
+          if (h.getTick() == 320) {
+            var body = subject[0];
+            h.assertTrue(
+                body.logicalPose().position().x() < initial[0] - .1,
+                "Creature could not walk away after wall pressure stopped");
+            h.assertTrue(
+                ModularLimbController.maximumJointSeparation(body) < .15,
+                "Escape separated the native joints");
             System.out.println(
-                "MODULAR_WALL_PASS swept_glass=true live_drive_rejected=true standing=true");
+                "MODULAR_WALL_PASS swept_glass=true live_drive_rejected=true standing=true"
+                    + " escape=true");
             h.succeed();
           }
         });

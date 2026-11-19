@@ -147,12 +147,44 @@ public final class SubLevelPathfinder {
     // Reserve half a second of motion, plus finite swing/turn clearance.
     double radius = Math.max(box.getXsize(), box.getZsize()) / 2;
     double margin = .15 + Math.min(.4, radius * Math.abs(yawRate) * .1);
-    var future = box.move(movement.scale(.5)).inflate(margin, 0, margin);
-    var sweep = box.minmax(future);
-    if (terrainClear(level, sweep)) return true;
+    var delta = movement.scale(.5);
+    if (movementSweepClear(level, box, delta, margin)) return true;
     // Permit bounded native step-up, while keeping tall walls blocked.
     double step = SubLevelLocomotion.stepHeight(body);
-    return step > 0 && terrainClear(level, sweep.move(0, step, 0));
+    return step > 0 && movementSweepClear(level, box.move(0, step, 0), delta, margin);
+  }
+
+  private static double overlap(AABB a, AABB b) {
+    return Math.max(0, Math.min(a.maxX, b.maxX) - Math.max(a.minX, b.minX))
+        * Math.max(0, Math.min(a.maxY, b.maxY) - Math.max(a.minY, b.minY))
+        * Math.max(0, Math.min(a.maxZ, b.maxZ) - Math.max(a.minZ, b.minZ));
+  }
+
+  private static boolean movementSweepClear(
+      net.minecraft.server.level.ServerLevel level, AABB start, Vec3 delta, double margin) {
+    var future = start.move(delta).inflate(margin, 0, margin);
+    var sweep = start.minmax(future);
+    if (terrainClear(level, sweep)) return true;
+    // Physics contact tolerance can leave a tiny starting overlap. Permit only escape:
+    // the destination is clear, no new obstacle is crossed, and overlap never increases.
+    if (delta.lengthSqr() < 1e-8 || !terrainClear(level, future)) return false;
+    var lo = BlockPos.containing(sweep.minX, sweep.minY, sweep.minZ);
+    var hi = BlockPos.containing(sweep.maxX, sweep.maxY, sweep.maxZ);
+    if (!level.hasChunksAt(lo, hi)) return false;
+    for (var cell : BlockPos.betweenClosed(lo, hi))
+      for (var shape : level.getBlockState(cell).getCollisionShape(level, cell).toAabbs()) {
+        var obstacle = shape.move(cell);
+        if (!obstacle.intersects(sweep)) continue;
+        double previous = overlap(start, obstacle);
+        if (previous <= 0) return false;
+        for (double t : new double[] {.25, .5, .75, 1}) {
+          double current =
+              overlap(start.move(delta.scale(t)).inflate(margin * t, 0, margin * t), obstacle);
+          if (current > previous + 1e-8) return false;
+          previous = current;
+        }
+      }
+    return true;
   }
 
   public static List<BlockPos> search(
