@@ -141,7 +141,7 @@ public final class StomachBlockEntity extends OrganInventory implements IHaveGog
           case 0 -> state().acid;
           case 1 -> state().progress;
           case 2 -> state().duration;
-          case 3 -> genes.longevity() ? 1 : 0;
+          case 3 -> genes.longevityTier();
           case 4 -> genes.efficiency();
           default -> 0;
         };
@@ -161,7 +161,7 @@ public final class StomachBlockEntity extends OrganInventory implements IHaveGog
     tooltip.add(Component.literal("Queued food: " + queued() + " / 576"));
     tooltip.add(
         Component.literal(
-            "Longevity gene: " + (genes.longevity() ? "installed (+5 capacity)" : "none")));
+            "Longevity gene: " + genes.longevityTier() + " / " + StomachGenes.MAX_LONGEVITY));
     tooltip.add(Component.literal("Efficiency gene: " + genes.efficiency() + " / 3"));
     return true;
   }

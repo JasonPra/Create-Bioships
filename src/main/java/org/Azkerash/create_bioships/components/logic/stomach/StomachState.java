@@ -9,7 +9,7 @@ import net.minecraft.world.item.ItemStack;
 public final class StomachState
     implements org.Azkerash.create_bioships.core.component.ComponentState {
   int acid = 200, progress, duration, activeSlot = -1, eating, efficiency;
-  boolean longevity;
+  int longevity;
   String recipeId = "";
   NonNullList<ItemStack> pending = NonNullList.create();
 
@@ -17,7 +17,7 @@ public final class StomachState
     var tag = new CompoundTag();
     tag.putInt("Acid", acid);
     var genes = new CompoundTag();
-    genes.putBoolean("Longevity", longevity);
+    genes.putInt("Longevity", longevity);
     genes.putInt("Efficiency", efficiency);
     tag.put("Genes", genes);
     tag.putInt("Progress", progress);
@@ -33,7 +33,8 @@ public final class StomachState
   }
 
   public void load(CompoundTag tag, HolderLookup.Provider registries) {
-    longevity = tag.getCompound("Genes").getBoolean("Longevity");
+    longevity =
+        Math.clamp(tag.getCompound("Genes").getInt("Longevity"), 0, StomachGenes.MAX_LONGEVITY);
     efficiency = Math.clamp(tag.getCompound("Genes").getInt("Efficiency"), 0, 3);
     acid =
         tag.contains("Acid") ? Math.clamp(tag.getInt("Acid"), 0, StomachBlockEntity.MAX_ACID) : 200;

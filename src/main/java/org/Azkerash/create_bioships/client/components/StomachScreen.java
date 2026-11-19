@@ -44,7 +44,7 @@ public final class StomachScreen extends AbstractContainerScreen<StomachMenu> {
     OrganScreenStyle.divider(g, x + 12, y + 162, imageWidth - 24);
     g.drawString(
         font,
-        "Longevity " + menu.value(3) + "/1 · Efficiency " + menu.value(4) + "/3",
+        "Longevity " + menu.value(3) + "/3 · Efficiency " + menu.value(4) + "/3",
         x + 12,
         y + 153,
         0xffa79a91,

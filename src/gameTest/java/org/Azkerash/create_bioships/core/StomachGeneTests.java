@@ -83,18 +83,28 @@ public final class StomachGeneTests {
         item.getStoredItemStack(tool).getCount() == 2
             && player.getInventory().countItem(ModItems.VIAL.get()) == 1,
         "Native serum consumption/vial return failed");
+    for (int tier = 2; tier <= 3; tier++) {
+      player.getCooldowns().removeCooldown(item);
+      helper.assertTrue(
+          inject(stomach, player, tool).consumesAction() && stomach.genes().longevityTier() == tier,
+          "Longevity tier failed: " + tier);
+      helper.assertTrue(
+          SubLevelData.maximumHunger(body) == 10 + tier * 5 && SubLevelData.hunger(body) == 7,
+          "Capacity tier refilled food or incorrect maximum");
+    }
+    var extra = injector(ComponentRegistry.LONGEVITY_SERUM.get(), 1);
     player.getCooldowns().removeCooldown(item);
     helper.assertTrue(
-        inject(stomach, player, tool) == ItemInteractionResult.FAIL
-            && item.getStoredItemStack(tool).getCount() == 2,
-        "Duplicate longevity consumed serum");
+        inject(stomach, player, extra) == ItemInteractionResult.FAIL
+            && item.getStoredItemStack(extra).getCount() == 1,
+        "Fourth longevity dose was accepted or consumed");
     var saved = stomach.saveWithFullMetadata(level.registryAccess());
     var restored =
         (StomachBlockEntity)
             BlockEntity.loadStatic(
                 core.east(), stomach.getBlockState(), saved, level.registryAccess());
     restored.setLevel(level);
-    helper.assertTrue(restored.genes().longevity(), "Reload lost longevity gene");
+    helper.assertTrue(restored.genes().longevityTier() == 3, "Reload lost longevity tier");
     var drops =
         net.minecraft.world.level.block.Block.getDrops(
             stomach.getBlockState(), level, stomach.getBlockPos(), stomach);
@@ -104,7 +114,7 @@ public final class StomachGeneTests {
             .get(net.minecraft.core.component.DataComponents.BLOCK_ENTITY_DATA)
             .copyTag()
             .getCompound("Genes");
-    helper.assertTrue(genes.getBoolean("Longevity"), "Block item lost upgraded gene");
+    helper.assertTrue(genes.getInt("Longevity") == 3, "Block item lost upgraded gene tier");
     SubLevelHealth.damage(body, SubLevelHealth.status(body).current(), "test");
     var efficiency = injector(ComponentRegistry.EFFICIENCY_SERUM.get(), 2);
     player.getCooldowns().removeCooldown(item);

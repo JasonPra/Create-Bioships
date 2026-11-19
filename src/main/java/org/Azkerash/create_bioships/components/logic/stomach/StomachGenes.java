@@ -12,7 +12,7 @@ import org.Azkerash.create_bioships.core.*;
 
 /** Stomach-owned gene state and effects. New component types implement their own rules. */
 public final class StomachGenes {
-  public static final int LONGEVITY_CAPACITY = 5, MAX_EFFICIENCY = 3;
+  public static final int LONGEVITY_CAPACITY = 5, MAX_LONGEVITY = 3, MAX_EFFICIENCY = 3;
   private static final int[] EXTRA_COMPONENT_CHANCE = {0, 20, 30, 35};
   private final StomachBlockEntity stomach;
 
@@ -21,6 +21,10 @@ public final class StomachGenes {
   }
 
   public boolean longevity() {
+    return stomach.state().longevity > 0;
+  }
+
+  public int longevityTier() {
     return stomach.state().longevity;
   }
 
@@ -29,7 +33,7 @@ public final class StomachGenes {
   }
 
   public int capacityBonus() {
-    return stomach.state().longevity ? LONGEVITY_CAPACITY : 0;
+    return stomach.state().longevity * LONGEVITY_CAPACITY;
   }
 
   public int pastePerMeal() {
@@ -41,7 +45,8 @@ public final class StomachGenes {
   }
 
   public boolean accepts(Serum serum) {
-    return serum == ComponentRegistry.LONGEVITY_GENE.get() && !stomach.state().longevity
+    return serum == ComponentRegistry.LONGEVITY_GENE.get()
+            && stomach.state().longevity < MAX_LONGEVITY
         || serum == ComponentRegistry.EFFICIENCY_GENE.get()
             && stomach.state().efficiency < MAX_EFFICIENCY;
   }
@@ -57,7 +62,7 @@ public final class StomachGenes {
   }
 
   private void apply(Serum serum) {
-    if (serum == ComponentRegistry.LONGEVITY_GENE.get()) stomach.state().longevity = true;
+    if (serum == ComponentRegistry.LONGEVITY_GENE.get()) stomach.state().longevity++;
     else stomach.state().efficiency++;
     stomach.setChanged();
     if (stomach.getLevel() instanceof ServerLevel level) {
@@ -83,13 +88,13 @@ public final class StomachGenes {
 
   public CompoundTag save() {
     var tag = new CompoundTag();
-    tag.putBoolean("Longevity", stomach.state().longevity);
+    tag.putInt("Longevity", stomach.state().longevity);
     tag.putInt("Efficiency", stomach.state().efficiency);
     return tag;
   }
 
   public void load(CompoundTag tag) {
-    stomach.state().longevity = tag.getBoolean("Longevity");
+    stomach.state().longevity = Math.clamp(tag.getInt("Longevity"), 0, MAX_LONGEVITY);
     stomach.state().efficiency = Math.clamp(tag.getInt("Efficiency"), 0, MAX_EFFICIENCY);
   }
 }
