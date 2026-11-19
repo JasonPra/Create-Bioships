@@ -17,7 +17,7 @@ public final class WanderBehavior implements BrainBehavior {
   private List<Vec3> route = List.of();
   private int waypoint;
   private long nextDecision = Long.MIN_VALUE, lastProgress;
-  private double bestRemaining = Double.POSITIVE_INFINITY;
+  private double bestRemaining = Double.POSITIVE_INFINITY, bestHeading = Double.POSITIVE_INFINITY;
   private long motionRevision = Long.MIN_VALUE;
   private SubLevelPathfinder.Mode mode = SubLevelPathfinder.Mode.GROUND;
 
@@ -63,7 +63,10 @@ public final class WanderBehavior implements BrainBehavior {
       return;
     }
     var position = SubLevelPathfinder.position(body);
-    while (waypoint < route.size() && distance(position, route.get(waypoint)) < .55) waypoint++;
+    while (waypoint < route.size() && distance(position, route.get(waypoint)) < .55) {
+      waypoint++;
+      bestHeading = Double.POSITIVE_INFINITY;
+    }
     if (!route.isEmpty() && waypoint >= route.size()) {
       pause(body, now + 30 + body.getLevel().random.nextInt(50));
       return;
@@ -92,6 +95,7 @@ public final class WanderBehavior implements BrainBehavior {
         return;
       }
       bestRemaining = Double.POSITIVE_INFINITY;
+      bestHeading = Double.POSITIVE_INFINITY;
       lastProgress = now;
       save(body, mode == SubLevelPathfinder.Mode.WATER ? "swimming" : "walking", now);
     }
@@ -103,19 +107,25 @@ public final class WanderBehavior implements BrainBehavior {
       bestRemaining = remaining;
       lastProgress = now;
     }
+    var delta = route.get(waypoint).subtract(position);
+    var steering =
+        org.Azkerash.create_bioships.core.locomotion.SubLevelFacing.towards(
+            org.Azkerash.create_bioships.core.locomotion.SubLevelFacing.world(body),
+            delta,
+            .65,
+            mode == SubLevelPathfinder.Mode.WATER);
+    // A deliberate turn towards the target is progress; rocking against terrain is not.
+    double heading = Math.abs(steering.error());
+    if (heading < bestHeading - .1) {
+      bestHeading = heading;
+      lastProgress = now;
+    }
     if (now - lastProgress > 80) {
       pause(body, now + 40);
       return;
     }
     org.Azkerash.create_bioships.core.pathfinding.SubLevelPaths.update(body, mode, route, waypoint);
-    var delta = route.get(waypoint).subtract(position);
-    var direction =
-        (mode == SubLevelPathfinder.Mode.WATER ? delta : new Vec3(delta.x, 0, delta.z)).normalize();
-    var facing = body.logicalPose().orientation().transform(new org.joml.Vector3d(0, 0, 1));
-    double angle = Math.atan2(direction.x, direction.z) - Math.atan2(facing.x, facing.z);
-    angle = Math.atan2(Math.sin(angle), Math.cos(angle));
-    if (!BrainMotorControls.move(body, direction.scale(.65), Math.clamp(angle, -.6, .6), 20, mode)
-        && !BrainMotorControls.move(body, direction.scale(.65), 0, 20, mode)) {
+    if (!BrainMotorControls.move(body, steering.velocity(), steering.yawRate(), 20, mode)) {
       pause(body, now + 60);
       return;
     }

@@ -37,8 +37,12 @@ public final class DevelopmentToolkitItem extends Item {
   @Override
   public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
     if (!allowed(player)) return InteractionResultHolder.fail(player.getItemInHand(hand));
-    if (player instanceof ServerPlayer server)
-      PacketDistributor.sendToPlayer(server, new DevelopmentToolPayload(false));
+    if (player instanceof ServerPlayer server) {
+      if (player.isShiftKeyDown())
+        org.Azkerash.create_bioships.development.testing.network.FacingDebugSync.setFromLook(
+            server);
+      else PacketDistributor.sendToPlayer(server, new DevelopmentToolPayload(false));
+    }
     return InteractionResultHolder.sidedSuccess(player.getItemInHand(hand), level.isClientSide);
   }
 }
