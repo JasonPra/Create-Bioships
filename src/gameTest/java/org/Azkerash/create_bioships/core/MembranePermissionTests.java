@@ -45,6 +45,11 @@ public final class MembranePermissionTests {
         SubLevelPermissions.assignIfUnowned(body, owner.getUUID())
             && !SubLevelPermissions.assignIfUnowned(body, intruder.getUUID()),
         "Owner could be overwritten");
+    helper.assertTrue(
+        SubLevelPermissions.canInspect(body, owner.getUUID())
+            && !SubLevelPermissions.canInspect(body, guest.getUUID())
+            && !SubLevelPermissions.canInspect(body, intruder.getUUID()),
+        "Inspection disclosed data to an uninvited player");
     var pos = core.east();
     var state = level.getBlockState(pos);
     helper.assertTrue(
@@ -85,6 +90,9 @@ public final class MembranePermissionTests {
         !SubLevelPermissions.add(body, intruder.getUUID(), guest)
             && SubLevelPermissions.add(body, owner.getUUID(), guest),
         "Permission edit authority broken");
+    helper.assertTrue(
+        SubLevelPermissions.canInspect(body, guest.getUUID()),
+        "Invited player cannot inspect creature");
     var mob = EntityType.COW.create(level);
     var duplicate = EntityType.COW.create(level);
     mob.setCustomName(Component.literal("Bessie"));
@@ -115,6 +123,16 @@ public final class MembranePermissionTests {
         !SubLevelPermissions.remove(body, owner.getUUID(), mob.getUUID())
             && SubLevelPermissions.remove(body, guest.getUUID(), mob.getUUID()),
         "Former owner could edit after transfer");
+    helper.assertTrue(
+        !SubLevelPermissions.canInspect(body, owner.getUUID())
+            && SubLevelPermissions.canInspect(body, guest.getUUID()),
+        "Inspection did not follow ownership transfer");
+    helper.assertTrue(
+        SubLevelPermissions.add(body, guest.getUUID(), intruder)
+            && SubLevelPermissions.canInspect(body, intruder.getUUID())
+            && SubLevelPermissions.remove(body, guest.getUUID(), intruder.getUUID())
+            && !SubLevelPermissions.canInspect(body, intruder.getUUID()),
+        "Revoked invitation still permits inspection");
     SubLevelHealth.damage(body, 10000, "test");
     helper.assertTrue(
         state.getCollisionShape(level, pos, CollisionContext.of(guest)).isEmpty(),

@@ -95,3 +95,15 @@ client QA probes are removed before building the final jar.
 The native arrow fixture retries only lanes whose eye wound has not registered yet.
 Its regression permits extra native retry arrows while requiring a living and corpse
 arrow on every eye; random dispenser spread is not treated as a combat failure.
+
+Creature diagnostics are private per viewer. Intestine, vision, path, and metabolism
+subscriptions are filtered on the server through `SubLevelPermissions.canInspect`:
+only the creature owner or an explicitly invited UUID receives its snapshots.
+Linked limb sublevels use the main creature's permission list. Unassigned creatures
+have no inspection viewers; developer/operator status does not bypass ownership.
+Permissions are rechecked for every update, and removed snapshots clear the local
+overlay after revocation or ownership transfer. Enabling a display never enables it
+for another player. This shared disclosure check can also serve a future player tool.
+
+Intestine holograms render at the end of the world pass, with see-through text, so
+opaque contraption geometry and entities do not cover their inventory labels.

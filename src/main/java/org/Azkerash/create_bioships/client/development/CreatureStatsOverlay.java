@@ -44,6 +44,10 @@ public final class CreatureStatsOverlay {
       STATS.clear();
       world = mc.level;
     }
+    if (p.rows().isEmpty()) {
+      STATS.remove(p.body());
+      return;
+    }
     STATS.put(p.body(), new Snapshot(p, mc.level.getGameTime()));
   }
 

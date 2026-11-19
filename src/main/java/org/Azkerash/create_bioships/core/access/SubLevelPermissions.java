@@ -4,8 +4,8 @@ import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import java.util.*;
 import net.minecraft.nbt.*;
 import net.minecraft.world.entity.Entity;
-import org.Azkerash.create_bioships.core.SubLevelData;
 import org.Azkerash.create_bioships.core.SubLevelCreatureParts;
+import org.Azkerash.create_bioships.core.SubLevelData;
 
 /** Grid-owned identity permissions. Names are labels; identity is always a UUID. */
 public final class SubLevelPermissions {
@@ -42,6 +42,11 @@ public final class SubLevelPermissions {
           return new Access(
               tag.hasUUID("owner") ? tag.getUUID("owner") : null, List.copyOf(entries.values()));
         });
+  }
+
+  /** Server-side disclosure policy shared by diagnostics and future player inspection tools. */
+  public static boolean canInspect(ServerSubLevel body, UUID player) {
+    return player != null && SubLevelCreatureParts.available(body) && get(body).permits(player);
   }
 
   private static void save(ServerSubLevel body, Access access) {

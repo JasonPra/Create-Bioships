@@ -78,8 +78,7 @@ public final class IntestineDebugOverlay {
 
   @SubscribeEvent
   public static void render(RenderLevelStageEvent event) {
-    if (!enabled || event.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS)
-      return;
+    if (!enabled || event.getStage() != RenderLevelStageEvent.Stage.AFTER_LEVEL) return;
     var mc = Minecraft.getInstance();
     if (mc.level == null) return;
     var container = SubLevelContainer.getContainer(mc.level);

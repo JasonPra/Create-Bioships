@@ -63,6 +63,8 @@ public final class PathDebugSync {
               && !body.isRemoved()
               && !org.Azkerash.create_bioships.core.SubLevelCreatureParts.isPart(body)
               && SubLevelPaths.get(body) != null) {
+            if (!org.Azkerash.create_bioships.core.access.SubLevelPermissions.canInspect(
+                body, player.getUUID())) continue;
             var center =
                 body.logicalPose()
                     .transformPosition(Vec3.atCenterOf(body.getPlot().getCenterBlock()));

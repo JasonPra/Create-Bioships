@@ -61,6 +61,8 @@ public final class VisionDebugSync {
       if (container != null)
         for (var entry : container.getAllSubLevels())
           if (entry instanceof ServerSubLevel body && SubLevelVision.active(body)) {
+            if (!org.Azkerash.create_bioships.core.access.SubLevelPermissions.canInspect(
+                body, player.getUUID())) continue;
             var center =
                 body.logicalPose()
                     .transformPosition(Vec3.atCenterOf(body.getPlot().getCenterBlock()));

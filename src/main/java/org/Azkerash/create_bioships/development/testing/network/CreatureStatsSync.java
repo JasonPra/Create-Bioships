@@ -15,7 +15,7 @@ import org.Azkerash.create_bioships.development.testing.DevelopmentToolkitItem;
 
 @EventBusSubscriber(modid = "create_bioships")
 public final class CreatureStatsSync {
-  private static final Set<ServerPlayer> VIEWERS = Collections.newSetFromMap(new WeakHashMap<>());
+  private static final Map<ServerPlayer, Set<UUID>> VIEWERS = new WeakHashMap<>();
 
   private CreatureStatsSync() {}
 
@@ -29,7 +29,8 @@ public final class CreatureStatsSync {
             c.enqueueWork(
                 () -> {
                   if (c.player() instanceof ServerPlayer player) {
-                    if (p.enabled() && DevelopmentToolkitItem.allowed(player)) VIEWERS.add(player);
+                    if (p.enabled() && DevelopmentToolkitItem.allowed(player))
+                      VIEWERS.put(player, new HashSet<>());
                     else VIEWERS.remove(player);
                   }
                 }));
@@ -161,11 +162,13 @@ public final class CreatureStatsSync {
   @SubscribeEvent
   public static void tick(net.neoforged.neoforge.event.tick.ServerTickEvent.Post e) {
     if (e.getServer().getTickCount() % 10 != 0) return;
-    VIEWERS.removeIf(
-        p ->
-            !e.getServer().getPlayerList().getPlayers().contains(p)
-                || !DevelopmentToolkitItem.allowed(p));
-    for (var player : VIEWERS) {
+    VIEWERS
+        .keySet()
+        .removeIf(
+            p ->
+                !e.getServer().getPlayerList().getPlayers().contains(p)
+                    || !DevelopmentToolkitItem.allowed(p));
+    for (var player : VIEWERS.keySet()) {
       var c = SubLevelContainer.getContainer(player.serverLevel());
       if (c == null) continue;
       var roots = new ArrayList<ServerSubLevel>();
@@ -174,6 +177,8 @@ public final class CreatureStatsSync {
             && !b.isRemoved()
             && !SubLevelCreatureParts.isPart(b)
             && CoreAssemblyRules.isCreature(b)
+            && org.Azkerash.create_bioships.core.access.SubLevelPermissions.canInspect(
+                b, player.getUUID())
             && org.Azkerash.create_bioships
                     .core
                     .pathfinding
@@ -190,8 +195,16 @@ public final class CreatureStatsSync {
                       .SubLevelPathfinder
                       .position(b)
                       .distanceToSqr(player.position())));
-      for (var b : roots.subList(0, Math.min(4, roots.size())))
+      var present = new HashSet<UUID>();
+      for (var b : roots.subList(0, Math.min(4, roots.size()))) {
+        present.add(b.getUniqueId());
         PacketDistributor.sendToPlayer(player, snapshot(b));
+      }
+      for (var id : VIEWERS.get(player))
+        if (!present.contains(id))
+          PacketDistributor.sendToPlayer(
+              player, new CreatureStatsPayload(id, Vec3.ZERO, List.of()));
+      VIEWERS.put(player, present);
     }
   }
 
