@@ -18,8 +18,9 @@ public final class LocomotionWallTests {
   @GameTest(template = "test_empty", timeoutTicks = 400, batch = "modular_wall_clearance")
   public static void live_wall_cancels_drive_and_native_sweep_cannot_tunnel(GameTestHelper h) {
     var level = h.getLevel();
-    var base = new BlockPos(4096, 80, 128);
-    for (int cx = 254; cx <= 258; cx++)
+    var base = new BlockPos(7168, 80, 128);
+    // Keep this subject away from the compact standing fixture at x=4096.
+    for (int cx = (base.getX() >> 4) - 2; cx <= (base.getX() >> 4) + 2; cx++)
       for (int cz = 6; cz <= 10; cz++) level.setChunkForced(cx, cz, true);
     for (int x = -16; x <= 16; x++)
       for (int z = -16; z <= 16; z++)
