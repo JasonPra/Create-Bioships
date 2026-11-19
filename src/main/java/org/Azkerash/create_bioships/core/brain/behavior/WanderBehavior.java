@@ -17,7 +17,7 @@ public final class WanderBehavior implements BrainBehavior {
   private List<Vec3> route = List.of();
   private int waypoint;
   private long nextDecision = Long.MIN_VALUE, lastProgress;
-  private Vec3 previous;
+  private double bestRemaining = Double.POSITIVE_INFINITY;
   private long motionRevision = Long.MIN_VALUE;
   private SubLevelPathfinder.Mode mode = SubLevelPathfinder.Mode.GROUND;
 
@@ -91,12 +91,16 @@ public final class WanderBehavior implements BrainBehavior {
         pause(body, now + 60);
         return;
       }
-      previous = position;
+      bestRemaining = Double.POSITIVE_INFINITY;
       lastProgress = now;
       save(body, mode == SubLevelPathfinder.Mode.WATER ? "swimming" : "walking", now);
     }
-    if (previous == null || distance(position, previous) > .2) {
-      previous = position;
+    double remaining = distance(position, route.get(waypoint));
+    for (int i = waypoint + 1; i < route.size(); i++)
+      remaining += distance(route.get(i - 1), route.get(i));
+    // Rocking or moving sideways against a wall is not progress along the route.
+    if (remaining < bestRemaining - .2) {
+      bestRemaining = remaining;
       lastProgress = now;
     }
     if (now - lastProgress > 80) {
@@ -110,7 +114,11 @@ public final class WanderBehavior implements BrainBehavior {
     var facing = body.logicalPose().orientation().transform(new org.joml.Vector3d(0, 0, 1));
     double angle = Math.atan2(direction.x, direction.z) - Math.atan2(facing.x, facing.z);
     angle = Math.atan2(Math.sin(angle), Math.cos(angle));
-    BrainMotorControls.move(body, direction.scale(.65), Math.clamp(angle, -.6, .6), 20, mode);
+    if (!BrainMotorControls.move(
+        body, direction.scale(.65), Math.clamp(angle, -.6, .6), 20, mode)) {
+      pause(body, now + 60);
+      return;
+    }
     if (waypoint == route.size() - 1 && distance(position, route.getLast()) < .6)
       pause(body, now + 30 + body.getLevel().random.nextInt(50));
   }
@@ -120,7 +128,7 @@ public final class WanderBehavior implements BrainBehavior {
     nextDecision = until;
     route = List.of();
     waypoint = 0;
-    previous = null;
+    bestRemaining = Double.POSITIVE_INFINITY;
     BrainMotorControls.move(body, Vec3.ZERO, 0, 20, mode);
     save(body, "paused", until);
   }

@@ -67,7 +67,7 @@ public final class SubLevelPathfinder {
       goal = BlockPos.containing(b.point().add(0, .01, 0));
       groundHeight = a.point().y;
     }
-    var bounds = SubLevelLocomotion.bounds(body).deflate(.025);
+    var bounds = SubLevelLocomotion.bounds(body).inflate(.3, 0, .3).deflate(.025);
     final var box =
         mode == Mode.GROUND
             ? new AABB(
@@ -123,6 +123,36 @@ public final class SubLevelPathfinder {
     return new Route(
         mode,
         cells.stream().map(p -> new Vec3(p.getX() + .5, p.getY() + lift, p.getZ() + .5)).toList());
+  }
+
+  /**
+   * Recheck live articulated clearance; a saved route is not permission to push through terrain.
+   */
+  public static boolean movementClear(ServerSubLevel body, Vec3 movement, double yawRate) {
+    body = SubLevelCreatureParts.root(body);
+    if (movement.lengthSqr() < 1e-8 && Math.abs(yawRate) < 1e-8) return true;
+    var level = body.getLevel();
+    var box = SubLevelLocomotion.bounds(body).deflate(.025);
+    var here = position(body);
+    var ground = TerrainProbe.down(level, here.add(0, 2, 0), 12, body);
+    if (ground != null && TerrainProbe.standable(ground))
+      box =
+          new AABB(
+              box.minX,
+              Math.max(box.minY, ground.point().y + .05),
+              box.minZ,
+              box.maxX,
+              box.maxY,
+              box.maxZ);
+    // Reserve half a second of motion, plus finite swing/turn clearance.
+    double radius = Math.max(box.getXsize(), box.getZsize()) / 2;
+    double margin = .15 + Math.min(.4, radius * Math.abs(yawRate) * .1);
+    var future = box.move(movement.scale(.5)).inflate(margin, 0, margin);
+    var sweep = box.minmax(future);
+    if (terrainClear(level, sweep)) return true;
+    // Permit bounded native step-up, while keeping tall walls blocked.
+    double step = SubLevelLocomotion.stepHeight(body);
+    return step > 0 && terrainClear(level, sweep.move(0, step, 0));
   }
 
   public static List<BlockPos> search(

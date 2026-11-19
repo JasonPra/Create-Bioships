@@ -80,3 +80,17 @@ The regression reference assembles native Let It Walk components and Create gird
 powered by a real creative motor. It checks standing, movement and pivot continuity.
 Both leg exhibits now share a wider enclosure with a 24-block-high roof; migration
 preserves existing subjects and their settings.
+
+## Wall clearance
+
+Powered native segments are posed directly by `BuiltLegDriver`; collision shapes alone
+cannot reject a pose teleport. `ModularLimbCollisions` checks the native forward-chain
+poses using cached collision shapes and finite-volume translation/rotation sweeps.
+Blocked legs retain physical pivot constraints while the brain's movement request is
+cancelled. Native walkers outside our adapter retain their normal implementation.
+
+Shared planning reserves limb clearance, and the motor surface rechecks the current
+articulated envelope before each movement request. Wander counts reduced remaining
+route distance as progress; rocking against a wall cannot keep a route alive forever.
+The regression repeatedly requests motion into one-block glass and checks that the
+body remains bounded, joints remain connected, and standing stays enabled.

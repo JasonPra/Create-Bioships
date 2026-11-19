@@ -448,7 +448,8 @@ public final class ModularLimbController {
         }
         continue;
       }
-      c.releasePins();
+      if (ModularLimbCollisions.obstructed(c.body)) c.ensurePins();
+      else c.releasePins();
       var handle = RigidBodyHandle.of(c.body);
       if (handle != null && handle.isValid()) {
         WalkerPhysics.substep(c.nativeWalker, c.body, handle, event.getTimeStep());
@@ -457,7 +458,7 @@ public final class ModularLimbController {
         WalkerCargo.substep(
             c.nativeWalker,
             c.body,
-            BuiltLegDriver.substep(c.nativeWalker, c.body, event.getTimeStep()),
+            ModularLimbCollisions.substep(c.nativeWalker, c.body, event.getTimeStep()),
             event.getTimeStep());
       }
     }
