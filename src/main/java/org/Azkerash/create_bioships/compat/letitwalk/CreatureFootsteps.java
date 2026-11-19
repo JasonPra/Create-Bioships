@@ -42,6 +42,18 @@ public final class CreatureFootsteps {
         SoundSource.NEUTRAL,
         sound.getVolume() * profile.volume() * Math.clamp(weight, .4f, 1.5f),
         sound.getPitch() * profile.pitch() * (.95f + level.random.nextFloat() * .1f));
+    if (level instanceof net.minecraft.server.level.ServerLevel server && !ground.state().isAir())
+      server.sendParticles(
+          new net.minecraft.core.particles.BlockParticleOption(
+              net.minecraft.core.particles.ParticleTypes.BLOCK, ground.state()),
+          point.x,
+          point.y + .04,
+          point.z,
+          compact ? 3 : 6,
+          compact ? .09 : .16,
+          .04,
+          compact ? .09 : .16,
+          .015);
     return true;
   }
 }
