@@ -179,13 +179,28 @@ public final class StomachGeneTests {
           paste += stomach.getItem(slot).getCount();
       helper.assertTrue(paste == tier + 1, "Meal did not guarantee upgraded paste yield");
       for (int slot = 0; slot < 27; slot++) stomach.setItem(slot, ItemStack.EMPTY);
-      SubLevelData.hunger(body, 2);
-      stomach.setItem(9, new ItemStack(StomachBlockEntity.paste(), 3));
-      for (int tick = 0; tick < StomachBlockEntity.EAT_TICKS; tick++) stomach.advance();
+      int restored = 0;
+      for (int meal = 0; meal < 5; meal++) {
+        SubLevelData.hunger(body, 0);
+        stomach.setItem(9, new ItemStack(StomachBlockEntity.paste()));
+        for (int tick = 0; tick < StomachBlockEntity.EAT_TICKS; tick++) stomach.advance();
+        restored += SubLevelData.hunger(body);
+        var nutritionState = stomach.state().save(level.registryAccess());
+        stomach.state().load(nutritionState, level.registryAccess());
+        helper.assertTrue(
+            stomach.state().save(level.registryAccess()).getInt("NutritionRemainder")
+                == nutritionState.getInt("NutritionRemainder"),
+            "Nutrition carry did not persist");
+        helper.assertTrue(stomach.getItem(9).isEmpty(), "Nutrition consumed more than one paste");
+      }
       helper.assertTrue(
-          SubLevelData.hunger(body) == 3 && stomach.getItem(9).isEmpty(),
-          "Efficiency tier changed the fixed three-paste conversion ratio");
-      SubLevelData.hunger(body, SubLevelData.maximumHunger(body));
+          restored
+              == switch (tier) {
+                case 1 -> 24;
+                case 2 -> 26;
+                default -> 27;
+              },
+          "Efficiency nutrition bonus or fractional carry is incorrect: " + restored);
     }
     player.getCooldowns().removeCooldown(injector);
     int remaining = injector.getStoredItemStack(tool).getCount();

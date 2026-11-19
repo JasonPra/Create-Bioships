@@ -116,7 +116,7 @@ public final class StomachDigestionTests {
   }
 
   @GameTest(template = "test_empty", batch = "paste_conversion")
-  public static void three_paste_across_slots_restore_one_hunger_after_eating(GameTestHelper h) {
+  public static void one_paste_restores_four_hunger_after_eating(GameTestHelper h) {
     var level = h.getLevel();
     var cell = h.absolutePos(new BlockPos(1, 2, 1));
     level.setBlock(cell, ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
@@ -130,30 +130,20 @@ public final class StomachDigestionTests {
     SubLevelData.hungerPaused(body, true);
     SubLevelData.hunger(body, 2);
     var stomach = (StomachBlockEntity) level.getBlockEntity(body.getPlot().getCenterBlock());
-    stomach.setItem(9, new ItemStack(StomachBlockEntity.paste()));
-    stomach.setItem(10, new ItemStack(StomachBlockEntity.paste()));
     for (int i = 0; i < StomachBlockEntity.EAT_TICKS * 2; i++) stomach.advance();
-    h.assertTrue(
-        SubLevelData.hunger(body) == 2
-            && stomach.getItem(9).getCount() == 1
-            && stomach.getItem(10).getCount() == 1,
-        "An incomplete paste portion was consumed");
+    h.assertTrue(SubLevelData.hunger(body) == 2, "Empty stomach restored hunger");
     stomach.setItem(11, new ItemStack(StomachBlockEntity.paste()));
     for (int i = 0; i < StomachBlockEntity.EAT_TICKS - 1; i++) stomach.advance();
-    h.assertTrue(
-        SubLevelData.hunger(body) == 2, "Paste restored hunger before the eating cycle finished");
+    h.assertTrue(SubLevelData.hunger(body) == 2, "Paste restored hunger before eating finished");
     stomach.advance();
     h.assertTrue(
-        SubLevelData.hunger(body) == 3
-            && stomach.getItem(9).isEmpty()
-            && stomach.getItem(10).isEmpty()
-            && stomach.getItem(11).isEmpty(),
-        "Three paste across output slots did not restore exactly one hunger");
+        SubLevelData.hunger(body) == 6 && stomach.getItem(11).isEmpty(),
+        "One paste did not restore four hunger");
     SubLevelData.hunger(body, SubLevelData.maximumHunger(body));
     stomach.setItem(9, new ItemStack(StomachBlockEntity.paste(), 6));
     for (int i = 0; i < StomachBlockEntity.EAT_TICKS * 2; i++) stomach.advance();
     h.assertTrue(stomach.getItem(9).getCount() == 6, "Full hunger wasted paste");
-    System.out.println("PASTE_CONVERSION_PASS ratio=3:1 cycle=32 partial_portion_safe=true");
+    System.out.println("PASTE_CONVERSION_PASS ratio=1:4 cycle=32 full_hunger_safe=true");
     h.succeed();
   }
 }

@@ -134,7 +134,7 @@ public final class CreatureStatsSync {
             SubLevelData.trust(body),
             100,
             0xffb68ed6));
-    rows.add(row("Stomach conversion: 3 paste -> 1 hunger in 1.6s"));
+    rows.add(row("Stomach: 1 paste -> 4 hunger (+Efficiency) / 1.6s"));
     rows.add(
         row(
             "Appendages: legs="

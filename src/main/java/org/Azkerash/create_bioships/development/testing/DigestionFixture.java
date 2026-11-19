@@ -274,7 +274,7 @@ public final class DigestionFixture {
                 "DIGESTION REGRESSION\n"
                     + "Left: START · Right: RESET\n"
                     + "Mouth → intestines → stomach; four pork chops.\n"
-                    + "Three paste restores one hunger; one paste remains.\n"
+                    + "One paste restores four hunger; Efficiency improves nutrition.\n"
                     + "Seeded living control has no mouth or intestines.\n"
                     + "Inspect acid, digestion, components and hunger.\n"
                     + "Toolkit → Intestine connections: sac branches and open ends.\n"

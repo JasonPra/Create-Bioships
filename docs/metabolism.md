@@ -14,11 +14,12 @@ At zero hunger, starvation still deals 1 HP every four seconds until death. Pass
 regeneration still requires at least 90% hunger. Healing potions remain independent.
 These damage/healing timers are separate from the mass-scaled hunger drain.
 
-Every stomach consumes exactly three nutrient paste for one hunger in a 32-tick
-(1.6-second) eating cycle, at all upgrade tiers. A portion can span output slots;
-incomplete portions are retained, and full hunger never wastes paste. Storage routing
-can replenish a partial portion from connected sacs. Efficiency only changes paste
-production (2/3/4 at tiers 1/2/3) and the existing extra-component chances.
+A stomach consumes one nutrient paste for four hunger in a 32-tick (1.6-second)
+eating cycle. Efficiency increases hunger per paste by 20%, 30%, then 35% total:
+4.8, 5.2, and 5.4 hunger. Fractional fifths carry between meals and persist with the
+sublevel component's state, including portable stomach snapshots. Full hunger never
+wastes paste. Efficiency also retains paste production (2/3/4 at tiers 1/2/3) and the
+existing extra-component chances.
 
 The Development Toolkit's **Creature statistics** toggle subscribes to read-only
 holograms for the nearest four creature roots within 64 blocks. Snapshots refresh
@@ -29,5 +30,5 @@ require the development preset and its protected toolkit; the display does not d
 simulation or change hunger.
 
 Regression coverage includes linked mass without double counting, fractional save/load,
-pause behavior, rate reduction on detachment, fixed paste conversion at every Efficiency
-tier, incomplete portions, full-hunger preservation and the bounded statistics codec.
+pause behavior, rate reduction on detachment, nutrition bonuses at every Efficiency
+tier, fractional nutrition save/load, full-hunger preservation and the bounded statistics codec.

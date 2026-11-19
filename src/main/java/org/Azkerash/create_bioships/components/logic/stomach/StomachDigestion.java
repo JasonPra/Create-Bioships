@@ -45,7 +45,9 @@ public final class StomachDigestion {
             stack.shrink(consumed);
             remaining -= consumed;
           }
-          SubLevelData.hunger(body, SubLevelData.hunger(body) + HUNGER_PER_MEAL);
+          int nutrition = genes.nutritionFifths() + state.nutritionRemainder;
+          SubLevelData.hunger(body, SubLevelData.hunger(body) + nutrition / 5);
+          state.nutritionRemainder = nutrition % 5;
           state.eating = 0;
         }
         stomach.setChanged();

@@ -40,6 +40,17 @@ public final class StomachGenes {
     return 1 + stomach.state().efficiency;
   }
 
+  /** Fifths of a hunger point: 4, 4.8, 5.2, 5.4 per paste. */
+  public int nutritionFifths() {
+    return StomachBlockEntity.HUNGER_PER_MEAL * 5
+        + switch (efficiency()) {
+          case 1 -> 4;
+          case 2 -> 6;
+          case 3 -> 7;
+          default -> 0;
+        };
+  }
+
   public int extraComponentChance() {
     return EXTRA_COMPONENT_CHANCE[stomach.state().efficiency];
   }
