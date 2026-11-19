@@ -35,8 +35,11 @@ tier, fractional nutrition save/load, full-hunger preservation and the bounded s
 
 Players may place multiple stomachs and mouths on a living creature. Each stomach
 keeps its own inventory and digestion state; connected mouths can route into the
-same intestine network. Hunger capacity continues to use the strongest stomach's
-capacity contribution, rather than multiplying capacity by the number of stomachs.
+same intestine network. Hunger capacity is 5 base plus the sum of every stomach's contribution, including
+those on linked body parts. Each stomach adds 5 capacity plus 5 per installed
+Longevity upgrade (up to three independently installed upgrades per stomach).
+Adding or upgrading a stomach increases capacity without filling hunger; removal
+subtracts only that stomach's contribution and clamps current hunger if necessary.
 
 The stomach's existing bottom-right output cell (slot 26) is reserved for nutrient
 paste and outlined in green. The inventory remains 27 slots. Player clicks and

@@ -43,7 +43,7 @@ public final class SubLevelHunger {
   }
 
   private static void capacityChanged(ServerSubLevel body, java.util.Set<Long> stomachs) {
-    int capacity = 0;
+    long capacity = 0;
     for (long cell : stomachs) {
       var be = body.getLevel().getBlockEntity(net.minecraft.core.BlockPos.of(cell));
       int bonus =
@@ -52,14 +52,15 @@ public final class SubLevelHunger {
                   org.Azkerash.create_bioships.components.logic.stomach.StomachBlockEntity stomach
               ? stomach.genes().capacityBonus()
               : 0;
-      capacity = Math.max(capacity, SubLevelData.STOMACH_HUNGER + bonus);
+      capacity += SubLevelData.STOMACH_HUNGER + bonus;
     }
     if (SubLevelCreatureParts.isPart(body)) {
-      SubLevelCreatureParts.stomachContribution(body, capacity);
+      SubLevelCreatureParts.stomachContribution(body, (int) Math.min(Integer.MAX_VALUE, capacity));
       return;
     }
-    capacity = Math.max(capacity, SubLevelCreatureParts.extraStomachCapacity(body));
-    SubLevelData.maximumHunger(body, SubLevelData.BASE_HUNGER + capacity);
+    capacity += SubLevelCreatureParts.extraStomachCapacity(body);
+    SubLevelData.maximumHunger(
+        body, (int) Math.min(Integer.MAX_VALUE, SubLevelData.BASE_HUNGER + capacity));
   }
 
   private static final java.util.Set<ServerSubLevel> PENDING_CAPACITY =

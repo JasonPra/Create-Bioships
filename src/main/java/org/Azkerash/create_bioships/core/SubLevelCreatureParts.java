@@ -82,7 +82,7 @@ public final class SubLevelCreatureParts {
     double capacity = 0;
     var entries = data(owner).getCompound("Members");
     for (var key : entries.getAllKeys())
-      capacity = Math.max(capacity, finite(entries.getCompound(key).getDouble("Hunger")));
+      capacity += finite(entries.getCompound(key).getDouble("Hunger"));
     return (int) Math.min(Integer.MAX_VALUE, capacity);
   }
 

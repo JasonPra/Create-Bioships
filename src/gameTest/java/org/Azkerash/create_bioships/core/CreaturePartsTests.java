@@ -88,6 +88,25 @@ public final class CreaturePartsTests {
                   && SubLevelHunger.hasStomach(limb)
                   && SubLevelData.maximumHunger(root) == 10,
               "Limb stomach did not share creature capacity/restriction");
+          var rootStomach = root.getPlot().getCenterBlock().east();
+          level.setBlock(rootStomach, ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
+          var otherLimb = assemble(h, p.offset(10, 0, 0), false);
+          SubLevelCreatureParts.attach(root, otherLimb);
+          var otherStomach = otherLimb.getPlot().getCenterBlock().above(2);
+          level.setBlock(otherStomach, ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
+          h.assertTrue(
+              SubLevelData.maximumHunger(root) == 20,
+              "Root and two linked stomachs did not sum their capacity");
+          SubLevelCreatureParts.attach(root, otherLimb);
+          h.assertTrue(
+              SubLevelData.maximumHunger(root) == 20,
+              "Repeated link counted stomach capacity twice");
+          level.removeBlock(otherStomach, false);
+          SubLevelCreatureParts.detach(otherLimb);
+          level.removeBlock(rootStomach, false);
+          h.assertTrue(
+              SubLevelData.maximumHunger(root) == 10,
+              "Removing extra root/linked stomachs left stale capacity");
           level.removeBlock(stomach, false);
           h.assertTrue(
               !SubLevelHunger.hasStomach(root) && SubLevelData.maximumHunger(root) == 5,

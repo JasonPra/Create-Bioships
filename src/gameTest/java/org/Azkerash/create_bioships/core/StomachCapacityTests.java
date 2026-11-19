@@ -148,8 +148,8 @@ public final class StomachCapacityTests {
           level.setBlock(core.east(), ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
           level.setBlock(core.east(2), ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
           helper.assertTrue(
-              SubLevelData.maximumHunger(body) == 10 && SubLevelData.hunger(body) == 5,
-              "Command/imported extra stomachs stacked capacity or filled hunger");
+              SubLevelData.maximumHunger(body) == 15 && SubLevelData.hunger(body) == 5,
+              "Additional stomach failed to stack capacity without filling hunger");
           level.setBlock(core.east(), Blocks.STONE.defaultBlockState(), 3);
           helper.assertTrue(
               SubLevelData.maximumHunger(body) == 10, "Remaining stomach lost capacity");

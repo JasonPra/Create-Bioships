@@ -115,6 +115,45 @@ public final class StomachGeneTests {
             .copyTag()
             .getCompound("Genes");
     helper.assertTrue(genes.getInt("Longevity") == 3, "Block item lost upgraded gene tier");
+    // A second stomach owns its own genes, and every organ contributes to shared capacity.
+    level.setBlock(core.east(2), ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
+    var second = (StomachBlockEntity) level.getBlockEntity(core.east(2));
+    helper.assertTrue(
+        second.genes().longevityTier() == 0 && SubLevelData.maximumHunger(body) == 30,
+        "Second stomach inherited genes or failed to add its base capacity");
+    var secondTool = injector(ComponentRegistry.LONGEVITY_SERUM.get(), 2);
+    for (int tier = 1; tier <= 2; tier++) {
+      player.getCooldowns().removeCooldown(item);
+      helper.assertTrue(
+          inject(second, player, secondTool).consumesAction()
+              && second.genes().longevityTier() == tier
+              && stomach.genes().longevityTier() == 3
+              && SubLevelData.maximumHunger(body) == 30 + tier * 5
+              && SubLevelData.hunger(body) == 7,
+          "Independent stomach upgrade changed another organ, refilled hunger, or lost capacity");
+    }
+    var secondSaved = second.saveWithFullMetadata(level.registryAccess());
+    var secondRestored =
+        (StomachBlockEntity)
+            BlockEntity.loadStatic(
+                core.east(2), second.getBlockState(), secondSaved, level.registryAccess());
+    secondRestored.setLevel(level);
+    helper.assertTrue(
+        secondRestored.genes().longevityTier() == 2 && restored.genes().longevityTier() == 3,
+        "Reload merged independent upgrade tiers");
+    SubLevelData.hunger(body, 40);
+    level.removeBlock(core.east(), false);
+    helper.assertTrue(
+        SubLevelData.maximumHunger(body) == 20 && SubLevelData.hunger(body) == 20,
+        "Removing upgraded stomach lost remaining upgrades or failed to clamp hunger");
+    level.setBlock(core.east(), ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
+    stomach = (StomachBlockEntity) level.getBlockEntity(core.east());
+    helper.assertTrue(
+        stomach.genes().longevityTier() == 0
+            && second.genes().longevityTier() == 2
+            && SubLevelData.maximumHunger(body) == 25
+            && SubLevelData.hunger(body) == 20,
+        "Fresh replacement copied upgrades or refilled hunger");
     SubLevelHealth.damage(body, SubLevelHealth.status(body).current(), "test");
     var efficiency = injector(ComponentRegistry.EFFICIENCY_SERUM.get(), 2);
     player.getCooldowns().removeCooldown(item);
