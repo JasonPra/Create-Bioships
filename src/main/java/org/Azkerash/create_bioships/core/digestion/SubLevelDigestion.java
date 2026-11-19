@@ -104,7 +104,7 @@ public final class SubLevelDigestion {
       return 4;
     return state.is(ComponentRegistry.INTESTINE.get())
         ? 1
-        : state.is(ComponentRegistry.MOUTH.get())
+        : state.getBlock() instanceof org.Azkerash.create_bioships.components.logic.mouth.MouthBlock
             ? 2
             : state.is(ComponentRegistry.STOMACH.get()) ? 3 : 0;
   }

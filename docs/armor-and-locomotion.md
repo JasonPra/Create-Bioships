@@ -35,3 +35,12 @@ validated socket states. Removing a leg between the scheduled gait update and ph
 longer reads block properties from air or leaves that leg's collision bodies active.
 
 The compact-leg development exhibit uses default native powered stance. It no longer applies a custom 1.5× damping override. Positioner stiffness and damping adjust passive ragdoll articulation only; powered walking and suspension use upstream pose driving. Reset restores component defaults, and removal clears component tuning without clearing shared health, armor or trust ledgers.
+
+The Armored Maw is a separate feeding-mouth variant. Its overlapping chitin front
+adds 20 points to the shared armor pool and uses the armored material mass of 1.5.
+Only a hit whose local block face matches the maw's facing direction can spend
+armor; the fleshy sides/back and hits without a known face remain unprotected.
+Rotating it rotates the protected face. Removal/replacement preserves spent armor.
+Its mouth inventory, chewing/breathing, intestine routing, feeding trust and sickness
+behavior use the same classes as the Feeder Mouth. Its model has a recessed throat,
+staggered hooked teeth and front-only chitin scutes, with packed flesh on the body.

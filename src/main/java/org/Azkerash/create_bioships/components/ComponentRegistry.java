@@ -281,6 +281,16 @@ public final class ComponentRegistry {
                           BlockBehaviour.Properties.of()
                               .strength(1)
                               .sound(SoundType.SLIME_BLOCK))));
+  public static final DeferredBlock<org.Azkerash.create_bioships.components.logic.mouth.MouthBlock>
+      ARMORED_MAW =
+          component(
+              new ComponentDefinition<>(
+                  "armored_maw",
+                  () ->
+                      new org.Azkerash.create_bioships.components.logic.mouth.MouthBlock(
+                          BlockBehaviour.Properties.of()
+                              .strength(2)
+                              .sound(SoundType.SLIME_BLOCK))));
   public static final DeferredBlock<
           org.Azkerash.create_bioships.components.logic.intestine.IntestineBlock>
       INTESTINE =
@@ -302,7 +312,8 @@ public final class ComponentRegistry {
               () ->
                   BlockEntityType.Builder.of(
                           org.Azkerash.create_bioships.components.logic.mouth.MouthBlockEntity::new,
-                          MOUTH.get())
+                          MOUTH.get(),
+                          ARMORED_MAW.get())
                       .build(null));
 
   public static final DeferredItem<BlockItem> CORE_ITEM = item(CORE),

@@ -44,7 +44,8 @@ public final class IntestineBlock
     return state.getBlock()
             instanceof com.github.elenterius.biomancy.block.storagesac.StorageSacBlock
         || state.is(ComponentRegistry.INTESTINE.get())
-        || state.is(ComponentRegistry.MOUTH.get())
+        || state.getBlock()
+            instanceof org.Azkerash.create_bioships.components.logic.mouth.MouthBlock
         || state.is(ComponentRegistry.STOMACH.get());
   }
 

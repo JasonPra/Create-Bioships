@@ -177,7 +177,7 @@ public final class MouthBlockEntity extends OrganInventory {
   }
 
   public Component getDisplayName() {
-    return Component.translatable("block.create_bioships.feeding_mouth");
+    return Component.translatable(getBlockState().getBlock().getDescriptionId());
   }
 
   public AbstractContainerMenu createMenu(int id, Inventory inventory, Player player) {

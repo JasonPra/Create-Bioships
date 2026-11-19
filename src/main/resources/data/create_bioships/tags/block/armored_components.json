@@ -10,6 +10,7 @@
     "create_bioships:limb_swivel",
     "create_bioships:limb_segment",
     "create_bioships:limb_foot",
-    "create_bioships:limb_socket"
+    "create_bioships:limb_socket",
+    "create_bioships:armored_maw"
   ]
 }

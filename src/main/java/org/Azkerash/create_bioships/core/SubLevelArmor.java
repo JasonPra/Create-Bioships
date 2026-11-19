@@ -71,6 +71,15 @@ public final class SubLevelArmor {
   /** Returns health damage remaining after a hit on an actual armored cell. */
   public static double absorb(
       ServerSubLevel body, BlockPos cell, DamageSource source, double damage) {
+    return absorb(body, cell, null, source, damage);
+  }
+
+  public static double absorb(
+      ServerSubLevel body,
+      BlockPos cell,
+      net.minecraft.core.Direction face,
+      DamageSource source,
+      double damage) {
     if (!Double.isFinite(damage) || damage <= 0) return 0;
     if (!SubLevelCreatureParts.available(body)) return damage;
     var compact =
@@ -85,7 +94,7 @@ public final class SubLevelArmor {
     }
     if (cell == null
         || source.is(DamageTypeTags.BYPASSES_ARMOR)
-        || ArmorValues.points(body.getLevel().getBlockState(cell)) == 0
+        || !ArmorValues.protects(body.getLevel().getBlockState(cell), face)
         || SubLevelHealth.status(body).dead()) return damage;
     if (SubLevelCreatureParts.isPart(body)) capacity(body);
     double absorbed = Math.min(damage, status(body).current);
