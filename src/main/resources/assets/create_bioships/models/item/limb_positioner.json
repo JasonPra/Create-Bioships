@@ -1,3 +1,6 @@
 {
-  "parent": "let_it_walk:item/leg_positioner"
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "create_bioships:item/synaptic_calibrator"
+  }
 }

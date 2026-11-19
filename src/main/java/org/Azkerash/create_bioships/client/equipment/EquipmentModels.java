@@ -23,12 +23,14 @@ public final class EquipmentModels {
   public static void additional(ModelEvent.RegisterAdditional event) {
     event.register(extra("bioship_goggles_worn"));
     event.register(extra("bioship_wrench_held"));
+    event.register(extra("synaptic_calibrator_held"));
   }
 
   @SubscribeEvent
   public static void bake(ModelEvent.ModifyBakingResult event) {
     bind(event, "bioship_goggles", "bioship_goggles_worn", true);
     bind(event, "bioship_wrench", "bioship_wrench_held", false);
+    bind(event, "limb_positioner", "synaptic_calibrator_held", false);
   }
 
   private static void bind(

@@ -13,7 +13,7 @@ public final class LimbPositionerScreen extends Screen {
   private LimbPositionerState state;
 
   private LimbPositionerScreen(LimbPositionerState state) {
-    super(Component.literal("Limb Positioner"));
+    super(Component.translatable("item.create_bioships.limb_positioner"));
     this.state = state;
   }
 
