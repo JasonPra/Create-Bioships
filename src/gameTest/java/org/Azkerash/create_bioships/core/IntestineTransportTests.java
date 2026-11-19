@@ -133,11 +133,13 @@ public final class IntestineTransportTests {
               SubLevelData.hunger(body) == 1, "Paste consumed faster than player eating");
           stomach.advance();
           helper.assertTrue(
-              SubLevelData.hunger(body) == 5 && stomach.getItem(9).getCount() == 2,
-              "Paste did not restore four hunger");
+              SubLevelData.hunger(body) == 2 && stomach.getItem(9).isEmpty(),
+              "Three paste did not restore exactly one hunger");
+          SubLevelData.hunger(body, SubLevelData.maximumHunger(body) - 1);
+          stomach.setItem(9, new ItemStack(StomachBlockEntity.paste(), 6));
           for (int i = 0; i < 64; i++) stomach.advance();
           helper.assertTrue(
-              SubLevelData.hunger(body) == 10 && stomach.getItem(9).isEmpty(),
+              SubLevelData.hunger(body) == 10 && stomach.getItem(9).getCount() == 3,
               "Paste did not respect hunger cap");
           stomach.setItem(9, new ItemStack(StomachBlockEntity.paste(), 2));
           for (int i = 0; i < 64; i++) stomach.advance();

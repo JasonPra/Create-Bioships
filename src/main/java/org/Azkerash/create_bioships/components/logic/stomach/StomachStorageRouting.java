@@ -131,8 +131,7 @@ public final class StomachStorageRouting {
       if (body == null
           || org.Azkerash.create_bioships.core.SubLevelData.hunger(body)
               >= org.Azkerash.create_bioships.core.SubLevelData.maximumHunger(body)) return false;
-      for (int slot = 9; slot < 27; slot++)
-        if (stomach.getItem(slot).is(StomachBlockEntity.paste())) return false;
+      if (StomachDigestion.pasteCount(stomach) >= StomachBlockEntity.PASTE_PER_MEAL) return false;
     }
     for (var pos : sacs) {
       var handler = inventory(stomach.getLevel(), pos);

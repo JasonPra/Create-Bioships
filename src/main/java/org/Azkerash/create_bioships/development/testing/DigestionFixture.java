@@ -158,7 +158,7 @@ public final class DigestionFixture {
         .addForceLoadTicket(body, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
     SubLevelData.hungerPaused(body, true);
     DevelopmentTestOwnership.assign(body);
-    SubLevelData.hunger(body, 0);
+    SubLevelData.hunger(body, SubLevelData.maximumHunger(body) - 1);
     ((MouthBlockEntity) level.getBlockEntity(core.north().west(3)))
         .feed(new ItemStack(Items.PORKCHOP, 4), false);
     var controlPos = isolated(level);
@@ -274,6 +274,7 @@ public final class DigestionFixture {
                 "DIGESTION REGRESSION\n"
                     + "Left: START · Right: RESET\n"
                     + "Mouth → intestines → stomach; four pork chops.\n"
+                    + "Three paste restores one hunger; one paste remains.\n"
                     + "Seeded living control has no mouth or intestines.\n"
                     + "Inspect acid, digestion, components and hunger.\n"
                     + "Toolkit → Intestine connections: sac branches and open ends.\n"

@@ -66,7 +66,11 @@ public final class StomachBlockEntity extends OrganInventory implements IHaveGog
   }
 
   private int clientQueued;
-  public static final int INPUT_SLOTS = 9, MAX_ACID = 1000, EAT_TICKS = 32, HUNGER_PER_PASTE = 4;
+  public static final int INPUT_SLOTS = 9,
+      MAX_ACID = 1000,
+      EAT_TICKS = 32,
+      PASTE_PER_MEAL = 3,
+      HUNGER_PER_MEAL = 1;
   private final StomachState detachedState = new StomachState();
 
   @Override

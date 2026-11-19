@@ -12,6 +12,13 @@ import org.Azkerash.create_bioships.core.*;
 public final class StomachDigestion {
   private StomachDigestion() {}
 
+  static int pasteCount(StomachBlockEntity stomach) {
+    int count = 0;
+    for (int i = INPUT_SLOTS; i < stomach.items().size(); i++)
+      if (stomach.getItem(i).is(paste())) count += stomach.getItem(i).getCount();
+    return count;
+  }
+
   public static void advance(StomachBlockEntity stomach) {
     var level = stomach.getLevel();
     var worldPosition = stomach.getBlockPos();
@@ -28,16 +35,17 @@ public final class StomachDigestion {
       stomach.setChanged();
     }
     if (SubLevelData.hunger(body) < SubLevelData.maximumHunger(body)) {
-      int pasteSlot = -1;
-      for (int i = INPUT_SLOTS; i < items.size(); i++)
-        if (items.get(i).is(paste())) {
-          pasteSlot = i;
-          break;
-        }
-      if (pasteSlot >= 0) {
+      if (pasteCount(stomach) >= PASTE_PER_MEAL) {
         if (++state.eating >= EAT_TICKS) {
-          items.get(pasteSlot).shrink(1);
-          SubLevelData.hunger(body, SubLevelData.hunger(body) + HUNGER_PER_PASTE);
+          int remaining = PASTE_PER_MEAL;
+          for (int i = INPUT_SLOTS; i < items.size() && remaining > 0; i++) {
+            var stack = items.get(i);
+            if (!stack.is(paste())) continue;
+            int consumed = Math.min(remaining, stack.getCount());
+            stack.shrink(consumed);
+            remaining -= consumed;
+          }
+          SubLevelData.hunger(body, SubLevelData.hunger(body) + HUNGER_PER_MEAL);
           state.eating = 0;
         }
         stomach.setChanged();

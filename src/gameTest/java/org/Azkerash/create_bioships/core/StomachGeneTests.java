@@ -178,6 +178,14 @@ public final class StomachGeneTests {
         if (stomach.getItem(slot).is(StomachBlockEntity.paste()))
           paste += stomach.getItem(slot).getCount();
       helper.assertTrue(paste == tier + 1, "Meal did not guarantee upgraded paste yield");
+      for (int slot = 0; slot < 27; slot++) stomach.setItem(slot, ItemStack.EMPTY);
+      SubLevelData.hunger(body, 2);
+      stomach.setItem(9, new ItemStack(StomachBlockEntity.paste(), 3));
+      for (int tick = 0; tick < StomachBlockEntity.EAT_TICKS; tick++) stomach.advance();
+      helper.assertTrue(
+          SubLevelData.hunger(body) == 3 && stomach.getItem(9).isEmpty(),
+          "Efficiency tier changed the fixed three-paste conversion ratio");
+      SubLevelData.hunger(body, SubLevelData.maximumHunger(body));
     }
     player.getCooldowns().removeCooldown(injector);
     int remaining = injector.getStoredItemStack(tool).getCount();
