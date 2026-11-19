@@ -42,7 +42,10 @@ public final class VisionFixture {
   private static void subjectBlocks(ServerLevel level, BlockPos core) {
     level.setBlock(core, ComponentRegistry.CORE.get().defaultBlockState(), 3);
     for (var pos : List.of(core.west(), core.east())) {
-      level.setBlock(pos, Blocks.STONE.defaultBlockState(), 3);
+      level.setBlock(
+          pos,
+          com.github.elenterius.biomancy.init.ModBlocks.PACKED_FLESH.get().defaultBlockState(),
+          3);
       level.setBlock(
           pos.north(),
           (pos.getX() < core.getX() ? ComponentRegistry.LAND_EYE : ComponentRegistry.AQUATIC_EYE)
@@ -86,8 +89,18 @@ public final class VisionFixture {
     for (int lane = 0; lane < 2; lane++) {
       var core = subject(level, lane);
       subjectBlocks(level, core);
+      if (lane == 1)
+        for (var eye : java.util.List.of(core.west().north(), core.east().north()))
+          level.setBlock(
+              eye, level.getBlockState(eye).setValue(BlockStateProperties.WATERLOGGED, true), 3);
       for (int y = 1; y <= 3; y++)
-        level.setBlock(core.offset(-1, y - 2, -4), Blocks.BEDROCK.defaultBlockState(), 2);
+        level.setBlock(
+            core.offset(-1, y - 2, -4),
+            (lane == 0
+                    ? com.github.elenterius.biomancy.init.ModBlocks.PACKED_FLESH.get()
+                    : ComponentRegistry.CHITIN_ARMOR.get())
+                .defaultBlockState(),
+            2);
     }
     level.setBlock(
         base.offset(-8, 0, 5),

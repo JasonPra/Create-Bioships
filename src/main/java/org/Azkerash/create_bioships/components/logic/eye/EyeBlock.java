@@ -16,7 +16,8 @@ import org.Azkerash.create_bioships.core.*;
 /** Small outward-facing sensory component; land and aquatic forms share all behavior. */
 @net.neoforged.fml.common.EventBusSubscriber(
     modid = org.Azkerash.create_bioships.Create_bioships.MODID)
-public final class EyeBlock extends Block implements BlockSubLevelAssemblyListener {
+public final class EyeBlock extends Block
+    implements BlockSubLevelAssemblyListener, SimpleWaterloggedBlock {
   private static final java.util.Map<ServerLevel, java.util.Set<BlockPos>> SUPPORT_CHECKS =
       new java.util.WeakHashMap<>();
 
@@ -47,7 +48,10 @@ public final class EyeBlock extends Block implements BlockSubLevelAssemblyListen
     super(properties);
     registerDefaultState(
         EyeBlink.sleeping(
-            stateDefinition.any().setValue(BlockStateProperties.FACING, Direction.NORTH)));
+            stateDefinition
+                .any()
+                .setValue(BlockStateProperties.WATERLOGGED, false)
+                .setValue(BlockStateProperties.FACING, Direction.NORTH)));
   }
 
   @Override
@@ -57,12 +61,25 @@ public final class EyeBlock extends Block implements BlockSubLevelAssemblyListen
 
   @Override
   protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-    builder.add(BlockStateProperties.FACING, EyeBlink.BLINK, EyeBlink.WAKE, EyeBlink.STAGE);
+    builder.add(
+        BlockStateProperties.WATERLOGGED,
+        BlockStateProperties.FACING,
+        EyeBlink.BLINK,
+        EyeBlink.WAKE,
+        EyeBlink.STAGE);
   }
 
   @Override
   public BlockState getStateForPlacement(BlockPlaceContext context) {
-    var state = defaultBlockState().setValue(BlockStateProperties.FACING, context.getClickedFace());
+    var state =
+        defaultBlockState()
+            .setValue(BlockStateProperties.FACING, context.getClickedFace())
+            .setValue(
+                BlockStateProperties.WATERLOGGED,
+                context
+                    .getLevel()
+                    .getFluidState(context.getClickedPos())
+                    .is(net.minecraft.tags.FluidTags.WATER));
     return state.canSurvive(context.getLevel(), context.getClickedPos()) ? state : null;
   }
 
@@ -79,9 +96,21 @@ public final class EyeBlock extends Block implements BlockSubLevelAssemblyListen
       LevelAccessor level,
       BlockPos pos,
       BlockPos otherPos) {
+    if (state.getValue(BlockStateProperties.WATERLOGGED))
+      level.scheduleTick(
+          pos,
+          net.minecraft.world.level.material.Fluids.WATER,
+          net.minecraft.world.level.material.Fluids.WATER.getTickDelay(level));
     if (direction == state.getValue(BlockStateProperties.FACING).getOpposite()
         && !state.canSurvive(level, pos)) level.scheduleTick(pos, this, 1);
     return super.updateShape(state, direction, other, level, pos, otherPos);
+  }
+
+  @Override
+  protected net.minecraft.world.level.material.FluidState getFluidState(BlockState state) {
+    return state.getValue(BlockStateProperties.WATERLOGGED)
+        ? net.minecraft.world.level.material.Fluids.WATER.getSource(false)
+        : super.getFluidState(state);
   }
 
   @Override
