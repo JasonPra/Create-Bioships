@@ -21,7 +21,7 @@ public final class DigestiveDebugSync {
   @SubscribeEvent
   public static void register(
       net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent event) {
-    var registrar = event.registrar("1");
+    var registrar = event.registrar("2");
     registrar.playToServer(
         DigestiveDebugRequest.TYPE,
         DigestiveDebugRequest.CODEC,
@@ -99,6 +99,7 @@ public final class DigestiveDebugSync {
   public static DigestiveDebugPayload.Node inventoryNode(
       ServerSubLevel body, net.minecraft.core.BlockPos pos, int kind) {
     int slots = 0, used = 0, items = 0;
+    var totals = new LinkedHashMap<net.minecraft.resources.ResourceLocation, Integer>();
     var be = body.getLevel().getBlockEntity(pos);
     if (be instanceof com.github.elenterius.biomancy.block.storagesac.StorageSacBlockEntity sac) {
       var inventory = sac.getInventory();
@@ -108,6 +109,11 @@ public final class DigestiveDebugSync {
         if (!stack.isEmpty()) {
           used++;
           items += stack.getCount();
+          if (kind == 3)
+            totals.merge(
+                net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()),
+                stack.getCount(),
+                Integer::sum);
         }
       }
     } else if (be instanceof net.minecraft.world.Container inventory) {
@@ -117,10 +123,23 @@ public final class DigestiveDebugSync {
         if (!stack.isEmpty()) {
           used++;
           items += stack.getCount();
+          if (kind == 3)
+            totals.merge(
+                net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()),
+                stack.getCount(),
+                Integer::sum);
         }
       }
     }
-    return new DigestiveDebugPayload.Node(pos, kind, slots, used, items);
+    return new DigestiveDebugPayload.Node(
+        pos,
+        kind,
+        slots,
+        used,
+        items,
+        totals.entrySet().stream()
+            .map(e -> new DigestiveDebugPayload.ItemTotal(e.getKey(), e.getValue()))
+            .toList());
   }
 
   @SubscribeEvent

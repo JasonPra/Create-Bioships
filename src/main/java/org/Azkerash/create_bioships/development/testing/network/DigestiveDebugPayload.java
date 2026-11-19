@@ -9,7 +9,23 @@ import net.minecraft.resources.ResourceLocation;
 
 public record DigestiveDebugPayload(UUID body, List<Node> nodes, boolean truncated)
     implements CustomPacketPayload {
-  public record Node(BlockPos pos, int kind, int slots, int used, int items) {
+  public record ItemTotal(ResourceLocation item, int count) {
+    public ItemTotal {
+      if (count <= 0) throw new IllegalArgumentException("Invalid item total");
+    }
+  }
+
+  public record Node(
+      BlockPos pos, int kind, int slots, int used, int items, List<ItemTotal> contents) {
+    public Node {
+      contents = List.copyOf(contents);
+      if (contents.size() > 27) throw new IllegalArgumentException("Too many inventory item types");
+    }
+
+    public Node(BlockPos pos, int kind, int slots, int used, int items) {
+      this(pos, kind, slots, used, items, List.of());
+    }
+
     public Node(BlockPos pos, int kind) {
       this(pos, kind, 0, 0, 0);
     }
@@ -30,6 +46,13 @@ public record DigestiveDebugPayload(UUID body, List<Node> nodes, boolean truncat
               buffer.writeVarInt(node.slots);
               buffer.writeVarInt(node.used);
               buffer.writeVarInt(node.items);
+              buffer.writeVarInt(node.contents.size());
+              for (var item : node.contents) {
+                buffer.writeVarInt(
+                    net.minecraft.core.registries.BuiltInRegistries.ITEM.getId(
+                        net.minecraft.core.registries.BuiltInRegistries.ITEM.get(item.item())));
+                buffer.writeVarInt(item.count());
+              }
             }
           },
           buffer -> {
@@ -39,16 +62,30 @@ public record DigestiveDebugPayload(UUID body, List<Node> nodes, boolean truncat
             if (count < 0 || count > MAX_NODES)
               throw new IllegalArgumentException("Invalid graph size");
             var nodes = new ArrayList<Node>();
-            for (int i = 0; i < count; i++)
-              nodes.add(
-                  new Node(
-                      buffer.readBlockPos(),
-                      buffer.readUnsignedByte(),
-                      buffer.readVarInt(),
-                      buffer.readVarInt(),
-                      buffer.readVarInt()));
+            for (int i = 0; i < count; i++) {
+              var pos = buffer.readBlockPos();
+              int kind = buffer.readUnsignedByte(),
+                  slots = buffer.readVarInt(),
+                  used = buffer.readVarInt(),
+                  items = buffer.readVarInt();
+              int types = buffer.readVarInt();
+              if (types < 0 || types > 27)
+                throw new IllegalArgumentException("Invalid inventory summary");
+              var contents = new ArrayList<ItemTotal>();
+              for (int j = 0; j < types; j++) contents.add(readItem(buffer));
+              nodes.add(new Node(pos, kind, slots, used, items, contents));
+            }
             return new DigestiveDebugPayload(body, List.copyOf(nodes), truncated);
           });
+
+  private static ItemTotal readItem(RegistryFriendlyByteBuf buffer) {
+    int id = buffer.readVarInt();
+    var item = net.minecraft.core.registries.BuiltInRegistries.ITEM.byId(id);
+    if (id < 0 || item == null || item == net.minecraft.world.item.Items.AIR)
+      throw new IllegalArgumentException("Invalid inventory item");
+    return new ItemTotal(
+        net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(item), buffer.readVarInt());
+  }
 
   public Type<DigestiveDebugPayload> type() {
     return TYPE;

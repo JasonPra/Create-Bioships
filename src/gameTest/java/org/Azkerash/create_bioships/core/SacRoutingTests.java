@@ -173,12 +173,31 @@ public final class SacRoutingTests {
     h.assertTrue(
         node.slots() > 0 && node.used() == 1 && node.items() == 1,
         "Inventory debug snapshot missing recognized slots/counts");
+    stomach.clearContent();
+    stomach.setItem(0, new ItemStack(Items.BEEF, 64));
+    stomach.setItem(1, new ItemStack(Items.BEEF, 32));
+    stomach.setItem(9, new ItemStack(StomachBlockEntity.paste(), 17));
+    var stomachNode =
+        org.Azkerash.create_bioships.development.testing.network.DigestiveDebugSync.inventoryNode(
+            body, stomach.getBlockPos(), 3);
+    h.assertTrue(
+        stomachNode.used() == 3
+            && stomachNode.items() == 113
+            && stomachNode.contents().size() == 2
+            && stomachNode
+                .contents()
+                .getFirst()
+                .item()
+                .equals(BuiltInRegistries.ITEM.getKey(Items.BEEF))
+            && stomachNode.contents().getFirst().count() == 96
+            && stomachNode.contents().getLast().count() == 17,
+        "Stomach icons did not combine duplicate stacks into one item total");
     var b =
         new net.minecraft.network.RegistryFriendlyByteBuf(
             io.netty.buffer.Unpooled.buffer(), l.registryAccess());
     var packet =
         new org.Azkerash.create_bioships.development.testing.network.DigestiveDebugPayload(
-            body.getUniqueId(), List.of(node), false);
+            body.getUniqueId(), List.of(node, stomachNode), false);
     org.Azkerash.create_bioships.development.testing.network.DigestiveDebugPayload.CODEC.encode(
         b, packet);
     h.assertTrue(

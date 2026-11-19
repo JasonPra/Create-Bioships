@@ -107,3 +107,9 @@ for another player. This shared disclosure check can also serve a future player 
 
 Intestine holograms render at the end of the world pass, with see-through text, so
 opaque contraption geometry and entities do not cover their inventory labels.
+
+Stomach labels append native inventory item icons with combined quantities. Duplicate
+stacks of the same item type share one icon and a total (including totals above 64).
+The server includes all 27 stomach slots when computing these permission-filtered
+summaries. Icons and count text are projected beside the world label and remain
+visible through the contraption's hull.

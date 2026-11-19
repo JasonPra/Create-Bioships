@@ -19,6 +19,11 @@ import org.Azkerash.create_bioships.development.testing.network.*;
 @EventBusSubscriber(modid = "create_bioships", value = Dist.CLIENT)
 public final class IntestineDebugOverlay {
   private static boolean enabled;
+
+  private record ItemStrip(
+      float x, float y, float scale, List<DigestiveDebugPayload.ItemTotal> items) {}
+
+  private static final List<ItemStrip> ITEM_STRIPS = new ArrayList<>();
   private static net.minecraft.client.multiplayer.ClientLevel world;
   private static final Map<UUID, DigestiveDebugPayload> GRAPHS = new HashMap<>();
 
@@ -79,6 +84,7 @@ public final class IntestineDebugOverlay {
   @SubscribeEvent
   public static void render(RenderLevelStageEvent event) {
     if (!enabled || event.getStage() != RenderLevelStageEvent.Stage.AFTER_LEVEL) return;
+    ITEM_STRIPS.clear();
     var mc = Minecraft.getInstance();
     if (mc.level == null) return;
     var container = SubLevelContainer.getContainer(mc.level);
@@ -175,6 +181,23 @@ public final class IntestineDebugOverlay {
                   + node.items()
                   + " items";
           labels.add(new Label(at, text));
+          if (!node.contents().isEmpty()) {
+            var clip = new org.joml.Vector4f((float) at.x, (float) at.y, (float) at.z, 1);
+            event.getModelViewMatrix().transform(clip);
+            event.getProjectionMatrix().transform(clip);
+            if (clip.w > 0) {
+              float height = mc.getWindow().getGuiScaledHeight();
+              float scale = event.getProjectionMatrix().m11() * height * .01f / clip.w;
+              float x = (clip.x / clip.w + 1) * mc.getWindow().getGuiScaledWidth() / 2f;
+              float y = (1 - clip.y / clip.w) * height / 2f;
+              ITEM_STRIPS.add(
+                  new ItemStrip(
+                      x + (mc.font.width(text) / 2f + 6) * scale,
+                      y - 4 * scale,
+                      scale,
+                      node.contents()));
+            }
+          }
         }
     }
     buffers.endBatch(DevelopmentDebugRenderType.LINES);
@@ -215,6 +238,28 @@ public final class IntestineDebugOverlay {
     var mc = Minecraft.getInstance();
     if (mc.level == null) return;
     var g = event.getGuiGraphics();
+    if (mc.screen == null)
+      for (var strip : ITEM_STRIPS) {
+        g.pose().pushPose();
+        g.pose().translate(strip.x(), strip.y(), 0);
+        g.pose().scale(strip.scale(), strip.scale(), 1);
+        int x = 0;
+        for (var item : strip.items()) {
+          var stack =
+              net.minecraft.core.registries.BuiltInRegistries.ITEM
+                  .get(item.item())
+                  .getDefaultInstance();
+          if (stack.isEmpty()) continue;
+          String count = Integer.toString(item.count());
+          int width = Math.max(20, mc.font.width(count) + 4);
+          int iconX = x + width - 20;
+          g.renderItem(stack, iconX, 0);
+          g.renderItemDecorations(mc.font, stack, iconX, 0, count);
+          x += width;
+        }
+        g.pose().popPose();
+      }
+
     int y = mc.getWindow().getGuiScaledHeight() - 57;
     String label =
         "Toolkit: intestine graph · red=open · green=connected · " + GRAPHS.size() + " grids";
