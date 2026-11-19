@@ -103,3 +103,18 @@ Socket cups are hollow around smaller rounded knuckles, with tapered continuous 
 A rejected pose does not apply a global movement cooldown: collision-clear escape
 requests remain active. The final wall regression keeps requesting pressure against
 glass, then requests a real walk away and checks displacement and connected pivots.
+
+## Collision-safe support during steps
+
+The solid modular sole's rotated lowest corner raises the native point-foot IK
+target; tilting a wide foot no longer intentionally drives its edge below the floor.
+A rejected IK iteration first tries smaller steps from the last admitted angles.
+The sweep permits departure from existing physics contact only when penetration
+does not increase, while continuing to reject new obstacles and through-wall poses.
+If no pose is admissible, only that leg braces at its current physical socket
+orientation. Other legs keep their native actuation. These constraints connect
+creature parts to one another; they never anchor a foot to the world. Passive/dead
+limbs retain their existing adjustable socket limits.
+
+A continuous walking regression exercises forward and reverse travel, upright
+support, socket continuity, and knee height over repeated steps on a flat floor.

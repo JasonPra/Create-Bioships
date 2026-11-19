@@ -8,7 +8,6 @@ import java.util.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.*;
 import org.Azkerash.create_bioships.core.brain.BrainMotorControls;
-import org.joml.Intersectiond;
 import org.joml.Quaterniond;
 import org.joml.Quaterniondc;
 import org.joml.Vector3d;
@@ -18,9 +17,15 @@ import org.joml.Vector3d;
  */
 public final class ModularLimbCollisions {
   private static final Map<ServerSubLevel, Long> BLOCKED = new WeakHashMap<>();
+  private static final Map<BuiltLeg, Long> BRACE = new WeakHashMap<>();
+  private static final Map<BuiltLeg, double[]> ADMITTED = new WeakHashMap<>();
 
   public static boolean obstructed(ServerSubLevel owner) {
     return owner.getLevel().getGameTime() < BLOCKED.getOrDefault(owner, 0L);
+  }
+
+  public static boolean bracing(BuiltLeg leg, long time) {
+    return time < BRACE.getOrDefault(leg, 0L);
   }
 
   private ModularLimbCollisions() {}
@@ -32,7 +37,8 @@ public final class ModularLimbCollisions {
     try {
       walker.legs.removeIf(
           leg -> {
-            if (clear(owner, walker.getBlockPos(), leg.built)) return false;
+            if (admit(owner, walker.getBlockPos(), leg.built)) return false;
+            BRACE.put(leg.built, owner.getLevel().getGameTime() + 2);
             leg.built.prevDesired = null;
             leg.built.prevDesiredRot = null;
             BLOCKED.put(owner, owner.getLevel().getGameTime() + 20);
@@ -46,6 +52,32 @@ public final class ModularLimbCollisions {
       walker.legs.clear();
       walker.legs.addAll(all);
     }
+  }
+
+  /** Keep native actuation at a feasible pose when an IK iteration grazes terrain. */
+  private static boolean admit(ServerSubLevel owner, BlockPos core, BuiltLeg built) {
+    if (clear(owner, core, built)) {
+      ADMITTED.put(built, built.angles.clone());
+      return true;
+    }
+    var previous = ADMITTED.get(built);
+    if (previous == null || previous.length != built.angles.length) return false;
+    var desired = built.angles.clone();
+    var limits = (org.Azkerash.create_bioships.mixin.JointChainLimitsAccess) (Object) built.chain;
+    for (double fraction : new double[] {.5, .25, .125, 0}) {
+      for (int i = 0; i < desired.length; i++)
+        built.angles[i] =
+            Math.clamp(
+                previous[i] + fraction * (desired[i] - previous[i]),
+                limits.bioships$minimum()[i],
+                limits.bioships$maximum()[i]);
+      if (clear(owner, core, built)) {
+        ADMITTED.put(built, built.angles.clone());
+        return true;
+      }
+    }
+    System.arraycopy(desired, 0, built.angles, 0, desired.length);
+    return false;
   }
 
   /** Read the same forward-chain poses used by BuiltLegDriver, including socket rotation axes. */
@@ -167,25 +199,66 @@ public final class ModularLimbCollisions {
                   .getCollisionShape(part.getLevel(), cell)
                   .toAabbs()) {
             var obstacle = solid.move(cell).deflate(.025);
-            if (Intersectiond.testObOb(
-                center,
-                x,
-                y,
-                z,
-                extent,
-                new Vector3d(
-                    (obstacle.minX + obstacle.maxX) / 2,
-                    (obstacle.minY + obstacle.maxY) / 2,
-                    (obstacle.minZ + obstacle.maxZ) / 2),
-                new Vector3d(1, 0, 0),
-                new Vector3d(0, 1, 0),
-                new Vector3d(0, 0, 1),
-                new Vector3d(
-                    obstacle.getXsize() / 2, obstacle.getYsize() / 2, obstacle.getZsize() / 2)))
-              return false;
+            double depth = penetration(center, x, y, z, extent, obstacle);
+            if (depth <= 0) continue;
+            // Native physics permits a small resting contact. A sweep out of that contact
+            // must remain possible; rejecting its first sample strands the foot in ragdoll.
+            var initialRotation = new Quaterniond(pose.orientation());
+            var initialCenter =
+                initialRotation
+                    .transform(
+                        new Vector3d(
+                                (box.minX + box.maxX) / 2 - origin.x(),
+                                (box.minY + box.maxY) / 2 - origin.y(),
+                                (box.minZ + box.maxZ) / 2 - origin.z())
+                            .mul(scale))
+                    .add(from);
+            double initialDepth =
+                penetration(
+                    initialCenter,
+                    initialRotation.transform(new Vector3d(1, 0, 0)),
+                    initialRotation.transform(new Vector3d(0, 1, 0)),
+                    initialRotation.transform(new Vector3d(0, 0, 1)),
+                    extent,
+                    obstacle);
+            if (initialDepth <= 0 || depth > initialDepth + 1e-7) return false;
           }
       }
     }
     return true;
+  }
+
+  /** Separating-axis penetration of an oriented limb box against a world collision box. */
+  private static double penetration(
+      Vector3d center, Vector3d x, Vector3d y, Vector3d z, Vector3d extent, AABB obstacle) {
+    var world =
+        new Vector3d[] {new Vector3d(1, 0, 0), new Vector3d(0, 1, 0), new Vector3d(0, 0, 1)};
+    var local = new Vector3d[] {x, y, z};
+    var axes = new ArrayList<Vector3d>(15);
+    Collections.addAll(axes, world);
+    Collections.addAll(axes, local);
+    for (var a : local) for (var b : world) axes.add(a.cross(b, new Vector3d()));
+    var delta =
+        new Vector3d(
+                (obstacle.minX + obstacle.maxX) / 2,
+                (obstacle.minY + obstacle.maxY) / 2,
+                (obstacle.minZ + obstacle.maxZ) / 2)
+            .sub(center);
+    double minimum = Double.POSITIVE_INFINITY;
+    for (var axis : axes) {
+      if (axis.lengthSquared() < 1e-12) continue;
+      var a = new Vector3d(axis).normalize();
+      double radius =
+          Math.abs(a.dot(x)) * extent.x
+              + Math.abs(a.dot(y)) * extent.y
+              + Math.abs(a.dot(z)) * extent.z
+              + Math.abs(a.x) * obstacle.getXsize() / 2
+              + Math.abs(a.y) * obstacle.getYsize() / 2
+              + Math.abs(a.z) * obstacle.getZsize() / 2;
+      double depth = radius - Math.abs(a.dot(delta));
+      if (depth <= 0) return 0;
+      minimum = Math.min(minimum, depth);
+    }
+    return minimum;
   }
 }

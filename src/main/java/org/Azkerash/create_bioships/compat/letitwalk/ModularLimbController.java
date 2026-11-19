@@ -67,6 +67,8 @@ public final class ModularLimbController {
   private final ServerSubLevel body;
   private final Context nativeWalker;
   private final List<Pin> pins = new ArrayList<>();
+  private Set<BuiltLeg> pinnedLegs = Set.of();
+  private boolean pinsPowered;
   private final Map<UUID, Map<Long, net.minecraft.world.level.block.state.BlockState>> blockTypes =
       new HashMap<>();
   private int physicalContacts;
@@ -258,17 +260,22 @@ public final class ModularLimbController {
   }
 
   private void ensurePins() {
-    if (pins.size()
-            == nativeWalker.legs.stream()
-                .mapToInt(l -> SocketJointRig.base(l.built).joints.size())
-                .sum()
-        && !pins.isEmpty()
+    boolean powered = postureEnabled();
+    var wanted = new HashSet<BuiltLeg>();
+    for (var runtime : nativeWalker.legs)
+      if (!powered || ModularLimbCollisions.bracing(runtime.built, body.getLevel().getGameTime()))
+        wanted.add(runtime.built);
+    if (wanted.equals(pinnedLegs)
+        && powered == pinsPowered
         && pins.stream().allMatch(p -> p.handle.isValid())) return;
     releasePins();
+    pinnedLegs = wanted;
+    pinsPowered = powered;
     var container = SubLevelContainer.getContainer(body.getLevel());
     if (container == null) return;
     var pipeline = container.physicsSystem().getPipeline();
     for (var runtime : nativeWalker.legs) {
+      if (!wanted.contains(runtime.built)) continue;
       var leg = SocketJointRig.base(runtime.built);
       for (int i = 0; i < leg.joints.size(); i++) {
         var joint = leg.joints.get(i);
@@ -292,15 +299,26 @@ public final class ModularLimbController {
                 ConstraintJointAxis.LINEAR_Z,
                 ConstraintJointAxis.ANGULAR_Z);
         if (socketFrame == null) locked.add(ConstraintJointAxis.ANGULAR_Y);
+        var parentFrame = new Quaterniond(frame);
+        if (powered) {
+          // A rejected powered pose should brace at the current physical orientation,
+          // rather than unlock its swivel and let a planted knee collapse.
+          locked.addAll(EnumSet.allOf(ConstraintJointAxis.class));
+          parentFrame =
+              new Quaterniond(parent.logicalPose().orientation())
+                  .conjugate()
+                  .mul(child.logicalPose().orientation())
+                  .mul(frame);
+        }
         var pin =
             pipeline.addConstraint(
                 parent,
                 child,
                 new GenericConstraintConfiguration(
-                    v(joint.parentPlot), v(joint.childPlot), frame, frame, locked));
+                    v(joint.parentPlot), v(joint.childPlot), parentFrame, frame, locked));
         if (pin == null) continue;
         pin.setContactsEnabled(false);
-        pin.setLimit(ConstraintJointAxis.ANGULAR_X, -Math.PI * .85, Math.PI * .85);
+        if (!powered) pin.setLimit(ConstraintJointAxis.ANGULAR_X, -Math.PI * .85, Math.PI * .85);
         pins.add(new Pin(pin, leg, i, runtime.built));
       }
     }
@@ -313,6 +331,7 @@ public final class ModularLimbController {
   private void releasePins() {
     for (var pin : pins) if (pin.handle.isValid()) pin.handle.remove();
     pins.clear();
+    pinnedLegs = Set.of();
   }
 
   private boolean postureEnabled() {

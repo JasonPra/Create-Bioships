@@ -322,6 +322,33 @@ public final class SocketJointRig {
     }
   }
 
+  /** Raise the native point-foot target by the rotated physical sole's lowest corner. */
+  public static double soleClearance(BuiltLeg built) {
+    var rig = RIGS.get(built);
+    if (rig == null || Arrays.stream(rig.keys).anyMatch(k -> k != null && k.startsWith("c:")))
+      return 0;
+    var container =
+        dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(rig.owner.getLevel());
+    if (container == null || built.footPlot == null) return 0;
+    var entry = container.getSubLevel(rig.base.segments.getLast());
+    if (!(entry instanceof ServerSubLevel part)) return 0;
+    var rotation = new org.joml.Quaterniond(rig.owner.logicalPose().orientation());
+    for (int i = 0; i < built.angles.length; i++) {
+      var axis = built.restAxes[i];
+      rotation.mul(
+          new org.joml.Quaterniond().fromAxisAngleRad(axis[0], axis[1], axis[2], built.angles[i]));
+    }
+    var down = rotation.transformInverse(new org.joml.Vector3d(0, 1, 0));
+    double lowest = 0;
+    for (var box : LimbGroundContacts.shapes(part)) {
+      double x = (down.x < 0 ? box.maxX : box.minX) - built.footPlot.x;
+      double y = (down.y < 0 ? box.maxY : box.minY) - built.footPlot.y;
+      double z = (down.z < 0 ? box.maxZ : box.minZ) - built.footPlot.z;
+      lowest = Math.min(lowest, x * down.x + y * down.y + z * down.z);
+    }
+    return -lowest;
+  }
+
   public static SocketJointSettings limits(BuiltLeg built, int joint) {
     var rig = RIGS.get(built);
     if (rig == null || rig.keys[joint] == null) return null;
