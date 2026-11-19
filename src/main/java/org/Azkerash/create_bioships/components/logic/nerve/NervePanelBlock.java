@@ -15,7 +15,8 @@ import net.minecraft.world.phys.shapes.*;
 import org.Azkerash.create_bioships.core.*;
 
 /** A physical terminal only. Permissions belong to the grid, never this block. */
-public final class NervePanelBlock extends Block {
+public final class NervePanelBlock
+    extends org.Azkerash.create_bioships.components.logic.WaterloggedComponentBlock {
   public static final MapCodec<NervePanelBlock> CODEC = simpleCodec(NervePanelBlock::new);
 
   public NervePanelBlock(Properties properties) {
@@ -31,12 +32,15 @@ public final class NervePanelBlock extends Block {
 
   @Override
   protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+    super.createBlockStateDefinition(builder);
     builder.add(BlockStateProperties.FACING);
   }
 
   @Override
   public BlockState getStateForPlacement(BlockPlaceContext context) {
-    return defaultBlockState().setValue(BlockStateProperties.FACING, context.getClickedFace());
+    return placed(
+        defaultBlockState().setValue(BlockStateProperties.FACING, context.getClickedFace()),
+        context);
   }
 
   @Override

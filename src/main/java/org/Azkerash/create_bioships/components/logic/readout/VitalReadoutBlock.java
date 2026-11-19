@@ -12,7 +12,9 @@ import net.minecraft.world.phys.shapes.*;
 import org.Azkerash.create_bioships.components.logic.core.CoreGogglesDisplay;
 
 /** A mounted inspection surface. All data and presentation are shared with the core. */
-public final class VitalReadoutBlock extends Block implements EntityBlock {
+public final class VitalReadoutBlock
+    extends org.Azkerash.create_bioships.components.logic.WaterloggedComponentBlock
+    implements EntityBlock {
   public static final MapCodec<VitalReadoutBlock> CODEC = simpleCodec(VitalReadoutBlock::new);
 
   public VitalReadoutBlock(Properties properties) {
@@ -28,12 +30,15 @@ public final class VitalReadoutBlock extends Block implements EntityBlock {
 
   @Override
   protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+    super.createBlockStateDefinition(builder);
     builder.add(BlockStateProperties.FACING);
   }
 
   @Override
   public BlockState getStateForPlacement(BlockPlaceContext context) {
-    return defaultBlockState().setValue(BlockStateProperties.FACING, context.getClickedFace());
+    return placed(
+        defaultBlockState().setValue(BlockStateProperties.FACING, context.getClickedFace()),
+        context);
   }
 
   @Override

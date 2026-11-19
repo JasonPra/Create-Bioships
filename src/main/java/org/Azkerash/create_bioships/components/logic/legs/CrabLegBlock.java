@@ -18,7 +18,8 @@ import org.Azkerash.create_bioships.core.legs.SubLevelLegs;
  * Passive horizontal socket. The owning grid connects generated limb sublevels to native Let It
  * Walk controls.
  */
-public final class CrabLegBlock extends Block
+public final class CrabLegBlock
+    extends org.Azkerash.create_bioships.components.logic.WaterloggedComponentBlock
     implements BlockSubLevelAssemblyListener,
         com.simibubi.create.content.equipment.wrench.IWrenchable {
   public static final net.minecraft.world.level.block.state.properties.IntegerProperty HEIGHT =
@@ -50,6 +51,7 @@ public final class CrabLegBlock extends Block
 
   @Override
   protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+    super.createBlockStateDefinition(builder);
     builder.add(BlockStateProperties.HORIZONTAL_FACING, HEIGHT);
   }
 
@@ -57,7 +59,8 @@ public final class CrabLegBlock extends Block
   public BlockState getStateForPlacement(BlockPlaceContext context) {
     var face = context.getClickedFace();
     if (!face.getAxis().isHorizontal()) return null;
-    var state = defaultBlockState().setValue(BlockStateProperties.HORIZONTAL_FACING, face);
+    var state =
+        placed(defaultBlockState().setValue(BlockStateProperties.HORIZONTAL_FACING, face), context);
     return state.canSurvive(context.getLevel(), context.getClickedPos()) ? state : null;
   }
 

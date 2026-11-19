@@ -10,7 +10,8 @@ import net.minecraft.world.level.block.state.properties.*;
 import net.minecraft.world.phys.shapes.*;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
 
-public final class IntestineBlock extends Block
+public final class IntestineBlock
+    extends org.Azkerash.create_bioships.components.logic.WaterloggedComponentBlock
     implements com.simibubi.create.content.equipment.wrench.IWrenchable {
   public static final Map<Direction, BooleanProperty> CONNECTIONS =
       Map.of(
@@ -50,11 +51,12 @@ public final class IntestineBlock extends Block
   }
 
   protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+    super.createBlockStateDefinition(builder);
     for (var property : CONNECTIONS.values()) builder.add(property);
   }
 
   public BlockState getStateForPlacement(BlockPlaceContext context) {
-    var state = defaultBlockState();
+    var state = placed(defaultBlockState(), context);
     for (var e : CONNECTIONS.entrySet())
       state =
           state.setValue(
@@ -72,7 +74,13 @@ public final class IntestineBlock extends Block
       LevelAccessor level,
       BlockPos pos,
       BlockPos otherPos) {
-    return state.setValue(CONNECTIONS.get(direction), compatible(other, direction));
+    return super.updateShape(
+        state.setValue(CONNECTIONS.get(direction), compatible(other, direction)),
+        direction,
+        other,
+        level,
+        pos,
+        otherPos);
   }
 
   protected void onPlace(

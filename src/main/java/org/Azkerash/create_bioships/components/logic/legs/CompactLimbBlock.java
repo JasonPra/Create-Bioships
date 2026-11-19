@@ -9,7 +9,8 @@ import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.phys.shapes.*;
 
 /** Internal collision tissue for generated native limb sublevels; never a player item. */
-public final class CompactLimbBlock extends Block {
+public final class CompactLimbBlock
+    extends org.Azkerash.create_bioships.components.logic.WaterloggedComponentBlock {
   public static final IntegerProperty BONE = IntegerProperty.create("bone", 0, 2);
   public static final IntegerProperty HEIGHT = IntegerProperty.create("height", 1, 3);
   public static final IntegerProperty FILL = IntegerProperty.create("fill", 1, 64);
@@ -28,6 +29,7 @@ public final class CompactLimbBlock extends Block {
 
   @Override
   protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) {
+    super.createBlockStateDefinition(b);
     b.add(BONE, HEIGHT, FILL);
   }
 

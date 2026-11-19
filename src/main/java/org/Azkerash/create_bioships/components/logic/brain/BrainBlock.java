@@ -17,7 +17,8 @@ import org.Azkerash.create_bioships.core.*;
 import org.Azkerash.create_bioships.core.brain.SubLevelBrains;
 
 /** Brain tissue and its movable access face. The block stores no inventory or behavior data. */
-public final class BrainBlock extends Block
+public final class BrainBlock
+    extends org.Azkerash.create_bioships.components.logic.WaterloggedComponentBlock
     implements net.minecraft.world.level.block.EntityBlock,
         BlockSubLevelAssemblyListener,
         com.simibubi.create.content.equipment.wrench.IWrenchable {
@@ -68,6 +69,7 @@ public final class BrainBlock extends Block
 
   @Override
   protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+    super.createBlockStateDefinition(builder);
     builder.add(PORT, FORMED);
   }
 
@@ -80,7 +82,7 @@ public final class BrainBlock extends Block
       if (body != null && !SubLevelBrains.get(body).canAdd(pos)) return null;
     } else if (!org.Azkerash.create_bioships.client.components.BrainPlacementView.canPlace(
         level, pos)) return null;
-    return defaultBlockState();
+    return placed(defaultBlockState(), context);
   }
 
   private static void changed(Level level, BlockPos pos) {
