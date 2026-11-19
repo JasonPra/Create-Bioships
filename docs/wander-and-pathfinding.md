@@ -11,3 +11,16 @@ The grid saves `hasLegs`, `hasFins`, and `hasWallClimbers` in SubLevelData. One 
 Ground routes and motor requests require ground legs; water routes and vertical motor requests require fins. Wander selects water routes only when the creature has fins and is underwater. No swimming actuator or fin block is introduced in this batch. No ordinary crab leg anchors to terrain, and jumping is not implemented.
 
 The locomotion exhibit's START installs Wander, RESET returns the subject to its unassembled state, and hunger stays paused. Existing assembled exhibit subjects receive the card once on loading. Regression coverage includes ground detours/steps, 3D water volumes, search budgets, capability gating, actual Wander movement, card removal, and START/RESET.
+
+The shared planner supports eight horizontal ground directions (including bounded
+up/down step variants) and all 26 neighboring directions in water. Edge costs use
+actual diagonal distance; the heuristic uses octile distance on land and the
+corresponding 3D diagonal distance in water. Neighbor offsets are precomputed and
+passability results are reused within each search.
+
+A diagonal is legal only when every crossed orthogonal side/corner cell is clear;
+water-space diagonals involving three axes check all six intermediate corner cells.
+The native world adapter samples the swept creature envelope between nodes rather
+than checking only destination occupancy. Existing distance, expansion, loaded-chunk
+and appendage-mode restrictions remain in force. Diagonals do not grant swimming
+capability to land legs or permit movement through a blocked corner.

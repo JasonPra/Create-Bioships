@@ -33,6 +33,20 @@ public final class SubLevelPathfinder {
 
   private record Node(BlockPos cell, double score) {}
 
+  private static final List<BlockPos> GROUND_OFFSETS = offsets(false),
+      WATER_OFFSETS = offsets(true);
+
+  private static List<BlockPos> offsets(boolean water) {
+    var result = new ArrayList<BlockPos>();
+    for (int x = -1; x <= 1; x++)
+      for (int y = -1; y <= 1; y++)
+        for (int z = -1; z <= 1; z++) {
+          if (x == 0 && z == 0 && (!water || y == 0)) continue;
+          result.add(new BlockPos(x, y, z));
+        }
+    return List.copyOf(result);
+  }
+
   private SubLevelPathfinder() {}
 
   public static boolean allowed(ServerSubLevel body, Mode mode) {
@@ -104,18 +118,34 @@ public final class SubLevelPathfinder {
                 && terrainClear(level, at(cell.getX(), cell.getY() + stepHeight, cell.getZ()));
           }
 
-          public boolean edgeClear(BlockPos from, BlockPos to, Mode kind) {
-            if (kind != Mode.GROUND || from.getY() == to.getY()) return true;
-            if (Math.abs(to.getY() - from.getY()) > stepHeight + 1e-6) return false;
-            int high = Math.max(from.getY(), to.getY());
-            for (double t : new double[] {0, .5, 1})
+          private boolean swept(AABB from, AABB to) {
+            for (double t : new double[] {0, .25, .5, .75, 1})
               if (!terrainClear(
                   level,
-                  at(
-                      from.getX() + (to.getX() - from.getX()) * t,
-                      high,
-                      from.getZ() + (to.getZ() - from.getZ()) * t))) return false;
+                  from.move(
+                      (to.minX - from.minX) * t,
+                      (to.minY - from.minY) * t,
+                      (to.minZ - from.minZ) * t))) return false;
             return true;
+          }
+
+          public boolean edgeClear(BlockPos from, BlockPos to, Mode kind) {
+            if (kind == Mode.GROUND && Math.abs(to.getY() - from.getY()) > stepHeight + 1e-6)
+              return false;
+            // Begin at the actual pose, not a rounded grid centre that could overlap a wall.
+            var begin = from.equals(origin) ? box : at(from.getX(), from.getY(), from.getZ());
+            var end = at(to.getX(), to.getY(), to.getZ());
+            if (kind == Mode.GROUND && from.getY() != to.getY()) {
+              int high = Math.max(from.getY(), to.getY());
+              begin = begin.move(0, high - from.getY(), 0);
+              end = end.move(0, high - to.getY(), 0);
+            }
+            if (swept(begin, end)) return true;
+            // Front feet reach a stair before the hull centre does; reserve native lift.
+            return kind == Mode.GROUND
+                && from.getY() == to.getY()
+                && stepHeight > 0
+                && swept(begin.move(0, stepHeight, 0), end.move(0, stepHeight, 0));
           }
         };
     var cells = search(space, start, goal, mode, 256);
@@ -206,26 +236,22 @@ public final class SubLevelPathfinder {
         Collections.reverse(result);
         return result.isEmpty() ? List.of(start) : List.copyOf(result);
       }
-      var next = new ArrayList<BlockPos>();
-      for (var direction : Direction.Plane.HORIZONTAL) {
-        var p = current.relative(direction);
-        next.add(p);
-        if (mode == Mode.GROUND) {
-          next.add(p.above());
-          next.add(p.below());
-        }
-      }
-      if (mode == Mode.WATER) {
-        next.add(current.above());
-        next.add(current.below());
-      }
-      for (var p : next) {
+      for (var offset : mode == Mode.GROUND ? GROUND_OFFSETS : WATER_OFFSETS) {
+        var p = current.offset(offset);
         if (closed.contains(p)
             || Math.abs(p.getY() - start.getY()) > 8
             || p.distManhattan(start) > 32
             || !memo.computeIfAbsent(p, k -> world.passable(k, mode))) continue;
-        if (!world.edgeClear(current, p, mode)) continue;
-        double cost = costs.get(current) + 1 + Math.abs(p.getY() - current.getY()) * .3;
+        if (!cornerClear(world, current, p, mode, memo) || !world.edgeClear(current, p, mode))
+          continue;
+        double edge =
+            mode == Mode.GROUND
+                ? Math.hypot(offset.getX(), offset.getZ()) + Math.abs(offset.getY()) * .3
+                : Math.sqrt(
+                    offset.getX() * offset.getX()
+                        + offset.getY() * offset.getY()
+                        + offset.getZ() * offset.getZ());
+        double cost = costs.get(current) + edge;
         if (cost >= costs.getOrDefault(p, Double.POSITIVE_INFINITY)) continue;
         costs.put(p, cost);
         parents.put(p, current);
@@ -235,10 +261,32 @@ public final class SubLevelPathfinder {
     return List.of();
   }
 
+  /** Every crossed side/corner cell must be clear; a free diagonal endpoint is not enough. */
+  private static boolean cornerClear(
+      Space world, BlockPos from, BlockPos to, Mode mode, Map<BlockPos, Boolean> memo) {
+    int dx = to.getX() - from.getX(),
+        dy = mode == Mode.WATER ? to.getY() - from.getY() : 0,
+        dz = to.getZ() - from.getZ();
+    int mask = (dx != 0 ? 1 : 0) | (dy != 0 ? 2 : 0) | (dz != 0 ? 4 : 0);
+    if (Integer.bitCount(mask) < 2) return true;
+    for (int subset = (mask - 1) & mask; subset != 0; subset = (subset - 1) & mask) {
+      var side =
+          from.offset(
+              (subset & 1) != 0 ? dx : 0, (subset & 2) != 0 ? dy : 0, (subset & 4) != 0 ? dz : 0);
+      if (!memo.computeIfAbsent(side, p -> world.passable(p, mode))) return false;
+    }
+    return true;
+  }
+
   private static double heuristic(BlockPos from, BlockPos to, Mode mode) {
-    return Math.abs(from.getX() - to.getX())
-        + Math.abs(from.getZ() - to.getZ())
-        + (mode == Mode.GROUND ? .3 : 1) * Math.abs(from.getY() - to.getY());
+    int x = Math.abs(from.getX() - to.getX()),
+        y = Math.abs(from.getY() - to.getY()),
+        z = Math.abs(from.getZ() - to.getZ());
+    if (mode == Mode.GROUND) return Math.max(x, z) + (Math.sqrt(2) - 1) * Math.min(x, z) + .3 * y;
+    int lo = Math.min(x, Math.min(y, z)),
+        hi = Math.max(x, Math.max(y, z)),
+        mid = x + y + z - lo - hi;
+    return Math.sqrt(3) * lo + Math.sqrt(2) * (mid - lo) + (hi - mid);
   }
 
   private static boolean terrainClear(net.minecraft.server.level.ServerLevel level, AABB box) {
