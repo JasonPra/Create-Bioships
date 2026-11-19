@@ -94,3 +94,8 @@ articulated envelope before each movement request. Wander counts reduced remaini
 route distance as progress; rocking against a wall cannot keep a route alive forever.
 The regression repeatedly requests motion into one-block glass and checks that the
 body remains bounded, joints remain connected, and standing stays enabled.
+
+The refined shell meshes use the correct U/V axes on side faces and align each UV
+span with its model-space span. All 4,446 visible limb quads retain one texture pixel
+per model pixel; increasing segment length no longer stretches a side-face patch.
+Socket cups are hollow around smaller rounded knuckles, with tapered continuous bones.
