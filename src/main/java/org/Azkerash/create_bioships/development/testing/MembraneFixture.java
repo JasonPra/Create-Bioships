@@ -22,6 +22,7 @@ import org.Azkerash.create_bioships.core.*;
 import org.Azkerash.create_bioships.core.access.SubLevelPermissions;
 
 /** Walk-through native Biomancy membrane, owner terminal and two individually named guests. */
+@net.neoforged.fml.common.EventBusSubscriber(modid = "create_bioships")
 public final class MembraneFixture {
   private static final String MARK = "create_bioships:membrane_fixture";
 
@@ -39,6 +40,9 @@ public final class MembraneFixture {
     var result = new ArrayList<BlockPos>();
     var base = base(level);
     for (int x = -5; x <= 5; x++) for (int y = 0; y <= 5; y++) result.add(base.offset(x, y, 0));
+    // A stable flesh footing outside the two-block-wide opening prevents the tall wall tipping.
+    for (int x = -5; x <= 5; x++)
+      if (x < 0 || x > 1) for (int z : new int[] {-1, 1}) result.add(base.offset(x, 0, z));
     result.add(base.offset(-2, 1, -1));
     return result;
   }
@@ -64,14 +68,14 @@ public final class MembraneFixture {
     for (var e :
         level.getEntitiesOfClass(
             Entity.class, new AABB(base).inflate(20), e -> e.getTags().contains(MARK))) e.discard();
-    for (int x = -8; x <= 8; x++)
+    for (int x = -10; x <= 10; x++)
       for (int z = -9; z <= 7; z++) {
         level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 2);
-        if (Math.abs(x) <= 6 && Math.abs(z) <= 6)
+        if (Math.abs(x) <= 8 && Math.abs(z) <= 6)
           for (int y = 0; y <= 6; y++)
             level.setBlock(
                 base.offset(x, y, z),
-                (Math.abs(x) == 6 || Math.abs(z) == 6 || y == 6
+                (Math.abs(x) == 8 || Math.abs(z) == 6 || y == 6
                         ? DevelopmentTestBlocks.GLASS.get()
                         : Blocks.AIR)
                     .defaultBlockState(),
@@ -138,7 +142,7 @@ public final class MembraneFixture {
             level,
             origin,
             cells(level),
-            new BoundingBox3i(base.offset(-5, 0, -1), base.offset(5, 5, 0)));
+            new BoundingBox3i(base.offset(-5, 0, -1), base.offset(5, 5, 1)));
     if (body == null) return 0;
     CoreAssemblyRules.changed(level, body.getPlot().getCenterBlock());
     var tag = body.getUserDataTag().copy();
@@ -152,6 +156,10 @@ public final class MembraneFixture {
     var pig = EntityType.PIG.create(level);
     if (cow != null) guest(level, cow, base.offset(3, 0, -3), "Juniper");
     if (pig != null) guest(level, pig, base.offset(-3, 0, -3), "Truffle");
+    var guests = body.getUserDataTag().copy();
+    if (cow != null) guests.putUUID("MembraneCow", cow.getUUID());
+    if (pig != null) guests.putUUID("MembranePig", pig.getUUID());
+    body.setUserDataTag(guests);
     explain(level, "Running: first development player owns this subject");
     return 1;
   }
@@ -160,10 +168,127 @@ public final class MembraneFixture {
     mob.setPos(pos.getX() + .5, pos.getY(), pos.getZ() + .5);
     mob.setCustomName(Component.literal(name));
     mob.setCustomNameVisible(true);
-    mob.setNoAi(true);
+    mob.setNoAi(false);
+    configureGuest(mob);
     mob.setPersistenceRequired();
     mob.addTag(MARK);
-    level.addFreshEntity(mob);
+    boolean added = level.addFreshEntity(mob);
+    if (Boolean.getBoolean("core.membraneTrace"))
+      System.out.println(
+          "MEMBRANE_GUEST_SPAWN " + name + " added=" + added + " pos=" + mob.position());
+  }
+
+  public static java.util.List<Mob> guests(ServerLevel level) {
+    var grid = body(level);
+    var found = new java.util.ArrayList<Mob>();
+    if (grid != null) {
+      var tag = grid.getUserDataTag();
+      for (var key : java.util.List.of("MembraneCow", "MembranePig"))
+        if (tag.hasUUID(key)
+            && level.getEntity(tag.getUUID(key)) instanceof Mob mob
+            && !mob.isRemoved()) found.add(mob);
+    }
+    if (!found.isEmpty()) return found;
+    return level.getEntitiesOfClass(
+        Mob.class, new AABB(base(level)).inflate(40), e -> e.getTags().contains(MARK));
+  }
+
+  private static void configureGuest(Mob mob) {
+    if (mob.goalSelector.getAvailableGoals().stream()
+        .anyMatch(g -> g.getGoal() instanceof GuestCircuit)) return;
+    mob.setNoAi(false);
+    mob.goalSelector.removeAllGoals(g -> true);
+    mob.targetSelector.removeAllGoals(g -> true);
+    mob.goalSelector.addGoal(0, new GuestCircuit(mob));
+  }
+
+  @net.neoforged.bus.api.SubscribeEvent
+  public static void maintainGuests(net.neoforged.neoforge.event.tick.ServerTickEvent.Post e) {
+    if (e.getServer().getTickCount() % 20 != 0) return;
+    for (var level : e.getServer().getAllLevels())
+      if (CoreTestState.get(level).membraneBuilt && body(level) != null)
+        for (var mob : guests(level)) configureGuest(mob);
+  }
+
+  /** Fixture-only waypoints keep ordinary navigation active and deliberately retry the membrane. */
+  private static final class GuestCircuit extends net.minecraft.world.entity.ai.goal.Goal {
+    private final Mob mob;
+    private static final String PHASE = "create_bioships:membrane_phase",
+        ALLOWED = "create_bioships:membrane_allowed";
+
+    GuestCircuit(Mob mob) {
+      this.mob = mob;
+      setFlags(java.util.EnumSet.of(Flag.MOVE, Flag.LOOK));
+    }
+
+    @Override
+    public boolean canUse() {
+      return mob.isAlive() && mob.level() instanceof ServerLevel level && body(level) != null;
+    }
+
+    @Override
+    public boolean canContinueToUse() {
+      return canUse();
+    }
+
+    @Override
+    public void tick() {
+      var level = (ServerLevel) mob.level();
+      var grid = body(level);
+      if (grid == null) return;
+      var data = mob.getPersistentData();
+      boolean allowed = SubLevelPermissions.get(grid).permits(mob.getUUID());
+      int phase = data.getInt(PHASE);
+      var origin = grid.getPlot().getCenterBlock().below(4);
+      var local = grid.logicalPose().transformPositionInverse(mob.position());
+      if (allowed != data.getBoolean(ALLOWED)) {
+        phase = allowed ? 0 : (local.z > origin.getZ() + .5 ? 10 : 0);
+        data.putBoolean(ALLOWED, allowed);
+        data.putInt(PHASE, phase);
+        mob.getNavigation().stop();
+      }
+      double lane = mob.getType() == EntityType.COW ? 1 : 0;
+      double side = mob.getType() == EntityType.COW ? 7 : -7;
+      Vec3 target =
+          switch (phase) {
+            case 10 -> Vec3.atBottomCenterOf(origin).add(side, 0, 3);
+            case 11 -> Vec3.atBottomCenterOf(origin).add(side, 0, -3);
+            case 0, 12 -> Vec3.atBottomCenterOf(origin).add(lane, 0, -2);
+            default -> Vec3.atBottomCenterOf(origin).add(lane, 0, 3);
+          };
+      if (phase == 2) {
+        mob.getNavigation().stop();
+        return;
+      }
+      var world = grid.logicalPose().transformPosition(target);
+      double distance = Math.hypot(mob.getX() - world.x, mob.getZ() - world.z);
+      if (distance < .18) {
+        phase = phase == 0 ? 1 : phase == 10 ? 11 : phase == 11 ? 12 : phase == 12 ? 13 : 2;
+        data.putInt(PHASE, phase);
+        mob.getNavigation().stop();
+        return;
+      }
+      if (phase == 1 || phase == 13 || distance < 3) {
+        mob.getNavigation().stop();
+        mob.getMoveControl().setWantedPosition(world.x, world.y, world.z, 1.1);
+      } else if (mob.tickCount % 10 == 0 || mob.getNavigation().isDone())
+        mob.getNavigation().moveTo(world.x, world.y, world.z, 1.1);
+      if (Boolean.getBoolean("core.membraneTrace") && mob.tickCount % 80 == 0)
+        System.out.println(
+            "MEMBRANE_CIRCUIT "
+                + mob.getName().getString()
+                + " phase="
+                + phase
+                + " allowed="
+                + allowed
+                + " pos="
+                + mob.position()
+                + " target="
+                + world
+                + " up="
+                + grid.logicalPose().orientation());
+      mob.getLookControl().setLookAt(world.x, world.y + mob.getEyeHeight(), world.z);
+    }
   }
 
   public static String status(ServerLevel level) {
@@ -193,7 +318,7 @@ public final class MembraneFixture {
                     + "Left: START · Right: RESET\n"
                     + "Enter the glass doors, then use the Nerve Panel.\n"
                     + "Owner passes automatically; add/remove named guests.\n"
-                    + "Juniper and Truffle have AI paused for repeatable checks.\n"
+                    + "Guests cross when allowed; revoking sends them around to retry.\n"
                     + "Players tab: add players or confirm an ownership transfer.\n"
                     + result),
             level.registryAccess()));
