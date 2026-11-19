@@ -44,6 +44,9 @@ public final class ModularLimbTests {
               "Native assembler rejected our joint/segment/foot topology");
           h.assertTrue(ModularLimbController.limbCount(body) == 4, "Expected four modular limbs");
           h.assertTrue(
+              ModularLimbController.axisCount(body) == 16,
+              "Synovial sockets did not expose both native axes");
+          h.assertTrue(
               ModularLimbController.segments(body).size() == 8,
               "Expected two linked sublevels per limb");
           h.assertTrue(

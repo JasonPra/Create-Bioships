@@ -18,11 +18,21 @@ public final class WanderBehavior implements BrainBehavior {
   private int waypoint;
   private long nextDecision = Long.MIN_VALUE, lastProgress;
   private Vec3 previous;
+  private long motionRevision = Long.MIN_VALUE;
   private SubLevelPathfinder.Mode mode = SubLevelPathfinder.Mode.GROUND;
 
   @Override
   public void tick(ServerSubLevel body) {
     long now = body.getLevel().getGameTime();
+    long revision =
+        org.Azkerash.create_bioships.core.locomotion.SubLevelLocomotion.motionRevision(body);
+    if (revision != motionRevision) {
+      motionRevision = revision;
+      route = List.of();
+      waypoint = 0;
+      nextDecision = Long.MIN_VALUE;
+    }
+
     var flags = org.Azkerash.create_bioships.core.locomotion.SubLevelLocomotion.get(body);
     var location = SubLevelPathfinder.position(body);
     var selected =

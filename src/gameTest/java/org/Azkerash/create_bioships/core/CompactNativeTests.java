@@ -226,6 +226,67 @@ public final class CompactNativeTests {
                         + ": "
                         + SubLevelLegs.collisionBounds(body));
               }
+              if (editRestPose && tick == 180) {
+                for (int x = 7; x <= 9; x++)
+                  for (int z = -1; z <= 1; z++)
+                    level.setBlock(base.offset(x, 0, z), Blocks.BEDROCK.defaultBlockState(), 3);
+                for (var pose : SubLevelLegs.poses(body))
+                  for (int i = 0; i < 3; i++)
+                    new org.Azkerash.create_bioships.compat.letitwalk.SocketJointSettings(0, 0)
+                        .save(
+                            body,
+                            org.Azkerash.create_bioships.compat.letitwalk.SocketJointSettings
+                                .compact(pose.cell(), i));
+                var goal =
+                    org.Azkerash.create_bioships
+                        .core
+                        .pathfinding
+                        .SubLevelPathfinder
+                        .position(body)
+                        .add(8, 1, 0);
+                h.assertTrue(
+                    org.Azkerash.create_bioships.core.locomotion.SubLevelLocomotion.stepHeight(body)
+                        == 0,
+                    "Locked socket limits did not reach the grid's motion profile");
+                h.assertTrue(
+                    !org.Azkerash.create_bioships
+                        .core
+                        .pathfinding
+                        .SubLevelPathfinder
+                        .find(
+                            body,
+                            goal,
+                            org.Azkerash.create_bioships
+                                .core
+                                .pathfinding
+                                .SubLevelPathfinder
+                                .Mode
+                                .GROUND)
+                        .found(),
+                    "Pathfinder routed locked joints up a full block");
+                for (var pose : SubLevelLegs.poses(body))
+                  for (int i = 0; i < 3; i++)
+                    org.Azkerash.create_bioships.compat.letitwalk.SocketJointSettings.DEFAULT.save(
+                        body,
+                        org.Azkerash.create_bioships.compat.letitwalk.SocketJointSettings.compact(
+                            pose.cell(), i));
+                h.assertTrue(
+                    org.Azkerash.create_bioships
+                        .core
+                        .pathfinding
+                        .SubLevelPathfinder
+                        .find(
+                            body,
+                            goal,
+                            org.Azkerash.create_bioships
+                                .core
+                                .pathfinding
+                                .SubLevelPathfinder
+                                .Mode
+                                .GROUND)
+                        .found(),
+                    "Default socket limits prevented an ordinary stair route");
+              }
               if (editRestPose && tick == 240) {
                 tuned = SubLevelLegs.poses(body).getFirst().cell();
                 originalSegments =
@@ -278,17 +339,22 @@ public final class CompactNativeTests {
                   var delayed = saved.copy();
                   var pending = delayed.getList("Legs", 10).getCompound(0);
                   var missing = UUID.randomUUID();
-                  pending
-                      .getCompound("Leg")
-                      .getList("segments", 10)
-                      .getCompound(0)
-                      .putUUID("id", missing);
-                  pending
-                      .getCompound("Runtime")
-                      .getCompound("built")
-                      .getList("segments", 10)
-                      .getCompound(0)
-                      .putUUID("id", missing);
+                  var oldId =
+                      pending
+                          .getCompound("Leg")
+                          .getList("segments", 10)
+                          .getCompound(0)
+                          .getUUID("id");
+                  for (var definition :
+                      List.of(
+                          pending.getCompound("Leg"),
+                          pending.getCompound("Runtime").getCompound("built"),
+                          pending.getCompound("Runtime").getCompound("BioshipSocketBase")))
+                    for (var rawSegment : definition.getList("segments", 10)) {
+                      var segment = (net.minecraft.nbt.CompoundTag) rawSegment;
+                      if (segment.hasUUID("id") && segment.getUUID("id").equals(oldId))
+                        segment.putUUID("id", missing);
+                    }
                   var rootData = body.getUserDataTag().copy();
                   rootData.put(CompactLimbController.DATA, delayed);
                   body.setUserDataTag(rootData);

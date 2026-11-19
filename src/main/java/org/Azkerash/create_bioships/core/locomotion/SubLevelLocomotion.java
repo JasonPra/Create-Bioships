@@ -24,6 +24,40 @@ public final class SubLevelLocomotion {
           java.util.function.Function<ServerSubLevel, net.minecraft.world.phys.AABB>>
       BOUNDS = new LinkedHashMap<>();
 
+  private static final Map<ResourceLocation, java.util.function.Function<ServerSubLevel, Double>>
+      STEP_HEIGHTS = new LinkedHashMap<>();
+
+  public static long motionRevision(ServerSubLevel body) {
+    var root = SubLevelCreatureParts.root(body).getUserDataTag();
+    return root == null ? 0 : root.getLong("create_bioships:motion_revision");
+  }
+
+  public static void invalidateRoutes(ServerSubLevel body) {
+    body = SubLevelCreatureParts.root(body);
+    var tag =
+        body.getUserDataTag() == null
+            ? new net.minecraft.nbt.CompoundTag()
+            : body.getUserDataTag().copy();
+    tag.putLong("create_bioships:motion_revision", motionRevision(body) + 1);
+    body.setUserDataTag(tag);
+  }
+
+  public static void registerStepHeight(
+      ResourceLocation type, java.util.function.Function<ServerSubLevel, Double> provider) {
+    if (STEP_HEIGHTS.putIfAbsent(type, provider) != null)
+      throw new IllegalArgumentException("Duplicate step-height provider: " + type);
+  }
+
+  public static double stepHeight(ServerSubLevel body) {
+    body = SubLevelCreatureParts.root(body);
+    double height = 1;
+    for (var provider : STEP_HEIGHTS.values()) {
+      var limit = provider.apply(body);
+      if (limit != null) height = Math.min(height, Math.max(0, limit));
+    }
+    return height;
+  }
+
   public static void registerBounds(
       ResourceLocation type,
       java.util.function.Function<ServerSubLevel, net.minecraft.world.phys.AABB> provider) {
@@ -39,7 +73,10 @@ public final class SubLevelLocomotion {
             b.minX(), b.minY(), b.minZ(), b.maxX(), b.maxY(), b.maxZ());
     for (var member : SubLevelCreatureParts.members(body)) {
       var box = member.boundingBox();
-      result = result.minmax(new net.minecraft.world.phys.AABB(box.minX(), box.minY(), box.minZ(), box.maxX(), box.maxY(), box.maxZ()));
+      result =
+          result.minmax(
+              new net.minecraft.world.phys.AABB(
+                  box.minX(), box.minY(), box.minZ(), box.maxX(), box.maxY(), box.maxZ()));
       for (var provider : BOUNDS.values()) {
         var extra = provider.apply(member);
         if (extra != null) result = result.minmax(extra);

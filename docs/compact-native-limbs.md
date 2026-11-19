@@ -27,6 +27,8 @@ Height changes grow geometry in place using native IK to retain both socket and 
 
 Our wrench and Positioner resolve hits on generated tissue to the owning socket. Removing a socket deletes all three generated sublevels and uses the normal Create-based component drop path. Removing a compact socket or modular joint clears only that component's saved tuning. A replacement receives fresh native segment identities and default settings, including same-tick replacements. Old streamed-in segments are rejected by their saved generation identity.
 
+Compact sockets now provide three independent combined swivel/bend joints; see [socket-joints.md](socket-joints.md). Clicking a visible joint opens its own limits; the attachment block remains the general-settings target.
+
 The Positioner Reset button restores the selected compact socket to height 1, rest angle 0, stiffness 1 and damping 1, or resets the selected modular joint's rest angle and tuning. Reach and held-tool validation also apply to Reset. Shared creature health, armor and trust are unaffected.
 
 Modular feet include a full-height ankle and hinge models include connectors on each attachment axis. Their collision shape includes the ankle. Native pivot separation is checked during standing and walking; the original visible gaps were missing model geometry.

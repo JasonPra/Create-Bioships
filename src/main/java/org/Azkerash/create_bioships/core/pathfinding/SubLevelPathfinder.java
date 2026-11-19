@@ -80,6 +80,7 @@ public final class SubLevelPathfinder {
             : bounds;
     var origin = start;
     var reference = here;
+    double stepHeight = mode == Mode.GROUND ? SubLevelLocomotion.stepHeight(body) : 1;
     Space space =
         new Space() {
           private AABB at(double x, double y, double z) {
@@ -94,11 +95,18 @@ public final class SubLevelPathfinder {
               if (!level.getBlockState(below).isFaceSturdy(level, below, Direction.UP))
                 return false;
             } else if (!level.getFluidState(cell).is(FluidTags.WATER)) return false;
-            return terrainClear(level, at(cell.getX(), cell.getY(), cell.getZ()));
+            if (terrainClear(level, at(cell.getX(), cell.getY(), cell.getZ()))) return true;
+            // Native stepping starts when the forward feet meet a ledge, before the hull
+            // centre crosses it. Reserve that bounded lift instead of treating the swept
+            // leg envelope as a solid wall all the way down to the old floor.
+            return kind == Mode.GROUND
+                && stepHeight > 0
+                && terrainClear(level, at(cell.getX(), cell.getY() + stepHeight, cell.getZ()));
           }
 
           public boolean edgeClear(BlockPos from, BlockPos to, Mode kind) {
             if (kind != Mode.GROUND || from.getY() == to.getY()) return true;
+            if (Math.abs(to.getY() - from.getY()) > stepHeight + 1e-6) return false;
             int high = Math.max(from.getY(), to.getY());
             for (double t : new double[] {0, .5, 1})
               if (!terrainClear(

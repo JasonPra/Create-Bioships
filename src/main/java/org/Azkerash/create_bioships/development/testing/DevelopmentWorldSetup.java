@@ -54,6 +54,8 @@ public final class DevelopmentWorldSetup {
     if (!state.brainBuilt) BrainFixture.reset(level);
     if (!state.locomotionBuilt) LocomotionFixture.reset(level);
     if (!state.modularLimbsBuilt) ModularLimbFixture.reset(level);
+    LocomotionFixture.installDoors(level);
+    ModularLimbFixture.installDoors(level);
     if (!state.digestionBuilt) {
       state.digestionOrigin = new BlockPos(384, state.layout().base().getY(), 0);
       DigestionFixture.reset(level);

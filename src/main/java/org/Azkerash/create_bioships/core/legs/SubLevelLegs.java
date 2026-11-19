@@ -57,9 +57,10 @@ public final class SubLevelLegs {
 
   public static void changed(ServerSubLevel body, BlockPos pos, BlockState state) {
     var c = CONTROLLERS.get(body);
-    if (c != null && (state.is(ComponentRegistry.CRAB_LEG.get()) || c.hasSocket(pos)))
+    if (c != null && (state.is(ComponentRegistry.CRAB_LEG.get()) || c.hasSocket(pos))) {
+      org.Azkerash.create_bioships.core.locomotion.SubLevelLocomotion.invalidateRoutes(body);
       c.changed(pos, state);
-    else if (state.is(ComponentRegistry.CRAB_LEG.get())) request(body);
+    } else if (state.is(ComponentRegistry.CRAB_LEG.get())) request(body);
   }
 
   public static List<Pose> poses(ServerSubLevel body) {
@@ -74,6 +75,17 @@ public final class SubLevelLegs {
 
   public static int collisionShapes(ServerSubLevel body) {
     return segments(body).size();
+  }
+
+  public static String collisionDetails(
+      ServerSubLevel body, net.minecraft.world.phys.AABB obstacle) {
+    var c = CONTROLLERS.get(body);
+    return c == null ? "no controller" : c.collisionDetails(obstacle);
+  }
+
+  public static Double stepHeight(ServerSubLevel body) {
+    var c = CONTROLLERS.get(SubLevelCreatureParts.root(body));
+    return c == null ? null : c.stepHeight();
   }
 
   public static int contacts(ServerSubLevel body) {

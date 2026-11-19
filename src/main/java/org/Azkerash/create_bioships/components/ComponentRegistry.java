@@ -119,6 +119,22 @@ public final class ComponentRegistry {
                               .noOcclusion()
                               .sound(SoundType.BONE_BLOCK))));
   public static final DeferredBlock<
+          org.Azkerash.create_bioships.components.logic.legs.SocketJointBlock>
+      LIMB_SOCKET =
+          component(
+              new ComponentDefinition<>(
+                      "limb_socket",
+                      () ->
+                          new org.Azkerash.create_bioships.components.logic.legs.SocketJointBlock(
+                              BlockBehaviour.Properties.of()
+                                  .strength(3, 6)
+                                  .noOcclusion()
+                                  .sound(SoundType.BONE_BLOCK)))
+                  .withBehavior(
+                      org.Azkerash.create_bioships.components.logic.legs.SocketJointBlock
+                          ::initialize));
+
+  public static final DeferredBlock<
           org.Azkerash.create_bioships.components.logic.legs.ModularJointBlock>
       LIMB_SWIVEL =
           component(
@@ -166,7 +182,8 @@ public final class ComponentRegistry {
                           org.Azkerash.create_bioships.components.logic.legs.ModularJointEntity
                               ::new,
                           LIMB_JOINT.get(),
-                          LIMB_SWIVEL.get())
+                          LIMB_SWIVEL.get(),
+                          LIMB_SOCKET.get())
                       .build(null));
   public static final DeferredHolder<
           BlockEntityType<?>,

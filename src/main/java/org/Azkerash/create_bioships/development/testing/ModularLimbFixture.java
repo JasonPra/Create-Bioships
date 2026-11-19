@@ -68,7 +68,7 @@ public final class ModularLimbFixture {
         var facing = side < 0 ? Direction.WEST : Direction.EAST;
         level.setBlock(
             hip,
-            ComponentRegistry.LIMB_JOINT
+            ComponentRegistry.LIMB_SOCKET
                 .get()
                 .defaultBlockState()
                 .setValue(dev.letitwalk.content.LegJointBlock.FACING, facing),
@@ -83,7 +83,7 @@ public final class ModularLimbFixture {
             3);
         level.setBlock(
             knee,
-            ComponentRegistry.LIMB_JOINT
+            ComponentRegistry.LIMB_SOCKET
                 .get()
                 .defaultBlockState()
                 .setValue(dev.letitwalk.content.LegJointBlock.FACING, Direction.DOWN),
@@ -128,6 +128,7 @@ public final class ModularLimbFixture {
                   .defaultBlockState(),
               2);
       }
+    installDoors(level);
     place(level, base);
     button(level, base.offset(-3, 0, -10), "modular_limb_test start");
     button(level, base.offset(3, 0, -10), "modular_limb_test reset");
@@ -150,6 +151,34 @@ public final class ModularLimbFixture {
     text.load(nbt);
     text.addTag(MARK);
     level.addFreshEntity(text);
+  }
+
+  /** Add access without resetting an existing subject or its recorded settings. */
+  public static void installDoors(ServerLevel level) {
+    var base = base(level);
+    for (int x = 0; x <= 1; x++) {
+      var door =
+          DevelopmentTestBlocks.GLASS_DOOR
+              .get()
+              .defaultBlockState()
+              .setValue(DoorBlock.FACING, Direction.NORTH)
+              .setValue(
+                  DoorBlock.HINGE,
+                  x == 0
+                      ? net.minecraft.world.level.block.state.properties.DoorHingeSide.LEFT
+                      : net.minecraft.world.level.block.state.properties.DoorHingeSide.RIGHT);
+      for (var half : net.minecraft.world.level.block.state.properties.DoubleBlockHalf.values()) {
+        var pos =
+            base.offset(
+                x,
+                half == net.minecraft.world.level.block.state.properties.DoubleBlockHalf.LOWER
+                    ? 0
+                    : 1,
+                -8);
+        if (!level.getBlockState(pos).is(DevelopmentTestBlocks.GLASS_DOOR.get()))
+          level.setBlock(pos, door.setValue(DoorBlock.HALF, half), 3);
+      }
+    }
   }
 
   private static void button(ServerLevel level, BlockPos pos, String command) {

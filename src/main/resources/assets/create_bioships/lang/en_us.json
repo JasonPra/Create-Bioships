@@ -29,5 +29,6 @@
   "block.create_bioships.limb_segment": "Chitin Limb Segment",
   "block.create_bioships.limb_foot": "Armored Foot",
   "item.create_bioships.limb_positioner": "Limb Positioner",
-  "item.create_bioships.limb_positioner.hint": "Rest angle: %s\u00b0 \u00b7 Scroll: 5\u00b0 \u00b7 Ctrl: 1\u00b0 \u00b7 Sneak-use: lock mount"
+  "item.create_bioships.limb_positioner.hint": "Rest angle: %s° · Scroll: 5° · Ctrl: 1° · Sneak-use: lock mount",
+  "block.create_bioships.limb_socket": "Synovial Socket"
 }

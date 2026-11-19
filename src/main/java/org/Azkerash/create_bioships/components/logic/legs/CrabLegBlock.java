@@ -29,6 +29,9 @@ public final class CrabLegBlock extends Block
     org.Azkerash.create_bioships.core.locomotion.SubLevelLocomotion.registerBounds(
         net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(block),
         SubLevelLegs::collisionBounds);
+    org.Azkerash.create_bioships.core.locomotion.SubLevelLocomotion.registerStepHeight(
+        net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(block),
+        SubLevelLegs::stepHeight);
   }
 
   public CrabLegBlock(Properties properties) {
@@ -121,10 +124,10 @@ public final class CrabLegBlock extends Block
   protected VoxelShape getShape(
       BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
     return switch (state.getValue(BlockStateProperties.HORIZONTAL_FACING)) {
-      case NORTH -> box(4, 4, 10, 12, 12, 16);
-      case SOUTH -> box(4, 4, 0, 12, 12, 6);
-      case EAST -> box(0, 4, 4, 6, 12, 12);
-      case WEST -> box(10, 4, 4, 16, 12, 12);
+      case NORTH -> box(4, 4, 12, 12, 12, 16);
+      case SOUTH -> box(4, 4, 0, 12, 12, 4);
+      case EAST -> box(0, 4, 4, 4, 12, 12);
+      case WEST -> box(12, 4, 4, 16, 12, 12);
       default -> Shapes.empty();
     };
   }

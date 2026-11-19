@@ -27,7 +27,10 @@
     "SableMembraneCollisionMixin",
     "StorageSacMenuAccess",
     "FeedingMenuMixin",
-    "WalkerSnapInvoker"
+    "WalkerSnapInvoker",
+    "JointChainLimitsAccess",
+    "SocketLegCollisionMixin",
+    "SocketFootholdMixin"
   ],
   "client": [],
   "injectors": {

@@ -111,10 +111,66 @@ public final class CrabLegRenderer {
                                   .HEIGHT)),
               hurt);
         }
+        double size =
+            .24
+                * org.Azkerash.create_bioships.compat.letitwalk.CrabLegKinematics.thickness(
+                    mc.level
+                        .getBlockState(pose.cell())
+                        .getValue(
+                            org.Azkerash.create_bioships
+                                .components
+                                .logic
+                                .legs
+                                .CrabLegBlock
+                                .HEIGHT));
+        for (int joint = 0; joint < 3; joint++) {
+          var point =
+              previous
+                  .collisionEndpoints()
+                  .get(joint * 2)
+                  .lerp(pose.collisionEndpoints().get(joint * 2), mix)
+                  .subtract(pivot);
+          socket(stack, mc, point, size, hurt);
+        }
       }
       stack.popPose();
     }
     mc.renderBuffers().bufferSource().endBatch();
+  }
+
+  private static void socket(
+      com.mojang.blaze3d.vertex.PoseStack stack,
+      Minecraft mc,
+      Vec3 point,
+      double size,
+      net.minecraft.client.renderer.RenderType hurt) {
+    stack.pushPose();
+    stack.translate(point.x, point.y - size / 2, point.z);
+    int light =
+        net.minecraft.client.renderer.LevelRenderer.getLightColor(
+            mc.level, mc.gameRenderer.getMainCamera().getBlockPosition());
+    CrabLegMesh.render(stack, mc, size, size, light, hurt);
+    stack.translate(0, size * .15, 0);
+    CrabLegMesh.render(stack, mc, size * 1.18, size * .7, light, hurt);
+    stack.translate(0, -size * .15, 0);
+    if (mc.player != null
+        && org.Azkerash.create_bioships.compat.letitwalk.LimbPositionerActions.holding(mc.player))
+      net.minecraft.client.renderer.LevelRenderer.renderLineBox(
+          stack,
+          mc.renderBuffers()
+              .bufferSource()
+              .getBuffer(net.minecraft.client.renderer.RenderType.lines()),
+          -size * .7,
+          -size * .2,
+          -size * .7,
+          size * .7,
+          size * 1.2,
+          size * .7,
+          .8f,
+          .4f,
+          1f,
+          1f);
+    stack.popPose();
   }
 
   private static void segment(

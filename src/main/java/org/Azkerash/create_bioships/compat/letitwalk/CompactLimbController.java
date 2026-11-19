@@ -242,7 +242,7 @@ public final class CompactLimbController {
   }
 
   private void resize(Limb limb, double extension) {
-    var oldRuntime = limb.runtime.save();
+    var oldRuntime = SocketJointRig.save(limb.runtime);
     var angles = limb.runtime.built.angles.clone();
     var oldLengths = limb.lengths.clone();
     var footPart = limb.bodies.getLast();
@@ -270,22 +270,28 @@ public final class CompactLimbController {
     // Translating a longer chain backward from its foot leaves a gap at the hip, which
     // the constraint solver can close by driving a light distal segment through terrain.
     limb.runtime.built.chain.solveRobust(arr(target), limb.runtime.built.angles, 16, .02);
-    var posed = limb.runtime.built.chain.forward(limb.runtime.built.angles, null);
+    var posed = SocketJointRig.points(limb.runtime.built, origin);
     var turn = new Quaterniond();
+    int axisCursor = 0;
     for (int i = 0; i < 3; i++) {
       var part = limb.bodies.get(i);
-      var axis = limb.runtime.built.restAxes[i];
-      turn.mul(
-          new Quaterniond()
-              .fromAxisAngleRad(axis[0], axis[1], axis[2], limb.runtime.built.angles[i]));
+      int end = SocketJointRig.endAxis(limb.runtime.built, i);
+      while (axisCursor <= end) {
+        var axis = limb.runtime.built.restAxes[axisCursor];
+        turn.mul(
+            new Quaterniond()
+                .fromAxisAngleRad(
+                    axis[0], axis[1], axis[2], limb.runtime.built.angles[axisCursor]));
+        axisCursor++;
+      }
       var q = new Quaterniond(body.logicalPose().orientation()).mul(turn).mul(limb.rest.get(i));
       fill(part, i, limb.height, limb.lengths[i]);
       for (int y = (int) Math.ceil(limb.lengths[i]); y < (int) Math.ceil(oldLengths[i]); y++)
         body.getLevel().removeBlock(part.getPlot().getCenterBlock().above(y), false);
-      placeSegment(part, body.logicalPose().transformPosition(origin.add(vec(posed[i]))), q);
+      placeSegment(part, body.logicalPose().transformPosition(posed.get(i)), q);
     }
-    oldRuntime.put("built", limb.runtime.built.save());
-    var restored = LegRuntime.load(oldRuntime);
+    oldRuntime = SocketJointRig.geometry(oldRuntime, limb.runtime);
+    var restored = SocketJointRig.loadCompact(body, limb.socket, oldRuntime);
     if (restored != null && !changedAngle) limb.runtime = restored;
   }
 
@@ -338,6 +344,7 @@ public final class CompactLimbController {
             limbs.size(),
             limb.face == Direction.WEST || limb.face == Direction.NORTH ? -1 : 1,
             false);
+    limb.runtime = SocketJointRig.compact(body, limb.socket, limb.runtime);
     ensurePins(limb);
   }
 
@@ -347,7 +354,7 @@ public final class CompactLimbController {
   private boolean loaded(Limb limb) {
     var container = SubLevelContainer.getContainer(body.getLevel());
     var found = new ArrayList<ServerSubLevel>();
-    for (var id : limb.runtime.built.segments) {
+    for (var id : new LinkedHashSet<>(limb.runtime.built.segments)) {
       var entry = container.getSubLevel(id);
       if (!(entry instanceof ServerSubLevel part) || part.isRemoved()) return false;
       found.add(part);
@@ -368,12 +375,15 @@ public final class CompactLimbController {
     releasePins(limb);
     var pipe = SubLevelContainer.getContainer(body.getLevel()).physicsSystem().getPipeline();
     for (int i = 0; i < 3; i++) {
-      var joint = limb.runtime.built.joints.get(i);
+      var joint = SocketJointRig.base(limb.runtime.built).joints.get(i);
       var parent = i == 0 ? body : limb.bodies.get(i - 1);
       var child = limb.bodies.get(i);
       // Express the native chain's hinge axis in each segment's own rest frame.
+      var socketFrame = SocketJointRig.frame(limb.runtime.built, i);
       var axisFrame =
-          new Quaterniond().rotationTo(new Vector3d(1, 0, 0), v(joint.axis).normalize());
+          socketFrame == null
+              ? new Quaterniond().rotationTo(new Vector3d(1, 0, 0), v(joint.axis).normalize())
+              : socketFrame;
       var qa = i == 0 ? new Quaterniond() : new Quaterniond(limb.rest.get(i - 1));
       var qb = limb.rest.get(i);
       var pin =
@@ -389,11 +399,21 @@ public final class CompactLimbController {
                       ConstraintJointAxis.LINEAR_X,
                       ConstraintJointAxis.LINEAR_Y,
                       ConstraintJointAxis.LINEAR_Z,
-                      ConstraintJointAxis.ANGULAR_Y,
                       ConstraintJointAxis.ANGULAR_Z)));
       if (pin != null) {
         pin.setContactsEnabled(false);
         pin.setLimit(ConstraintJointAxis.ANGULAR_X, i == 0 ? -1.22 : -2.8, i == 0 ? 1.22 : 2.8);
+        var limits = SocketJointRig.limits(limb.runtime.built, i);
+        if (limits != null) {
+          pin.setLimit(
+              ConstraintJointAxis.ANGULAR_X,
+              -Math.toRadians(limits.bend()),
+              Math.toRadians(limits.bend()));
+          pin.setLimit(
+              ConstraintJointAxis.ANGULAR_Y,
+              -Math.toRadians(limits.swivel() / 2d),
+              Math.toRadians(limits.swivel() / 2d));
+        }
         limb.pins.add(pin);
       }
     }
@@ -464,6 +484,7 @@ public final class CompactLimbController {
   private void stancePreference() {
     double sx = 0, sz = 0, sh = 0;
     int n = limbs.size();
+    walker.leanPitchTarget = walker.leanRollTarget = 0;
     if (n < 3) return;
     for (var l : limbs.values()) {
       sx += l.socket.getX();
@@ -507,7 +528,8 @@ public final class CompactLimbController {
         save();
       }
     }
-    BuiltLegDriver.ensureContactFilters(walker, body.getLevel());
+    SocketJointRig.ensureContactFilters(walker, body.getLevel());
+    for (var l : limbs.values()) SocketJointRig.apply(l.runtime.built);
     BuiltLegDriver.updateActualFeet(walker, body.getLevel());
     var family = new HashSet<UUID>();
     for (var p : SubLevelCreatureParts.members(body)) family.add(p.getUniqueId());
@@ -532,7 +554,12 @@ public final class CompactLimbController {
             walker.receiveTurn(r.yawRate() * .05);
             stancePreference();
             WalkerBrain.tick(walker, body);
-            walker.targetVelocity.set(r.velocity().x, 0, r.velocity().z);
+            for (var leg : walker.legs)
+              SocketJointRig.prepareSwing(leg, body.getLevel().getGameTime());
+            double wanted = Math.hypot(r.velocity().x, r.velocity().z);
+            double permitted = Math.hypot(walker.targetVelocity.x, walker.targetVelocity.z);
+            double factor = permitted > 1e-8 ? Math.min(1, wanted / permitted) : 0;
+            walker.targetVelocity.mul(factor);
             BuiltLegDriver.solve(walker, body, body.getLevel().getGameTime());
           }
         });
@@ -552,7 +579,19 @@ public final class CompactLimbController {
       else {
         ensurePins(l);
         var tuning = LimbTuning.get(body.getLevel(), l.socket);
-        for (var pin : l.pins)
+        for (int i = 0; i < l.pins.size(); i++) {
+          var pin = l.pins.get(i);
+          var limits = SocketJointRig.limits(l.runtime.built, i);
+          if (limits != null) {
+            pin.setLimit(
+                ConstraintJointAxis.ANGULAR_X,
+                -Math.toRadians(limits.bend()),
+                Math.toRadians(limits.bend()));
+            pin.setLimit(
+                ConstraintJointAxis.ANGULAR_Y,
+                -Math.toRadians(limits.swivel() / 2d),
+                Math.toRadians(limits.swivel() / 2d));
+          }
           pin.setMotor(
               ConstraintJointAxis.ANGULAR_X,
               0,
@@ -560,6 +599,7 @@ public final class CompactLimbController {
               4 * tuning.damping(),
               true,
               1);
+        }
       }
     }
     if (!powered) return;
@@ -568,6 +608,7 @@ public final class CompactLimbController {
     // Match WalkerCoreBlockEntity's native physics ordering and support decisions.
     // Native WalkerBrain/WalkerPhysics determine loss of footing; no extra contact gate.
     WalkerPhysics.substep(walker, body, handle, dt);
+    for (var l : limbs.values()) SocketJointRig.apply(l.runtime.built);
     BuiltLegDriver.solve(walker, body, body.getLevel().getGameTime());
     var posed = BuiltLegDriver.substep(walker, body, dt);
     for (var limb : limbs.values()) {
@@ -604,10 +645,7 @@ public final class CompactLimbController {
     var origin = Vec3.atLowerCornerOf(walker.getBlockPos());
     for (var l : limbs.values()) {
       if (!loaded(l)) continue;
-      var points =
-          Arrays.stream(l.runtime.built.chain.forward(l.runtime.built.angles, null))
-              .map(p -> origin.add(vec(p)))
-              .toList();
+      var points = SocketJointRig.points(l.runtime.built, origin);
       var actual = new ArrayList<Vec3>();
       for (int i = 0; i < 3; i++) {
         var part = l.bodies.get(i);
@@ -629,6 +667,36 @@ public final class CompactLimbController {
         .flatMap(l -> l.bodies.stream())
         .filter(b -> !b.isRemoved())
         .toList();
+  }
+
+  public String collisionDetails(net.minecraft.world.phys.AABB box) {
+    var out = new StringBuilder();
+    for (var pose : poses())
+      if (CompactLegCollisions.overlaps(body, java.util.List.of(pose), box, .08)) {
+        var leg = limbs.get(pose.cell()).runtime;
+        out.append("cell=")
+            .append(pose.cell())
+            .append(" state=")
+            .append(leg.state)
+            .append(" wanted=")
+            .append(leg.footWorld(body.getLevel().getGameTime()).add(0, .04, 0))
+            .append(" actual=")
+            .append(leg.actualFoot)
+            .append(" from=")
+            .append(leg.swingFrom)
+            .append(" to=")
+            .append(leg.swingTo)
+            .append(" endpoints=")
+            .append(
+                pose.collisionEndpoints().stream()
+                    .map(p -> body.logicalPose().transformPosition(p))
+                    .toList());
+      }
+    return out.toString();
+  }
+
+  public Double stepHeight() {
+    return SocketJointRig.stepHeight(limbs.values().stream().map(l -> l.runtime).toList());
   }
 
   public int contacts() {
@@ -686,7 +754,7 @@ public final class CompactLimbController {
       t.putDouble("Extension", l.extension);
       t.putString("Face", l.face.getName());
       t.put("Leg", l.runtime.built.save());
-      t.put("Runtime", l.runtime.save());
+      t.put("Runtime", SocketJointRig.save(l.runtime));
       list.add(t);
     }
     data.put("Legs", list);
@@ -701,7 +769,7 @@ public final class CompactLimbController {
     for (var raw : data.getList("Legs", 10)) {
       var t = (CompoundTag) raw;
       var built = BuiltLeg.load(t.getCompound("Leg"));
-      if (built == null || built.segments.size() != 3) continue;
+      if (built == null || new LinkedHashSet<>(built.segments).size() != 3) continue;
       var l = new Limb();
       l.socket = BlockPos.of(t.getLong("Socket"));
       l.height = Math.clamp(t.getInt("Height"), 1, 3);
@@ -709,7 +777,7 @@ public final class CompactLimbController {
       l.restAngle = t.getInt("RestAngle");
       l.face = Direction.byName(t.getString("Face"));
       if (l.face == null || !l.face.getAxis().isHorizontal()) continue;
-      for (var id : built.segments) {
+      for (var id : new LinkedHashSet<>(built.segments)) {
         var part = container.getSubLevel(id);
         if (part instanceof ServerSubLevel s && !s.isRemoved()) l.bodies.add(s);
       }
@@ -727,9 +795,10 @@ public final class CompactLimbController {
               l.face == Direction.WEST || l.face == Direction.NORTH ? -1 : 1,
               false);
       if (t.contains("Runtime")) {
-        var runtime = LegRuntime.load(t.getCompound("Runtime"));
+        var runtime = SocketJointRig.loadCompact(body, l.socket, t.getCompound("Runtime"));
         if (runtime != null) l.runtime = runtime;
       }
+      if (!t.contains("Runtime")) l.runtime = SocketJointRig.compact(body, l.socket, l.runtime);
       if (loaded(l)) ensurePins(l);
       limbs.put(l.socket, l);
     }

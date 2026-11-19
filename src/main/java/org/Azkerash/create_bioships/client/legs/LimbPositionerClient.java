@@ -39,6 +39,31 @@ public final class LimbPositionerClient {
         || mc.screen != null
         || !LimbPositionerActions.holding(mc.player)) return;
     if (mc.hitResult instanceof BlockHitResult hit
+        && mc.level
+            .getBlockState(hit.getBlockPos())
+            .is(org.Azkerash.create_bioships.components.ComponentRegistry.COMPACT_LIMB.get())) {
+      mc.player.displayClientMessage(
+          Component.literal("Right-click a highlighted socket to adjust its limits"), true);
+      return;
+    }
+    if (mc.hitResult instanceof BlockHitResult hit
+        && mc.level
+            .getBlockState(hit.getBlockPos())
+            .is(org.Azkerash.create_bioships.components.ComponentRegistry.LIMB_SOCKET.get())) {
+      mc.player.displayClientMessage(
+          Component.literal("Right-click: joint limits · Scroll: rest pose"), true);
+      return;
+    }
+    if (mc.hitResult instanceof BlockHitResult hit
+        && mc.level
+            .getBlockState(hit.getBlockPos())
+            .is(org.Azkerash.create_bioships.components.ComponentRegistry.CRAB_LEG.get())) {
+      mc.player.displayClientMessage(
+          Component.literal("Right-click: general settings · Aim at a socket for joint limits"),
+          true);
+      return;
+    }
+    if (mc.hitResult instanceof BlockHitResult hit
         && mc.level.getBlockEntity(hit.getBlockPos()) instanceof ModularJointEntity joint)
       mc.player.displayClientMessage(
           Component.translatable("item.create_bioships.limb_positioner.hint", joint.restOffset()),
