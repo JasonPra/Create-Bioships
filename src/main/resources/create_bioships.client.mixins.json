@@ -5,9 +5,7 @@
   "compatibilityLevel": "JAVA_21",
   "client": [
     "StatusEffectTooltipMixin",
-    "SymbioticGogglesOverlayMixin",
-    "IntestineDebugKeyMixin",
-    "VisionDebugKeyMixin"
+    "SymbioticGogglesOverlayMixin"
   ],
   "mixins": [],
   "injectors": {

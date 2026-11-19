@@ -29,7 +29,9 @@ public final class DigestiveDebugSync {
             c.enqueueWork(
                 () -> {
                   if (c.player() instanceof ServerPlayer player) {
-                    if (p.enabled()) VIEWERS.put(player, new HashMap<>());
+                    if (p.enabled()
+                        && org.Azkerash.create_bioships.development.testing.DevelopmentToolkitItem
+                            .allowed(player)) VIEWERS.put(player, new HashMap<>());
                     else VIEWERS.remove(player);
                   }
                 }));
@@ -50,7 +52,9 @@ public final class DigestiveDebugSync {
     while (iterator.hasNext()) {
       var viewer = iterator.next();
       var player = viewer.getKey();
-      if (!event.getServer().getPlayerList().getPlayers().contains(player)) {
+      if (!event.getServer().getPlayerList().getPlayers().contains(player)
+          || !org.Azkerash.create_bioships.development.testing.DevelopmentToolkitItem.allowed(
+              player)) {
         iterator.remove();
         continue;
       }

@@ -276,7 +276,7 @@ public final class DigestionFixture {
                     + "Mouth → intestines → stomach; four pork chops.\n"
                     + "Seeded living control has no mouth or intestines.\n"
                     + "Inspect acid, digestion, components and hunger.\n"
-                    + "F3+I: connected sac branch and open-end debug lines.\n"
+                    + "Toolkit → Intestine connections: sac branches and open ends.\n"
                     + state.digestionResult),
             level.registryAccess()));
     tag.putString("billboard", "center");

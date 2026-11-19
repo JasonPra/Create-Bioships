@@ -96,6 +96,7 @@ public final class CorePresetProbe {
         };
     DevelopmentLoadout.prepare(navigatorPlayer);
     DevelopmentLoadout.prepare(navigatorPlayer);
+    toolkit(navigatorPlayer);
     if (!navigatorPlayer
             .getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD)
             .is(Create_bioships.BIOSHIP_GOGGLES.get())
@@ -104,7 +105,7 @@ public final class CorePresetProbe {
             navigatorPlayer.getInventory().getItem(DevelopmentLoadout.NAVIGATOR_SLOT)))
       throw new IllegalStateException("Development kit missing, duplicated, or not equipped");
     navigatorPlayer.inventoryMenu.clicked(
-        DevelopmentLoadout.NAVIGATOR_MENU_SLOT,
+        DevelopmentLoadout.TOOLKIT_MENU_SLOT,
         0,
         net.minecraft.world.inventory.ClickType.PICKUP,
         navigatorPlayer);
@@ -124,11 +125,16 @@ public final class CorePresetProbe {
     if (navigatorPlayer.drop(
             new net.minecraft.world.item.ItemStack(DevelopmentNavigatorItem.ITEM.get()), false)
         != null) throw new IllegalStateException("Navigator could be dropped");
+    toolkit(navigatorPlayer);
+    if (navigatorPlayer.drop(DevelopmentToolkitItem.ITEM.get().getDefaultInstance(), false) != null)
+      throw new IllegalStateException("Toolkit could be dropped");
     navigatorPlayer.getInventory().dropAll();
+    toolkit(navigatorPlayer);
     if (!DevelopmentLoadout.navigator(
         navigatorPlayer.getInventory().getItem(DevelopmentLoadout.NAVIGATOR_SLOT)))
       throw new IllegalStateException("Death inventory drop lost navigator");
     navigatorPlayer.getInventory().clearContent();
+    toolkit(navigatorPlayer);
     if (!DevelopmentLoadout.navigator(
         navigatorPlayer.getInventory().getItem(DevelopmentLoadout.NAVIGATOR_SLOT)))
       throw new IllegalStateException("Inventory clearing lost navigator");
@@ -140,6 +146,7 @@ public final class CorePresetProbe {
         new net.neoforged.neoforge.event.entity.player.PlayerEvent.Clone(
             respawned, navigatorPlayer, true));
     DevelopmentLoadout.prepare(respawned);
+    toolkit(respawned);
     if (!DevelopmentLoadout.navigator(
             respawned.getInventory().getItem(DevelopmentLoadout.NAVIGATOR_SLOT))
         || respawned.getInventory().countItem(Create_bioships.BIOSHIP_WRENCH.get()) != 0)
@@ -164,6 +171,30 @@ public final class CorePresetProbe {
             + layout.cores().size()
             + " bedrock=true roof=true assembled=false commandBlocks="
             + event.getServer().isCommandBlockEnabled());
+    System.out.println(
+        "DEVELOPMENT_TOOLKIT_PASS pinned=true clear=true drops=true respawn=true unique=true");
     event.getServer().halt(false);
+  }
+
+  private static void toolkit(net.minecraft.server.level.ServerPlayer player) {
+    if (!player
+            .getInventory()
+            .getItem(DevelopmentLoadout.TOOLKIT_SLOT)
+            .is(DevelopmentToolkitItem.ITEM.get())
+        || player.getInventory().countItem(DevelopmentToolkitItem.ITEM.get()) != 1
+        || !DevelopmentToolkitItem.allowed(player))
+      throw new IllegalStateException("Toolkit missing, duplicated or inaccessible");
+    if (!DevelopmentLoadout.rejectsClick(
+            player.inventoryMenu,
+            DevelopmentLoadout.TOOLKIT_MENU_SLOT,
+            0,
+            net.minecraft.world.inventory.ClickType.PICKUP,
+            player)
+        || !DevelopmentLoadout.rejectsClick(
+            player.inventoryMenu,
+            0,
+            DevelopmentLoadout.TOOLKIT_SLOT,
+            net.minecraft.world.inventory.ClickType.SWAP,
+            player)) throw new IllegalStateException("Toolkit slot could be moved or swapped");
   }
 }

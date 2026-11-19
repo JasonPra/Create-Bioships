@@ -50,6 +50,7 @@ public final class WanderBehavior implements BrainBehavior {
     if (!SubLevelPathfinder.allowed(body, mode)) {
       BrainMotorControls.stop(body);
       route = List.of();
+      org.Azkerash.create_bioships.core.pathfinding.SubLevelPaths.clear(body);
       nextDecision = Long.MIN_VALUE;
       return;
     }
@@ -102,6 +103,7 @@ public final class WanderBehavior implements BrainBehavior {
       pause(body, now + 40);
       return;
     }
+    org.Azkerash.create_bioships.core.pathfinding.SubLevelPaths.update(body, mode, route, waypoint);
     var delta = route.get(waypoint).subtract(position);
     var direction =
         (mode == SubLevelPathfinder.Mode.WATER ? delta : new Vec3(delta.x, 0, delta.z)).normalize();
@@ -114,6 +116,7 @@ public final class WanderBehavior implements BrainBehavior {
   }
 
   private void pause(ServerSubLevel body, long until) {
+    org.Azkerash.create_bioships.core.pathfinding.SubLevelPaths.clear(body);
     nextDecision = until;
     route = List.of();
     waypoint = 0;

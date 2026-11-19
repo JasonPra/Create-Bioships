@@ -30,7 +30,8 @@
     "WalkerSnapInvoker",
     "JointChainLimitsAccess",
     "SocketLegCollisionMixin",
-    "SocketFootholdMixin"
+    "SocketFootholdMixin",
+    "CreatureFootstepsMixin"
   ],
   "client": [],
   "injectors": {

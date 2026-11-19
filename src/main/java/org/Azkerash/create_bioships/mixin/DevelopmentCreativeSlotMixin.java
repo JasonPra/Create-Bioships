@@ -24,7 +24,7 @@ public abstract class DevelopmentCreativeSlotMixin {
   private void core$keepCreativeNavigator(
       ServerboundSetCreativeModeSlotPacket packet, CallbackInfo callback) {
     if (DevelopmentLoadout.active(player)
-        && packet.slotNum() == DevelopmentLoadout.NAVIGATOR_MENU_SLOT) {
+        && DevelopmentLoadout.reservedMenuSlot(packet.slotNum())) {
       DevelopmentLoadout.ensureNavigator(player);
       DevelopmentLoadout.synchronize(player);
       callback.cancel();
@@ -47,7 +47,7 @@ public abstract class DevelopmentCreativeSlotMixin {
         action == ServerboundPlayerActionPacket.Action.DROP_ITEM
             || action == ServerboundPlayerActionPacket.Action.DROP_ALL_ITEMS;
     boolean swap = action == ServerboundPlayerActionPacket.Action.SWAP_ITEM_WITH_OFFHAND;
-    if ((drop || swap) && DevelopmentLoadout.navigator(player.getMainHandItem())
+    if ((drop || swap) && DevelopmentLoadout.managed(player.getMainHandItem())
         || swap && DevelopmentLoadout.protectedItem(player, player.getOffhandItem())) {
       DevelopmentLoadout.synchronize(player);
       callback.cancel();

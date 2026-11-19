@@ -32,12 +32,23 @@ public final class VisionDebugOverlay {
 
   public static void toggle() {
     var mc = Minecraft.getInstance();
-    if (mc.level == null || mc.player == null) return;
+    if (mc.level == null
+        || mc.player == null
+        || !org.Azkerash.create_bioships.development.testing.DevelopmentToolkitItem.allowed(
+            mc.player)) return;
     enabled = !enabled;
     SAMPLES.clear();
     world = mc.level;
     PacketDistributor.sendToServer(new VisionDebugRequest(enabled));
     mc.gui.setOverlayMessage(Component.literal("Vision rays: " + (enabled ? "ON" : "OFF")), false);
+  }
+
+  public static void toggleOff() {
+    if (!enabled) return;
+    enabled = false;
+    SAMPLES.clear();
+    if (Minecraft.getInstance().getConnection() != null)
+      PacketDistributor.sendToServer(new VisionDebugRequest(false));
   }
 
   public static void receive(VisionDebugPayload payload) {
@@ -50,6 +61,12 @@ public final class VisionDebugOverlay {
   @SubscribeEvent
   public static void changedLevel(ClientTickEvent.Post event) {
     var mc = Minecraft.getInstance();
+    if (enabled
+        && mc.player != null
+        && !org.Azkerash.create_bioships.development.testing.DevelopmentToolkitItem.allowed(
+            mc.player)) {
+      toggleOff();
+    }
     if (world != mc.level) {
       world = mc.level;
       SAMPLES.clear();
@@ -100,7 +117,9 @@ public final class VisionDebugOverlay {
     g.fill(5, y - 3, Math.min(mc.getWindow().getGuiScaledWidth() - 5, 450), y + 12, 0x99000000);
     g.drawString(
         mc.font,
-        "F3+V: vision · cyan=clear · red=blocked · yellow=unloaded · " + SAMPLES.size() + " grids",
+        "Toolkit: vision · cyan=clear · red=blocked · yellow=unloaded · "
+            + SAMPLES.size()
+            + " grids",
         8,
         y,
         0xffc5e8ea);

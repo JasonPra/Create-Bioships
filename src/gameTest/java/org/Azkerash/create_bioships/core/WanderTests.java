@@ -165,9 +165,22 @@ public final class WanderTests {
               WanderBehavior.ID.equals(BrainBehaviors.active(body)),
               "Wander did not activate from the grid inventory");
           var initial = SubLevelPathfinder.position(body);
+          boolean[] sawPath = {false};
+          for (int delay = 50; delay < 220; delay += 10)
+            helper.runAfterDelay(
+                delay,
+                () -> {
+                  var path = org.Azkerash.create_bioships.core.pathfinding.SubLevelPaths.get(body);
+                  if (path != null) {
+                    sawPath[0] = true;
+                    helper.assertTrue(
+                        path.next() < path.points().size(), "Active path has invalid waypoint");
+                  }
+                });
           helper.runAfterDelay(
               220,
               () -> {
+                helper.assertTrue(sawPath[0], "Wander never exposed its actual active path");
                 var end = SubLevelPathfinder.position(body);
                 var state = body.getUserDataTag().getCompound(SubLevelData.BEHAVIOR);
                 System.out.println(
@@ -192,6 +205,9 @@ public final class WanderTests {
                     BrainBehaviors.active(body) == null
                         && BrainMotorControls.current(body).expires() == 0,
                     "Removing Wander left its movement request active");
+                helper.assertTrue(
+                    org.Azkerash.create_bioships.core.pathfinding.SubLevelPaths.get(body) == null,
+                    "Removing Wander left a stale path overlay");
                 for (var pose : SubLevelLegs.poses(body)) level.removeBlock(pose.cell(), false);
                 helper.assertTrue(
                     !SubLevelLocomotion.get(body).hasLegs(),

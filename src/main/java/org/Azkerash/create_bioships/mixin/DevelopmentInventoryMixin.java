@@ -15,7 +15,7 @@ public abstract class DevelopmentInventoryMixin {
   @ModifyVariable(method = "clearOrCountMatchingItems", at = @At("HEAD"), argsOnly = true)
   private Predicate<ItemStack> core$clearKeepsNavigator(Predicate<ItemStack> predicate) {
     return DevelopmentLoadout.active(player)
-        ? stack -> !DevelopmentLoadout.navigator(stack) && predicate.test(stack)
+        ? stack -> !DevelopmentLoadout.managed(stack) && predicate.test(stack)
         : predicate;
   }
 

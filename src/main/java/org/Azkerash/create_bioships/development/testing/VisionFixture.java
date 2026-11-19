@@ -158,7 +158,7 @@ public final class VisionFixture {
       DevelopmentTestOwnership.assign(body);
       container.addForceLoadTicket(body, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
     }
-    explain(level, "Running: F3+V shows actual cached collision rays");
+    explain(level, "Running: Toolkit → Vision rays shows actual cached collision rays");
     return 1;
   }
 
@@ -176,7 +176,7 @@ public final class VisionFixture {
         + grids
         + " assembled subjects, "
         + eyes
-        + " cached eye cones. F3+V toggles rays.";
+        + " cached eye cones. Use Toolkit → Vision rays.";
   }
 
   private static void explain(ServerLevel level, String result) {
@@ -197,7 +197,7 @@ public final class VisionFixture {
                     + "Left chamber: air · Right: water\n"
                     + "Each: core + land eye (left) + aquatic eye (right)\n"
                     + "Wall blocks left eye; floor eye remains unassembled.\n"
-                    + "F3+V: cyan clear · red blocked · yellow unloaded\n"
+                    + "Toolkit vision: cyan clear · red blocked · yellow unloaded\n"
                     + "Use /time set day or night to compare range.\n"
                     + result),
             level.registryAccess()));

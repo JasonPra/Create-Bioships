@@ -18,7 +18,7 @@ and stop at unloaded physical chunks without requesting them. Water does not occ
 
 ## Development tools
 
-- **F3+V** toggles server ray samples near the player (96 blocks, at most 16 grids,
+- **Development Toolkit → Vision rays** toggles server ray samples near the player (96 blocks, at most 16 grids,
   32 recent cones per grid). Cyan means clear to the sampled range, red means a
   collision, yellow means an unloaded-chunk boundary. Small boxes mark endpoints.
   Snapshots refresh twice per second; the overlay shows sampled world positions.
@@ -29,7 +29,7 @@ and stop at unloaded physical chunks without requesting them. Water does not occ
   it on their next startup; RESET recreates it. Use `/time set day` or
   `/time set night` for light comparisons. Hunger is paused on these test subjects.
 
-The overlay uses the same see-through development line renderer as F3+I. Debug
+The overlay uses the same see-through development line renderer as the intestine overlay. Debug
 packets contain only bounded ray samples, never inventories or component state.
 
 ## Validation
@@ -37,9 +37,8 @@ packets contain only bounded ray samples, never inventories or component state.
 Regression coverage includes all six core faces, both eye profiles, bounded sampling,
 self-occlusion and world obstacles, grid rotation, eye reorientation, injured/dead
 sensors, day/night light changes, unloaded chunk boundaries, the debug wire codec,
-and the visible fixture's reset/start cycle. Native client QA also exercises the
-actual F3+V shortcut and renders both air/water subjects. The shortcut covers Veil's
-extra development chunk-debug handler as well as Minecraft's ordinary debug handler.
+and the visible fixture's reset/start cycle. The toolkit replaces the former debug
+keyboard shortcuts. Its toggles are available only in development worlds, and the
+server validates toolkit ownership before subscribing a player to debug snapshots.
 
-Release check: all 46 required GameTests passed with Epic Fight installed and with
-it absent. The native client captured two grids through the actual F3+V input path.
+See [development-toolkit.md](development-toolkit.md) for current tool and client checks.

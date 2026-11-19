@@ -8,5 +8,6 @@ public interface BrainBehavior {
 
   default void stop(ServerSubLevel body) {
     org.Azkerash.create_bioships.core.brain.BrainMotorControls.stop(body);
+    org.Azkerash.create_bioships.core.pathfinding.SubLevelPaths.clear(body);
   }
 }

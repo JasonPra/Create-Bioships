@@ -15,7 +15,7 @@ import net.neoforged.neoforge.client.event.*;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.Azkerash.create_bioships.development.testing.network.*;
 
-/** F3+I draws the authoritative server graph in the grid's interpolated coordinate frame. */
+/** The toolkit draws the authoritative server graph in the grid's interpolated coordinate frame. */
 @EventBusSubscriber(modid = "create_bioships", value = Dist.CLIENT)
 public final class IntestineDebugOverlay {
   private static boolean enabled;
@@ -34,13 +34,24 @@ public final class IntestineDebugOverlay {
 
   public static void toggle() {
     var mc = Minecraft.getInstance();
-    if (mc.level == null || mc.player == null) return;
+    if (mc.level == null
+        || mc.player == null
+        || !org.Azkerash.create_bioships.development.testing.DevelopmentToolkitItem.allowed(
+            mc.player)) return;
     enabled = !enabled;
     GRAPHS.clear();
     world = mc.level;
     PacketDistributor.sendToServer(new DigestiveDebugRequest(enabled));
     mc.gui.setOverlayMessage(
         Component.literal("Intestine graph: " + (enabled ? "ON" : "OFF")), false);
+  }
+
+  public static void toggleOff() {
+    if (!enabled) return;
+    enabled = false;
+    GRAPHS.clear();
+    if (Minecraft.getInstance().getConnection() != null)
+      PacketDistributor.sendToServer(new DigestiveDebugRequest(false));
   }
 
   public static void receive(DigestiveDebugPayload payload) {
@@ -52,6 +63,12 @@ public final class IntestineDebugOverlay {
   @SubscribeEvent
   public static void changedLevel(ClientTickEvent.Post event) {
     var mc = Minecraft.getInstance();
+    if (enabled
+        && mc.player != null
+        && !org.Azkerash.create_bioships.development.testing.DevelopmentToolkitItem.allowed(
+            mc.player)) {
+      toggleOff();
+    }
     if (world == mc.level) return;
     world = mc.level;
     GRAPHS.clear();
@@ -142,7 +159,7 @@ public final class IntestineDebugOverlay {
     var g = event.getGuiGraphics();
     int y = mc.getWindow().getGuiScaledHeight() - 57;
     String label =
-        "F3+I: intestine graph · red=open · green=connected · " + GRAPHS.size() + " grids";
+        "Toolkit: intestine graph · red=open · green=connected · " + GRAPHS.size() + " grids";
     g.fill(5, y - 3, Math.min(mc.getWindow().getGuiScaledWidth() - 5, 420), y + 24, 0x99000000);
     g.drawString(mc.font, label, 8, y, 0xffc5e8ea);
     g.drawString(mc.font, "Pink: mouth · purple: stomach · cyan: sac", 8, y + 12, 0xffc5e8ea);

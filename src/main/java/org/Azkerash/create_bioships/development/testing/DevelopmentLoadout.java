@@ -13,10 +13,11 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import org.Azkerash.create_bioships.Create_bioships;
 
-/** Development starter equipment and one protected navigator; no menu or test behavior. */
+/** Development starter equipment and protected development tools; no menu or test behavior. */
 @EventBusSubscriber(modid = Create_bioships.MODID)
 public final class DevelopmentLoadout {
   public static final int NAVIGATOR_SLOT = 8, NAVIGATOR_MENU_SLOT = 44;
+  public static final int TOOLKIT_SLOT = 7, TOOLKIT_MENU_SLOT = 43;
   private static final String GIVEN = "create_bioships:development_kit";
 
   private DevelopmentLoadout() {}
@@ -40,8 +41,20 @@ public final class DevelopmentLoadout {
     return stack.is(DevelopmentNavigatorItem.ITEM.get());
   }
 
+  public static boolean managed(ItemStack stack) {
+    return navigator(stack) || stack.is(DevelopmentToolkitItem.ITEM.get());
+  }
+
+  public static boolean reservedSlot(int slot) {
+    return slot == NAVIGATOR_SLOT || slot == TOOLKIT_SLOT;
+  }
+
+  public static boolean reservedMenuSlot(int slot) {
+    return slot == NAVIGATOR_MENU_SLOT || slot == TOOLKIT_MENU_SLOT;
+  }
+
   public static boolean protectedItem(Player player, ItemStack stack) {
-    return active(player) && navigator(stack);
+    return active(player) && managed(stack);
   }
 
   public static void prepare(ServerPlayer player) {
@@ -70,27 +83,53 @@ public final class DevelopmentLoadout {
   }
 
   public static void ensureNavigator(ServerPlayer player) {
-    if (!active(player)) return;
     var inventory = player.getInventory();
-    for (int slot = 0; slot < inventory.getContainerSize(); slot++)
-      if (slot != NAVIGATOR_SLOT && navigator(inventory.getItem(slot)))
+    if (!active(player)) {
+      for (int slot = 0; slot < inventory.getContainerSize(); slot++)
+        if (inventory.getItem(slot).is(DevelopmentToolkitItem.ITEM.get()))
+          inventory.setItem(slot, ItemStack.EMPTY);
+      if (player.containerMenu.getCarried().is(DevelopmentToolkitItem.ITEM.get()))
+        player.containerMenu.setCarried(ItemStack.EMPTY);
+      return;
+    }
+    boolean changed = false;
+    for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+      var item = inventory.getItem(slot);
+      if (managed(item)
+          && !(slot == NAVIGATOR_SLOT && navigator(item))
+          && !(slot == TOOLKIT_SLOT && item.is(DevelopmentToolkitItem.ITEM.get()))) {
         inventory.setItem(slot, ItemStack.EMPTY);
-    if (navigator(inventory.getItem(NAVIGATOR_SLOT))) return;
-    var displaced = inventory.getItem(NAVIGATOR_SLOT).copy();
-    inventory.setItem(NAVIGATOR_SLOT, new ItemStack(DevelopmentNavigatorItem.ITEM.get()));
-    if (!displaced.isEmpty() && !inventory.add(displaced)) player.drop(displaced, false);
-    inventory.setChanged();
-    player.inventoryMenu.broadcastChanges();
+        changed = true;
+      }
+    }
+    if (managed(player.containerMenu.getCarried())) {
+      player.containerMenu.setCarried(ItemStack.EMPTY);
+      changed = true;
+    }
+    for (int slot : new int[] {TOOLKIT_SLOT, NAVIGATOR_SLOT}) {
+      var expected =
+          slot == TOOLKIT_SLOT
+              ? DevelopmentToolkitItem.ITEM.get()
+              : DevelopmentNavigatorItem.ITEM.get();
+      if (inventory.getItem(slot).is(expected)) continue;
+      var displaced = inventory.getItem(slot).copy();
+      inventory.setItem(slot, new ItemStack(expected));
+      changed = true;
+      if (!displaced.isEmpty() && !inventory.add(displaced)) player.drop(displaced, false);
+    }
+    if (changed) {
+      inventory.setChanged();
+      player.inventoryMenu.broadcastChanges();
+    }
   }
 
   public static boolean rejectsClick(
       AbstractContainerMenu menu, int slotId, int button, ClickType type, Player player) {
     if (!active(player)) return false;
-    if (type == ClickType.SWAP && button == NAVIGATOR_SLOT || navigator(menu.getCarried()))
-      return true;
+    if (type == ClickType.SWAP && reservedSlot(button) || managed(menu.getCarried())) return true;
     if (slotId < 0 || slotId >= menu.slots.size()) return false;
     var slot = menu.getSlot(slotId);
-    return slot.container == player.getInventory() && slot.getContainerSlot() == NAVIGATOR_SLOT;
+    return slot.container == player.getInventory() && reservedSlot(slot.getContainerSlot());
   }
 
   public static void synchronize(ServerPlayer player) {
@@ -119,13 +158,12 @@ public final class DevelopmentLoadout {
 
   @SubscribeEvent
   public static void tick(net.neoforged.neoforge.event.tick.PlayerTickEvent.Post event) {
-    if (event.getEntity() instanceof ServerPlayer player && player.tickCount % 20 == 0)
-      ensureNavigator(player);
+    if (event.getEntity() instanceof ServerPlayer player) ensureNavigator(player);
   }
 
   @SubscribeEvent
   public static void drops(net.neoforged.neoforge.event.entity.living.LivingDropsEvent event) {
     if (event.getEntity() instanceof Player player && active(player))
-      event.getDrops().removeIf(drop -> navigator(drop.getItem()));
+      event.getDrops().removeIf(drop -> managed(drop.getItem()));
   }
 }
