@@ -5,8 +5,6 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.neoforged.neoforge.network.PacketDistributor;
-import org.Azkerash.create_bioships.development.testing.network.DevelopmentToolPayload;
 
 /** A single item menu replaces our debug key combinations. */
 public final class DevelopmentToolkitScreen extends Screen {
@@ -31,7 +29,7 @@ public final class DevelopmentToolkitScreen extends Screen {
                   action.run();
                   rebuildWidgets();
                 })
-            .bounds((width - 244) / 2, (height - 222) / 2 + 37 + row * 27, 244, 22)
+            .bounds((width - 244) / 2, (height - 195) / 2 + 37 + row * 27, 244, 22)
             .build());
   }
 
@@ -51,20 +49,13 @@ public final class DevelopmentToolkitScreen extends Screen {
         "Hitboxes: " + (renderer.shouldRenderHitBoxes() ? "ON" : "OFF"),
         () -> renderer.setRenderHitBoxes(!renderer.shouldRenderHitBoxes()),
         3);
-    control(
-        "Visit a test exhibit",
-        () -> {
-          onClose();
-          PacketDistributor.sendToServer(new DevelopmentToolPayload(true));
-        },
-        4);
-    control("Done", this::onClose, 5);
+    control("Done", this::onClose, 4);
   }
 
   @Override
   public void render(GuiGraphics g, int mx, int my, float partial) {
     g.fill(0, 0, width, height, 0x99000000);
-    int y = (height - 222) / 2;
+    int y = (height - 195) / 2;
     g.drawCenteredString(font, title, width / 2, y + 12, 0xffffffff);
     for (var widget : renderables) widget.render(g, mx, my, partial);
   }

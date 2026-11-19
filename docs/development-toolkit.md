@@ -2,8 +2,8 @@
 
 The development preset supplies a **Development Toolkit** in hotbar slot 8 and keeps
 the existing exhibit navigator in slot 9. Right-click the toolkit for independent
-path, vision-ray, intestine-connection and vanilla hitbox toggles, or open the test
-navigator from the same menu. Custom F3+I and F3+V interception has been removed.
+path, vision-ray, intestine-connection and vanilla hitbox toggles. Use the compass
+for test-exhibit navigation. Custom F3+I and F3+V interception has been removed.
 The Synaptic Calibrator remains a normal gameplay tool for adjusting limb joints.
 
 Neither development item appears in the creative tab. The toolkit has no crafting
