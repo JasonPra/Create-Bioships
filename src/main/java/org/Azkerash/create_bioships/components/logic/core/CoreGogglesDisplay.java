@@ -120,20 +120,17 @@ public final class CoreGogglesDisplay extends BlockEntity implements IHaveGoggle
     if (!inspection.contains("maximum")) tooltip.add(Component.literal("Unassembled"));
     else {
       tooltip.add(
-          Component.literal(
-              String.format(
-                  java.util.Locale.ROOT,
-                  "Health: %.1f / %.1f",
-                  inspection.getDouble("current"),
-                  inspection.getDouble("maximum"))));
-      if (inspection.getDouble("maximumArmor") > 0)
-        tooltip.add(
-            Component.literal(
-                String.format(
-                    java.util.Locale.ROOT,
-                    "Armor: %.1f / %.1f",
-                    inspection.getDouble("armor"),
-                    inspection.getDouble("maximumArmor"))));
+          meter(
+              "Health",
+              "health",
+              inspection.getDouble("current"),
+              inspection.getDouble("maximum")));
+      tooltip.add(
+          meter(
+              "Armor",
+              "armor",
+              inspection.getDouble("armor"),
+              inspection.getDouble("maximumArmor")));
       tooltip.add(
           Component.literal("Hunger: ")
               .append(
@@ -152,10 +149,7 @@ public final class CoreGogglesDisplay extends BlockEntity implements IHaveGoggle
                           + "/"
                           + inspection.getInt("maximumHunger")
                           + (inspection.getBoolean("hungerPaused") ? " (paused)" : ""))));
-      tooltip.add(
-          Component.literal(
-              String.format(
-                  java.util.Locale.ROOT, "Trust: %.1f/100", inspection.getDouble("trust"))));
+      tooltip.add(meter("Trust", "trust", inspection.getDouble("trust"), 100));
       for (var entry : inspection.getList("effects", 10)) {
         var effect = net.minecraft.world.effect.MobEffectInstance.load((CompoundTag) entry);
         if (effect == null) continue;
@@ -178,6 +172,19 @@ public final class CoreGogglesDisplay extends BlockEntity implements IHaveGoggle
         tooltip.add(Component.literal("Dead · " + inspection.getString("cause")));
     }
     return true;
+  }
+
+  private static Component meter(String label, String kind, double value, double maximum) {
+    return Component.literal(label + ": " + (label.length() < 6 ? " " : ""))
+        .append(
+            Component.literal(" ".repeat(28))
+                .withStyle(
+                    style ->
+                        style.withInsertion(
+                            "create_bioships:bar/" + kind + "/" + value + "/" + maximum)))
+        .append(
+            Component.literal(
+                String.format(java.util.Locale.ROOT, " %.1f / %.1f", value, maximum)));
   }
 
   @Override

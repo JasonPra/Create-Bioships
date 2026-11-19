@@ -45,6 +45,17 @@ public final class StatusEffectIcons {
                                 8,
                                 matrix,
                                 buffers));
+            } else if (marker.startsWith("create_bioships:bar/")) {
+              var values = marker.substring("create_bioships:bar/".length()).split("/");
+              if (values.length == 3)
+                CoreStatusBars.draw(
+                    values[0],
+                    Double.parseDouble(values[1]),
+                    Double.parseDouble(values[2]),
+                    x + offset[0],
+                    y,
+                    matrix,
+                    buffers);
             } else if (marker.startsWith("create_bioships:hunger/")) {
               var values = marker.substring("create_bioships:hunger/".length()).split("/");
               int hunger = Integer.parseInt(values[0]);

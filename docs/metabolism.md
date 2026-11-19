@@ -49,3 +49,8 @@ of the reserved paste cell.
 Older non-paste contents in that cell are preserved and relocated when general
 output space becomes available, or sent through normal connected-sac overflow.
 No items are discarded to enforce the new restriction.
+
+The Symbiotic Goggles core readout includes fixed-width health, armor, and trust
+meters alongside their numeric values and the existing hunger icons. Empty armor
+capacity renders an empty meter safely; fractional trust remains visible in the
+number and meter fill.
