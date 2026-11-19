@@ -116,18 +116,7 @@ public final class ModularLimbFixture {
         level.getEntitiesOfClass(
             Display.TextDisplay.class, new AABB(base).inflate(40), e -> e.getTags().contains(MARK)))
       e.discard();
-    for (int x = -10; x <= 10; x++)
-      for (int z = -8; z <= 24; z++) {
-        level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 2);
-        for (int y = 0; y <= 11; y++)
-          level.setBlock(
-              base.offset(x, y, z),
-              (Math.abs(x) == 10 || z == -8 || z == 24 || y == 11
-                      ? DevelopmentTestBlocks.GLASS.get()
-                      : Blocks.AIR)
-                  .defaultBlockState(),
-              2);
-      }
+    DevelopmentLegChambers.build(level, base, true, 11);
     installDoors(level);
     place(level, base);
     button(level, base.offset(-3, 0, -10), "modular_limb_test start");
@@ -142,7 +131,7 @@ public final class ModularLimbFixture {
             Component.literal(
                 "MODULAR LIMB LOCOMOTION\n"
                     + "Left: START · Right: RESET\n"
-                    + "Four modular limbs · native assembly, IK and suspension\n"
+                    + "Four organic limbs · native assembly, IK and suspension\n"
                     + "Wander card in brain · local ground routes.\n"
                     + "Armor absorbs only hits on armored parts."),
             level.registryAccess()));

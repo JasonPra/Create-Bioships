@@ -54,6 +54,12 @@ public final class DevelopmentWorldSetup {
     if (!state.brainBuilt) BrainFixture.reset(level);
     if (!state.locomotionBuilt) LocomotionFixture.reset(level);
     if (!state.modularLimbsBuilt) ModularLimbFixture.reset(level);
+    if (state.legChamberVersion < 1) {
+      DevelopmentLegChambers.build(level, LocomotionFixture.base(level), false, 7);
+      DevelopmentLegChambers.build(level, ModularLimbFixture.base(level), false, 11);
+      state.legChamberVersion = 1;
+      state.setDirty();
+    }
     LocomotionFixture.installDoors(level);
     ModularLimbFixture.installDoors(level);
     if (!state.digestionBuilt) {

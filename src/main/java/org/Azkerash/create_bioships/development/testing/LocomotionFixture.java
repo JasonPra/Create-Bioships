@@ -92,18 +92,7 @@ public final class LocomotionFixture {
         level.getEntitiesOfClass(
             Display.TextDisplay.class, new AABB(base).inflate(40), e -> e.getTags().contains(MARK)))
       e.discard();
-    for (int x = -10; x <= 10; x++)
-      for (int z = -8; z <= 24; z++) {
-        level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 2);
-        for (int y = 0; y <= 7; y++)
-          level.setBlock(
-              base.offset(x, y, z),
-              (Math.abs(x) == 10 || z == -8 || z == 24 || y == 7
-                      ? DevelopmentTestBlocks.GLASS.get()
-                      : Blocks.AIR)
-                  .defaultBlockState(),
-              2);
-      }
+    DevelopmentLegChambers.build(level, base, true, 7);
     installDoors(level);
     place(level, base);
     button(level, base.offset(-3, 0, -10), "leg_test start");
