@@ -30,7 +30,12 @@ public final class IntestineBlock
 
   public IntestineBlock(Properties properties) {
     super(properties);
-    var state = stateDefinition.any();
+    var state =
+        stateDefinition
+            .any()
+            .setValue(
+                net.minecraft.world.level.block.state.properties.BlockStateProperties.WATERLOGGED,
+                false);
     for (var property : CONNECTIONS.values()) state = state.setValue(property, false);
     registerDefaultState(state);
   }

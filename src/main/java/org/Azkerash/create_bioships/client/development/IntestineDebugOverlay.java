@@ -88,6 +88,8 @@ public final class IntestineDebugOverlay {
     var lines = buffers.getBuffer(DevelopmentDebugRenderType.LINES);
     var pose = event.getPoseStack();
     var camera = event.getCamera().getPosition();
+    record Label(Vec3 at, String text) {}
+    var labels = new ArrayList<Label>();
     for (var graph : GRAPHS.values()) {
       var body = container.getSubLevel(graph.body());
       if (!(body instanceof ClientSubLevel client) || body.isRemoved()) continue;
@@ -171,25 +173,32 @@ public final class IntestineDebugOverlay {
                   + " slots · "
                   + node.items()
                   + " items";
-          pose.pushPose();
-          pose.translate(at.x, at.y, at.z);
-          pose.mulPose(mc.getEntityRenderDispatcher().cameraOrientation());
-          pose.scale(-.02f, -.02f, .02f);
-          mc.font.drawInBatch(
-              text,
-              -mc.font.width(text) / 2f,
-              0,
-              0xffbbffff,
-              false,
-              pose.last().pose(),
-              buffers,
-              net.minecraft.client.gui.Font.DisplayMode.SEE_THROUGH,
-              0x66000000,
-              LightTexture.FULL_BRIGHT);
-          pose.popPose();
+          labels.add(new Label(at, text));
         }
     }
     buffers.endBatch(DevelopmentDebugRenderType.LINES);
+    // Fonts may switch/flush BufferSource's shared builder. Finish ALL geometry first.
+    for (var label : labels) {
+      var at = label.at();
+      var text = label.text();
+      pose.pushPose();
+      pose.translate(at.x, at.y, at.z);
+      pose.mulPose(mc.getEntityRenderDispatcher().cameraOrientation());
+      pose.scale(.02f, -.02f, .02f);
+      mc.font.drawInBatch(
+          text,
+          -mc.font.width(text) / 2f,
+          0,
+          0xffbbffff,
+          false,
+          pose.last().pose(),
+          buffers,
+          net.minecraft.client.gui.Font.DisplayMode.SEE_THROUGH,
+          0x66000000,
+          LightTexture.FULL_BRIGHT);
+      pose.popPose();
+    }
+    buffers.endBatch();
   }
 
   @SubscribeEvent

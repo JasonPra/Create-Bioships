@@ -40,6 +40,9 @@ public final class CrabLegBlock
     registerDefaultState(
         stateDefinition
             .any()
+            .setValue(
+                net.minecraft.world.level.block.state.properties.BlockStateProperties.WATERLOGGED,
+                false)
             .setValue(BlockStateProperties.HORIZONTAL_FACING, Direction.NORTH)
             .setValue(HEIGHT, 1));
   }

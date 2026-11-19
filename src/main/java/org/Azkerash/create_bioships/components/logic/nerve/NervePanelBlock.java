@@ -22,7 +22,12 @@ public final class NervePanelBlock
   public NervePanelBlock(Properties properties) {
     super(properties);
     registerDefaultState(
-        stateDefinition.any().setValue(BlockStateProperties.FACING, Direction.NORTH));
+        stateDefinition
+            .any()
+            .setValue(
+                net.minecraft.world.level.block.state.properties.BlockStateProperties.WATERLOGGED,
+                false)
+            .setValue(BlockStateProperties.FACING, Direction.NORTH));
   }
 
   @Override

@@ -4,7 +4,7 @@ The development preset supplies a **Development Toolkit** in hotbar slot 8 and k
 the existing exhibit navigator in slot 9. Right-click the toolkit for independent
 path, vision-ray, intestine-connection and vanilla hitbox toggles, or open the test
 navigator from the same menu. Custom F3+I and F3+V interception has been removed.
-The Limb Positioner remains a normal gameplay tool for adjusting limb joints.
+The Synaptic Calibrator remains a normal gameplay tool for adjusting limb joints.
 
 Neither development item appears in the creative tab. The toolkit has no crafting
 recipe or loot source. Server interactions and debug subscriptions require the
@@ -42,3 +42,32 @@ native. Ordinary Let It Walk walkers retain their original audio.
   neutral backdrop rather than the component screens' flesh framing.
 - Native foot-contact events emitted vanilla stone footsteps on the bedrock floor:
   compact volume 0.15 at normal pitch, modular volume 0.35 at a lower pitch.
+
+## Waterlogging catalogue
+
+The navigator opens a single swimmable waterlogging exhibit containing 98 placeable
+Bioships/Biomancy block types. Spaced, labelled samples show normal native behavior,
+including special support requirements. The hologram explains the display. There
+are no start or reset controls: this is a persistent in-world inspection exhibit.
+
+Bioships non-full components support source-water placement, bucket filling/draining
+and fluid ticks. Land and aquatic eyes share these rules and survive submerged
+assembly and transfer back to world space. Full solid blocks retain ordinary behavior.
+
+Intestine diagnostics show recognized inventory bounds, occupied/total slots and item
+counts as well as connections. Sac ports accept only top/bottom connections; stacked
+sacs are consumed bottom first and compact downward within a bounded transfer budget.
+All line geometry is flushed before billboard labels to avoid invalidating a shared
+vertex buffer between graphs.
+
+## Current batch regression coverage
+
+All 99 required GameTests passed without Epic Fight and with Epic Fight 21.17.3.1.
+Coverage includes waterlogging and submerged eye transfers, stacked storage, expanded
+chambers, native walking pivots, the membrane grant/cross/revoke/return circuit, and
+three arrow-wound targets with a full 30-second delay before shooter placement.
+
+Client smoke checks also exercised the native joint meshes while standing/walking,
+through-glass rendering, held tool framing, mouth tooth UVs, multi-grid inventory
+outlines and readable labels, the membrane return circuit, and living/corpse arrow
+wounds. Temporary client probes are excluded from the release sources and jar.

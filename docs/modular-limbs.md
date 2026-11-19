@@ -38,9 +38,9 @@ control origin is the creature's core, while brain blocks expose loading depende
 Deletion records prevent unloaded limbs from becoming living orphans after their owner
 is permanently removed.
 
-## Positioner
+## Synaptic Calibrator
 
-The Limb Positioner is a separate item, crafted from a native Let It Walk Positioner and
+The Synaptic Calibrator is a separate item, crafted from a native Let It Walk Positioner and
 Chitin Armor. It accepts our modular joints and compact Crab Legs only. It does not alter
 native Let It Walk joints or unrelated contraption blocks.
 
@@ -65,3 +65,18 @@ linear and yaw control, controller reconstruction from saved limb data, whole-cr
 and exhibit START/RESET cleanup. Native client checks cover both Positioner screens, server
 round trips, actual development commands, rendering through glass, and a world close/reopen
 with four limbs, eight joints and nine physical members restored.
+
+## Organic joint rendering
+
+World joints use Let It Walk's `LegJointRenderer.pose` for the parent base,
+intermediate knuckle and child connector. Our renderer substitutes chitin/bone
+meshes while retaining the native rotations. The canonical parent connection is
++Z and the child connection is -Z. Rendering the whole block model on the parent
+leaves visible gaps when the child rotates; only inventory previews use that model.
+Exposed-face meshes remove internal overlaps and keep short texture patches at
+normal pixel density. Suspension, IK and foot contact remain native.
+
+The regression reference assembles native Let It Walk components and Create girders,
+powered by a real creative motor. It checks standing, movement and pivot continuity.
+Both leg exhibits now share a wider enclosure with a 24-block-high roof; migration
+preserves existing subjects and their settings.

@@ -19,7 +19,14 @@ public final class CompactLimbBlock
   public CompactLimbBlock(Properties p) {
     super(p);
     registerDefaultState(
-        stateDefinition.any().setValue(BONE, 0).setValue(HEIGHT, 1).setValue(FILL, 64));
+        stateDefinition
+            .any()
+            .setValue(
+                net.minecraft.world.level.block.state.properties.BlockStateProperties.WATERLOGGED,
+                false)
+            .setValue(BONE, 0)
+            .setValue(HEIGHT, 1)
+            .setValue(FILL, 64));
   }
 
   @Override

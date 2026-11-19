@@ -53,7 +53,14 @@ public final class BrainBlock
 
   public BrainBlock(Properties properties) {
     super(properties);
-    registerDefaultState(stateDefinition.any().setValue(PORT, Port.NONE).setValue(FORMED, false));
+    registerDefaultState(
+        stateDefinition
+            .any()
+            .setValue(
+                net.minecraft.world.level.block.state.properties.BlockStateProperties.WATERLOGGED,
+                false)
+            .setValue(PORT, Port.NONE)
+            .setValue(FORMED, false));
   }
 
   @Override

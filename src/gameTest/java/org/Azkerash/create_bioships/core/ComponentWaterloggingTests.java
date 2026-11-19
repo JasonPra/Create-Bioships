@@ -42,6 +42,9 @@ public final class ComponentWaterloggingTests {
         () -> {
           for (int i = 0; i < types.size(); i++) {
             var block = types.get(i);
+            h.assertTrue(
+                !block.defaultBlockState().getValue(BlockStateProperties.WATERLOGGED),
+                "Dry component defaults unexpectedly contain water: " + block);
             var p = base.east(i * 3);
             l.setBlock(
                 p.below(),
