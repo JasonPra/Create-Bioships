@@ -737,6 +737,31 @@ public final class NecromancerDenFixture {
             rubble % 2 == 0 ? Blocks.MOSSY_STONE_BRICK_SLAB : Blocks.COBBLESTONE_STAIRS);
       }
     }
+    // A broken outer tower arc and toppled buttress suggest the surviving tower
+    // once belonged to a much larger keep. Keep both away from the approach road.
+    for (int x = 19; x <= 35; x++)
+      for (int z = -34; z <= -18; z++) {
+        double radius = Math.hypot(x - 27, z + 26);
+        if (radius < 6 || radius > 8 || x > 29 && z < -27) continue;
+        int height = 1 + Math.floorMod(x * 13 + z * 7, 4);
+        for (int y = -1; y < height; y++)
+          put(
+              l,
+              b,
+              x,
+              gardenHeight(x, z) + y,
+              z,
+              Math.floorMod(x + z + y, 4) == 0
+                  ? Blocks.CHISELED_DEEPSLATE
+                  : Blocks.CRACKED_DEEPSLATE_BRICKS);
+      }
+    for (int step = 0; step < 10; step++) {
+      int x = -35 + step, z = 10 + step / 2;
+      int h = gardenHeight(x, z);
+      put(l, b, x, h, z, Blocks.CHISELED_POLISHED_BLACKSTONE);
+      if (step < 7) put(l, b, x, h + 1, z, Blocks.CRACKED_POLISHED_BLACKSTONE_BRICKS);
+      if (step % 3 == 0) put(l, b, x, h, z + 1, Blocks.MOSSY_STONE_BRICK_SLAB);
+    }
     for (int x = -41; x <= -34; x++)
       l.setBlock(
           b.offset(x, gardenHeight(x, 34), 34),
