@@ -215,7 +215,11 @@ public final class CoreArrowFixture {
   }
 
   private static void fire(ServerLevel level) {
-    for (var pos : dispensers(level)) {
+    fire(level, dispensers(level));
+  }
+
+  private static void fire(ServerLevel level, List<BlockPos> positions) {
+    for (var pos : positions) {
       if (!level.getBlockState(pos).is(Blocks.DISPENSER)) {
         level.setBlock(
             pos,
@@ -270,6 +274,7 @@ public final class CoreArrowFixture {
           && dispensers(level).stream().allMatch(level::isPositionEntityTicking)) {
         state.arrowShotAt = now;
         fire(level);
+        state.arrowNextAction = now + 20;
         state.arrowPhase = 1;
         state.arrowDeadline = now + 160;
         state.arrowResult = "Firing at living eyes";
@@ -284,11 +289,15 @@ public final class CoreArrowFixture {
       state.arrowResult = "Living eyes: PASS. Inspect before corpse round.";
       state.setDirty();
       explain(level);
+    } else if (state.arrowPhase == 1 && now >= state.arrowNextAction) {
+      retryMissing(level, body, state.arrowShotAt);
+      state.arrowNextAction = now + 20;
     } else if (state.arrowPhase == 2 && now >= state.arrowNextAction) {
       if (!SubLevelHealth.status(body).dead()) {
         SubLevelHealth.damage(body, SubLevelHealth.status(body).current(), "arrow_test_corpse");
         state.arrowShotAt = now;
         fire(level);
+        state.arrowNextAction = now + 20;
         state.arrowResult = "Firing at corpse eyes";
         state.setDirty();
         explain(level);
@@ -299,9 +308,40 @@ public final class CoreArrowFixture {
         state.setDirty();
         explain(level);
         return;
+      } else {
+        retryMissing(level, body, state.arrowShotAt);
+        state.arrowNextAction = now + 20;
       }
     }
     if (now >= state.arrowDeadline) fail(level, "timeout in phase " + state.arrowPhase);
+  }
+
+  /** Native dispensers have random spread. Retry only missing lanes within the same deadline. */
+  private static void retryMissing(ServerLevel level, ServerSubLevel body, long since) {
+    var targets = targets(body);
+    var wounds = SubLevelWounds.state(body).active(level.getGameTime());
+    var missing = new ArrayList<BlockPos>();
+    for (int i = 0; i < targets.size(); i++) {
+      var cell = targets.get(i);
+      if (wounds.stream()
+          .noneMatch(
+              w ->
+                  w.surface().cell().equals(cell)
+                      && w.surface().face() == Direction.NORTH
+                      && w.at() >= since)) missing.add(dispensers(level).get(i));
+    }
+    // Remove misses embedded in supporting tissue; retained eye arrows still prove both rounds.
+    for (var arrow :
+        level.getEntitiesOfClass(
+            net.minecraft.world.entity.projectile.Arrow.class,
+            new AABB(CoreTestState.get(level).arrowOrigin).inflate(12),
+            ProjectileAttachment::attached)) {
+      var data = arrow.getPersistentData().getCompound("create_bioships:embedded_projectile");
+      if (data.hasUUID("body")
+          && data.getUUID("body").equals(body.getUniqueId())
+          && !targets.contains(BlockPos.of(data.getLong("cell")))) arrow.discard();
+    }
+    fire(level, missing);
   }
 
   private static boolean wounded(ServerSubLevel body, long since) {
