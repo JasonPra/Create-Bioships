@@ -60,8 +60,26 @@ public final class StomachCapacityTests {
               new BlockPlaceContext(
                   player, net.minecraft.world.InteractionHand.MAIN_HAND, stack, hit);
           helper.assertTrue(
-              ComponentRegistry.STOMACH.get().getStateForPlacement(placement) == null,
-              "Second stomach placement was permitted");
+              ComponentRegistry.STOMACH.get().getStateForPlacement(placement) != null,
+              "Existing stomach prevented another stomach placement");
+          player.setPos(core.getX() + .5, core.getY() + 3, core.getZ() + .5);
+          helper.assertTrue(
+              ((BlockItem) stack.getItem()).place(placement).consumesAction()
+                  && level.getBlockState(core.east(3)).is(ComponentRegistry.STOMACH.get()),
+              "Player BlockItem placement rejected a second stomach");
+          var third =
+              new BlockPlaceContext(
+                  player,
+                  net.minecraft.world.InteractionHand.MAIN_HAND,
+                  ComponentRegistry.STOMACH_ITEM.get().getDefaultInstance(),
+                  new BlockHitResult(
+                      Vec3.atCenterOf(core.east(2)), Direction.NORTH, core.east(2), false));
+          helper.assertTrue(
+              ((BlockItem) third.getItemInHand().getItem()).place(third).consumesAction()
+                  && level.getBlockState(core.east(2).north()).is(ComponentRegistry.STOMACH.get()),
+              "Player BlockItem placement rejected a third stomach");
+          level.removeBlock(core.east(3), false);
+          level.removeBlock(core.east(2).north(), false);
           for (var pos : List.of(core, core.east())) {
             var display = level.getBlockEntity(pos);
             helper.assertTrue(display != null, "Inspection block entity lost during assembly");

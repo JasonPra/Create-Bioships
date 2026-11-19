@@ -32,3 +32,8 @@ simulation or change hunger.
 Regression coverage includes linked mass without double counting, fractional save/load,
 pause behavior, rate reduction on detachment, nutrition bonuses at every Efficiency
 tier, fractional nutrition save/load, full-hunger preservation and the bounded statistics codec.
+
+Players may place multiple stomachs and mouths on a living creature. Each stomach
+keeps its own inventory and digestion state; connected mouths can route into the
+same intestine network. Hunger capacity continues to use the strongest stomach's
+capacity contribution, rather than multiplying capacity by the number of stomachs.

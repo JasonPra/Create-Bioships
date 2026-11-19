@@ -29,15 +29,6 @@ public final class StomachBlock extends DirectionalBlock
 
   @Override
   public BlockState getStateForPlacement(BlockPlaceContext context) {
-    if (context.getLevel() instanceof net.minecraft.server.level.ServerLevel server) {
-      var body =
-          org.Azkerash.create_bioships.core.CoreAssemblyRules.containing(
-              server, context.getClickedPos());
-      if (body != null
-          && org.Azkerash.create_bioships.core.CoreAssemblyRules.isCreature(body)
-          && !server.getBlockState(context.getClickedPos()).is(this)
-          && org.Azkerash.create_bioships.core.SubLevelHunger.hasStomach(body)) return null;
-    }
     return defaultBlockState().setValue(FACING, context.getNearestLookingDirection().getOpposite());
   }
 
