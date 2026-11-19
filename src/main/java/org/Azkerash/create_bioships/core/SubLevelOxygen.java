@@ -15,11 +15,24 @@ import org.Azkerash.create_bioships.components.logic.respiration.RespiratoryBloc
 /** One oxygen reserve per creature; cached organ census, sampled once per second. */
 @EventBusSubscriber(modid = "create_bioships")
 public final class SubLevelOxygen {
-  public static final int MAXIMUM = 1200, SUPPLY_PER_ORGAN = 40, SUFFOCATION_INTERVAL = 80;
+  public static final int MAXIMUM = 1200, SUPPLY_PER_ORGAN = 40, SUFFOCATION_INTERVAL = 20;
+  public static final double REFERENCE_MASS = 100;
+
+  public static double demandForMass(double mass) {
+    return 20 * Math.max(1, Math.max(0, mass) / REFERENCE_MASS);
+  }
+
   private static final Map<ServerSubLevel, Map<BlockPos, BlockState>> ORGANS = new WeakHashMap<>();
 
   public record Status(
-      double current, int maximum, double demand, double supply, int lungs, int gills) {}
+      double current,
+      int maximum,
+      double demand,
+      double supply,
+      int lungs,
+      int gills,
+      int breathingLungs,
+      int breathingGills) {}
 
   private SubLevelOxygen() {}
 
@@ -80,7 +93,7 @@ public final class SubLevelOxygen {
 
   public static Status status(ServerSubLevel body) {
     body = SubLevelCreatureParts.root(body);
-    int lungs = 0, gills = 0;
+    int lungs = 0, gills = 0, breathingLungs = 0, breathingGills = 0;
     double supply = 0;
     for (var part : SubLevelCreatureParts.members(body)) {
       if (!ORGANS.containsKey(part))
@@ -89,16 +102,22 @@ public final class SubLevelOxygen {
         var organ = (RespiratoryBlock) e.getValue().getBlock();
         if (organ.gills()) gills++;
         else lungs++;
-        if (breathing(part, e.getKey())) supply += SUPPLY_PER_ORGAN;
+        if (breathing(part, e.getKey())) {
+          supply += SUPPLY_PER_ORGAN;
+          if (organ.gills()) breathingGills++;
+          else breathingLungs++;
+        }
       }
     }
     return new Status(
         SubLevelData.oxygen(body).value(),
         MAXIMUM,
-        20 * SubLevelHunger.metabolism(body).multiplier(),
+        demandForMass(SubLevelHunger.metabolism(body).mass()),
         supply,
         lungs,
-        gills);
+        gills,
+        breathingLungs,
+        breathingGills);
   }
 
   public static void advance(ServerSubLevel body, int ticks) {
@@ -123,7 +142,7 @@ public final class SubLevelOxygen {
       else suffocation = 0;
       if (suffocation >= SUFFOCATION_INTERVAL) {
         suffocation -= SUFFOCATION_INTERVAL;
-        SubLevelHealth.damage(body, 1, "suffocation");
+        SubLevelHealth.damage(body, 2, "suffocation");
         if (SubLevelHealth.status(body).dead()) break;
       }
     }

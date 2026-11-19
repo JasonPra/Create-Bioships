@@ -93,7 +93,14 @@ public final class CoreGogglesDisplay extends BlockEntity implements IHaveGoggle
       next.putInt("maximumHunger", SubLevelData.maximumHunger(body));
       next.putBoolean("hungerPaused", SubLevelData.hungerState(body).paused());
       next.putDouble("trust", SubLevelData.trust(body));
-      next.putDouble("oxygen", SubLevelData.oxygen(body).value());
+      var respiration = SubLevelOxygen.status(body);
+      next.putDouble("oxygen", respiration.current());
+      next.putDouble("airSupply", respiration.supply());
+      next.putDouble("airUse", respiration.demand());
+      next.putInt("breathingLungs", respiration.breathingLungs());
+      next.putInt("breathingGills", respiration.breathingGills());
+      next.putInt("lungs", respiration.lungs());
+      next.putInt("gills", respiration.gills());
       next.putBoolean("oxygenPaused", SubLevelData.oxygen(body).paused());
       next.putInt(
           "sicknessTicks",
@@ -172,6 +179,24 @@ public final class CoreGogglesDisplay extends BlockEntity implements IHaveGoggle
                               100 * inspection.getDouble("oxygen") / SubLevelOxygen.MAXIMUM)
                           + "%"
                           + (inspection.getBoolean("oxygenPaused") ? " (paused)" : ""))));
+      tooltip.add(
+          Component.literal(
+              String.format(
+                  java.util.Locale.ROOT,
+                  "  Air: %.0f/s supply · %.0f/s use",
+                  inspection.getDouble("airSupply"),
+                  inspection.getDouble("airUse"))));
+      tooltip.add(
+          Component.literal(
+              "  Breathing: "
+                  + inspection.getInt("breathingLungs")
+                  + "/"
+                  + inspection.getInt("lungs")
+                  + " lungs · "
+                  + inspection.getInt("breathingGills")
+                  + "/"
+                  + inspection.getInt("gills")
+                  + " gills"));
       tooltip.add(meter("Trust", "trust", inspection.getDouble("trust"), 100));
       if (inspection.getInt("sicknessTicks") > 0)
         tooltip.add(

@@ -181,12 +181,15 @@ public final class SubLevelHunger {
       if (!health.dead()
           && SubLevelData.oxygen(body).value() > 0
           && value >= minimumHungerToHeal(body)
-          && health.current() < health.maximum()) {
+          && (health.current() < health.maximum()
+              || SubLevelArmor.status(body).current() < SubLevelArmor.status(body).maximum())) {
         regeneration += step;
         if (regeneration >= REGENERATION_INTERVAL) {
           regeneration -= REGENERATION_INTERVAL;
-          var target = CombatAdapter.target(body);
-          if (target != null) target.heal(1);
+          if (health.current() < health.maximum()) {
+            var target = CombatAdapter.target(body);
+            if (target != null) target.heal(1);
+          } else SubLevelArmor.repair(body, 1);
         }
       } else regeneration = 0;
     }

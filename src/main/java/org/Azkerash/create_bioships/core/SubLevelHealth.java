@@ -143,7 +143,7 @@ public final class SubLevelHealth {
     body = SubLevelCreatureParts.root(body);
     if (!Double.isFinite(amount) || amount <= 0) return false;
     var old = status(body);
-    if (old.dead()) return false;
+    if (old.dead() || SubLevelData.oxygen(body).value() <= 0) return false;
     store(body, Math.max(0, damageTaken(body) - amount), old.maximum(), false, old.causeOfDeath());
     return true;
   }

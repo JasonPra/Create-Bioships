@@ -1,6 +1,10 @@
 # Armor and locomotion
 
-Chitin Armor contributes 20 armor points; armored Crab Legs contribute 10. A single grid-owned spent-armor ledger is persisted in `create_bioships:armor`. Only hits on an armored component consume this pool. Remaining damage reaches health normally. Vanilla armor-bypassing damage still bypasses it. There is no automatic armor repair.
+Chitin Armor contributes 20 armor points; armored Crab Legs contribute 10. A single grid-owned spent-armor ledger is persisted in `create_bioships:armor`. Only hits on an armored component consume this pool. Remaining damage reaches health normally. Vanilla armor-bypassing damage still bypasses it. Once health is completely full, natural regeneration repairs one armor point
+every four seconds. It requires the same minimum hunger (90%) and positive oxygen
+as passive health healing. Health has priority, and one healing pulse cannot
+repair health and armor together. Paused metabolism and death stop repair; the
+existing saved regeneration timer and root-owned wear ledger survive reloads.
 
 Removal and replacement preserve spent points, including when capacity falls below spent points. Adding new capacity does not erase prior armor damage. Core and eye weak points remain unarmored.
 

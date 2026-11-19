@@ -11,7 +11,9 @@ Fractional work survives saving and mass changes. Pausing freezes the timers and
 unloaded creatures accrue no catch-up debt. Corpses never metabolize.
 
 At zero hunger, starvation still deals 1 HP every four seconds until death. Passive
-regeneration still requires at least 90% hunger. Healing potions remain independent.
+regeneration still requires at least 90% hunger. Healing potions remain independent of hunger, but all healing requires oxygen.
+At full health, passive regeneration repairs armor instead, at one point per four
+seconds with the same hunger and oxygen conditions.
 These damage/healing timers are separate from the mass-scaled hunger drain.
 
 A stomach consumes one nutrient paste for four hunger in a 32-tick (1.6-second)

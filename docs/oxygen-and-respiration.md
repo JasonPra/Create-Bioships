@@ -5,7 +5,7 @@ bodies. A new or older creature without oxygen data starts with 1,200 air units:
 60 seconds at the baseline demand of 20 units per second. Loaded simulation time
 advances the reserve; unloading does not create catch-up suffocation damage.
 
-Demand uses the same mass multiplier as hunger: `20 * max(1, mass / 10)` per second,
+Demand is `20 * max(1, mass / 100)` per second,
 summing Sable's maintained mass across creature members. Each functioning lung or
 gill supplies 40 air units per second. Supply and demand are combined once per
 creature. The reserve is capped at 1,200; adding or replacing an organ never grants
@@ -28,14 +28,19 @@ water updates, and use the slightly dense biological material mass of 1.05.
 They appear in the shared component creative tab and the automatically generated
 development waterlogging catalogue.
 
-An empty reserve causes one health damage every four seconds. This bypasses armor
-and does not count as an owner attack or starvation trust penalty. Natural hunger
-regeneration requires positive oxygen; potion effects retain their usual rules.
+An empty reserve causes two health damage every 20 ticks (one second), matching
+player drowning pulses after the reserve is exhausted. The saved partial damage
+timer survives reloads and resets when oxygen starts recovering. This bypasses armor
+and does not count as an owner attack or starvation trust penalty. All health healing requires positive oxygen, including natural regeneration,
+regeneration potions and instant healing. Armor repair also stops at zero air.
+Effects may remain active, but cannot heal until the creature has air again.
 Death stops oxygen simulation. No artificial world-block breathing tickers run.
 
 The Symbiotic Goggles core/readout tooltip draws the player's vanilla air bubbles,
 including the partial bursting bubble. The inspection snapshot contains oxygen;
-the authority remains on the root sublevel. The display indicates a paused reserve
+the authority remains on the root sublevel. The readout also shows supply and
+consumption per second, and the functioning/total count of lungs and gills. A
+valid organ contributes supply even if a larger creature still has a net deficit. The display indicates a paused reserve
 for development subjects.
 
 Unrelated developer exhibits and regression fixtures explicitly pause oxygen and
@@ -61,3 +66,10 @@ Armored Gills are a cosmetic alternative: identical model geometry, intake rules
 supply, mass and animation to fleshy Gills. Only intake-facing textures change to
 the core's chitin palette. Neither variant supplies armor points or protects hits;
 both remain exposed weak spots even when the creature has armor elsewhere.
+
+Oxygen has its own reference mass of 100, independent of hunger’s reference of 10.
+Junior’s measured mass of 88.55 consumes 20 air per second, so one working lung
+provides 40 and refills his reserve at 20 per second. Larger creatures still scale. Either a working lung
+or a working gill contributes oxygen; both contribute together. Recovery occurs
+when their combined supply exceeds demand. No special lung-and-gill pairing is
+required. Paused developer subjects explicitly retain their paused reserve.

@@ -68,6 +68,27 @@ public final class SubLevelArmor {
     if (SubLevelCreatureParts.isPart(body)) SubLevelCreatureParts.armorContribution(body, total);
   }
 
+  /**
+   * Repairs the saved wear ledger only after health is fully restored and life support permits it.
+   */
+  public static boolean repair(ServerSubLevel body, double amount) {
+    if (!SubLevelCreatureParts.available(body) || !Double.isFinite(amount) || amount <= 0)
+      return false;
+    body = SubLevelCreatureParts.root(body);
+    var health = SubLevelHealth.status(body);
+    if (health.dead()
+        || health.current() < health.maximum()
+        || !SubLevelHunger.canRegenerate(body)
+        || status(body).maximum() <= 0
+        || spent(body) <= 0) return false;
+    var root = body.getUserDataTag().copy();
+    var armor = root.getCompound(SubLevelData.ARMOR).copy();
+    armor.putDouble("spent", Math.max(0, spent(body) - amount));
+    root.put(SubLevelData.ARMOR, armor);
+    body.setUserDataTag(root);
+    return true;
+  }
+
   /** Returns health damage remaining after a hit on an actual armored cell. */
   public static double absorb(
       ServerSubLevel body, BlockPos cell, DamageSource source, double damage) {

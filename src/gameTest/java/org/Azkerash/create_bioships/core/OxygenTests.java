@@ -94,20 +94,24 @@ public final class OxygenTests {
     SubLevelOxygen.advance(b, 20);
     h.assertTrue(!SubLevelHunger.canRegenerate(b), "Natural regeneration ignored empty oxygen");
     double hp = SubLevelHealth.status(b).current();
-    SubLevelOxygen.advance(b, 60);
+    SubLevelOxygen.advance(b, 19);
     var saved = b.getUserDataTag().copy();
     b.setUserDataTag(saved.copy());
     h.assertTrue(
-        SubLevelData.oxygen(b).suffocationTicks() == 60 && SubLevelHealth.status(b).current() == hp,
+        SubLevelData.oxygen(b).suffocationTicks() == 19 && SubLevelHealth.status(b).current() == hp,
         "Suffocation damaged early or reload lost timer");
-    SubLevelOxygen.advance(b, 20);
+    SubLevelOxygen.advance(b, 1);
     h.assertTrue(
-        SubLevelHealth.status(b).current() == hp - 1,
-        "Empty air did not damage every four seconds");
+        SubLevelHealth.status(b).current() == hp - 2,
+        "Empty air did not deal player-style drowning damage after 20 ticks");
+    SubLevelOxygen.advance(b, 40);
+    h.assertTrue(
+        SubLevelHealth.status(b).current() == hp - 6,
+        "Repeated drowning pulses did not deal 2 damage per second");
     SubLevelData.oxygen(b, new SubLevelData.Oxygen(0, 0, true));
     SubLevelOxygen.advance(b, 10000);
     h.assertTrue(
-        SubLevelData.oxygen(b).paused() && SubLevelHealth.status(b).current() == hp - 1,
+        SubLevelData.oxygen(b).paused() && SubLevelHealth.status(b).current() == hp - 6,
         "Paused oxygen advanced");
     SubLevelData.oxygen(b, new SubLevelData.Oxygen(0, 0, false));
     h.getLevel().setBlock(p.east(), ComponentRegistry.LUNG.get().defaultBlockState(), 3);
@@ -149,7 +153,7 @@ public final class OxygenTests {
     h.assertTrue(SubLevelData.oxygen(root).value() == 100, "Linked body simulated reserve twice");
     double demand = SubLevelOxygen.status(root).demand();
     var c = root.getPlot().getCenterBlock();
-    for (int x = 1; x <= 80; x++)
+    for (int x = 1; x <= 150; x++)
       h.getLevel().setBlock(c.above(x), Blocks.IRON_BLOCK.defaultBlockState(), 3);
     h.assertTrue(
         SubLevelOxygen.status(root).demand() > demand, "Mass did not increase oxygen demand");
@@ -254,6 +258,57 @@ public final class OxygenTests {
           SubLevelHealth.status(b).current() == hp - 4 && SubLevelArmor.status(b).current() == 20,
           "Gill hit was protected by the creature armor pool");
     }
+    h.succeed();
+  }
+
+  @GameTest(template = "test_empty", batch = "oxygen_recovery", timeoutTicks = 100)
+  public static void either_valid_organ_refills_and_both_add_supply_without_free_air(
+      GameTestHelper h) {
+    var b = body(h, h.absolutePos(new BlockPos(1, 3, 1)), true);
+    var l = h.getLevel();
+    var core = b.getPlot().getCenterBlock();
+    var lung = core.east();
+    var gill = core.east(3);
+    SubLevelData.oxygen(b, new SubLevelData.Oxygen(100, 19, false));
+    h.assertTrue(
+        SubLevelOxygen.status(b).breathingLungs() == 1
+            && SubLevelOxygen.status(b).breathingGills() == 0,
+        "Dry lung was not recognized as functioning");
+    SubLevelOxygen.advance(b, 20);
+    h.assertTrue(
+        SubLevelData.oxygen(b).value() == 120 && SubLevelData.oxygen(b).suffocationTicks() == 0,
+        "Working lung failed to refill and reset drowning timer");
+    l.setBlock(lung, l.getBlockState(lung).setValue(BlockStateProperties.WATERLOGGED, true), 3);
+    l.setBlock(gill.north(), Blocks.WATER.defaultBlockState(), 3);
+    h.assertTrue(
+        SubLevelOxygen.status(b).breathingLungs() == 0
+            && SubLevelOxygen.status(b).breathingGills() == 1,
+        "Underwater intake was not recognized as functioning");
+    SubLevelOxygen.advance(b, 20);
+    h.assertTrue(SubLevelData.oxygen(b).value() == 140, "Working gill alone failed to refill");
+    l.setBlock(lung, l.getBlockState(lung).setValue(BlockStateProperties.WATERLOGGED, false), 3);
+    SubLevelOxygen.advance(b, 20);
+    h.assertTrue(
+        SubLevelData.oxygen(b).value() == 200 && SubLevelOxygen.status(b).supply() == 80,
+        "Working lung and gill failed to combine their supply");
+    SubLevelData.oxygen(b, new SubLevelData.Oxygen(1190, 0, false));
+    SubLevelOxygen.advance(b, 20);
+    h.assertTrue(
+        SubLevelData.oxygen(b).value() == SubLevelOxygen.MAXIMUM,
+        "Recovery exceeded reserve capacity");
+    h.succeed();
+  }
+
+  @GameTest(template = "test_empty", batch = "junior_breathing_balance", timeoutTicks = 20)
+  public static void junior_mass_needs_one_lung_while_large_bodies_still_scale(GameTestHelper h) {
+    // Measured from the uploaded Junior save with its generated native compact limbs.
+    double juniorDemand = SubLevelOxygen.demandForMass(88.55);
+    h.assertTrue(
+        juniorDemand == 20 && juniorDemand < SubLevelOxygen.SUPPLY_PER_ORGAN,
+        "One working lung cannot sustain Junior and refill his reserve");
+    h.assertTrue(
+        SubLevelOxygen.demandForMass(300) == 60,
+        "Large-creature demand stopped scaling independently of hunger");
     h.succeed();
   }
 }
