@@ -77,7 +77,7 @@ public final class StomachGeneTests {
         inject(stomach, player, tool).consumesAction() && stomach.genes().longevity(),
         "Native injector failed to install longevity from side");
     helper.assertTrue(
-        SubLevelData.maximumHunger(body) == 15 && SubLevelData.hunger(body) == 7,
+        SubLevelData.maximumHunger(body) == 12 && SubLevelData.hunger(body) == 7,
         "Longevity refilled food or failed to add capacity");
     helper.assertTrue(
         item.getStoredItemStack(tool).getCount() == 2
@@ -89,7 +89,8 @@ public final class StomachGeneTests {
           inject(stomach, player, tool).consumesAction() && stomach.genes().longevityTier() == tier,
           "Longevity tier failed: " + tier);
       helper.assertTrue(
-          SubLevelData.maximumHunger(body) == 10 + tier * 5 && SubLevelData.hunger(body) == 7,
+          SubLevelData.maximumHunger(body) == (tier == 2 ? 13 : 15)
+              && SubLevelData.hunger(body) == 7,
           "Capacity tier refilled food or incorrect maximum");
     }
     var extra = injector(ComponentRegistry.LONGEVITY_SERUM.get(), 1);
@@ -119,7 +120,7 @@ public final class StomachGeneTests {
     level.setBlock(core.east(2), ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
     var second = (StomachBlockEntity) level.getBlockEntity(core.east(2));
     helper.assertTrue(
-        second.genes().longevityTier() == 0 && SubLevelData.maximumHunger(body) == 30,
+        second.genes().longevityTier() == 0 && SubLevelData.maximumHunger(body) == 16,
         "Second stomach inherited genes or failed to add its base capacity");
     var secondTool = injector(ComponentRegistry.LONGEVITY_SERUM.get(), 2);
     for (int tier = 1; tier <= 2; tier++) {
@@ -128,7 +129,7 @@ public final class StomachGeneTests {
           inject(second, player, secondTool).consumesAction()
               && second.genes().longevityTier() == tier
               && stomach.genes().longevityTier() == 3
-              && SubLevelData.maximumHunger(body) == 30 + tier * 5
+              && SubLevelData.maximumHunger(body) == (tier == 1 ? 17 : 18)
               && SubLevelData.hunger(body) == 7,
           "Independent stomach upgrade changed another organ, refilled hunger, or lost capacity");
     }
@@ -144,15 +145,15 @@ public final class StomachGeneTests {
     SubLevelData.hunger(body, 40);
     level.removeBlock(core.east(), false);
     helper.assertTrue(
-        SubLevelData.maximumHunger(body) == 20 && SubLevelData.hunger(body) == 20,
+        SubLevelData.maximumHunger(body) == 13 && SubLevelData.hunger(body) == 13,
         "Removing upgraded stomach lost remaining upgrades or failed to clamp hunger");
     level.setBlock(core.east(), ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
     stomach = (StomachBlockEntity) level.getBlockEntity(core.east());
     helper.assertTrue(
         stomach.genes().longevityTier() == 0
             && second.genes().longevityTier() == 2
-            && SubLevelData.maximumHunger(body) == 25
-            && SubLevelData.hunger(body) == 20,
+            && SubLevelData.maximumHunger(body) == 15
+            && SubLevelData.hunger(body) == 13,
         "Fresh replacement copied upgrades or refilled hunger");
     SubLevelHealth.damage(body, SubLevelHealth.status(body).current(), "test");
     var efficiency = injector(ComponentRegistry.EFFICIENCY_SERUM.get(), 2);

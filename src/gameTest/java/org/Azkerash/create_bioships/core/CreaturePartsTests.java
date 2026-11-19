@@ -95,11 +95,11 @@ public final class CreaturePartsTests {
           var otherStomach = otherLimb.getPlot().getCenterBlock().above(2);
           level.setBlock(otherStomach, ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
           h.assertTrue(
-              SubLevelData.maximumHunger(root) == 20,
-              "Root and two linked stomachs did not sum their capacity");
+              SubLevelData.maximumHunger(root) == 13,
+              "Linked stomachs did not apply one creature-wide diminishing-return curve");
           SubLevelCreatureParts.attach(root, otherLimb);
           h.assertTrue(
-              SubLevelData.maximumHunger(root) == 20,
+              SubLevelData.maximumHunger(root) == 13,
               "Repeated link counted stomach capacity twice");
           level.removeBlock(otherStomach, false);
           SubLevelCreatureParts.detach(otherLimb);

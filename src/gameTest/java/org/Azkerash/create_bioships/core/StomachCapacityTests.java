@@ -148,7 +148,7 @@ public final class StomachCapacityTests {
           level.setBlock(core.east(), ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
           level.setBlock(core.east(2), ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
           helper.assertTrue(
-              SubLevelData.maximumHunger(body) == 15 && SubLevelData.hunger(body) == 5,
+              SubLevelData.maximumHunger(body) == 12 && SubLevelData.hunger(body) == 5,
               "Additional stomach failed to stack capacity without filling hunger");
           level.setBlock(core.east(), Blocks.STONE.defaultBlockState(), 3);
           helper.assertTrue(
@@ -156,6 +156,19 @@ public final class StomachCapacityTests {
           level.setBlock(core.east(2), Blocks.STONE.defaultBlockState(), 3);
           helper.assertTrue(
               SubLevelData.maximumHunger(body) == 5, "Last stomach removal kept bonus capacity");
+          // Build the same group in reverse order; capacity depends on the total, not placement
+          // order.
+          level.setBlock(core.east(2), ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
+          level.setBlock(core.east(), ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
+          helper.assertTrue(
+              SubLevelData.maximumHunger(body) == 12 && SubLevelData.hunger(body) == 5,
+              "Reverse placement changed diminishing returns or filled hunger");
+          long[] raw = {0, 5, 10, 20, 45, 80};
+          int[] expected = {5, 10, 12, 15, 20, 25};
+          for (int i = 0; i < raw.length; i++)
+            helper.assertTrue(
+                SubLevelHunger.balancedCapacity(raw[i]) == expected[i],
+                "Unexpected diminishing-return capacity for raw total " + raw[i]);
           helper.succeed();
         });
   }

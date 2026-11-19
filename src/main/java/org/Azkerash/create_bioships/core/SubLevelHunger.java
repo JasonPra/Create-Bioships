@@ -59,8 +59,15 @@ public final class SubLevelHunger {
       return;
     }
     capacity += SubLevelCreatureParts.extraStomachCapacity(body);
-    SubLevelData.maximumHunger(
-        body, (int) Math.min(Integer.MAX_VALUE, SubLevelData.BASE_HUNGER + capacity));
+    SubLevelData.maximumHunger(body, balancedCapacity(capacity));
+  }
+
+  /** Apply diminishing returns once, after combining raw capacity from every physical body. */
+  static int balancedCapacity(long rawCapacity) {
+    double effective =
+        SubLevelData.STOMACH_HUNGER
+            * Math.sqrt(Math.max(0, rawCapacity) / (double) SubLevelData.STOMACH_HUNGER);
+    return (int) Math.min(Integer.MAX_VALUE, SubLevelData.BASE_HUNGER + Math.floor(effective));
   }
 
   private static final java.util.Set<ServerSubLevel> PENDING_CAPACITY =
