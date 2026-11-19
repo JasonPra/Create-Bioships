@@ -46,7 +46,7 @@ public final class DigestionFixture {
         m.east(3),
         m.east(3).south(),
         m.east().south(),
-        m.east().south(2),
+        m.east().south().above(),
         m.east(2).north());
   }
 
@@ -106,7 +106,7 @@ public final class DigestionFixture {
     level.setBlock(m.east().south(), ComponentRegistry.INTESTINE.get().defaultBlockState(), 3);
     level.setBlock(m.east(2).north(), ComponentRegistry.INTESTINE.get().defaultBlockState(), 3);
     level.setBlock(
-        m.east().south(2),
+        m.east().south().above(),
         net.minecraft.core.registries.BuiltInRegistries.BLOCK
             .get(net.minecraft.resources.ResourceLocation.parse("biomancy:storage_sac"))
             .defaultBlockState(),
@@ -147,7 +147,7 @@ public final class DigestionFixture {
             level,
             m.east(3).south(),
             cells(level),
-            new BoundingBox3i(m.north(), m.east(3).south(2)));
+            new BoundingBox3i(m.north(), m.east(3).south(2).above()));
     if (body == null) return 0;
     var core = body.getPlot().getCenterBlock();
     CoreAssemblyRules.changed(level, core);

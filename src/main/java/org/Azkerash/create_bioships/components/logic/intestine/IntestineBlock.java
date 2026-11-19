@@ -42,6 +42,13 @@ public final class IntestineBlock extends Block
         || state.is(ComponentRegistry.STOMACH.get());
   }
 
+  public static boolean compatible(BlockState state, Direction direction) {
+    return compatible(state)
+        && (!(state.getBlock()
+                instanceof com.github.elenterius.biomancy.block.storagesac.StorageSacBlock)
+            || direction.getAxis() == Direction.Axis.Y);
+  }
+
   protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
     for (var property : CONNECTIONS.values()) builder.add(property);
   }
@@ -53,7 +60,8 @@ public final class IntestineBlock extends Block
           state.setValue(
               e.getValue(),
               compatible(
-                  context.getLevel().getBlockState(context.getClickedPos().relative(e.getKey()))));
+                  context.getLevel().getBlockState(context.getClickedPos().relative(e.getKey())),
+                  e.getKey()));
     return state;
   }
 
@@ -64,7 +72,7 @@ public final class IntestineBlock extends Block
       LevelAccessor level,
       BlockPos pos,
       BlockPos otherPos) {
-    return state.setValue(CONNECTIONS.get(direction), compatible(other));
+    return state.setValue(CONNECTIONS.get(direction), compatible(other, direction));
   }
 
   protected void onPlace(
@@ -74,7 +82,9 @@ public final class IntestineBlock extends Block
       var next = state;
       for (var e : CONNECTIONS.entrySet())
         next =
-            next.setValue(e.getValue(), compatible(level.getBlockState(pos.relative(e.getKey()))));
+            next.setValue(
+                e.getValue(),
+                compatible(level.getBlockState(pos.relative(e.getKey())), e.getKey()));
       if (!next.equals(state)) level.setBlock(pos, next, 3);
     }
   }

@@ -73,17 +73,18 @@ public final class DigestiveDebugSync {
           var id = body.getUniqueId();
           present.add(id);
           int version = SubLevelDigestion.topologyVersion(body);
-          if (known.getOrDefault(id, -1) == version) continue;
           var nodes = SubLevelDigestion.debugNodes(body);
           var points =
               nodes.entrySet().stream()
                   .sorted(Map.Entry.comparingByKey())
                   .limit(DigestiveDebugPayload.MAX_NODES)
-                  .map(n -> new DigestiveDebugPayload.Node(n.getKey(), n.getValue()))
+                  .map(n -> inventoryNode(body, n.getKey(), n.getValue()))
                   .toList();
+          int signature = 31 * version + points.hashCode();
+          if (known.getOrDefault(id, -1) == signature) continue;
           PacketDistributor.sendToPlayer(
               player, new DigestiveDebugPayload(id, points, nodes.size() > points.size()));
-          known.put(id, version);
+          known.put(id, signature);
         }
       for (var id : new HashSet<>(known.keySet()))
         if (!present.contains(id)) {
@@ -91,6 +92,33 @@ public final class DigestiveDebugSync {
           known.remove(id);
         }
     }
+  }
+
+  public static DigestiveDebugPayload.Node inventoryNode(
+      ServerSubLevel body, net.minecraft.core.BlockPos pos, int kind) {
+    int slots = 0, used = 0, items = 0;
+    var be = body.getLevel().getBlockEntity(pos);
+    if (be instanceof com.github.elenterius.biomancy.block.storagesac.StorageSacBlockEntity sac) {
+      var inventory = sac.getInventory();
+      slots = inventory.getSlots();
+      for (int i = 0; i < slots; i++) {
+        var stack = inventory.getStackInSlot(i);
+        if (!stack.isEmpty()) {
+          used++;
+          items += stack.getCount();
+        }
+      }
+    } else if (be instanceof net.minecraft.world.Container inventory) {
+      slots = inventory.getContainerSize();
+      for (int i = 0; i < slots; i++) {
+        var stack = inventory.getItem(i);
+        if (!stack.isEmpty()) {
+          used++;
+          items += stack.getCount();
+        }
+      }
+    }
+    return new DigestiveDebugPayload.Node(pos, kind, slots, used, items);
   }
 
   @SubscribeEvent

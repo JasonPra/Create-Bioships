@@ -115,7 +115,8 @@ public final class IntestineDebugOverlay {
         Direction neighbor = null;
         for (var face : Direction.values()) {
           var next = node.pos().relative(face);
-          if (!nodes.containsKey(next)) continue;
+          if (!org.Azkerash.create_bioships.core.digestion.SubLevelDigestion.connected(
+              node.kind(), nodes.getOrDefault(next, 0), face)) continue;
           degree++;
           neighbor = face;
           var end = point.relative(face, 1);
@@ -136,7 +137,13 @@ public final class IntestineDebugOverlay {
           float red = node.kind() == 2 ? 1f : node.kind() == 3 ? .8f : .2f;
           float green = node.kind() == 2 ? .7f : node.kind() == 3 ? .3f : 1f;
           LevelRenderer.renderLineBox(
-              pose, lines, new AABB(point, point).inflate(.18), red, green, 1f, 1f);
+              pose,
+              lines,
+              new AABB(point, point).inflate(node.slots() > 0 ? .48 : .18),
+              red,
+              green,
+              1f,
+              1f);
         } else if (degree <= 1) {
           var endpoint = degree == 0 ? point : point.relative(neighbor.getOpposite(), .5);
           LevelRenderer.renderLineBox(
@@ -147,6 +154,40 @@ public final class IntestineDebugOverlay {
         }
       }
       pose.popPose();
+      for (var node : graph.nodes())
+        if (node.slots() > 0) {
+          var at =
+              transform
+                  .transformPosition(Vec3.atCenterOf(node.pos()))
+                  .add(0, .8, 0)
+                  .subtract(camera);
+          String name = node.kind() == 4 ? "Storage sac" : node.kind() == 3 ? "Stomach" : "Mouth";
+          String text =
+              name
+                  + " · "
+                  + node.used()
+                  + "/"
+                  + node.slots()
+                  + " slots · "
+                  + node.items()
+                  + " items";
+          pose.pushPose();
+          pose.translate(at.x, at.y, at.z);
+          pose.mulPose(mc.getEntityRenderDispatcher().cameraOrientation());
+          pose.scale(-.02f, -.02f, .02f);
+          mc.font.drawInBatch(
+              text,
+              -mc.font.width(text) / 2f,
+              0,
+              0xffbbffff,
+              false,
+              pose.last().pose(),
+              buffers,
+              net.minecraft.client.gui.Font.DisplayMode.SEE_THROUGH,
+              0x66000000,
+              LightTexture.FULL_BRIGHT);
+          pose.popPose();
+        }
     }
     buffers.endBatch(DevelopmentDebugRenderType.LINES);
   }

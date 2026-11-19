@@ -9,7 +9,11 @@ import net.minecraft.resources.ResourceLocation;
 
 public record DigestiveDebugPayload(UUID body, List<Node> nodes, boolean truncated)
     implements CustomPacketPayload {
-  public record Node(BlockPos pos, int kind) {}
+  public record Node(BlockPos pos, int kind, int slots, int used, int items) {
+    public Node(BlockPos pos, int kind) {
+      this(pos, kind, 0, 0, 0);
+    }
+  }
 
   public static final int MAX_NODES = 4096;
   public static final Type<DigestiveDebugPayload> TYPE =
@@ -23,6 +27,9 @@ public record DigestiveDebugPayload(UUID body, List<Node> nodes, boolean truncat
             for (var node : payload.nodes) {
               buffer.writeBlockPos(node.pos);
               buffer.writeByte(node.kind);
+              buffer.writeVarInt(node.slots);
+              buffer.writeVarInt(node.used);
+              buffer.writeVarInt(node.items);
             }
           },
           buffer -> {
@@ -33,7 +40,13 @@ public record DigestiveDebugPayload(UUID body, List<Node> nodes, boolean truncat
               throw new IllegalArgumentException("Invalid graph size");
             var nodes = new ArrayList<Node>();
             for (int i = 0; i < count; i++)
-              nodes.add(new Node(buffer.readBlockPos(), buffer.readUnsignedByte()));
+              nodes.add(
+                  new Node(
+                      buffer.readBlockPos(),
+                      buffer.readUnsignedByte(),
+                      buffer.readVarInt(),
+                      buffer.readVarInt(),
+                      buffer.readVarInt()));
             return new DigestiveDebugPayload(body, List.copyOf(nodes), truncated);
           });
 

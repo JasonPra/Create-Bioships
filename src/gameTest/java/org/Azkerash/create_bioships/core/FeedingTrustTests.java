@@ -28,7 +28,7 @@ public final class FeedingTrustTests {
     var sacBlock =
         net.minecraft.core.registries.BuiltInRegistries.BLOCK.get(
             net.minecraft.resources.ResourceLocation.parse("biomancy:storage_sac"));
-    level.setBlock(origin.east(4), sacBlock.defaultBlockState(), 3);
+    level.setBlock(origin.east(2).above(), sacBlock.defaultBlockState(), 3);
     level.setBlock(origin.east(6), sacBlock.defaultBlockState(), 3);
     var body =
         SubLevelAssemblyHelper.assembleBlocks(
@@ -39,9 +39,9 @@ public final class FeedingTrustTests {
                 origin.east(),
                 origin.east(2),
                 origin.east(3),
-                origin.east(4),
+                origin.east(2).above(),
                 origin.east(6)),
-            new BoundingBox3i(origin, origin.east(6)));
+            new BoundingBox3i(origin, origin.east(6).above()));
     var core = body.getPlot().getCenterBlock();
     CoreAssemblyRules.mark(level, core);
     SubLevelData.hungerPaused(body, true);
@@ -64,7 +64,7 @@ public final class FeedingTrustTests {
         Math.abs(SubLevelData.trust(body) - .5) < 1e-8, "GUI stack feeding count incorrect");
     var sac =
         (com.github.elenterius.biomancy.block.storagesac.StorageSacBlockEntity)
-            level.getBlockEntity(core.east(4));
+            level.getBlockEntity(core.east(2).above());
     var sacMenu =
         com.github.elenterius.biomancy.menu.StorageSacMenu.createServerMenu(
             2, player.getInventory(), sac);

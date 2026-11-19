@@ -58,6 +58,33 @@ public final class StomachStorageRouting {
     return 0;
   }
 
+  /** Move a bounded number of native stacks downward; no per-sac ticker or duplicate inventory. */
+  public static int compactStacks(Level level, List<BlockPos> sacs, int cursor, int budget) {
+    if (sacs.size() < 2 || budget <= 0) return 0;
+    var known = new HashSet<>(sacs);
+    int moved = 0;
+    for (int i = 0; i < Math.min(sacs.size(), 8) && moved < budget; i++) {
+      var upper = sacs.get(Math.floorMod(cursor + i, sacs.size()));
+      if (!known.contains(upper.below())) continue;
+      var source = inventory(level, upper);
+      var below = inventory(level, upper.below());
+      if (source == null || below == null) continue;
+      for (int slot = 0; slot < source.getSlots(); slot++) {
+        var preview = source.extractItem(slot, 64, true);
+        if (preview.isEmpty()) continue;
+        var rest = ItemHandlerHelper.insertItemStacked(below, preview, true);
+        int accepted = preview.getCount() - rest.getCount();
+        if (accepted <= 0) continue;
+        var extracted = source.extractItem(slot, accepted, false);
+        var left = ItemHandlerHelper.insertItemStacked(below, extracted, false);
+        if (!left.isEmpty()) source.insertItem(slot, left, false);
+        if (extracted.getCount() > left.getCount()) moved++;
+        break;
+      }
+    }
+    return moved;
+  }
+
   public static int service(StomachBlockEntity stomach, List<BlockPos> sacs, int budget) {
     if (sacs.isEmpty() || budget <= 0) return 0;
     int moved = 0;

@@ -59,20 +59,45 @@ public final class SubLevelDigestion {
           if (role == 4) sacs.add(pos);
           for (var direction : Direction.values()) {
             var next = pos.relative(direction);
-            if (unseen.remove(next)) queue.add(next);
+            if (connected(role, nodes.getOrDefault(next, 0), direction) && unseen.remove(next))
+              queue.add(next);
           }
         }
         mouths.sort(BlockPos::compareTo);
         stomachs.sort(BlockPos::compareTo);
-        sacs.sort(BlockPos::compareTo);
+        sacs.sort(
+            Comparator.comparingInt((BlockPos p) -> p.getY())
+                .thenComparingInt(BlockPos::getX)
+                .thenComparingInt(BlockPos::getZ));
         result.add(new Group(List.copyOf(mouths), List.copyOf(stomachs), List.copyOf(sacs)));
       }
+      for (var entry : nodes.entrySet())
+        if (entry.getValue() == 1) {
+          var state = body.getLevel().getBlockState(entry.getKey());
+          var next = state;
+          for (var face : Direction.values())
+            next =
+                next.setValue(
+                    org.Azkerash.create_bioships.components.logic.intestine.IntestineBlock
+                        .CONNECTIONS.get(face),
+                    org.Azkerash.create_bioships.components.logic.intestine.IntestineBlock
+                        .compatible(
+                            body.getLevel().getBlockState(entry.getKey().relative(face)), face));
+          if (!next.equals(state)) body.getLevel().setBlock(entry.getKey(), next, 2);
+        }
       groups = List.copyOf(result);
       dirty = false;
     }
   }
 
   private SubLevelDigestion() {}
+
+  /** Storage sacs expose top/bottom ports only. The debug renderer uses the same rule. */
+  public static boolean connected(int from, int to, Direction direction) {
+    return from != 0
+        && to != 0
+        && ((from != 4 && to != 4) || direction.getAxis() == Direction.Axis.Y);
+  }
 
   private static int role(BlockState state) {
     if (state.getBlock() instanceof com.github.elenterius.biomancy.block.storagesac.StorageSacBlock)
@@ -157,6 +182,11 @@ public final class SubLevelDigestion {
               if (level.getBlockEntity(pos) instanceof MouthBlockEntity mouth) transfer(mouth);
             }
             int remaining = MAX_TRANSFERS;
+            for (var group : groups)
+              if (remaining > 0)
+                remaining -=
+                    StomachStorageRouting.compactStacks(
+                        level, group.sacs, network.cursor++, remaining);
             for (var group : groups)
               for (var pos : group.stomachs)
                 if (remaining > 0
