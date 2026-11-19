@@ -80,6 +80,31 @@ public final class ComponentRegistry {
                               .sound(SoundType.BONE_BLOCK))));
 
   public static final DeferredBlock<
+          org.Azkerash.create_bioships.components.logic.flipper.FlipperBlock>
+      FLIPPER =
+          component(
+              new ComponentDefinition<>(
+                  "flipper",
+                  () ->
+                      new org.Azkerash.create_bioships.components.logic.flipper.FlipperBlock(
+                          BlockBehaviour.Properties.of()
+                              .strength(1.5f)
+                              .noOcclusion()
+                              .sound(SoundType.SLIME_BLOCK))));
+  public static final DeferredHolder<
+          BlockEntityType<?>,
+          BlockEntityType<org.Azkerash.create_bioships.components.logic.flipper.FlipperBlockEntity>>
+      FLIPPER_ENTITY =
+          BLOCK_ENTITIES.register(
+              "flipper",
+              () ->
+                  BlockEntityType.Builder.of(
+                          org.Azkerash.create_bioships.components.logic.flipper.FlipperBlockEntity
+                              ::new,
+                          FLIPPER.get())
+                      .build(null));
+
+  public static final DeferredBlock<
           org.Azkerash.create_bioships.components.logic.legs.CompactLimbBlock>
       COMPACT_LIMB =
           BLOCKS.register(

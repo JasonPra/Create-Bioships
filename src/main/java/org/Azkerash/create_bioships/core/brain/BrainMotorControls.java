@@ -83,6 +83,7 @@ public final class BrainMotorControls {
 
   /** Standing is an idle brain reflex, independent of a behavior card or movement lease. */
   public static boolean groundPostureEnabled(ServerSubLevel body) {
+    if (org.Azkerash.create_bioships.core.flippers.SubLevelFlippers.supporting(body)) return false;
     if (!active(body)
         || !org.Azkerash.create_bioships.core.pathfinding.SubLevelPathfinder.allowed(
             body, org.Azkerash.create_bioships.core.pathfinding.SubLevelPathfinder.Mode.GROUND))

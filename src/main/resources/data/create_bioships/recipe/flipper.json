@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " FF",
+    "FBC",
+    " FF"
+  ],
+  "key": {
+    "F": {
+      "item": "biomancy:packed_flesh"
+    },
+    "B": {
+      "item": "minecraft:bone"
+    },
+    "C": {
+      "item": "create_bioships:chitin_armor"
+    }
+  },
+  "result": {
+    "id": "create_bioships:flipper",
+    "count": 2
+  }
+}
