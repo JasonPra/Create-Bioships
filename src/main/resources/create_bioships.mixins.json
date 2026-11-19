@@ -33,7 +33,9 @@
     "SocketFootholdMixin",
     "CreatureFootstepsMixin"
   ],
-  "client": [],
+  "client": [
+    "client.ExhibitDisplayMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   },

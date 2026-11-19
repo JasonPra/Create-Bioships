@@ -71,3 +71,11 @@ Client smoke checks also exercised the native joint meshes while standing/walkin
 through-glass rendering, held tool framing, mouth tooth UVs, multi-grid inventory
 outlines and readable labels, the membrane return circuit, and living/corpse arrow
 wounds. Temporary client probes are excluded from the release sources and jar.
+
+## Exhibit transparency
+
+Our exhibit TextDisplays defer their normal vanilla renderer until opaque block entities
+and custom creature surfaces have finished, before translucent glass. Their transparent
+backgrounds no longer write depth ahead of limb/brain geometry. A frame-local queue only
+handles Bioships-tagged text, retains the vanilla billboard/interpolation behavior, and
+clears after replay. Client checks cover both ordinary and Epic Fight rendering.
