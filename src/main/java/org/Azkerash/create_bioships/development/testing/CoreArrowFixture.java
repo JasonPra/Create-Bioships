@@ -34,25 +34,25 @@ public final class CoreArrowFixture {
   }
 
   public static BlockPos dispenser(ServerLevel level) {
-    return core(level).north(2);
+    return core(level).north(4);
   }
 
   public static List<BlockPos> dispensers(ServerLevel level) {
-    return List.of(dispenser(level), core(level).west(3).north(), core(level).east(3).north());
+    return List.of(dispenser(level), dispenser(level).west(3), dispenser(level).east(3));
   }
 
   public static List<BlockPos> targets(ServerSubLevel body) {
     var core = body.getPlot().getCenterBlock();
-    return List.of(core, core.west(3), core.east(3));
+    return List.of(core, core.west(3).north(), core.east(3).north());
   }
 
   private static List<BlockPos> cells(BlockPos base) {
     var result = new ArrayList<BlockPos>();
-    for (int x = -3; x <= 3; x++) result.add(base.offset(x, 0, 0));
+    for (int x = -3; x <= 3; x++) for (int z = -1; z <= 1; z++) result.add(base.offset(x, 0, z));
     for (int x : new int[] {-3, 0, 3}) {
       result.add(base.offset(x, 1, 0));
       result.add(base.offset(x, 2, 0));
-      result.add(base.offset(x, 2, 1));
+      if (x != 0) result.add(base.offset(x, 2, -1));
     }
     return result;
   }
@@ -65,14 +65,14 @@ public final class CoreArrowFixture {
     for (var cell : cells(base)) level.setBlock(cell, flesh.defaultBlockState(), 3);
     level.setBlock(core(level), ComponentRegistry.CORE.get().defaultBlockState(), 3);
     level.setBlock(
-        core(level).west(3),
+        core(level).west(3).north(),
         ComponentRegistry.LAND_EYE
             .get()
             .defaultBlockState()
             .setValue(BlockStateProperties.FACING, Direction.NORTH),
         3);
     level.setBlock(
-        core(level).east(3),
+        core(level).east(3).north(),
         ComponentRegistry.AQUATIC_EYE
             .get()
             .defaultBlockState()
@@ -126,15 +126,6 @@ public final class CoreArrowFixture {
           }
       }
     sleeping(level);
-    for (var pos : dispensers(level)) {
-      level.setBlock(
-          pos,
-          Blocks.DISPENSER.defaultBlockState().setValue(DispenserBlock.FACING, Direction.SOUTH),
-          3);
-      var inventory = (DispenserBlockEntity) level.getBlockEntity(pos);
-      inventory.setItem(0, new ItemStack(Items.ARROW, 16));
-      inventory.setChanged();
-    }
     control(level, base.offset(-3, 0, -8), "arrow_test start");
     control(level, base.offset(3, 0, -8), "arrow_test reset");
     state.arrowBuilt = true;
@@ -178,7 +169,7 @@ public final class CoreArrowFixture {
                 "EYE ARROW REGRESSION\n"
                     + "Left: START · Right: RESET\n"
                     + "Core · Land eye · Aquatic eye\n"
-                    + "Wait for wake-up; three front-facing arrows.\n"
+                    + "30s observation, then three front-facing dispensers.\n"
                     + "Then repeat on the corpse after 5 seconds.\n"
                     + "Expected: embedded arrows and fading wounds.\n"
                     + state.arrowResult),
@@ -202,7 +193,7 @@ public final class CoreArrowFixture {
             level,
             core(level),
             cells(base),
-            new BoundingBox3i(base.west(3), core(level).east(3).south()));
+            new BoundingBox3i(base.west(3).north(), core(level).east(3).south()));
     if (body == null) return 0;
     CoreAssemblyRules.changed(level, body.getPlot().getCenterBlock());
     var tag = body.getUserDataTag().copy();
@@ -215,8 +206,9 @@ public final class CoreArrowFixture {
     state.arrowBody = body.getUniqueId();
     state.arrowRunning = true;
     state.arrowPhase = 0;
-    state.arrowDeadline = level.getGameTime() + 200;
-    state.arrowResult = "Waiting for all three eyes to wake";
+    state.arrowNextAction = level.getGameTime() + 600;
+    state.arrowDeadline = level.getGameTime() + 800;
+    state.arrowResult = "Assembled: dispensers appear in 30 seconds";
     state.setDirty();
     explain(level);
     return 1;
@@ -268,7 +260,14 @@ public final class CoreArrowFixture {
                         && block.getValue(EyeBlink.WAKE) == 0
                         && !block.getValue(EyeBlink.BLINK);
                   });
-      if (awake && dispensers(level).stream().allMatch(level::isPositionEntityTicking)) {
+      if (now < state.arrowNextAction && now % 20 == 0) {
+        state.arrowResult =
+            "Dispensers appear in " + ((state.arrowNextAction - now + 19) / 20) + "s";
+        explain(level);
+      }
+      if (now >= state.arrowNextAction
+          && awake
+          && dispensers(level).stream().allMatch(level::isPositionEntityTicking)) {
         state.arrowShotAt = now;
         fire(level);
         state.arrowPhase = 1;

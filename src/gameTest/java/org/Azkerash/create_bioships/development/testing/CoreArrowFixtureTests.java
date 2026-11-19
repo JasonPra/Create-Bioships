@@ -16,7 +16,7 @@ import org.Azkerash.create_bioships.core.*;
 @GameTestHolder(Create_bioships.MODID)
 @PrefixGameTestTemplate(false)
 public final class CoreArrowFixtureTests {
-  @GameTest(template = "test_empty", timeoutTicks = 500, batch = "visible_arrow_fixture")
+  @GameTest(template = "test_empty", timeoutTicks = 1200, batch = "visible_arrow_fixture")
   public static void three_awake_eyes_and_corpse_keep_native_arrows_and_wounds(
       GameTestHelper helper) {
     var level = helper.getLevel();
@@ -34,6 +34,25 @@ public final class CoreArrowFixtureTests {
         .thenExecute(
             () -> {
               helper.assertTrue(CoreArrowFixture.start(level) == 1, "Fixture failed to start");
+              helper.assertTrue(
+                  CoreArrowFixture.dispensers(level).stream()
+                      .noneMatch(
+                          p ->
+                              level.getBlockState(p).is(Blocks.DISPENSER)
+                                  || level.getBlockState(p.north()).is(Blocks.REDSTONE_BLOCK)),
+                  "Shooters exist before 30-second observation");
+              helper.runAfterDelay(
+                  599,
+                  () ->
+                      helper.assertTrue(
+                          CoreArrowFixture.dispensers(level).stream()
+                              .noneMatch(
+                                  p ->
+                                      level.getBlockState(p).is(Blocks.DISPENSER)
+                                          || level
+                                              .getBlockState(p.north())
+                                              .is(Blocks.REDSTONE_BLOCK)),
+                          "Shooters spawned before full 30 seconds"));
               helper.assertTrue(
                   CoreArrowFixture.dispensers(level).stream().noneMatch(level::hasNeighborSignal),
                   "Dispensers fired before wake-up");
