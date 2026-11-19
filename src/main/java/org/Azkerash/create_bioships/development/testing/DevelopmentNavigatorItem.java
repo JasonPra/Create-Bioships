@@ -87,13 +87,18 @@ public final class DevelopmentNavigatorItem extends Item {
     entries.setItem(11, icon(Items.KELP, "Habitat: Aquatic homunculus aquarium"));
     if (state.juniorHabitatBuilt)
       entries.setItem(12, icon(Items.POPPY, "Habitat: Junior’s garden"));
+    if (state.necromancerDenBuilt)
+      entries.setItem(13, icon(Items.BOOKSHELF, "Landmark: The Den of Az’kerash"));
     player.openMenu(
         new SimpleMenuProvider(
             (id, inventory, viewer) ->
                 new ChestMenu(MenuType.GENERIC_9x2, id, inventory, entries, 2) {
                   @Override
                   public void clicked(int slot, int button, ClickType type, Player clicking) {
-                    if (slot < 0 || slot > 12 || slot == 12 && !state.juniorHabitatBuilt) return;
+                    if (slot < 0
+                        || slot > 13
+                        || slot == 12 && !state.juniorHabitatBuilt
+                        || slot == 13 && !state.necromancerDenBuilt) return;
                     var base =
                         switch (slot) {
                           case 0 -> state.layout().base();
@@ -108,7 +113,8 @@ public final class DevelopmentNavigatorItem extends Item {
                           case 9 -> ModularLimbFixture.base(level);
                           case 10 -> WaterloggingFixture.base(level);
                           case 11 -> DevelopmentHabitatFixtures.aquariumBase(level);
-                          default -> state.juniorHabitatOrigin;
+                          case 12 -> state.juniorHabitatOrigin;
+                          default -> NecromancerDenFixture.surface(level);
                         };
                     int approach =
                         switch (slot) {
@@ -117,6 +123,7 @@ public final class DevelopmentNavigatorItem extends Item {
                           case 5, 7 -> -12;
                           case 11 -> -24;
                           case 12 -> -21;
+                          case 13 -> -20;
                           default -> -10;
                         };
                     clicking.closeContainer();

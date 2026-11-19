@@ -22,6 +22,28 @@ public final class DevelopmentTestBlocks {
           Registries.BLOCK,
           ResourceLocation.fromNamespaceAndPath(Create_bioships.MODID, "development_glass_door"));
 
+  public static final DeferredHolder<Block, DevelopmentPathBlock> PATH =
+      DeferredHolder.create(
+          Registries.BLOCK,
+          ResourceLocation.fromNamespaceAndPath(Create_bioships.MODID, "development_dirt_path"));
+
+  public static final class DevelopmentPathBlock extends DirtPathBlock {
+    public DevelopmentPathBlock(BlockBehaviour.Properties properties) {
+      super(properties);
+    }
+
+    @Override
+    protected net.minecraft.world.level.block.state.BlockState updateShape(
+        net.minecraft.world.level.block.state.BlockState state,
+        net.minecraft.core.Direction direction,
+        net.minecraft.world.level.block.state.BlockState other,
+        net.minecraft.world.level.LevelAccessor level,
+        net.minecraft.core.BlockPos pos,
+        net.minecraft.core.BlockPos otherPos) {
+      return state;
+    }
+  }
+
   public static final java.util.Map<String, DeferredHolder<Block, Block>> FLOOR =
       new java.util.LinkedHashMap<>();
   public static final DeferredHolder<Block, Block> BUTTON =
@@ -45,7 +67,8 @@ public final class DevelopmentTestBlocks {
   }
 
   public static boolean protectedBlock(net.minecraft.world.level.block.state.BlockState state) {
-    return state.is(GLASS.get())
+    return state.is(PATH.get())
+        || state.is(GLASS.get())
         || state.is(GLASS_DOOR.get())
         || state.is(BUTTON.get())
         || FLOOR.values().stream().anyMatch(h -> state.is(h.get()));
@@ -58,6 +81,12 @@ public final class DevelopmentTestBlocks {
     event.register(
         Registries.BLOCK,
         helper -> {
+          helper.register(
+              PATH.getId(),
+              new DevelopmentPathBlock(
+                  BlockBehaviour.Properties.ofFullCopy(Blocks.DIRT_PATH)
+                      .strength(-1, 3600000)
+                      .noLootTable()));
           helper.register(
               GLASS_DOOR.getId(),
               new DoorBlock(

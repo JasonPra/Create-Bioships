@@ -68,6 +68,18 @@ public final class ComponentRegistry {
   private static final List<Runnable> SETUP = new ArrayList<>();
   private static boolean initialized;
 
+  public static final DeferredBlock<org.Azkerash.create_bioships.furniture.ThroneBlock>
+      THRONE_OF_AZKERASH =
+          component(
+              new ComponentDefinition<>(
+                  "throne_of_azkerash",
+                  () ->
+                      new org.Azkerash.create_bioships.furniture.ThroneBlock(
+                          BlockBehaviour.Properties.of()
+                              .strength(2.5f)
+                              .noOcclusion()
+                              .sound(SoundType.BONE_BLOCK))));
+
   public static final DeferredBlock<org.Azkerash.create_bioships.components.logic.armor.ArmorBlock>
       CHITIN_ARMOR =
           component(

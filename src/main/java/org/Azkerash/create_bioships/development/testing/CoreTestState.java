@@ -11,10 +11,12 @@ public final class CoreTestState extends SavedData {
   boolean built, running, combatBuilt, combatRunning;
   boolean visionBuilt, membraneBuilt, brainBuilt, locomotionBuilt, modularLimbsBuilt;
   int legChamberVersion;
-  boolean waterloggingBuilt, aquariumBuilt, juniorHabitatBuilt;
+  boolean waterloggingBuilt, aquariumBuilt, juniorHabitatBuilt, necromancerDenBuilt;
   BlockPos juniorHabitatOrigin = BlockPos.ZERO;
   int waterloggingCatalogSize;
-  UUID developmentOwner;
+  UUID developmentOwner, juniorSubject;
+  long juniorFeedAt;
+  net.minecraft.nbt.CompoundTag juniorBaseline = new net.minecraft.nbt.CompoundTag();
   BlockPos combatOrigin = new BlockPos(1024, DevelopmentWorldSetup.DEFAULT_TEST_Y, 1024);
   boolean combatFailuresExpanded;
   int combatFailurePage;
@@ -63,6 +65,10 @@ public final class CoreTestState extends SavedData {
                 CoreTestState::new,
                 (tag, registries) -> {
                   var state = new CoreTestState();
+                  if (tag.hasUUID("JuniorSubject"))
+                    state.juniorSubject = tag.getUUID("JuniorSubject");
+                  state.juniorFeedAt = tag.getLong("JuniorFeedAt");
+                  state.juniorBaseline = tag.getCompound("JuniorBaseline").copy();
                   if (tag.hasUUID("DevelopmentOwner"))
                     state.developmentOwner = tag.getUUID("DevelopmentOwner");
                   state.visionBuilt = tag.getBoolean("VisionBuilt");
@@ -71,6 +77,7 @@ public final class CoreTestState extends SavedData {
                   state.waterloggingBuilt = tag.getBoolean("WaterloggingBuilt");
                   state.aquariumBuilt = tag.getBoolean("AquariumBuilt");
                   state.juniorHabitatBuilt = tag.getBoolean("JuniorHabitatBuilt");
+                  state.necromancerDenBuilt = tag.getBoolean("NecromancerDenBuilt");
                   state.juniorHabitatOrigin = BlockPos.of(tag.getLong("JuniorHabitatOrigin"));
                   state.waterloggingCatalogSize = tag.getInt("WaterloggingCatalogSize");
                   state.legChamberVersion = tag.getInt("LegChamberVersion");
@@ -145,12 +152,16 @@ public final class CoreTestState extends SavedData {
 
   public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
     if (developmentOwner != null) tag.putUUID("DevelopmentOwner", developmentOwner);
+    if (juniorSubject != null) tag.putUUID("JuniorSubject", juniorSubject);
+    tag.putLong("JuniorFeedAt", juniorFeedAt);
+    tag.put("JuniorBaseline", juniorBaseline.copy());
     tag.putBoolean("VisionBuilt", visionBuilt);
     tag.putBoolean("MembraneBuilt", membraneBuilt);
     tag.putBoolean("BrainBuilt", brainBuilt);
     tag.putBoolean("WaterloggingBuilt", waterloggingBuilt);
     tag.putBoolean("AquariumBuilt", aquariumBuilt);
     tag.putBoolean("JuniorHabitatBuilt", juniorHabitatBuilt);
+    tag.putBoolean("NecromancerDenBuilt", necromancerDenBuilt);
     tag.putLong("JuniorHabitatOrigin", juniorHabitatOrigin.asLong());
     tag.putInt("WaterloggingCatalogSize", waterloggingCatalogSize);
     tag.putInt("LegChamberVersion", legChamberVersion);

@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " B ",
+    "CFC",
+    "BBB"
+  ],
+  "key": {
+    "B": {
+      "item": "minecraft:bone_block"
+    },
+    "C": {
+      "item": "create_bioships:chitin_armor"
+    },
+    "F": {
+      "item": "biomancy:packed_flesh"
+    }
+  },
+  "result": {
+    "id": "create_bioships:throne_of_azkerash",
+    "count": 1
+  }
+}
