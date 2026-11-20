@@ -4,7 +4,7 @@
 
 The programmable brain uses a documented **sandboxed C# subset**, implemented in Java. It does not embed Lua, a native compiler, the CLR, or arbitrary .NET libraries. The editor, compiler, card storage and interpreter have separate responsibilities.
 
-Programs may use top-level statements, or a `class Program` containing `static void Main()`. `using System;` is accepted for console output. Supported local types are `int`, `double`, `bool`, `string`, and inferred `var`; declarations require initializers. Expressions support arithmetic, comparisons, equality and short-circuit boolean operators. Assignment, compound assignment and postfix increment/decrement are supported as statements and for-loop steps. Statements include blocks, `if`/`else`, `while`, `for`, `break`, `continue`, and `return`.
+Programs may use top-level statements, or a `class Program` containing `static void Main()`. `using System;` is accepted for console output. Supported local types are `int`, `double`, `bool`, `string`, and inferred `var`; declarations require initializers. Expressions support arithmetic, comparisons, equality and short-circuit boolean operators. Assignment, compound assignment and postfix increment/decrement are supported as statements and for-loop steps. Statements include blocks, `if`/`else`, `while`, `for`, `switch`, `break`, `continue`, and `return`.
 
 The initial host surface is `Console.WriteLine(value)`, `Brain.Wait(ticks)`, and read-only `Brain.Health`, `Brain.Hunger`, `Brain.Oxygen`, and `Brain.Tick`. There is no component-control API in this version. Calls outside the documented host surface are compiler errors, including file/network access, reflection, object construction and arbitrary library calls.
 
@@ -96,3 +96,35 @@ Final verification: **153/153 required tests passed without Epic Fight**, and
 and interpreter and excludes temporary native-QA helpers and development test
 classes. All Brain statistic properties return double values; Brain.Tick is the
 world's current game tick, while Brain.Wait takes an int duration in game ticks.
+
+## Switch statements
+
+Switch selectors may be int, bool, or string expressions and are evaluated once.
+Case labels are matching literal constants (including negative integer literals);
+duplicate cases and duplicate defaults are errors. Adjacent labels can share one
+section. Default may appear anywhere, and a switch without a matching case or
+default simply continues after the switch.
+
+```csharp
+int mode = 2;
+switch (mode) {
+    case 1:
+        Console.WriteLine("Rest");
+        break;
+    case 2:
+    case 3:
+        Console.WriteLine("Explore");
+        break;
+    default:
+        Console.WriteLine("Unknown mode");
+        break;
+}
+```
+
+Sections must explicitly exit on every path using break, return, or a continue
+that targets an enclosing loop. The compiler conservatively checks both sides
+of conditional branches; implicit fall-through, goto, patterns, and guarded cases
+are not supported. A break exits the nearest switch or loop; continue skips any
+switches to reach the nearest loop. Section-local variables cannot be read from
+another section. Switches use the existing bounded instructions and allocate one
+hidden local slot, so source, nesting, local, and instruction limits still apply.

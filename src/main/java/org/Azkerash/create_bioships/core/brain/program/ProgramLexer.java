@@ -110,7 +110,7 @@ public final class ProgramLexer {
           take();
           take();
           add(Kind.SYMBOL, pair, row, col);
-        } else if ("{}();,.+-*/%!=<>".indexOf(c) >= 0) {
+        } else if ("{}();:,.+-*/%!=<>".indexOf(c) >= 0) {
           take();
           add(Kind.SYMBOL, "" + c, row, col);
         } else fail(row, col, "Unsupported character.");
