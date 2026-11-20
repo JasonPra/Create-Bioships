@@ -90,3 +90,9 @@ The native client exercised Compile & write, persistence and reopening, and the
 source/console switch. An intermittent Create registry-callback startup failure
 also appears in older pre-change logs; a retry loaded the world and completed the
 native checks. This startup failure has not been fixed by the programming changes.
+
+Final verification: **153/153 required tests passed without Epic Fight**, and
+**153/153 passed with Epic Fight 21.17.3.1**. The release JAR contains the compiler
+and interpreter and excludes temporary native-QA helpers and development test
+classes. All Brain statistic properties return double values; Brain.Tick is the
+world's current game tick, while Brain.Wait takes an int duration in game ticks.
