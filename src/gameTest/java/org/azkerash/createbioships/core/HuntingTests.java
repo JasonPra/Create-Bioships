@@ -51,6 +51,126 @@ public final class HuntingTests {
   @GameTest(template = "test_empty", batch = "hunt_runtime", timeoutTicks = 100)
   public static void hunting_needs_a_weapon_and_bites_only_whitelisted_visible_prey(
       GameTestHelper h) {
+    verifyHunt(h, ComponentRegistry.HUNTSMAN_MAW.get());
+  }
+
+  @GameTest(template = "test_empty", batch = "hunt_melee_mouth", timeoutTicks = 100)
+  public static void ordinary_feeding_mouth_can_hunt_without_any_ranged_weapon(GameTestHelper h) {
+    verifyHunt(h, ComponentRegistry.MOUTH.get());
+  }
+
+  @GameTest(template = "test_empty", batch = "hunt_food", timeoutTicks = 100)
+  public static void half_hungry_hunter_collects_meat_and_digests_it_then_idles_when_full(
+      GameTestHelper h) {
+    var level = h.getLevel();
+    var p = h.absolutePos(new BlockPos(2, 4, 2));
+    level.setBlock(p, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(p.above(), ComponentRegistry.BRAIN.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(p.east(), ComponentRegistry.STOMACH.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(
+        p.east(2),
+        ComponentRegistry.MOUTH
+            .get()
+            .defaultBlockState()
+            .setValue(
+                org.azkerash.createbioships.components.logic.mouth.MouthBlock.FACING,
+                Direction.EAST),
+        Block.UPDATE_ALL);
+    var body =
+        SubLevelAssemblyHelper.assembleBlocks(
+            level,
+            p,
+            List.of(p, p.above(), p.east(), p.east(2)),
+            new BoundingBox3i(p, p.east(2).above()));
+    var core = body.getPlot().getCenterBlock();
+    CoreAssemblyRules.mark(level, core);
+    DevelopmentLifeSupport.pause(body);
+    SubLevelData.hunger(body, SubLevelData.maximumHunger(body));
+    var card = new ItemStack(ComponentRegistry.HUNTING_BEHAVIOR_CARD.get());
+    HuntingCardData.write(card, "minecraft:cow");
+    SubLevelBrains.get(body).inventory().setItem(0, card);
+    h.runAfterDelay(
+        20,
+        () -> {
+          var mouth =
+              (org.azkerash.createbioships.components.logic.mouth.MouthBlockEntity)
+                  level.getBlockEntity(core.east(2));
+          var stomach =
+              (org.azkerash.createbioships.components.logic.stomach.StomachBlockEntity)
+                  level.getBlockEntity(core.east());
+          var origin =
+              body.logicalPose().transformPosition(Vec3.atCenterOf(core.east(2)).add(1.2, 0, 0));
+          var meat =
+              new net.minecraft.world.entity.item.ItemEntity(
+                  level,
+                  origin.x,
+                  origin.y,
+                  origin.z,
+                  new ItemStack(net.minecraft.world.item.Items.BEEF, 3));
+          meat.setNoGravity(true);
+          meat.setPickUpDelay(0);
+          level.addFreshEntity(meat);
+          int maximum = SubLevelData.maximumHunger(body);
+          // Organ onLoad can enlarge capacity before this delayed fixture assertion.
+          SubLevelData.hunger(body, maximum);
+          BrainBehaviors.advance(body);
+          SubLevelData.hunger(body, maximum - 1);
+          BrainBehaviors.advance(body);
+          h.assertTrue(meat.isAlive() && mouth.isEmpty(), "Hunter started above half hunger");
+          SubLevelData.hunger(body, maximum / 2);
+          BrainBehaviors.advance(body);
+          h.assertTrue(
+              !meat.isAlive() && mouth.chewRemaining() > 0,
+              "Hungry mouth-only hunter did not collect and chew meat");
+          h.assertTrue(
+              org.azkerash.createbioships.core.digestion.SubLevelDigestion.transfer(mouth) > 0
+                  && stomach.queued() > 0,
+              "Meat did not reach the real digestion system");
+          stomach
+              .state()
+              .setAcid(
+                  org.azkerash.createbioships.components.logic.stomach.StomachBlockEntity.MAX_ACID);
+          int before = SubLevelData.hunger(body);
+          for (int tick = 0; tick < 2000 && SubLevelData.hunger(body) == before; tick++) {
+            org.azkerash.createbioships.components.logic.stomach.StomachDigestion.advance(stomach);
+          }
+          h.assertTrue(
+              SubLevelData.hunger(body) > before,
+              "Collected meat did not restore hunger through digestion");
+          var second =
+              new net.minecraft.world.entity.item.ItemEntity(
+                  level,
+                  origin.x,
+                  origin.y,
+                  origin.z,
+                  new ItemStack(net.minecraft.world.item.Items.BEEF));
+          second.setPickUpDelay(0);
+          level.addFreshEntity(second);
+          SubLevelData.hunger(body, maximum - 1);
+          BrainBehaviors.advance(body);
+          h.assertTrue(!second.isAlive(), "An active meal stopped as soon as hunger crossed half");
+          var third =
+              new net.minecraft.world.entity.item.ItemEntity(
+                  level,
+                  origin.x,
+                  origin.y,
+                  origin.z,
+                  new ItemStack(net.minecraft.world.item.Items.BEEF));
+          third.setPickUpDelay(0);
+          level.addFreshEntity(third);
+          SubLevelData.hunger(body, maximum);
+          BrainBehaviors.advance(body);
+          h.assertTrue(third.isAlive(), "Full hunter kept collecting food");
+          SubLevelData.hunger(body, maximum - 1);
+          BrainBehaviors.advance(body);
+          h.assertTrue(third.isAlive(), "Hunter restarted before hunger fell to half again");
+          third.discard();
+          h.succeed();
+        });
+  }
+
+  private static void verifyHunt(
+      GameTestHelper h, org.azkerash.createbioships.components.logic.mouth.MouthBlock mouthType) {
     var level = h.getLevel();
     var p = h.absolutePos(new BlockPos(2, 4, 2));
     for (int x = -3; x <= 14; x++) {
@@ -77,6 +197,7 @@ public final class HuntingTests {
     var core = body.getPlot().getCenterBlock();
     CoreAssemblyRules.mark(level, core);
     DevelopmentLifeSupport.pause(body);
+    SubLevelData.hunger(body, SubLevelData.maximumHunger(body));
     var card = new ItemStack(ComponentRegistry.HUNTING_BEHAVIOR_CARD.get());
     HuntingCardData.write(card, "minecraft:cow");
     SubLevelBrains.get(body).inventory().setItem(0, card);
@@ -89,6 +210,7 @@ public final class HuntingTests {
           var center = body.logicalPose().transformPosition(Vec3.atCenterOf(core.east()));
           cow.moveTo(center.x + 1.6, center.y - .5, center.z, 0, 0);
           level.addFreshEntity(cow);
+          SubLevelData.hunger(body, SubLevelData.maximumHunger(body) / 2);
           h.assertTrue(
               HuntingWeapons.mounts(body).isEmpty(), "Nonweapon fulfilled attack prerequisite");
           BrainBehaviors.advance(body);
@@ -97,8 +219,7 @@ public final class HuntingTests {
               "Unarmed hunter moved");
           level.setBlock(
               core.east(),
-              ComponentRegistry.HUNTSMAN_MAW
-                  .get()
+              mouthType
                   .defaultBlockState()
                   .setValue(
                       org.azkerash.createbioships.components.logic.mouth.MouthBlock.FACING,
@@ -114,7 +235,16 @@ public final class HuntingTests {
               "Fixture cow not visible");
           float health = cow.getHealth();
           BrainBehaviors.advance(body);
-          h.assertTrue(cow.getHealth() < health, "Hunter did not bite visible whitelisted cow");
+          h.assertTrue(
+              cow.getHealth() < health,
+              "Hunter did not bite visible whitelisted cow: hunger="
+                  + SubLevelData.hunger(body)
+                  + "/"
+                  + SubLevelData.maximumHunger(body)
+                  + " food="
+                  + HuntingFood.nearest(body)
+                  + " active="
+                  + BrainBehaviors.active(body));
           float bitten = cow.getHealth();
           cow.invulnerableTime = 0;
           BrainBehaviors.advance(body);
@@ -136,6 +266,12 @@ public final class HuntingTests {
                 h.assertTrue(
                     path != null && !path.points().isEmpty(),
                     "Visible distant prey did not receive a chase route");
+                SubLevelData.hunger(body, SubLevelData.maximumHunger(body));
+                BrainBehaviors.advance(body);
+                h.assertTrue(
+                    org.azkerash.createbioships.core.pathfinding.SubLevelPaths.get(body) == null
+                        && BrainMotorControls.current(body).velocity().equals(Vec3.ZERO),
+                    "Full creature kept hunting");
                 SubLevelBrains.get(body).inventory().setItem(0, ItemStack.EMPTY);
                 BrainBehaviors.advance(body);
                 h.assertTrue(

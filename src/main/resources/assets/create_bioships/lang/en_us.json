@@ -56,5 +56,5 @@
   "block.create_bioships.huntsman_armor": "Huntsman Chitin Armor",
   "block.create_bioships.huntsman_maw": "Huntsman Eldritch Maw",
   "item.create_bioships.hunting_behavior_card": "Hunting Behavior Card",
-  "item.create_bioships.hunting_behavior_card.tooltip": "Hunts visible whitelisted prey. Requires an Eldritch Maw or another registered weapon. Use to edit prey types."
+  "item.create_bioships.hunting_behavior_card.tooltip": "Starts hunting whitelisted prey at half hunger or less; feeds until full. Requires a mouth or another registered weapon. Collects meat drops to eat. Use to edit prey types."
 }

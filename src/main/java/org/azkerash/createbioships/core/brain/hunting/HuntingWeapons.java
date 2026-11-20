@@ -28,7 +28,7 @@ public final class HuntingWeapons {
     register(
         new Weapon() {
           public boolean installed(ServerSubLevel member, BlockPos cell) {
-            return MouthBlock.isArmored(member.getLevel().getBlockState(cell));
+            return member.getLevel().getBlockState(cell).getBlock() instanceof MouthBlock;
           }
 
           public boolean attack(ServerSubLevel member, BlockPos cell, LivingEntity prey) {
@@ -84,7 +84,8 @@ public final class HuntingWeapons {
               }
               return false;
             }
-            return mouth.requestAcidAttack(null) == MawAcidAttack.Result.READY;
+            return MouthBlock.isArmored(state)
+                && mouth.requestAcidAttack(null) == MawAcidAttack.Result.READY;
           }
         });
   }

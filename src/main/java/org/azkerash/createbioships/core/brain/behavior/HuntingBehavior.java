@@ -24,7 +24,8 @@ public final class HuntingBehavior implements BrainBehavior {
   private static final double CHASE_SPEED = 1.6, REPLAN_DISTANCE_SQUARED = 4;
   private static final double APPROACH_MARGIN = 1, ROUTE_LEG_BLOCKS = 12;
   private final WanderBehavior search = new WanderBehavior();
-  private boolean searching;
+  private boolean searching, seekingMeal;
+  private static final double HUNT_START_HUNGER_FRACTION = .5;
   private final WaypointNavigator navigator = new WaypointNavigator();
   private List<Vec3> route = List.of();
   private int next;
@@ -75,10 +76,35 @@ public final class HuntingBehavior implements BrainBehavior {
 
   @Override
   public void tick(ServerSubLevel body) {
+    // Start at half hunger, but finish the meal before idling to avoid toggling after one bite.
+    double hunger = SubLevelData.hunger(body), maximum = SubLevelData.maximumHunger(body);
+    if (hunger >= maximum) {
+      seekingMeal = false;
+      stop(body);
+      return;
+    }
+    if (!seekingMeal && hunger > maximum * HUNT_START_HUNGER_FRACTION) {
+      stop(body);
+      return;
+    }
+    seekingMeal = true;
     var types = preyTypes(body);
     var weapons = HuntingWeapons.mounts(body);
     if (types.isEmpty() || weapons.isEmpty()) {
       stop(body);
+      return;
+    }
+    var food = HuntingFood.nearest(body);
+    if (food != null) {
+      stopSearching(body);
+      if (HuntingFood.collect(body, food)) {
+        navigator.reset();
+        route = List.of();
+        BrainMotorControls.stop(body);
+        SubLevelPaths.clear(body);
+      } else {
+        navigate(body, food.getUUID(), food.position(), APPROACH_MARGIN);
+      }
       return;
     }
     var position = SubLevelPathfinder.position(body);
@@ -100,10 +126,31 @@ public final class HuntingBehavior implements BrainBehavior {
       search.tick(body);
       return;
     }
+    stopSearching(body);
+    for (var mount : weapons) {
+      if (mount.weapon().attack(mount.body(), mount.cell(), prey)) {
+        break;
+      }
+    }
+    // Body clearance excludes the legs' support polygon, so jaws can reach their prey.
+    var bounds = body.boundingBox();
+    double approach =
+        Math.max(bounds.maxX() - bounds.minX(), bounds.maxZ() - bounds.minZ()) / 2
+            + APPROACH_MARGIN;
+    navigate(body, prey.getUUID(), prey.position(), approach);
+  }
+
+  private void stopSearching(ServerSubLevel body) {
     if (searching) {
       search.stop(body);
       searching = false;
     }
+  }
+
+  /** Both pursuit and food retrieval use the shared obstacle-aware waypoint navigator. */
+  private void navigate(
+      ServerSubLevel body, UUID destinationId, Vec3 destination, double approach) {
+    var position = SubLevelPathfinder.position(body);
     var mode =
         org.azkerash.createbioships.core.locomotion.SubLevelLocomotion.get(body).hasFins()
                 && body.getLevel()
@@ -115,22 +162,10 @@ public final class HuntingBehavior implements BrainBehavior {
       stop(body);
       return;
     }
-    for (var mount : weapons) {
-      if (mount.weapon().attack(mount.body(), mount.cell(), prey)) {
-        break;
-      }
-    }
-    var destination = prey.position();
     var offset = destination.subtract(position);
     if (mode == SubLevelPathfinder.Mode.GROUND) {
       offset = new Vec3(offset.x, 0, offset.z);
     }
-    // Body clearance excludes the legs' wide support polygon: otherwise a huntsman
-    // stops several blocks before its jaws can ever reach the victim.
-    var bounds = body.boundingBox();
-    double approach =
-        Math.max(bounds.maxX() - bounds.minX(), bounds.maxZ() - bounds.minZ()) / 2
-            + APPROACH_MARGIN;
     if (offset.length() <= approach) {
       var steering =
           org.azkerash.createbioships.core.locomotion.SubLevelFacing.towards(
@@ -142,11 +177,11 @@ public final class HuntingBehavior implements BrainBehavior {
       return;
     }
     long now = body.getLevel().getGameTime();
-    if (!prey.getUUID().equals(target)
+    if (!destinationId.equals(target)
         || now >= nextPlan
         || goal == null
         || goal.distanceToSqr(destination) > REPLAN_DISTANCE_SQUARED) {
-      target = prey.getUUID();
+      target = destinationId;
       goal = destination;
       nextPlan = now + REPLAN_TICKS;
       var endpoint =
