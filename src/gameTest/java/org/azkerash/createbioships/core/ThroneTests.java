@@ -37,7 +37,10 @@ public final class ThroneTests {
     var floorHit =
         new BlockHitResult(
             Vec3.atCenterOf(p.below()).add(0, .5, 0), Direction.UP, p.below(), false);
-    player.getMainHandItem().useOn(new UseOnContext(player, InteractionHand.MAIN_HAND, floorHit));
+    var placementResult =
+        player
+            .getMainHandItem()
+            .useOn(new UseOnContext(player, InteractionHand.MAIN_HAND, floorHit));
     var lower = l.getBlockState(p);
     var upper = l.getBlockState(p.above());
     h.assertTrue(
@@ -45,7 +48,17 @@ public final class ThroneTests {
             && upper.is(lower.getBlock())
             && lower.getValue(BlockStateProperties.DOUBLE_BLOCK_HALF) == DoubleBlockHalf.LOWER
             && upper.getValue(BlockStateProperties.DOUBLE_BLOCK_HALF) == DoubleBlockHalf.UPPER,
-        "Throne did not place two linked halves");
+        "Throne did not place two linked halves: "
+            + placementResult
+            + " lower="
+            + lower
+            + " upper="
+            + upper
+            + " mayBuild="
+            + player.getAbilities().mayBuild
+            + " permission="
+            + org.azkerash.createbioships.core.access.SubLevelInteractionInterceptor.canPlace(
+                player, l, p.below(), Direction.UP));
     h.assertTrue(
         lower.getValue(BlockStateProperties.WATERLOGGED)
             && upper.getValue(BlockStateProperties.WATERLOGGED),

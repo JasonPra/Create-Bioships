@@ -79,6 +79,8 @@ public final class CoreFacePlacementTests {
                       level, origin, List.of(origin), new BoundingBox3i(origin, origin));
               var core = body.getPlot().getCenterBlock();
               CoreAssemblyRules.mark(level, core);
+              org.azkerash.createbioships.core.access.SubLevelPermissions.assignIfUnowned(
+                  body, player.getUUID());
               helper.runAfterDelay(
                   5,
                   () -> {

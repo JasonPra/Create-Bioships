@@ -2,7 +2,7 @@ package org.azkerash.createbioships.equipment;
 
 import com.simibubi.create.content.equipment.wrench.WrenchItem;
 
-/** Uses Create's wrench interactions; individual blocks own their restrictions. */
+/** Create wrench actions with shared sublevel authorization and native ground drops. */
 @net.neoforged.fml.common.EventBusSubscriber(
     modid = org.azkerash.createbioships.CreateBioships.MODID)
 public final class BioshipWrenchItem extends WrenchItem {
@@ -77,15 +77,11 @@ public final class BioshipWrenchItem extends WrenchItem {
       var body = org.azkerash.createbioships.core.CoreAssemblyRules.containing(server, pos);
       if (supportsGridBlock(body, state)) {
         if (player.isShiftKeyDown()
-            && org.azkerash.createbioships.core.SubLevelData.isLiving(body)
-            && !player
-                .getUUID()
-                .equals(
-                    org.azkerash.createbioships.core.access.SubLevelPermissions.get(body)
-                        .owner())) {
+            && !org.azkerash.createbioships.core.access.SubLevelInteractionInterceptor
+                .canRemoveComponent(player.getUUID(), body)) {
           player.displayClientMessage(
               net.minecraft.network.chat.Component.literal(
-                  "Only the creature's owner can remove its components."),
+                  "Only the sublevel's owner can remove its components."),
               true);
           return net.minecraft.world.InteractionResult.FAIL;
         }

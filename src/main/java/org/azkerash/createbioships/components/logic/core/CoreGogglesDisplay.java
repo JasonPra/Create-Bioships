@@ -21,7 +21,8 @@ public final class CoreGogglesDisplay extends BlockEntity implements IHaveGoggle
 
   public void restoreRecoveredCore() {
     if (!getBlockState().is(ComponentRegistry.CORE.get())
-        || !(level instanceof ServerLevel server)) {
+        || !(level instanceof ServerLevel server)
+        || !(recoveredDead || coreSnapshot.getCompound(SubLevelData.HEALTH).getBoolean("dead"))) {
       return;
     }
     var body = CoreAssemblyRules.containing(server, worldPosition);
@@ -29,8 +30,7 @@ public final class CoreGogglesDisplay extends BlockEntity implements IHaveGoggle
         && SubLevelHealth.blocks(body).stream()
                 .filter(pos -> server.getBlockState(pos).is(ComponentRegistry.CORE.get()))
                 .count()
-            == 1
-        && (recoveredDead || coreSnapshot.getCompound(SubLevelData.HEALTH).getBoolean("dead"))) {
+            == 1) {
       SubLevelData.restoreDeadCore(body, coreSnapshot);
     }
   }
@@ -38,6 +38,9 @@ public final class CoreGogglesDisplay extends BlockEntity implements IHaveGoggle
   @Override
   public void onLoad() {
     super.onLoad();
+    if (getBlockState().is(ComponentRegistry.CORE.get()) && level instanceof ServerLevel server) {
+      CoreAssemblyRules.changed(server, worldPosition);
+    }
     restoreRecoveredCore();
   }
 

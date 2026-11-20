@@ -115,11 +115,6 @@ public final class CoreBlock extends Block
       }
       return;
     }
-    CoreAssemblyRules.mark(level, pos);
-    CoreAssemblyRules.reconcile(level, pos);
-    if (!level.getBlockState(pos).is(this)) {
-      return;
-    }
     var body = CoreAssemblyRules.containing(level, pos);
     if (body != null && SubLevelHealth.status(body).dead()) {
       level.setBlock(

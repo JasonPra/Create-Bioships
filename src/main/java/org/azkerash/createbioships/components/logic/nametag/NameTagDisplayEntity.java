@@ -14,7 +14,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.azkerash.createbioships.components.ComponentRegistry;
 import org.azkerash.createbioships.components.logic.inventory.OrganInventory;
 import org.azkerash.createbioships.core.*;
-import org.azkerash.createbioships.core.access.SubLevelPermissions;
 import org.azkerash.createbioships.core.component.ComponentState;
 import org.azkerash.createbioships.core.naming.SubLevelNames;
 
@@ -111,7 +110,8 @@ public final class NameTagDisplayEntity extends OrganInventory {
     var body = CoreAssemblyRules.containing(server, worldPosition);
     return body == null
         || !SubLevelData.isLiving(body)
-        || player.getUUID().equals(SubLevelPermissions.get(body).owner());
+        || org.azkerash.createbioships.core.access.SubLevelInteractionInterceptor.isOwner(
+            player.getUUID(), body);
   }
 
   @Override

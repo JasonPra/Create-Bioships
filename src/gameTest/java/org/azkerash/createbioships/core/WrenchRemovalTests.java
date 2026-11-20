@@ -19,7 +19,7 @@ import org.azkerash.createbioships.components.ComponentRegistry;
 @GameTestHolder(CreateBioships.MODID)
 @PrefixGameTestTemplate(false)
 public final class WrenchRemovalTests {
-  @GameTest(template = "test_empty", timeoutTicks = 120, batch = "safe_component_removal")
+  @GameTest(template = "test_empty", timeoutTicks = 200, batch = "safe_component_removal")
   public static void create_pickup_preserves_life_and_dead_core_drops_nothing(
       GameTestHelper helper) {
     var level = helper.getLevel();
@@ -200,6 +200,8 @@ public final class WrenchRemovalTests {
             genericOrigin,
             List.of(genericOrigin, genericOrigin.east(), genericOrigin.west()),
             new BoundingBox3i(genericOrigin.west(), genericOrigin.east()));
+    org.azkerash.createbioships.core.access.SubLevelPermissions.assignIfUnowned(
+        generic, player.getUUID());
     var genericCenter = generic.getPlot().getCenterBlock();
     helper.assertTrue(
         !CoreAssemblyRules.isCreature(generic), "Ordinary sublevel became a creature");

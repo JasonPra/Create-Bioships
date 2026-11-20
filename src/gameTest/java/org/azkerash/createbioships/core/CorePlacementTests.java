@@ -136,6 +136,8 @@ public final class CorePlacementTests {
             level, pos, java.util.List.of(pos), new BoundingBox3i(pos, pos));
     var logical = body.getPlot().getCenterBlock();
     var player = helper.makeMockPlayer(GameType.CREATIVE);
+    org.azkerash.createbioships.core.access.SubLevelPermissions.assignIfUnowned(
+        body, player.getUUID());
     var hit = new BlockHitResult(Vec3.atCenterOf(logical), Direction.UP, logical, false);
     for (var item :
         java.util.List.of(

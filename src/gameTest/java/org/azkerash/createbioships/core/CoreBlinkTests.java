@@ -133,11 +133,12 @@ public final class CoreBlinkTests {
         net.minecraft.core.registries.BuiltInRegistries.BLOCK.get(
             net.minecraft.resources.ResourceLocation.parse("simulated:physics_assembler"));
     level.setBlock(site, assembler.defaultBlockState(), Block.UPDATE_ALL);
+    var builder = helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL);
+    org.azkerash.createbioships.core.access.SubLevelPermissions.assignIfUnowned(
+        body, builder.getUUID());
     var placement =
         new net.neoforged.neoforge.event.level.BlockEvent.EntityPlaceEvent(
-            snapshot,
-            Blocks.STONE.defaultBlockState(),
-            helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL));
+            snapshot, Blocks.STONE.defaultBlockState(), builder);
     net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(placement);
     helper.assertTrue(!placement.isCanceled(), "Ordinary grid rejected an assembler");
     snapshot.restore();

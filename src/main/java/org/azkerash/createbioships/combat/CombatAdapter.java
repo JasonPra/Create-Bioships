@@ -374,7 +374,8 @@ public final class CombatAdapter {
     if (impact == null) {
       return;
     }
-    if (SubLevelHealth.status(body).dead()) {
+    if (!org.azkerash.createbioships.core.access.SubLevelInteractionInterceptor
+        .routesMiningToCombat(body)) {
       if (event.getAction() == PlayerInteractEvent.LeftClickBlock.Action.START) {
         impact.wound(event.getPos(), event.getFace());
       }
