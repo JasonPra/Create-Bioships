@@ -628,7 +628,7 @@ public final class CompactLimbController {
             BuiltLegDriver.solve(walker, body, body.getLevel().getGameTime());
           }
         });
-    // Joint angles and physical poses are serialized by Let It Walk/Sable; no pose teleport driver.
+    // Let It Walk/Sable serialize joint angles and physical poses for reload recovery.
     if (body.getLevel().getGameTime() % 20 == 0) {
       save();
     }
@@ -637,8 +637,10 @@ public final class CompactLimbController {
   public void physics(double dt) {
     discardRemoved();
     boolean powered = postureEnabled();
+    boolean allLoaded = true;
     for (var l : limbs.values()) {
       if (!loaded(l)) {
+        allLoaded = false;
         releasePins(l);
         continue;
       }
@@ -684,7 +686,11 @@ public final class CompactLimbController {
       SocketJointRig.apply(l.runtime.built);
     }
     BuiltLegDriver.solve(walker, body, body.getLevel().getGameTime());
-    var posed = BuiltLegDriver.substep(walker, body, dt);
+    // Preserve native partial-limb handling while Sable streams a saved rig back in.
+    var posed =
+        allLoaded
+            ? NativeLegPoseBatch.calculate(walker, body, dt)
+            : BuiltLegDriver.substep(walker, body, dt);
     for (var limb : limbs.values()) {
       if (!loaded(limb)) {
         continue;

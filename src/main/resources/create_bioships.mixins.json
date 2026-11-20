@@ -28,6 +28,7 @@
     "StorageSacMenuAccess",
     "FeedingMenuMixin",
     "WalkerSnapInvoker",
+    "NativeLegPoseBatchMixin",
     "JointChainLimitsAccess",
     "SocketLegCollisionMixin",
     "SocketFootholdMixin",
