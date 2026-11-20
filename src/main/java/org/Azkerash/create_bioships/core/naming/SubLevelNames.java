@@ -16,6 +16,8 @@ import org.Azkerash.create_bioships.core.*;
  */
 @EventBusSubscriber(modid = "create_bioships")
 public final class SubLevelNames {
+  private static final int REFRESH_INTERVAL_TICKS = 20;
+
   private static final Map<ServerSubLevel, List<NameTagDisplayEntity>> PANELS =
       new IdentityHashMap<>();
   private static final Map<ServerSubLevel, Integer> FAMILIES = new IdentityHashMap<>();
@@ -102,7 +104,7 @@ public final class SubLevelNames {
     for (var body : List.copyOf(DIRTY)) {
       refresh(body);
     }
-    if (e.getServer().getTickCount() % 20 == 0) {
+    if (e.getServer().getTickCount() % REFRESH_INTERVAL_TICKS == 0) {
       for (var l : e.getServer().getAllLevels()) {
         var c = SubLevelContainer.getContainer(l);
         if (c != null) {

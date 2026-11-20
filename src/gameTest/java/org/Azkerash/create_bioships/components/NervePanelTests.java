@@ -8,6 +8,7 @@ import net.minecraft.gametest.framework.*;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.gametest.*;
@@ -27,14 +28,15 @@ public final class NervePanelTests {
     helper.runAfterDelay(
         1,
         () -> {
-          level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
+          level.setBlock(
+              origin, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
           level.setBlock(
               origin.east(),
               ComponentRegistry.NERVE_PANEL
                   .get()
                   .defaultBlockState()
                   .setValue(BlockStateProperties.FACING, Direction.EAST),
-              3);
+              Block.UPDATE_ALL);
           var body =
               SubLevelAssemblyHelper.assembleBlocks(
                   level,

@@ -3,6 +3,7 @@ package org.Azkerash.create_bioships.core;
 import net.minecraft.core.*;
 import net.minecraft.gametest.framework.*;
 import net.minecraft.world.item.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
@@ -18,7 +19,7 @@ public final class StomachDigestionTests {
     var level = helper.getLevel();
     var pos = helper.absolutePos(new BlockPos(1, 2, 1));
     var state = ComponentRegistry.STOMACH.get().defaultBlockState();
-    level.setBlock(pos, state, 3);
+    level.setBlock(pos, state, Block.UPDATE_ALL);
     var body =
         dev.ryanhcode.sable.api.SubLevelAssemblyHelper.assembleBlocks(
             level,
@@ -86,7 +87,7 @@ public final class StomachDigestionTests {
     var level = helper.getLevel();
     var pos = helper.absolutePos(new BlockPos(1, 2, 1));
     var state = ComponentRegistry.STOMACH.get().defaultBlockState();
-    level.setBlock(pos, state, 3);
+    level.setBlock(pos, state, Block.UPDATE_ALL);
     var body =
         dev.ryanhcode.sable.api.SubLevelAssemblyHelper.assembleBlocks(
             level,
@@ -135,7 +136,7 @@ public final class StomachDigestionTests {
   public static void one_paste_restores_four_hunger_after_eating(GameTestHelper h) {
     var level = h.getLevel();
     var cell = h.absolutePos(new BlockPos(1, 2, 1));
-    level.setBlock(cell, ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
+    level.setBlock(cell, ComponentRegistry.STOMACH.get().defaultBlockState(), Block.UPDATE_ALL);
     var body =
         dev.ryanhcode.sable.api.SubLevelAssemblyHelper.assembleBlocks(
             level,

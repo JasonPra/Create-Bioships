@@ -6,6 +6,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.*;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.LecternBlockEntity;
 import net.minecraft.world.level.block.state.properties.*;
 import org.Azkerash.create_bioships.furniture.FurnitureRegistry;
@@ -19,7 +20,7 @@ public final class EstateInteriors {
   }
 
   private static void put(ServerLevel l, BlockPos p, Block b) {
-    l.setBlock(p, b.defaultBlockState(), 3);
+    l.setBlock(p, b.defaultBlockState(), Block.UPDATE_ALL);
   }
 
   private static void face(ServerLevel l, BlockPos p, Block b, Direction d) {
@@ -29,7 +30,7 @@ public final class EstateInteriors {
     } else if (state.hasProperty(BlockStateProperties.FACING)) {
       state = state.setValue(BlockStateProperties.FACING, d);
     }
-    l.setBlock(p, state, 3);
+    l.setBlock(p, state, Block.UPDATE_ALL);
   }
 
   private static boolean stairShaft(int x, int z) {
@@ -52,7 +53,7 @@ public final class EstateInteriors {
     face(l, p, FurnitureRegistry.OSSUARY_LECTERN.get(), d);
     if (l.getBlockEntity(p) instanceof LecternBlockEntity e) {
       e.setBook(new ItemStack(Items.WRITABLE_BOOK));
-      l.setBlock(p, l.getBlockState(p).setValue(LecternBlock.HAS_BOOK, true), 3);
+      l.setBlock(p, l.getBlockState(p).setValue(LecternBlock.HAS_BOOK, true), Block.UPDATE_ALL);
     }
   }
 
@@ -112,7 +113,7 @@ public final class EstateInteriors {
             }
             c.clearContent();
           }
-          l.setBlock(p, Blocks.AIR.defaultBlockState(), 3);
+          l.setBlock(p, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
         }
       }
     }
@@ -200,7 +201,7 @@ public final class EstateInteriors {
   private static void bed(ServerLevel l, BlockPos foot, Direction facing) {
     var b = FurnitureRegistry.OSSUARY_BED.get();
     var state = b.defaultBlockState().setValue(BedBlock.FACING, facing);
-    l.setBlock(foot, state, 2);
+    l.setBlock(foot, state, Block.UPDATE_CLIENTS);
     b.setPlacedBy(l, foot, state, null, ItemStack.EMPTY);
   }
 
@@ -212,7 +213,7 @@ public final class EstateInteriors {
     l.setBlock(
         floor.offset(x, lampHeight, z),
         Blocks.LANTERN.defaultBlockState().setValue(LanternBlock.HANGING, true),
-        3);
+        Block.UPDATE_ALL);
   }
 
   public static void rooms(ServerLevel l, BlockPos surface) {
@@ -315,7 +316,7 @@ public final class EstateInteriors {
       c.clearContent();
     }
     l.removeBlock(from, false);
-    l.setBlock(to, state, 3);
+    l.setBlock(to, state, Block.UPDATE_ALL);
     var target = l.getBlockEntity(to);
     if (target != null) {
       target.loadWithComponents(saved, l.registryAccess());
@@ -347,15 +348,16 @@ public final class EstateInteriors {
               z = face.getStepZ() * 13 + tangent.getStepZ() * side;
           var hook = surface.offset(x, floor + 4, z);
           var outer = hook.relative(face.getOpposite());
-          l.setBlock(hook, Blocks.DEEPSLATE_BRICK_WALL.defaultBlockState(), 3);
-          l.setBlock(outer, Blocks.DEEPSLATE_BRICK_WALL.defaultBlockState(), 3);
+          l.setBlock(hook, Blocks.DEEPSLATE_BRICK_WALL.defaultBlockState(), Block.UPDATE_ALL);
+          l.setBlock(outer, Blocks.DEEPSLATE_BRICK_WALL.defaultBlockState(), Block.UPDATE_ALL);
           for (var p : new BlockPos[] {hook, outer}) {
-            l.setBlock(p, Block.updateFromNeighbourShapes(l.getBlockState(p), l, p), 2);
+            l.setBlock(
+                p, Block.updateFromNeighbourShapes(l.getBlockState(p), l, p), Block.UPDATE_CLIENTS);
           }
           l.setBlock(
               outer.below(),
               Blocks.LANTERN.defaultBlockState().setValue(LanternBlock.HANGING, true),
-              3);
+              Block.UPDATE_ALL);
         }
       }
       for (int[] lamp : new int[][] {{0, 5}, {7, -4}, {-6, 7}}) {

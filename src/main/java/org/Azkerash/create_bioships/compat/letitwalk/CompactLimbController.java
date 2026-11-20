@@ -12,6 +12,7 @@ import dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason;
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.nbt.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.Vec3;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
 import org.Azkerash.create_bioships.components.logic.legs.*;
@@ -198,7 +199,7 @@ public final class CompactLimbController {
                   .setValue(
                       CompactLimbBlock.FILL,
                       Math.clamp((int) Math.round(Math.min(1, length - y) * 64), 1, 64)),
-              3);
+              Block.UPDATE_ALL);
     }
   }
 

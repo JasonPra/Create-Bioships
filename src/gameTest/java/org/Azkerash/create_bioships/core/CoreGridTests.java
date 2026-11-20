@@ -11,6 +11,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.*;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Unit;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.*;
@@ -28,20 +29,20 @@ public final class CoreGridTests {
     level.getChunk(10, 2);
     for (int x = -4; x <= 12; x++) {
       for (int z = -4; z <= 6; z++) {
-        level.setBlock(origin.offset(x, -2, z), Blocks.STONE.defaultBlockState(), 3);
+        level.setBlock(origin.offset(x, -2, z), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
       }
     }
     var blocks = new ArrayList<BlockPos>();
     for (int x = 0; x < 9; x++) {
       for (int z = 0; z < 3; z++) {
         var pos = origin.offset(x, 0, z);
-        level.setBlock(pos, Blocks.STONE.defaultBlockState(), 3);
+        level.setBlock(pos, Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
         blocks.add(pos);
       }
     }
     for (int x : new int[] {0, 4, 8}) {
       var pos = origin.offset(x, 1, 1);
-      level.setBlock(pos, ComponentRegistry.CORE.get().defaultBlockState(), 3);
+      level.setBlock(pos, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
       blocks.add(pos);
     }
     var parent =
@@ -90,10 +91,10 @@ public final class CoreGridTests {
     level.getChunk(14, 2);
     for (int x = -4; x <= 4; x++) {
       for (int z = -4; z <= 4; z++) {
-        level.setBlock(origin.offset(x, -2, z), Blocks.STONE.defaultBlockState(), 3);
+        level.setBlock(origin.offset(x, -2, z), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
       }
     }
-    level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
+    level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
     var parent =
         SubLevelAssemblyHelper.assembleBlocks(
             level, origin, List.of(origin), new BoundingBox3i(origin, origin));
@@ -102,8 +103,10 @@ public final class CoreGridTests {
     helper.runAfterDelay(
         8,
         () -> {
-          level.setBlock(original.east(), ComponentRegistry.CORE.get().defaultBlockState(), 3);
-          level.setBlock(original.west(), ComponentRegistry.CORE.get().defaultBlockState(), 3);
+          level.setBlock(
+              original.east(), ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
+          level.setBlock(
+              original.west(), ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
         });
     helper.runAfterDelay(12, () -> nearby(level, origin).forEach(body -> hold(level, body)));
     helper.runAfterDelay(

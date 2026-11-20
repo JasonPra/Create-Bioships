@@ -6,6 +6,7 @@ import java.util.List;
 import net.minecraft.core.*;
 import net.minecraft.gametest.framework.*;
 import net.minecraft.world.item.*;
+import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.components.logic.mouth.*;
 import org.Azkerash.create_bioships.core.*;
@@ -18,8 +19,9 @@ public final class MouthChewingTests {
   public static void accepted_food_chews_then_closes_and_gui_input_restarts(GameTestHelper helper) {
     var level = helper.getLevel();
     var origin = helper.absolutePos(new BlockPos(1, 2, 1));
-    level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
-    level.setBlock(origin.east(), ComponentRegistry.MOUTH.get().defaultBlockState(), 3);
+    level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(
+        origin.east(), ComponentRegistry.MOUTH.get().defaultBlockState(), Block.UPDATE_ALL);
     var body =
         SubLevelAssemblyHelper.assembleBlocks(
             level,

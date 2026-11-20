@@ -7,6 +7,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.Azkerash.create_bioships.Create_bioships;
@@ -132,7 +133,7 @@ public final class CoreGogglesDisplay extends BlockEntity implements IHaveGoggle
     }
     inspection = next;
     setChanged();
-    level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 2);
+    level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
   }
 
   @Override

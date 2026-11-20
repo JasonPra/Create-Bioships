@@ -14,6 +14,9 @@ import org.Azkerash.create_bioships.core.brain.program.editor.*;
 
 /** Source editing stays client-side; only explicit saves alter a physical card on the server. */
 public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspaceMenu> {
+  private static final int LIVE_ANALYSIS_DELAY_TICKS = 8;
+  private static final int STATUS_POLL_INTERVAL_TICKS = 20;
+
   private CerebralSourceEditor editor;
   private final SourceDocument document;
   private final EditorLog log;
@@ -41,7 +44,7 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
     document.listener(
         value -> {
           dirty = true;
-          analysisDelay = 8;
+          analysisDelay = LIVE_ANALYSIS_DELAY_TICKS;
           problems = List.of();
           if (editor != null) {
             editor.problems(List.of());
@@ -228,7 +231,7 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
     if (analysisDelay > 0 && --analysisDelay == 0) {
       analyzeNow();
     }
-    if (pollTicks++ % 20 == 0) {
+    if (pollTicks++ % STATUS_POLL_INTERVAL_TICKS == 0) {
       PacketDistributor.sendToServer(
           new CardWorkspaceNetwork.Poll(menu.containerId, menu.getIdentity()));
     }

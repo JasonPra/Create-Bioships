@@ -11,6 +11,8 @@ import net.neoforged.fml.common.EventBusSubscriber;
 /** Restore a creative client-side copy without disclosing source in public item synchronization. */
 @EventBusSubscriber(modid = "create_bioships")
 public final class PrivateCardBackups {
+  private static final int INVENTORY_SCAN_INTERVAL_TICKS = 20;
+
   private static final String KEY = "create_bioships:private_card_backups";
   private static final int MAX_BACKUPS = 64;
 
@@ -75,7 +77,8 @@ public final class PrivateCardBackups {
 
   @SubscribeEvent
   public static void tick(net.neoforged.neoforge.event.tick.PlayerTickEvent.Post e) {
-    if (e.getEntity() instanceof ServerPlayer p && p.tickCount % 20 == 0) {
+    if (e.getEntity() instanceof ServerPlayer p
+        && p.tickCount % INVENTORY_SCAN_INTERVAL_TICKS == 0) {
       for (int i = 0; i < p.getInventory().getContainerSize(); i++) {
         restore(p, p.getInventory().getItem(i));
       }

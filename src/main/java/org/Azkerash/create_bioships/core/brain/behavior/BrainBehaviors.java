@@ -19,6 +19,8 @@ import org.Azkerash.create_bioships.core.brain.program.ProgramCardData;
  */
 @EventBusSubscriber(modid = "create_bioships")
 public final class BrainBehaviors {
+  private static final int UPDATE_INTERVAL_TICKS = 10;
+
   public static final ResourceLocation PROGRAM_ID =
       ResourceLocation.parse("create_bioships:cerebral_program");
 
@@ -128,7 +130,7 @@ public final class BrainBehaviors {
         discard(body);
       }
     }
-    if (event.getServer().getTickCount() % 10 != 0) {
+    if (event.getServer().getTickCount() % UPDATE_INTERVAL_TICKS != 0) {
       return;
     }
     for (var level : event.getServer().getAllLevels()) {

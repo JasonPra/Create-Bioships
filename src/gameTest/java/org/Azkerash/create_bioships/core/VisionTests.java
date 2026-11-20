@@ -5,6 +5,7 @@ import dev.ryanhcode.sable.companion.math.BoundingBox3i;
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.gametest.framework.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.Vec3;
@@ -57,23 +58,24 @@ public final class VisionTests {
         10,
         () -> {
           var cells = List.of(origin, origin.east(), origin.east(2), origin.west(), origin.west(2));
-          level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
-          level.setBlock(origin.east(), Blocks.STONE.defaultBlockState(), 3);
-          level.setBlock(origin.west(), Blocks.STONE.defaultBlockState(), 3);
+          level.setBlock(
+              origin, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
+          level.setBlock(origin.east(), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
+          level.setBlock(origin.west(), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
           level.setBlock(
               origin.east(2),
               ComponentRegistry.LAND_EYE
                   .get()
                   .defaultBlockState()
                   .setValue(BlockStateProperties.FACING, Direction.EAST),
-              3);
+              Block.UPDATE_ALL);
           level.setBlock(
               origin.west(2),
               ComponentRegistry.AQUATIC_EYE
                   .get()
                   .defaultBlockState()
                   .setValue(BlockStateProperties.FACING, Direction.WEST),
-              3);
+              Block.UPDATE_ALL);
           var body =
               SubLevelAssemblyHelper.assembleBlocks(
                   level, origin, cells, new BoundingBox3i(origin.west(2), origin.east(2)));
@@ -107,7 +109,7 @@ public final class VisionTests {
               "Eye ray started inside supporting tissue");
           var start = outer.rays().getFirst().from();
           var wall = BlockPos.containing(start.add(2.5, 0, 0));
-          level.setBlock(wall, Blocks.STONE.defaultBlockState(), 3);
+          level.setBlock(wall, Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
           var hit = VisionRaycaster.cast(level, start, new Vec3(1, 0, 0), 6);
           helper.assertTrue(
               hit.blocked() && hit.from().distanceTo(hit.to()) < 3, "World wall did not stop ray");
@@ -171,7 +173,7 @@ public final class VisionTests {
           level.setBlock(
               core.east(2),
               level.getBlockState(core.east(2)).setValue(BlockStateProperties.FACING, Direction.UP),
-              2);
+              Block.UPDATE_CLIENTS);
           SubLevelVision.refresh(body, 100);
           helper.assertTrue(
               SubLevelVision.sights(body).stream()

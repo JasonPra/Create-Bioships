@@ -22,13 +22,17 @@ public final class EyeBlink {
     int wake = state.getValue(WAKE);
     if (wake > 0) {
       int next = wake == 9 ? 0 : wake + 1;
-      level.setBlock(pos, state.setValue(WAKE, next).setValue(BLINK, next != 0), 2);
+      level.setBlock(
+          pos, state.setValue(WAKE, next).setValue(BLINK, next != 0), Block.UPDATE_CLIENTS);
       level.scheduleTick(pos, block, next == 0 ? 109 : 3);
       return;
     }
     int stage = state.getValue(STAGE);
     int next = stage == 3 || stage == 0 && state.getValue(BLINK) ? 0 : stage + 1;
-    level.setBlock(pos, state.setValue(BLINK, next == 1 || next == 3).setValue(STAGE, next), 2);
+    level.setBlock(
+        pos,
+        state.setValue(BLINK, next == 1 || next == 3).setValue(STAGE, next),
+        Block.UPDATE_CLIENTS);
     level.scheduleTick(pos, block, next == 0 ? 109 : next == 3 ? 3 : 4);
   }
 }

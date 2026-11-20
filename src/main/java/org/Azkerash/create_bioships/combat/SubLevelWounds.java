@@ -3,6 +3,7 @@ package org.Azkerash.create_bioships.combat;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import java.util.*;
 import net.minecraft.core.*;
+import net.minecraft.world.level.block.Block;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
 import org.Azkerash.create_bioships.components.logic.eye.EyeWoundBehavior;
 import org.Azkerash.create_bioships.core.SurfaceWoundState;
@@ -68,7 +69,9 @@ public final class SubLevelWounds {
     if (EyeWoundBehavior.isEye(block)) {
       body.getLevel()
           .setBlock(
-              cell, org.Azkerash.create_bioships.components.logic.eye.EyeBlink.sleeping(block), 2);
+              cell,
+              org.Azkerash.create_bioships.components.logic.eye.EyeBlink.sleeping(block),
+              Block.UPDATE_CLIENTS);
       body.getLevel().scheduleTick(cell, block.getBlock(), 1);
     }
     var root =

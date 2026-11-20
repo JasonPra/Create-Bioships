@@ -14,6 +14,10 @@ import org.Azkerash.create_bioships.core.access.SubLevelPermissions;
 /** Server-validated panel interactions; a remote/stale screen never grants editing rights. */
 public final class NervePanelControl {
   public static final int CANDIDATE_LIMIT = 128;
+  private static final int PANEL_REACH_BLOCKS = 8;
+  private static final int MOB_SEARCH_RADIUS_BLOCKS = 32;
+  private static final int CONSTRUCT_SEARCH_RADIUS_BLOCKS = 64;
+  private static final int UUID_LABEL_CHARS = 8;
 
   private NervePanelControl() {}
 
@@ -26,7 +30,7 @@ public final class NervePanelControl {
         && player
                 .getEyePosition()
                 .distanceToSqr(body.logicalPose().transformPosition(Vec3.atCenterOf(panel)))
-            <= 64;
+            <= PANEL_REACH_BLOCKS * PANEL_REACH_BLOCKS;
   }
 
   public static void open(ServerPlayer player, ServerSubLevel body, BlockPos panel) {
@@ -49,7 +53,7 @@ public final class NervePanelControl {
           body.getLevel()
               .getEntitiesOfClass(
                   Mob.class,
-                  new AABB(center, center).inflate(32),
+                  new AABB(center, center).inflate(MOB_SEARCH_RADIUS_BLOCKS),
                   e -> e.isAlive() && e.hasCustomName());
       mobs.sort(Comparator.comparingDouble(e -> e.position().distanceToSqr(center)));
       for (var mob : mobs) {
@@ -100,8 +104,8 @@ public final class NervePanelControl {
                       ? cache
                           .get(access.owner())
                           .map(com.mojang.authlib.GameProfile::getName)
-                          .orElse(access.owner().toString().substring(0, 8))
-                      : access.owner().toString().substring(0, 8);
+                          .orElse(access.owner().toString().substring(0, UUID_LABEL_CHARS))
+                      : access.owner().toString().substring(0, UUID_LABEL_CHARS);
     }
     PacketDistributor.sendToPlayer(
         player,
@@ -125,30 +129,39 @@ public final class NervePanelControl {
       return false;
     }
     boolean changed = false;
-    if (action.action() == 1) {
-      var target = player.getServer().getPlayerList().getPlayer(action.target());
-      net.minecraft.world.entity.Entity entity =
-          target == null ? body.getLevel().getEntity(action.target()) : target;
-      var center = body.logicalPose().transformPosition(Vec3.atCenterOf(action.panel()));
-      if (entity instanceof ServerPlayer
-          || entity instanceof Mob
-              && entity.isAlive()
-              && entity.hasCustomName()
-              && entity.position().distanceToSqr(center) <= 32 * 32) {
-        changed = SubLevelPermissions.add(body, player.getUUID(), entity);
-      } else {
-        var container =
-            dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(body.getLevel());
-        var other = container == null ? null : container.getSubLevel(action.target());
-        if (other instanceof ServerSubLevel craft && nearConstruct(center, craft)) {
-          changed = SubLevelPermissions.addConstruct(body, player.getUUID(), craft);
+    switch (action.action()) {
+      case NervePanelAction.INVITE -> {
+        var target = player.getServer().getPlayerList().getPlayer(action.target());
+        net.minecraft.world.entity.Entity entity =
+            target == null ? body.getLevel().getEntity(action.target()) : target;
+        var center = body.logicalPose().transformPosition(Vec3.atCenterOf(action.panel()));
+        if (entity instanceof ServerPlayer
+            || entity instanceof Mob
+                && entity.isAlive()
+                && entity.hasCustomName()
+                && entity.position().distanceToSqr(center)
+                    <= MOB_SEARCH_RADIUS_BLOCKS * MOB_SEARCH_RADIUS_BLOCKS) {
+          changed = SubLevelPermissions.add(body, player.getUUID(), entity);
+        } else {
+          var container =
+              dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(body.getLevel());
+          var other = container == null ? null : container.getSubLevel(action.target());
+          if (other instanceof ServerSubLevel craft && nearConstruct(center, craft)) {
+            changed = SubLevelPermissions.addConstruct(body, player.getUUID(), craft);
+          }
         }
       }
-    } else if (action.action() == 2) {
-      changed = SubLevelPermissions.remove(body, player.getUUID(), action.target());
-    } else if (action.action() == 3
-        && player.getServer().getPlayerList().getPlayer(action.target()) != null) {
-      changed = SubLevelPermissions.transfer(body, player.getUUID(), action.target());
+      case NervePanelAction.REVOKE -> {
+        changed = SubLevelPermissions.remove(body, player.getUUID(), action.target());
+      }
+      case NervePanelAction.TRANSFER -> {
+        if (player.getServer().getPlayerList().getPlayer(action.target()) != null) {
+          changed = SubLevelPermissions.transfer(body, player.getUUID(), action.target());
+        }
+      }
+      default -> {
+        // Refresh and unknown actions only return the current authorized view.
+      }
     }
     open(player, body, action.panel());
     return changed;
@@ -161,6 +174,7 @@ public final class NervePanelControl {
             Math.clamp(center.x, bounds.minX, bounds.maxX),
             Math.clamp(center.y, bounds.minY, bounds.maxY),
             Math.clamp(center.z, bounds.minZ, bounds.maxZ));
-    return closest.distanceToSqr(center) <= 64 * 64;
+    return closest.distanceToSqr(center)
+        <= CONSTRUCT_SEARCH_RADIUS_BLOCKS * CONSTRUCT_SEARCH_RADIUS_BLOCKS;
   }
 }

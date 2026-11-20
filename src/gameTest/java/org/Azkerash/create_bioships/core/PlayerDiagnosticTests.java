@@ -6,6 +6,7 @@ import java.util.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.*;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
@@ -22,7 +23,7 @@ public final class PlayerDiagnosticTests {
           GameTestHelper h) {
     var l = h.getLevel();
     var p = h.absolutePos(new BlockPos(1, 3, 1));
-    l.setBlock(p, ComponentRegistry.CORE.get().defaultBlockState(), 3);
+    l.setBlock(p, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
     var b = SubLevelAssemblyHelper.assembleBlocks(l, p, List.of(p), new BoundingBox3i(p, p));
     CoreAssemblyRules.mark(l, b.getPlot().getCenterBlock());
     DevelopmentLifeSupport.pause(b);

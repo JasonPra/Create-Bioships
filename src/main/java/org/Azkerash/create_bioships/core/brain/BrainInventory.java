@@ -12,6 +12,8 @@ import org.Azkerash.create_bioships.core.SubLevelData;
 
 /** A container view of grid data. Shrinking the structure never deletes overflow cards. */
 public final class BrainInventory implements Container {
+  private static final int INTERACTION_RANGE_BLOCKS = 8;
+
   public static final TagKey<net.minecraft.world.item.Item> CARDS =
       TagKey.create(Registries.ITEM, ResourceLocation.parse("create_bioships:behavior_cards"));
   private final SubLevelBrains brain;
@@ -100,6 +102,6 @@ public final class BrainInventory implements Container {
                 .getEyePosition()
                 .distanceToSqr(
                     brain.getBody().logicalPose().transformPosition(Vec3.atCenterOf(port)))
-            <= 64;
+            <= INTERACTION_RANGE_BLOCKS * INTERACTION_RANGE_BLOCKS;
   }
 }

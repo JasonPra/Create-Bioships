@@ -9,6 +9,7 @@ import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.nbt.*;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.Block;
 import org.Azkerash.create_bioships.compat.letitwalk.CompactLimbController;
 import org.Azkerash.create_bioships.core.*;
 
@@ -96,7 +97,7 @@ public final class DevelopmentJuniorBaseline {
       var entry = (CompoundTag) raw;
       var p = staging.offset(BlockPos.of(entry.getLong("offset")));
       var block = NbtUtils.readBlockState(lookup, entry.getCompound("state"));
-      level.setBlock(p, block, 2);
+      level.setBlock(p, block, Block.UPDATE_CLIENTS);
       if (entry.contains("entity") && level.getBlockEntity(p) != null) {
         var data = entry.getCompound("entity").copy();
         data.putInt("x", p.getX());

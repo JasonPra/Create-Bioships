@@ -117,7 +117,7 @@ public final class ProgramMachine {
           case WAIT -> {
             int ticks = (Integer) pop();
             if (ticks < 0 || ticks > ProgramLimits.MAX_WAIT) {
-              throw new Fault("Wait must be between 0 and 72000 ticks.");
+              throw new Fault("Wait must be between 0 and " + ProgramLimits.MAX_WAIT + " ticks.");
             }
             long delay = Math.max(1, ticks);
             resumeAt = gameTick > Long.MAX_VALUE - delay ? Long.MAX_VALUE : gameTick + delay;

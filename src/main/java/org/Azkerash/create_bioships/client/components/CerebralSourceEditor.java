@@ -16,6 +16,11 @@ import org.lwjgl.glfw.GLFW;
  * Native source editor with original line numbers, lexical colors, folds and diagnostic squiggles.
  */
 public final class CerebralSourceEditor extends AbstractScrollWidget {
+  private static final int ROW_GAP_PIXELS = 3;
+  private static final int MIN_GUTTER_PIXELS = 34;
+  private static final int HORIZONTAL_SCROLL_STEP_PIXELS = 18;
+  private static final long CARET_BLINK_PERIOD_MILLIS = 500;
+
   private record Part(int start, int end, SourceSyntax.Kind kind) {}
 
   private final Font font;
@@ -56,11 +61,11 @@ public final class CerebralSourceEditor extends AbstractScrollWidget {
   }
 
   private int rowHeight() {
-    return font.lineHeight + 3;
+    return font.lineHeight + ROW_GAP_PIXELS;
   }
 
   private int gutter() {
-    return Math.max(34, font.width(Integer.toString(document.lineCount())) + 18);
+    return Math.max(MIN_GUTTER_PIXELS, font.width(Integer.toString(document.lineCount())) + 18);
   }
 
   private int textX() {
@@ -221,7 +226,8 @@ public final class CerebralSourceEditor extends AbstractScrollWidget {
       return false;
     }
     if (Screen.hasShiftDown() || dx != 0) {
-      horizontal = Math.max(0, horizontal - (int) ((dx != 0 ? dx : dy) * 18));
+      horizontal =
+          Math.max(0, horizontal - (int) ((dx != 0 ? dx : dy) * HORIZONTAL_SCROLL_STEP_PIXELS));
       return true;
     }
     return super.mouseScrolled(mx, my, dx, dy);
@@ -371,7 +377,7 @@ public final class CerebralSourceEditor extends AbstractScrollWidget {
       }
       if (isFocused()
           && document.lineAt(document.caret()) == line
-          && Util.getMillis() / 500 % 2 == 0) {
+          && Util.getMillis() / CARET_BLINK_PERIOD_MILLIS % 2 == 0) {
         int caret = xAt(line, document.column());
         g.fill(caret, y - 1, caret + 1, y + font.lineHeight + 1, 0xfff5e5d2);
       }

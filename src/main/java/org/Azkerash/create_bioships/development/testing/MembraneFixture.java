@@ -14,6 +14,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Unit;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.CommandBlockEntity;
 import net.minecraft.world.level.block.state.properties.*;
 import net.minecraft.world.phys.*;
@@ -89,7 +90,8 @@ public final class MembraneFixture {
     }
     for (int x = -10; x <= 10; x++) {
       for (int z = -9; z <= 7; z++) {
-        level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 2);
+        level.setBlock(
+            base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), Block.UPDATE_CLIENTS);
         if (Math.abs(x) <= 8 && Math.abs(z) <= 6) {
           for (int y = 0; y <= 6; y++) {
             level.setBlock(
@@ -98,16 +100,16 @@ public final class MembraneFixture {
                         ? DevelopmentTestBlocks.GLASS.get()
                         : Blocks.AIR)
                     .defaultBlockState(),
-                2);
+                Block.UPDATE_CLIENTS);
           }
         }
       }
     }
     var flesh = com.github.elenterius.biomancy.init.ModBlocks.PACKED_FLESH.get();
     for (var cell : cells(level)) {
-      level.setBlock(cell, flesh.defaultBlockState(), 3);
+      level.setBlock(cell, flesh.defaultBlockState(), Block.UPDATE_ALL);
     }
-    level.setBlock(core(level), ComponentRegistry.CORE.get().defaultBlockState(), 3);
+    level.setBlock(core(level), ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
     for (int x = 0; x <= 1; x++) {
       for (int y = 0; y <= 1; y++) {
         level.setBlock(
@@ -115,7 +117,7 @@ public final class MembraneFixture {
             com.github.elenterius.biomancy.init.ModBlocks.BIOMETRIC_MEMBRANE
                 .get()
                 .defaultBlockState(),
-            3);
+            Block.UPDATE_ALL);
       }
     }
     level.setBlock(
@@ -124,7 +126,7 @@ public final class MembraneFixture {
             .get()
             .defaultBlockState()
             .setValue(BlockStateProperties.FACING, Direction.NORTH),
-        3);
+        Block.UPDATE_ALL);
     for (int x = 0; x <= 1; x++) {
       for (int y = 0; y <= 1; y++) {
         level.setBlock(
@@ -135,7 +137,7 @@ public final class MembraneFixture {
                 .setValue(DoorBlock.FACING, Direction.NORTH)
                 .setValue(DoorBlock.HALF, y == 0 ? DoubleBlockHalf.LOWER : DoubleBlockHalf.UPPER)
                 .setValue(DoorBlock.HINGE, x == 0 ? DoorHingeSide.LEFT : DoorHingeSide.RIGHT),
-            3);
+            Block.UPDATE_ALL);
       }
     }
     control(level, base.offset(-3, 0, -8), "membrane_test start");
@@ -146,7 +148,7 @@ public final class MembraneFixture {
   }
 
   private static void control(ServerLevel level, BlockPos pos, String command) {
-    level.setBlock(pos, Blocks.COMMAND_BLOCK.defaultBlockState(), 3);
+    level.setBlock(pos, Blocks.COMMAND_BLOCK.defaultBlockState(), Block.UPDATE_ALL);
     var be = (CommandBlockEntity) level.getBlockEntity(pos);
     be.getCommandBlock().setCommand(command);
     be.getCommandBlock().setTrackOutput(false);
@@ -157,7 +159,7 @@ public final class MembraneFixture {
             .get()
             .defaultBlockState()
             .setValue(BlockStateProperties.ATTACH_FACE, AttachFace.FLOOR),
-        3);
+        Block.UPDATE_ALL);
   }
 
   public static int start(ServerLevel level) {

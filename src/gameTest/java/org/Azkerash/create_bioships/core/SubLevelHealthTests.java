@@ -4,6 +4,7 @@ import dev.ryanhcode.sable.api.SubLevelAssemblyHelper;
 import dev.ryanhcode.sable.companion.math.BoundingBox3i;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
@@ -17,8 +18,8 @@ public final class SubLevelHealthTests {
   public static void pooled_health_tracks_grid_and_persists_death(GameTestHelper helper) {
     var level = helper.getLevel();
     var origin = helper.absolutePos(new BlockPos(2, 3, 2));
-    level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
-    level.setBlock(origin.east(), Blocks.STONE.defaultBlockState(), 3);
+    level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(origin.east(), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
     var body =
         SubLevelAssemblyHelper.assembleBlocks(
             level,
@@ -36,7 +37,7 @@ public final class SubLevelHealthTests {
             == net.minecraft.core.registries.BuiltInRegistries.BLOCK.size(),
         "Missing registered block IDs");
     var core = body.getPlot().getCenterBlock();
-    level.setBlock(core.above(), Blocks.STONE.defaultBlockState(), 3);
+    level.setBlock(core.above(), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
     helper.assertTrue(SubLevelHealth.status(body).maximum() == 30, "Added grid block not counted");
     SubLevelHealth.damage(body, 7, "arrow");
     level.removeBlock(core.above(), false);
@@ -55,7 +56,7 @@ public final class SubLevelHealthTests {
     helper.assertTrue(
         health.current() == 0 && health.dead() && health.causeOfDeath().equals("arrow"),
         "Death not clamped and attributed: " + health);
-    level.setBlock(core.above(), Blocks.STONE.defaultBlockState(), 3);
+    level.setBlock(core.above(), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
     helper.assertTrue(
         SubLevelHealth.status(body).current() == 0 && SubLevelHealth.status(body).dead(),
         "Growth revived dead grid");

@@ -10,6 +10,8 @@ import org.Azkerash.create_bioships.core.brain.program.ProgramCardData;
 
 /** The server keeps the editing lease; clients receive only this card's source and identity. */
 public final class CardWorkspaceMenu extends AbstractContainerMenu {
+  private static final int REQUEST_INTERVAL_TICKS = 10;
+
   private final CardWorkspaceTarget target;
   private final UUID identity;
   private final String initialSource;
@@ -20,7 +22,7 @@ public final class CardWorkspaceMenu extends AbstractContainerMenu {
     if (tick < nextPoll) {
       return false;
     }
-    nextPoll = tick + 10;
+    nextPoll = tick + REQUEST_INTERVAL_TICKS;
     return true;
   }
 
@@ -28,7 +30,7 @@ public final class CardWorkspaceMenu extends AbstractContainerMenu {
     if (tick < nextCompile) {
       return false;
     }
-    nextCompile = tick + 10;
+    nextCompile = tick + REQUEST_INTERVAL_TICKS;
     return true;
   }
 

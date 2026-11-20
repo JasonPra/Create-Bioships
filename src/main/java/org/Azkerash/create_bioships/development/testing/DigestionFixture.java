@@ -15,6 +15,7 @@ import net.minecraft.util.Unit;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.*;
 import net.minecraft.world.level.block.state.properties.*;
 import net.minecraft.world.phys.*;
@@ -77,7 +78,8 @@ public final class DigestionFixture {
     }
     for (int x = -6; x <= 6; x++) {
       for (int z = -8; z <= 6; z++) {
-        level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 2);
+        level.setBlock(
+            base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), Block.UPDATE_CLIENTS);
         if (Math.abs(x) <= 5 && Math.abs(z) <= 5) {
           for (int y = 0; y <= 5; y++) {
             var pos = base.offset(x, y, z);
@@ -90,7 +92,7 @@ public final class DigestionFixture {
                         ? DevelopmentTestBlocks.GLASS.get()
                         : Blocks.AIR)
                     .defaultBlockState(),
-                2);
+                Block.UPDATE_CLIENTS);
           }
         }
       }
@@ -105,24 +107,31 @@ public final class DigestionFixture {
                 .setValue(DoorBlock.FACING, Direction.NORTH)
                 .setValue(DoorBlock.HALF, y == 0 ? DoubleBlockHalf.LOWER : DoubleBlockHalf.UPPER)
                 .setValue(DoorBlock.HINGE, x == 0 ? DoorHingeSide.LEFT : DoorHingeSide.RIGHT),
-            3);
+            Block.UPDATE_ALL);
       }
     }
     var m = mouth(level);
-    level.setBlock(m, ComponentRegistry.MOUTH.get().defaultBlockState(), 3);
-    level.setBlock(m.east(), ComponentRegistry.INTESTINE.get().defaultBlockState(), 3);
-    level.setBlock(m.east(2), ComponentRegistry.INTESTINE.get().defaultBlockState(), 3);
-    level.setBlock(m.east(3), ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
-    level.setBlock(m.east(3).south(), ComponentRegistry.CORE.get().defaultBlockState(), 3);
-    level.setBlock(m.east().south(), ComponentRegistry.INTESTINE.get().defaultBlockState(), 3);
-    level.setBlock(m.east(2).north(), ComponentRegistry.INTESTINE.get().defaultBlockState(), 3);
+    level.setBlock(m, ComponentRegistry.MOUTH.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(
+        m.east(), ComponentRegistry.INTESTINE.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(
+        m.east(2), ComponentRegistry.INTESTINE.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(
+        m.east(3), ComponentRegistry.STOMACH.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(
+        m.east(3).south(), ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(
+        m.east().south(), ComponentRegistry.INTESTINE.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(
+        m.east(2).north(), ComponentRegistry.INTESTINE.get().defaultBlockState(), Block.UPDATE_ALL);
     level.setBlock(
         m.east().south().above(),
         net.minecraft.core.registries.BuiltInRegistries.BLOCK
             .get(net.minecraft.resources.ResourceLocation.parse("biomancy:storage_sac"))
             .defaultBlockState(),
-        3);
-    level.setBlock(isolated(level), ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
+        Block.UPDATE_ALL);
+    level.setBlock(
+        isolated(level), ComponentRegistry.STOMACH.get().defaultBlockState(), Block.UPDATE_ALL);
     control(level, base.offset(-3, 0, -7), "digestion_test start");
     control(level, base.offset(3, 0, -7), "digestion_test reset");
     state.setDigestionBuilt(true);
@@ -135,7 +144,7 @@ public final class DigestionFixture {
   }
 
   private static void control(ServerLevel level, BlockPos pos, String command) {
-    level.setBlock(pos, Blocks.COMMAND_BLOCK.defaultBlockState(), 3);
+    level.setBlock(pos, Blocks.COMMAND_BLOCK.defaultBlockState(), Block.UPDATE_ALL);
     var be = (CommandBlockEntity) level.getBlockEntity(pos);
     be.getCommandBlock().setCommand(command);
     be.getCommandBlock().setTrackOutput(false);
@@ -146,7 +155,7 @@ public final class DigestionFixture {
             .get()
             .defaultBlockState()
             .setValue(BlockStateProperties.ATTACH_FACE, AttachFace.FLOOR),
-        3);
+        Block.UPDATE_ALL);
   }
 
   public static int start(ServerLevel level) {
@@ -179,7 +188,8 @@ public final class DigestionFixture {
     ((MouthBlockEntity) level.getBlockEntity(core.north().west(3)))
         .feed(new ItemStack(Items.PORKCHOP, 4), false);
     var controlPos = isolated(level);
-    level.setBlock(controlPos.south(), ComponentRegistry.CORE.get().defaultBlockState(), 3);
+    level.setBlock(
+        controlPos.south(), ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
     var controlBody =
         SubLevelAssemblyHelper.assembleBlocks(
             level,

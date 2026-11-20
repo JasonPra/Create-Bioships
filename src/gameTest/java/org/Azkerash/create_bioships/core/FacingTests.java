@@ -5,6 +5,7 @@ import dev.ryanhcode.sable.companion.math.BoundingBox3i;
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.gametest.framework.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
@@ -20,7 +21,7 @@ public final class FacingTests {
   public static void front_is_saved_local_shared_and_rotates_with_the_creature(GameTestHelper h) {
     var l = h.getLevel();
     var p = h.absolutePos(new BlockPos(1, 3, 1));
-    l.setBlock(p, ComponentRegistry.CORE.get().defaultBlockState(), 3);
+    l.setBlock(p, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
     var b = SubLevelAssemblyHelper.assembleBlocks(l, p, List.of(p), new BoundingBox3i(p, p));
     CoreAssemblyRules.mark(l, b.getPlot().getCenterBlock());
     DevelopmentLifeSupport.pause(b);
@@ -42,7 +43,7 @@ public final class FacingTests {
             && SubLevelFacing.world(b).dot(new Vec3(-1, 0, 0)) > .99999,
         "Front was world-fixed or lost on reload");
     var q = p.east(5);
-    l.setBlock(q, ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState(), 3);
+    l.setBlock(q, ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState(), Block.UPDATE_ALL);
     var part = SubLevelAssemblyHelper.assembleBlocks(l, q, List.of(q), new BoundingBox3i(q, q));
     SubLevelCreatureParts.attach(b, part);
     h.assertTrue(SubLevelFacing.local(part) == Direction.NORTH, "Limb duplicated the front");

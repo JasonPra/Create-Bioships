@@ -6,6 +6,7 @@ import net.minecraft.core.*;
 import net.minecraft.nbt.*;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -16,6 +17,9 @@ import org.Azkerash.create_bioships.core.*;
 /** One brain inventory and one active physical group per grid, rebuilt only on topology edits. */
 @EventBusSubscriber(modid = "create_bioships")
 public final class SubLevelBrains {
+  private static final int APPEARANCE_TRACKING_RANGE_BLOCKS = 192;
+  private static final int DISCOVERY_INTERVAL_TICKS = 20;
+
   private static final Map<ServerSubLevel, SubLevelBrains> BRAINS = new IdentityHashMap<>();
   private static final Set<ServerSubLevel> PENDING =
       Collections.newSetFromMap(new IdentityHashMap<>());
@@ -197,7 +201,9 @@ public final class SubLevelBrains {
           || state.getValue(BrainBlock.FORMED) != formed) {
         body.getLevel()
             .setBlock(
-                p, state.setValue(BrainBlock.PORT, desired).setValue(BrainBlock.FORMED, formed), 2);
+                p,
+                state.setValue(BrainBlock.PORT, desired).setValue(BrainBlock.FORMED, formed),
+                Block.UPDATE_CLIENTS);
       }
     }
   }
@@ -235,7 +241,8 @@ public final class SubLevelBrains {
             face,
             !SubLevelHealth.status(body).dead());
     for (var player : body.getLevel().players()) {
-      if (player.position().distanceToSqr(point) < 192 * 192) {
+      if (player.position().distanceToSqr(point)
+          < APPEARANCE_TRACKING_RANGE_BLOCKS * APPEARANCE_TRACKING_RANGE_BLOCKS) {
         net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, payload);
       }
     }
@@ -253,7 +260,7 @@ public final class SubLevelBrains {
       }
     }
     PENDING.clear();
-    if (event.getServer().getTickCount() % 20 == 0) {
+    if (event.getServer().getTickCount() % DISCOVERY_INTERVAL_TICKS == 0) {
       for (var level : event.getServer().getAllLevels()) {
         var container = dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(level);
         if (container != null) {

@@ -6,6 +6,7 @@ import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.gametest.framework.*;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
@@ -29,12 +30,12 @@ public final class JuniorBaselineTests {
     }
     for (int x = -4; x <= 4; x++) {
       for (int z = -4; z <= 4; z++) {
-        l.setBlock(at.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 2);
+        l.setBlock(at.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), Block.UPDATE_CLIENTS);
       }
     }
-    l.setBlock(at, ComponentRegistry.CORE.get().defaultBlockState(), 3);
-    l.setBlock(at.east(), ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
-    l.setBlock(at.west(), ComponentRegistry.MOUTH.get().defaultBlockState(), 3);
+    l.setBlock(at, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
+    l.setBlock(at.east(), ComponentRegistry.STOMACH.get().defaultBlockState(), Block.UPDATE_ALL);
+    l.setBlock(at.west(), ComponentRegistry.MOUTH.get().defaultBlockState(), Block.UPDATE_ALL);
     var b =
         SubLevelAssemblyHelper.assembleBlocks(
             l, at, List.of(at, at.east(), at.west()), new BoundingBox3i(at.west(), at.east()));
@@ -90,7 +91,8 @@ public final class JuniorBaselineTests {
     for (int x = -12; x <= 12; x++) {
       for (int z = -12; z <= 12; z++) {
         l.setChunkForced((floor.getX() + x) >> 4, (floor.getZ() + z) >> 4, true);
-        l.setBlock(floor.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 2);
+        l.setBlock(
+            floor.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), Block.UPDATE_CLIENTS);
       }
     }
     h.runAfterDelay(
@@ -102,11 +104,13 @@ public final class JuniorBaselineTests {
             for (int z = -1; z <= 1; z++) {
               var at = p.offset(x, 0, z);
               cells.add(at);
-              l.setBlock(at, ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState(), 3);
+              l.setBlock(
+                  at, ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState(), Block.UPDATE_ALL);
             }
           }
-          l.setBlock(p, ComponentRegistry.CORE.get().defaultBlockState(), 3);
-          l.setBlock(p.above(), ComponentRegistry.BRAIN.get().defaultBlockState(), 3);
+          l.setBlock(p, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
+          l.setBlock(
+              p.above(), ComponentRegistry.BRAIN.get().defaultBlockState(), Block.UPDATE_ALL);
           cells.add(p.above());
           for (var face : List.of(Direction.EAST, Direction.WEST)) {
             for (int z : new int[] {-1, 1}) {
@@ -121,7 +125,7 @@ public final class JuniorBaselineTests {
                           net.minecraft.world.level.block.state.properties.BlockStateProperties
                               .HORIZONTAL_FACING,
                           face),
-                  3);
+                  Block.UPDATE_ALL);
             }
           }
           var b =
@@ -162,7 +166,7 @@ public final class JuniorBaselineTests {
       GameTestHelper h) {
     var path = DevelopmentTestBlocks.PATH.get();
     var p = h.absolutePos(new BlockPos(1, 2, 1));
-    h.getLevel().setBlock(p, path.defaultBlockState(), 2);
+    h.getLevel().setBlock(p, path.defaultBlockState(), Block.UPDATE_CLIENTS);
     h.assertTrue(
         DevelopmentTestBlocks.protectedBlock(path.defaultBlockState())
             && path.defaultBlockState().getDestroySpeed(h.getLevel(), p) < 0

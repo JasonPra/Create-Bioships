@@ -14,6 +14,22 @@ import org.Azkerash.create_bioships.core.pathfinding.SubLevelPathfinder;
  */
 public final class WanderBehavior implements BrainBehavior {
   public static final ResourceLocation ID = ResourceLocation.parse("create_bioships:wander");
+  // Durations use server ticks; distances use world blocks and heading errors use radians.
+  private static final int INITIAL_PAUSE_TICKS = 40;
+  private static final int ARRIVAL_PAUSE_TICKS = 30;
+  private static final int ARRIVAL_PAUSE_JITTER_TICKS = 50;
+  private static final int RETRY_PAUSE_TICKS = 60;
+  private static final int PROGRESS_TIMEOUT_TICKS = 80;
+  private static final int MOTOR_COMMAND_TICKS = 20;
+  private static final int ROUTE_ATTEMPTS = 4;
+  private static final double WAYPOINT_RADIUS_BLOCKS = .55;
+  private static final double ARRIVAL_RADIUS_BLOCKS = .6;
+  private static final double MIN_ROUTE_DISTANCE_BLOCKS = 4;
+  private static final double ROUTE_DISTANCE_JITTER_BLOCKS = 5;
+  private static final double WATER_VERTICAL_RADIUS_BLOCKS = 3;
+  private static final double MIN_PROGRESS_BLOCKS = .2;
+  private static final double MIN_HEADING_PROGRESS_RADIANS = .1;
+  private static final double WANDER_SPEED = .65;
   private List<Vec3> route = List.of();
   private int waypoint;
   private long nextDecision = Long.MIN_VALUE, lastProgress;
@@ -55,33 +71,39 @@ public final class WanderBehavior implements BrainBehavior {
       return;
     }
     if (nextDecision == Long.MIN_VALUE) {
-      pause(body, now + 40);
+      pause(body, now + INITIAL_PAUSE_TICKS);
       return;
     }
     if (now < nextDecision) {
-      BrainMotorControls.move(body, Vec3.ZERO, 0, 20, mode);
+      BrainMotorControls.move(body, Vec3.ZERO, 0, MOTOR_COMMAND_TICKS, mode);
       return;
     }
     var position = SubLevelPathfinder.position(body);
-    while (waypoint < route.size() && distance(position, route.get(waypoint)) < .55) {
+    while (waypoint < route.size()
+        && distance(position, route.get(waypoint)) < WAYPOINT_RADIUS_BLOCKS) {
       waypoint++;
       bestHeading = Double.POSITIVE_INFINITY;
     }
     if (!route.isEmpty() && waypoint >= route.size()) {
-      pause(body, now + 30 + body.getLevel().random.nextInt(50));
+      pause(
+          body,
+          now + ARRIVAL_PAUSE_TICKS + body.getLevel().random.nextInt(ARRIVAL_PAUSE_JITTER_TICKS));
       return;
     }
     if (waypoint >= route.size()) {
       route = List.of();
       waypoint = 0;
-      for (int attempt = 0; attempt < 4; attempt++) {
+      for (int attempt = 0; attempt < ROUTE_ATTEMPTS; attempt++) {
         double angle = body.getLevel().random.nextDouble() * Math.PI * 2;
-        double distance = 4 + body.getLevel().random.nextDouble() * 5;
+        double distance =
+            MIN_ROUTE_DISTANCE_BLOCKS
+                + body.getLevel().random.nextDouble() * ROUTE_DISTANCE_JITTER_BLOCKS;
         var goal =
             position.add(
                 Math.cos(angle) * distance,
                 mode == SubLevelPathfinder.Mode.WATER
-                    ? body.getLevel().random.nextDouble() * 6 - 3
+                    ? body.getLevel().random.nextDouble() * (WATER_VERTICAL_RADIUS_BLOCKS * 2)
+                        - WATER_VERTICAL_RADIUS_BLOCKS
                     : 0,
                 Math.sin(angle) * distance);
         var candidate = SubLevelPathfinder.find(body, goal, mode);
@@ -91,7 +113,7 @@ public final class WanderBehavior implements BrainBehavior {
         }
       }
       if (route.isEmpty()) {
-        pause(body, now + 60);
+        pause(body, now + RETRY_PAUSE_TICKS);
         return;
       }
       bestRemaining = Double.POSITIVE_INFINITY;
@@ -104,7 +126,7 @@ public final class WanderBehavior implements BrainBehavior {
       remaining += distance(route.get(i - 1), route.get(i));
     }
     // Rocking or moving sideways against a wall is not progress along the route.
-    if (remaining < bestRemaining - .2) {
+    if (remaining < bestRemaining - MIN_PROGRESS_BLOCKS) {
       bestRemaining = remaining;
       lastProgress = now;
     }
@@ -113,25 +135,29 @@ public final class WanderBehavior implements BrainBehavior {
         org.Azkerash.create_bioships.core.locomotion.SubLevelFacing.towards(
             org.Azkerash.create_bioships.core.locomotion.SubLevelFacing.world(body),
             delta,
-            .65,
+            WANDER_SPEED,
             mode == SubLevelPathfinder.Mode.WATER);
     // A deliberate turn towards the target is progress; rocking against terrain is not.
     double heading = Math.abs(steering.error());
-    if (heading < bestHeading - .1) {
+    if (heading < bestHeading - MIN_HEADING_PROGRESS_RADIANS) {
       bestHeading = heading;
       lastProgress = now;
     }
-    if (now - lastProgress > 80) {
-      pause(body, now + 40);
+    if (now - lastProgress > PROGRESS_TIMEOUT_TICKS) {
+      pause(body, now + INITIAL_PAUSE_TICKS);
       return;
     }
     org.Azkerash.create_bioships.core.pathfinding.SubLevelPaths.update(body, mode, route, waypoint);
-    if (!BrainMotorControls.move(body, steering.velocity(), steering.yawRate(), 20, mode)) {
-      pause(body, now + 60);
+    if (!BrainMotorControls.move(
+        body, steering.velocity(), steering.yawRate(), MOTOR_COMMAND_TICKS, mode)) {
+      pause(body, now + RETRY_PAUSE_TICKS);
       return;
     }
-    if (waypoint == route.size() - 1 && distance(position, route.getLast()) < .6) {
-      pause(body, now + 30 + body.getLevel().random.nextInt(50));
+    if (waypoint == route.size() - 1
+        && distance(position, route.getLast()) < ARRIVAL_RADIUS_BLOCKS) {
+      pause(
+          body,
+          now + ARRIVAL_PAUSE_TICKS + body.getLevel().random.nextInt(ARRIVAL_PAUSE_JITTER_TICKS));
     }
   }
 
@@ -141,7 +167,7 @@ public final class WanderBehavior implements BrainBehavior {
     route = List.of();
     waypoint = 0;
     bestRemaining = Double.POSITIVE_INFINITY;
-    BrainMotorControls.move(body, Vec3.ZERO, 0, 20, mode);
+    BrainMotorControls.move(body, Vec3.ZERO, 0, MOTOR_COMMAND_TICKS, mode);
     save(body, "paused", until);
   }
 

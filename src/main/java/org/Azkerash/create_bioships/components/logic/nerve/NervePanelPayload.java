@@ -16,6 +16,8 @@ public record NervePanelPayload(
     List<SubLevelPermissions.Entry> allowed,
     List<SubLevelPermissions.Entry> candidates)
     implements CustomPacketPayload {
+  private static final int MAX_DISPLAY_NAME_CHARS = 80;
+
   public static final Type<NervePanelPayload> TYPE =
       new Type<>(ResourceLocation.parse("create_bioships:nerve_panel"));
 
@@ -23,7 +25,9 @@ public record NervePanelPayload(
     b.writeVarInt(entries.size());
     for (var e : entries) {
       b.writeUUID(e.id());
-      b.writeUtf(e.name().substring(0, Math.min(80, e.name().length())), 80);
+      b.writeUtf(
+          e.name().substring(0, Math.min(MAX_DISPLAY_NAME_CHARS, e.name().length())),
+          MAX_DISPLAY_NAME_CHARS);
       b.writeBoolean(e.player());
       b.writeBoolean(e.sublevel());
     }
@@ -38,7 +42,7 @@ public record NervePanelPayload(
     for (int i = 0; i < count; i++) {
       entries.add(
           new SubLevelPermissions.Entry(
-              b.readUUID(), b.readUtf(80), b.readBoolean(), b.readBoolean()));
+              b.readUUID(), b.readUtf(MAX_DISPLAY_NAME_CHARS), b.readBoolean(), b.readBoolean()));
     }
     return List.copyOf(entries);
   }
@@ -48,7 +52,7 @@ public record NervePanelPayload(
           (b, p) -> {
             b.writeUUID(p.grid);
             b.writeBlockPos(p.panel);
-            b.writeUtf(p.owner, 80);
+            b.writeUtf(p.owner, MAX_DISPLAY_NAME_CHARS);
             b.writeBoolean(p.editable);
             entries(b, p.allowed);
             entries(b, p.candidates);
@@ -57,7 +61,7 @@ public record NervePanelPayload(
               new NervePanelPayload(
                   b.readUUID(),
                   b.readBlockPos(),
-                  b.readUtf(80),
+                  b.readUtf(MAX_DISPLAY_NAME_CHARS),
                   b.readBoolean(),
                   entries(b),
                   entries(b)));

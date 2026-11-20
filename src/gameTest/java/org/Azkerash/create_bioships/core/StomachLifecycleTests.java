@@ -8,6 +8,7 @@ import net.minecraft.gametest.framework.*;
 import net.minecraft.world.*;
 import net.minecraft.world.item.*;
 import net.minecraft.world.item.context.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.gametest.*;
@@ -25,7 +26,7 @@ public final class StomachLifecycleTests {
     var level = helper.getLevel();
     var pos = helper.absolutePos(new BlockPos(1, 2, 1));
     var state = ComponentRegistry.STOMACH.get().defaultBlockState();
-    level.setBlock(pos, state, 3);
+    level.setBlock(pos, state, Block.UPDATE_ALL);
     var stomach = (StomachBlockEntity) level.getBlockEntity(pos);
     stomach.enqueue(new ItemStack(Items.PORKCHOP, 3), false);
     stomach.setItem(9, new ItemStack(StomachBlockEntity.paste(), 5));
@@ -84,11 +85,18 @@ public final class StomachLifecycleTests {
             () -> {
               for (int x = -3; x <= 5; x++) {
                 for (int z = -3; z <= 5; z++) {
-                  level.setBlock(origin.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 3);
+                  level.setBlock(
+                      origin.offset(x, -1, z),
+                      Blocks.BEDROCK.defaultBlockState(),
+                      Block.UPDATE_ALL);
                 }
               }
-              level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
-              level.setBlock(origin.east(), ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
+              level.setBlock(
+                  origin, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
+              level.setBlock(
+                  origin.east(),
+                  ComponentRegistry.STOMACH.get().defaultBlockState(),
+                  Block.UPDATE_ALL);
               var body =
                   SubLevelAssemblyHelper.assembleBlocks(
                       level,
@@ -150,7 +158,8 @@ public final class StomachLifecycleTests {
                       .contains(componentId),
                   "Old grid retained removed inventory ownership");
               var destination = origin.south(4);
-              level.setBlock(destination, ComponentRegistry.CORE.get().defaultBlockState(), 3);
+              level.setBlock(
+                  destination, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
               var target =
                   SubLevelAssemblyHelper.assembleBlocks(
                       level,

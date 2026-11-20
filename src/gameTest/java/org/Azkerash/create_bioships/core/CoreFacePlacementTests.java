@@ -9,6 +9,7 @@ import net.minecraft.gametest.framework.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.*;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -31,7 +32,8 @@ public final class CoreFacePlacementTests {
     }
     for (int x = -5; x <= 5; x++) {
       for (int z = -5; z <= 5; z++) {
-        level.setBlock(origin.offset(x, -3, z), Blocks.BEDROCK.defaultBlockState(), 3);
+        level.setBlock(
+            origin.offset(x, -3, z), Blocks.BEDROCK.defaultBlockState(), Block.UPDATE_ALL);
       }
     }
     helper
@@ -57,7 +59,8 @@ public final class CoreFacePlacementTests {
                   new net.neoforged.neoforge.common.util.FakePlayer(level, profile).connection;
               player.setPos(Vec3.atCenterOf(origin).add(0, 0, -4));
               player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(flesh.asItem(), 64));
-              level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
+              level.setBlock(
+                  origin, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
               for (var face : Direction.values()) {
                 player.gameMode.useItemOn(
                     player,

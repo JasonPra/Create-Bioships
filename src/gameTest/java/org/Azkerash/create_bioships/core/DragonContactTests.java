@@ -7,6 +7,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.*;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.boss.enderdragon.phases.EnderDragonPhase;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.*;
@@ -26,9 +27,10 @@ public final class DragonContactTests {
     helper.runAfterDelay(
         10,
         () -> {
-          level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
-          level.setBlock(origin.east(), Blocks.STONE.defaultBlockState(), 3);
-          level.setBlock(origin.east(2), Blocks.STONE.defaultBlockState(), 3);
+          level.setBlock(
+              origin, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
+          level.setBlock(origin.east(), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
+          level.setBlock(origin.east(2), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
           var body =
               SubLevelAssemblyHelper.assembleBlocks(
                   level,

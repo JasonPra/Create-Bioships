@@ -4,6 +4,7 @@ import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.properties.*;
 import net.minecraft.world.level.levelgen.Heightmap;
 
@@ -33,7 +34,7 @@ public final class EstateGardens {
             .defaultBlockState()
             .setValue(SlabBlock.TYPE, SlabType.TOP)
             .setValue(SlabBlock.WATERLOGGED, true),
-        3);
+        Block.UPDATE_ALL);
     for (int dx = -4; dx <= 4; dx++) {
       for (int dz = -3; dz <= 3; dz++) {
         int x = cx + dx, z = cz + dz;
@@ -52,8 +53,10 @@ public final class EstateGardens {
           continue;
         }
         l.setBlock(
-            p.below(), Blocks.FARMLAND.defaultBlockState().setValue(FarmBlock.MOISTURE, 7), 3);
-        l.setBlock(p, crop.getStateForAge(crop.getMaxAge()), 3);
+            p.below(),
+            Blocks.FARMLAND.defaultBlockState().setValue(FarmBlock.MOISTURE, 7),
+            Block.UPDATE_ALL);
+        l.setBlock(p, crop.getStateForAge(crop.getMaxAge()), Block.UPDATE_ALL);
       }
     }
     var light = base.offset(cx + 5, EstateLandscape.height(cx + 5, cz), cz);
@@ -79,7 +82,10 @@ public final class EstateGardens {
           continue;
         }
         EstateLandscape.put(l, p.below(), Blocks.SOUL_SAND);
-        l.setBlock(p, Blocks.NETHER_WART.defaultBlockState().setValue(NetherWartBlock.AGE, 3), 3);
+        l.setBlock(
+            p,
+            Blocks.NETHER_WART.defaultBlockState().setValue(NetherWartBlock.AGE, 3),
+            Block.UPDATE_ALL);
       }
     }
     // A small cistern and sugar-cane bed have actual adjacent water, not decorative crop placement.
@@ -165,21 +171,22 @@ public final class EstateGardens {
       var parts = new ArrayList<BlockPos>();
       for (int y = 0; y <= 4; y++) {
         var q = p.above(y);
-        l.setBlock(q, Blocks.DEEPSLATE_BRICK_WALL.defaultBlockState(), 3);
+        l.setBlock(q, Blocks.DEEPSLATE_BRICK_WALL.defaultBlockState(), Block.UPDATE_ALL);
         parts.add(q);
       }
       for (int arm = 1; arm <= 2; arm++) {
         var q = p.above(4).relative(side.getOpposite(), arm);
-        l.setBlock(q, Blocks.DEEPSLATE_BRICK_WALL.defaultBlockState(), 3);
+        l.setBlock(q, Blocks.DEEPSLATE_BRICK_WALL.defaultBlockState(), Block.UPDATE_ALL);
         parts.add(q);
       }
       for (var q : parts) {
-        l.setBlock(q, Block.updateFromNeighbourShapes(l.getBlockState(q), l, q), 2);
+        l.setBlock(
+            q, Block.updateFromNeighbourShapes(l.getBlockState(q), l, q), Block.UPDATE_CLIENTS);
       }
       l.setBlock(
           p.above(3).relative(side.getOpposite(), 2),
           Blocks.LANTERN.defaultBlockState().setValue(LanternBlock.HANGING, true),
-          3);
+          Block.UPDATE_ALL);
     }
   }
 
@@ -202,7 +209,7 @@ public final class EstateGardens {
             }
           }
           if (attached) {
-            l.setBlock(p, s, 2);
+            l.setBlock(p, s, Block.UPDATE_CLIENTS);
           }
         }
       }
@@ -259,7 +266,7 @@ public final class EstateGardens {
           l.setBlock(
               p,
               Blocks.SWEET_BERRY_BUSH.defaultBlockState().setValue(SweetBerryBushBlock.AGE, 3),
-              3);
+              Block.UPDATE_ALL);
         } else {
           var plant = herbs[random.nextInt(herbs.length)];
           if (plant.defaultBlockState().canSurvive(l, p)) {

@@ -10,7 +10,10 @@ import org.Azkerash.create_bioships.core.brain.program.editor.EditorLog;
 /** Private, bounded per-card client-session histories. No source or history broadcasts. */
 @EventBusSubscriber(modid = "create_bioships", value = Dist.CLIENT)
 public final class CerebralDiagnosticLogs {
-  private static final LinkedHashMap<UUID, EditorLog> LOGS = new LinkedHashMap<>(32, .75f, true);
+  private static final int MAX_CACHED_CARDS = 32;
+
+  private static final LinkedHashMap<UUID, EditorLog> LOGS =
+      new LinkedHashMap<>(MAX_CACHED_CARDS, .75f, true);
   private static Object world;
 
   private CerebralDiagnosticLogs() {}
@@ -21,7 +24,7 @@ public final class CerebralDiagnosticLogs {
       world = Minecraft.getInstance().level;
     }
     var log = LOGS.computeIfAbsent(identity, id -> new EditorLog());
-    while (LOGS.size() > 32) {
+    while (LOGS.size() > MAX_CACHED_CARDS) {
       LOGS.remove(LOGS.keySet().iterator().next());
     }
     return log;

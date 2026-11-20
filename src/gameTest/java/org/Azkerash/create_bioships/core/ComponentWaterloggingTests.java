@@ -5,6 +5,7 @@ import net.minecraft.core.*;
 import net.minecraft.gametest.framework.*;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.gametest.*;
@@ -58,14 +59,14 @@ public final class ComponentWaterloggingTests {
                 com.github.elenterius.biomancy.init.ModBlocks.PACKED_FLESH
                     .get()
                     .defaultBlockState(),
-                3);
+                Block.UPDATE_ALL);
             l.setBlock(
                 p.south(),
                 com.github.elenterius.biomancy.init.ModBlocks.PACKED_FLESH
                     .get()
                     .defaultBlockState(),
-                3);
-            l.setBlock(p, Blocks.WATER.defaultBlockState(), 3);
+                Block.UPDATE_ALL);
+            l.setBlock(p, Blocks.WATER.defaultBlockState(), Block.UPDATE_ALL);
             var c =
                 new BlockPlaceContext(
                     l,
@@ -80,7 +81,7 @@ public final class ComponentWaterloggingTests {
                     && state.hasProperty(BlockStateProperties.WATERLOGGED)
                     && state.getValue(BlockStateProperties.WATERLOGGED),
                 "Component did not waterlog on placement: " + block);
-            l.setBlock(p, state, 3);
+            l.setBlock(p, state, Block.UPDATE_ALL);
           }
           h.runAfterDelay(
               80,
@@ -120,7 +121,7 @@ public final class ComponentWaterloggingTests {
                         ? ComponentRegistry.CORE.get()
                         : com.github.elenterius.biomancy.init.ModBlocks.PACKED_FLESH.get())
                     .defaultBlockState(),
-                3);
+                Block.UPDATE_ALL);
             cells.add(p);
           }
           for (var p : List.of(base.east().north(), base.east(3).north())) {
@@ -133,7 +134,7 @@ public final class ComponentWaterloggingTests {
                     .defaultBlockState()
                     .setValue(BlockStateProperties.FACING, Direction.NORTH)
                     .setValue(BlockStateProperties.WATERLOGGED, true),
-                3);
+                Block.UPDATE_ALL);
             cells.add(p);
           }
           var body =
@@ -160,7 +161,10 @@ public final class ComponentWaterloggingTests {
                 for (int x = -1; x <= 4; x++) {
                   for (int z = -2; z <= 1; z++) {
                     for (int y = 0; y <= 2; y++) {
-                      l.setBlock(destination.offset(x, y, z), Blocks.WATER.defaultBlockState(), 3);
+                      l.setBlock(
+                          destination.offset(x, y, z),
+                          Blocks.WATER.defaultBlockState(),
+                          Block.UPDATE_ALL);
                     }
                   }
                 }

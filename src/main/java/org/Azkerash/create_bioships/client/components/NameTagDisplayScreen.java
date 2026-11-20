@@ -37,7 +37,7 @@ public final class NameTagDisplayScreen extends AbstractContainerScreen<NameTagD
             "Reset",
             button -> {
               for (int i = 0; i < 3; i++) {
-                sliders[i].reset(i == 1 ? 24 : 0);
+                sliders[i].reset(i == 1 ? NameTagDisplayEntity.DEFAULT_Y_UNITS : 0);
               }
               send();
             }));
@@ -98,7 +98,7 @@ public final class NameTagDisplayScreen extends AbstractContainerScreen<NameTagD
                   java.util.Locale.ROOT,
                   "%s offset: %+.2f blocks",
                   new String[] {"X", "Y", "Z"}[axis],
-                  units() / 16d)));
+                  units() / (double) NameTagDisplayEntity.OFFSET_UNITS_PER_BLOCK)));
     }
 
     @Override

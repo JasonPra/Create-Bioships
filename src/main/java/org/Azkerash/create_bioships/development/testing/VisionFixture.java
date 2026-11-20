@@ -14,6 +14,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Unit;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.CommandBlockEntity;
 import net.minecraft.world.level.block.state.properties.*;
 import net.minecraft.world.phys.*;
@@ -40,19 +41,19 @@ public final class VisionFixture {
   }
 
   private static void subjectBlocks(ServerLevel level, BlockPos core) {
-    level.setBlock(core, ComponentRegistry.CORE.get().defaultBlockState(), 3);
+    level.setBlock(core, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
     for (var pos : List.of(core.west(), core.east())) {
       level.setBlock(
           pos,
           com.github.elenterius.biomancy.init.ModBlocks.PACKED_FLESH.get().defaultBlockState(),
-          3);
+          Block.UPDATE_ALL);
       level.setBlock(
           pos.north(),
           (pos.getX() < core.getX() ? ComponentRegistry.LAND_EYE : ComponentRegistry.AQUATIC_EYE)
               .get()
               .defaultBlockState()
               .setValue(BlockStateProperties.FACING, Direction.NORTH),
-          3);
+          Block.UPDATE_ALL);
     }
   }
 
@@ -78,7 +79,8 @@ public final class VisionFixture {
     }
     for (int x = -12; x <= 12; x++) {
       for (int z = -12; z <= 9; z++) {
-        level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 2);
+        level.setBlock(
+            base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), Block.UPDATE_CLIENTS);
         if (Math.abs(x) <= 10 && Math.abs(z) <= 8) {
           for (int y = 0; y <= 7; y++) {
             boolean wall = Math.abs(x) == 10 || Math.abs(z) == 8 || y == 7 || x == 0;
@@ -88,7 +90,7 @@ public final class VisionFixture {
                         ? DevelopmentTestBlocks.GLASS.get()
                         : x > 0 && y < 6 ? Blocks.WATER : Blocks.AIR)
                     .defaultBlockState(),
-                2);
+                Block.UPDATE_CLIENTS);
           }
         }
       }
@@ -100,7 +102,9 @@ public final class VisionFixture {
       if (lane == 1) {
         for (var eye : java.util.List.of(core.west().north(), core.east().north())) {
           level.setBlock(
-              eye, level.getBlockState(eye).setValue(BlockStateProperties.WATERLOGGED, true), 3);
+              eye,
+              level.getBlockState(eye).setValue(BlockStateProperties.WATERLOGGED, true),
+              Block.UPDATE_ALL);
         }
       }
       for (int y = 1; y <= 3; y++) {
@@ -110,7 +114,7 @@ public final class VisionFixture {
                     ? com.github.elenterius.biomancy.init.ModBlocks.PACKED_FLESH.get()
                     : ComponentRegistry.CHITIN_ARMOR.get())
                 .defaultBlockState(),
-            2);
+            Block.UPDATE_CLIENTS);
       }
     }
     level.setBlock(
@@ -119,8 +123,8 @@ public final class VisionFixture {
             .get()
             .defaultBlockState()
             .setValue(BlockStateProperties.FACING, Direction.UP),
-        3);
-    level.setBlock(base.offset(-8, -1, 5), Blocks.BEDROCK.defaultBlockState(), 3);
+        Block.UPDATE_ALL);
+    level.setBlock(base.offset(-8, -1, 5), Blocks.BEDROCK.defaultBlockState(), Block.UPDATE_ALL);
     for (int lane = 0; lane < 2; lane++) {
       for (int x = 0; x <= 1; x++) {
         for (int y = 0; y <= 1; y++) {
@@ -132,7 +136,7 @@ public final class VisionFixture {
                   .setValue(DoorBlock.FACING, Direction.NORTH)
                   .setValue(DoorBlock.HALF, y == 0 ? DoubleBlockHalf.LOWER : DoubleBlockHalf.UPPER)
                   .setValue(DoorBlock.HINGE, x == 0 ? DoorHingeSide.LEFT : DoorHingeSide.RIGHT),
-              3);
+              Block.UPDATE_ALL);
         }
       }
     }
@@ -144,7 +148,7 @@ public final class VisionFixture {
   }
 
   private static void control(ServerLevel level, BlockPos pos, String command) {
-    level.setBlock(pos, Blocks.COMMAND_BLOCK.defaultBlockState(), 3);
+    level.setBlock(pos, Blocks.COMMAND_BLOCK.defaultBlockState(), Block.UPDATE_ALL);
     var be = (CommandBlockEntity) level.getBlockEntity(pos);
     be.getCommandBlock().setCommand(command);
     be.getCommandBlock().setTrackOutput(false);
@@ -155,7 +159,7 @@ public final class VisionFixture {
             .get()
             .defaultBlockState()
             .setValue(BlockStateProperties.ATTACH_FACE, AttachFace.FLOOR),
-        3);
+        Block.UPDATE_ALL);
   }
 
   public static int start(ServerLevel level) {

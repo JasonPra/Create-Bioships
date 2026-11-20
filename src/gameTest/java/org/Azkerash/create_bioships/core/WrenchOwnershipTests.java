@@ -8,6 +8,7 @@ import net.minecraft.core.*;
 import net.minecraft.gametest.framework.*;
 import net.minecraft.world.*;
 import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.gametest.*;
@@ -24,8 +25,9 @@ public final class WrenchOwnershipTests {
       GameTestHelper h) {
     var l = h.getLevel();
     var p = h.absolutePos(new BlockPos(1, 3, 1));
-    l.setBlock(p, ComponentRegistry.CORE.get().defaultBlockState(), 3);
-    l.setBlock(p.east(), ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState(), 3);
+    l.setBlock(p, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
+    l.setBlock(
+        p.east(), ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState(), Block.UPDATE_ALL);
     var body =
         SubLevelAssemblyHelper.assembleBlocks(
             l, p, List.of(p, p.east()), new BoundingBox3i(p, p.east()));

@@ -3,6 +3,7 @@ package org.Azkerash.create_bioships.core;
 import net.minecraft.core.*;
 import net.minecraft.gametest.framework.*;
 import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
@@ -20,17 +21,17 @@ public final class EyeWaterTests {
       level.setBlock(
           p.south(),
           com.github.elenterius.biomancy.init.ModBlocks.PACKED_FLESH.get().defaultBlockState(),
-          3);
+          Block.UPDATE_ALL);
       level.setBlock(
           p,
           (p.equals(a) ? ComponentRegistry.LAND_EYE : ComponentRegistry.AQUATIC_EYE)
               .get()
               .defaultBlockState()
               .setValue(BlockStateProperties.FACING, Direction.NORTH),
-          3);
-      level.setBlock(p.above(), Blocks.WATER.defaultBlockState(), 3);
+          Block.UPDATE_ALL);
+      level.setBlock(p.above(), Blocks.WATER.defaultBlockState(), Block.UPDATE_ALL);
     }
-    level.setBlock(b, Blocks.WATER.defaultBlockState(), 3);
+    level.setBlock(b, Blocks.WATER.defaultBlockState(), Block.UPDATE_ALL);
     var context =
         new net.minecraft.world.item.context.BlockPlaceContext(
             level,
@@ -46,7 +47,7 @@ public final class EyeWaterTests {
     h.assertTrue(
         placed != null && placed.getValue(BlockStateProperties.WATERLOGGED),
         "Underwater placement did not retain water");
-    level.setBlock(b, placed, 3);
+    level.setBlock(b, placed, Block.UPDATE_ALL);
     h.runAfterDelay(
         120,
         () -> {

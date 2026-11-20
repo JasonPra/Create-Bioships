@@ -10,6 +10,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.gametest.*;
@@ -26,7 +27,8 @@ public final class CreatureDecayTests {
     level.setChunkForced(29, 8, true);
     for (int x = -5; x <= 5; x++) {
       for (int z = -5; z <= 5; z++) {
-        level.setBlock(origin.offset(x, -2, z), Blocks.BEDROCK.defaultBlockState(), 3);
+        level.setBlock(
+            origin.offset(x, -2, z), Blocks.BEDROCK.defaultBlockState(), Block.UPDATE_ALL);
       }
     }
     helper.runAfterDelay(
@@ -34,9 +36,10 @@ public final class CreatureDecayTests {
         () -> {
           // An ordinary inventory block and a newly registered future component surround the core.
           CreatureDecay.registerLastToRot(ResourceLocation.withDefaultNamespace("diamond_block"));
-          level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
-          level.setBlock(origin.west(), Blocks.CHEST.defaultBlockState(), 3);
-          level.setBlock(origin.east(), Blocks.DIAMOND_BLOCK.defaultBlockState(), 3);
+          level.setBlock(
+              origin, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
+          level.setBlock(origin.west(), Blocks.CHEST.defaultBlockState(), Block.UPDATE_ALL);
+          level.setBlock(origin.east(), Blocks.DIAMOND_BLOCK.defaultBlockState(), Block.UPDATE_ALL);
           ((net.minecraft.world.level.block.entity.ChestBlockEntity)
                   level.getBlockEntity(origin.west()))
               .setItem(0, new ItemStack(Items.APPLE, 5));
@@ -49,8 +52,9 @@ public final class CreatureDecayTests {
           var core = parent.getPlot().getCenterBlock();
           CoreAssemblyRules.mark(level, core);
           var detached = origin.south(3);
-          level.setBlock(detached, Blocks.DIAMOND_BLOCK.defaultBlockState(), 3);
-          level.setBlock(detached.east(), Blocks.DIAMOND_BLOCK.defaultBlockState(), 3);
+          level.setBlock(detached, Blocks.DIAMOND_BLOCK.defaultBlockState(), Block.UPDATE_ALL);
+          level.setBlock(
+              detached.east(), Blocks.DIAMOND_BLOCK.defaultBlockState(), Block.UPDATE_ALL);
           var child =
               SubLevelAssemblyHelper.assembleBlocks(
                   level,

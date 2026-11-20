@@ -8,6 +8,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
@@ -25,10 +26,10 @@ public final class CapacityDamageTests {
         BuiltInRegistries.BLOCK.get(
             ResourceLocation.fromNamespaceAndPath("biomancy", "packed_flesh"));
     var cells = new ArrayList<BlockPos>();
-    level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
+    level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
     cells.add(origin);
     for (int i = 1; i <= 5; i++) {
-      level.setBlock(origin.east(i), flesh.defaultBlockState(), 3);
+      level.setBlock(origin.east(i), flesh.defaultBlockState(), Block.UPDATE_ALL);
       cells.add(origin.east(i));
     }
     var body =
@@ -65,7 +66,7 @@ public final class CapacityDamageTests {
           SubLevelHealth.status(body).current() == 48.5
               && SubLevelHealth.status(body).maximum() == 50,
           "Removal erased fractional damage");
-      level.setBlock(part, flesh.defaultBlockState(), 3);
+      level.setBlock(part, flesh.defaultBlockState(), Block.UPDATE_ALL);
       helper.assertTrue(
           SubLevelHealth.status(body).current() == 58.5
               && SubLevelHealth.status(body).maximum() == 60,
@@ -79,7 +80,7 @@ public final class CapacityDamageTests {
         body,
         () -> {
           level.removeBlock(part, false);
-          level.setBlock(part, flesh.defaultBlockState(), 3);
+          level.setBlock(part, flesh.defaultBlockState(), Block.UPDATE_ALL);
           return true;
         });
     helper.assertTrue(
@@ -96,7 +97,7 @@ public final class CapacityDamageTests {
             && SubLevelHealth.status(body).current() == 0
             && SubLevelHealth.status(body).causeOfDeath().equals("component_loss"),
         "Insufficient capacity did not cause permanent death");
-    level.setBlock(part, flesh.defaultBlockState(), 3);
+    level.setBlock(part, flesh.defaultBlockState(), Block.UPDATE_ALL);
     helper.assertTrue(
         SubLevelHealth.status(body).dead() && !SubLevelHealth.heal(body, 100),
         "Replacing/healing revived dead grid");

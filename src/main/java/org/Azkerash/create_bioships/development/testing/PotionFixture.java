@@ -20,6 +20,7 @@ import net.minecraft.world.entity.*;
 import net.minecraft.world.item.*;
 import net.minecraft.world.item.alchemy.PotionContents;
 import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.*;
 import net.minecraft.world.level.block.state.properties.*;
 import net.minecraft.world.phys.*;
@@ -102,7 +103,8 @@ public final class PotionFixture {
     }
     for (int x = -7; x <= 7; x++) {
       for (int z = -9; z <= 7; z++) {
-        level.setBlock(b.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 2);
+        level.setBlock(
+            b.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), Block.UPDATE_CLIENTS);
         if (Math.abs(x) <= 6 && Math.abs(z) <= 6) {
           for (int y = 0; y <= 7; y++) {
             level.setBlock(
@@ -111,7 +113,7 @@ public final class PotionFixture {
                         ? DevelopmentTestBlocks.GLASS.get()
                         : Blocks.AIR)
                     .defaultBlockState(),
-                2);
+                Block.UPDATE_CLIENTS);
           }
         }
       }
@@ -124,14 +126,20 @@ public final class PotionFixture {
               .defaultBlockState()
               .setValue(DoorBlock.FACING, Direction.NORTH)
               .setValue(DoorBlock.HINGE, x == 1 ? DoorHingeSide.LEFT : DoorHingeSide.RIGHT);
-      level.setBlock(b.offset(x, 0, -6), door.setValue(DoorBlock.HALF, DoubleBlockHalf.LOWER), 2);
-      level.setBlock(b.offset(x, 1, -6), door.setValue(DoorBlock.HALF, DoubleBlockHalf.UPPER), 2);
+      level.setBlock(
+          b.offset(x, 0, -6),
+          door.setValue(DoorBlock.HALF, DoubleBlockHalf.LOWER),
+          Block.UPDATE_CLIENTS);
+      level.setBlock(
+          b.offset(x, 1, -6),
+          door.setValue(DoorBlock.HALF, DoubleBlockHalf.UPPER),
+          Block.UPDATE_CLIENTS);
     }
     sleepingSubject(level);
     level.setBlock(
         dispenser(level),
         Blocks.DISPENSER.defaultBlockState().setValue(DispenserBlock.FACING, Direction.SOUTH),
-        3);
+        Block.UPDATE_ALL);
     button(level, b.offset(-3, 0, -8), "potion_test start");
     button(level, b.offset(3, 0, -8), "potion_test reset");
     state.setPotionBuilt(true);
@@ -145,16 +153,16 @@ public final class PotionFixture {
         BuiltInRegistries.BLOCK.get(
             ResourceLocation.fromNamespaceAndPath("biomancy", "packed_flesh"));
     for (var cell : subject(level)) {
-      level.setBlock(cell, flesh.defaultBlockState(), 3);
+      level.setBlock(cell, flesh.defaultBlockState(), Block.UPDATE_ALL);
     }
-    level.setBlock(core(level), ComponentRegistry.CORE.get().defaultBlockState(), 3);
+    level.setBlock(core(level), ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
     level.setBlock(
         base(level).above().north(),
         ComponentRegistry.VITAL_READOUT
             .get()
             .defaultBlockState()
             .setValue(BlockStateProperties.FACING, Direction.NORTH),
-        3);
+        Block.UPDATE_ALL);
   }
 
   public static int start(ServerLevel level) {
@@ -178,7 +186,7 @@ public final class PotionFixture {
     }
     clear(level);
     sleepingSubject(level);
-    level.setBlock(dispenser(level).north(), Blocks.AIR.defaultBlockState(), 3);
+    level.setBlock(dispenser(level).north(), Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
     var cells = subject(level);
     var body =
         SubLevelAssemblyHelper.assembleBlocks(
@@ -258,7 +266,8 @@ public final class PotionFixture {
   }
 
   private static void firePotion(ServerLevel level) {
-    level.setBlock(dispenser(level).north(), Blocks.REDSTONE_BLOCK.defaultBlockState(), 3);
+    level.setBlock(
+        dispenser(level).north(), Blocks.REDSTONE_BLOCK.defaultBlockState(), Block.UPDATE_ALL);
     level.neighborChanged(dispenser(level), Blocks.REDSTONE_BLOCK, dispenser(level).north());
   }
 
@@ -382,7 +391,7 @@ public final class PotionFixture {
   }
 
   private static void button(ServerLevel level, BlockPos pos, String command) {
-    level.setBlock(pos, Blocks.COMMAND_BLOCK.defaultBlockState(), 3);
+    level.setBlock(pos, Blocks.COMMAND_BLOCK.defaultBlockState(), Block.UPDATE_ALL);
     var entity = (CommandBlockEntity) level.getBlockEntity(pos);
     entity.getCommandBlock().setCommand(command);
     entity.getCommandBlock().setTrackOutput(false);
@@ -393,7 +402,7 @@ public final class PotionFixture {
             .get()
             .defaultBlockState()
             .setValue(BlockStateProperties.ATTACH_FACE, AttachFace.FLOOR),
-        3);
+        Block.UPDATE_ALL);
   }
 
   private static void explain(ServerLevel level, String progress) {

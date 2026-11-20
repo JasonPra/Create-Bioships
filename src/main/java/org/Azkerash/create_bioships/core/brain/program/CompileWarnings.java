@@ -5,6 +5,8 @@ import org.Azkerash.create_bioships.core.brain.program.ProgramLexer.Token;
 
 /** Non-blocking, bounded source warnings, separate from executable validation. */
 final class CompileWarnings {
+  private static final int MAX_WARNING_NAME_CHARS = 48;
+
   record Declaration(int index, Token token) {}
 
   private CompileWarnings() {}
@@ -13,14 +15,16 @@ final class CompileWarnings {
       CerebralProgram program, List<Declaration> declarations, Set<Integer> reads) {
     var warnings = new ArrayList<ProgramDiagnostic>();
     for (var declaration : declarations) {
-      if (!reads.contains(declaration.index()) && warnings.size() < 64) {
+      if (!reads.contains(declaration.index()) && warnings.size() < ProgramLimits.WARNINGS) {
         var token = declaration.token();
         warnings.add(
             new ProgramDiagnostic(
                 token.line(),
                 token.column(),
                 "Local '"
-                    + token.text().substring(0, Math.min(48, token.text().length()))
+                    + token
+                        .text()
+                        .substring(0, Math.min(MAX_WARNING_NAME_CHARS, token.text().length()))
                     + "' is never read."));
       }
     }
@@ -46,7 +50,7 @@ final class CompileWarnings {
       }
     }
     var lines = new HashSet<Integer>();
-    for (int i = 0; i < code.size() && warnings.size() < 64; i++) {
+    for (int i = 0; i < code.size() && warnings.size() < ProgramLimits.WARNINGS; i++) {
       var instruction = code.get(i);
       if (visited.get(i)) {
         continue;

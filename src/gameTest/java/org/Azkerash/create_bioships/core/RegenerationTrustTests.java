@@ -8,6 +8,7 @@ import net.minecraft.gametest.framework.*;
 import net.minecraft.world.effect.*;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.projectile.ThrownPotion;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.combat.*;
@@ -24,7 +25,7 @@ public final class RegenerationTrustTests {
       GameTestHelper h) {
     var level = h.getLevel();
     var origin = h.absolutePos(new BlockPos(1, 3, 1));
-    level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
+    level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
     var body =
         SubLevelAssemblyHelper.assembleBlocks(
             level, origin, List.of(origin), new BoundingBox3i(origin, origin));

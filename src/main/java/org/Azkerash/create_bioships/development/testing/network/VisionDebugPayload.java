@@ -11,6 +11,8 @@ import org.Azkerash.create_bioships.core.vision.VisionRaycaster.Ray;
 /** World-space samples: endpoints are the actual server collision results, not invented cones. */
 public record VisionDebugPayload(UUID body, List<Ray> rays, List<Vec3> targets)
     implements CustomPacketPayload {
+  public static final int MAX_TARGETS = 128;
+
   public VisionDebugPayload(UUID body, List<Ray> rays) {
     this(body, rays, List.of());
   }
@@ -18,7 +20,7 @@ public record VisionDebugPayload(UUID body, List<Ray> rays, List<Vec3> targets)
   public VisionDebugPayload {
     rays = List.copyOf(rays);
     targets = List.copyOf(targets);
-    if (rays.size() > 416 || targets.size() > 128) {
+    if (rays.size() > MAX_RAYS || targets.size() > MAX_TARGETS) {
       throw new IllegalArgumentException("Vision snapshot too large");
     }
   }
@@ -74,7 +76,7 @@ public record VisionDebugPayload(UUID body, List<Ray> rays, List<Vec3> targets)
                       b.readBoolean() ? b.readUUID() : null));
             }
             int targetCount = b.readVarInt();
-            if (targetCount < 0 || targetCount > 128) {
+            if (targetCount < 0 || targetCount > MAX_TARGETS) {
               throw new IllegalArgumentException("Invalid vision target count");
             }
             var targets = new ArrayList<Vec3>();

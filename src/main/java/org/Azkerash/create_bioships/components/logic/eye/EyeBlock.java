@@ -8,6 +8,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.*;
 import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.*;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.shapes.*;
@@ -151,7 +152,7 @@ public final class EyeBlock extends Block
     }
     var body = CoreAssemblyRules.containing(level, pos);
     if (body == null || !CoreAssemblyRules.isCreature(body) || SubLevelHealth.status(body).dead()) {
-      level.setBlock(pos, EyeBlink.sleeping(state), 2);
+      level.setBlock(pos, EyeBlink.sleeping(state), Block.UPDATE_CLIENTS);
       return;
     }
     if (org.Azkerash.create_bioships
@@ -161,7 +162,7 @@ public final class EyeBlock extends Block
         .active(level.getGameTime())
         .stream()
         .anyMatch(w -> w.surface().cell().equals(pos))) {
-      level.setBlock(pos, EyeBlink.sleeping(state), 2);
+      level.setBlock(pos, EyeBlink.sleeping(state), Block.UPDATE_CLIENTS);
       level.scheduleTick(pos, this, 20);
       return;
     }
@@ -171,7 +172,8 @@ public final class EyeBlock extends Block
   @Override
   public void afterMove(
       ServerLevel source, ServerLevel destination, BlockState state, BlockPos from, BlockPos to) {
-    destination.setBlock(to, EyeBlink.sleeping(state).setValue(EyeBlink.WAKE, 1), 2);
+    destination.setBlock(
+        to, EyeBlink.sleeping(state).setValue(EyeBlink.WAKE, 1), Block.UPDATE_CLIENTS);
     destination.scheduleTick(to, this, 1);
   }
 }

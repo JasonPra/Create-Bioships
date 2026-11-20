@@ -2,6 +2,7 @@ package org.Azkerash.create_bioships.development.testing;
 
 import net.minecraft.core.*;
 import net.minecraft.gametest.framework.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.gametest.*;
 
@@ -28,8 +29,14 @@ public final class LegChamberTests {
     var id = body.getUniqueId();
     var tag = body.getUserDataTag().copy();
     var base = LocomotionFixture.base(l);
-    l.setBlock(base.offset(10, 3, 6), DevelopmentTestBlocks.GLASS.get().defaultBlockState(), 2);
-    l.setBlock(base.offset(1, 7, 6), DevelopmentTestBlocks.GLASS.get().defaultBlockState(), 2);
+    l.setBlock(
+        base.offset(10, 3, 6),
+        DevelopmentTestBlocks.GLASS.get().defaultBlockState(),
+        Block.UPDATE_CLIENTS);
+    l.setBlock(
+        base.offset(1, 7, 6),
+        DevelopmentTestBlocks.GLASS.get().defaultBlockState(),
+        Block.UPDATE_CLIENTS);
     DevelopmentLegChambers.build(l, base, false, 7);
     LocomotionFixture.installDoors(l);
     h.assertTrue(

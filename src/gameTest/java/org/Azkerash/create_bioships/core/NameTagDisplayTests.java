@@ -9,6 +9,7 @@ import net.minecraft.gametest.framework.*;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.neoforged.neoforge.gametest.*;
@@ -27,7 +28,7 @@ public final class NameTagDisplayTests {
     var l = h.getLevel();
     var p = new BlockPos(8100, 90, 128);
     l.setChunkForced(p.getX() >> 4, p.getZ() >> 4, true);
-    l.setBlock(p, ComponentRegistry.CORE.get().defaultBlockState(), 3);
+    l.setBlock(p, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
     l.setBlock(
         p.below(),
         ComponentRegistry.NAME_TAG_DISPLAYER
@@ -35,7 +36,7 @@ public final class NameTagDisplayTests {
             .defaultBlockState()
             .setValue(BlockStateProperties.FACING, Direction.DOWN)
             .setValue(BlockStateProperties.WATERLOGGED, true),
-        3);
+        Block.UPDATE_ALL);
     var panel = (NameTagDisplayEntity) l.getBlockEntity(p.below());
     panel.setItem(0, new ItemStack(Items.DIAMOND));
     h.assertTrue(panel.isEmpty(), "Panel accepted an unrelated item");
@@ -93,8 +94,8 @@ public final class NameTagDisplayTests {
     for (int i = 0; i < 2; i++) {
       var p = new BlockPos(8150 + i * 20, 90, 128);
       l.setChunkForced(p.getX() >> 4, p.getZ() >> 4, true);
-      l.setBlock(p, ComponentRegistry.CORE.get().defaultBlockState(), 3);
-      l.setBlock(p.above(), Blocks.STONE.defaultBlockState(), 3);
+      l.setBlock(p, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
+      l.setBlock(p.above(), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
       var body =
           SubLevelAssemblyHelper.assembleBlocks(
               l, p, List.of(p, p.above()), new BoundingBox3i(p, p.above()));

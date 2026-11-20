@@ -9,6 +9,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.*;
 import net.minecraft.world.level.block.state.properties.*;
 import net.minecraft.world.phys.*;
@@ -33,7 +34,7 @@ public final class NecromancerDenFixture {
   }
 
   private static void put(ServerLevel l, BlockPos b, int x, int y, int z, Block block) {
-    l.setBlock(b.offset(x, y, z), block.defaultBlockState(), 2);
+    l.setBlock(b.offset(x, y, z), block.defaultBlockState(), Block.UPDATE_CLIENTS);
   }
 
   private static void fill(
@@ -165,17 +166,17 @@ public final class NecromancerDenFixture {
             .defaultBlockState()
             .setValue(WallBlock.NORTH_WALL, WallSide.LOW)
             .setValue(WallBlock.SOUTH_WALL, WallSide.LOW);
-    l.setBlock(b.offset(x, 4, z - 2), hook, 2);
-    l.setBlock(b.offset(x, 4, z - 3), hook, 2);
+    l.setBlock(b.offset(x, 4, z - 2), hook, Block.UPDATE_CLIENTS);
+    l.setBlock(b.offset(x, 4, z - 3), hook, Block.UPDATE_CLIENTS);
     l.setBlock(
         b.offset(x, 3, z - 3),
         Blocks.LANTERN.defaultBlockState().setValue(LanternBlock.HANGING, true),
-        2);
+        Block.UPDATE_CLIENTS);
   }
 
   private static void biological(ServerLevel l, BlockPos p, String name) {
     var block = BuiltInRegistries.BLOCK.get(ResourceLocation.parse("biomancy:" + name));
-    l.setBlock(p, block.defaultBlockState(), 2);
+    l.setBlock(p, block.defaultBlockState(), Block.UPDATE_CLIENTS);
   }
 
   private static void laboratory(ServerLevel l, BlockPos b) {
@@ -250,8 +251,11 @@ public final class NecromancerDenFixture {
       }
     }
     var door = Blocks.IRON_DOOR.defaultBlockState().setValue(DoorBlock.FACING, Direction.EAST);
-    l.setBlock(b.offset(-33, 0, z), door, 2);
-    l.setBlock(b.offset(-33, 1, z), door.setValue(DoorBlock.HALF, DoubleBlockHalf.UPPER), 2);
+    l.setBlock(b.offset(-33, 0, z), door, Block.UPDATE_CLIENTS);
+    l.setBlock(
+        b.offset(-33, 1, z),
+        door.setValue(DoorBlock.HALF, DoubleBlockHalf.UPPER),
+        Block.UPDATE_CLIENTS);
     put(l, b, -33, 1, z - 1, Blocks.POLISHED_BLACKSTONE_BRICKS);
     l.setBlock(
         b.offset(-32, 1, z - 1),
@@ -259,7 +263,7 @@ public final class NecromancerDenFixture {
             .defaultBlockState()
             .setValue(BlockStateProperties.ATTACH_FACE, AttachFace.WALL)
             .setValue(BlockStateProperties.HORIZONTAL_FACING, Direction.EAST),
-        2);
+        Block.UPDATE_CLIENTS);
     bed(
         l,
         b.offset(-39, 0, z + 1),
@@ -337,7 +341,7 @@ public final class NecromancerDenFixture {
 
   private static void tree(ServerLevel l, BlockPos p) {
     for (int y = 0; y < 7; y++) {
-      l.setBlock(p.above(y), Blocks.DARK_OAK_LOG.defaultBlockState(), 2);
+      l.setBlock(p.above(y), Blocks.DARK_OAK_LOG.defaultBlockState(), Block.UPDATE_CLIENTS);
     }
     for (int x = -3; x <= 3; x++) {
       for (int z = -3; z <= 3; z++) {
@@ -346,7 +350,7 @@ public final class NecromancerDenFixture {
             l.setBlock(
                 p.offset(x, y, z),
                 Blocks.DARK_OAK_LEAVES.defaultBlockState().setValue(LeavesBlock.PERSISTENT, true),
-                2);
+                Block.UPDATE_CLIENTS);
           }
         }
       }
@@ -541,10 +545,12 @@ public final class NecromancerDenFixture {
           anchor = anchor.above();
         }
         for (var q = lamp.above(); q.getY() < anchor.getY(); q = q.above()) {
-          l.setBlock(q, Blocks.CHAIN.defaultBlockState(), 2);
+          l.setBlock(q, Blocks.CHAIN.defaultBlockState(), Block.UPDATE_CLIENTS);
         }
         l.setBlock(
-            lamp, Blocks.LANTERN.defaultBlockState().setValue(LanternBlock.HANGING, true), 2);
+            lamp,
+            Blocks.LANTERN.defaultBlockState().setValue(LanternBlock.HANGING, true),
+            Block.UPDATE_CLIENTS);
       }
     }
     supportLights(l, b, s);
@@ -557,7 +563,7 @@ public final class NecromancerDenFixture {
       rack = rackBlock.defaultBlockState();
     }
     rack = rack.setValue(BlockStateProperties.HORIZONTAL_FACING, Direction.SOUTH);
-    l.setBlock(b.offset(37, 1, -36), rack, 3);
+    l.setBlock(b.offset(37, 1, -36), rack, Block.UPDATE_ALL);
     for (var old :
         l.getEntitiesOfClass(
             net.minecraft.world.entity.Display.TextDisplay.class,
@@ -711,7 +717,7 @@ public final class NecromancerDenFixture {
           for (var side : Direction.Plane.HORIZONTAL) {
             var wall = p.relative(side);
             if (l.getBlockState(wall).isFaceSturdy(l, wall, side.getOpposite())) {
-              l.setBlock(p.below(), Blocks.BONE_BLOCK.defaultBlockState(), 2);
+              l.setBlock(p.below(), Blocks.BONE_BLOCK.defaultBlockState(), Block.UPDATE_CLIENTS);
               bracket = true;
               break;
             }
@@ -723,11 +729,11 @@ public final class NecromancerDenFixture {
             }
             if (!l.getBlockState(ceiling).isAir()) {
               for (var q = p.above(); q.getY() < ceiling.getY(); q = q.above()) {
-                l.setBlock(q, Blocks.CHAIN.defaultBlockState(), 2);
+                l.setBlock(q, Blocks.CHAIN.defaultBlockState(), Block.UPDATE_CLIENTS);
               }
-              l.setBlock(p, state.setValue(LanternBlock.HANGING, true), 2);
+              l.setBlock(p, state.setValue(LanternBlock.HANGING, true), Block.UPDATE_CLIENTS);
             } else {
-              l.setBlock(p.below(), Blocks.BONE_BLOCK.defaultBlockState(), 2);
+              l.setBlock(p.below(), Blocks.BONE_BLOCK.defaultBlockState(), Block.UPDATE_CLIENTS);
             }
           }
         }
@@ -750,9 +756,9 @@ public final class NecromancerDenFixture {
             continue;
           }
           for (var q = p.above(); q.getY() < ceiling.getY(); q = q.above()) {
-            l.setBlock(q, Blocks.CHAIN.defaultBlockState(), 2);
+            l.setBlock(q, Blocks.CHAIN.defaultBlockState(), Block.UPDATE_CLIENTS);
           }
-          l.setBlock(p, state.setValue(LanternBlock.HANGING, true), 2);
+          l.setBlock(p, state.setValue(LanternBlock.HANGING, true), Block.UPDATE_CLIENTS);
         }
       }
     }
@@ -835,9 +841,9 @@ public final class NecromancerDenFixture {
       var p = a.offset(dx * i, 0, dz * i);
       for (int w = -2; w <= 2; w++) {
         var at = p.offset(dz == 0 ? 0 : w, 0, dx == 0 ? 0 : w);
-        l.setBlock(at, DevelopmentTestBlocks.PATH.get().defaultBlockState(), 2);
+        l.setBlock(at, DevelopmentTestBlocks.PATH.get().defaultBlockState(), Block.UPDATE_CLIENTS);
         for (int h = 1; h <= 3; h++) {
-          l.setBlock(at.above(h), Blocks.AIR.defaultBlockState(), 2);
+          l.setBlock(at.above(h), Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
         }
       }
       if (i % 32 == 0) {
@@ -850,35 +856,39 @@ public final class NecromancerDenFixture {
         }
         int hx = dz == 0 ? 0 : -1, hz = dx == 0 ? 0 : -1;
         for (int up = 0; up < 4; up++) {
-          l.setBlock(lamp.above(up), Blocks.DEEPSLATE_BRICK_WALL.defaultBlockState(), 3);
+          l.setBlock(
+              lamp.above(up), Blocks.DEEPSLATE_BRICK_WALL.defaultBlockState(), Block.UPDATE_ALL);
         }
         for (int arm = 1; arm <= 2; arm++) {
           l.setBlock(
               lamp.offset(hx * arm, 3, hz * arm),
               Blocks.DEEPSLATE_BRICK_WALL.defaultBlockState(),
-              3);
+              Block.UPDATE_ALL);
         }
 
         for (int up = 0; up < 4; up++) {
           var q = lamp.above(up);
-          l.setBlock(q, Block.updateFromNeighbourShapes(l.getBlockState(q), l, q), 2);
+          l.setBlock(
+              q, Block.updateFromNeighbourShapes(l.getBlockState(q), l, q), Block.UPDATE_CLIENTS);
         }
         for (int arm = 1; arm <= 2; arm++) {
           var q = lamp.offset(hx * arm, 3, hz * arm);
-          l.setBlock(q, Block.updateFromNeighbourShapes(l.getBlockState(q), l, q), 2);
+          l.setBlock(
+              q, Block.updateFromNeighbourShapes(l.getBlockState(q), l, q), Block.UPDATE_CLIENTS);
         }
         l.setBlock(
             lamp.offset(hx * 2, 2, hz * 2),
             Blocks.LANTERN.defaultBlockState().setValue(LanternBlock.HANGING, true),
-            3);
+            Block.UPDATE_ALL);
       }
     }
   }
 
   private static void bed(ServerLevel l, BlockPos foot, Direction face, Block bed) {
     var state = bed.defaultBlockState().setValue(BedBlock.FACING, face);
-    l.setBlock(foot, state, 2);
-    l.setBlock(foot.relative(face), state.setValue(BedBlock.PART, BedPart.HEAD), 2);
+    l.setBlock(foot, state, Block.UPDATE_CLIENTS);
+    l.setBlock(
+        foot.relative(face), state.setValue(BedBlock.PART, BedPart.HEAD), Block.UPDATE_CLIENTS);
   }
 
   private static void throne(ServerLevel l, BlockPos p, Direction facing) {
@@ -887,11 +897,11 @@ public final class NecromancerDenFixture {
             .get()
             .defaultBlockState()
             .setValue(BlockStateProperties.HORIZONTAL_FACING, facing);
-    l.setBlock(p, state, 2);
+    l.setBlock(p, state, Block.UPDATE_CLIENTS);
     l.setBlock(
         p.above(),
         state.setValue(BlockStateProperties.DOUBLE_BLOCK_HALF, DoubleBlockHalf.UPPER),
-        2);
+        Block.UPDATE_CLIENTS);
   }
 
   private static void label(ServerLevel l, Vec3 at, String text) {
@@ -949,7 +959,7 @@ public final class NecromancerDenFixture {
           Blocks.RED_WALL_BANNER
               .defaultBlockState()
               .setValue(WallBannerBlock.FACING, Direction.NORTH),
-          2);
+          Block.UPDATE_CLIENTS);
     }
     for (int x : new int[] {-8, 8}) {
       for (int z : new int[] {-38, -15}) {
@@ -1061,19 +1071,19 @@ public final class NecromancerDenFixture {
           if (plant == Blocks.RED_MUSHROOM || plant == Blocks.BROWN_MUSHROOM) {
             put(l, b, x, h - 1, z, Blocks.PODZOL);
           }
-          l.setBlock(at, plant.defaultBlockState(), 2);
+          l.setBlock(at, plant.defaultBlockState(), Block.UPDATE_CLIENTS);
         } else if (pick == 8) {
           l.setBlock(
               at,
               Blocks.AZALEA_LEAVES.defaultBlockState().setValue(LeavesBlock.PERSISTENT, true),
-              2);
+              Block.UPDATE_CLIENTS);
           if (random.nextBoolean()) {
             l.setBlock(
                 at.above(),
                 Blocks.FLOWERING_AZALEA_LEAVES
                     .defaultBlockState()
                     .setValue(LeavesBlock.PERSISTENT, true),
-                2);
+                Block.UPDATE_CLIENTS);
           }
         }
       }
@@ -1087,7 +1097,7 @@ public final class NecromancerDenFixture {
           l.setBlock(
               b.offset(x, h, z),
               Blocks.NETHER_WART.defaultBlockState().setValue(NetherWartBlock.AGE, 3),
-              2);
+              Block.UPDATE_CLIENTS);
         }
       }
     }
@@ -1103,9 +1113,11 @@ public final class NecromancerDenFixture {
             l.setBlock(
                 b.offset(x, -1, z),
                 Blocks.FARMLAND.defaultBlockState().setValue(FarmBlock.MOISTURE, 7),
-                2);
+                Block.UPDATE_CLIENTS);
             l.setBlock(
-                b.offset(x, 0, z), Blocks.WHEAT.defaultBlockState().setValue(CropBlock.AGE, 7), 2);
+                b.offset(x, 0, z),
+                Blocks.WHEAT.defaultBlockState().setValue(CropBlock.AGE, 7),
+                Block.UPDATE_CLIENTS);
           }
         }
       }
@@ -1203,7 +1215,7 @@ public final class NecromancerDenFixture {
           Blocks.DARK_OAK_LOG
               .defaultBlockState()
               .setValue(RotatedPillarBlock.AXIS, Direction.Axis.X),
-          2);
+          Block.UPDATE_CLIENTS);
     }
     // Vines cling to actual supported facade faces, not invisible floating sheets.
     for (var face : Direction.Plane.HORIZONTAL) {
@@ -1223,7 +1235,8 @@ public final class NecromancerDenFixture {
           var support = p.relative(face.getOpposite());
           if (l.getBlockState(p).isAir()
               && l.getBlockState(support).isFaceSturdy(l, support, face)) {
-            l.setBlock(p, Blocks.VINE.defaultBlockState().setValue(property, true), 2);
+            l.setBlock(
+                p, Blocks.VINE.defaultBlockState().setValue(property, true), Block.UPDATE_CLIENTS);
           }
         }
       }

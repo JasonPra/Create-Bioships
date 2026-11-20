@@ -5,6 +5,7 @@ import dev.ryanhcode.sable.companion.math.BoundingBox3i;
 import java.util.List;
 import net.minecraft.core.*;
 import net.minecraft.gametest.framework.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
@@ -18,9 +19,10 @@ public final class ArmorTests {
   public static void armored_hits_capacity_replacement_and_persistence(GameTestHelper helper) {
     var level = helper.getLevel();
     var origin = helper.absolutePos(new BlockPos(1, 3, 1));
-    level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
-    level.setBlock(origin.east(), ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState(), 3);
-    level.setBlock(origin.east(2), Blocks.STONE.defaultBlockState(), 3);
+    level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(
+        origin.east(), ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(origin.east(2), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
     var body =
         SubLevelAssemblyHelper.assembleBlocks(
             level,
@@ -45,7 +47,8 @@ public final class ArmorTests {
         "Armor did not absorb hit");
     level.removeBlock(core.east(), false);
     helper.assertTrue(SubLevelArmor.status(body).maximum() == 0, "Removed armor still counted");
-    level.setBlock(core.east(), ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState(), 3);
+    level.setBlock(
+        core.east(), ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState(), Block.UPDATE_ALL);
     helper.assertTrue(SubLevelArmor.status(body).current() == 13, "Replacement repaired armor");
     helper.assertTrue(
         body.getUserDataTag().getCompound(SubLevelData.ARMOR).getDouble("spent") == 7,

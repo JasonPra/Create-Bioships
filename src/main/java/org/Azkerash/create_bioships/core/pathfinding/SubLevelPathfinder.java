@@ -11,6 +11,10 @@ import org.Azkerash.create_bioships.core.locomotion.SubLevelLocomotion;
 
 /** Bounded shared route planning. Movement and limb actuation remain separate. */
 public final class SubLevelPathfinder {
+  private static final int MAX_ROUTE_DISTANCE_BLOCKS = 20;
+  private static final int GROUND_PROBE_DEPTH_BLOCKS = 12;
+  private static final int GROUND_PROBE_ORIGIN_LIFT_BLOCKS = 2;
+
   public enum Mode {
     GROUND,
     WATER
@@ -79,7 +83,7 @@ public final class SubLevelPathfinder {
     var here = position(body);
     var start = BlockPos.containing(here);
     var goal = BlockPos.containing(destination);
-    if (here.distanceToSqr(destination) > 20 * 20) {
+    if (here.distanceToSqr(destination) > MAX_ROUTE_DISTANCE_BLOCKS * MAX_ROUTE_DISTANCE_BLOCKS) {
       return new Route(mode, List.of());
     }
     double groundHeight = here.y;
@@ -87,8 +91,18 @@ public final class SubLevelPathfinder {
       if (!level.hasChunkAt(start) || !level.hasChunkAt(goal)) {
         return new Route(mode, List.of());
       }
-      var a = TerrainProbe.down(level, here.add(0, 2, 0), 12, body);
-      var b = TerrainProbe.down(level, destination.add(0, 2, 0), 12, body);
+      var a =
+          TerrainProbe.down(
+              level,
+              here.add(0, GROUND_PROBE_ORIGIN_LIFT_BLOCKS, 0),
+              GROUND_PROBE_DEPTH_BLOCKS,
+              body);
+      var b =
+          TerrainProbe.down(
+              level,
+              destination.add(0, GROUND_PROBE_ORIGIN_LIFT_BLOCKS, 0),
+              GROUND_PROBE_DEPTH_BLOCKS,
+              body);
       if (a == null || b == null || !TerrainProbe.standable(a) || !TerrainProbe.standable(b)) {
         return new Route(mode, List.of());
       }
@@ -196,7 +210,12 @@ public final class SubLevelPathfinder {
     var level = body.getLevel();
     var box = SubLevelLocomotion.bounds(body).deflate(.025);
     var here = position(body);
-    var ground = TerrainProbe.down(level, here.add(0, 2, 0), 12, body);
+    var ground =
+        TerrainProbe.down(
+            level,
+            here.add(0, GROUND_PROBE_ORIGIN_LIFT_BLOCKS, 0),
+            GROUND_PROBE_DEPTH_BLOCKS,
+            body);
     if (ground != null && TerrainProbe.standable(ground)) {
       box =
           new AABB(

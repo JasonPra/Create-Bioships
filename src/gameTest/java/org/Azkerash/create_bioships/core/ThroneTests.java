@@ -10,6 +10,7 @@ import net.minecraft.world.*;
 import net.minecraft.world.item.*;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.properties.*;
 import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.gametest.*;
@@ -23,9 +24,9 @@ public final class ThroneTests {
       GameTestHelper h) {
     var l = h.getLevel();
     var p = h.absolutePos(new BlockPos(2, 3, 2));
-    l.setBlock(p.below(), Blocks.STONE.defaultBlockState(), 3);
-    l.setBlock(p, Blocks.WATER.defaultBlockState(), 3);
-    l.setBlock(p.above(), Blocks.WATER.defaultBlockState(), 3);
+    l.setBlock(p.below(), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
+    l.setBlock(p, Blocks.WATER.defaultBlockState(), Block.UPDATE_ALL);
+    l.setBlock(p.above(), Blocks.WATER.defaultBlockState(), Block.UPDATE_ALL);
     var profile = new GameProfile(UUID.randomUUID(), "ThroneTester");
     var player = new ServerPlayer(l.getServer(), l, profile, ClientInformation.createDefault());
     player.connection = new net.neoforged.neoforge.common.util.FakePlayer(l, profile).connection;

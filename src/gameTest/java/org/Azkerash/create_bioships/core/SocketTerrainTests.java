@@ -4,6 +4,7 @@ import dev.ryanhcode.sable.api.SubLevelAssemblyHelper;
 import dev.ryanhcode.sable.companion.math.BoundingBox3i;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.gametest.*;
@@ -26,9 +27,10 @@ public final class SocketTerrainTests {
     }
     for (int x = -16; x <= 24; x++) {
       for (int z = -14; z <= 14; z++) {
-        level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 3);
+        level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), Block.UPDATE_ALL);
         if (x >= 4) {
-          level.setBlock(base.offset(x, 0, z), Blocks.BEDROCK.defaultBlockState(), 3);
+          level.setBlock(
+              base.offset(x, 0, z), Blocks.BEDROCK.defaultBlockState(), Block.UPDATE_ALL);
         }
       }
     }

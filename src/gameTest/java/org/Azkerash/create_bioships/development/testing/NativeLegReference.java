@@ -7,6 +7,7 @@ import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import net.minecraft.core.*;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 
 /** Working upstream reference: original core, joints, girders, feet and a real Create motor. */
@@ -21,13 +22,16 @@ public final class NativeLegReference {
     }
     for (int x = -14; x <= 14; x++) {
       for (int z = -14; z <= 14; z++) {
-        level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 2);
+        level.setBlock(
+            base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), Block.UPDATE_CLIENTS);
       }
     }
     for (int x = -1; x <= 1; x++) {
       for (int z = -2; z <= 2; z++) {
         level.setBlock(
-            base.offset(x, 4, z), ModContent.KLAXIUM_CASING.get().defaultBlockState(), 3);
+            base.offset(x, 4, z),
+            ModContent.KLAXIUM_CASING.get().defaultBlockState(),
+            Block.UPDATE_ALL);
       }
     }
     var core = base.above(4);
@@ -37,14 +41,14 @@ public final class NativeLegReference {
             .get()
             .defaultBlockState()
             .setValue(WalkerCoreBlock.FACING, Direction.NORTH),
-        3);
+        Block.UPDATE_ALL);
     var motor = core.north();
     level.setBlock(
         motor,
         com.simibubi.create.AllBlocks.CREATIVE_MOTOR
             .getDefaultState()
             .setValue(net.minecraft.world.level.block.DirectionalBlock.FACING, Direction.SOUTH),
-        3);
+        Block.UPDATE_ALL);
     var motorBe =
         (com.simibubi.create.content.kinetics.motor.CreativeMotorBlockEntity)
             level.getBlockEntity(motor);
@@ -59,18 +63,19 @@ public final class NativeLegReference {
         level.setBlock(
             hip,
             ModContent.LEG_HINGE.get().defaultBlockState().setValue(LegJointBlock.FACING, facing),
-            3);
-        level.setBlock(hip.relative(facing), beam, 3);
+            Block.UPDATE_ALL);
+        level.setBlock(hip.relative(facing), beam, Block.UPDATE_ALL);
         level.setBlock(
             knee,
             ModContent.LEG_HINGE
                 .get()
                 .defaultBlockState()
                 .setValue(LegJointBlock.FACING, Direction.DOWN),
-            3);
-        level.setBlock(knee.below(), beam, 3);
-        level.setBlock(knee.below(2), beam, 3);
-        level.setBlock(knee.below(3), ModContent.LEG_FOOT.get().defaultBlockState(), 3);
+            Block.UPDATE_ALL);
+        level.setBlock(knee.below(), beam, Block.UPDATE_ALL);
+        level.setBlock(knee.below(2), beam, Block.UPDATE_ALL);
+        level.setBlock(
+            knee.below(3), ModContent.LEG_FOOT.get().defaultBlockState(), Block.UPDATE_ALL);
       }
     }
     var result = BuiltLegAssembler.assemble(level, core);

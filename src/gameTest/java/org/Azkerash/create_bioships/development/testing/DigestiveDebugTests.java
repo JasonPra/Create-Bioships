@@ -6,6 +6,7 @@ import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.gametest.framework.*;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
@@ -20,10 +21,15 @@ public final class DigestiveDebugTests {
   public static void graph_snapshot_matches_topology_and_wire_codec(GameTestHelper helper) {
     var level = helper.getLevel();
     var origin = helper.absolutePos(new BlockPos(1, 2, 1));
-    level.setBlock(origin, ComponentRegistry.MOUTH.get().defaultBlockState(), 3);
-    level.setBlock(origin.east(), ComponentRegistry.INTESTINE.get().defaultBlockState(), 3);
-    level.setBlock(origin.east(2), ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
-    level.setBlock(origin.east().south(), ComponentRegistry.INTESTINE.get().defaultBlockState(), 3);
+    level.setBlock(origin, ComponentRegistry.MOUTH.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(
+        origin.east(), ComponentRegistry.INTESTINE.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(
+        origin.east(2), ComponentRegistry.STOMACH.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(
+        origin.east().south(),
+        ComponentRegistry.INTESTINE.get().defaultBlockState(),
+        Block.UPDATE_ALL);
     var body =
         SubLevelAssemblyHelper.assembleBlocks(
             level,

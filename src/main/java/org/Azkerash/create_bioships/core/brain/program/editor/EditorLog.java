@@ -4,11 +4,13 @@ import java.util.*;
 
 /** Bounded session build/error history, kept separately from the current problem list. */
 public final class EditorLog {
+  private static final int MAX_ENTRIES = 64;
+
   private final Deque<EditorProblem> entries = new ArrayDeque<>();
 
   public void add(EditorProblem entry) {
     entries.addFirst(entry);
-    while (entries.size() > 64) {
+    while (entries.size() > MAX_ENTRIES) {
       entries.removeLast();
     }
   }

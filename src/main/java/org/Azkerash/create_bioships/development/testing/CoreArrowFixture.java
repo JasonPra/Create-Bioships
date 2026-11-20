@@ -15,6 +15,7 @@ import net.minecraft.util.Unit;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.*;
 import net.minecraft.world.level.block.state.properties.*;
 import net.minecraft.world.phys.*;
@@ -69,23 +70,23 @@ public final class CoreArrowFixture {
         net.minecraft.core.registries.BuiltInRegistries.BLOCK.get(
             net.minecraft.resources.ResourceLocation.parse("biomancy:packed_flesh"));
     for (var cell : cells(base)) {
-      level.setBlock(cell, flesh.defaultBlockState(), 3);
+      level.setBlock(cell, flesh.defaultBlockState(), Block.UPDATE_ALL);
     }
-    level.setBlock(core(level), ComponentRegistry.CORE.get().defaultBlockState(), 3);
+    level.setBlock(core(level), ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
     level.setBlock(
         core(level).west(3).north(),
         ComponentRegistry.LAND_EYE
             .get()
             .defaultBlockState()
             .setValue(BlockStateProperties.FACING, Direction.NORTH),
-        3);
+        Block.UPDATE_ALL);
     level.setBlock(
         core(level).east(3).north(),
         ComponentRegistry.AQUATIC_EYE
             .get()
             .defaultBlockState()
             .setValue(BlockStateProperties.FACING, Direction.NORTH),
-        3);
+        Block.UPDATE_ALL);
   }
 
   public static void reset(ServerLevel level) {
@@ -125,7 +126,8 @@ public final class CoreArrowFixture {
     }
     for (int x = -7; x <= 7; x++) {
       for (int z = -10; z <= 7; z++) {
-        level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 2);
+        level.setBlock(
+            base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), Block.UPDATE_CLIENTS);
         if (Math.abs(x) <= 6 && Math.abs(z) <= 6) {
           for (int y = 0; y <= 7; y++) {
             if (level.getBlockEntity(base.offset(x, y, z))
@@ -138,7 +140,7 @@ public final class CoreArrowFixture {
                         ? DevelopmentTestBlocks.GLASS.get()
                         : Blocks.AIR)
                     .defaultBlockState(),
-                2);
+                Block.UPDATE_CLIENTS);
           }
         }
       }
@@ -156,7 +158,7 @@ public final class CoreArrowFixture {
   }
 
   private static void control(ServerLevel level, BlockPos pos, String command) {
-    level.setBlock(pos, Blocks.COMMAND_BLOCK.defaultBlockState(), 3);
+    level.setBlock(pos, Blocks.COMMAND_BLOCK.defaultBlockState(), Block.UPDATE_ALL);
     var block = (CommandBlockEntity) level.getBlockEntity(pos);
     block.getCommandBlock().setCommand(command);
     block.getCommandBlock().setTrackOutput(false);
@@ -167,7 +169,7 @@ public final class CoreArrowFixture {
             .get()
             .defaultBlockState()
             .setValue(BlockStateProperties.ATTACH_FACE, AttachFace.FLOOR),
-        3);
+        Block.UPDATE_ALL);
   }
 
   private static void explain(ServerLevel level) {
@@ -251,13 +253,13 @@ public final class CoreArrowFixture {
         level.setBlock(
             pos,
             Blocks.DISPENSER.defaultBlockState().setValue(DispenserBlock.FACING, Direction.SOUTH),
-            3);
+            Block.UPDATE_ALL);
         ((DispenserBlockEntity) level.getBlockEntity(pos))
             .setItem(0, new ItemStack(Items.ARROW, 16));
       }
-      level.setBlock(pos.north(), Blocks.AIR.defaultBlockState(), 3);
+      level.setBlock(pos.north(), Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
       level.neighborChanged(pos, Blocks.AIR, pos.north());
-      level.setBlock(pos.north(), Blocks.REDSTONE_BLOCK.defaultBlockState(), 3);
+      level.setBlock(pos.north(), Blocks.REDSTONE_BLOCK.defaultBlockState(), Block.UPDATE_ALL);
       level.neighborChanged(pos, Blocks.REDSTONE_BLOCK, pos.north());
       level.scheduleTick(pos, Blocks.DISPENSER, 4);
     }

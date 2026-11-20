@@ -7,6 +7,7 @@ import net.minecraft.core.*;
 import net.minecraft.gametest.framework.*;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.item.*;
+import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
 import org.Azkerash.create_bioships.components.logic.stomach.*;
@@ -20,8 +21,9 @@ public final class StomachPasteSlotTests {
       GameTestHelper h) {
     var level = h.getLevel();
     var origin = h.absolutePos(new BlockPos(1, 3, 1));
-    level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
-    level.setBlock(origin.east(), ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
+    level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(
+        origin.east(), ComponentRegistry.STOMACH.get().defaultBlockState(), Block.UPDATE_ALL);
     var body =
         SubLevelAssemblyHelper.assembleBlocks(
             level,

@@ -5,6 +5,7 @@ import dev.ryanhcode.sable.companion.math.BoundingBox3i;
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.gametest.framework.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.*;
@@ -33,7 +34,7 @@ public final class WaterWeightTests {
               base.offset(x, y, z),
               (y == 0 || Math.abs(x) == 8 || Math.abs(z) == 8 ? Blocks.BEDROCK : Blocks.WATER)
                   .defaultBlockState(),
-              2);
+              Block.UPDATE_CLIENTS);
         }
       }
     }
@@ -44,21 +45,21 @@ public final class WaterWeightTests {
           var starts = new ArrayList<Vec3>();
           for (int i = 0; i < 2; i++) {
             var at = base.offset(i * 6 - 3, 12, 0);
-            level.setBlock(at, ComponentRegistry.CORE.get().defaultBlockState(), 3);
+            level.setBlock(at, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
             var material =
                 i == 0
                     ? net.minecraft.core.registries.BuiltInRegistries.BLOCK.get(
                         net.minecraft.resources.ResourceLocation.parse("biomancy:packed_flesh"))
                     : ComponentRegistry.CHITIN_ARMOR.get();
-            level.setBlock(at.east(), material.defaultBlockState(), 3);
+            level.setBlock(at.east(), material.defaultBlockState(), Block.UPDATE_ALL);
             var body =
                 SubLevelAssemblyHelper.assembleBlocks(
                     level, at, List.of(at, at.east()), new BoundingBox3i(at, at.east()));
             CoreAssemblyRules.mark(level, body.getPlot().getCenterBlock());
             DevelopmentLifeSupport.pause(body);
             SubLevelLegs.request(body);
-            level.setBlock(at, Blocks.WATER.defaultBlockState(), 2);
-            level.setBlock(at.east(), Blocks.WATER.defaultBlockState(), 2);
+            level.setBlock(at, Blocks.WATER.defaultBlockState(), Block.UPDATE_CLIENTS);
+            level.setBlock(at.east(), Blocks.WATER.defaultBlockState(), Block.UPDATE_CLIENTS);
             bodies.add(body);
             starts.add(
                 body.logicalPose()

@@ -14,6 +14,7 @@ import net.minecraft.world.*;
 import net.minecraft.world.item.*;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.common.NeoForge;
@@ -31,9 +32,9 @@ public final class CorePlacementTests {
     var level = helper.getLevel();
     var pos = helper.absolutePos(new BlockPos(2, 3, 2));
     level.getChunk(pos.getX() >> 4, pos.getZ() >> 4);
-    level.setBlock(pos.below(), Blocks.STONE.defaultBlockState(), 3);
+    level.setBlock(pos.below(), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
     var generated = pos.east(8);
-    level.setBlock(generated, ComponentRegistry.CORE.get().defaultBlockState(), 3);
+    level.setBlock(generated, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
     var player = helper.makeMockPlayer(GameType.SURVIVAL);
     player.setPos(pos.getX() + 2, pos.getY() + 1, pos.getZ() + 2);
     var stack = new ItemStack(ComponentRegistry.CORE_ITEM.get(), 2);
@@ -129,7 +130,7 @@ public final class CorePlacementTests {
     var level = helper.getLevel();
     var pos = new BlockPos(416, 80, 32);
     level.getChunk(26, 2);
-    level.setBlock(pos, ComponentRegistry.CORE.get().defaultBlockState(), 3);
+    level.setBlock(pos, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
     var body =
         SubLevelAssemblyHelper.assembleBlocks(
             level, pos, java.util.List.of(pos), new BoundingBox3i(pos, pos));

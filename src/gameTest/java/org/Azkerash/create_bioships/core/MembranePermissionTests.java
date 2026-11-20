@@ -7,6 +7,7 @@ import net.minecraft.core.*;
 import net.minecraft.gametest.framework.*;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
@@ -22,8 +23,8 @@ public final class MembranePermissionTests {
     var level = helper.getLevel();
     var origin = helper.absolutePos(new BlockPos(1, 2, 1));
     var membrane = com.github.elenterius.biomancy.init.ModBlocks.BIOMETRIC_MEMBRANE.get();
-    level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
-    level.setBlock(origin.east(), membrane.defaultBlockState(), 3);
+    level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(origin.east(), membrane.defaultBlockState(), Block.UPDATE_ALL);
     var body =
         SubLevelAssemblyHelper.assembleBlocks(
             level,
@@ -139,7 +140,7 @@ public final class MembranePermissionTests {
         state.getCollisionShape(level, pos, CollisionContext.of(guest)).isEmpty(),
         "Corpse lost ownership permissions");
     var world = origin.south(3);
-    level.setBlock(world, membrane.defaultBlockState(), 3);
+    level.setBlock(world, membrane.defaultBlockState(), Block.UPDATE_ALL);
     var nativeMembrane =
         (com.github.elenterius.biomancy.block.membrane.BiometricMembraneBlockEntity)
             level.getBlockEntity(world);
@@ -166,7 +167,8 @@ public final class MembranePermissionTests {
     helper.runAfterDelay(
         10,
         () -> {
-          level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
+          level.setBlock(
+              origin, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
           CoreAssemblyRules.playerPlaced(level, origin, owner);
           helper.runAfterDelay(
               10,

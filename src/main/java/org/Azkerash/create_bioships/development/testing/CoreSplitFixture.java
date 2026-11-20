@@ -6,6 +6,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.*;
 import net.minecraft.world.level.block.state.properties.*;
 import net.minecraft.world.phys.AABB;
@@ -106,7 +107,8 @@ public final class CoreSplitFixture {
     }
     for (int x = -10; x <= 10; x++) {
       for (int z = -15; z <= 10; z++) {
-        level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 2);
+        level.setBlock(
+            base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), Block.UPDATE_CLIENTS);
       }
     }
     for (int x = -RADIUS; x <= RADIUS; x++) {
@@ -116,15 +118,15 @@ public final class CoreSplitFixture {
           level.setBlock(
               base.offset(x, y, z),
               (shell ? DevelopmentTestBlocks.GLASS.get() : Blocks.AIR).defaultBlockState(),
-              2);
+              Block.UPDATE_CLIENTS);
         }
       }
     }
     for (int y = 0; y < 4; y++) {
-      level.setBlock(base.above(y), Blocks.OAK_LOG.defaultBlockState(), 3);
+      level.setBlock(base.above(y), Blocks.OAK_LOG.defaultBlockState(), Block.UPDATE_ALL);
     }
     for (var pos : layout.cores()) {
-      level.setBlock(pos, ComponentRegistry.CORE.get().defaultBlockState(), 3);
+      level.setBlock(pos, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
     }
     var glue = new HoneyGlueEntity(level, layout.glue());
     level.addFreshEntity(glue);
@@ -137,7 +139,7 @@ public final class CoreSplitFixture {
   private static void control(
       ServerLevel level, BlockPos button, String command, String title, String description) {
     var pos = button.below();
-    level.setBlock(pos, Blocks.COMMAND_BLOCK.defaultBlockState(), 3);
+    level.setBlock(pos, Blocks.COMMAND_BLOCK.defaultBlockState(), Block.UPDATE_ALL);
     var entity = (CommandBlockEntity) level.getBlockEntity(pos);
     entity.getCommandBlock().setCommand(command);
     entity.getCommandBlock().setTrackOutput(false);
@@ -149,10 +151,12 @@ public final class CoreSplitFixture {
             .get()
             .defaultBlockState()
             .setValue(BlockStateProperties.ATTACH_FACE, AttachFace.FLOOR),
-        3);
+        Block.UPDATE_ALL);
     var signPos = pos.north();
     level.setBlock(
-        signPos, Blocks.OAK_SIGN.defaultBlockState().setValue(StandingSignBlock.ROTATION, 8), 3);
+        signPos,
+        Blocks.OAK_SIGN.defaultBlockState().setValue(StandingSignBlock.ROTATION, 8),
+        Block.UPDATE_ALL);
     var sign = (SignBlockEntity) level.getBlockEntity(signPos);
     var text =
         sign.getFrontText()

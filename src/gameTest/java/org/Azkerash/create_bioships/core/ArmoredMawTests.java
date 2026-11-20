@@ -7,6 +7,7 @@ import net.minecraft.core.*;
 import net.minecraft.gametest.framework.*;
 import net.minecraft.world.*;
 import net.minecraft.world.item.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
@@ -24,10 +25,12 @@ public final class ArmoredMawTests {
     var level = h.getLevel();
     var p = h.absolutePos(new BlockPos(1, 3, 1));
     var blocks = List.of(p, p.east(), p.east(2), p.east(3));
-    level.setBlock(p, ComponentRegistry.CORE.get().defaultBlockState(), 3);
-    level.setBlock(p.east(), ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
-    level.setBlock(p.east(2), ComponentRegistry.INTESTINE.get().defaultBlockState(), 3);
-    level.setBlock(p.east(3), ComponentRegistry.ARMORED_MAW.get().defaultBlockState(), 3);
+    level.setBlock(p, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(p.east(), ComponentRegistry.STOMACH.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(
+        p.east(2), ComponentRegistry.INTESTINE.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(
+        p.east(3), ComponentRegistry.ARMORED_MAW.get().defaultBlockState(), Block.UPDATE_ALL);
     var body =
         SubLevelAssemblyHelper.assembleBlocks(level, p, blocks, new BoundingBox3i(p, p.east(3)));
     var core = body.getPlot().getCenterBlock();
@@ -59,7 +62,8 @@ public final class ArmoredMawTests {
     var source = level.damageSources().playerAttack(player);
     h.assertTrue(SubLevelArmor.status(body).maximum() == 20, "Maw did not add armor capacity");
     for (var facing : Direction.values()) {
-      level.setBlock(at, level.getBlockState(at).setValue(MouthBlock.FACING, facing), 3);
+      level.setBlock(
+          at, level.getBlockState(at).setValue(MouthBlock.FACING, facing), Block.UPDATE_ALL);
       for (var face : Direction.values()) {
         if (face != facing) {
           h.assertTrue(
@@ -72,7 +76,8 @@ public final class ArmoredMawTests {
         SubLevelArmor.status(body).current() == 20
             && SubLevelArmor.absorb(body, at, source, 2) == 2,
         "Exposed or unknown face spent armor");
-    level.setBlock(at, level.getBlockState(at).setValue(MouthBlock.FACING, Direction.NORTH), 3);
+    level.setBlock(
+        at, level.getBlockState(at).setValue(MouthBlock.FACING, Direction.NORTH), Block.UPDATE_ALL);
     var target = org.Azkerash.create_bioships.combat.CombatAdapter.target(body);
     double health = SubLevelHealth.status(body).current();
     target.impact(at, Direction.NORTH);
@@ -91,16 +96,16 @@ public final class ArmoredMawTests {
         "Native back hit incorrectly used armor");
     level.removeBlock(at, false);
     h.assertTrue(SubLevelArmor.status(body).maximum() == 0, "Removed maw left armor capacity");
-    level.setBlock(at, ComponentRegistry.ARMORED_MAW.get().defaultBlockState(), 3);
+    level.setBlock(at, ComponentRegistry.ARMORED_MAW.get().defaultBlockState(), Block.UPDATE_ALL);
     h.assertTrue(SubLevelArmor.status(body).current() == 16, "Replacement refilled spent armor");
     h.assertTrue(
         ((MouthBlockEntity) level.getBlockEntity(at)).salivaParticles(),
         "Living Eldritch Maw did not emit saliva");
-    level.setBlock(at, ComponentRegistry.MOUTH.get().defaultBlockState(), 3);
+    level.setBlock(at, ComponentRegistry.MOUTH.get().defaultBlockState(), Block.UPDATE_ALL);
     h.assertTrue(
         !((MouthBlockEntity) level.getBlockEntity(at)).salivaParticles(),
         "Ordinary Feeder Mouth emitted Eldritch saliva");
-    level.setBlock(at, ComponentRegistry.ARMORED_MAW.get().defaultBlockState(), 3);
+    level.setBlock(at, ComponentRegistry.ARMORED_MAW.get().defaultBlockState(), Block.UPDATE_ALL);
     SubLevelHealth.damage(body, 10000, "test");
     h.assertTrue(
         !((MouthBlockEntity) level.getBlockEntity(at)).salivaParticles(),

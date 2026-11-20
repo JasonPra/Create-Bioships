@@ -4,6 +4,7 @@ import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.properties.*;
 import net.minecraft.world.phys.Vec3;
 
@@ -104,7 +105,7 @@ public final class EstatePaths {
           l.setBlock(
               base.offset(center + dx, height, crossingZ(z, dx) + dz),
               Blocks.STONE_BRICK_WALL.defaultBlockState(),
-              3);
+              Block.UPDATE_ALL);
           if (dx % 7 == 0) {
             EstateLandscape.put(
                 l, base.offset(center + dx, height + 1, crossingZ(z, dx) + dz), Blocks.LANTERN);
@@ -157,7 +158,7 @@ public final class EstatePaths {
           h % 1 == 0
               ? DevelopmentTestBlocks.PATH.get().defaultBlockState()
               : DevelopmentTestBlocks.PATH_SLAB.get().defaultBlockState();
-      l.setBlock(base.offset(c.x, blockY, c.z), state, 2);
+      l.setBlock(base.offset(c.x, blockY, c.z), state, Block.UPDATE_CLIENTS);
       for (int y = blockY + 1;
           y <= Math.max(blockY + 3, EstateLandscape.height(c.x, c.z) + 2);
           y++) {

@@ -45,7 +45,10 @@ public final class NameTagDisplayRenderer implements BlockEntityRenderer<NameTag
     var mc = Minecraft.getInstance();
     var o = panel.offset();
     stack.pushPose();
-    stack.translate(.5 + o.getX() / 16d, .5 + o.getY() / 16d, .5 + o.getZ() / 16d);
+    stack.translate(
+        .5 + o.getX() / (double) NameTagDisplayEntity.OFFSET_UNITS_PER_BLOCK,
+        .5 + o.getY() / (double) NameTagDisplayEntity.OFFSET_UNITS_PER_BLOCK,
+        .5 + o.getZ() / (double) NameTagDisplayEntity.OFFSET_UNITS_PER_BLOCK);
     var container = SubLevelContainer.getContainer(panel.getLevel());
     if (container != null && container.inBounds(panel.getBlockPos())) {
       var plot = container.getPlot(new ChunkPos(panel.getBlockPos()));

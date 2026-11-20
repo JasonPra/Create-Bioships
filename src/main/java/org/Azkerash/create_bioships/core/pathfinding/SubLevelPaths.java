@@ -9,6 +9,8 @@ import org.Azkerash.create_bioships.core.*;
  * Transient, grid-owned active routes. Behaviors publish their real route, never a debug replan.
  */
 public final class SubLevelPaths {
+  private static final int ROUTE_EXPIRY_TICKS = 40;
+
   public static final int MAX_POINTS = 256;
 
   public record Snapshot(
@@ -47,7 +49,7 @@ public final class SubLevelPaths {
     }
     if (body.isRemoved()
         || SubLevelHealth.status(body).dead()
-        || body.getLevel().getGameTime() - route.tick() > 40
+        || body.getLevel().getGameTime() - route.tick() > ROUTE_EXPIRY_TICKS
         || route.revision()
             != org.Azkerash.create_bioships.core.locomotion.SubLevelLocomotion.motionRevision(
                 body)) {

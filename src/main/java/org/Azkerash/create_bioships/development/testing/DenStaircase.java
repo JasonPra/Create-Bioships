@@ -3,6 +3,7 @@ package org.Azkerash.create_bioships.development.testing;
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.properties.*;
 import net.minecraft.world.phys.Vec3;
@@ -50,7 +51,7 @@ final class DenStaircase {
               origin.offset(x, y, z),
               (wall || core || y == -1 ? Blocks.POLISHED_BLACKSTONE_BRICKS : Blocks.AIR)
                   .defaultBlockState(),
-              2);
+              Block.UPDATE_CLIENTS);
         }
       }
     }
@@ -72,7 +73,7 @@ final class DenStaircase {
               : new int[] {step.z()};
       for (int x : xs) {
         for (int z : zs) {
-          l.setBlock(origin.offset(x, y, z), slab, 2);
+          l.setBlock(origin.offset(x, y, z), slab, Block.UPDATE_CLIENTS);
         }
       }
     }
@@ -80,7 +81,7 @@ final class DenStaircase {
     for (int y = 2; y <= height + 1; y += 4) {
       for (var face : Direction.Plane.HORIZONTAL) {
         var p = origin.offset(face.getStepX() * 2, y, face.getStepZ() * 2);
-        l.setBlock(p, Blocks.SHROOMLIGHT.defaultBlockState(), 2);
+        l.setBlock(p, Blocks.SHROOMLIGHT.defaultBlockState(), Block.UPDATE_CLIENTS);
       }
     }
     if (vault) {
@@ -106,14 +107,17 @@ final class DenStaircase {
   }
 
   private static void floor(ServerLevel l, BlockPos b, int x, int y, int z) {
-    l.setBlock(b.offset(x, y - 1, z), Blocks.POLISHED_BLACKSTONE_BRICKS.defaultBlockState(), 2);
+    l.setBlock(
+        b.offset(x, y - 1, z),
+        Blocks.POLISHED_BLACKSTONE_BRICKS.defaultBlockState(),
+        Block.UPDATE_CLIENTS);
   }
 
   private static void open(ServerLevel l, BlockPos b, int y, int minX, int maxX, int z) {
     for (int x = minX; x <= maxX; x++) {
       floor(l, b, x, y, z);
       for (int head = 0; head < 4; head++) {
-        l.setBlock(b.offset(x, y + head, z), Blocks.AIR.defaultBlockState(), 2);
+        l.setBlock(b.offset(x, y + head, z), Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
       }
     }
   }

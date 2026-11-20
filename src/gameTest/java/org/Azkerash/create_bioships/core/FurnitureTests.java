@@ -3,6 +3,7 @@ package org.Azkerash.create_bioships.core;
 import net.minecraft.core.*;
 import net.minecraft.gametest.framework.*;
 import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.furniture.FurnitureRegistry;
@@ -15,8 +16,14 @@ public final class FurnitureTests {
     var l = h.getLevel();
     var p = h.absolutePos(new BlockPos(2, 2, 2));
     var table = FurnitureRegistry.OSSUARY_TABLE.get();
-    l.setBlock(p, table.defaultBlockState().setValue(BlockStateProperties.WATERLOGGED, true), 3);
-    l.setBlock(p.east(), table.defaultBlockState().setValue(BlockStateProperties.WEST, true), 3);
+    l.setBlock(
+        p,
+        table.defaultBlockState().setValue(BlockStateProperties.WATERLOGGED, true),
+        Block.UPDATE_ALL);
+    l.setBlock(
+        p.east(),
+        table.defaultBlockState().setValue(BlockStateProperties.WEST, true),
+        Block.UPDATE_ALL);
     h.assertTrue(
         l.getBlockState(p).getValue(BlockStateProperties.EAST),
         "Existing table did not join its new neighbor");
@@ -43,7 +50,7 @@ public final class FurnitureTests {
             .get()
             .defaultBlockState()
             .setValue(BlockStateProperties.WATERLOGGED, true),
-        3);
+        Block.UPDATE_ALL);
     var stand = (net.minecraft.world.level.block.entity.LecternBlockEntity) l.getBlockEntity(p);
     h.assertTrue(
         stand != null && stand.getType() == FurnitureRegistry.READING_STAND_ENTITY.get(),
@@ -68,7 +75,7 @@ public final class FurnitureTests {
   public static void chair_uses_native_seat_and_dye_does_not_replace_it(GameTestHelper h) {
     var l = h.getLevel();
     var p = h.absolutePos(new BlockPos(2, 2, 2));
-    l.setBlock(p, FurnitureRegistry.OSSUARY_CHAIR.get().defaultBlockState(), 3);
+    l.setBlock(p, FurnitureRegistry.OSSUARY_CHAIR.get().defaultBlockState(), Block.UPDATE_ALL);
     var profile = new com.mojang.authlib.GameProfile(java.util.UUID.randomUUID(), "ChairTester");
     var player =
         new net.minecraft.server.level.ServerPlayer(
@@ -106,7 +113,7 @@ public final class FurnitureTests {
             .get()
             .defaultBlockState()
             .setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH),
-        3);
+        Block.UPDATE_ALL);
     var archive =
         (net.minecraft.world.level.block.entity.ChiseledBookShelfBlockEntity) l.getBlockEntity(p);
     archive.setItem(0, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.BOOK));
@@ -134,7 +141,8 @@ public final class FurnitureTests {
                 net.minecraft.world.level.block.ChiseledBookShelfBlock.SLOT_OCCUPIED_PROPERTIES
                     .getFirst()),
         "Removing book left occupied slot");
-    l.setBlock(p.east(), FurnitureRegistry.OSSUARY_CABINET.get().defaultBlockState(), 3);
+    l.setBlock(
+        p.east(), FurnitureRegistry.OSSUARY_CABINET.get().defaultBlockState(), Block.UPDATE_ALL);
     var cabinet =
         (net.minecraft.world.level.block.entity.BarrelBlockEntity) l.getBlockEntity(p.east());
     cabinet.setItem(
@@ -158,10 +166,10 @@ public final class FurnitureTests {
   public static void bed_places_wet_halves_and_removal_preserves_water(GameTestHelper h) {
     var l = h.getLevel();
     var p = h.absolutePos(new BlockPos(2, 2, 2));
-    l.setBlock(p.below(), Blocks.STONE.defaultBlockState(), 3);
-    l.setBlock(p.south().below(), Blocks.STONE.defaultBlockState(), 3);
-    l.setBlock(p, Blocks.WATER.defaultBlockState(), 3);
-    l.setBlock(p.south(), Blocks.WATER.defaultBlockState(), 3);
+    l.setBlock(p.below(), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
+    l.setBlock(p.south().below(), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
+    l.setBlock(p, Blocks.WATER.defaultBlockState(), Block.UPDATE_ALL);
+    l.setBlock(p.south(), Blocks.WATER.defaultBlockState(), Block.UPDATE_ALL);
     var profile = new com.mojang.authlib.GameProfile(java.util.UUID.randomUUID(), "BedTester");
     var player =
         new net.minecraft.server.level.ServerPlayer(
@@ -210,10 +218,10 @@ public final class FurnitureTests {
     var l = h.getLevel();
     var p = h.absolutePos(new BlockPos(5, 2, 5));
     var bed = FurnitureRegistry.OSSUARY_BED.get();
-    l.setBlock(p.below(), Blocks.STONE.defaultBlockState(), 3);
-    l.setBlock(p.south().below(), Blocks.STONE.defaultBlockState(), 3);
+    l.setBlock(p.below(), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
+    l.setBlock(p.south().below(), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
     var state = bed.defaultBlockState().setValue(BedBlock.FACING, Direction.SOUTH);
-    l.setBlock(p, state, 2);
+    l.setBlock(p, state, Block.UPDATE_CLIENTS);
     bed.setPlacedBy(l, p, state, null, net.minecraft.world.item.ItemStack.EMPTY);
     var profile = new com.mojang.authlib.GameProfile(java.util.UUID.randomUUID(), "SleepTester");
     var player =

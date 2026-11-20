@@ -9,6 +9,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.*;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
 import org.Azkerash.create_bioships.components.logic.inventory.OrganInventory;
@@ -21,10 +22,17 @@ import org.Azkerash.create_bioships.core.naming.SubLevelNames;
  * Slot and offsets bind to the sublevel component store; a detached panel keeps its portable data.
  */
 public final class NameTagDisplayEntity extends OrganInventory {
-  public static final int MIN = -256, MAX = 256;
+  /** Offsets are serialized in sixteenths of a block, relative to the panel's centre. */
+  public static final int OFFSET_UNITS_PER_BLOCK = 16;
+
+  public static final int MAX_OFFSET_BLOCKS = 16;
+  public static final int DEFAULT_Y_UNITS = 24;
+
+  public static final int MIN = -MAX_OFFSET_BLOCKS * OFFSET_UNITS_PER_BLOCK,
+      MAX = MAX_OFFSET_BLOCKS * OFFSET_UNITS_PER_BLOCK;
 
   public static final class Offset implements ComponentState {
-    private int x, y = 24, z;
+    private int x, y = DEFAULT_Y_UNITS, z;
 
     public CompoundTag save(HolderLookup.Provider r) {
       var t = new CompoundTag();
@@ -36,7 +44,7 @@ public final class NameTagDisplayEntity extends OrganInventory {
 
     public void load(CompoundTag t, HolderLookup.Provider r) {
       x = Math.clamp(t.getInt("LabelX"), MIN, MAX);
-      y = t.contains("LabelY") ? Math.clamp(t.getInt("LabelY"), MIN, MAX) : 24;
+      y = t.contains("LabelY") ? Math.clamp(t.getInt("LabelY"), MIN, MAX) : DEFAULT_Y_UNITS;
       z = Math.clamp(t.getInt("LabelZ"), MIN, MAX);
     }
 
@@ -127,7 +135,7 @@ public final class NameTagDisplayEntity extends OrganInventory {
       if (b != null) {
         SubLevelNames.request(b);
       }
-      level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 2);
+      level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
     }
   }
 

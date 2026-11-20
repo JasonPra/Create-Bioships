@@ -6,6 +6,7 @@ import dev.ryanhcode.sable.companion.math.BoundingBox3i;
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.gametest.framework.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
@@ -22,7 +23,7 @@ public final class SocketJointTests {
       GameTestHelper h) {
     var level = h.getLevel();
     var pos = h.absolutePos(new BlockPos(1, 2, 1));
-    level.setBlock(pos, ComponentRegistry.CORE.get().defaultBlockState(), 3);
+    level.setBlock(pos, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
     var body =
         SubLevelAssemblyHelper.assembleBlocks(
             level, pos, List.of(pos), new BoundingBox3i(pos, pos));
@@ -116,9 +117,11 @@ public final class SocketJointTests {
   public static void individual_tool_validation_native_move_and_removal_cleanup(GameTestHelper h) {
     var level = h.getLevel();
     var pos = h.absolutePos(new BlockPos(1, 3, 1));
-    level.setBlock(pos, ComponentRegistry.CORE.get().defaultBlockState(), 3);
-    level.setBlock(pos.east(), ComponentRegistry.LIMB_SOCKET.get().defaultBlockState(), 3);
-    level.setBlock(pos.west(), ComponentRegistry.LIMB_SOCKET.get().defaultBlockState(), 3);
+    level.setBlock(pos, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(
+        pos.east(), ComponentRegistry.LIMB_SOCKET.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(
+        pos.west(), ComponentRegistry.LIMB_SOCKET.get().defaultBlockState(), Block.UPDATE_ALL);
     var body =
         SubLevelAssemblyHelper.assembleBlocks(
             level,
@@ -154,7 +157,8 @@ public final class SocketJointTests {
     SocketJointSettings.duringMove(
         () -> {
           level.removeBlock(cell, false);
-          level.setBlock(moved, ComponentRegistry.LIMB_SOCKET.get().defaultBlockState(), 3);
+          level.setBlock(
+              moved, ComponentRegistry.LIMB_SOCKET.get().defaultBlockState(), Block.UPDATE_ALL);
           level.getBlockEntity(moved).loadWithComponents(snapshot, level.registryAccess());
           return true;
         });
@@ -173,7 +177,8 @@ public final class SocketJointTests {
         !SocketJointActions.configure(player, moved, 0, 1, 1),
         "Packet without the Positioner changed joint limits");
     level.removeBlock(moved, false);
-    level.setBlock(moved, ComponentRegistry.LIMB_SOCKET.get().defaultBlockState(), 3);
+    level.setBlock(
+        moved, ComponentRegistry.LIMB_SOCKET.get().defaultBlockState(), Block.UPDATE_ALL);
     h.assertTrue(
         !((ModularJointEntity) level.getBlockEntity(moved)).componentIdentity().equals(identity)
             && SocketJointSettings.get(body, SocketJointSettings.modular(body, moved))

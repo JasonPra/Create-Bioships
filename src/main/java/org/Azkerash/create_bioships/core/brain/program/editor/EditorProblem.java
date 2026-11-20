@@ -10,7 +10,12 @@ public record EditorProblem(
   }
 
   public EditorProblem {
-    message = message.substring(0, Math.min(512, message.length()));
+    message =
+        message.substring(
+            0,
+            Math.min(
+                org.Azkerash.create_bioships.core.brain.program.ProgramLimits.DIAGNOSTIC_CHARS,
+                message.length()));
   }
 
   public String label() {

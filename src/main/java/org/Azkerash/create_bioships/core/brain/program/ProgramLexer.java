@@ -41,7 +41,8 @@ public final class ProgramLexer {
 
   public static List<Token> scan(String source) {
     if (source == null || source.length() > ProgramLimits.SOURCE) {
-      throw new Failure(new Token(Kind.END, "", 1, 1), "Source exceeds 8192 characters.");
+      throw new Failure(
+          new Token(Kind.END, "", 1, 1), "Source exceeds " + ProgramLimits.SOURCE + " characters.");
     }
     return new ProgramLexer(source).read();
   }

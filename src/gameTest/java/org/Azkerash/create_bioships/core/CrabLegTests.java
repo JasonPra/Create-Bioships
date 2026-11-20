@@ -5,6 +5,7 @@ import dev.ryanhcode.sable.companion.math.BoundingBox3i;
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.gametest.framework.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.*;
@@ -28,7 +29,7 @@ public final class CrabLegTests {
     }
     for (int x = -8; x <= 8; x++) {
       for (int z = -8; z <= 8; z++) {
-        level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 3);
+        level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), Block.UPDATE_ALL);
       }
     }
     helper.runAfterDelay(
@@ -45,7 +46,7 @@ public final class CrabLegTests {
                   .CORE
                   .get()
                   .defaultBlockState(),
-              3);
+              Block.UPDATE_ALL);
           level.setBlock(
               armor,
               org.Azkerash.create_bioships
@@ -54,7 +55,7 @@ public final class CrabLegTests {
                   .CHITIN_ARMOR
                   .get()
                   .defaultBlockState(),
-              3);
+              Block.UPDATE_ALL);
           level.setBlock(
               leg,
               org.Azkerash.create_bioships
@@ -67,7 +68,7 @@ public final class CrabLegTests {
                       net.minecraft.world.level.block.state.properties.BlockStateProperties
                           .HORIZONTAL_FACING,
                       Direction.EAST),
-              3);
+              Block.UPDATE_ALL);
           var body =
               SubLevelAssemblyHelper.assembleBlocks(
                   level, core, List.of(core, armor, leg), new BoundingBox3i(core, leg));
@@ -110,11 +111,11 @@ public final class CrabLegTests {
     }
     for (int x = -3; x <= 3; x++) {
       for (int z = -3; z <= 3; z++) {
-        level.setBlock(pos.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 3);
+        level.setBlock(pos.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), Block.UPDATE_ALL);
       }
     }
-    level.setBlock(pos, Blocks.BEDROCK.defaultBlockState(), 3);
-    level.setBlock(pos.above(), Blocks.BEDROCK.defaultBlockState(), 3);
+    level.setBlock(pos, Blocks.BEDROCK.defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(pos.above(), Blocks.BEDROCK.defaultBlockState(), Block.UPDATE_ALL);
     helper.runAfterDelay(
         20,
         () -> {
@@ -128,7 +129,7 @@ public final class CrabLegTests {
                     .COMPACT_LIMB
                     .get()
                     .defaultBlockState(),
-                3);
+                Block.UPDATE_ALL);
           }
           var segment =
               SubLevelAssemblyHelper.assembleBlocks(
@@ -186,7 +187,7 @@ public final class CrabLegTests {
     }
     for (int x = -12; x <= 12; x++) {
       for (int z = -12; z <= 12; z++) {
-        level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 3);
+        level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), Block.UPDATE_ALL);
       }
     }
     helper.runAfterDelay(
@@ -205,7 +206,7 @@ public final class CrabLegTests {
                   .CHITIN_ARMOR
                   .get()
                   .defaultBlockState(),
-              3);
+              Block.UPDATE_ALL);
           cells.add(extra);
           var body =
               SubLevelAssemblyHelper.assembleBlocks(
@@ -232,7 +233,7 @@ public final class CrabLegTests {
                         .BRAIN
                         .get()
                         .defaultBlockState(),
-                    3);
+                    Block.UPDATE_ALL);
                 helper.runAfterDelay(
                     80,
                     () -> {
@@ -255,7 +256,7 @@ public final class CrabLegTests {
                                           .CrabLegBlock
                                           .HEIGHT,
                                       3),
-                              3);
+                              Block.UPDATE_ALL);
                         }
                       }
                       helper.runAfterDelay(
@@ -315,7 +316,7 @@ public final class CrabLegTests {
     }
     for (int x = -15; x <= 15; x++) {
       for (int z = -15; z <= 20; z++) {
-        level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 3);
+        level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), Block.UPDATE_ALL);
       }
     }
     helper.runAfterDelay(
@@ -386,7 +387,7 @@ public final class CrabLegTests {
                                     .CrabLegBlock
                                     .HEIGHT,
                                 3),
-                            3);
+                            Block.UPDATE_ALL);
                       }
                       helper.runAfterDelay(
                           120,
@@ -443,7 +444,7 @@ public final class CrabLegTests {
     }
     for (int x = -12; x <= 12; x++) {
       for (int z = -12; z <= 12; z++) {
-        level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 3);
+        level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), Block.UPDATE_ALL);
       }
     }
     helper.runAfterDelay(

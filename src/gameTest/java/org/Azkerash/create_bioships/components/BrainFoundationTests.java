@@ -8,6 +8,7 @@ import net.minecraft.gametest.framework.*;
 import net.minecraft.world.*;
 import net.minecraft.world.item.*;
 import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
@@ -26,7 +27,7 @@ public final class BrainFoundationTests {
     for (boolean formed : new boolean[] {false, true}) {
       var brain =
           ComponentRegistry.BRAIN.get().defaultBlockState().setValue(BrainBlock.FORMED, formed);
-      level.setBlock(pos, brain, 3);
+      level.setBlock(pos, brain, Block.UPDATE_ALL);
       for (var face : Direction.values()) {
         var neighbor = pos.relative(face.getOpposite());
         for (var block :
@@ -36,7 +37,7 @@ public final class BrainFoundationTests {
               net.minecraft.world.level.block.Blocks.STONE
             }) {
           var state = block.defaultBlockState();
-          level.setBlock(neighbor, state, 3);
+          level.setBlock(neighbor, state, Block.UPDATE_ALL);
           helper.assertTrue(
               net.minecraft.world.level.block.Block.shouldRenderFace(
                   state, level, neighbor, face, pos),
@@ -55,13 +56,13 @@ public final class BrainFoundationTests {
     var origin = helper.absolutePos(new BlockPos(1, 2, 1));
     var cells = new ArrayList<BlockPos>();
     cells.add(origin);
-    level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
+    level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
     for (int x = 1; x <= 3; x++) {
       for (int y = 0; y < 3; y++) {
         for (int z = 0; z < 3; z++) {
           var p = origin.offset(x, y, z);
           cells.add(p);
-          level.setBlock(p, ComponentRegistry.BRAIN.get().defaultBlockState(), 3);
+          level.setBlock(p, ComponentRegistry.BRAIN.get().defaultBlockState(), Block.UPDATE_ALL);
         }
       }
     }
@@ -174,7 +175,8 @@ public final class BrainFoundationTests {
     helper.assertTrue(
         restored.capacity() == 0 && !restored.inventory().getItem(0).isEmpty(),
         "Removing all physical brain blocks deleted grid data");
-    level.setBlock(core.east(), ComponentRegistry.BRAIN.get().defaultBlockState(), 3);
+    level.setBlock(
+        core.east(), ComponentRegistry.BRAIN.get().defaultBlockState(), Block.UPDATE_ALL);
     helper.assertTrue(
         restored.capacity() == 1 && !restored.inventory().getItem(0).isEmpty(),
         "Rebuilding the brain failed to recover grid-owned cards");
@@ -186,9 +188,11 @@ public final class BrainFoundationTests {
       GameTestHelper helper) {
     var level = helper.getLevel();
     var origin = helper.absolutePos(new BlockPos(1, 2, 1));
-    level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
-    level.setBlock(origin.east(), ComponentRegistry.BRAIN.get().defaultBlockState(), 3);
-    level.setBlock(origin.south(), ComponentRegistry.BRAIN.get().defaultBlockState(), 3);
+    level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(
+        origin.east(), ComponentRegistry.BRAIN.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(
+        origin.south(), ComponentRegistry.BRAIN.get().defaultBlockState(), Block.UPDATE_ALL);
     var body =
         SubLevelAssemblyHelper.assembleBlocks(
             level,

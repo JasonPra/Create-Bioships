@@ -3,6 +3,7 @@ package org.Azkerash.create_bioships.client.core;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.*;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -112,21 +113,21 @@ public final class StatusEffectIcons {
         .addVertex(matrix, x, y + size, 0)
         .setUv(sprite.getU0(), sprite.getV1())
         .setColor(-1)
-        .setLight(15728880);
+        .setLight(LightTexture.FULL_BRIGHT);
     vertex
         .addVertex(matrix, x + size, y + size, 0)
         .setUv(sprite.getU1(), sprite.getV1())
         .setColor(-1)
-        .setLight(15728880);
+        .setLight(LightTexture.FULL_BRIGHT);
     vertex
         .addVertex(matrix, x + size, y, 0)
         .setUv(sprite.getU1(), sprite.getV0())
         .setColor(-1)
-        .setLight(15728880);
+        .setLight(LightTexture.FULL_BRIGHT);
     vertex
         .addVertex(matrix, x, y, 0)
         .setUv(sprite.getU0(), sprite.getV0())
         .setColor(-1)
-        .setLight(15728880);
+        .setLight(LightTexture.FULL_BRIGHT);
   }
 }

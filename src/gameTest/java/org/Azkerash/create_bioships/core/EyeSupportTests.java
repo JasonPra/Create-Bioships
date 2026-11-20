@@ -4,6 +4,7 @@ import dev.ryanhcode.sable.api.SubLevelAssemblyHelper;
 import dev.ryanhcode.sable.companion.math.BoundingBox3i;
 import net.minecraft.core.*;
 import net.minecraft.gametest.framework.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
@@ -32,9 +33,10 @@ public final class EyeSupportTests {
                   .get()
                   .defaultBlockState()
                   .setValue(facing, Direction.WEST);
-          level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
-          level.setBlock(origin.east(), land, 3);
-          level.setBlock(origin.west(), aqua, 3);
+          level.setBlock(
+              origin, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
+          level.setBlock(origin.east(), land, Block.UPDATE_ALL);
+          level.setBlock(origin.west(), aqua, Block.UPDATE_ALL);
           var body =
               SubLevelAssemblyHelper.assembleBlocks(
                   level,
@@ -51,8 +53,8 @@ public final class EyeSupportTests {
                 level.getBlockState(cell).getValue(EyeBlink.BLINK), "Injured eye stayed open");
           }
           var unsupported = origin.south(5);
-          level.setBlock(unsupported, land, 3);
-          level.setBlock(unsupported.west(), aqua, 3);
+          level.setBlock(unsupported, land, Block.UPDATE_ALL);
+          level.setBlock(unsupported.west(), aqua, Block.UPDATE_ALL);
           helper.assertTrue(
               !EyeWoundBehavior.hasSupport(land, level, unsupported),
               "Eye counted another eye as support");

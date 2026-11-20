@@ -5,6 +5,7 @@ import dev.ryanhcode.sable.companion.math.BoundingBox3i;
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.gametest.framework.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.*;
@@ -29,7 +30,7 @@ public final class ModularLimbTests {
     }
     for (int x = -12; x <= 12; x++) {
       for (int z = -12; z <= 12; z++) {
-        level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 3);
+        level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), Block.UPDATE_ALL);
       }
     }
     h.runAfterDelay(
@@ -189,14 +190,15 @@ public final class ModularLimbTests {
   public static void native_component_types_and_restricted_positioner(GameTestHelper h) {
     var level = h.getLevel();
     var pos = h.absolutePos(new BlockPos(1, 2, 1));
-    level.setBlock(pos, ComponentRegistry.LIMB_JOINT.get().defaultBlockState(), 3);
+    level.setBlock(pos, ComponentRegistry.LIMB_JOINT.get().defaultBlockState(), Block.UPDATE_ALL);
     var joint = (ModularJointEntity) level.getBlockEntity(pos);
     h.assertTrue(
         joint.getType() == ComponentRegistry.MODULAR_JOINT_ENTITY.get(),
         "Joint entity registered under native type");
     joint.setRestOffset(45);
     h.assertTrue(joint.restOffset() == 45, "Native rest-pose API did not retain angle");
-    level.setBlock(pos.east(), ComponentRegistry.LIMB_FOOT.get().defaultBlockState(), 3);
+    level.setBlock(
+        pos.east(), ComponentRegistry.LIMB_FOOT.get().defaultBlockState(), Block.UPDATE_ALL);
     h.assertTrue(
         level.getBlockEntity(pos.east()).getType() == ComponentRegistry.MODULAR_FOOT_ENTITY.get(),
         "Foot entity type mismatch");
@@ -209,16 +211,18 @@ public final class ModularLimbTests {
         LimbPositionerActions.adjust(player, pos, 5) && joint.restOffset() == 50,
         "Our Positioner did not use native pose adjustment");
     var other = pos.south();
-    level.setBlock(other, dev.letitwalk.ModContent.LEG_HINGE.get().defaultBlockState(), 3);
+    level.setBlock(
+        other, dev.letitwalk.ModContent.LEG_HINGE.get().defaultBlockState(), Block.UPDATE_ALL);
     h.assertTrue(
         !LimbPositionerActions.adjust(player, other, 5),
         "Our Positioner modified another mod's limb");
     var core = pos.offset(4, 0, 0);
     var armor = core.north();
     var socket = core.north(2);
-    level.setBlock(core, ComponentRegistry.CORE.get().defaultBlockState(), 3);
-    level.setBlock(armor, ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState(), 3);
-    level.setBlock(socket, ComponentRegistry.CRAB_LEG.get().defaultBlockState(), 3);
+    level.setBlock(core, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(
+        armor, ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(socket, ComponentRegistry.CRAB_LEG.get().defaultBlockState(), Block.UPDATE_ALL);
     var body =
         SubLevelAssemblyHelper.assembleBlocks(
             level, core, List.of(core, armor, socket), new BoundingBox3i(socket, core));
@@ -240,7 +244,7 @@ public final class ModularLimbTests {
             && tuning.damping() == .75,
         "Compact settings did not persist on the grid");
     var loose = pos.offset(10, 0, 0);
-    level.setBlock(loose, ComponentRegistry.LIMB_JOINT.get().defaultBlockState(), 3);
+    level.setBlock(loose, ComponentRegistry.LIMB_JOINT.get().defaultBlockState(), Block.UPDATE_ALL);
     var unowned =
         SubLevelAssemblyHelper.assembleBlocks(
             level, loose, List.of(loose), new BoundingBox3i(loose, loose));

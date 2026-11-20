@@ -6,10 +6,15 @@ import net.minecraft.core.*;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.*;
+import net.minecraft.world.level.block.Block;
 import org.Azkerash.create_bioships.core.*;
 
 /** Stomach-specific simulation invoked centrally by the sublevel controller. */
 public final class StomachDigestion {
+  private static final int CLIENT_SYNC_INTERVAL_TICKS = 20;
+  private static final int ACID_PER_RECIPE_NUTRIENT = 100;
+  private static final int MIN_RECIPE_ACID_COST = 50;
+
   private StomachDigestion() {}
 
   static int pasteCount(StomachBlockEntity stomach) {
@@ -31,8 +36,9 @@ public final class StomachDigestion {
     if (!(level instanceof ServerLevel server)) {
       return;
     }
-    if (level.getGameTime() % 20 == 0) {
-      level.sendBlockUpdated(worldPosition, stomach.getBlockState(), stomach.getBlockState(), 2);
+    if (level.getGameTime() % CLIENT_SYNC_INTERVAL_TICKS == 0) {
+      level.sendBlockUpdated(
+          worldPosition, stomach.getBlockState(), stomach.getBlockState(), Block.UPDATE_CLIENTS);
     }
     var body = CoreAssemblyRules.containing(server, worldPosition);
     if (body == null || !SubLevelData.isLiving(body) || SubLevelHealth.status(body).dead()) {
@@ -58,8 +64,10 @@ public final class StomachDigestion {
             remaining -= consumed;
           }
           int nutrition = genes.nutritionFifths() + state.getNutritionRemainder();
-          SubLevelData.hunger(body, SubLevelData.hunger(body) + nutrition / 5);
-          state.setNutritionRemainder(nutrition % 5);
+          SubLevelData.hunger(
+              body,
+              SubLevelData.hunger(body) + nutrition / StomachGenes.NUTRITION_UNITS_PER_HUNGER);
+          state.setNutritionRemainder(nutrition % StomachGenes.NUTRITION_UNITS_PER_HUNGER);
           state.setEating(0);
         }
         stomach.setChanged();
@@ -79,7 +87,11 @@ public final class StomachDigestion {
         if (items.get(slot).getCount() < value.getIngredientQuantity().count()) {
           continue;
         }
-        int cost = Math.clamp(value.getCraftingCostNutrients() * 100, 50, MAX_ACID);
+        int cost =
+            Math.clamp(
+                value.getCraftingCostNutrients() * ACID_PER_RECIPE_NUTRIENT,
+                MIN_RECIPE_ACID_COST,
+                MAX_ACID);
         if (state.getAcid() < cost) {
           continue;
         }

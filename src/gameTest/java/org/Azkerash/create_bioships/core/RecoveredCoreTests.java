@@ -5,6 +5,7 @@ import dev.ryanhcode.sable.companion.math.BoundingBox3i;
 import net.minecraft.core.*;
 import net.minecraft.gametest.framework.*;
 import net.minecraft.world.item.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
@@ -19,7 +20,7 @@ public final class RecoveredCoreTests {
       GameTestHelper helper) {
     var level = helper.getLevel();
     var origin = helper.absolutePos(new BlockPos(1, 2, 1));
-    level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
+    level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
     var body =
         SubLevelAssemblyHelper.assembleBlocks(
             level, origin, java.util.List.of(origin), new BoundingBox3i(origin, origin));
@@ -33,7 +34,7 @@ public final class RecoveredCoreTests {
     helper.assertTrue(
         tag.getBoolean("RecoveredDeadCore"), "Recovered core item forgot terminal death");
     var placed = origin.east(4);
-    level.setBlock(placed, ComponentRegistry.CORE.get().defaultBlockState(), 3);
+    level.setBlock(placed, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
     var be =
         BlockEntity.loadStatic(placed, level.getBlockState(placed), tag, level.registryAccess());
     level.setBlockEntity(be);

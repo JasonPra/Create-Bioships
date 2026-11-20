@@ -8,6 +8,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.*;
 import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.*;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.shapes.*;
@@ -127,7 +128,10 @@ public final class CrabLegBlock
     if (!context.getLevel().isClientSide && state.getValue(HEIGHT) < 3) {
       context
           .getLevel()
-          .setBlock(context.getClickedPos(), state.setValue(HEIGHT, state.getValue(HEIGHT) + 1), 3);
+          .setBlock(
+              context.getClickedPos(),
+              state.setValue(HEIGHT, state.getValue(HEIGHT) + 1),
+              Block.UPDATE_ALL);
       com.simibubi.create.content.equipment.wrench.IWrenchable.playRotateSound(
           context.getLevel(), context.getClickedPos());
     }

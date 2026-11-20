@@ -10,6 +10,7 @@ import net.minecraft.world.entity.*;
 import net.minecraft.world.item.*;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.*;
 import net.minecraft.world.level.block.state.properties.*;
 import net.minecraft.world.phys.*;
@@ -53,7 +54,8 @@ public final class WaterloggingFixture {
     }
     for (int x = -HALF_WIDTH; x <= HALF_WIDTH; x++) {
       for (int z = -4; z <= back; z++) {
-        level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 2);
+        level.setBlock(
+            base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), Block.UPDATE_CLIENTS);
         for (int y = 0; y <= HEIGHT; y++) {
           level.setBlock(
               base.offset(x, y, z),
@@ -61,7 +63,7 @@ public final class WaterloggingFixture {
                       ? DevelopmentTestBlocks.GLASS.get()
                       : y <= 5 ? Blocks.WATER : Blocks.AIR)
                   .defaultBlockState(),
-              2);
+              Block.UPDATE_CLIENTS);
         }
       }
     }
@@ -75,7 +77,7 @@ public final class WaterloggingFixture {
                 .setValue(DoorBlock.FACING, Direction.NORTH)
                 .setValue(DoorBlock.HINGE, x == 0 ? DoorHingeSide.LEFT : DoorHingeSide.RIGHT)
                 .setValue(DoorBlock.HALF, half),
-            3);
+            Block.UPDATE_ALL);
       }
     }
     var player =
@@ -88,8 +90,8 @@ public final class WaterloggingFixture {
       var pos = sample(level, i);
       var flesh =
           com.github.elenterius.biomancy.init.ModBlocks.PACKED_FLESH.get().defaultBlockState();
-      level.setBlock(pos.below(), flesh, 3);
-      level.setBlock(pos.south(), flesh, 3);
+      level.setBlock(pos.below(), flesh, Block.UPDATE_ALL);
+      level.setBlock(pos.south(), flesh, Block.UPDATE_ALL);
       var context =
           new BlockPlaceContext(
               level,
@@ -115,7 +117,7 @@ public final class WaterloggingFixture {
               Blocks.DIRT.defaultBlockState(),
               Blocks.MYCELIUM.defaultBlockState(),
               Blocks.SOUL_SOIL.defaultBlockState())) {
-        level.setBlock(pos.below(), support, 3);
+        level.setBlock(pos.below(), support, Block.UPDATE_ALL);
         if (state.canSurvive(level, pos)) {
           break;
         }
@@ -124,13 +126,13 @@ public final class WaterloggingFixture {
       if (!valid) {
         unsupported++;
       }
-      level.setBlock(pos, state, 3);
+      level.setBlock(pos, state, Block.UPDATE_ALL);
       if (state.hasProperty(BlockStateProperties.DOUBLE_BLOCK_HALF)
           && state.getValue(BlockStateProperties.DOUBLE_BLOCK_HALF) == DoubleBlockHalf.LOWER) {
         level.setBlock(
             pos.above(),
             state.setValue(BlockStateProperties.DOUBLE_BLOCK_HALF, DoubleBlockHalf.UPPER),
-            3);
+            Block.UPDATE_ALL);
       }
       label(
           level,

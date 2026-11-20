@@ -7,6 +7,7 @@ import dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason;
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.gametest.framework.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.Vec3;
@@ -39,7 +40,7 @@ public final class FlipperTests {
               origin.offset(x, y, z),
               (y == -1 || Math.abs(x) == 8 || Math.abs(z) == 8 ? Blocks.GLASS : Blocks.WATER)
                   .defaultBlockState(),
-              2);
+              Block.UPDATE_CLIENTS);
         }
       }
     }
@@ -48,14 +49,18 @@ public final class FlipperTests {
         () -> {
           var core = origin.above(6);
           var cells = new ArrayList<BlockPos>();
-          l.setBlock(core, ComponentRegistry.CORE.get().defaultBlockState(), 3);
+          l.setBlock(core, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
           cells.add(core);
-          l.setBlock(core.above(), ComponentRegistry.BRAIN.get().defaultBlockState(), 3);
+          l.setBlock(
+              core.above(), ComponentRegistry.BRAIN.get().defaultBlockState(), Block.UPDATE_ALL);
           cells.add(core.above());
           for (var face : List.of(Direction.EAST, Direction.WEST)) {
             var support = core.relative(face);
             var fin = core.relative(face, 2);
-            l.setBlock(support, ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState(), 3);
+            l.setBlock(
+                support,
+                ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState(),
+                Block.UPDATE_ALL);
             cells.add(support);
             l.setBlock(
                 fin,
@@ -64,7 +69,7 @@ public final class FlipperTests {
                     .defaultBlockState()
                     .setValue(BlockStateProperties.HORIZONTAL_FACING, face)
                     .setValue(BlockStateProperties.WATERLOGGED, true),
-                3);
+                Block.UPDATE_ALL);
             cells.add(fin);
           }
           var body =
@@ -76,7 +81,7 @@ public final class FlipperTests {
           SubLevelFlippers.request(body);
           // Restore the volume removed by assembly, so the body is truly submerged in world space.
           for (var cell : cells) {
-            l.setBlock(cell, Blocks.WATER.defaultBlockState(), 2);
+            l.setBlock(cell, Blocks.WATER.defaultBlockState(), Block.UPDATE_CLIENTS);
           }
           var start = SubLevelPathfinder.position(body);
           h.runAfterDelay(
@@ -140,13 +145,14 @@ public final class FlipperTests {
   public static void flipper_waterlogs_and_keeps_its_whole_collision_envelope(GameTestHelper h) {
     var p = h.absolutePos(new BlockPos(2, 3, 2));
     var l = h.getLevel();
-    l.setBlock(p.south(), ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState(), 3);
+    l.setBlock(
+        p.south(), ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState(), Block.UPDATE_ALL);
     var s =
         ComponentRegistry.FLIPPER
             .get()
             .defaultBlockState()
             .setValue(BlockStateProperties.WATERLOGGED, true);
-    l.setBlock(p, s, 3);
+    l.setBlock(p, s, Block.UPDATE_ALL);
     h.assertTrue(
         s.canSurvive(l, p) && s.getFluidState().is(net.minecraft.tags.FluidTags.WATER),
         "Waterlogging removed flipper/support");

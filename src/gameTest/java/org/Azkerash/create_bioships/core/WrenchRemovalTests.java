@@ -9,6 +9,7 @@ import net.minecraft.world.*;
 import net.minecraft.world.item.*;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
@@ -43,10 +44,11 @@ public final class WrenchRemovalTests {
     var level = helper.getLevel();
     for (int x = -4; x <= 4; x++) {
       for (int z = -4; z <= 4; z++) {
-        level.setBlock(origin.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 3);
+        level.setBlock(
+            origin.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), Block.UPDATE_ALL);
       }
     }
-    level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
+    level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
     level.setBlock(
         origin.east(),
         ComponentRegistry.LAND_EYE
@@ -55,13 +57,13 @@ public final class WrenchRemovalTests {
             .setValue(
                 net.minecraft.world.level.block.state.properties.BlockStateProperties.FACING,
                 Direction.EAST),
-        3);
-    level.setBlock(origin.west(), Blocks.CHEST.defaultBlockState(), 3);
+        Block.UPDATE_ALL);
+    level.setBlock(origin.west(), Blocks.CHEST.defaultBlockState(), Block.UPDATE_ALL);
     var flesh =
         net.minecraft.core.registries.BuiltInRegistries.BLOCK.get(
             net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
                 "biomancy", "packed_flesh"));
-    level.setBlock(origin.north(), flesh.defaultBlockState(), 3);
+    level.setBlock(origin.north(), flesh.defaultBlockState(), Block.UPDATE_ALL);
     var body =
         SubLevelAssemblyHelper.assembleBlocks(
             level,
@@ -104,7 +106,7 @@ public final class WrenchRemovalTests {
         body,
         () -> {
           level.removeBlock(core.east(), false);
-          level.setBlock(core.east(), eyeState, 3);
+          level.setBlock(core.east(), eyeState, Block.UPDATE_ALL);
           return net.minecraft.world.InteractionResult.PASS;
         });
     helper.assertTrue(
@@ -163,7 +165,7 @@ public final class WrenchRemovalTests {
     wrench.useOn(coreContext);
     helper.assertTrue(
         level.getBlockState(core).is(ComponentRegistry.CORE.get()), "Wrench picked up dead core");
-    level.setBlock(core.east(), eyeState, 3);
+    level.setBlock(core.east(), eyeState, Block.UPDATE_ALL);
     player.gameMode.useItemOn(
         player,
         level,
@@ -177,7 +179,8 @@ public final class WrenchRemovalTests {
         SubLevelHealth.status(body).current() == 0 && SubLevelHealth.status(body).dead(),
         "Wrench revived or healed dead creature");
     var outside = origin.east(4);
-    level.setBlock(outside, com.simibubi.create.AllBlocks.SHAFT.get().defaultBlockState(), 3);
+    level.setBlock(
+        outside, com.simibubi.create.AllBlocks.SHAFT.get().defaultBlockState(), Block.UPDATE_ALL);
     player.gameMode.useItemOn(
         player,
         level,
@@ -188,9 +191,9 @@ public final class WrenchRemovalTests {
         level.getBlockState(outside).isAir(),
         "Existing Create wrench pickup stopped working outside creature");
     var genericOrigin = origin.south(5);
-    level.setBlock(genericOrigin, Blocks.STONE.defaultBlockState(), 3);
-    level.setBlock(genericOrigin.east(), flesh.defaultBlockState(), 3);
-    level.setBlock(genericOrigin.west(), eyeState, 3);
+    level.setBlock(genericOrigin, Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(genericOrigin.east(), flesh.defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(genericOrigin.west(), eyeState, Block.UPDATE_ALL);
     var generic =
         SubLevelAssemblyHelper.assembleBlocks(
             level,

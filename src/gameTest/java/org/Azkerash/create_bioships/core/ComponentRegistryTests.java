@@ -43,7 +43,7 @@ public final class ComponentRegistryTests {
               .get()
               .defaultBlockState()
               .setValue(StomachBlock.FACING, direction);
-      helper.getLevel().setBlock(pos, state, 3);
+      helper.getLevel().setBlock(pos, state, Block.UPDATE_ALL);
       var display = helper.getLevel().getBlockEntity(pos);
       var tooltip = new java.util.ArrayList<net.minecraft.network.chat.Component>();
       helper.assertTrue(

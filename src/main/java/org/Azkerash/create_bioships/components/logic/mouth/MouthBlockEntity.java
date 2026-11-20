@@ -6,6 +6,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.*;
 import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
 import org.Azkerash.create_bioships.components.logic.inventory.OrganInventory;
@@ -120,7 +121,7 @@ public final class MouthBlockEntity extends OrganInventory {
           server.setBlock(
               worldPosition,
               getBlockState().setValue(MouthBlock.CHEW, 1).setValue(MouthBlock.BREATH, 0),
-              2);
+              Block.UPDATE_CLIENTS);
           MouthBlock.chewingSound(server, worldPosition);
         }
         server.scheduleTick(worldPosition, getBlockState().getBlock(), 3);

@@ -9,6 +9,7 @@ import dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.*;
 import net.minecraft.util.Unit;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
@@ -27,11 +28,11 @@ public final class CoreBlinkTests {
     level.getChunk(2, 2);
     for (int x = -3; x <= 3; x++) {
       for (int z = -3; z <= 3; z++) {
-        level.setBlock(pos.offset(x, -2, z), Blocks.STONE.defaultBlockState(), 3);
+        level.setBlock(pos.offset(x, -2, z), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
       }
     }
-    level.setBlock(idle, ComponentRegistry.CORE.get().defaultBlockState(), 3);
-    level.setBlock(pos, ComponentRegistry.CORE.get().defaultBlockState(), 3);
+    level.setBlock(idle, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(pos, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
     helper.assertTrue(
         level.getBlockState(pos).getValue(CoreBlock.BLINK), "Unassembled core is not closed-eyed");
     helper.assertTrue(
@@ -80,7 +81,7 @@ public final class CoreBlinkTests {
     var pos = new BlockPos(64, 80, 32);
     level.getChunk(4, 2);
     var state = ComponentRegistry.CORE.get().defaultBlockState();
-    level.setBlock(pos, state, 3);
+    level.setBlock(pos, state, Block.UPDATE_ALL);
     helper.assertTrue(
         ComponentRegistry.CORE.get().getCloneItemStack(level, pos, state).isEmpty(),
         "Pick block yielded a core");
@@ -120,7 +121,7 @@ public final class CoreBlinkTests {
     var level = helper.getLevel();
     var origin = new BlockPos(96, 80, 32);
     level.getChunk(6, 2);
-    level.setBlock(origin, Blocks.STONE.defaultBlockState(), 3);
+    level.setBlock(origin, Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
     var body =
         SubLevelAssemblyHelper.assembleBlocks(
             level, origin, java.util.List.of(origin), new BoundingBox3i(origin, origin));
@@ -131,7 +132,7 @@ public final class CoreBlinkTests {
     var assembler =
         net.minecraft.core.registries.BuiltInRegistries.BLOCK.get(
             net.minecraft.resources.ResourceLocation.parse("simulated:physics_assembler"));
-    level.setBlock(site, assembler.defaultBlockState(), 3);
+    level.setBlock(site, assembler.defaultBlockState(), Block.UPDATE_ALL);
     var placement =
         new net.neoforged.neoforge.event.level.BlockEvent.EntityPlaceEvent(
             snapshot,
@@ -198,7 +199,7 @@ public final class CoreBlinkTests {
           var snapshot =
               net.neoforged.neoforge.common.util.BlockSnapshot.create(
                   level.dimension(), level, site);
-          level.setBlock(site, assembler.defaultBlockState(), 3);
+          level.setBlock(site, assembler.defaultBlockState(), Block.UPDATE_ALL);
           var placement =
               new net.neoforged.neoforge.event.level.BlockEvent.EntityPlaceEvent(
                   snapshot,

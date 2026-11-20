@@ -5,6 +5,7 @@ import dev.ryanhcode.sable.companion.math.BoundingBox3i;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.*;
+import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
 import org.Azkerash.create_bioships.combat.CombatAdapter;
@@ -28,13 +29,14 @@ public final class SubLevelHungerTests {
         level.setBlock(
             origin.offset(x, -2, z),
             net.minecraft.world.level.block.Blocks.BEDROCK.defaultBlockState(),
-            3);
+            Block.UPDATE_ALL);
       }
     }
     helper.runAfterDelay(
         10,
         () -> {
-          level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
+          level.setBlock(
+              origin, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
           var body =
               SubLevelAssemblyHelper.assembleBlocks(
                   level, origin, List.of(origin), new BoundingBox3i(origin, origin));

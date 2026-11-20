@@ -5,6 +5,7 @@ import dev.ryanhcode.sable.companion.math.BoundingBox3i;
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.gametest.framework.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.*;
@@ -76,7 +77,7 @@ public final class CompactNativeTests {
     }
     for (int x = -18; x <= 18; x++) {
       for (int z = -18; z <= 25; z++) {
-        level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 3);
+        level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), Block.UPDATE_ALL);
       }
     }
     h.runAfterDelay(
@@ -101,7 +102,7 @@ public final class CompactNativeTests {
                   ComponentRegistry.MOUTH.get().defaultBlockState());
           entries.forEach(
               (p, s) -> {
-                level.setBlock(p, s, 3);
+                level.setBlock(p, s, Block.UPDATE_ALL);
                 cells.add(p);
               });
           for (int x : new int[] {-1, 1}) {
@@ -116,7 +117,7 @@ public final class CompactNativeTests {
                       .setValue(
                           BlockStateProperties.HORIZONTAL_FACING,
                           z < 0 ? Direction.NORTH : Direction.SOUTH),
-                  3);
+                  Block.UPDATE_ALL);
               cells.add(p);
             }
           }
@@ -125,7 +126,10 @@ public final class CompactNativeTests {
               for (int z = -1; z <= 1; z++) {
                 for (int y = 3; y <= 4; y++) {
                   var cell = base.offset(x, y, z);
-                  level.setBlock(cell, ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState(), 3);
+                  level.setBlock(
+                      cell,
+                      ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState(),
+                      Block.UPDATE_ALL);
                   cells.add(cell);
                 }
               }
@@ -244,7 +248,8 @@ public final class CompactNativeTests {
               if (editRestPose && tick == 180) {
                 for (int x = 7; x <= 9; x++) {
                   for (int z = -1; z <= 1; z++) {
-                    level.setBlock(base.offset(x, 0, z), Blocks.BEDROCK.defaultBlockState(), 3);
+                    level.setBlock(
+                        base.offset(x, 0, z), Blocks.BEDROCK.defaultBlockState(), Block.UPDATE_ALL);
                   }
                 }
                 for (var pose : SubLevelLegs.poses(body)) {
@@ -456,7 +461,7 @@ public final class CompactNativeTests {
                         .setValue(
                             BlockStateProperties.HORIZONTAL_FACING,
                             oldState.getValue(BlockStateProperties.HORIZONTAL_FACING)),
-                    3);
+                    Block.UPDATE_ALL);
                 h.runAfterDelay(
                     10,
                     () -> {

@@ -8,6 +8,7 @@ import net.minecraft.world.item.*;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.*;
 import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.*;
 import net.minecraft.world.level.block.state.*;
 import net.minecraft.world.level.block.state.properties.*;
@@ -57,7 +58,10 @@ public final class OssuaryBedBlock extends BedBlock implements SimpleWaterlogged
     boolean wet = l.getFluidState(head).is(net.minecraft.tags.FluidTags.WATER);
     super.setPlacedBy(l, p, s, placer, stack);
     if (!l.isClientSide && l.getBlockState(head).is(this)) {
-      l.setBlock(head, l.getBlockState(head).setValue(BlockStateProperties.WATERLOGGED, wet), 3);
+      l.setBlock(
+          head,
+          l.getBlockState(head).setValue(BlockStateProperties.WATERLOGGED, wet),
+          Block.UPDATE_ALL);
     }
   }
 

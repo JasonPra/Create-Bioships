@@ -5,6 +5,7 @@ import net.minecraft.core.*;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.*;
 import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.*;
 import net.minecraft.world.level.block.state.properties.*;
 import net.minecraft.world.phys.shapes.*;
@@ -106,7 +107,7 @@ public final class IntestineBlock
                 compatible(level.getBlockState(pos.relative(e.getKey())), e.getKey()));
       }
       if (!next.equals(state)) {
-        level.setBlock(pos, next, 3);
+        level.setBlock(pos, next, Block.UPDATE_ALL);
       }
     }
   }

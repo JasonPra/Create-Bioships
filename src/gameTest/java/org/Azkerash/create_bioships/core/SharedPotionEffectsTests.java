@@ -8,6 +8,7 @@ import net.minecraft.gametest.framework.*;
 import net.minecraft.world.effect.*;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.projectile.ThrownPotion;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.gametest.*;
@@ -31,13 +32,15 @@ public final class SharedPotionEffectsTests {
     }
     for (int x = -5; x <= 5; x++) {
       for (int z = -5; z <= 5; z++) {
-        level.setBlock(origin.offset(x, -2, z), Blocks.BEDROCK.defaultBlockState(), 3);
+        level.setBlock(
+            origin.offset(x, -2, z), Blocks.BEDROCK.defaultBlockState(), Block.UPDATE_ALL);
       }
     }
     helper.runAfterDelay(
         10,
         () -> {
-          level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
+          level.setBlock(
+              origin, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
           level.setBlock(
               origin.east(),
               ComponentRegistry.LAND_EYE
@@ -46,7 +49,7 @@ public final class SharedPotionEffectsTests {
                   .setValue(
                       net.minecraft.world.level.block.state.properties.BlockStateProperties.FACING,
                       Direction.EAST),
-              3);
+              Block.UPDATE_ALL);
           level.setBlock(
               origin.west(),
               ComponentRegistry.AQUATIC_EYE
@@ -55,7 +58,7 @@ public final class SharedPotionEffectsTests {
                   .setValue(
                       net.minecraft.world.level.block.state.properties.BlockStateProperties.FACING,
                       Direction.WEST),
-              3);
+              Block.UPDATE_ALL);
           var body =
               SubLevelAssemblyHelper.assembleBlocks(
                   level,

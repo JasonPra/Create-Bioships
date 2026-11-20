@@ -3,6 +3,7 @@ package org.Azkerash.create_bioships.development.testing;
 import net.minecraft.core.*;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.Block;
 
 /** Deterministic authored terrain around the estate; never edits the vault or its central plot. */
 public final class EstateLandscape {
@@ -80,7 +81,7 @@ public final class EstateLandscape {
   }
 
   static void put(ServerLevel l, BlockPos p, Block b) {
-    l.setBlock(p, b.defaultBlockState(), 2);
+    l.setBlock(p, b.defaultBlockState(), Block.UPDATE_CLIENTS);
   }
 
   public static void terrain(ServerLevel l, BlockPos base) {

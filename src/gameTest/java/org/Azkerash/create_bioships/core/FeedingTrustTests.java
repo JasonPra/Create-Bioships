@@ -8,6 +8,7 @@ import net.minecraft.gametest.framework.*;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.item.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
@@ -22,15 +23,18 @@ public final class FeedingTrustTests {
   public static void hand_menu_connected_sac_and_fractional_trust(GameTestHelper helper) {
     var level = helper.getLevel();
     var origin = helper.absolutePos(new BlockPos(1, 3, 1));
-    level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
-    level.setBlock(origin.east(), ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
-    level.setBlock(origin.east(2), ComponentRegistry.INTESTINE.get().defaultBlockState(), 3);
-    level.setBlock(origin.east(3), ComponentRegistry.MOUTH.get().defaultBlockState(), 3);
+    level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(
+        origin.east(), ComponentRegistry.STOMACH.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(
+        origin.east(2), ComponentRegistry.INTESTINE.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(
+        origin.east(3), ComponentRegistry.MOUTH.get().defaultBlockState(), Block.UPDATE_ALL);
     var sacBlock =
         net.minecraft.core.registries.BuiltInRegistries.BLOCK.get(
             net.minecraft.resources.ResourceLocation.parse("biomancy:storage_sac"));
-    level.setBlock(origin.east(2).above(), sacBlock.defaultBlockState(), 3);
-    level.setBlock(origin.east(6), sacBlock.defaultBlockState(), 3);
+    level.setBlock(origin.east(2).above(), sacBlock.defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(origin.east(6), sacBlock.defaultBlockState(), Block.UPDATE_ALL);
     var body =
         SubLevelAssemblyHelper.assembleBlocks(
             level,

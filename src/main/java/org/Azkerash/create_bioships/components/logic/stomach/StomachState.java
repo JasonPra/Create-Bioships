@@ -8,7 +8,10 @@ import net.minecraft.world.item.ItemStack;
 /** Runtime data belongs to the sublevel component entry, with a portable detached snapshot. */
 public final class StomachState
     implements org.Azkerash.create_bioships.core.component.ComponentState {
-  private int acid = 200, progress, duration, activeSlot = -1, eating, efficiency;
+  private static final int INITIAL_ACID = 200;
+  private static final int MAX_PENDING_OUTPUT_STACKS = 32;
+
+  private int acid = INITIAL_ACID, progress, duration, activeSlot = -1, eating, efficiency;
   private int longevity, nutritionRemainder;
   private String recipeId = "";
   private NonNullList<ItemStack> pending = NonNullList.create();
@@ -36,17 +39,27 @@ public final class StomachState
   public void load(CompoundTag tag, HolderLookup.Provider registries) {
     longevity =
         Math.clamp(tag.getCompound("Genes").getInt("Longevity"), 0, StomachGenes.MAX_LONGEVITY);
-    efficiency = Math.clamp(tag.getCompound("Genes").getInt("Efficiency"), 0, 3);
+    efficiency =
+        Math.clamp(tag.getCompound("Genes").getInt("Efficiency"), 0, StomachGenes.MAX_EFFICIENCY);
     acid =
-        tag.contains("Acid") ? Math.clamp(tag.getInt("Acid"), 0, StomachBlockEntity.MAX_ACID) : 200;
+        tag.contains("Acid")
+            ? Math.clamp(tag.getInt("Acid"), 0, StomachBlockEntity.MAX_ACID)
+            : INITIAL_ACID;
     progress = Math.max(0, tag.getInt("Progress"));
     duration = Math.max(0, tag.getInt("Duration"));
-    activeSlot = tag.contains("ActiveSlot") ? Math.clamp(tag.getInt("ActiveSlot"), -1, 8) : -1;
+    activeSlot =
+        tag.contains("ActiveSlot")
+            ? Math.clamp(tag.getInt("ActiveSlot"), -1, StomachBlockEntity.INPUT_SLOTS - 1)
+            : -1;
     eating = Math.clamp(tag.getInt("Eating"), 0, StomachBlockEntity.EAT_TICKS - 1);
-    nutritionRemainder = Math.clamp(tag.getInt("NutritionRemainder"), 0, 4);
+    nutritionRemainder =
+        Math.clamp(
+            tag.getInt("NutritionRemainder"), 0, StomachGenes.NUTRITION_UNITS_PER_HUNGER - 1);
     recipeId = tag.getString("Recipe");
     var outputs = tag.getCompound("Pending");
-    pending = NonNullList.withSize(Math.clamp(outputs.getInt("Size"), 0, 32), ItemStack.EMPTY);
+    pending =
+        NonNullList.withSize(
+            Math.clamp(outputs.getInt("Size"), 0, MAX_PENDING_OUTPUT_STACKS), ItemStack.EMPTY);
     ContainerHelper.loadAllItems(outputs, pending, registries);
   }
 

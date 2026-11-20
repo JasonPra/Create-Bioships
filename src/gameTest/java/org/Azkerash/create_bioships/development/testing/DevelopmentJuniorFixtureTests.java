@@ -1,6 +1,7 @@
 package org.Azkerash.create_bioships.development.testing;
 
 import net.minecraft.gametest.framework.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.core.*;
@@ -18,7 +19,7 @@ public final class DevelopmentJuniorFixtureTests {
       for (int z = -20; z <= 20; z++) {
         var p = base.offset(x, -1, z);
         l.setChunkForced(p.getX() >> 4, p.getZ() >> 4, true);
-        l.setBlock(p, Blocks.BEDROCK.defaultBlockState(), 2);
+        l.setBlock(p, Blocks.BEDROCK.defaultBlockState(), Block.UPDATE_CLIENTS);
       }
     }
     h.runAfterDelay(

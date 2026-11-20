@@ -6,6 +6,7 @@ import dev.ryanhcode.sable.physics.config.block_properties.PhysicsBlockPropertyH
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.gametest.framework.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.neoforged.neoforge.gametest.*;
@@ -22,7 +23,7 @@ public final class MasslessPanelTests {
     for (int x = -2; x <= 12; x++) {
       for (int z = -2; z <= 10; z++) {
         l.setChunkForced((at.getX() + x) >> 4, (at.getZ() + z) >> 4, true);
-        l.setBlock(at.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 2);
+        l.setBlock(at.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), Block.UPDATE_CLIENTS);
       }
     }
     var cells = new ArrayList<BlockPos>();
@@ -30,10 +31,10 @@ public final class MasslessPanelTests {
       for (int z = 0; z < 8; z++) {
         var p = at.offset(x, 0, z);
         cells.add(p);
-        l.setBlock(p, ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState(), 3);
+        l.setBlock(p, ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState(), Block.UPDATE_ALL);
       }
     }
-    l.setBlock(at, ComponentRegistry.CORE.get().defaultBlockState(), 3);
+    l.setBlock(at, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
     var b =
         SubLevelAssemblyHelper.assembleBlocks(
             l, at, cells, new BoundingBox3i(at, at.offset(9, 0, 7)));
@@ -62,7 +63,7 @@ public final class MasslessPanelTests {
                 .setValue(BlockStateProperties.FACING, Direction.WEST));
     for (var e : panels.entrySet()) {
       var state = e.getValue().setValue(BlockStateProperties.WATERLOGGED, true);
-      l.setBlock(e.getKey(), state, 3);
+      l.setBlock(e.getKey(), state, Block.UPDATE_ALL);
       h.assertTrue(
           PhysicsBlockPropertyHelper.getMass(l, e.getKey(), state) == 0
               && PhysicsBlockPropertyHelper.getVolume(state) == 0,

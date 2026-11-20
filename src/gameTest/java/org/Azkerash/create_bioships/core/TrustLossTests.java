@@ -6,6 +6,7 @@ import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.gametest.framework.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.combat.*;
@@ -25,11 +26,13 @@ public final class TrustLossTests {
     }
     for (int x = -6; x <= 6; x++) {
       for (int z = -6; z <= 6; z++) {
-        level.setBlock(origin.offset(x, -2, z), Blocks.BEDROCK.defaultBlockState(), 3);
+        level.setBlock(
+            origin.offset(x, -2, z), Blocks.BEDROCK.defaultBlockState(), Block.UPDATE_ALL);
       }
     }
-    level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
-    level.setBlock(origin.east(), ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState(), 3);
+    level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(
+        origin.east(), ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState(), Block.UPDATE_ALL);
     var result =
         SubLevelAssemblyHelper.assembleBlocks(
             level,
@@ -136,7 +139,7 @@ public final class TrustLossTests {
     var origin = new BlockPos(3712, 82, 128);
     var root = body(h, origin);
     var limbSource = origin.east(4);
-    level.setBlock(limbSource, Blocks.STONE.defaultBlockState(), 3);
+    level.setBlock(limbSource, Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
     var limb =
         SubLevelAssemblyHelper.assembleBlocks(
             level, limbSource, List.of(limbSource), new BoundingBox3i(limbSource, limbSource));

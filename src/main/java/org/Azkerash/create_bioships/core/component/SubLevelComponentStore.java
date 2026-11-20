@@ -18,6 +18,9 @@ import org.Azkerash.create_bioships.components.logic.inventory.OrganInventory;
  */
 @EventBusSubscriber(modid = Create_bioships.MODID)
 public final class SubLevelComponentStore {
+  private static final int MAX_STORED_INVENTORY_SLOTS = 256;
+  private static final int FLUSH_INTERVAL_TICKS = 8;
+
   public static final String KEY = "create_bioships:components";
   private static final Map<ServerSubLevel, SubLevelComponentStore> STORES = new IdentityHashMap<>();
 
@@ -96,7 +99,9 @@ public final class SubLevelComponentStore {
         continue;
       }
       var tag = saved.getCompound(key);
-      var items = NonNullList.withSize(Math.clamp(tag.getInt("Size"), 0, 256), ItemStack.EMPTY);
+      var items =
+          NonNullList.withSize(
+              Math.clamp(tag.getInt("Size"), 0, MAX_STORED_INVENTORY_SLOTS), ItemStack.EMPTY);
       ContainerHelper.loadAllItems(tag, items, body.getLevel().registryAccess());
       var entry =
           new Entry(
@@ -223,7 +228,7 @@ public final class SubLevelComponentStore {
 
   @SubscribeEvent
   public static void tick(net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) {
-    if (event.getServer().getTickCount() % 8 != 0) {
+    if (event.getServer().getTickCount() % FLUSH_INTERVAL_TICKS != 0) {
       return;
     }
     for (var body : new ArrayList<>(STORES.keySet())) {

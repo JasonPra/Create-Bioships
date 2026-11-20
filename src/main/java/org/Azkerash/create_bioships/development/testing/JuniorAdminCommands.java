@@ -7,6 +7,7 @@ import net.minecraft.core.*;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.CommandBlockEntity;
 import net.minecraft.world.level.block.state.properties.*;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -93,9 +94,12 @@ public final class JuniorAdminCommands {
             entity -> entity.getTags().contains(CONTROL_LABEL))) {
       previous.discard();
     }
-    l.setBlock(p.below(), Blocks.POLISHED_BLACKSTONE_BRICKS.defaultBlockState(), 2);
     l.setBlock(
-        p, Blocks.COMMAND_BLOCK.defaultBlockState().setValue(CommandBlock.FACING, Direction.UP), 2);
+        p.below(), Blocks.POLISHED_BLACKSTONE_BRICKS.defaultBlockState(), Block.UPDATE_CLIENTS);
+    l.setBlock(
+        p,
+        Blocks.COMMAND_BLOCK.defaultBlockState().setValue(CommandBlock.FACING, Direction.UP),
+        Block.UPDATE_CLIENTS);
     if (l.getBlockEntity(p) instanceof CommandBlockEntity command) {
       command.getCommandBlock().setCommand("bioship_dev junior reset");
       command.getCommandBlock().setTrackOutput(false);
@@ -108,7 +112,7 @@ public final class JuniorAdminCommands {
             .defaultBlockState()
             .setValue(BlockStateProperties.HORIZONTAL_FACING, Direction.NORTH)
             .setValue(BlockStateProperties.ATTACH_FACE, AttachFace.WALL),
-        2);
+        Block.UPDATE_CLIENTS);
     var sign = net.minecraft.world.entity.EntityType.TEXT_DISPLAY.create(l);
     if (sign != null) {
       var tag = new net.minecraft.nbt.CompoundTag();

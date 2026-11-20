@@ -6,6 +6,7 @@ import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.gametest.framework.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.Vec3;
@@ -18,13 +19,13 @@ import org.Azkerash.create_bioships.components.logic.respiration.RespiratoryBloc
 public final class OxygenTests {
   private static ServerSubLevel body(GameTestHelper h, BlockPos p, boolean organs) {
     var l = h.getLevel();
-    l.setBlock(p, ComponentRegistry.CORE.get().defaultBlockState(), 3);
+    l.setBlock(p, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
     var cells = new ArrayList<BlockPos>();
     cells.add(p);
     if (organs) {
-      l.setBlock(p.east(), ComponentRegistry.LUNG.get().defaultBlockState(), 3);
+      l.setBlock(p.east(), ComponentRegistry.LUNG.get().defaultBlockState(), Block.UPDATE_ALL);
       cells.add(p.east());
-      l.setBlock(p.east(3), ComponentRegistry.GILLS.get().defaultBlockState(), 3);
+      l.setBlock(p.east(3), ComponentRegistry.GILLS.get().defaultBlockState(), Block.UPDATE_ALL);
       cells.add(p.east(3));
     }
     var b =
@@ -47,37 +48,49 @@ public final class OxygenTests {
         SubLevelOxygen.breathing(b, lung) && !SubLevelOxygen.breathing(b, gill),
         "Dry organ breathing incorrect");
     var world = BlockPos.containing(b.logicalPose().transformPosition(Vec3.atCenterOf(lung)));
-    l.setBlock(world, Blocks.WATER.defaultBlockState(), 3);
+    l.setBlock(world, Blocks.WATER.defaultBlockState(), Block.UPDATE_ALL);
     h.assertTrue(!SubLevelOxygen.breathing(b, lung), "Lung breathed while physically submerged");
-    l.setBlock(world, Blocks.AIR.defaultBlockState(), 3);
-    l.setBlock(lung, l.getBlockState(lung).setValue(BlockStateProperties.WATERLOGGED, true), 3);
+    l.setBlock(world, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+    l.setBlock(
+        lung,
+        l.getBlockState(lung).setValue(BlockStateProperties.WATERLOGGED, true),
+        Block.UPDATE_ALL);
     h.assertTrue(!SubLevelOxygen.breathing(b, lung), "Waterlogged lung breathed");
-    l.setBlock(lung, l.getBlockState(lung).setValue(BlockStateProperties.WATERLOGGED, false), 3);
-    l.setBlock(gill, l.getBlockState(gill).setValue(BlockStateProperties.WATERLOGGED, true), 3);
+    l.setBlock(
+        lung,
+        l.getBlockState(lung).setValue(BlockStateProperties.WATERLOGGED, false),
+        Block.UPDATE_ALL);
+    l.setBlock(
+        gill,
+        l.getBlockState(gill).setValue(BlockStateProperties.WATERLOGGED, true),
+        Block.UPDATE_ALL);
     h.assertTrue(!SubLevelOxygen.breathing(b, gill), "Waterlogging bypassed dry gill intake");
     for (var face : Direction.values()) {
-      l.setBlock(gill, l.getBlockState(gill).setValue(BlockStateProperties.FACING, face), 3);
+      l.setBlock(
+          gill,
+          l.getBlockState(gill).setValue(BlockStateProperties.FACING, face),
+          Block.UPDATE_ALL);
       var neighbor = gill.relative(face);
-      l.setBlock(neighbor, Blocks.WATER.defaultBlockState(), 3);
+      l.setBlock(neighbor, Blocks.WATER.defaultBlockState(), Block.UPDATE_ALL);
       h.assertTrue(SubLevelOxygen.breathing(b, gill), "Wet intake failed for " + face);
       l.setBlock(
           neighbor,
           Blocks.OAK_SLAB.defaultBlockState().setValue(BlockStateProperties.WATERLOGGED, true),
-          3);
+          Block.UPDATE_ALL);
       h.assertTrue(!SubLevelOxygen.breathing(b, gill), "Waterlogged solid failed to block intake");
-      l.setBlock(neighbor, Blocks.AIR.defaultBlockState(), 3);
+      l.setBlock(neighbor, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
     }
     // Breathing uses the transformed world position, not only water in plot coordinates.
     var front =
         BlockPos.containing(
             b.logicalPose().transformPosition(Vec3.atCenterOf(gill).relative(Direction.EAST, .6)));
-    l.setBlock(front, Blocks.WATER.defaultBlockState(), 3);
+    l.setBlock(front, Blocks.WATER.defaultBlockState(), Block.UPDATE_ALL);
     h.assertTrue(
         SubLevelOxygen.breathing(b, gill), "Gill missed water outside the physical intake");
-    l.setBlock(front, Blocks.AIR.defaultBlockState(), 3);
+    l.setBlock(front, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
     for (var face : Direction.values()) {
       if (l.getBlockState(lung.relative(face)).isAir()) {
-        l.setBlock(lung.relative(face), Blocks.STONE.defaultBlockState(), 3);
+        l.setBlock(lung.relative(face), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
       }
     }
     h.assertTrue(
@@ -116,7 +129,8 @@ public final class OxygenTests {
         SubLevelData.oxygen(b).paused() && SubLevelHealth.status(b).current() == hp - 6,
         "Paused oxygen advanced");
     SubLevelData.oxygen(b, new SubLevelData.Oxygen(0, 0, false));
-    h.getLevel().setBlock(p.east(), ComponentRegistry.LUNG.get().defaultBlockState(), 3);
+    h.getLevel()
+        .setBlock(p.east(), ComponentRegistry.LUNG.get().defaultBlockState(), Block.UPDATE_ALL);
     h.assertTrue(SubLevelData.oxygen(b).value() == 0, "Placing lung refilled oxygen for free");
     SubLevelOxygen.advance(b, 20);
     h.assertTrue(SubLevelData.oxygen(b).value() == 20, "Lung failed to refill reserve");
@@ -139,8 +153,8 @@ public final class OxygenTests {
     var p = h.absolutePos(new BlockPos(1, 3, 1));
     var root = body(h, p, false);
     var l = h.getLevel();
-    l.setBlock(p.east(6), ComponentRegistry.LUNG.get().defaultBlockState(), 3);
-    l.setBlock(p.east(7), ComponentRegistry.GILLS.get().defaultBlockState(), 3);
+    l.setBlock(p.east(6), ComponentRegistry.LUNG.get().defaultBlockState(), Block.UPDATE_ALL);
+    l.setBlock(p.east(7), ComponentRegistry.GILLS.get().defaultBlockState(), Block.UPDATE_ALL);
     var limb =
         SubLevelAssemblyHelper.assembleBlocks(
             l, p.east(6), List.of(p.east(6), p.east(7)), new BoundingBox3i(p.east(6), p.east(7)));
@@ -156,7 +170,7 @@ public final class OxygenTests {
     double demand = SubLevelOxygen.status(root).demand();
     var c = root.getPlot().getCenterBlock();
     for (int x = 1; x <= 150; x++) {
-      h.getLevel().setBlock(c.above(x), Blocks.IRON_BLOCK.defaultBlockState(), 3);
+      h.getLevel().setBlock(c.above(x), Blocks.IRON_BLOCK.defaultBlockState(), Block.UPDATE_ALL);
     }
     h.assertTrue(
         SubLevelOxygen.status(root).demand() > demand, "Mass did not increase oxygen demand");
@@ -171,15 +185,16 @@ public final class OxygenTests {
     var p = h.absolutePos(new BlockPos(1, 3, 1));
     var root = body(h, p, true);
     var c = root.getPlot().getCenterBlock();
-    l.setBlock(c.above(), ComponentRegistry.ARMORED_GILLS.get().defaultBlockState(), 3);
-    l.setBlock(p.east(6), ComponentRegistry.GILLS.get().defaultBlockState(), 3);
+    l.setBlock(
+        c.above(), ComponentRegistry.ARMORED_GILLS.get().defaultBlockState(), Block.UPDATE_ALL);
+    l.setBlock(p.east(6), ComponentRegistry.GILLS.get().defaultBlockState(), Block.UPDATE_ALL);
     var part =
         SubLevelAssemblyHelper.assembleBlocks(
             l, p.east(6), List.of(p.east(6)), new BoundingBox3i(p.east(6), p.east(6)));
     SubLevelCreatureParts.attach(root, part);
     var at = List.of(c.east(3), c.above(), part.getPlot().getCenterBlock());
     for (var pos : at) {
-      l.setBlock(pos.north(), Blocks.WATER.defaultBlockState(), 3);
+      l.setBlock(pos.north(), Blocks.WATER.defaultBlockState(), Block.UPDATE_ALL);
     }
     var before = SubLevelData.oxygen(root);
     SubLevelOxygen.animate(root, 12);
@@ -189,7 +204,7 @@ public final class OxygenTests {
           state.getValue(RespiratoryBlock.BREATH) == 1 && !state.getValue(RespiratoryBlock.GASPING),
           "Submerged gills lost common breathing phase");
     }
-    l.setBlock(at.getFirst().north(), Blocks.AIR.defaultBlockState(), 3);
+    l.setBlock(at.getFirst().north(), Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
     SubLevelOxygen.animate(root, 12);
     h.assertTrue(
         l.getBlockState(at.getFirst()).getValue(RespiratoryBlock.BREATH) == 0
@@ -199,7 +214,9 @@ public final class OxygenTests {
         l.getBlockState(at.getLast()).getValue(RespiratoryBlock.BREATH) == 1,
         "Wet linked gills stopped breathing while lung supplied air");
     l.setBlock(
-        c.east(), l.getBlockState(c.east()).setValue(BlockStateProperties.WATERLOGGED, true), 3);
+        c.east(),
+        l.getBlockState(c.east()).setValue(BlockStateProperties.WATERLOGGED, true),
+        Block.UPDATE_ALL);
 
     SubLevelOxygen.animate(root, 12);
     for (var pos : at) {
@@ -210,7 +227,7 @@ public final class OxygenTests {
           "Mixed wet/dry gills failed synchronized faster gasping");
     }
     for (var pos : at) {
-      l.setBlock(pos.north(), Blocks.AIR.defaultBlockState(), 3);
+      l.setBlock(pos.north(), Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
     }
     SubLevelOxygen.animate(root, 12);
     for (var pos : at) {
@@ -219,7 +236,9 @@ public final class OxygenTests {
           "All dry gills failed to gasp together without functional lungs");
     }
     l.setBlock(
-        c.east(), l.getBlockState(c.east()).setValue(BlockStateProperties.WATERLOGGED, false), 3);
+        c.east(),
+        l.getBlockState(c.east()).setValue(BlockStateProperties.WATERLOGGED, false),
+        Block.UPDATE_ALL);
     SubLevelOxygen.animate(root, 15);
     for (var pos : at) {
       h.assertTrue(
@@ -243,8 +262,9 @@ public final class OxygenTests {
     var l = h.getLevel();
     var c = b.getPlot().getCenterBlock();
     var gill = c.east(3);
-    l.setBlock(c.above(), ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState(), 3);
-    l.setBlock(gill.north(), Blocks.WATER.defaultBlockState(), 3);
+    l.setBlock(
+        c.above(), ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState(), Block.UPDATE_ALL);
+    l.setBlock(gill.north(), Blocks.WATER.defaultBlockState(), Block.UPDATE_ALL);
     var normal = SubLevelOxygen.status(b);
     var player =
         new net.neoforged.neoforge.common.util.FakePlayer(
@@ -253,7 +273,7 @@ public final class OxygenTests {
     var target = org.Azkerash.create_bioships.combat.CombatAdapter.target(b);
     for (var block :
         List.of(ComponentRegistry.GILLS.get(), ComponentRegistry.ARMORED_GILLS.get())) {
-      l.setBlock(gill, block.defaultBlockState(), 3);
+      l.setBlock(gill, block.defaultBlockState(), Block.UPDATE_ALL);
       var sample = SubLevelOxygen.status(b);
       h.assertTrue(
           sample.supply() == normal.supply()
@@ -288,15 +308,21 @@ public final class OxygenTests {
     h.assertTrue(
         SubLevelData.oxygen(b).value() == 120 && SubLevelData.oxygen(b).suffocationTicks() == 0,
         "Working lung failed to refill and reset drowning timer");
-    l.setBlock(lung, l.getBlockState(lung).setValue(BlockStateProperties.WATERLOGGED, true), 3);
-    l.setBlock(gill.north(), Blocks.WATER.defaultBlockState(), 3);
+    l.setBlock(
+        lung,
+        l.getBlockState(lung).setValue(BlockStateProperties.WATERLOGGED, true),
+        Block.UPDATE_ALL);
+    l.setBlock(gill.north(), Blocks.WATER.defaultBlockState(), Block.UPDATE_ALL);
     h.assertTrue(
         SubLevelOxygen.status(b).breathingLungs() == 0
             && SubLevelOxygen.status(b).breathingGills() == 1,
         "Underwater intake was not recognized as functioning");
     SubLevelOxygen.advance(b, 20);
     h.assertTrue(SubLevelData.oxygen(b).value() == 140, "Working gill alone failed to refill");
-    l.setBlock(lung, l.getBlockState(lung).setValue(BlockStateProperties.WATERLOGGED, false), 3);
+    l.setBlock(
+        lung,
+        l.getBlockState(lung).setValue(BlockStateProperties.WATERLOGGED, false),
+        Block.UPDATE_ALL);
     SubLevelOxygen.advance(b, 20);
     h.assertTrue(
         SubLevelData.oxygen(b).value() == 200 && SubLevelOxygen.status(b).supply() == 80,

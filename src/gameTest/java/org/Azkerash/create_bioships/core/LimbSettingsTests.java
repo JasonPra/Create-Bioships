@@ -6,6 +6,7 @@ import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.gametest.framework.*;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.Vec3;
@@ -23,16 +24,17 @@ public final class LimbSettingsTests {
   public static void removal_clears_only_that_components_tuning(GameTestHelper h) {
     var level = h.getLevel();
     var at = h.absolutePos(new BlockPos(1, 4, 1));
-    level.setBlock(at, ComponentRegistry.CORE.get().defaultBlockState(), 3);
-    level.setBlock(at.east(), Blocks.STONE.defaultBlockState(), 3);
+    level.setBlock(at, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(at.east(), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
     level.setBlock(
         at.east(2),
         ComponentRegistry.CRAB_LEG
             .get()
             .defaultBlockState()
             .setValue(BlockStateProperties.HORIZONTAL_FACING, Direction.EAST),
-        3);
-    level.setBlock(at.south(), ComponentRegistry.LIMB_JOINT.get().defaultBlockState(), 3);
+        Block.UPDATE_ALL);
+    level.setBlock(
+        at.south(), ComponentRegistry.LIMB_JOINT.get().defaultBlockState(), Block.UPDATE_ALL);
     var body =
         SubLevelAssemblyHelper.assembleBlocks(
             level,
@@ -46,7 +48,8 @@ public final class LimbSettingsTests {
     var tuned = new LimbTuning(20, 1.75, 1.5);
     tuned.save(level, socket);
     new LimbTuning(0, 1.25, .5).save(level, jointCell);
-    level.setBlock(socket, level.getBlockState(socket).setValue(CrabLegBlock.HEIGHT, 3), 3);
+    level.setBlock(
+        socket, level.getBlockState(socket).setValue(CrabLegBlock.HEIGHT, 3), Block.UPDATE_ALL);
     h.assertTrue(
         LimbTuning.get(level, socket).equals(tuned), "Changing height cleared live tuning");
     level.removeBlock(socket, false);
@@ -64,7 +67,7 @@ public final class LimbSettingsTests {
             .get()
             .defaultBlockState()
             .setValue(BlockStateProperties.HORIZONTAL_FACING, Direction.EAST),
-        3);
+        Block.UPDATE_ALL);
     h.assertTrue(
         LimbTuning.get(level, socket).equals(LimbTuning.DEFAULT)
             && level.getBlockState(socket).getValue(CrabLegBlock.HEIGHT) == 1,
@@ -73,7 +76,8 @@ public final class LimbSettingsTests {
     level.removeBlock(jointCell, false);
     h.assertTrue(
         !body.getUserDataTag().contains(LimbTuning.DATA), "Empty tuning registry was retained");
-    level.setBlock(jointCell, ComponentRegistry.LIMB_JOINT.get().defaultBlockState(), 3);
+    level.setBlock(
+        jointCell, ComponentRegistry.LIMB_JOINT.get().defaultBlockState(), Block.UPDATE_ALL);
     h.assertTrue(
         ((ModularJointEntity) level.getBlockEntity(jointCell)).restOffset() == 0
             && LimbTuning.get(level, jointCell).equals(LimbTuning.DEFAULT),
@@ -86,8 +90,8 @@ public final class LimbSettingsTests {
       GameTestHelper h) {
     var level = h.getLevel();
     var at = h.absolutePos(new BlockPos(1, 4, 1));
-    level.setBlock(at, ComponentRegistry.CORE.get().defaultBlockState(), 3);
-    level.setBlock(at.east(), Blocks.STONE.defaultBlockState(), 3);
+    level.setBlock(at, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(at.east(), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
     level.setBlock(
         at.east(2),
         ComponentRegistry.CRAB_LEG
@@ -95,8 +99,9 @@ public final class LimbSettingsTests {
             .defaultBlockState()
             .setValue(BlockStateProperties.HORIZONTAL_FACING, Direction.EAST)
             .setValue(CrabLegBlock.HEIGHT, 3),
-        3);
-    level.setBlock(at.south(), ComponentRegistry.LIMB_SWIVEL.get().defaultBlockState(), 3);
+        Block.UPDATE_ALL);
+    level.setBlock(
+        at.south(), ComponentRegistry.LIMB_SWIVEL.get().defaultBlockState(), Block.UPDATE_ALL);
     var body =
         SubLevelAssemblyHelper.assembleBlocks(
             level,

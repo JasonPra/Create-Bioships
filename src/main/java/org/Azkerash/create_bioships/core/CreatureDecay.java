@@ -19,8 +19,12 @@ import org.Azkerash.create_bioships.Create_bioships;
 /** Two-stage decay shared by every physical fragment of a dead creature. */
 @EventBusSubscriber(modid = Create_bioships.MODID)
 public final class CreatureDecay {
+  private static final int TICKS_PER_GAME_DAY = 24_000;
+  private static final int DECAY_GAME_DAYS = 3;
+  private static final int DECAY_SCAN_INTERVAL_TICKS = 20;
+
   public static final String FAMILY = "create_bioships:remains_family";
-  public static final int DURATION_TICKS = 3 * 24000;
+  public static final int DURATION_TICKS = DECAY_GAME_DAYS * TICKS_PER_GAME_DAY;
   private static final Set<ResourceLocation> LAST_TO_ROT = new TreeSet<>();
   private static final Map<ServerSubLevel, Map<Long, ResourceLocation>> CELLS = new WeakHashMap<>();
 
@@ -156,7 +160,7 @@ public final class CreatureDecay {
   @SubscribeEvent
   public static void tick(ServerTickEvent.Post event) {
     for (var level : event.getServer().getAllLevels()) {
-      if (level.getGameTime() % 20 == 0) {
+      if (level.getGameTime() % DECAY_SCAN_INTERVAL_TICKS == 0) {
         advance(level, level.getGameTime());
       }
     }
@@ -194,7 +198,9 @@ public final class CreatureDecay {
                 .mapToInt(Integer::intValue)
                 .sum();
         family.interval =
-            Math.max(20, (DURATION_TICKS + Math.max(1, size) - 1) / Math.max(1, size));
+            Math.max(
+                DECAY_SCAN_INTERVAL_TICKS,
+                (DURATION_TICKS + Math.max(1, size) - 1) / Math.max(1, size));
         family.next = now + family.interval;
         world.setDirty();
         continue;
@@ -229,8 +235,9 @@ public final class CreatureDecay {
       }
       var eligible = exposed.isEmpty() ? interior : exposed;
       if (eligible.isEmpty()) {
+        // An unloaded ordinary fragment still blocks the final group.
         continue;
-      } // An unloaded ordinary fragment still blocks the final group.
+      }
       var selected = eligible.get(level.random.nextInt(eligible.size()));
       if (CELLS.get(selected.body).size() == 1) {
         // Delete the grid through Sable before creating an empty physics body. Never drop loot.

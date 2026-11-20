@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import java.util.*;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.RenderType;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -131,7 +132,7 @@ public final class CreatureStatsOverlay {
           buffers,
           net.minecraft.client.gui.Font.DisplayMode.SEE_THROUGH,
           0,
-          0xf000f0);
+          LightTexture.FULL_BRIGHT);
     }
     buffers.endBatch();
   }

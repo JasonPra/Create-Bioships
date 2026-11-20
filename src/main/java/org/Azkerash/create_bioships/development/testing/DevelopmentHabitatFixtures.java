@@ -6,6 +6,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.properties.*;
 import net.minecraft.world.phys.*;
 
@@ -44,14 +45,15 @@ public final class DevelopmentHabitatFixtures {
     for (int x = -w - 3; x <= w + 3; x++) {
       for (int z = -d - 3; z <= d + 3; z++) {
         boolean inside = Math.abs(x) < w && Math.abs(z) < d;
-        l.setBlock(b.offset(x, -1, z), Blocks.SMOOTH_STONE.defaultBlockState(), 2);
+        l.setBlock(
+            b.offset(x, -1, z), Blocks.SMOOTH_STONE.defaultBlockState(), Block.UPDATE_CLIENTS);
         l.setBlock(
             b.offset(x, 0, z),
             (inside
                     ? (Math.floorMod(x * 13 + z * 7, 11) < 2 ? Blocks.GRAVEL : Blocks.SAND)
                     : Blocks.DARK_PRISMARINE)
                 .defaultBlockState(),
-            2);
+            Block.UPDATE_CLIENTS);
         if (Math.abs(x) > w || Math.abs(z) > d) {
           continue;
         }
@@ -69,7 +71,7 @@ public final class DevelopmentHabitatFixtures {
               shell
                   ? (rib ? Blocks.PRISMARINE_BRICKS.defaultBlockState() : glass)
                   : (y <= WATER_HEIGHT ? Blocks.WATER : Blocks.AIR).defaultBlockState(),
-              2);
+              Block.UPDATE_CLIENTS);
         }
       }
     }
@@ -81,15 +83,17 @@ public final class DevelopmentHabitatFixtures {
         }
         int noise = Math.floorMod(x * 37 + z * 19, 31);
         if (noise < 4) {
-          l.setBlock(b.offset(x, 1, z), Blocks.SEAGRASS.defaultBlockState(), 2);
+          l.setBlock(b.offset(x, 1, z), Blocks.SEAGRASS.defaultBlockState(), Block.UPDATE_CLIENTS);
         } else if (noise == 6) {
           for (int y = 1; y <= 3; y++) {
-            l.setBlock(b.offset(x, y, z), Blocks.KELP_PLANT.defaultBlockState(), 2);
+            l.setBlock(
+                b.offset(x, y, z), Blocks.KELP_PLANT.defaultBlockState(), Block.UPDATE_CLIENTS);
           }
-          l.setBlock(b.offset(x, 4, z), Blocks.KELP.defaultBlockState(), 2);
+          l.setBlock(b.offset(x, 4, z), Blocks.KELP.defaultBlockState(), Block.UPDATE_CLIENTS);
         }
         if (Math.floorMod(x, 8) == 0 && Math.floorMod(z, 6) == 0) {
-          l.setBlock(b.offset(x, 0, z), Blocks.SEA_LANTERN.defaultBlockState(), 2);
+          l.setBlock(
+              b.offset(x, 0, z), Blocks.SEA_LANTERN.defaultBlockState(), Block.UPDATE_CLIENTS);
         }
       }
     }
@@ -100,30 +104,42 @@ public final class DevelopmentHabitatFixtures {
           for (int y = 1; y <= 3; y++) {
             if (x * x + z * z + 3 * y * y < 20) {
               l.setBlock(
-                  b.offset(cx + x, y, cz + z), Blocks.MOSSY_COBBLESTONE.defaultBlockState(), 2);
+                  b.offset(cx + x, y, cz + z),
+                  Blocks.MOSSY_COBBLESTONE.defaultBlockState(),
+                  Block.UPDATE_CLIENTS);
             }
           }
         }
       }
-      l.setBlock(b.offset(cx, 1, cz - 4), Blocks.BRAIN_CORAL_BLOCK.defaultBlockState(), 2);
-      l.setBlock(b.offset(cx + 1, 1, cz - 4), Blocks.BUBBLE_CORAL_BLOCK.defaultBlockState(), 2);
+      l.setBlock(
+          b.offset(cx, 1, cz - 4),
+          Blocks.BRAIN_CORAL_BLOCK.defaultBlockState(),
+          Block.UPDATE_CLIENTS);
+      l.setBlock(
+          b.offset(cx + 1, 1, cz - 4),
+          Blocks.BUBBLE_CORAL_BLOCK.defaultBlockState(),
+          Block.UPDATE_CLIENTS);
     }
     // Dry ladder and viewing deck enter above the waterline, so access cannot drain the tank.
     for (int y = 1; y <= 21; y++) {
-      l.setBlock(b.offset(-25, y, -20), Blocks.STRIPPED_SPRUCE_LOG.defaultBlockState(), 2);
+      l.setBlock(
+          b.offset(-25, y, -20),
+          Blocks.STRIPPED_SPRUCE_LOG.defaultBlockState(),
+          Block.UPDATE_CLIENTS);
       l.setBlock(
           b.offset(-25, y, -21),
           Blocks.LADDER.defaultBlockState().setValue(LadderBlock.FACING, Direction.NORTH),
-          2);
+          Block.UPDATE_CLIENTS);
     }
     for (int x = -26; x <= -20; x++) {
       for (int z = -21; z <= -16; z++) {
-        l.setBlock(b.offset(x, 20, z), Blocks.SPRUCE_PLANKS.defaultBlockState(), 2);
+        l.setBlock(
+            b.offset(x, 20, z), Blocks.SPRUCE_PLANKS.defaultBlockState(), Block.UPDATE_CLIENTS);
       }
     }
     for (int x = -23; x <= -20; x++) {
       for (int y = 21; y <= 22; y++) {
-        l.setBlock(b.offset(x, y, -d), Blocks.AIR.defaultBlockState(), 2);
+        l.setBlock(b.offset(x, y, -d), Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
       }
     }
     label(
@@ -150,7 +166,7 @@ public final class DevelopmentHabitatFixtures {
         l.setBlock(
             b.offset(x, -1, z),
             (inside ? Blocks.MOSS_BLOCK : Blocks.MOSSY_STONE_BRICKS).defaultBlockState(),
-            2);
+            Block.UPDATE_CLIENTS);
         if (Math.abs(x) > half || Math.abs(z) > half) {
           continue;
         }
@@ -166,7 +182,7 @@ public final class DevelopmentHabitatFixtures {
               shell
                   ? (rib ? Blocks.MOSSY_STONE_BRICKS.defaultBlockState() : glass)
                   : Blocks.AIR.defaultBlockState(),
-              2);
+              Block.UPDATE_CLIENTS);
         }
       }
     }
@@ -174,7 +190,7 @@ public final class DevelopmentHabitatFixtures {
       for (int end : new int[] {-1, 1}) {
         var trunk = b.offset(side * 12, 0, end * 12);
         for (int y = 0; y < 5; y++) {
-          l.setBlock(trunk.above(y), Blocks.OAK_LOG.defaultBlockState(), 2);
+          l.setBlock(trunk.above(y), Blocks.OAK_LOG.defaultBlockState(), Block.UPDATE_CLIENTS);
         }
         for (int x = -2; x <= 2; x++) {
           for (int z = -2; z <= 2; z++) {
@@ -183,7 +199,7 @@ public final class DevelopmentHabitatFixtures {
                 l.setBlock(
                     trunk.offset(x, y, z),
                     Blocks.OAK_LEAVES.defaultBlockState().setValue(LeavesBlock.PERSISTENT, true),
-                    2);
+                    Block.UPDATE_CLIENTS);
               }
             }
           }
@@ -197,17 +213,20 @@ public final class DevelopmentHabitatFixtures {
         }
         if (Math.floorMod(x * 13 + z * 7, 29) == 0) {
           l.setBlock(
-              b.offset(x, 0, z), (x % 2 == 0 ? Blocks.FERN : Blocks.POPPY).defaultBlockState(), 2);
+              b.offset(x, 0, z),
+              (x % 2 == 0 ? Blocks.FERN : Blocks.POPPY).defaultBlockState(),
+              Block.UPDATE_CLIENTS);
         }
         if (Math.floorMod(x * 7 + z * 11, 53) == 0) {
-          l.setBlock(b.offset(x, -1, z), Blocks.SHROOMLIGHT.defaultBlockState(), 2);
+          l.setBlock(
+              b.offset(x, -1, z), Blocks.SHROOMLIGHT.defaultBlockState(), Block.UPDATE_CLIENTS);
         }
       }
     }
     for (int x = -13; x <= -10; x++) {
       for (int z = -5; z <= 1; z++) {
-        l.setBlock(b.offset(x, -2, z), Blocks.CLAY.defaultBlockState(), 2);
-        l.setBlock(b.offset(x, -1, z), Blocks.WATER.defaultBlockState(), 2);
+        l.setBlock(b.offset(x, -2, z), Blocks.CLAY.defaultBlockState(), Block.UPDATE_CLIENTS);
+        l.setBlock(b.offset(x, -1, z), Blocks.WATER.defaultBlockState(), Block.UPDATE_CLIENTS);
       }
     }
     for (int x = 0; x <= 1; x++) {
@@ -217,10 +236,13 @@ public final class DevelopmentHabitatFixtures {
               .defaultBlockState()
               .setValue(DoorBlock.FACING, Direction.SOUTH)
               .setValue(DoorBlock.HINGE, x == 0 ? DoorHingeSide.LEFT : DoorHingeSide.RIGHT);
-      l.setBlock(b.offset(x, 0, -half), door, 2);
-      l.setBlock(b.offset(x, 1, -half), door.setValue(DoorBlock.HALF, DoubleBlockHalf.UPPER), 2);
+      l.setBlock(b.offset(x, 0, -half), door, Block.UPDATE_CLIENTS);
+      l.setBlock(
+          b.offset(x, 1, -half),
+          door.setValue(DoorBlock.HALF, DoubleBlockHalf.UPPER),
+          Block.UPDATE_CLIENTS);
       for (int z = -half - 2; z <= -half + 4; z++) {
-        l.setBlock(b.offset(x, -1, z), Blocks.OAK_PLANKS.defaultBlockState(), 2);
+        l.setBlock(b.offset(x, -1, z), Blocks.OAK_PLANKS.defaultBlockState(), Block.UPDATE_CLIENTS);
       }
     }
   }

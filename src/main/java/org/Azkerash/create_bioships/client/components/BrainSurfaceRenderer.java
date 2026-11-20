@@ -7,6 +7,7 @@ import dev.ryanhcode.sable.sublevel.ClientSubLevel;
 import java.util.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.*;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.core.*;
@@ -244,7 +245,7 @@ public final class BrainSurfaceRenderer {
           buffers,
           net.minecraft.client.gui.Font.DisplayMode.NORMAL,
           0,
-          0xf000f0);
+          LightTexture.FULL_BRIGHT);
       mc.font.drawInBatch(
           "{ }",
           -mc.font.width("{ }") / 2f,
@@ -255,7 +256,7 @@ public final class BrainSurfaceRenderer {
           buffers,
           net.minecraft.client.gui.Font.DisplayMode.NORMAL,
           0,
-          0xf000f0);
+          LightTexture.FULL_BRIGHT);
     }
     stack.popPose();
   }

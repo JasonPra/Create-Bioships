@@ -9,6 +9,9 @@ import net.minecraft.world.phys.Vec3;
 
 public record CreatureStatsPayload(UUID body, Vec3 at, List<Metric> rows)
     implements CustomPacketPayload {
+  private static final int MAX_ROWS = 14;
+  private static final int MAX_ROW_LABEL_CHARS = 120;
+
   public record Metric(String text, double fraction, int color) {
     public Metric {
       if (text.length() > 120 || !Double.isFinite(fraction) || fraction < -1 || fraction > 1) {
@@ -19,7 +22,7 @@ public record CreatureStatsPayload(UUID body, Vec3 at, List<Metric> rows)
 
   public CreatureStatsPayload {
     rows = List.copyOf(rows);
-    if (rows.size() > 14
+    if (rows.size() > MAX_ROWS
         || !Double.isFinite(at.x)
         || !Double.isFinite(at.y)
         || !Double.isFinite(at.z)) {
@@ -43,7 +46,7 @@ public record CreatureStatsPayload(UUID body, Vec3 at, List<Metric> rows)
             b.writeDouble(p.at.z);
             b.writeVarInt(p.rows.size());
             for (var row : p.rows) {
-              b.writeUtf(row.text, 120);
+              b.writeUtf(row.text, MAX_ROW_LABEL_CHARS);
               b.writeDouble(row.fraction);
               b.writeInt(row.color);
             }
@@ -52,12 +55,12 @@ public record CreatureStatsPayload(UUID body, Vec3 at, List<Metric> rows)
             var id = b.readUUID();
             var pos = new Vec3(b.readDouble(), b.readDouble(), b.readDouble());
             int count = b.readVarInt();
-            if (count < 0 || count > 14) {
+            if (count < 0 || count > MAX_ROWS) {
               throw new IllegalArgumentException("Invalid statistics count");
             }
             var rows = new ArrayList<Metric>();
             for (int i = 0; i < count; i++) {
-              rows.add(new Metric(b.readUtf(120), b.readDouble(), b.readInt()));
+              rows.add(new Metric(b.readUtf(MAX_ROW_LABEL_CHARS), b.readDouble(), b.readInt()));
             }
             return new CreatureStatsPayload(id, pos, rows);
           });

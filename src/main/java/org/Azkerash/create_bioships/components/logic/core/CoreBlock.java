@@ -108,7 +108,10 @@ public final class CoreBlock extends Block
   protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
     if (!assembled(level, pos)) {
       if (!state.getValue(BLINK) || state.getValue(STAGE) != 0 || state.getValue(WAKE) != 0) {
-        level.setBlock(pos, state.setValue(BLINK, true).setValue(STAGE, 0).setValue(WAKE, 0), 2);
+        level.setBlock(
+            pos,
+            state.setValue(BLINK, true).setValue(STAGE, 0).setValue(WAKE, 0),
+            Block.UPDATE_CLIENTS);
       }
       return;
     }
@@ -119,7 +122,10 @@ public final class CoreBlock extends Block
     }
     var body = CoreAssemblyRules.containing(level, pos);
     if (body != null && SubLevelHealth.status(body).dead()) {
-      level.setBlock(pos, state.setValue(BLINK, true).setValue(WAKE, 0).setValue(STAGE, 0), 2);
+      level.setBlock(
+          pos,
+          state.setValue(BLINK, true).setValue(WAKE, 0).setValue(STAGE, 0),
+          Block.UPDATE_CLIENTS);
       return;
     }
     org.Azkerash.create_bioships.components.logic.eye.EyeBlink.advance(this, state, level, pos);
@@ -147,7 +153,7 @@ public final class CoreBlock extends Block
             .setValue(BLINK, true)
             .setValue(STAGE, 0)
             .setValue(WAKE, assembled(destination, to) ? 1 : 0),
-        2);
+        Block.UPDATE_CLIENTS);
     CoreAssemblyRules.changed(destination, to);
     if (destination.getBlockEntity(to) instanceof CoreGogglesDisplay display) {
       display.restoreRecoveredCore();

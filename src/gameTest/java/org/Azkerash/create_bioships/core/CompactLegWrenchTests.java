@@ -7,6 +7,7 @@ import net.minecraft.core.*;
 import net.minecraft.gametest.framework.*;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.*;
@@ -25,15 +26,15 @@ public final class CompactLegWrenchTests {
       GameTestHelper helper) {
     var level = helper.getLevel();
     var at = helper.absolutePos(new BlockPos(1, 3, 1));
-    level.setBlock(at, ComponentRegistry.CORE.get().defaultBlockState(), 3);
-    level.setBlock(at.east(), Blocks.STONE.defaultBlockState(), 3);
+    level.setBlock(at, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(at.east(), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
     level.setBlock(
         at.east(2),
         ComponentRegistry.CRAB_LEG
             .get()
             .defaultBlockState()
             .setValue(BlockStateProperties.HORIZONTAL_FACING, Direction.EAST),
-        3);
+        Block.UPDATE_ALL);
     var body =
         SubLevelAssemblyHelper.assembleBlocks(
             level, at, List.of(at, at.east(), at.east(2)), new BoundingBox3i(at, at.east(2)));

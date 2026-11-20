@@ -8,6 +8,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.*;
+import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
@@ -25,10 +26,10 @@ public final class SacRoutingTests {
     var level = helper.getLevel();
     var pos = helper.absolutePos(new BlockPos(2, 3, 2));
     var sac = BuiltInRegistries.BLOCK.get(ResourceLocation.parse("biomancy:storage_sac"));
-    level.setBlock(pos, ComponentRegistry.INTESTINE.get().defaultBlockState(), 3);
+    level.setBlock(pos, ComponentRegistry.INTESTINE.get().defaultBlockState(), Block.UPDATE_ALL);
     for (var face : Direction.values()) {
       var adjacent = pos.relative(face);
-      level.setBlock(adjacent, sac.defaultBlockState(), 3);
+      level.setBlock(adjacent, sac.defaultBlockState(), Block.UPDATE_ALL);
       helper.assertTrue(
           level.getBlockState(pos).getValue(IntestineBlock.CONNECTIONS.get(face))
               == (face.getAxis() == Direction.Axis.Y),
@@ -52,11 +53,14 @@ public final class SacRoutingTests {
     var level = helper.getLevel();
     var origin = helper.absolutePos(new BlockPos(1, 3, 1));
     var sacBlock = BuiltInRegistries.BLOCK.get(ResourceLocation.parse("biomancy:storage_sac"));
-    level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
-    level.setBlock(origin.east(), ComponentRegistry.MOUTH.get().defaultBlockState(), 3);
-    level.setBlock(origin.east(2), ComponentRegistry.INTESTINE.get().defaultBlockState(), 3);
-    level.setBlock(origin.east(3), ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
-    level.setBlock(origin.east(2).above(), sacBlock.defaultBlockState(), 3);
+    level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(
+        origin.east(), ComponentRegistry.MOUTH.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(
+        origin.east(2), ComponentRegistry.INTESTINE.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(
+        origin.east(3), ComponentRegistry.STOMACH.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(origin.east(2).above(), sacBlock.defaultBlockState(), Block.UPDATE_ALL);
     var cells =
         List.of(origin, origin.east(), origin.east(2), origin.east(3), origin.east(2).above());
     var body =
@@ -119,12 +123,12 @@ public final class SacRoutingTests {
     var l = h.getLevel();
     var o = h.absolutePos(new BlockPos(1, 3, 1));
     var sacBlock = BuiltInRegistries.BLOCK.get(ResourceLocation.parse("biomancy:storage_sac"));
-    l.setBlock(o, ComponentRegistry.CORE.get().defaultBlockState(), 3);
-    l.setBlock(o.east(), ComponentRegistry.MOUTH.get().defaultBlockState(), 3);
-    l.setBlock(o.east(2), ComponentRegistry.INTESTINE.get().defaultBlockState(), 3);
-    l.setBlock(o.east(3), ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
+    l.setBlock(o, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
+    l.setBlock(o.east(), ComponentRegistry.MOUTH.get().defaultBlockState(), Block.UPDATE_ALL);
+    l.setBlock(o.east(2), ComponentRegistry.INTESTINE.get().defaultBlockState(), Block.UPDATE_ALL);
+    l.setBlock(o.east(3), ComponentRegistry.STOMACH.get().defaultBlockState(), Block.UPDATE_ALL);
     for (var pos : List.of(o.east(2).above(), o.east(2).above(2), o.east(2).south())) {
-      l.setBlock(pos, sacBlock.defaultBlockState(), 3);
+      l.setBlock(pos, sacBlock.defaultBlockState(), Block.UPDATE_ALL);
     }
     var cells =
         List.of(

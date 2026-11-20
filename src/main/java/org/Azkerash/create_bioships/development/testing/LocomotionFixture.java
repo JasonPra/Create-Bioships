@@ -14,6 +14,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Display;
 import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.CommandBlockEntity;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.*;
@@ -59,12 +60,12 @@ public final class LocomotionFixture {
             pos,
             (x == 0 && z == 0 ? ComponentRegistry.CORE.get() : ComponentRegistry.CHITIN_ARMOR.get())
                 .defaultBlockState(),
-            3);
+            Block.UPDATE_ALL);
         cells.add(pos);
       }
     }
     var brain = base.offset(0, 3, 0);
-    level.setBlock(brain, ComponentRegistry.BRAIN.get().defaultBlockState(), 3);
+    level.setBlock(brain, ComponentRegistry.BRAIN.get().defaultBlockState(), Block.UPDATE_ALL);
     cells.add(brain);
     for (int side : new int[] {-1, 1}) {
       for (int z = -1; z <= 1; z++) {
@@ -77,7 +78,7 @@ public final class LocomotionFixture {
                 .setValue(
                     BlockStateProperties.HORIZONTAL_FACING,
                     side < 0 ? Direction.WEST : Direction.EAST),
-            3);
+            Block.UPDATE_ALL);
         cells.add(pos);
       }
     }
@@ -153,14 +154,14 @@ public final class LocomotionFixture {
                     : 1,
                 -8);
         if (!level.getBlockState(pos).is(DevelopmentTestBlocks.GLASS_DOOR.get())) {
-          level.setBlock(pos, door.setValue(DoorBlock.HALF, half), 3);
+          level.setBlock(pos, door.setValue(DoorBlock.HALF, half), Block.UPDATE_ALL);
         }
       }
     }
   }
 
   private static void button(ServerLevel level, BlockPos pos, String command) {
-    level.setBlock(pos, Blocks.COMMAND_BLOCK.defaultBlockState(), 3);
+    level.setBlock(pos, Blocks.COMMAND_BLOCK.defaultBlockState(), Block.UPDATE_ALL);
     if (level.getBlockEntity(pos) instanceof CommandBlockEntity be) {
       be.getCommandBlock().setCommand(command);
     }
@@ -170,7 +171,7 @@ public final class LocomotionFixture {
             .get()
             .defaultBlockState()
             .setValue(BlockStateProperties.HORIZONTAL_FACING, Direction.NORTH),
-        3);
+        Block.UPDATE_ALL);
   }
 
   public static int start(ServerLevel level) {

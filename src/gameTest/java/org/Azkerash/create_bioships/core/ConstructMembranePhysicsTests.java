@@ -7,6 +7,7 @@ import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import java.util.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.*;
@@ -28,7 +29,7 @@ public final class ConstructMembranePhysicsTests {
       for (int x = -7; x <= 7; x++) {
         for (int z = -7; z <= 32; z++) {
           l.setChunkForced((p.getX() + x) >> 4, (p.getZ() + z) >> 4, true);
-          l.setBlock(p.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 2);
+          l.setBlock(p.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), Block.UPDATE_CLIENTS);
         }
       }
       var cells = new ArrayList<BlockPos>();
@@ -42,17 +43,18 @@ public final class ConstructMembranePhysicsTests {
                       ? com.github.elenterius.biomancy.init.ModBlocks.BIOMETRIC_MEMBRANE.get()
                       : Blocks.OBSIDIAN)
                   .defaultBlockState(),
-              3);
+              Block.UPDATE_ALL);
         }
       }
-      l.setBlock(p.offset(-4, 0, 0), ComponentRegistry.CORE.get().defaultBlockState(), 3);
+      l.setBlock(
+          p.offset(-4, 0, 0), ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
       var wall =
           SubLevelAssemblyHelper.assembleBlocks(
               l, p, cells, new BoundingBox3i(p.offset(-5, 0, 0), p.offset(5, 3, 0)));
       CoreAssemblyRules.mark(l, wall.getPlot().getCenterBlock().offset(-4, 0, 0));
       DevelopmentLifeSupport.pause(wall);
       var start = p.north(4);
-      l.setBlock(start, ComponentRegistry.CORE.get().defaultBlockState(), 3);
+      l.setBlock(start, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
       var craft =
           SubLevelAssemblyHelper.assembleBlocks(
               l, start, List.of(start), new BoundingBox3i(start, start));

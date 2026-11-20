@@ -10,6 +10,7 @@ import net.minecraft.world.item.*;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.*;
 import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.*;
 import net.minecraft.world.level.block.state.properties.*;
 import net.minecraft.world.level.material.Fluids;
@@ -66,7 +67,7 @@ public final class ThroneBlock extends SeatBlock {
             .setValue(
                 BlockStateProperties.WATERLOGGED,
                 l.getFluidState(p.above()).is(net.minecraft.tags.FluidTags.WATER)),
-        3);
+        Block.UPDATE_ALL);
   }
 
   @Override

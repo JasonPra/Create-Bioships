@@ -10,6 +10,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.*;
 import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.gametest.*;
@@ -32,15 +33,18 @@ public final class StomachCapacityTests {
     }
     for (int x = -4; x <= 4; x++) {
       for (int z = -4; z <= 4; z++) {
-        level.setBlock(origin.offset(x, -2, z), Blocks.BEDROCK.defaultBlockState(), 3);
+        level.setBlock(
+            origin.offset(x, -2, z), Blocks.BEDROCK.defaultBlockState(), Block.UPDATE_ALL);
       }
     }
     helper.runAfterDelay(
         10,
         () -> {
-          level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
-          level.setBlock(origin.east(), ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
-          level.setBlock(origin.east(2), Blocks.STONE.defaultBlockState(), 3);
+          level.setBlock(
+              origin, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
+          level.setBlock(
+              origin.east(), ComponentRegistry.STOMACH.get().defaultBlockState(), Block.UPDATE_ALL);
+          level.setBlock(origin.east(2), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
           var body =
               SubLevelAssemblyHelper.assembleBlocks(
                   level,
@@ -148,27 +152,31 @@ public final class StomachCapacityTests {
           helper.assertTrue(
               SubLevelHealth.status(body).current() == before + 1,
               "Paused metabolism regenerated health");
-          level.setBlock(core.east(), Blocks.STONE.defaultBlockState(), 3);
+          level.setBlock(core.east(), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
           helper.assertTrue(
               SubLevelData.maximumHunger(body) == 5
                   && SubLevelData.hunger(body) == 5
                   && SubLevelHunger.minimumHungerToHeal(body) == 5,
               "Removal did not shrink capacity and clamp hunger");
-          level.setBlock(core.east(), ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
-          level.setBlock(core.east(2), ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
+          level.setBlock(
+              core.east(), ComponentRegistry.STOMACH.get().defaultBlockState(), Block.UPDATE_ALL);
+          level.setBlock(
+              core.east(2), ComponentRegistry.STOMACH.get().defaultBlockState(), Block.UPDATE_ALL);
           helper.assertTrue(
               SubLevelData.maximumHunger(body) == 12 && SubLevelData.hunger(body) == 5,
               "Additional stomach failed to stack capacity without filling hunger");
-          level.setBlock(core.east(), Blocks.STONE.defaultBlockState(), 3);
+          level.setBlock(core.east(), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
           helper.assertTrue(
               SubLevelData.maximumHunger(body) == 10, "Remaining stomach lost capacity");
-          level.setBlock(core.east(2), Blocks.STONE.defaultBlockState(), 3);
+          level.setBlock(core.east(2), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
           helper.assertTrue(
               SubLevelData.maximumHunger(body) == 5, "Last stomach removal kept bonus capacity");
           // Build the same group in reverse order; capacity depends on the total, not placement
           // order.
-          level.setBlock(core.east(2), ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
-          level.setBlock(core.east(), ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
+          level.setBlock(
+              core.east(2), ComponentRegistry.STOMACH.get().defaultBlockState(), Block.UPDATE_ALL);
+          level.setBlock(
+              core.east(), ComponentRegistry.STOMACH.get().defaultBlockState(), Block.UPDATE_ALL);
           helper.assertTrue(
               SubLevelData.maximumHunger(body) == 12 && SubLevelData.hunger(body) == 5,
               "Reverse placement changed diminishing returns or filled hunger");

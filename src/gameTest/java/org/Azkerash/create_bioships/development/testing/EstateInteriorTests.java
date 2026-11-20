@@ -3,6 +3,7 @@ package org.Azkerash.create_bioships.development.testing;
 import net.minecraft.core.*;
 import net.minecraft.gametest.framework.*;
 import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.furniture.FurnitureRegistry;
 
@@ -16,11 +17,11 @@ public final class EstateInteriorTests {
     var base = new BlockPos(9500, 80, 256);
     for (int x = -13; x <= 13; x++) {
       for (int z = -13; z <= 13; z++) {
-        l.setBlock(base.offset(x, 23, z), Blocks.STONE.defaultBlockState(), 2);
+        l.setBlock(base.offset(x, 23, z), Blocks.STONE.defaultBlockState(), Block.UPDATE_CLIENTS);
       }
     }
     var oldChest = base.offset(-8, 24, 9);
-    l.setBlock(oldChest, Blocks.CHEST.defaultBlockState(), 3);
+    l.setBlock(oldChest, Blocks.CHEST.defaultBlockState(), Block.UPDATE_ALL);
     ((net.minecraft.world.Container) l.getBlockEntity(oldChest))
         .setItem(
             0, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.DIAMOND, 3));
@@ -51,7 +52,8 @@ public final class EstateInteriorTests {
     for (int floor : new int[] {0, 12, 36}) {
       for (int x = -12; x <= 12; x++) {
         for (int z = -12; z <= 12; z++) {
-          l.setBlock(base.offset(x, floor - 1, z), Blocks.STONE.defaultBlockState(), 2);
+          l.setBlock(
+              base.offset(x, floor - 1, z), Blocks.STONE.defaultBlockState(), Block.UPDATE_CLIENTS);
         }
       }
     }

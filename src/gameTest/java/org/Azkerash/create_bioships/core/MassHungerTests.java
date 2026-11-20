@@ -6,6 +6,7 @@ import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import java.util.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.*;
+import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
 import org.Azkerash.create_bioships.development.testing.DevelopmentLifeSupport;
@@ -28,7 +29,8 @@ public final class MassHungerTests {
         .thenExecuteAfter(
             10,
             () -> {
-              level.setBlock(at, ComponentRegistry.CORE.get().defaultBlockState(), 3);
+              level.setBlock(
+                  at, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
               bodies[0] =
                   SubLevelAssemblyHelper.assembleBlocks(
                       level, at, List.of(at), new BoundingBox3i(at, at));
@@ -37,7 +39,8 @@ public final class MassHungerTests {
               var cells = new ArrayList<BlockPos>();
               for (int x = 0; x < 20; x++) {
                 var p = at.offset(x + 32, 0, 0);
-                level.setBlock(p, ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState(), 3);
+                level.setBlock(
+                    p, ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState(), Block.UPDATE_ALL);
                 cells.add(p);
               }
               bodies[1] =

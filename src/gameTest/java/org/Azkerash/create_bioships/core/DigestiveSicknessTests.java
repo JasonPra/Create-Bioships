@@ -11,6 +11,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
@@ -34,16 +35,18 @@ public final class DigestiveSicknessTests {
     var origin = h.absolutePos(new BlockPos(1, 3, 1));
     var cells =
         List.of(origin, origin.east(), origin.east(2), origin.east(3), origin.east(2).above());
-    l.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
-    l.setBlock(origin.east(), ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
-    l.setBlock(origin.east(2), ComponentRegistry.INTESTINE.get().defaultBlockState(), 3);
-    l.setBlock(origin.east(3), ComponentRegistry.MOUTH.get().defaultBlockState(), 3);
+    l.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
+    l.setBlock(
+        origin.east(), ComponentRegistry.STOMACH.get().defaultBlockState(), Block.UPDATE_ALL);
+    l.setBlock(
+        origin.east(2), ComponentRegistry.INTESTINE.get().defaultBlockState(), Block.UPDATE_ALL);
+    l.setBlock(origin.east(3), ComponentRegistry.MOUTH.get().defaultBlockState(), Block.UPDATE_ALL);
     l.setBlock(
         origin.east(2).above(),
         BuiltInRegistries.BLOCK
             .get(ResourceLocation.parse("biomancy:storage_sac"))
             .defaultBlockState(),
-        3);
+        Block.UPDATE_ALL);
     var body =
         SubLevelAssemblyHelper.assembleBlocks(
             l, origin, cells, new BoundingBox3i(origin, origin.east(3).above()));

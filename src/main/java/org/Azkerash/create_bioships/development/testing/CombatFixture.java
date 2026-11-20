@@ -18,6 +18,7 @@ import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.CommandBlockEntity;
 import net.minecraft.world.level.block.state.properties.*;
 import net.minecraft.world.phys.*;
@@ -123,7 +124,8 @@ public final class CombatFixture {
     for (int x = -12; x <= 12; x++) {
       for (int z = -12; z <= 12; z++) {
         for (int y = 0; y < HEIGHT; y++) {
-          level.setBlock(base(level).offset(x, y, z), Blocks.AIR.defaultBlockState(), 2);
+          level.setBlock(
+              base(level).offset(x, y, z), Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
         }
       }
     }
@@ -134,9 +136,10 @@ public final class CombatFixture {
         BuiltInRegistries.BLOCK.get(
             ResourceLocation.fromNamespaceAndPath("biomancy", "packed_flesh"));
     for (var pos : subject(base(level))) {
-      level.setBlock(pos, flesh.defaultBlockState(), 3);
+      level.setBlock(pos, flesh.defaultBlockState(), Block.UPDATE_ALL);
     }
-    level.setBlock(base(level).above(9), ComponentRegistry.CORE.get().defaultBlockState(), 3);
+    level.setBlock(
+        base(level).above(9), ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
   }
 
   public static void reset(ServerLevel level) {
@@ -159,7 +162,8 @@ public final class CombatFixture {
     }
     for (int x = -14; x <= 14; x++) {
       for (int z = -19; z <= 14; z++) {
-        level.setBlock(b.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 2);
+        level.setBlock(
+            b.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), Block.UPDATE_CLIENTS);
       }
     }
     for (int x = -13; x <= 13; x++) {
@@ -168,7 +172,9 @@ public final class CombatFixture {
           int edge = Math.max(Math.abs(x), Math.abs(z));
           if (edge == 13 || y == HEIGHT) {
             level.setBlock(
-                b.offset(x, y, z), DevelopmentTestBlocks.GLASS.get().defaultBlockState(), 2);
+                b.offset(x, y, z),
+                DevelopmentTestBlocks.GLASS.get().defaultBlockState(),
+                Block.UPDATE_CLIENTS);
           }
         }
       }
@@ -183,7 +189,7 @@ public final class CombatFixture {
   }
 
   private static void control(ServerLevel level, BlockPos pos, String command) {
-    level.setBlock(pos, Blocks.COMMAND_BLOCK.defaultBlockState(), 3);
+    level.setBlock(pos, Blocks.COMMAND_BLOCK.defaultBlockState(), Block.UPDATE_ALL);
     var block = (CommandBlockEntity) level.getBlockEntity(pos);
     block.getCommandBlock().setCommand(command);
     block.getCommandBlock().setTrackOutput(false);
@@ -194,7 +200,7 @@ public final class CombatFixture {
             .get()
             .defaultBlockState()
             .setValue(BlockStateProperties.ATTACH_FACE, AttachFace.FLOOR),
-        3);
+        Block.UPDATE_ALL);
   }
 
   private static void explanation(ServerLevel level, String progress) {
@@ -324,7 +330,10 @@ public final class CombatFixture {
       for (int x = -10; x <= 10; x++) {
         for (int z = -10; z <= 10; z++) {
           for (int y = 0; y < 3; y++) {
-            level.setBlock(base(level).offset(x, y, z), Blocks.WATER.defaultBlockState(), 2);
+            level.setBlock(
+                base(level).offset(x, y, z),
+                Blocks.WATER.defaultBlockState(),
+                Block.UPDATE_CLIENTS);
           }
         }
       }

@@ -6,6 +6,7 @@ import java.util.List;
 import net.minecraft.core.*;
 import net.minecraft.gametest.framework.*;
 import net.minecraft.world.entity.projectile.Arrow;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.gametest.*;
@@ -28,8 +29,8 @@ public final class ImpactAdapterTests {
     helper.runAfterDelay(
         10,
         () -> {
-          level.setBlock(origin, Blocks.STONE.defaultBlockState(), 3);
-          level.setBlock(origin.east(), Blocks.STONE.defaultBlockState(), 3);
+          level.setBlock(origin, Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
+          level.setBlock(origin.east(), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
           var body =
               SubLevelAssemblyHelper.assembleBlocks(
                   level,

@@ -9,6 +9,8 @@ import net.minecraft.resources.ResourceLocation;
 
 public record DigestiveDebugPayload(UUID body, List<Node> nodes, boolean truncated)
     implements CustomPacketPayload {
+  private static final int MAX_CONTENT_TYPES = 27;
+
   public record ItemTotal(ResourceLocation item, int count) {
     public ItemTotal {
       if (count <= 0) {
@@ -21,7 +23,7 @@ public record DigestiveDebugPayload(UUID body, List<Node> nodes, boolean truncat
       BlockPos pos, int kind, int slots, int used, int items, List<ItemTotal> contents) {
     public Node {
       contents = List.copyOf(contents);
-      if (contents.size() > 27) {
+      if (contents.size() > MAX_CONTENT_TYPES) {
         throw new IllegalArgumentException("Too many inventory item types");
       }
     }
@@ -74,7 +76,7 @@ public record DigestiveDebugPayload(UUID body, List<Node> nodes, boolean truncat
                   used = buffer.readVarInt(),
                   items = buffer.readVarInt();
               int types = buffer.readVarInt();
-              if (types < 0 || types > 27) {
+              if (types < 0 || types > MAX_CONTENT_TYPES) {
                 throw new IllegalArgumentException("Invalid inventory summary");
               }
               var contents = new ArrayList<ItemTotal>();

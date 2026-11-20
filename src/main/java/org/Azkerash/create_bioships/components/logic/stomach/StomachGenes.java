@@ -7,11 +7,15 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.*;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
 import org.Azkerash.create_bioships.core.*;
 
 /** Stomach-owned gene state and effects. New component types implement their own rules. */
 public final class StomachGenes {
+  /** Nutrition uses fixed-point fifths so fractional upgrade benefits survive saving. */
+  public static final int NUTRITION_UNITS_PER_HUNGER = 5;
+
   public static final int LONGEVITY_CAPACITY = 5, MAX_LONGEVITY = 3, MAX_EFFICIENCY = 3;
   private static final int[] EXTRA_COMPONENT_CHANCE = {0, 20, 30, 35};
   private final StomachBlockEntity stomach;
@@ -42,7 +46,7 @@ public final class StomachGenes {
 
   /** Fifths of a hunger point: 4, 4.8, 5.2, 5.4 per paste. */
   public int nutritionFifths() {
-    return StomachBlockEntity.HUNGER_PER_MEAL * 5
+    return StomachBlockEntity.HUNGER_PER_MEAL * NUTRITION_UNITS_PER_HUNGER
         + switch (efficiency()) {
           case 1 -> 4;
           case 2 -> 6;
@@ -86,7 +90,10 @@ public final class StomachGenes {
         SubLevelHunger.refreshCapacity(body);
       }
       level.sendBlockUpdated(
-          stomach.getBlockPos(), stomach.getBlockState(), stomach.getBlockState(), 2);
+          stomach.getBlockPos(),
+          stomach.getBlockState(),
+          stomach.getBlockState(),
+          Block.UPDATE_CLIENTS);
     }
   }
 

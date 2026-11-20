@@ -6,6 +6,7 @@ import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.gametest.framework.*;
 import net.minecraft.world.entity.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.*;
 import net.neoforged.fml.ModList;
@@ -29,26 +30,29 @@ public final class EpicFightCompatibilityTests {
     level.setChunkForced(17, 8, true);
     for (int x = -4; x <= 4; x++) {
       for (int z = -4; z <= 4; z++) {
-        level.setBlock(origin.offset(x, -2, z), Blocks.BEDROCK.defaultBlockState(), 3);
+        level.setBlock(
+            origin.offset(x, -2, z), Blocks.BEDROCK.defaultBlockState(), Block.UPDATE_ALL);
       }
     }
     helper.runAfterDelay(
         10,
         () -> {
           var facing = net.minecraft.world.level.block.state.properties.BlockStateProperties.FACING;
-          level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
+          level.setBlock(
+              origin, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
           level.setBlock(
               origin.east(),
               ComponentRegistry.LAND_EYE
                   .get()
                   .defaultBlockState()
                   .setValue(facing, Direction.NORTH),
-              3);
-          level.setBlock(origin.east().south(), Blocks.STONE.defaultBlockState(), 3);
-          level.setBlock(origin.west(2), Blocks.STONE.defaultBlockState(), 3);
-          level.setBlock(origin.south(), Blocks.STONE.defaultBlockState(), 3);
-          level.setBlock(origin.south().west(), Blocks.STONE.defaultBlockState(), 3);
-          level.setBlock(origin.south().west(2), Blocks.STONE.defaultBlockState(), 3);
+              Block.UPDATE_ALL);
+          level.setBlock(origin.east().south(), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
+          level.setBlock(origin.west(2), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
+          level.setBlock(origin.south(), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
+          level.setBlock(origin.south().west(), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
+          level.setBlock(
+              origin.south().west(2), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
           var body =
               SubLevelAssemblyHelper.assembleBlocks(
                   level,
@@ -124,7 +128,7 @@ public final class EpicFightCompatibilityTests {
                           .visibleContact(adapter, attacker),
                       "Swept contact rejected the struck creature's own tissue");
                   var wall = BlockPos.containing(tissue.add(0, 0, -2));
-                  level.setBlock(wall, Blocks.STONE.defaultBlockState(), 3);
+                  level.setBlock(wall, Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
                   helper.assertTrue(
                       !org.Azkerash.create_bioships.compat.epicfight.EpicFightBlockCollisions
                           .visibleContact(adapter, attacker),

@@ -7,6 +7,7 @@ import java.util.List;
 import net.minecraft.core.*;
 import net.minecraft.gametest.framework.*;
 import net.minecraft.world.entity.*;
+import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
 import org.Azkerash.create_bioships.core.vision.*;
@@ -37,10 +38,11 @@ public final class VisionDetectionTests {
                   level.setBlock(
                       base.offset(x, -1, z),
                       ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState(),
-                      3);
+                      Block.UPDATE_ALL);
                 }
               }
-              level.setBlock(base, ComponentRegistry.CORE.get().defaultBlockState(), 3);
+              level.setBlock(
+                  base, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
               subject[0] =
                   SubLevelAssemblyHelper.assembleBlocks(
                       level, base, List.of(base), new BoundingBox3i(base, base));
@@ -98,7 +100,7 @@ public final class VisionDetectionTests {
                   level.setBlock(
                       base.offset(50, y, z),
                       ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState(),
-                      3);
+                      Block.UPDATE_ALL);
                 }
               }
               SubLevelVision.refresh(body, 8);

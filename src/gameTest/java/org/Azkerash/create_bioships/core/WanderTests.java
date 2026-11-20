@@ -6,6 +6,7 @@ import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.gametest.framework.*;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.*;
@@ -33,15 +34,16 @@ public final class WanderTests {
     for (int x = -5; x <= 5; x++) {
       for (int y = -4; y <= 4; y++) {
         for (int z = -5; z <= 5; z++) {
-          level.setBlock(base.offset(x, y, z), Blocks.WATER.defaultBlockState(), 3);
+          level.setBlock(base.offset(x, y, z), Blocks.WATER.defaultBlockState(), Block.UPDATE_ALL);
         }
       }
     }
     helper.runAfterDelay(
         20,
         () -> {
-          level.setBlock(base, ComponentRegistry.CORE.get().defaultBlockState(), 3);
-          level.setBlock(base.above(), ComponentRegistry.BRAIN.get().defaultBlockState(), 3);
+          level.setBlock(base, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
+          level.setBlock(
+              base.above(), ComponentRegistry.BRAIN.get().defaultBlockState(), Block.UPDATE_ALL);
           var body =
               SubLevelAssemblyHelper.assembleBlocks(
                   level, base, List.of(base, base.above()), new BoundingBox3i(base, base.above()));
@@ -130,7 +132,7 @@ public final class WanderTests {
     }
     for (int x = -16; x <= 16; x++) {
       for (int z = -16; z <= 22; z++) {
-        level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 3);
+        level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), Block.UPDATE_ALL);
       }
     }
     helper.runAfterDelay(

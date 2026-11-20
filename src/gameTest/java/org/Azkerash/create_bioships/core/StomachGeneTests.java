@@ -10,6 +10,7 @@ import net.minecraft.gametest.framework.*;
 import net.minecraft.world.*;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.gametest.*;
@@ -50,7 +51,7 @@ public final class StomachGeneTests {
       GameTestHelper helper) {
     var level = helper.getLevel();
     var origin = helper.absolutePos(new BlockPos(1, 2, 1));
-    level.setBlock(origin, ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
+    level.setBlock(origin, ComponentRegistry.STOMACH.get().defaultBlockState(), Block.UPDATE_ALL);
     var stomach = (StomachBlockEntity) level.getBlockEntity(origin);
     var player =
         new net.neoforged.neoforge.common.util.FakePlayer(
@@ -62,7 +63,8 @@ public final class StomachGeneTests {
         inject(stomach, player, tool) == ItemInteractionResult.FAIL
             && item.getStoredItemStack(tool).getCount() == 3,
         "World stomach consumed serum");
-    level.setBlock(origin.west(), ComponentRegistry.CORE.get().defaultBlockState(), 3);
+    level.setBlock(
+        origin.west(), ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
     var body =
         SubLevelAssemblyHelper.assembleBlocks(
             level,
@@ -118,7 +120,8 @@ public final class StomachGeneTests {
             .getCompound("Genes");
     helper.assertTrue(genes.getInt("Longevity") == 3, "Block item lost upgraded gene tier");
     // A second stomach owns its own genes, and every organ contributes to shared capacity.
-    level.setBlock(core.east(2), ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
+    level.setBlock(
+        core.east(2), ComponentRegistry.STOMACH.get().defaultBlockState(), Block.UPDATE_ALL);
     var second = (StomachBlockEntity) level.getBlockEntity(core.east(2));
     helper.assertTrue(
         second.genes().longevityTier() == 0 && SubLevelData.maximumHunger(body) == 16,
@@ -148,7 +151,8 @@ public final class StomachGeneTests {
     helper.assertTrue(
         SubLevelData.maximumHunger(body) == 13 && SubLevelData.hunger(body) == 13,
         "Removing upgraded stomach lost remaining upgrades or failed to clamp hunger");
-    level.setBlock(core.east(), ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
+    level.setBlock(
+        core.east(), ComponentRegistry.STOMACH.get().defaultBlockState(), Block.UPDATE_ALL);
     stomach = (StomachBlockEntity) level.getBlockEntity(core.east());
     helper.assertTrue(
         stomach.genes().longevityTier() == 0
@@ -171,7 +175,7 @@ public final class StomachGeneTests {
       GameTestHelper helper) {
     var level = helper.getLevel();
     var origin = helper.absolutePos(new BlockPos(1, 2, 1));
-    level.setBlock(origin, ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
+    level.setBlock(origin, ComponentRegistry.STOMACH.get().defaultBlockState(), Block.UPDATE_ALL);
     var body =
         SubLevelAssemblyHelper.assembleBlocks(
             level, origin, List.of(origin), new BoundingBox3i(origin, origin));

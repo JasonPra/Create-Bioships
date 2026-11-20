@@ -5,6 +5,7 @@ import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.tags.FluidTags;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.Vec3;
@@ -15,11 +16,15 @@ import org.Azkerash.create_bioships.components.logic.respiration.RespiratoryBloc
 /** One oxygen reserve per creature; cached organ census, sampled once per second. */
 @EventBusSubscriber(modid = "create_bioships")
 public final class SubLevelOxygen {
+  private static final int BASE_DEMAND_PER_SECOND = 20;
+  private static final int UPDATE_INTERVAL_TICKS = 20;
+  private static final int GILL_VISUAL_UPDATE_INTERVAL_TICKS = 3;
+
   public static final int MAXIMUM = 1200, SUPPLY_PER_ORGAN = 40, SUFFOCATION_INTERVAL = 20;
   public static final double REFERENCE_MASS = 100;
 
   public static double demandForMass(double mass) {
-    return 20 * Math.max(1, Math.max(0, mass) / REFERENCE_MASS);
+    return BASE_DEMAND_PER_SECOND * Math.max(1, Math.max(0, mass) / REFERENCE_MASS);
   }
 
   private static final Map<ServerSubLevel, Map<BlockPos, BlockState>> ORGANS = new WeakHashMap<>();
@@ -114,8 +119,9 @@ public final class SubLevelOxygen {
     double supply = 0;
     for (var part : SubLevelCreatureParts.members(body)) {
       if (!ORGANS.containsKey(part)) {
+        // Populate the organ census only once after a grid loads.
         SubLevelHealth.blocks(part);
-      } // Initialize only once after load.
+      }
       for (var e : ORGANS.getOrDefault(part, Map.of()).entrySet()) {
         var organ = (RespiratoryBlock) e.getValue().getBlock();
         if (organ.gills()) {
@@ -233,7 +239,7 @@ public final class SubLevelOxygen {
             state
                 .setValue(RespiratoryBlock.BREATH, gillPhase)
                 .setValue(RespiratoryBlock.GASPING, gasp),
-            2);
+            Block.UPDATE_CLIENTS);
       }
     }
   }
@@ -241,14 +247,14 @@ public final class SubLevelOxygen {
   @SubscribeEvent
   public static void tick(net.neoforged.neoforge.event.tick.ServerTickEvent.Post e) {
     long now = e.getServer().getTickCount();
-    if (now % 3 == 0) {
+    if (now % GILL_VISUAL_UPDATE_INTERVAL_TICKS == 0) {
       for (var body : new ArrayList<>(ORGANS.keySet())) {
         if (!body.isRemoved() && !SubLevelCreatureParts.isPart(body)) {
           animate(body, now);
         }
       }
     }
-    if (e.getServer().getTickCount() % 20 != 0) {
+    if (e.getServer().getTickCount() % UPDATE_INTERVAL_TICKS != 0) {
       return;
     }
     for (var level : e.getServer().getAllLevels()) {

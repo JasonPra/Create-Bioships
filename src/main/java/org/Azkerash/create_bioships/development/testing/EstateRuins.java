@@ -4,6 +4,7 @@ import java.util.*;
 import net.minecraft.core.*;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.properties.*;
 
 /** Remains of a larger sanctuary and watchtower, surrounded by irregular mature woodland. */
@@ -155,7 +156,10 @@ public final class EstateRuins {
           }
           var q = p.offset(x, y, z);
           if (l.getBlockState(q).isAir()) {
-            l.setBlock(q, foliage.defaultBlockState().setValue(LeavesBlock.PERSISTENT, true), 2);
+            l.setBlock(
+                q,
+                foliage.defaultBlockState().setValue(LeavesBlock.PERSISTENT, true),
+                Block.UPDATE_CLIENTS);
           }
         }
       }

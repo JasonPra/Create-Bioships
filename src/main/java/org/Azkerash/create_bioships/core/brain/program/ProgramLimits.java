@@ -2,6 +2,10 @@ package org.Azkerash.create_bioships.core.brain.program;
 
 /** Shared hard limits for the private C# compiler and cooperative machine. */
 public final class ProgramLimits {
+  public static final int DIAGNOSTIC_CHARS = 512;
+  public static final int FINGERPRINT_HEX_CHARS = 64;
+  public static final int WARNINGS = 64;
+
   public static final int SOURCE = 8192;
   public static final int TOKENS = 2048;
   public static final int INSTRUCTIONS = 4096;

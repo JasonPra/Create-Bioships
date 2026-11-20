@@ -7,6 +7,7 @@ import net.minecraft.gametest.framework.*;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.projectile.*;
 import net.minecraft.world.item.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.gametest.*;
@@ -25,7 +26,8 @@ public final class WeakPointWoundTests {
     var origin = new BlockPos(160, 80, 128);
     for (int x = -5; x <= 5; x++) {
       for (int z = -5; z <= 5; z++) {
-        level.setBlock(origin.offset(x, -2, z), Blocks.BEDROCK.defaultBlockState(), 3);
+        level.setBlock(
+            origin.offset(x, -2, z), Blocks.BEDROCK.defaultBlockState(), Block.UPDATE_ALL);
       }
     }
     level.setChunkForced(10, 8, true);
@@ -39,10 +41,11 @@ public final class WeakPointWoundTests {
                   .setValue(
                       net.minecraft.world.level.block.state.properties.BlockStateProperties.FACING,
                       Direction.NORTH);
-          level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
-          level.setBlock(origin.east(), eyeState, 3);
-          level.setBlock(origin.west(), Blocks.STONE.defaultBlockState(), 3);
-          level.setBlock(origin.east().south(), Blocks.STONE.defaultBlockState(), 3);
+          level.setBlock(
+              origin, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
+          level.setBlock(origin.east(), eyeState, Block.UPDATE_ALL);
+          level.setBlock(origin.west(), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
+          level.setBlock(origin.east().south(), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
           var body =
               SubLevelAssemblyHelper.assembleBlocks(
                   level,

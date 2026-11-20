@@ -4,6 +4,7 @@ import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import java.util.*;
 import net.minecraft.core.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -96,7 +97,7 @@ public final class SubLevelDigestion {
                             body.getLevel().getBlockState(entry.getKey().relative(face)), face));
           }
           if (!next.equals(state)) {
-            body.getLevel().setBlock(entry.getKey(), next, 2);
+            body.getLevel().setBlock(entry.getKey(), next, Block.UPDATE_CLIENTS);
           }
         }
       }

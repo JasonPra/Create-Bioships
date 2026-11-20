@@ -8,6 +8,7 @@ import net.minecraft.core.*;
 import net.minecraft.gametest.framework.*;
 import net.minecraft.server.level.*;
 import net.minecraft.world.item.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.components.logic.brain.*;
@@ -162,9 +163,9 @@ public final class CardWorkspaceTests {
       GameTestHelper h) {
     var l = h.getLevel();
     var origin = h.absolutePos(new BlockPos(1, 2, 1));
-    l.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
-    l.setBlock(origin.east(), ComponentRegistry.BRAIN.get().defaultBlockState(), 3);
-    l.setBlock(origin.east(2), ComponentRegistry.BRAIN.get().defaultBlockState(), 3);
+    l.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
+    l.setBlock(origin.east(), ComponentRegistry.BRAIN.get().defaultBlockState(), Block.UPDATE_ALL);
+    l.setBlock(origin.east(2), ComponentRegistry.BRAIN.get().defaultBlockState(), Block.UPDATE_ALL);
     var body =
         SubLevelAssemblyHelper.assembleBlocks(
             l,
@@ -263,8 +264,8 @@ public final class CardWorkspaceTests {
       GameTestHelper h) {
     var l = h.getLevel();
     var origin = h.absolutePos(new BlockPos(1, 2, 1));
-    l.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
-    l.setBlock(origin.east(), ComponentRegistry.BRAIN.get().defaultBlockState(), 3);
+    l.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
+    l.setBlock(origin.east(), ComponentRegistry.BRAIN.get().defaultBlockState(), Block.UPDATE_ALL);
     var body =
         SubLevelAssemblyHelper.assembleBlocks(
             l, origin, List.of(origin, origin.east()), new BoundingBox3i(origin, origin.east()));

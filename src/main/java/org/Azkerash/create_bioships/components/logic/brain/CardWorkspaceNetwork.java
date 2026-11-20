@@ -10,7 +10,9 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.Azkerash.create_bioships.core.brain.program.ProgramCardData;
+import org.Azkerash.create_bioships.core.brain.program.ProgramLimits;
 
+/** Private editor packets; handlers validate the active menu and card identity before mutation. */
 @EventBusSubscriber(modid = "create_bioships")
 public final class CardWorkspaceNetwork {
   private CardWorkspaceNetwork() {}
@@ -94,26 +96,26 @@ public final class CardWorkspaceNetwork {
             (b, p) -> {
               b.writeVarInt(p.menu);
               b.writeUUID(p.identity);
-              b.writeUtf(p.state, 512);
-              if (p.lines.size() > 64) {
+              b.writeUtf(p.state, ProgramLimits.DIAGNOSTIC_CHARS);
+              if (p.lines.size() > ProgramLimits.OUTPUT_LINES) {
                 throw new IllegalArgumentException("Console history exceeds limit");
               }
               b.writeVarInt(p.lines.size());
               for (var line : p.lines) {
-                b.writeUtf(line, 256);
+                b.writeUtf(line, ProgramLimits.OUTPUT_LINE);
               }
             },
             b -> {
               int menu = b.readVarInt();
               UUID id = b.readUUID();
-              String state = b.readUtf(512);
+              String state = b.readUtf(ProgramLimits.DIAGNOSTIC_CHARS);
               int count = b.readVarInt();
-              if (count < 0 || count > 64) {
+              if (count < 0 || count > ProgramLimits.OUTPUT_LINES) {
                 throw new IllegalArgumentException("Invalid console history");
               }
               var lines = new java.util.ArrayList<String>();
               for (int i = 0; i < count; i++) {
-                lines.add(b.readUtf(256));
+                lines.add(b.readUtf(ProgramLimits.OUTPUT_LINE));
               }
               return new Output(menu, id, state, lines);
             });
@@ -133,12 +135,16 @@ public final class CardWorkspaceNetwork {
               b.writeVarInt(p.menu);
               b.writeUUID(p.identity);
               b.writeBoolean(p.saved);
-              b.writeUtf(p.message, 512);
-              b.writeUtf(p.fingerprint, 64);
+              b.writeUtf(p.message, ProgramLimits.DIAGNOSTIC_CHARS);
+              b.writeUtf(p.fingerprint, ProgramLimits.FINGERPRINT_HEX_CHARS);
             },
             b ->
                 new Result(
-                    b.readVarInt(), b.readUUID(), b.readBoolean(), b.readUtf(512), b.readUtf(64)));
+                    b.readVarInt(),
+                    b.readUUID(),
+                    b.readBoolean(),
+                    b.readUtf(ProgramLimits.DIAGNOSTIC_CHARS),
+                    b.readUtf(ProgramLimits.FINGERPRINT_HEX_CHARS)));
 
     public Type<Result> type() {
       return TYPE;

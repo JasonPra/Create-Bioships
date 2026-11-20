@@ -3,6 +3,7 @@ package org.Azkerash.create_bioships.development.testing;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.feature.*;
 import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
@@ -42,7 +43,9 @@ public final class DevelopmentFloorFeature extends Feature<NoneFeatureConfigurat
         if (level.getBlockState(pos).is(surface)
             && level.getBlockState(pos.below()).is(Blocks.BEDROCK)) {
           level.setBlock(
-              pos, palette.get(context.random().nextInt(palette.size())).defaultBlockState(), 2);
+              pos,
+              palette.get(context.random().nextInt(palette.size())).defaultBlockState(),
+              Block.UPDATE_CLIENTS);
         }
       }
     }

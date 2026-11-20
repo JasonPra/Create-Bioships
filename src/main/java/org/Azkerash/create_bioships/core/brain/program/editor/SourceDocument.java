@@ -6,6 +6,8 @@ import org.Azkerash.create_bioships.core.brain.program.ProgramLimits;
 
 /** Source, selection, history and fold projection. Folding never changes the program text. */
 public final class SourceDocument {
+  private static final int MAX_UNDO_SNAPSHOTS = 64;
+
   public static final int INDENT = 4;
 
   private record Snapshot(String text, int caret, int anchor, Set<Integer> collapsed) {}
@@ -216,7 +218,7 @@ public final class SourceDocument {
         && text.substring(lineStart(lineAt(selectionStart())), selectionStart()).isBlank()) {
       int point = selectionStart();
       int end = selectionEnd();
-      int indent = Math.max(0, Math.min(64, syntax.depthAt(point)) - 1) * INDENT;
+      int indent = Math.max(0, Math.min(ProgramLimits.NESTING, syntax.depthAt(point)) - 1) * INDENT;
       replace(lineStart(lineAt(point)), end, " ".repeat(indent) + "}");
       return;
     }
@@ -225,7 +227,7 @@ public final class SourceDocument {
 
   public void enter() {
     int point = selectionStart(), end = selectionEnd();
-    int depth = Math.min(64, syntax.depthAt(point));
+    int depth = Math.min(ProgramLimits.NESTING, syntax.depthAt(point));
     int indent = syntax.codeAt(point) ? depth * INDENT : leadingSpaces(line(lineAt(point)));
     int before = point - 1;
     while (before >= 0 && (text.charAt(before) == ' ' || text.charAt(before) == '\t')) {
@@ -348,7 +350,7 @@ public final class SourceDocument {
       return;
     }
     undo.push(snapshot());
-    while (undo.size() > 64) {
+    while (undo.size() > MAX_UNDO_SNAPSHOTS) {
       undo.removeLast();
     }
     redo.clear();
@@ -413,7 +415,7 @@ public final class SourceDocument {
         break;
       }
     }
-    return Math.min(n, 256);
+    return Math.min(n, INDENT * ProgramLimits.NESTING);
   }
 
   private static int clamp(int value, int min, int max) {

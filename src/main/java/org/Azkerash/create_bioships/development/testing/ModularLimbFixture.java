@@ -14,6 +14,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Display;
 import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.CommandBlockEntity;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.*;
@@ -59,12 +60,12 @@ public final class ModularLimbFixture {
             pos,
             (x == 0 && z == 0 ? ComponentRegistry.CORE.get() : ComponentRegistry.CHITIN_ARMOR.get())
                 .defaultBlockState(),
-            3);
+            Block.UPDATE_ALL);
         cells.add(pos);
       }
     }
     var brain = base.offset(0, 5, 0);
-    level.setBlock(brain, ComponentRegistry.BRAIN.get().defaultBlockState(), 3);
+    level.setBlock(brain, ComponentRegistry.BRAIN.get().defaultBlockState(), Block.UPDATE_ALL);
     cells.add(brain);
     for (int side : new int[] {-1, 1}) {
       for (int z : new int[] {-2, 2}) {
@@ -77,7 +78,7 @@ public final class ModularLimbFixture {
                 .get()
                 .defaultBlockState()
                 .setValue(dev.letitwalk.content.LegJointBlock.FACING, facing),
-            3);
+            Block.UPDATE_ALL);
         level.setBlock(
             hip.relative(facing),
             ComponentRegistry.LIMB_SEGMENT
@@ -85,17 +86,24 @@ public final class ModularLimbFixture {
                 .defaultBlockState()
                 .setValue(
                     net.minecraft.world.level.block.RotatedPillarBlock.AXIS, Direction.Axis.X),
-            3);
+            Block.UPDATE_ALL);
         level.setBlock(
             knee,
             ComponentRegistry.LIMB_SOCKET
                 .get()
                 .defaultBlockState()
                 .setValue(dev.letitwalk.content.LegJointBlock.FACING, Direction.DOWN),
-            3);
-        level.setBlock(knee.below(), ComponentRegistry.LIMB_SEGMENT.get().defaultBlockState(), 3);
-        level.setBlock(knee.below(2), ComponentRegistry.LIMB_SEGMENT.get().defaultBlockState(), 3);
-        level.setBlock(knee.below(3), ComponentRegistry.LIMB_FOOT.get().defaultBlockState(), 3);
+            Block.UPDATE_ALL);
+        level.setBlock(
+            knee.below(),
+            ComponentRegistry.LIMB_SEGMENT.get().defaultBlockState(),
+            Block.UPDATE_ALL);
+        level.setBlock(
+            knee.below(2),
+            ComponentRegistry.LIMB_SEGMENT.get().defaultBlockState(),
+            Block.UPDATE_ALL);
+        level.setBlock(
+            knee.below(3), ComponentRegistry.LIMB_FOOT.get().defaultBlockState(), Block.UPDATE_ALL);
         cells.addAll(
             List.of(hip, hip.relative(facing), knee, knee.below(), knee.below(2), knee.below(3)));
       }
@@ -179,14 +187,14 @@ public final class ModularLimbFixture {
                     : 1,
                 -8);
         if (!level.getBlockState(pos).is(DevelopmentTestBlocks.GLASS_DOOR.get())) {
-          level.setBlock(pos, door.setValue(DoorBlock.HALF, half), 3);
+          level.setBlock(pos, door.setValue(DoorBlock.HALF, half), Block.UPDATE_ALL);
         }
       }
     }
   }
 
   private static void button(ServerLevel level, BlockPos pos, String command) {
-    level.setBlock(pos, Blocks.COMMAND_BLOCK.defaultBlockState(), 3);
+    level.setBlock(pos, Blocks.COMMAND_BLOCK.defaultBlockState(), Block.UPDATE_ALL);
     if (level.getBlockEntity(pos) instanceof CommandBlockEntity be) {
       be.getCommandBlock().setCommand(command);
     }
@@ -196,7 +204,7 @@ public final class ModularLimbFixture {
             .get()
             .defaultBlockState()
             .setValue(BlockStateProperties.HORIZONTAL_FACING, Direction.NORTH),
-        3);
+        Block.UPDATE_ALL);
   }
 
   public static int start(ServerLevel level) {

@@ -7,6 +7,7 @@ import net.minecraft.core.*;
 import net.minecraft.gametest.framework.*;
 import net.minecraft.world.*;
 import net.minecraft.world.item.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
@@ -24,9 +25,11 @@ public final class IntestineTransportTests {
       GameTestHelper helper) {
     var level = helper.getLevel();
     var pos = helper.absolutePos(new BlockPos(1, 2, 1));
-    level.setBlock(pos, ComponentRegistry.MOUTH.get().defaultBlockState(), 3);
-    level.setBlock(pos.east(), ComponentRegistry.INTESTINE.get().defaultBlockState(), 3);
-    level.setBlock(pos.east(2), ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
+    level.setBlock(pos, ComponentRegistry.MOUTH.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(
+        pos.east(), ComponentRegistry.INTESTINE.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(
+        pos.east(2), ComponentRegistry.STOMACH.get().defaultBlockState(), Block.UPDATE_ALL);
     var grid =
         SubLevelAssemblyHelper.assembleBlocks(
             level, pos, List.of(pos, pos.east(), pos.east(2)), new BoundingBox3i(pos, pos.east(2)));
@@ -63,7 +66,8 @@ public final class IntestineTransportTests {
     helper.assertTrue(
         SubLevelDigestion.transfer(mouth) == 0 && mouth.getItem(0).getCount() == 2,
         "Cached route crossed broken intestine");
-    level.setBlock(pos.east(), ComponentRegistry.INTESTINE.get().defaultBlockState(), 3);
+    level.setBlock(
+        pos.east(), ComponentRegistry.INTESTINE.get().defaultBlockState(), Block.UPDATE_ALL);
     for (int i = 0; i < 9; i++) {
       stomach.setItem(i, new ItemStack(Items.PORKCHOP, 64));
     }
@@ -116,9 +120,11 @@ public final class IntestineTransportTests {
     helper.runAfterDelay(
         10,
         () -> {
-          level.setBlock(pos, ComponentRegistry.CORE.get().defaultBlockState(), 3);
-          level.setBlock(pos.east(), ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
-          level.setBlock(pos.west(), ComponentRegistry.MOUTH.get().defaultBlockState(), 3);
+          level.setBlock(pos, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
+          level.setBlock(
+              pos.east(), ComponentRegistry.STOMACH.get().defaultBlockState(), Block.UPDATE_ALL);
+          level.setBlock(
+              pos.west(), ComponentRegistry.MOUTH.get().defaultBlockState(), Block.UPDATE_ALL);
           var body =
               SubLevelAssemblyHelper.assembleBlocks(
                   level,

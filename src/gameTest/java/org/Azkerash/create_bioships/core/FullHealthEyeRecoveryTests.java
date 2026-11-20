@@ -5,6 +5,7 @@ import dev.ryanhcode.sable.companion.math.BoundingBox3i;
 import java.util.List;
 import net.minecraft.core.*;
 import net.minecraft.gametest.framework.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.Create_bioships;
@@ -18,7 +19,7 @@ public final class FullHealthEyeRecoveryTests {
   public static void full_health_clears_all_eye_types_and_saved_injuries(GameTestHelper helper) {
     var level = helper.getLevel();
     var origin = new BlockPos(656, 80, 128);
-    level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
+    level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
     level.setBlock(
         origin.east(),
         ComponentRegistry.LAND_EYE
@@ -27,7 +28,7 @@ public final class FullHealthEyeRecoveryTests {
             .setValue(
                 net.minecraft.world.level.block.state.properties.BlockStateProperties.FACING,
                 Direction.EAST),
-        3);
+        Block.UPDATE_ALL);
     level.setBlock(
         origin.west(),
         ComponentRegistry.AQUATIC_EYE
@@ -36,9 +37,9 @@ public final class FullHealthEyeRecoveryTests {
             .setValue(
                 net.minecraft.world.level.block.state.properties.BlockStateProperties.FACING,
                 Direction.WEST),
-        3);
-    level.setBlock(origin.north(), Blocks.STONE.defaultBlockState(), 3);
-    level.setBlock(origin.south(), Blocks.STONE.defaultBlockState(), 3);
+        Block.UPDATE_ALL);
+    level.setBlock(origin.north(), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(origin.south(), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
     var body =
         SubLevelAssemblyHelper.assembleBlocks(
             level,
@@ -61,7 +62,7 @@ public final class FullHealthEyeRecoveryTests {
         body,
         () -> {
           level.removeBlock(core.north(), false);
-          level.setBlock(core.north(), Blocks.STONE.defaultBlockState(), 3);
+          level.setBlock(core.north(), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
           return true;
         });
     helper.assertTrue(

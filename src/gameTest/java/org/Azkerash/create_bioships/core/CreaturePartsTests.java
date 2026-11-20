@@ -6,6 +6,7 @@ import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import java.util.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.*;
+import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
 import org.Azkerash.create_bioships.core.access.SubLevelPermissions;
@@ -21,12 +22,12 @@ public final class CreaturePartsTests {
         p,
         (core ? ComponentRegistry.CORE.get() : ComponentRegistry.CHITIN_ARMOR.get())
             .defaultBlockState(),
-        3);
+        Block.UPDATE_ALL);
     level.setBlock(
         p.above(),
         (core ? ComponentRegistry.BRAIN.get() : ComponentRegistry.CRAB_LEG.get())
             .defaultBlockState(),
-        3);
+        Block.UPDATE_ALL);
     var body =
         SubLevelAssemblyHelper.assembleBlocks(
             level, p, List.of(p, p.above()), new BoundingBox3i(p, p.above()));
@@ -83,18 +84,21 @@ public final class CreaturePartsTests {
               SubLevelHealth.status(root).maximum() == base + 20,
               "Repeated link double counted health");
           var stomach = limb.getPlot().getCenterBlock().above(2);
-          level.setBlock(stomach, ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
+          level.setBlock(
+              stomach, ComponentRegistry.STOMACH.get().defaultBlockState(), Block.UPDATE_ALL);
           h.assertTrue(
               SubLevelHunger.hasStomach(root)
                   && SubLevelHunger.hasStomach(limb)
                   && SubLevelData.maximumHunger(root) == 10,
               "Limb stomach did not share creature capacity/restriction");
           var rootStomach = root.getPlot().getCenterBlock().east();
-          level.setBlock(rootStomach, ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
+          level.setBlock(
+              rootStomach, ComponentRegistry.STOMACH.get().defaultBlockState(), Block.UPDATE_ALL);
           var otherLimb = assemble(h, p.offset(10, 0, 0), false);
           SubLevelCreatureParts.attach(root, otherLimb);
           var otherStomach = otherLimb.getPlot().getCenterBlock().above(2);
-          level.setBlock(otherStomach, ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
+          level.setBlock(
+              otherStomach, ComponentRegistry.STOMACH.get().defaultBlockState(), Block.UPDATE_ALL);
           h.assertTrue(
               SubLevelData.maximumHunger(root) == 13,
               "Linked stomachs did not apply one creature-wide diminishing-return curve");

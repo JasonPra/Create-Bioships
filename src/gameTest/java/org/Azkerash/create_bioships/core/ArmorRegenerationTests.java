@@ -6,6 +6,7 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.*;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.gametest.*;
 import org.Azkerash.create_bioships.combat.CombatAdapter;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
@@ -18,9 +19,10 @@ public final class ArmorRegenerationTests {
       GameTestHelper h) {
     var l = h.getLevel();
     var p = h.absolutePos(new BlockPos(2, 3, 2));
-    l.setBlock(p, ComponentRegistry.CORE.get().defaultBlockState(), 3);
-    l.setBlock(p.east(), ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState(), 3);
-    l.setBlock(p.west(), ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
+    l.setBlock(p, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
+    l.setBlock(
+        p.east(), ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState(), Block.UPDATE_ALL);
+    l.setBlock(p.west(), ComponentRegistry.STOMACH.get().defaultBlockState(), Block.UPDATE_ALL);
     var body =
         SubLevelAssemblyHelper.assembleBlocks(
             l, p, List.of(p, p.east(), p.west()), new BoundingBox3i(p.west(), p.east()));

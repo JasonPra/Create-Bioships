@@ -8,6 +8,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.*;
 import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.*;
 import net.minecraft.world.level.block.state.*;
 import net.minecraft.world.phys.BlockHitResult;
@@ -108,7 +109,7 @@ public final class MouthBlock extends DirectionalBlock
     int remaining = mouth.chewRemaining();
     if (!mouth.active()) {
       if (state.getValue(CHEW) != 0 || state.getValue(BREATH) != 0) {
-        level.setBlock(pos, state.setValue(CHEW, 0).setValue(BREATH, 0), 2);
+        level.setBlock(pos, state.setValue(CHEW, 0).setValue(BREATH, 0), Block.UPDATE_CLIENTS);
       }
       return;
     }
@@ -119,13 +120,13 @@ public final class MouthBlock extends DirectionalBlock
       int step = (int) ((level.getGameTime() / 8 + Math.floorMod(pos.asLong(), 8)) % 8);
       int breath = new int[] {0, 0, 1, 2, 2, 1, 0, 0}[step];
       if (state.getValue(CHEW) != 0 || state.getValue(BREATH) != breath) {
-        level.setBlock(pos, state.setValue(CHEW, 0).setValue(BREATH, breath), 2);
+        level.setBlock(pos, state.setValue(CHEW, 0).setValue(BREATH, breath), Block.UPDATE_CLIENTS);
       }
       level.scheduleTick(pos, this, 8);
       return;
     }
     int phase = state.getValue(CHEW) % 3 + 1;
-    level.setBlock(pos, state.setValue(CHEW, phase).setValue(BREATH, 0), 2);
+    level.setBlock(pos, state.setValue(CHEW, phase).setValue(BREATH, 0), Block.UPDATE_CLIENTS);
     if (phase == 1) {
       mouth.chewingParticles();
     }

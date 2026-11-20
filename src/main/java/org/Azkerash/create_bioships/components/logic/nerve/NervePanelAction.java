@@ -9,6 +9,12 @@ import net.minecraft.resources.ResourceLocation;
 
 public record NervePanelAction(UUID grid, BlockPos panel, int action, UUID target)
     implements CustomPacketPayload {
+  // Stable packet action IDs; changing these requires updating both ends of the protocol.
+  public static final int REFRESH = 0;
+  public static final int INVITE = 1;
+  public static final int REVOKE = 2;
+  public static final int TRANSFER = 3;
+
   public static final Type<NervePanelAction> TYPE =
       new Type<>(ResourceLocation.parse("create_bioships:nerve_action"));
   public static final StreamCodec<RegistryFriendlyByteBuf, NervePanelAction> CODEC =
@@ -23,7 +29,7 @@ public record NervePanelAction(UUID grid, BlockPos panel, int action, UUID targe
             var id = b.readUUID();
             var pos = b.readBlockPos();
             int action = b.readUnsignedByte();
-            if (action > 3) {
+            if (action > TRANSFER) {
               throw new IllegalArgumentException("Invalid nerve action");
             }
             return new NervePanelAction(id, pos, action, b.readUUID());
