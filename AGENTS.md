@@ -6,3 +6,5 @@
 - Prefer switch for discrete dispatch on one stable discriminator. Keep unrelated predicates and range/geometry tests as conditions.
 - Keep mutable state private. Expose getters and controlled update methods where other classes need access; protect collection invariants. Records already have read-only accessors. Public constants and framework-required interoperability members are exceptions.
 - Preserve behavior during readability cleanup. Run the build and relevant regression tests. Do not compile while a Minecraft client or test-server runtime is using the shared build output.
+
+- Use `BlockRegistration` and `ItemRegistration` for block/item construction plumbing. Keep properties fresh and construction deferred; preserve module registry ownership, IDs, and explicit no-item fixture blocks.

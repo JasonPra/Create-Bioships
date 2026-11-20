@@ -8,10 +8,15 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.registries.*;
 import org.Azkerash.create_bioships.Create_bioships;
+import org.Azkerash.create_bioships.registration.BlockRegistration;
 
 /** Fixture-only blocks: deliberately no item registration or creative inventory entry. */
 @EventBusSubscriber(modid = Create_bioships.MODID)
 public final class DevelopmentTestBlocks {
+  // Minecraft uses negative hardness for unbreakable blocks; fixture blast resistance is separate.
+  private static final float UNBREAKABLE_HARDNESS = -1;
+  private static final float FIXTURE_BLAST_RESISTANCE = 3_600_000;
+  private static final int BUTTON_PRESS_TICKS = 20;
   public static final DeferredHolder<Block, TransparentBlock> GLASS =
       DeferredHolder.create(
           Registries.BLOCK,
@@ -88,59 +93,52 @@ public final class DevelopmentTestBlocks {
 
   private DevelopmentTestBlocks() {}
 
+  private static BlockBehaviour.Properties fixtureProperties(Block source) {
+    return BlockBehaviour.Properties.ofFullCopy(source)
+        .strength(UNBREAKABLE_HARDNESS, FIXTURE_BLAST_RESISTANCE)
+        .noLootTable();
+  }
+
   @SubscribeEvent
   public static void register(RegisterEvent event) {
     event.register(
         Registries.BLOCK,
         helper -> {
-          helper.register(
-              PATH_SLAB.getId(),
-              new SlabBlock(
-                  BlockBehaviour.Properties.ofFullCopy(Blocks.STONE_SLAB)
-                      .strength(-1, 3600000)
-                      .noLootTable()));
-          helper.register(
-              PATH.getId(),
-              new DevelopmentPathBlock(
-                  BlockBehaviour.Properties.ofFullCopy(Blocks.DIRT_PATH)
-                      .strength(-1, 3600000)
-                      .noLootTable()));
-          helper.register(
-              GLASS_DOOR.getId(),
-              new DoorBlock(
-                  net.minecraft.world.level.block.state.properties.BlockSetType.OAK,
-                  BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_DOOR)
-                      .strength(-1, 3600000)
-                      .noLootTable()
-                      .noOcclusion()));
-          helper.register(
-              BUTTON.getId(),
-              new ButtonBlock(
-                  net.minecraft.world.level.block.state.properties.BlockSetType.STONE,
-                  20,
-                  BlockBehaviour.Properties.ofFullCopy(Blocks.STONE_BUTTON)
-                      .strength(-1, 3600000)
-                      .noLootTable()));
+          BlockRegistration.register(
+              helper, PATH_SLAB, () -> new SlabBlock(fixtureProperties(Blocks.STONE_SLAB)));
+          BlockRegistration.register(
+              helper, PATH, () -> new DevelopmentPathBlock(fixtureProperties(Blocks.DIRT_PATH)));
+          BlockRegistration.register(
+              helper,
+              GLASS_DOOR,
+              () ->
+                  new DoorBlock(
+                      net.minecraft.world.level.block.state.properties.BlockSetType.OAK,
+                      fixtureProperties(Blocks.OAK_DOOR).noOcclusion()));
+          BlockRegistration.register(
+              helper,
+              BUTTON,
+              () ->
+                  new ButtonBlock(
+                      net.minecraft.world.level.block.state.properties.BlockSetType.STONE,
+                      BUTTON_PRESS_TICKS,
+                      fixtureProperties(Blocks.STONE_BUTTON)));
           FLOOR.forEach(
               (name, holder) ->
-                  helper.register(
-                      holder.getId(),
-                      new Block(
-                          BlockBehaviour.Properties.ofFullCopy(
+                  BlockRegistration.register(
+                      helper,
+                      holder,
+                      () ->
+                          new Block(
+                              fixtureProperties(
                                   net.minecraft.core.registries.BuiltInRegistries.BLOCK.get(
-                                      ResourceLocation.withDefaultNamespace(name)))
-                              .strength(-1, 3600000)
-                              .noLootTable())));
+                                      ResourceLocation.withDefaultNamespace(name))))));
         });
     event.register(
         Registries.BLOCK,
         helper ->
-            helper.register(
-                GLASS.getId(),
-                new TransparentBlock(
-                    BlockBehaviour.Properties.ofFullCopy(Blocks.GLASS)
-                        .strength(-1, 3600000)
-                        .noLootTable())));
+            BlockRegistration.register(
+                helper, GLASS, () -> new TransparentBlock(fixtureProperties(Blocks.GLASS))));
   }
 
   @EventBusSubscriber(modid = Create_bioships.MODID)

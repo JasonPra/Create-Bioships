@@ -14,6 +14,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.registries.*;
 import org.Azkerash.create_bioships.Create_bioships;
+import org.Azkerash.create_bioships.registration.ItemRegistration;
 
 /** Read-only vanilla inventory menu for visiting development fixtures. */
 @EventBusSubscriber(modid = Create_bioships.MODID)
@@ -29,7 +30,8 @@ public final class DevelopmentNavigatorItem extends Item {
 
   @SubscribeEvent
   public static void register(RegisterEvent event) {
-    event.register(Registries.ITEM, h -> h.register(ITEM.getId(), new DevelopmentNavigatorItem()));
+    event.register(
+        Registries.ITEM, h -> ItemRegistration.register(h, ITEM, DevelopmentNavigatorItem::new));
   }
 
   @Override

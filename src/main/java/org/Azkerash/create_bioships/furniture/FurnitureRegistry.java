@@ -2,7 +2,7 @@ package org.Azkerash.create_bioships.furniture;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Supplier;
+import java.util.function.Function;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.block.*;
@@ -11,6 +11,7 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.*;
 import org.Azkerash.create_bioships.Create_bioships;
+import org.Azkerash.create_bioships.registration.BlockRegistration;
 
 /** Craftable furniture is separate from the living component simulation. */
 public final class FurnitureRegistry {
@@ -20,14 +21,14 @@ public final class FurnitureRegistry {
       DeferredRegister.createItems(Create_bioships.MODID);
   private static final List<DeferredItem<BlockItem>> DISPLAY_ITEMS = new ArrayList<>();
   public static final DeferredBlock<OssuaryTableBlock> OSSUARY_TABLE =
-      block("ossuary_table", () -> new OssuaryTableBlock(properties()));
+      block("ossuary_table", OssuaryTableBlock::new);
 
   private static final DeferredRegister<BlockEntityType<?>> ENTITIES =
       DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, Create_bioships.MODID);
   public static final DeferredBlock<OssuaryChairBlock> OSSUARY_CHAIR =
-      block("ossuary_chair", () -> new OssuaryChairBlock(properties()));
+      block("ossuary_chair", OssuaryChairBlock::new);
   public static final DeferredBlock<OssuaryLecternBlock> OSSUARY_LECTERN =
-      block("ossuary_lectern", () -> new OssuaryLecternBlock(properties()));
+      block("ossuary_lectern", OssuaryLecternBlock::new);
   public static final DeferredHolder<
           BlockEntityType<?>, BlockEntityType<OssuaryLecternBlock.ReadingStandEntity>>
       READING_STAND_ENTITY =
@@ -39,11 +40,11 @@ public final class FurnitureRegistry {
                       .build(null));
 
   public static final DeferredBlock<OssuaryBookcaseBlock> OSSUARY_BOOKCASE =
-      block("ossuary_bookcase", () -> new OssuaryBookcaseBlock(properties()));
+      block("ossuary_bookcase", OssuaryBookcaseBlock::new);
   public static final DeferredBlock<OssuaryArchiveBlock> OSSUARY_ARCHIVE =
-      block("ossuary_archive", () -> new OssuaryArchiveBlock(properties()));
+      block("ossuary_archive", OssuaryArchiveBlock::new);
   public static final DeferredBlock<OssuaryCabinetBlock> OSSUARY_CABINET =
-      block("ossuary_cabinet", () -> new OssuaryCabinetBlock(properties()));
+      block("ossuary_cabinet", OssuaryCabinetBlock::new);
   public static final DeferredHolder<
           BlockEntityType<?>, BlockEntityType<OssuaryArchiveBlock.ArchiveEntity>>
       ARCHIVE_ENTITY =
@@ -64,7 +65,7 @@ public final class FurnitureRegistry {
                       .build(null));
 
   public static final DeferredBlock<OssuaryBedBlock> OSSUARY_BED =
-      block("ossuary_bed", () -> new OssuaryBedBlock(properties()));
+      block("ossuary_bed", OssuaryBedBlock::new);
   public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<OssuaryBedBlock.BedEntity>>
       BED_ENTITY =
           ENTITIES.register(
@@ -79,10 +80,16 @@ public final class FurnitureRegistry {
     return BlockBehaviour.Properties.of().strength(2).sound(SoundType.BONE_BLOCK).noOcclusion();
   }
 
-  private static <T extends Block> DeferredBlock<T> block(String id, Supplier<T> factory) {
-    var block = BLOCKS.register(id, factory);
-    DISPLAY_ITEMS.add(ITEMS.registerSimpleBlockItem(block));
-    return block;
+  private static <T extends Block> DeferredBlock<T> block(
+      String id, Function<BlockBehaviour.Properties, T> constructor) {
+    var registered =
+        BlockRegistration.register(
+            BLOCKS,
+            ITEMS,
+            id,
+            BlockRegistration.createFactory(constructor, FurnitureRegistry::properties));
+    DISPLAY_ITEMS.add(registered.item());
+    return registered.block();
   }
 
   public static void register(IEventBus bus) {

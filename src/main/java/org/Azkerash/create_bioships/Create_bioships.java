@@ -3,13 +3,13 @@ package org.Azkerash.create_bioships;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.Item;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.registries.*;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
 import org.Azkerash.create_bioships.core.*;
 import org.Azkerash.create_bioships.equipment.*;
+import org.Azkerash.create_bioships.registration.ItemRegistration;
 
 /** Mod registration and lifecycle wiring. */
 @Mod(Create_bioships.MODID)
@@ -70,25 +70,15 @@ public final class Create_bioships {
       DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
 
   public static final DeferredItem<BioshipGogglesItem> BIOSHIP_GOGGLES =
-      ITEMS.register(
-          "bioship_goggles", () -> new BioshipGogglesItem(new Item.Properties().stacksTo(1)));
+      ItemRegistration.registerNonStackable(ITEMS, "bioship_goggles", BioshipGogglesItem::new);
   public static final DeferredItem<BioshipWrenchItem> BIOSHIP_WRENCH =
-      ITEMS.register(
-          "bioship_wrench", () -> new BioshipWrenchItem(new Item.Properties().stacksTo(1)));
+      ItemRegistration.registerNonStackable(ITEMS, "bioship_wrench", BioshipWrenchItem::new);
 
-  public static final DeferredItem<org.Azkerash.create_bioships.equipment.LimbPositionerItem>
-      LIMB_POSITIONER =
-          ITEMS.register(
-              "limb_positioner",
-              () ->
-                  new org.Azkerash.create_bioships.equipment.LimbPositionerItem(
-                      new Item.Properties().stacksTo(1)));
+  public static final DeferredItem<LimbPositionerItem> LIMB_POSITIONER =
+      ItemRegistration.registerNonStackable(ITEMS, "limb_positioner", LimbPositionerItem::new);
 
-  public static final DeferredItem<org.Azkerash.create_bioships.equipment.SomaticResonatorItem>
-      SOMATIC_RESONATOR =
-          ITEMS.register(
-              "somatic_resonator",
-              org.Azkerash.create_bioships.equipment.SomaticResonatorItem::new);
+  public static final DeferredItem<SomaticResonatorItem> SOMATIC_RESONATOR =
+      ItemRegistration.register(ITEMS, "somatic_resonator", SomaticResonatorItem::new);
 
   static {
     TABS.register(

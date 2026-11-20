@@ -12,6 +12,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.registries.*;
 import org.Azkerash.create_bioships.development.testing.network.DevelopmentToolPayload;
+import org.Azkerash.create_bioships.registration.ItemRegistration;
 
 /** Development-only entry point; debug controls live in its client screen. */
 @EventBusSubscriber(modid = "create_bioships")
@@ -26,7 +27,8 @@ public final class DevelopmentToolkitItem extends Item {
 
   @SubscribeEvent
   public static void register(RegisterEvent e) {
-    e.register(Registries.ITEM, h -> h.register(ITEM.getId(), new DevelopmentToolkitItem()));
+    e.register(
+        Registries.ITEM, h -> ItemRegistration.register(h, ITEM, DevelopmentToolkitItem::new));
   }
 
   public static boolean allowed(Player p) {
