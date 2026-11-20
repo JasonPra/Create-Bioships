@@ -185,4 +185,21 @@ public final class WaypointNavigationTests {
         "Valid descent was rejected by a fixed vertical search band");
     h.succeed();
   }
+
+  @GameTest(template = "test_empty")
+  public static void terrain_speed_slows_before_climbs_and_descents_and_recovers_gradually(
+      GameTestHelper h) {
+    h.assertTrue(TerrainSpeedControl.factor(0, 1) == 1, "Level terrain slowed travel");
+    double uphill = TerrainSpeedControl.factor(1, 1);
+    double downhill = TerrainSpeedControl.factor(-1, 1);
+    h.assertTrue(
+        uphill < 1 && downhill < uphill && downhill >= .25,
+        "Slope speed policy did not brake more strongly downhill");
+    double released = TerrainSpeedControl.recover(downhill, 1, .1);
+    h.assertTrue(
+        released > downhill && released < 1, "Speed cap disappeared instantly on level ground");
+    h.assertTrue(
+        TerrainSpeedControl.recover(1, downhill, .1) == downhill, "Slope braking was delayed");
+    h.succeed();
+  }
 }

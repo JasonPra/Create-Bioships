@@ -60,6 +60,13 @@ public final class WaypointNavigator {
   private SubLevelPathfinder.Mode mode;
   private int detourNext, rejoin, localDetours;
   private boolean localDetour;
+  private double terrainFactor = 1;
+  private long terrainTick = Long.MIN_VALUE;
+
+  private record Support(boolean supported, double factor) {}
+
+  private static final Support BLOCKED_SUPPORT = new Support(false, 0);
+  private static final Support LEVEL_SUPPORT = new Support(true, 1);
   private long nextPlan = Long.MIN_VALUE, detourUntil, revision;
 
   public void reset() {
@@ -69,6 +76,8 @@ public final class WaypointNavigator {
     localDetour = false;
     nextPlan = Long.MIN_VALUE;
     mode = null;
+    terrainFactor = 1;
+    terrainTick = Long.MIN_VALUE;
     revision++;
   }
 
@@ -109,11 +118,25 @@ public final class WaypointNavigator {
           }
 
           public boolean move(Vec3 velocity, double yawRate) {
-            if (!supported(body, velocity, kind)) {
+            var support = support(body, velocity, kind);
+            if (!support.supported) {
               BrainMotorControls.stop(body);
               return false;
             }
-            return BrainMotorControls.move(body, velocity, yawRate, leaseTicks, kind);
+            long now = tick();
+            double seconds =
+                terrainTick == Long.MIN_VALUE ? 0 : Math.max(0, now - terrainTick) / 20d;
+            double factor =
+                kind == SubLevelPathfinder.Mode.WATER
+                    ? 1
+                    : TerrainSpeedControl.recover(terrainFactor, support.factor, seconds);
+            boolean accepted =
+                BrainMotorControls.move(body, velocity.scale(factor), yawRate, leaseTicks, kind);
+            if (accepted && kind == SubLevelPathfinder.Mode.GROUND && velocity.lengthSqr() > 1e-8) {
+              terrainFactor = factor;
+              terrainTick = now;
+            }
+            return accepted;
           }
 
           public List<Vec3> plan(Vec3 destination, SubLevelPathfinder.Mode selected) {
@@ -283,22 +306,23 @@ public final class WaypointNavigator {
     return length;
   }
 
-  private static boolean supported(
-      ServerSubLevel body, Vec3 velocity, SubLevelPathfinder.Mode kind) {
+  private static Support support(ServerSubLevel body, Vec3 velocity, SubLevelPathfinder.Mode kind) {
     if (velocity.lengthSqr() < 1e-8) {
-      return true;
+      return LEVEL_SUPPORT;
     }
     var here = SubLevelPathfinder.position(body);
     var target = here.add(velocity.scale(MOVEMENT_LOOKAHEAD_SECONDS));
     if (!body.getLevel().hasChunkAt(BlockPos.containing(target))) {
-      return false;
+      return BLOCKED_SUPPORT;
     }
     if (kind == SubLevelPathfinder.Mode.WATER) {
-      return body.getLevel().getFluidState(BlockPos.containing(target)).is(FluidTags.WATER);
+      return body.getLevel().getFluidState(BlockPos.containing(target)).is(FluidTags.WATER)
+          ? LEVEL_SUPPORT
+          : BLOCKED_SUPPORT;
     }
     var family = new HashSet<UUID>();
     SubLevelCreatureParts.members(body).forEach(part -> family.add(part.getUniqueId()));
-    boolean[] result = {false};
+    Support[] result = {BLOCKED_SUPPORT};
     TerrainProbe.withIgnored(
         part -> family.contains(part.getUniqueId()),
         () -> {
@@ -309,6 +333,7 @@ public final class WaypointNavigator {
                   1,
                   MAX_SUPPORT_SAMPLES);
           Vec3 previous = null;
+          double factor = 1;
           for (int i = 0; i <= samples; i++) {
             var sample = here.add(delta.scale(i / (double) samples));
             if (!body.getLevel().hasChunkAt(BlockPos.containing(sample))) {
@@ -327,9 +352,14 @@ public final class WaypointNavigator {
                         > SubLevelLocomotion.stepHeight(body) + SUPPORT_TOLERANCE)) {
               return;
             }
+            if (previous != null) {
+              double run = Math.hypot(delta.x, delta.z) / samples;
+              factor =
+                  Math.min(factor, TerrainSpeedControl.factor(hit.point().y - previous.y, run));
+            }
             previous = hit.point();
           }
-          result[0] = true;
+          result[0] = new Support(true, factor);
         });
     return result[0];
   }
