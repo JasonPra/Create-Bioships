@@ -123,6 +123,7 @@ public final class SubLevelPathfinder {
             : bounds;
     // Capture once per search; moving constructs are recaptured by the next search/live check.
     var obstacles = SubLevelObstacles.capture(body, box.inflate(MAX_ROUTE_DISTANCE_BLOCKS));
+    var terrain = new NavigationTerrainSnapshot(level, obstacles);
     var origin = start;
     var reference = here;
     double stepHeight = mode == Mode.GROUND ? SubLevelLocomotion.stepHeight(body) : 1;
@@ -147,7 +148,7 @@ public final class SubLevelPathfinder {
             } else if (!level.getFluidState(cell).is(FluidTags.WATER)) {
               return false;
             }
-            if (clear(level, obstacles, at(cell.getX(), cell.getY(), cell.getZ()))) {
+            if (terrain.clear(at(cell.getX(), cell.getY(), cell.getZ()))) {
               return true;
             }
             // Native stepping starts when the forward feet meet a ledge, before the hull
@@ -155,14 +156,12 @@ public final class SubLevelPathfinder {
             // leg envelope as a solid wall all the way down to the old floor.
             return kind == Mode.GROUND
                 && stepHeight > 0
-                && clear(level, obstacles, at(cell.getX(), cell.getY() + stepHeight, cell.getZ()));
+                && terrain.clear(at(cell.getX(), cell.getY() + stepHeight, cell.getZ()));
           }
 
           private boolean swept(AABB from, AABB to) {
             for (double t : new double[] {0, .25, .5, .75, 1}) {
-              if (!clear(
-                  level,
-                  obstacles,
+              if (!terrain.clear(
                   from.move(
                       (to.minX - from.minX) * t,
                       (to.minY - from.minY) * t,
