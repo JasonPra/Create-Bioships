@@ -23,7 +23,8 @@ public final class CompactLegCollisions {
 
   public static boolean grounded(
       ServerSubLevel owner, List<ServerSubLevel> parts, double[] lengths) {
-    for (int i = 0; i < parts.size(); i++) {
+    // The distal foot normally supplies contact. Keep proximal checks for fallen/rotated limbs.
+    for (int i = parts.size() - 1; i >= 0; i--) {
       var p = parts.get(i);
       var q = p.logicalPose().orientation();
       var base = Vec3.atLowerCornerOf(p.getPlot().getCenterBlock()).add(.5, 0, .5);
