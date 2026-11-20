@@ -20,7 +20,7 @@ import org.azkerash.createbioships.CreateBioships;
 @EventBusSubscriber(modid = CreateBioships.MODID)
 public final class CreatureDecay {
   private static final int TICKS_PER_GAME_DAY = 24_000;
-  private static final int DECAY_GAME_DAYS = 3;
+  private static final int DECAY_GAME_DAYS = 2;
   private static final int DECAY_SCAN_INTERVAL_TICKS = 20;
 
   public static final String FAMILY = "create_bioships:remains_family";
@@ -61,7 +61,8 @@ public final class CreatureDecay {
   /** Associate living physical limbs without copying inventories or behavior state. */
   public static void link(ServerSubLevel parent, ServerSubLevel child) {
     var id = familyId(parent);
-    var tag = child.getUserDataTag().copy();
+      assert child.getUserDataTag() != null;
+      var tag = child.getUserDataTag().copy();
     tag.putUUID(FAMILY, id);
     child.setUserDataTag(tag);
     var world = WorldState.get(parent.getLevel());
