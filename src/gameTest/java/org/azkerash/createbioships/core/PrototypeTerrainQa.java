@@ -23,7 +23,6 @@ import org.azkerash.createbioships.components.ComponentRegistry;
 import org.azkerash.createbioships.components.logic.legs.CrabLegBlock;
 import org.azkerash.createbioships.core.brain.BrainMotorControls;
 import org.azkerash.createbioships.core.legs.SubLevelLegs;
-import org.azkerash.createbioships.core.locomotion.SubLevelFacing;
 import org.azkerash.createbioships.core.locomotion.prototype.PrototypeLocomotion;
 import org.azkerash.createbioships.core.pathfinding.SubLevelPathfinder;
 import org.azkerash.createbioships.development.testing.DevelopmentLifeSupport;
@@ -55,6 +54,8 @@ public final class PrototypeTerrainQa {
   private static Vec3 start, previous, goal;
   private static double distance, minUp, minY, maxY;
   private static List<Vec3> route;
+  private static org.azkerash.createbioships.core.pathfinding.WaypointNavigator navigator;
+  private static int detourUpdates;
   private static boolean started, done, routeFound;
   private static int arrived;
 
@@ -75,7 +76,7 @@ public final class PrototypeTerrainQa {
         Files.createDirectories(OUTPUT);
         Files.writeString(
             OUTPUT.resolve("results.csv"),
-            "terrain,mode,leg_height,requested_speed,seed,x,y,z,elevation_range,trunks,route_found,arrival_ticks,distance,net_distance,min_up,vertical_range,blocked_commands\n");
+            "terrain,mode,leg_height,requested_speed,seed,x,y,z,elevation_range,trunks,route_found,arrival_ticks,distance,net_distance,min_up,vertical_range,blocked_commands,detour_updates\n");
         level.getGameRules().getRule(GameRules.RULE_DOMOBSPAWNING).set(false, server);
         level.setDayTime(6000);
         selectSites(level);
@@ -114,7 +115,8 @@ public final class PrototypeTerrainQa {
         minY = maxY = position.y;
         minUp = 1;
         distance = 0;
-        arrived = blocked = waypoint = 0;
+        arrived = blocked = waypoint = detourUpdates = 0;
+        navigator = new org.azkerash.createbioships.core.pathfinding.WaypointNavigator();
         var site = sites.get(trial / trialsPerSite());
         var end = ground(level, site.start.getX(), site.start.getZ() + ROUTE_BLOCKS);
         if (end == null) {
@@ -134,22 +136,19 @@ public final class PrototypeTerrainQa {
       maxY = Math.max(maxY, position.y);
       distance += position.distanceTo(previous);
       previous = position;
-      while (waypoint < route.size() - 1 && horizontal(position, route.get(waypoint)) < 1) {
-        waypoint++;
-      }
-      if (arrived == 0 && horizontal(position, goal) < 1) {
-        arrived = age - SETTLE_TICKS;
-        BrainMotorControls.stop(subject);
-      }
       if (arrived == 0) {
-        var steering =
-            SubLevelFacing.towards(
-                SubLevelFacing.world(subject),
-                route.get(waypoint).subtract(position),
-                speed(),
-                false);
-        if (!BrainMotorControls.move(subject, steering.velocity(), steering.yawRate(), 3)) {
+        var progress =
+            navigator.follow(subject, route, waypoint, speed(), 3, SubLevelPathfinder.Mode.GROUND);
+        waypoint = progress.next();
+        if (progress.detouring()) {
+          detourUpdates++;
+        }
+        if (!progress.accepted()) {
           blocked++;
+        }
+        if (progress.arrived() || horizontal(position, goal) < 1) {
+          arrived = age - SETTLE_TICKS;
+          BrainMotorControls.stop(subject);
         }
       }
       if (age % 80 == 0) {
@@ -366,7 +365,7 @@ public final class PrototypeTerrainQa {
     String row =
         String.format(
             Locale.ROOT,
-            "%s,%s,%d,%.1f,%d,%d,%d,%d,%d,%d,%s,%d,%.3f,%.3f,%.6f,%.3f,%d%n",
+            "%s,%s,%d,%.1f,%d,%d,%d,%d,%d,%d,%s,%d,%.3f,%.3f,%.6f,%.3f,%d,%d%n",
             site.kind,
             PrototypeLocomotion.get(subject),
             LEG_HEIGHT,
@@ -383,7 +382,8 @@ public final class PrototypeTerrainQa {
             horizontal(position, start),
             minUp,
             maxY - minY,
-            blocked);
+            blocked,
+            detourUpdates);
     Files.writeString(OUTPUT.resolve("results.csv"), row, StandardOpenOption.APPEND);
     System.out.println("TERRAIN_RESULT " + row.strip());
     var container = SubLevelContainer.getContainer(level);

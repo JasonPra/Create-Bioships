@@ -152,4 +152,37 @@ public final class WaypointNavigationTests {
         "Pruning skipped unsupported/unloaded terrain");
     h.succeed();
   }
+
+  @GameTest(template = "test_empty")
+  public static void contact_escape_is_a_secondary_waypoint_without_skipping_the_main_target(
+      GameTestHelper h) {
+    var world = new World();
+    world.planned = List.of();
+    var navigator = new WaypointNavigator();
+    var primary = List.of(new Vec3(0, 0, 6));
+    var first = navigator.follow(world, primary, 0, 2, SubLevelPathfinder.Mode.GROUND);
+    h.assertTrue(
+        first.accepted() && first.detouring() && navigator.getDetourWaypoints().size() == 1,
+        "Blocked start did not create a bounded sidestep waypoint");
+    world.position = navigator.getDetourWaypoints().getFirst();
+    world.tick = 10;
+    var resumed = navigator.follow(world, primary, 0, 2, SubLevelPathfinder.Mode.GROUND);
+    h.assertTrue(
+        !resumed.arrived() && resumed.next() == 0 && world.velocity.z > 0,
+        "Completing a sidestep incorrectly completed the main route");
+    h.succeed();
+  }
+
+  @GameTest(template = "test_empty")
+  public static void search_includes_goal_elevation_beyond_the_old_eight_block_band(
+      GameTestHelper h) {
+    SubLevelPathfinder.Space stairs = (cell, mode) -> true;
+    var goal = new BlockPos(0, -10, 10);
+    var path =
+        SubLevelPathfinder.search(stairs, BlockPos.ZERO, goal, SubLevelPathfinder.Mode.GROUND, 512);
+    h.assertTrue(
+        !path.isEmpty() && path.getLast().equals(goal),
+        "Valid descent was rejected by a fixed vertical search band");
+    h.succeed();
+  }
 }

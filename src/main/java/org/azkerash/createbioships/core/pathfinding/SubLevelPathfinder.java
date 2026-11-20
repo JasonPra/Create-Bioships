@@ -12,6 +12,10 @@ import org.azkerash.createbioships.core.locomotion.SubLevelLocomotion;
 /** Bounded shared route planning. Movement and limb actuation remain separate. */
 public final class SubLevelPathfinder {
   public static final int MAX_ROUTE_DISTANCE_BLOCKS = 20;
+  private static final int ROUTE_SEARCH_NODE_BUDGET = 256;
+  private static final int MAX_VISIBILITY_TESTS = 64;
+  private static final int MIN_VERTICAL_SEARCH_RANGE = 8;
+  private static final int VERTICAL_SEARCH_MARGIN = 2;
   private static final int GROUND_PROBE_DEPTH_BLOCKS = 12;
   private static final int GROUND_PROBE_ORIGIN_LIFT_BLOCKS = 2;
 
@@ -195,7 +199,8 @@ public final class SubLevelPathfinder {
                 && swept(begin.move(0, stepHeight, 0), end.move(0, stepHeight, 0));
           }
         };
-    var cells = waypoints(space, start, search(space, start, goal, mode, 256), mode);
+    var cells =
+        waypoints(space, start, search(space, start, goal, mode, ROUTE_SEARCH_NODE_BUDGET), mode);
     double lift = here.y - origin.getY();
     return new Route(
         mode,
@@ -214,7 +219,7 @@ public final class SubLevelPathfinder {
     var result = new ArrayList<BlockPos>();
     var anchor = start;
     int next = 0;
-    int visibilityBudget = 64;
+    int visibilityBudget = MAX_VISIBILITY_TESTS;
     var memo = new HashMap<BlockPos, Boolean>();
     while (next < cells.size()) {
       int chosen = next;
@@ -368,6 +373,11 @@ public final class SubLevelPathfinder {
     if (start.distManhattan(goal) > 32 || budget < 1) {
       return List.of();
     }
+    // Include the destination's elevation; a fixed ±8 band rejected otherwise valid descents.
+    int verticalRange =
+        Math.max(
+            MIN_VERTICAL_SEARCH_RANGE,
+            Math.abs(goal.getY() - start.getY()) + VERTICAL_SEARCH_MARGIN);
     var open = new PriorityQueue<Node>(Comparator.comparingDouble(Node::score));
     var parents = new HashMap<BlockPos, BlockPos>();
     var costs = new HashMap<BlockPos, Double>();
@@ -391,7 +401,7 @@ public final class SubLevelPathfinder {
       for (var offset : mode == Mode.GROUND ? GROUND_OFFSETS : WATER_OFFSETS) {
         var p = current.offset(offset);
         if (closed.contains(p)
-            || Math.abs(p.getY() - start.getY()) > 8
+            || Math.abs(p.getY() - start.getY()) > verticalRange
             || p.distManhattan(start) > 32
             || !memo.computeIfAbsent(p, k -> world.passable(k, mode))) {
           continue;

@@ -34,6 +34,10 @@ public final class WaypointNavigator {
 
     boolean canStrafe();
 
+    default double detourDistance() {
+      return 2;
+    }
+
     boolean move(Vec3 velocity, double yawRate);
 
     List<Vec3> plan(Vec3 destination, SubLevelPathfinder.Mode mode);
@@ -46,17 +50,23 @@ public final class WaypointNavigator {
   private static final double STRAFE_SPEED_FACTOR = .65;
   private static final int REPLAN_INTERVAL_TICKS = 20;
   private static final int DETOUR_LIFETIME_TICKS = 400;
+  private static final int MAX_LOCAL_DETOURS = 2;
   private static final double SUPPORT_PROBE_LIFT = 2, SUPPORT_PROBE_DEPTH = 12;
   private static final double SUPPORT_TOLERANCE = .05;
+  private static final double SUPPORT_SAMPLE_SPACING = 1;
+  private static final int MAX_SUPPORT_SAMPLES = 4;
   private static final double MOVEMENT_LOOKAHEAD_SECONDS = .5;
   private List<Vec3> primary = List.of(), detour = List.of();
   private SubLevelPathfinder.Mode mode;
-  private int detourNext, rejoin;
+  private int detourNext, rejoin, localDetours;
+  private boolean localDetour;
   private long nextPlan = Long.MIN_VALUE, detourUntil, revision;
 
   public void reset() {
     primary = detour = List.of();
     detourNext = 0;
+    localDetours = 0;
+    localDetour = false;
     nextPlan = Long.MIN_VALUE;
     mode = null;
     revision++;
@@ -91,6 +101,11 @@ public final class WaypointNavigator {
           public boolean canStrafe() {
             // Legs can sidestep while walking, including underwater. Fin propulsion cannot.
             return kind == SubLevelPathfinder.Mode.GROUND && SubLevelLocomotion.get(body).hasLegs();
+          }
+
+          public double detourDistance() {
+            var bounds = SubLevelLocomotion.bounds(body);
+            return Math.clamp(Math.max(bounds.getXsize(), bounds.getZsize()) / 2, 1, 4);
           }
 
           public boolean move(Vec3 velocity, double yawRate) {
@@ -133,7 +148,9 @@ public final class WaypointNavigator {
         detourNext++;
       }
       if (detourNext >= detour.size()) {
-        next = rejoin + 1;
+        if (!localDetour) {
+          next = rejoin + 1;
+        }
         clearDetour();
       }
     }
@@ -144,6 +161,7 @@ public final class WaypointNavigator {
     }
     if (next >= primary.size()) {
       world.move(Vec3.ZERO, 0);
+      world.publish(List.of(), 0, kind);
       return new Result(next, true, true, false, 0, 0, revision);
     }
     var choice = steering(world, position, next, speed);
@@ -165,6 +183,7 @@ public final class WaypointNavigator {
           revision++;
         }
         detour = replacement;
+        localDetour = false;
         rejoin = candidate;
         detourNext = 0;
         detourUntil = world.tick() + DETOUR_LIFETIME_TICKS;
@@ -175,19 +194,44 @@ public final class WaypointNavigator {
         choice = steering(world, position, next, speed);
         accepted = world.move(choice.velocity(), choice.yawRate());
       }
+      if (!accepted && world.canStrafe() && localDetours < MAX_LOCAL_DETOURS) {
+        var nose = world.forward();
+        var right = new Vec3(nose.z, 0, -nose.x).normalize();
+        var facing =
+            SubLevelFacing.towards(nose, primary.get(candidate).subtract(position), speed, false);
+        // Contact may leave no valid first A* cell. Try a bounded, live-checked sidestep waypoint.
+        for (int side : new int[] {1, -1}) {
+          var direction = right.scale(side);
+          var velocity = direction.scale(speed * STRAFE_SPEED_FACTOR);
+          if (world.move(velocity, facing.yawRate())) {
+            detour = List.of(position.add(direction.scale(world.detourDistance())));
+            detourNext = 0;
+            localDetour = true;
+            localDetours++;
+            rejoin = candidate;
+            detourUntil = world.tick() + DETOUR_LIFETIME_TICKS;
+            revision++;
+            choice = new SubLevelFacing.Steering(velocity, facing.yawRate(), facing.error());
+            accepted = true;
+            break;
+          }
+        }
+      }
     }
     if (detour.isEmpty()) {
       world.publish(primary, next, kind);
     } else {
       var active = new ArrayList<>(detour);
-      active.addAll(primary.subList(rejoin + 1, primary.size()));
+      active.addAll(primary.subList(localDetour ? next : rejoin + 1, primary.size()));
       world.publish(List.copyOf(active), detourNext, kind);
     }
     double remaining =
         detour.isEmpty()
             ? remaining(position, primary, next)
             : remaining(position, detour, detourNext)
-                + remaining(primary.get(rejoin), primary, rejoin + 1);
+                + (localDetour
+                    ? remaining(detour.getLast(), primary, next)
+                    : remaining(primary.get(rejoin), primary, rejoin + 1));
     return new Result(
         next, false, accepted, !detour.isEmpty(), choice.error(), remaining, revision);
   }
@@ -216,6 +260,7 @@ public final class WaypointNavigator {
   }
 
   private void clearDetour() {
+    localDetour = false;
     detour = List.of();
     detourNext = 0;
     revision++;
@@ -257,19 +302,34 @@ public final class WaypointNavigator {
     TerrainProbe.withIgnored(
         part -> family.contains(part.getUniqueId()),
         () -> {
-          var a =
-              TerrainProbe.down(
-                  body.getLevel(), here.add(0, SUPPORT_PROBE_LIFT, 0), SUPPORT_PROBE_DEPTH, body);
-          var b =
-              TerrainProbe.down(
-                  body.getLevel(), target.add(0, SUPPORT_PROBE_LIFT, 0), SUPPORT_PROBE_DEPTH, body);
-          result[0] =
-              a != null
-                  && b != null
-                  && TerrainProbe.standable(a)
-                  && TerrainProbe.standable(b)
-                  && Math.abs(a.point().y - b.point().y)
-                      <= SubLevelLocomotion.stepHeight(body) + SUPPORT_TOLERANCE;
+          var delta = target.subtract(here);
+          int samples =
+              Math.clamp(
+                  (int) Math.ceil(delta.horizontalDistance() / SUPPORT_SAMPLE_SPACING),
+                  1,
+                  MAX_SUPPORT_SAMPLES);
+          Vec3 previous = null;
+          for (int i = 0; i <= samples; i++) {
+            var sample = here.add(delta.scale(i / (double) samples));
+            if (!body.getLevel().hasChunkAt(BlockPos.containing(sample))) {
+              return;
+            }
+            var hit =
+                TerrainProbe.down(
+                    body.getLevel(),
+                    sample.add(0, SUPPORT_PROBE_LIFT, 0),
+                    SUPPORT_PROBE_DEPTH,
+                    body);
+            if (hit == null
+                || !TerrainProbe.standable(hit)
+                || (previous != null
+                    && Math.abs(hit.point().y - previous.y)
+                        > SubLevelLocomotion.stepHeight(body) + SUPPORT_TOLERANCE)) {
+              return;
+            }
+            previous = hit.point();
+          }
+          result[0] = true;
         });
     return result[0];
   }
