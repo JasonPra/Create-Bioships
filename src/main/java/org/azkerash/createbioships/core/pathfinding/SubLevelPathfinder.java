@@ -121,6 +121,8 @@ public final class SubLevelPathfinder {
                 bounds.maxY,
                 bounds.maxZ)
             : bounds;
+    // Capture once per search; moving constructs are recaptured by the next search/live check.
+    var obstacles = SubLevelObstacles.capture(body, box.inflate(MAX_ROUTE_DISTANCE_BLOCKS));
     var origin = start;
     var reference = here;
     double stepHeight = mode == Mode.GROUND ? SubLevelLocomotion.stepHeight(body) : 1;
@@ -145,7 +147,7 @@ public final class SubLevelPathfinder {
             } else if (!level.getFluidState(cell).is(FluidTags.WATER)) {
               return false;
             }
-            if (terrainClear(level, at(cell.getX(), cell.getY(), cell.getZ()))) {
+            if (clear(level, obstacles, at(cell.getX(), cell.getY(), cell.getZ()))) {
               return true;
             }
             // Native stepping starts when the forward feet meet a ledge, before the hull
@@ -153,13 +155,14 @@ public final class SubLevelPathfinder {
             // leg envelope as a solid wall all the way down to the old floor.
             return kind == Mode.GROUND
                 && stepHeight > 0
-                && terrainClear(level, at(cell.getX(), cell.getY() + stepHeight, cell.getZ()));
+                && clear(level, obstacles, at(cell.getX(), cell.getY() + stepHeight, cell.getZ()));
           }
 
           private boolean swept(AABB from, AABB to) {
             for (double t : new double[] {0, .25, .5, .75, 1}) {
-              if (!terrainClear(
+              if (!clear(
                   level,
+                  obstacles,
                   from.move(
                       (to.minX - from.minX) * t,
                       (to.minY - from.minY) * t,
@@ -230,12 +233,12 @@ public final class SubLevelPathfinder {
     double radius = Math.max(box.getXsize(), box.getZsize()) / 2;
     double margin = .15 + Math.min(.4, radius * Math.abs(yawRate) * .1);
     var delta = movement.scale(.5);
-    if (movementSweepClear(level, box, delta, margin)) {
+    if (movementSweepClear(body, box, delta, margin)) {
       return true;
     }
     // Permit bounded native step-up, while keeping tall walls blocked.
     double step = SubLevelLocomotion.stepHeight(body);
-    return step > 0 && movementSweepClear(level, box.move(0, step, 0), delta, margin);
+    return step > 0 && movementSweepClear(body, box.move(0, step, 0), delta, margin);
   }
 
   private static double overlap(AABB a, AABB b) {
@@ -245,15 +248,17 @@ public final class SubLevelPathfinder {
   }
 
   private static boolean movementSweepClear(
-      net.minecraft.server.level.ServerLevel level, AABB start, Vec3 delta, double margin) {
+      ServerSubLevel body, AABB start, Vec3 delta, double margin) {
+    var level = body.getLevel();
     var future = start.move(delta).inflate(margin, 0, margin);
     var sweep = start.minmax(future);
-    if (terrainClear(level, sweep)) {
+    var obstacles = SubLevelObstacles.capture(body, sweep);
+    if (clear(level, obstacles, sweep)) {
       return true;
     }
     // Physics contact tolerance can leave a tiny starting overlap. Permit only escape:
     // the destination is clear, no new obstacle is crossed, and overlap never increases.
-    if (delta.lengthSqr() < 1e-8 || !terrainClear(level, future)) {
+    if (delta.lengthSqr() < 1e-8 || !clear(level, obstacles, future)) {
       return false;
     }
     var lo = BlockPos.containing(sweep.minX, sweep.minY, sweep.minZ);
@@ -261,27 +266,45 @@ public final class SubLevelPathfinder {
     if (!level.hasChunksAt(lo, hi)) {
       return false;
     }
+    for (var obstacle : obstacles.boxes()) {
+      if (!escapeClear(start, delta, sweep, obstacle)) {
+        return false;
+      }
+    }
     for (var cell : BlockPos.betweenClosed(lo, hi)) {
       for (var shape : level.getBlockState(cell).getCollisionShape(level, cell).toAabbs()) {
         var obstacle = shape.move(cell);
-        if (!obstacle.intersects(sweep)) {
-          continue;
-        }
-        double previous = overlap(start, obstacle);
-        if (previous <= 0) {
+        if (!escapeClear(start, delta, sweep, obstacle)) {
           return false;
-        }
-        for (double t : new double[] {.25, .5, .75, 1}) {
-          double current =
-              overlap(start.move(delta.scale(t)).inflate(margin * t, 0, margin * t), obstacle);
-          if (current > previous + 1e-8) {
-            return false;
-          }
-          previous = current;
         }
       }
     }
     return true;
+  }
+
+  private static boolean escapeClear(AABB start, Vec3 delta, AABB sweep, AABB obstacle) {
+    if (!obstacle.intersects(sweep)) {
+      return true;
+    }
+    double previous = overlap(start, obstacle);
+    if (previous <= 0) {
+      return false;
+    }
+    for (double t : new double[] {.25, .5, .75, 1}) {
+      double current = overlap(start.move(delta.scale(t)), obstacle);
+      if (current > previous + 1e-8) {
+        return false;
+      }
+      previous = current;
+    }
+    return true;
+  }
+
+  private static boolean clear(
+      net.minecraft.server.level.ServerLevel level,
+      SubLevelObstacles.Snapshot obstacles,
+      AABB box) {
+    return terrainClear(level, box) && obstacles.clear(box);
   }
 
   public static List<BlockPos> search(
