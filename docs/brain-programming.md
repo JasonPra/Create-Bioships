@@ -29,3 +29,18 @@ Execution is bounded by source/token/instruction/local-variable/stack/string/out
 Brain-backed editing and output use the existing owner/invite UUID policy on the server, with active-menu, slot, range and card-identity validation. Revoking permission or replacing/removing the card invalidates the editing context. An ordinary card held in the player's own inventory can be edited without granting access to another creature. Source and console output are not broadcast to nearby players.
 
 Compiler, machine, card persistence, menu/network validation and client editor each have separate responsibilities. Host calls are explicit extension points so later component support does not require rewriting the language parser.
+
+## Limits and timing
+
+The implementation limits source to 8,192 characters, 2,048 tokens, 4,096 instructions,
+128 local variables, 128 evaluation-stack entries, and 64 parser nesting levels.
+Each brain update permits 1,024 instructions before a non-yielding program faults.
+Strings are limited to 4,096 characters; console history retains 64 lines of up to
+256 characters. Waits accept 0–72,000 game ticks and yield at least one update.
+The brain updates every 10 ticks, so waits resume on the first brain update at or
+after the requested time. These are server-enforced bounds, not client preferences.
+
+The draft editor was exercised in the native client: typing the inventory key did
+not close it, Tab inserted spaces, and saving/reopening preserved the source.
+A public creative inventory copy restored source only from the author's private
+backup. Ordinary item network serialization omitted source and compiled state.
