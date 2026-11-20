@@ -84,7 +84,12 @@ public final class EstateInteriors {
             Blocks.BARREL,
             Blocks.RED_BED,
             Blocks.STRIPPED_DARK_OAK_LOG,
-            Blocks.FLOWER_POT);
+            Blocks.FLOWER_POT,
+            Blocks.SMOOTH_STONE,
+            Blocks.FURNACE,
+            Blocks.SMOKER,
+            Blocks.CAULDRON,
+            Blocks.CRAFTING_TABLE);
     for (int x = -12; x <= 12; x++)
       for (int z = -12; z <= 12; z++)
         for (int y = 0; y <= 7; y++) {
@@ -159,6 +164,96 @@ public final class EstateInteriors {
           "Estate library has only " + power + " valid enchanting shelves");
     var state = CoreTestState.get(l);
     state.denFurnitureVersion = Math.max(1, state.denFurnitureVersion);
+    state.setDirty();
+  }
+
+  private static void bed(ServerLevel l, BlockPos foot, Direction facing) {
+    var b = FurnitureRegistry.OSSUARY_BED.get();
+    var state = b.defaultBlockState().setValue(BedBlock.FACING, facing);
+    l.setBlock(foot, state, 2);
+    b.setPlacedBy(l, foot, state, null, ItemStack.EMPTY);
+  }
+
+  private static void pendant(ServerLevel l, BlockPos floor, int x, int z, int lampHeight) {
+    int ceiling = 11;
+    for (int y = lampHeight + 1; y < ceiling; y++) put(l, floor.offset(x, y, z), Blocks.CHAIN);
+    l.setBlock(
+        floor.offset(x, lampHeight, z),
+        Blocks.LANTERN.defaultBlockState().setValue(LanternBlock.HANGING, true),
+        3);
+  }
+
+  public static void rooms(ServerLevel l, BlockPos surface) {
+    var kitchen = surface.above(12);
+    var contents = clearOldFurniture(l, kitchen);
+    // Fitted functional cabinets, with real cooking blocks supported by the counter beneath them.
+    for (int z = 2; z <= 10; z++) cabinet(l, kitchen.offset(-10, 0, z), Direction.EAST, contents);
+    face(l, kitchen.offset(-10, 1, 2), Blocks.FURNACE, Direction.EAST);
+    face(l, kitchen.offset(-10, 1, 5), Blocks.FURNACE, Direction.EAST);
+    face(l, kitchen.offset(-10, 1, 8), Blocks.SMOKER, Direction.EAST);
+    put(l, kitchen.offset(-8, 0, 10), Blocks.CRAFTING_TABLE);
+    put(l, kitchen.offset(-8, 0, 8), Blocks.WATER_CAULDRON);
+    table(l, kitchen, -7, 4, -6, 7);
+    put(l, kitchen.offset(-6, 1, 4), Blocks.LANTERN);
+    table(l, kitchen, 0, 3, 1, 7);
+    for (int z : new int[] {3, 5, 7}) {
+      chair(l, kitchen.offset(-1, 0, z), Direction.EAST);
+      chair(l, kitchen.offset(2, 0, z), Direction.WEST);
+    }
+    pendant(l, kitchen, 0, 5, 5);
+    // Guest seating around a low-volume table, with clear circulation around the stair doorway.
+    table(l, kitchen, 8, -4, 9, -3);
+    for (int x : new int[] {7, 10}) {
+      chair(l, kitchen.offset(x, 0, -5), Direction.SOUTH);
+      chair(l, kitchen.offset(x, 0, -1), Direction.NORTH);
+    }
+    for (int y = 0; y < 2; y++) bookcase(l, kitchen.offset(11, y, -7), Direction.WEST, y == 0);
+    put(l, kitchen.offset(8, 1, -4), Blocks.LANTERN);
+    cabinet(l, kitchen.offset(10, 0, 9), Direction.NORTH, contents);
+    for (var item : contents)
+      Containers.dropItemStack(
+          l, kitchen.getX() - 9.5, kitchen.getY() + 1, kitchen.getZ() + 9.5, item);
+
+    var bedroom = surface.above(36);
+    contents = clearOldFurniture(l, bedroom);
+    bed(l, bedroom.offset(-1, 0, 7), Direction.NORTH);
+    bed(l, bedroom.offset(0, 0, 7), Direction.NORTH);
+    for (int x : new int[] {-3, 2}) {
+      cabinet(l, bedroom.offset(x, 0, 6), Direction.SOUTH, contents);
+      put(l, bedroom.offset(x, 1, 6), Blocks.LANTERN);
+    }
+    for (int z = 7; z <= 10; z++)
+      for (int y = 0; y < 2; y++) cabinet(l, bedroom.offset(10, y, z), Direction.WEST, contents);
+    table(l, bedroom, 6, 3, 8, 4);
+    chair(l, bedroom.offset(7, 0, 6), Direction.NORTH);
+    stand(l, bedroom.offset(9, 0, 5), Direction.SOUTH);
+    put(l, bedroom.offset(6, 1, 3), Blocks.LANTERN);
+    for (int z = -6; z <= -4; z++) bookcase(l, bedroom.offset(11, 0, z), Direction.WEST, z == -5);
+    chair(l, bedroom.offset(9, 0, -4), Direction.EAST);
+    table(l, bedroom, 7, -5, 7, -4);
+    put(l, bedroom.offset(7, 1, -5), Blocks.LANTERN);
+    for (var item : contents)
+      Containers.dropItemStack(
+          l, bedroom.getX() + 9.5, bedroom.getY() + 1, bedroom.getZ() + 8.5, item);
+    // Entry reading stands belong on the floor, with their own supported tops.
+    for (int x : new int[] {-5, 5}) {
+      stand(l, surface.offset(x, 0, -20), Direction.SOUTH);
+      var oldSkull = surface.offset(x, 1, -25);
+      if (l.getBlockState(oldSkull).is(Blocks.SKELETON_SKULL)) l.removeBlock(oldSkull, false);
+    }
+    // Replace decorative vanilla book towers in the biological workshop, keeping its machines.
+    var vault = NecromancerDenFixture.base(l);
+    for (int x : new int[] {22, 28, 34, 39})
+      for (int y = 1; y <= 2; y++)
+        bookcase(l, vault.offset(x, y, -39), Direction.SOUTH, y == 1 && x % 2 == 0);
+    for (int z : new int[] {-27, -14, -1}) {
+      var foot = vault.offset(-39, 0, z + 1);
+      l.removeBlock(foot, false);
+      l.removeBlock(foot.north(), false);
+      bed(l, foot, Direction.NORTH);
+    }
+    var state = CoreTestState.get(l);
+    state.denFurnitureVersion = 2;
     state.setDirty();
   }
 }

@@ -118,6 +118,7 @@ public final class NecromancerDenFixture {
     detailExterior(l, s);
     repairAccessAndLighting(l);
     EstateInteriors.library(l, s);
+    EstateInteriors.rooms(l, s);
     var state = CoreTestState.get(l);
     state.necromancerDenBuilt = true;
     state.setDirty();
@@ -220,7 +221,11 @@ public final class NecromancerDenFixture {
             .setValue(BlockStateProperties.ATTACH_FACE, AttachFace.WALL)
             .setValue(BlockStateProperties.HORIZONTAL_FACING, Direction.EAST),
         2);
-    bed(l, b.offset(-39, 0, z + 1), Direction.NORTH, Blocks.WHITE_BED);
+    bed(
+        l,
+        b.offset(-39, 0, z + 1),
+        Direction.NORTH,
+        org.Azkerash.create_bioships.furniture.FurnitureRegistry.OSSUARY_BED.get());
     put(l, b, -40, 0, z - 2, Blocks.WATER_CAULDRON);
     put(l, b, -39, 0, z - 2, Blocks.HAY_BLOCK);
     put(l, b, -39, 5, z, Blocks.SEA_LANTERN);
@@ -358,42 +363,6 @@ public final class NecromancerDenFixture {
   }
 
   private static void furnish(ServerLevel l, BlockPos b) {
-    // First floor: ordinary kitchen, dining table and a drawing room for guests.
-    fill(l, b, -11, 12, 1, -7, 12, 10, Blocks.SMOOTH_STONE);
-    for (int z : new int[] {2, 5}) put(l, b, -10, 13, z, Blocks.FURNACE);
-    put(l, b, -10, 13, 8, Blocks.SMOKER);
-    put(l, b, -8, 13, 8, Blocks.CAULDRON);
-    put(l, b, -8, 13, 2, Blocks.CRAFTING_TABLE);
-    put(l, b, -11, 13, 10, Blocks.BARREL);
-    put(l, b, -10, 14, 10, Blocks.CHEST);
-    fill(l, b, -2, 12, 2, 2, 12, 8, Blocks.DARK_OAK_FENCE);
-    fill(l, b, -2, 13, 2, 2, 13, 8, Blocks.DARK_OAK_SLAB);
-    for (int z : new int[] {3, 7})
-      for (int x : new int[] {-4, 4})
-        l.setBlock(
-            b.offset(x, 12, z),
-            Blocks.DARK_OAK_STAIRS
-                .defaultBlockState()
-                .setValue(StairBlock.FACING, x < 0 ? Direction.EAST : Direction.WEST),
-            2);
-    fill(l, b, 6, 12, -7, 10, 12, -5, Blocks.RED_WOOL);
-    fill(l, b, 6, 13, -7, 10, 13, -7, Blocks.DARK_OAK_TRAPDOOR);
-    fill(l, b, 7, 12, -2, 9, 12, 0, Blocks.DARK_OAK_SLAB);
-    put(l, b, 11, 12, -1, Blocks.FLOWER_POT);
-    // Master bedroom: double bed, wardrobe, bedside lights and a small seating area.
-    bed(l, b.offset(-1, 36, 6), Direction.NORTH, Blocks.RED_BED);
-    bed(l, b.offset(0, 36, 6), Direction.NORTH, Blocks.RED_BED);
-    for (int x : new int[] {-3, 2}) {
-      put(l, b, x, 36, 5, Blocks.BARREL);
-      put(l, b, x, 37, 5, Blocks.LANTERN);
-    }
-    for (int x : new int[] {-3, 2})
-      for (int z : new int[] {3, 7}) fill(l, b, x, 36, z, x, 40, z, Blocks.STRIPPED_DARK_OAK_LOG);
-    fill(l, b, -3, 41, 3, 2, 41, 7, Blocks.RED_WOOL);
-    fill(l, b, 8, 36, 4, 10, 39, 10, Blocks.DARK_OAK_PLANKS);
-    put(l, b, -10, 36, 9, Blocks.CHEST);
-    put(l, b, -7, 36, 9, Blocks.RED_WOOL);
-    put(l, b, -7, 36, 8, Blocks.DARK_OAK_STAIRS);
     for (int y : new int[] {0, 12, 24, 36, 48})
       for (int x : new int[] {-9, 9})
         for (int z : new int[] {-10, 10}) put(l, b, x, y + 6, z, Blocks.LANTERN);

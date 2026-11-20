@@ -41,4 +41,34 @@ public final class EstateInteriorTests {
         "Library migration lost stored items");
     h.succeed();
   }
+
+  @GameTest(template = "test_empty", batch = "estate_rooms", timeoutTicks = 60)
+  public static void rooms_have_supported_appliances_and_clear_stair_entry(GameTestHelper h) {
+    var l = h.getLevel();
+    var base = new BlockPos(9600, 80, 256);
+    for (int floor : new int[] {0, 12, 36})
+      for (int x = -12; x <= 12; x++)
+        for (int z = -12; z <= 12; z++)
+          l.setBlock(base.offset(x, floor - 1, z), Blocks.STONE.defaultBlockState(), 2);
+    // Model the real stair exit; furnishing must leave these two cells clear.
+    EstateInteriors.rooms(l, base);
+    var oven = base.offset(-10, 13, 2);
+    h.assertTrue(
+        l.getBlockState(oven).is(Blocks.FURNACE)
+            && l.getBlockState(oven.below()).isFaceSturdy(l, oven.below(), Direction.UP),
+        "Kitchen appliance floats");
+    h.assertTrue(
+        l.getBlockState(base.offset(-3, 12, 0)).isAir()
+            && l.getBlockState(base.offset(-3, 13, 0)).isAir(),
+        "Furniture blocks stair exit");
+    var foot = base.offset(-1, 36, 7);
+    h.assertTrue(
+        l.getBlockState(foot).is(FurnitureRegistry.OSSUARY_BED.get())
+            && l.getBlockState(foot.north()).is(FurnitureRegistry.OSSUARY_BED.get()),
+        "Bedroom lacks complete native bed");
+    h.assertTrue(
+        l.getBlockState(base.offset(-1, 12, 5)).is(FurnitureRegistry.OSSUARY_CHAIR.get()),
+        "Dining room lacks usable seating");
+    h.succeed();
+  }
 }

@@ -81,5 +81,7 @@ public final class DevelopmentWorldSetup {
     if (state.denAccessVersion < 1) NecromancerDenFixture.repairAccessAndLighting(level);
     if (state.denFurnitureVersion < 1)
       EstateInteriors.library(level, NecromancerDenFixture.surface(level));
+    if (state.denFurnitureVersion < 2)
+      EstateInteriors.rooms(level, NecromancerDenFixture.surface(level));
   }
 }
