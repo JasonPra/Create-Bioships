@@ -75,7 +75,7 @@ public final class SubLevelNames {
         updated.putBoolean(MANAGED, true);
         body.setUserDataTag(updated);
       }
-    } else if (managed) {
+    } else if (existing != null && managed) {
       body.setName(null);
       var updated = existing.copy();
       updated.remove(MANAGED);

@@ -19,11 +19,13 @@ public final class DevelopmentJuniorBaseline {
   public static void capture(ServerSubLevel body) {
     if (SubLevelHealth.status(body).dead())
       throw new IllegalArgumentException("Cannot capture a dead subject");
-    for (var part : SubLevelCreatureParts.members(body))
-      if (part != body && !part.getUserDataTag().contains(CompactLimbController.PART))
+    for (var part : SubLevelCreatureParts.members(body)) {
+      var data = part.getUserDataTag();
+      if (part != body && (data == null || !data.contains(CompactLimbController.PART)))
         throw new IllegalArgumentException(
             "This baseline supports generated compact limbs; modular assemblies require a future"
                 + " multipart schematic");
+    }
     var level = body.getLevel();
     var center = body.getPlot().getCenterBlock();
     var result = new CompoundTag();
@@ -39,7 +41,8 @@ public final class DevelopmentJuniorBaseline {
     }
     result.put("blocks", blocks);
     result.putLong("origin", center.asLong());
-    result.put("user", body.getUserDataTag().copy());
+    var user = body.getUserDataTag();
+    result.put("user", user == null ? new CompoundTag() : user.copy());
     var pose = body.logicalPose();
     var pos = pose.position();
     var rot = pose.orientation();
@@ -68,9 +71,10 @@ public final class DevelopmentJuniorBaseline {
     var container = SubLevelContainer.getContainer(level);
     var old = state.juniorSubject == null ? null : container.getSubLevel(state.juniorSubject);
     var former = old instanceof ServerSubLevel b ? b : null;
+    var formerData = former == null ? null : former.getUserDataTag();
     var access =
-        former != null && former.getUserDataTag() != null
-            ? former.getUserDataTag().getCompound(SubLevelData.ACCESS).copy()
+        formerData != null
+            ? formerData.getCompound(SubLevelData.ACCESS).copy()
             : snapshot.getCompound("user").getCompound(SubLevelData.ACCESS).copy();
     var origin = BlockPos.of(snapshot.getLong("origin"));
     var staging = new BlockPos(18000, 100, 18000);

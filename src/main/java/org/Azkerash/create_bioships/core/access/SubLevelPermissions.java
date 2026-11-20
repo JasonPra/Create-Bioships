@@ -62,7 +62,8 @@ public final class SubLevelPermissions {
   private static void save(ServerSubLevel body, Access access) {
     if (!SubLevelCreatureParts.available(body)) return;
     body = SubLevelCreatureParts.root(body);
-    var root = body.getUserDataTag() == null ? new CompoundTag() : body.getUserDataTag().copy();
+    var existing = body.getUserDataTag();
+    var root = existing == null ? new CompoundTag() : existing.copy();
     var tag = new CompoundTag();
     if (access.owner != null) tag.putUUID("owner", access.owner);
     var list = new ListTag();
