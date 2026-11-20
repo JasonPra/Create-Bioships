@@ -6,13 +6,25 @@ import org.Azkerash.create_bioships.core.brain.program.ProgramLexer.*;
 
 /** Server-side, closed-world C# subset compiler. It has no reflection or class-loading path. */
 public final class ProgramCompiler {
-  public record Result(CerebralProgram program, ProgramDiagnostic diagnostic) {
+  public record Result(
+      CerebralProgram program, ProgramDiagnostic diagnostic, List<ProgramDiagnostic> warnings) {
+    public Result {
+      warnings = List.copyOf(warnings);
+    }
+
+    public Result(CerebralProgram program, ProgramDiagnostic diagnostic) {
+      this(program, diagnostic, List.of());
+    }
+
     public boolean success() {
       return program != null;
     }
   }
 
   private record Local(int index, Type type) {}
+
+  private final List<CompileWarnings.Declaration> declarations = new ArrayList<>();
+  private final Set<Integer> reads = new HashSet<>();
 
   private final List<Token> tokens;
   private final List<Instruction> code = new ArrayList<>();
@@ -30,7 +42,10 @@ public final class ProgramCompiler {
 
   public static Result compile(String source) {
     try {
-      return new Result(new ProgramCompiler(ProgramLexer.scan(source)).program(), null);
+      var compiler = new ProgramCompiler(ProgramLexer.scan(source));
+      var program = compiler.program();
+      return new Result(
+          program, null, CompileWarnings.analyze(program, compiler.declarations, compiler.reads));
     } catch (Failure e) {
       return new Result(null, e.diagnostic());
     }
@@ -292,6 +307,7 @@ public final class ProgramCompiler {
       if (locals >= ProgramLimits.LOCALS) fail(name, "Local variable limit exceeded.");
       var local = new Local(locals++, type);
       scopes.peek().put(name.text(), local);
+      declarations.add(new CompileWarnings.Declaration(local.index(), name));
       emit(Op.STORE, local.index(), name);
       return;
     }
@@ -302,7 +318,10 @@ public final class ProgramCompiler {
             .contains(tokens.get(cursor + 1).text())) {
       Token name = take(), operator = take();
       Local local = local(name);
-      if (!operator.text().equals("=")) emit(Op.LOAD, local.index(), name);
+      if (!operator.text().equals("=")) {
+        reads.add(local.index());
+        emit(Op.LOAD, local.index(), name);
+      }
       Type value;
       if (operator.text().equals("++") || operator.text().equals("--")) {
         emit(Op.PUSH, 1, operator);
@@ -478,6 +497,7 @@ public final class ProgramCompiler {
     }
     if (token.kind() == Kind.NAME) {
       Local local = local(token);
+      reads.add(local.index());
       emit(Op.LOAD, local.index(), token);
       return local.type();
     }
