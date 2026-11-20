@@ -143,6 +143,11 @@ public final class HuntingCardScreen extends AbstractContainerScreen<HuntingCard
       add(input.getValue());
       return true;
     }
+    // Container screens normally close on the inventory binding before charTyped receives it.
+    // Entity IDs must accept that letter (E by default); Escape remains the close shortcut.
+    if (minecraft.options.keyInventory.matches(key, scan)) {
+      return true;
+    }
     return super.keyPressed(key, scan, modifiers);
   }
 
