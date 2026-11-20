@@ -18,6 +18,8 @@ public sealed interface CardWorkspaceTarget
 
   void changed();
 
+  void replace(ItemStack card);
+
   default dev.ryanhcode.sable.sublevel.ServerSubLevel body() {
     return null;
   }
@@ -33,6 +35,10 @@ public sealed interface CardWorkspaceTarget
           && slot < owner.getInventory().getContainerSize()
           && ProgramCardData.editable(card())
           && identity.equals(ProgramCardData.identity(card()));
+    }
+
+    public void replace(ItemStack card) {
+      owner.getInventory().setItem(slot, card);
     }
 
     public void changed() {
@@ -52,6 +58,10 @@ public sealed interface CardWorkspaceTarget
           && memory.validAt(player, port)
           && ProgramCardData.editable(card())
           && identity.equals(ProgramCardData.identity(card()));
+    }
+
+    public void replace(ItemStack card) {
+      memory.setItem(slot, card);
     }
 
     public void changed() {

@@ -58,6 +58,10 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
         Button.builder(Component.literal("Close"), b -> onClose())
             .bounds(leftPos + imageWidth - 72, topPos + imageHeight - 32, 60, 20)
             .build());
+    addRenderableWidget(
+        Button.builder(Component.literal("Compile & write"), b -> compile())
+            .bounds(leftPos + 118, topPos + imageHeight - 32, 106, 20)
+            .build());
     setInitialFocus(editor);
   }
 
@@ -65,6 +69,12 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
     PacketDistributor.sendToServer(
         new CardWorkspaceNetwork.Save(menu.containerId, menu.identity, editor.getValue()));
     status = "Saving…";
+  }
+
+  private void compile() {
+    PacketDistributor.sendToServer(
+        new CardWorkspaceNetwork.Write(menu.containerId, menu.identity, editor.getValue()));
+    status = "Compiling on the server…";
   }
 
   public static void receive(CardWorkspaceNetwork.Result result) {
@@ -92,6 +102,10 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
         replaying = false;
         dirty = true;
       }
+      return true;
+    }
+    if (hasControlDown() && key == org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER) {
+      compile();
       return true;
     }
     if (hasControlDown() && key == org.lwjgl.glfw.GLFW.GLFW_KEY_S) {
@@ -132,7 +146,7 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
         false);
     g.drawString(
         font,
-        "Ctrl+S saves · Closing discards unsaved edits",
+        "Ctrl+S saves · Ctrl+Enter compiles",
         leftPos + 12,
         topPos + imageHeight - 48,
         OrganScreenStyle.MUTED,

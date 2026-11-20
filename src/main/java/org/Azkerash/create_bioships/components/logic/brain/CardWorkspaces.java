@@ -63,4 +63,27 @@ public final class CardWorkspaces {
         player, menu.target.card());
     return true;
   }
+
+  public record Written(boolean success, String message) {}
+
+  public static Written compile(
+      ServerPlayer player, int menuId, java.util.UUID identity, String source) {
+    if (!(player.containerMenu instanceof CardWorkspaceMenu menu)
+        || menu.containerId != menuId
+        || !menu.identity.equals(identity)
+        || menu.target == null
+        || !menu.stillValid(player))
+      return new Written(false, "Card changed or access expired. Reopen the editor.");
+    if (!menu.allowCompile(player.level().getGameTime()))
+      return new Written(false, "Please wait a moment before compiling again.");
+    var result = org.Azkerash.create_bioships.core.brain.program.ProgramCompiler.compile(source);
+    if (!result.success()) return new Written(false, result.diagnostic().toString());
+    var card = ProgramCardData.compiledCopy(menu.target.card(), source);
+    if (card.isEmpty()) return new Written(false, "Unable to write this card.");
+    menu.target.replace(card);
+    menu.target.changed();
+    org.Azkerash.create_bioships.core.brain.program.PrivateCardBackups.remember(player, card);
+    return new Written(
+        true, "Compiled and written. Place this card in active brain memory to run it.");
+  }
 }

@@ -9,7 +9,7 @@ import org.Azkerash.create_bioships.components.ComponentRegistry;
 
 /** Versioned source stored on a physical card. Drafts never execute. */
 public final class ProgramCardData {
-  public static final int MAX_SOURCE = 8192;
+  public static final int MAX_SOURCE = ProgramLimits.SOURCE;
   public static final String KEY = "CerebralProgram";
   public static final String TEMPLATE =
       "using System;\n"
@@ -69,7 +69,9 @@ public final class ProgramCardData {
   private ProgramCardData() {}
 
   public static boolean editable(ItemStack stack) {
-    return stack.is(ComponentRegistry.BLANK_BEHAVIOR_CARD.get()) && stack.getCount() == 1;
+    return (stack.is(ComponentRegistry.BLANK_BEHAVIOR_CARD.get())
+            || stack.is(ComponentRegistry.PROGRAM_BEHAVIOR_CARD.get()))
+        && stack.getCount() == 1;
   }
 
   /**
@@ -118,6 +120,32 @@ public final class ProgramCardData {
     d.putString("Source", source);
     write(stack, d);
     return true;
+  }
+
+  /** The server compiler must accept the exact source before this is called. */
+  public static ItemStack compiledCopy(ItemStack original, String source) {
+    if (!editable(original) || !ProgramCompiler.compile(source).success()) return ItemStack.EMPTY;
+    var result = original.transmuteCopy(ComponentRegistry.PROGRAM_BEHAVIOR_CARD.get(), 1);
+    identify(result);
+    saveDraft(result, source);
+    var d = document(result);
+    d.putBoolean("Compiled", true);
+    d.putString("CompiledHash", fingerprint(source));
+    write(result, d);
+    return result;
+  }
+
+  public static boolean executable(ItemStack stack) {
+    if (!stack.is(ComponentRegistry.PROGRAM_BEHAVIOR_CARD.get()) || stack.getCount() != 1)
+      return false;
+    var d = document(stack);
+    String source = d.getString("Source");
+    return d.getBoolean("Compiled")
+        && d.getInt("Version") == 1
+        && d.getString("Language").equals("csharp")
+        && d.contains("Source")
+        && source.length() <= MAX_SOURCE
+        && d.getString("CompiledHash").equals(fingerprint(source));
   }
 
   public static String fingerprint(String source) {

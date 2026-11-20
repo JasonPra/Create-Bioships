@@ -13,6 +13,13 @@ public final class CardWorkspaceMenu extends AbstractContainerMenu {
   public final CardWorkspaceTarget target;
   public final UUID identity;
   public final String initialSource;
+  private long nextCompile;
+
+  public boolean allowCompile(long tick) {
+    if (tick < nextCompile) return false;
+    nextCompile = tick + 10;
+    return true;
+  }
 
   public CardWorkspaceMenu(int id, CardWorkspaceTarget target) {
     this(

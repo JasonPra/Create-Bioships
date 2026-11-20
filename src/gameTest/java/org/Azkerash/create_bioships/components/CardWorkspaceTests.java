@@ -27,6 +27,60 @@ public final class CardWorkspaceTests {
   }
 
   @GameTest(template = "test_empty", batch = "card_editor", timeoutTicks = 40)
+  public static void compiled_cards_preserve_identity_and_drafts_are_independent(GameTestHelper h) {
+    var p = player(h.getLevel(), "CompilerAuthor");
+    var blank = new ItemStack(ComponentRegistry.BLANK_BEHAVIOR_CARD.get());
+    blank.set(
+        net.minecraft.core.component.DataComponents.CUSTOM_NAME,
+        net.minecraft.network.chat.Component.literal("My card"));
+    var identity = ProgramCardData.identify(blank);
+    p.getInventory().setItem(0, blank);
+    p.containerMenu = new CardWorkspaceMenu(30, new CardWorkspaceTarget.Held(p, 0, identity));
+    var rejected = CardWorkspaces.compile(p, 29, identity, "Console.WriteLine(1);");
+    h.assertTrue(
+        !rejected.success() && p.getInventory().getItem(0) == blank,
+        "Forged compile changed the card");
+    var written = CardWorkspaces.compile(p, 30, identity, "Console.WriteLine(42);");
+    var card = p.getInventory().getItem(0);
+    h.assertTrue(
+        written.success() && ProgramCardData.executable(card),
+        "Successful compile did not write an executable card");
+    h.assertTrue(
+        identity.equals(ProgramCardData.identity(card))
+            && card.getHoverName().getString().equals("My card"),
+        "Compilation lost identity or custom components");
+    h.assertTrue(p.containerMenu.stillValid(p), "Conversion invalidated its own editing lease");
+    var loaded =
+        ItemStack.parseOptional(
+            h.getLevel().registryAccess(),
+            (net.minecraft.nbt.CompoundTag) card.save(h.getLevel().registryAccess()));
+    h.assertTrue(ProgramCardData.executable(loaded), "Saved program card did not reload");
+    var fresh = new ItemStack(ComponentRegistry.BLANK_BEHAVIOR_CARD.get());
+    h.assertTrue(
+        ProgramCardData.source(fresh).equals(ProgramCardData.TEMPLATE)
+            && ProgramCardData.identity(fresh) == null,
+        "Fresh card inherited another card's source");
+    var copy = card.copy();
+    ProgramCardData.saveDraft(copy, "Console.WriteLine(99);");
+    h.assertTrue(
+        ProgramCardData.source(card).equals("Console.WriteLine(42);")
+            && !ProgramCardData.executable(copy),
+        "Copy shared mutable source or changed source stayed executable");
+    p.containerMenu = new CardWorkspaceMenu(31, new CardWorkspaceTarget.Held(p, 0, identity));
+    var invalid = CardWorkspaces.compile(p, 31, identity, "int value = true;");
+    h.assertTrue(
+        !invalid.success()
+            && invalid.message().contains("Line 1")
+            && ProgramCardData.executable(card),
+        "Failed compilation corrupted the working card or lost diagnostic");
+    h.assertTrue(
+        CardWorkspaces.save(p, 31, identity, "Console.WriteLine(43);")
+            && !ProgramCardData.executable(card),
+        "Saving changed source left old executable enabled");
+    h.succeed();
+  }
+
+  @GameTest(template = "test_empty", batch = "card_editor", timeoutTicks = 40)
   public static void drafts_round_trip_on_the_physical_card_and_reject_stale_edits(
       GameTestHelper h) {
     var l = h.getLevel();

@@ -2,6 +2,7 @@
   "replace": false,
   "values": [
     "create_bioships:blank_behavior_card",
-    "create_bioships:wander_behavior_card"
+    "create_bioships:wander_behavior_card",
+    "create_bioships:program_behavior_card"
   ]
 }

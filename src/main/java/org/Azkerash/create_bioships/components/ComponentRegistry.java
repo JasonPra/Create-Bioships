@@ -326,6 +326,12 @@ public final class ComponentRegistry {
           ITEMS.register(
               "blank_behavior_card",
               org.Azkerash.create_bioships.components.logic.brain.BehaviorCardItem::new);
+  public static final DeferredItem<
+          org.Azkerash.create_bioships.components.logic.brain.BehaviorCardItem>
+      PROGRAM_BEHAVIOR_CARD =
+          ITEMS.register(
+              "program_behavior_card",
+              org.Azkerash.create_bioships.components.logic.brain.BehaviorCardItem::new);
   public static final DeferredBlock<
           org.Azkerash.create_bioships.components.logic.respiration.RespiratoryBlock>
       LUNG =
@@ -545,6 +551,7 @@ public final class ComponentRegistry {
   public static void addToCreative(CreativeModeTab.Output output) {
     BLOCK_ITEMS.values().forEach(item -> output.accept(item.get()));
     output.accept(BLANK_BEHAVIOR_CARD.get());
+    output.accept(PROGRAM_BEHAVIOR_CARD.get());
     output.accept(WANDER_BEHAVIOR_CARD.get());
     output.accept(LONGEVITY_SERUM.get());
     output.accept(EFFICIENCY_SERUM.get());

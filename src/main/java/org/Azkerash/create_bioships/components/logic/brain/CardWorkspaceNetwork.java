@@ -48,6 +48,23 @@ public final class CardWorkspaceNetwork {
     }
   }
 
+  public record Write(int menu, UUID identity, String source) implements CustomPacketPayload {
+    public static final Type<Write> TYPE =
+        new Type<>(ResourceLocation.parse("create_bioships:card_workspace_write"));
+    public static final StreamCodec<RegistryFriendlyByteBuf, Write> CODEC =
+        StreamCodec.of(
+            (b, p) -> {
+              b.writeVarInt(p.menu);
+              b.writeUUID(p.identity);
+              b.writeUtf(p.source, ProgramCardData.MAX_SOURCE);
+            },
+            b -> new Write(b.readVarInt(), b.readUUID(), b.readUtf(ProgramCardData.MAX_SOURCE)));
+
+    public Type<Write> type() {
+      return TYPE;
+    }
+  }
+
   public record Result(int menu, UUID identity, boolean saved, String message, String fingerprint)
       implements CustomPacketPayload {
     public static final Type<Result> TYPE =
@@ -100,6 +117,24 @@ public final class CardWorkspaceNetwork {
                                 ? "Draft saved. It is not executable until compiled."
                                 : "Card changed or access expired. Reopen the editor.",
                             saved ? ProgramCardData.fingerprint(p.source) : ""));
+                  }
+                }));
+    registrar.playToServer(
+        Write.TYPE,
+        Write.CODEC,
+        (p, c) ->
+            c.enqueueWork(
+                () -> {
+                  if (c.player() instanceof ServerPlayer player) {
+                    var result = CardWorkspaces.compile(player, p.menu, p.identity, p.source);
+                    PacketDistributor.sendToPlayer(
+                        player,
+                        new Result(
+                            p.menu,
+                            p.identity,
+                            result.success(),
+                            result.message(),
+                            result.success() ? ProgramCardData.fingerprint(p.source) : ""));
                   }
                 }));
     registrar.playToClient(
