@@ -21,30 +21,33 @@ public final class CerebralGuideScreen extends Screen {
   private Contents contents;
   private Button copy;
 
-  private CerebralGuideScreen(List<CerebralGuide.Chapter> chapters) {
-    super(Component.translatable("item.create_bioships.cerebral_codex"));
+  private CerebralGuideScreen(List<CerebralGuide.Chapter> chapters, Component title) {
+    super(title);
     this.chapters = List.copyOf(chapters);
   }
 
   public static void open() {
+    open(CerebralGuide.RESOURCE, Component.translatable("item.create_bioships.cerebral_codex"));
+  }
+
+  public static void open(String resource, Component title) {
     var mc = Minecraft.getInstance();
     List<CerebralGuide.Chapter> chapters;
     try (var reader =
         mc.getResourceManager()
-            .openAsReader(
-                ResourceLocation.fromNamespaceAndPath("create_bioships", CerebralGuide.RESOURCE))) {
+            .openAsReader(ResourceLocation.fromNamespaceAndPath("create_bioships", resource))) {
       chapters = CerebralGuide.read(reader);
     } catch (Exception e) {
-      LogUtils.getLogger().warn("Could not load Cerebral scripting guide", e);
+      LogUtils.getLogger().warn("Could not load field guide", e);
       chapters =
           List.of(
               new CerebralGuide.Chapter(
                   "Documentation unavailable",
-                  "The scripting guide resource could not be loaded. Check your resource packs and"
+                  "The guide resource could not be loaded. Check your resource packs and"
                       + " game log.",
                   ""));
     }
-    mc.setScreen(new CerebralGuideScreen(chapters));
+    mc.setScreen(new CerebralGuideScreen(chapters, title));
   }
 
   @Override

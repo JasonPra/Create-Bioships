@@ -96,6 +96,9 @@ public final class CreateBioships {
   public static final DeferredItem<SomaticResonatorItem> SOMATIC_RESONATOR =
       ItemRegistration.register(ITEMS, "somatic_resonator", SomaticResonatorItem::new);
 
+  public static final DeferredItem<LocomotionGuideItem> LOCOMOTION_CODEX =
+      ItemRegistration.registerNonStackable(ITEMS, "locomotion_codex", LocomotionGuideItem::new);
+
   public static final DeferredItem<CerebralGuideItem> CEREBRAL_CODEX =
       ItemRegistration.registerNonStackable(ITEMS, "cerebral_codex", CerebralGuideItem::new);
 
@@ -115,6 +118,7 @@ public final class CreateBioships {
                       output.accept(LIMB_POSITIONER.get());
                       output.accept(SOMATIC_RESONATOR.get());
                       output.accept(CEREBRAL_CODEX.get());
+                      output.accept(LOCOMOTION_CODEX.get());
                     })
                 .build());
   }

@@ -1,0 +1,69 @@
+{
+  "chapters": [
+    {
+      "title": "Start here",
+      "body": "This field guide explains the current leg controls. Begin with a small, symmetrical creature on flat ground. Prove that it can stand, walk forward, stop and turn before adding body mass or testing hills.\n\nA living body needs active brain capacity and a movement behavior card to request walking. A healthy creature without a movement request can still hold a standing posture. Check life support and component connections if it cannot stay alive long enough to test.\n\nChange one setting at a time. Let the creature settle, then repeat the same short walk. A larger body is a different test, not just the same animal with a larger number on its legs.",
+      "example": ""
+    },
+    {
+      "title": "Tools and controls",
+      "body": "Use the Bioship Wrench on a compact crab or arachnid socket to increase its height. It extends the leg rather than rotating its facing. Sneak-use the wrench to remove the socket.\n\nUse the Limb Positioner on the socket to open height, rest pose and passive tuning. Aim it at a generated ball joint to edit that joint’s swivel and bend limits. Those are separate screens: changing the socket rest pose does not automatically change every joint’s limits.\n\nOn compact legs, Joint 1 is nearest the body, Joint 2 is the middle articulation and Joint 3 is the distal articulation. Each joint has its own settings. Reset joint affects the selected joint. Reset in the socket screen restores that socket’s setup; it is not a reset of the whole animal.",
+      "example": ""
+    },
+    {
+      "title": "What each setting does",
+      "body": "Rest pose is an angle: where the leg naturally points.\n\nHeight is a size/reach setting, not walking speed.\n\nSwivel range is how far a particular joint may rotate around its swivel axis. Bend limit is how far it may bend away from its rest orientation. These limit what poses the solver can reach.\n\nPassive stiffness and passive damping describe the unpowered joint response. They are not extra range of motion, and increasing them does not make a blocked path clear or command the animal to run faster.\n\nRest pose chooses the starting direction; joint limits decide the remaining freedom around it.",
+      "example": ""
+    },
+    {
+      "title": "Zero and rest angles",
+      "body": "Compact socket rest pose ranges from -45° to +45°. Zero degrees points outward along the socket’s facing. There is no automatic fore/aft fan added to arachnid sockets.\n\nPositive and negative angles are relative to that facing, in the creature’s local block coordinates. Facing east and facing west are opposite bases. Mirroring the physical layout therefore also requires mirroring the signs.\n\nA foot can be planted somewhere other than its neutral position while walking, turning or supporting the body. Watch it after the body has stopped and settled before deciding the rest pose is wrong. Editing the angle makes that foot replant from the new rest pose. Existing saved automatic fan offsets are migrated away.",
+      "example": ""
+    },
+    {
+      "title": "Eight-leg spider",
+      "body": "Example: the creature’s front is NORTH. Four sockets on its west side face WEST; four sockets on its east side face EAST. Read each column from the front of the creature toward its rear.\n\nThis mirrors the fan without adding a hidden offset. If your front points another way, rotate the layout and socket facings to match. The signs below assume the north-facing example.\n\nStart with equal height, default joint settings, and passive stiffness/damping at 1.00×. This is a starting layout, not a guarantee that every body shape can climb every obstacle.",
+      "example": "FRONT = NORTH\n\nRow          WEST side    EAST side\nFront outer     -45°         +45°\nFront inner     -15°         +15°\nRear inner      +15°         -15°\nRear outer      +45°         -45°\n\nAll sockets point outward."
+    },
+    {
+      "title": "Swivel versus bend",
+      "body": "Default joint settings are 360° swivel and ±60° bend. Swivel accepts 0–360°. Bend accepts 0–150° and is shown as a ± limit in the joint screen.\n\nA 180° swivel setting means a total 180° window, roughly ±90° around its center. It does not mean ±180°. The 360° setting allows a full swivel turn. A ±60° bend limit allows bending in either direction from the joint’s rest orientation.\n\nA joint with both limits at zero cannot provide useful motion. A leg with a usable hip but a nearly locked knee may reach outward while failing to lift over a ledge.\n\nIf a knee is demonstrably hitting its bend limit, try increasing that joint alone, for example from 60° to 90°, then retest. Do not set every joint to maximum as a first step: more freedom also permits more folded and twisted poses. Geometry and collisions still limit the reachable result.",
+      "example": ""
+    },
+    {
+      "title": "Height and reach",
+      "body": "Compact crab and arachnid sockets support height settings 1–6. The same cap applies to the wrench and the Positioner. Generated bones and collision widths grow with the setting; this is not merely a visual scale.\n\nChanges extend gradually. Give a newly extended leg time to finish growing and settle before comparing its posture.\n\nLonger legs can reach farther but need more room to swing, turn and support the body. Raising the height does not remove an obstacle or widen a narrow passage.\n\nSegment-built modular limbs take their physical length from the blocks used to build them. They are not resized by the compact-socket height control.",
+      "example": ""
+    },
+    {
+      "title": "Passive tuning",
+      "body": "Passive stiffness and damping range from 0.25× to 2.00×. Both default to 1.00×. Positioner buttons change these multipliers in 0.25× steps.\n\nStiffness is the tendency of an unpowered joint to return toward its supported/rest orientation. Damping resists motion and reduces oscillation. Too little damping can look springy; too much resistance can make an unpowered limb slow to settle.\n\nThese controls are explicitly labeled PASSIVE. Powered walking uses its procedural pose and body controller; passive tuning does not increase its commanded speed or unlock a joint’s swivel/bend range.\n\nReturn both values to 1.00× while diagnosing a stance or path problem. Tune the response only after the geometry and movement are working.",
+      "example": ""
+    },
+    {
+      "title": "Stance and support",
+      "body": "Place legs on both sides and distribute attachment points along the body, rather than putting every hip on one short line. Give the feet lateral spread and room below the body. Avoid a standing pose that already uses the maximum reach or bend: it leaves little room to lift, turn or adjust to uneven ground.\n\nArachnid adhesion needs at least three real supporting toes. More legs give the gait more opportunities to move one while retaining support. An eight-leg arrangement is a useful starting point for floor-to-wall transfers.\n\nFeet must reach actual collision surfaces. Air and water do not anchor them. A surface on another Sable object can support a foot when it has a valid collision face. Removing that support must release the grip.",
+      "example": ""
+    },
+    {
+      "title": "Crab or arachnid?",
+      "body": "Crab-style legs walk and brace on the ground. Their slope handling and posture should not be mistaken for spider adhesion.\n\nArachnid legs add anchored surface contacts for wall and ceiling support. They still need enough reachable, real contacts, and their configured joint limits still apply. Being able to grip a wall does not guarantee that the current route planner can discover every path onto that wall.\n\nUse a flat floor test first, then a single low ledge, then a slope, and only then a wall or ceiling. This separates reach/stance problems from route-selection problems.",
+      "example": ""
+    },
+    {
+      "title": "Turtle and hunting",
+      "body": "A swimming turtle can use flippers for propulsion and an ordinary Feeding Mouth for melee hunting. A ranged weapon is not required. Eldritch Maw variants can bite and can also spit acid when supplied appropriately.\n\nThe Hunting Behavior Card starts a hunt at 50% hunger or less. Once a meal starts, it collects meat/fish drops and feeds until full, then waits until hunger falls to half again. Edit the prey whitelist on the card and save it. The card is a fixed behavior, not an editable C# program.\n\nCollected food enters real mouth inventory. It needs a connected digestive route and a functioning stomach to become nutrition. A full or disconnected mouth is not the same as having eaten.\n\nFlipper-only swimmers turn and swim forward rather than strafing like legged creatures. Legged swimmers can have different movement options.",
+      "example": ""
+    },
+    {
+      "title": "Large bodies",
+      "body": "The full leg span is deliberate physical and combat geometry. The legs remain collidable and hittable. They do not become intangible because the body wants to pass an obstacle.\n\nA large animal needs room for the body, the current leg poses, and the sweep of the joints during a turn. Longer legs can improve reach while making the total occupied span larger.\n\nTest the same creature on an open floor, through a wide opening, and beside a single obstacle. If only the narrow route fails, distinguish a clearance problem from a loss of support. If it cannot walk on open ground, check stance, power, joint limits and life support first.\n\nCurrent pathfinding has limitations for large articulated bodies. An accessible-looking route can still stall; changing passive stiffness is not a fix for that planner limitation.",
+      "example": ""
+    },
+    {
+      "title": "Troubleshooting",
+      "body": "Leg points backward: verify the socket facing, then the rest-angle sign. Compare the opposite side using the north-facing mirror example.\n\nLeg will not lift: check the selected hip/knee/ankle limits, reach and clearance. Increasing height is not a substitute for bend freedom.\n\nAnimal rocks or collapses: test equal heights and a wider, symmetrical stance. Count real supporting toes; a foot touching only water is not planted.\n\nOne leg clips or snags: identify which physical joint touches the obstacle. Test a small rest-angle change or a wider route. Keep the collision geometry enabled.\n\nHunting card does nothing: check half hunger, saved prey types, an installed mouth/weapon, active brain memory, visibility and locomotion. Only the first executable behavior in active brain memory runs.\n\nMeat sits in the mouth: inspect inventory space, digestive connections, stomach acid and processing.\n\nFor a reproducible report, record body dimensions, leg count/height, socket facings, rest angles, each joint’s limits, and the obstacle. Change one variable per retest.",
+      "example": ""
+    }
+  ]
+}

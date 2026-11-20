@@ -1,0 +1,8 @@
+{
+  "parent": "create_bioships:item/cerebral_codex",
+  "textures": {
+    "cover": "create_bioships:block/arachnid_chitin",
+    "spine": "create_bioships:block/arachnid_chitin",
+    "particle": "create_bioships:block/arachnid_chitin"
+  }
+}
