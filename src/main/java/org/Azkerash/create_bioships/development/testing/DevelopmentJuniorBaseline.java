@@ -15,6 +15,10 @@ import org.Azkerash.create_bioships.core.*;
 
 /** Developer-only baseline for Junior's main body and procedurally generated compact limbs. */
 public final class DevelopmentJuniorBaseline {
+  private static final int REMAP_RADIUS_BLOCKS = 64;
+  private static final java.util.regex.Pattern PACKED_POSITION_TEXT =
+      java.util.regex.Pattern.compile("-?\\d{10,20}");
+
   private DevelopmentJuniorBaseline() {}
 
   public static void capture(ServerSubLevel body) {
@@ -178,16 +182,19 @@ public final class DevelopmentJuniorBaseline {
     for (var key : List.copyOf(tag.getAllKeys())) {
       var value = tag.get(key);
       String mappedKey = remapText(key, origin, delta);
-      if (value instanceof CompoundTag child) {
-        remap(child, origin, delta);
-      } else if (value instanceof ListTag list) {
-        for (var element : list) {
-          if (element instanceof CompoundTag child) {
-            remap(child, origin, delta);
+      switch (value) {
+        case CompoundTag child -> remap(child, origin, delta);
+        case ListTag list -> {
+          for (var element : list) {
+            if (element instanceof CompoundTag child) {
+              remap(child, origin, delta);
+            }
           }
         }
-      } else if (value instanceof LongTag number) {
-        tag.putLong(key, remapPosition(number.getAsLong(), origin, delta));
+        case LongTag number -> tag.putLong(key, remapPosition(number.getAsLong(), origin, delta));
+        case null, default -> {
+          // Other scalar tags do not contain packed plot positions.
+        }
       }
       if (!mappedKey.equals(key)) {
         tag.put(mappedKey, tag.get(key));
@@ -198,15 +205,15 @@ public final class DevelopmentJuniorBaseline {
 
   private static long remapPosition(long value, BlockPos origin, BlockPos delta) {
     var p = BlockPos.of(value);
-    return Math.abs(p.getX() - origin.getX()) < 64
-            && Math.abs(p.getY() - origin.getY()) < 64
-            && Math.abs(p.getZ() - origin.getZ()) < 64
+    return Math.abs(p.getX() - origin.getX()) < REMAP_RADIUS_BLOCKS
+            && Math.abs(p.getY() - origin.getY()) < REMAP_RADIUS_BLOCKS
+            && Math.abs(p.getZ() - origin.getZ()) < REMAP_RADIUS_BLOCKS
         ? p.offset(delta).asLong()
         : value;
   }
 
   private static String remapText(String text, BlockPos origin, BlockPos delta) {
-    var matcher = java.util.regex.Pattern.compile("-?\\d{10,20}").matcher(text);
+    var matcher = PACKED_POSITION_TEXT.matcher(text);
     var result = new StringBuffer();
     while (matcher.find()) {
       try {

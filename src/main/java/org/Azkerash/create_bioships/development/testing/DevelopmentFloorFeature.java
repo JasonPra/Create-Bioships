@@ -35,8 +35,9 @@ public final class DevelopmentFloorFeature extends Feature<NoneFeatureConfigurat
     int y = context.chunkGenerator().getSpawnHeight(level) - 1;
     int startX = context.origin().getX() & ~15;
     int startZ = context.origin().getZ() & ~15;
-    var palette = DevelopmentTestBlocks.FLOOR.values().stream().map(h -> h.get()).toList();
-    var surface = DevelopmentTestBlocks.FLOOR.get("stone_bricks").get();
+    var palette =
+        DevelopmentTestBlocks.getFloorBlocks().values().stream().map(h -> h.get()).toList();
+    var surface = DevelopmentTestBlocks.getFloorBlocks().get("stone_bricks").get();
     for (int x = startX; x < startX + 16; x++) {
       for (int z = startZ; z < startZ + 16; z++) {
         var pos = new BlockPos(x, y, z);

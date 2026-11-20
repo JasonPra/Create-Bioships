@@ -49,7 +49,7 @@ public final class DevelopmentTestBlocks {
     }
   }
 
-  public static final java.util.Map<String, DeferredHolder<Block, Block>> FLOOR =
+  private static final java.util.Map<String, DeferredHolder<Block, Block>> FLOOR =
       new java.util.LinkedHashMap<>();
   public static final DeferredHolder<Block, Block> BUTTON =
       DeferredHolder.create(
@@ -70,6 +70,11 @@ public final class DevelopmentTestBlocks {
               Registries.BLOCK,
               ResourceLocation.fromNamespaceAndPath(Create_bioships.MODID, "development_" + name)));
     }
+  }
+
+  /** Preserve declaration order for seeded fixture palettes without exposing registry mutation. */
+  public static java.util.Map<String, DeferredHolder<Block, Block>> getFloorBlocks() {
+    return java.util.Collections.unmodifiableMap(FLOOR);
   }
 
   public static boolean protectedBlock(net.minecraft.world.level.block.state.BlockState state) {

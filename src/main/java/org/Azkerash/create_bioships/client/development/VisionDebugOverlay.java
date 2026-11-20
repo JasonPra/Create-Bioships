@@ -12,8 +12,14 @@ import net.neoforged.neoforge.client.event.*;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.Azkerash.create_bioships.development.testing.network.*;
 
+/**
+ * Client-local visualization of server-authorized snapshots; toggling this never changes detection.
+ */
 @EventBusSubscriber(modid = "create_bioships", value = Dist.CLIENT)
 public final class VisionDebugOverlay {
+  // Expire stale client snapshots even when an unsubscribe/removal packet is missed.
+  private static final int SNAPSHOT_EXPIRY_TICKS = 40;
+
   private record Snapshot(VisionDebugPayload payload, long at) {}
 
   private static boolean enabled;
@@ -87,7 +93,7 @@ public final class VisionDebugOverlay {
       }
     }
     if (world != null) {
-      SAMPLES.values().removeIf(s -> world.getGameTime() - s.at > 40);
+      SAMPLES.values().removeIf(s -> world.getGameTime() - s.at > SNAPSHOT_EXPIRY_TICKS);
     }
   }
 

@@ -18,6 +18,9 @@ import org.joml.Matrix4f;
 /** Opt-in, read-only holograms of the same server values used by creature metabolism. */
 @EventBusSubscriber(modid = "create_bioships", value = Dist.CLIENT)
 public final class CreatureStatsOverlay {
+  // Expire stale client snapshots even when an unsubscribe/removal packet is missed.
+  private static final int SNAPSHOT_EXPIRY_TICKS = 30;
+
   private record Snapshot(CreatureStatsPayload data, long at) {}
 
   private record Text(String value, Matrix4f pose, int y, int color) {}
@@ -89,7 +92,7 @@ public final class CreatureStatsOverlay {
     if (mc.level == null) {
       return;
     }
-    STATS.values().removeIf(s -> mc.level.getGameTime() - s.at() > 30);
+    STATS.values().removeIf(s -> mc.level.getGameTime() - s.at() > SNAPSHOT_EXPIRY_TICKS);
     var buffers = mc.renderBuffers().bufferSource();
     var type = RenderType.gui();
     var quads = buffers.getBuffer(type);

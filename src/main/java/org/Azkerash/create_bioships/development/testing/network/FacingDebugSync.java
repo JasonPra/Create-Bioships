@@ -20,6 +20,10 @@ import org.Azkerash.create_bioships.equipment.DiagnosticAccess;
 /** Per-viewer permission-filtered front markers; nothing is spawned into the shared world. */
 @EventBusSubscriber(modid = "create_bioships")
 public final class FacingDebugSync {
+  private static final int SNAPSHOT_INTERVAL_TICKS = 10;
+  private static final int VIEW_RADIUS_BLOCKS = 96;
+  private static final int MAX_VISIBLE_GRIDS = 16;
+
   private static final Map<ServerPlayer, Set<UUID>> VIEWERS = new WeakHashMap<>();
 
   private FacingDebugSync() {}
@@ -94,7 +98,7 @@ public final class FacingDebugSync {
 
   @SubscribeEvent
   public static void tick(net.neoforged.neoforge.event.tick.ServerTickEvent.Post e) {
-    if (e.getServer().getTickCount() % 10 != 0 || VIEWERS.isEmpty()) {
+    if (e.getServer().getTickCount() % SNAPSHOT_INTERVAL_TICKS != 0 || VIEWERS.isEmpty()) {
       return;
     }
     var it = VIEWERS.entrySet().iterator();
@@ -122,8 +126,8 @@ public final class FacingDebugSync {
                     box.maxY() + 1.6,
                     (box.minZ() + box.maxZ() + 1) / 2.0);
             if (body.logicalPose().transformPosition(origin).distanceToSqr(player.position())
-                    > 96 * 96
-                || present.size() >= 16) {
+                    > VIEW_RADIUS_BLOCKS * VIEW_RADIUS_BLOCKS
+                || present.size() >= MAX_VISIBLE_GRIDS) {
               continue;
             }
             present.add(body.getUniqueId());

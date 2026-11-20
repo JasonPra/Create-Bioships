@@ -90,7 +90,7 @@ public final class CorePresetProbe {
     }
     if (decoration.size() < 5
         || !decoration.containsAll(
-            DevelopmentTestBlocks.FLOOR.values().stream().map(h -> h.get()).toList())) {
+            DevelopmentTestBlocks.getFloorBlocks().values().stream().map(h -> h.get()).toList())) {
       throw new IllegalStateException("New-world decorative palette missing: " + decoration);
     }
     var navigatorPlayer =

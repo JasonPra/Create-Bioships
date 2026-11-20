@@ -15,6 +15,9 @@ import org.Azkerash.create_bioships.development.testing.DevelopmentToolkitItem;
 
 @EventBusSubscriber(modid = "create_bioships")
 public final class CreatureStatsSync {
+  private static final int SNAPSHOT_INTERVAL_TICKS = 10;
+  private static final int VIEW_RADIUS_BLOCKS = 64;
+
   private static final Map<ServerPlayer, Set<UUID>> VIEWERS = new WeakHashMap<>();
 
   private CreatureStatsSync() {}
@@ -163,7 +166,7 @@ public final class CreatureStatsSync {
 
   @SubscribeEvent
   public static void tick(net.neoforged.neoforge.event.tick.ServerTickEvent.Post e) {
-    if (e.getServer().getTickCount() % 10 != 0) {
+    if (e.getServer().getTickCount() % SNAPSHOT_INTERVAL_TICKS != 0) {
       return;
     }
     VIEWERS
@@ -191,7 +194,7 @@ public final class CreatureStatsSync {
                     .SubLevelPathfinder
                     .position(b)
                     .distanceToSqr(player.position())
-                < 64 * 64) {
+                < VIEW_RADIUS_BLOCKS * VIEW_RADIUS_BLOCKS) {
           roots.add(b);
         }
       }

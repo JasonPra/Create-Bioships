@@ -7,6 +7,10 @@ import org.Azkerash.create_bioships.core.*;
 
 /** Brain control surface. Behavior cards can request motion without knowing joints or gait. */
 public final class BrainMotorControls {
+  private static final double MAX_COMMAND_SPEED = 2;
+  private static final double MAX_YAW_COMMAND = 1;
+  private static final int MAX_LEASE_TICKS = 200;
+
   public record Request(
       Vec3 velocity,
       double yawRate,
@@ -58,8 +62,8 @@ public final class BrainMotorControls {
         mode == org.Azkerash.create_bioships.core.pathfinding.SubLevelPathfinder.Mode.WATER
             ? velocity
             : new Vec3(velocity.x, 0, velocity.z);
-    if (movement.lengthSqr() > 4) {
-      movement = movement.normalize().scale(2);
+    if (movement.lengthSqr() > MAX_COMMAND_SPEED * MAX_COMMAND_SPEED) {
+      movement = movement.normalize().scale(MAX_COMMAND_SPEED);
     }
     if (!org.Azkerash.create_bioships.core.pathfinding.SubLevelPathfinder.movementClear(
         body, movement, yawRate)) {
@@ -70,8 +74,8 @@ public final class BrainMotorControls {
         body,
         new Request(
             movement,
-            Math.clamp(yawRate, -1, 1),
-            body.getLevel().getGameTime() + Math.clamp(leaseTicks, 1, 200),
+            Math.clamp(yawRate, -MAX_YAW_COMMAND, MAX_YAW_COMMAND),
+            body.getLevel().getGameTime() + Math.clamp(leaseTicks, 1, MAX_LEASE_TICKS),
             mode));
     return true;
   }

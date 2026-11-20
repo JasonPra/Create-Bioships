@@ -9,6 +9,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+/** Defers only mod-tagged exhibit text to the render phase that precedes translucent glass. */
 @Mixin(DisplayRenderer.class)
 public abstract class ExhibitDisplayMixin {
   @Inject(

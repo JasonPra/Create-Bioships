@@ -1,5 +1,6 @@
 package org.Azkerash.create_bioships.mixin;
 
+/** Exposes the menu backing inventory so feeding trust follows actual storage-sac transfers. */
 @org.spongepowered.asm.mixin.Mixin(com.github.elenterius.biomancy.menu.StorageSacMenu.class)
 public interface StorageSacMenuAccess {
   @org.spongepowered.asm.mixin.gen.Accessor(value = "storageSac", remap = false)

@@ -16,6 +16,9 @@ import org.Azkerash.create_bioships.development.testing.network.*;
 /** Draws the server's real route without running another path search on either side. */
 @EventBusSubscriber(modid = "create_bioships", value = Dist.CLIENT)
 public final class PathDebugOverlay {
+  // Expire stale client snapshots even when an unsubscribe/removal packet is missed.
+  private static final int SNAPSHOT_EXPIRY_TICKS = 40;
+
   private record Sample(PathDebugPayload path, long at) {}
 
   private static final Map<UUID, Sample> ROUTES = new HashMap<>();
@@ -77,7 +80,7 @@ public final class PathDebugOverlay {
       }
     }
     if (world != null) {
-      ROUTES.values().removeIf(s -> world.getGameTime() - s.at() > 40);
+      ROUTES.values().removeIf(s -> world.getGameTime() - s.at() > SNAPSHOT_EXPIRY_TICKS);
     }
   }
 

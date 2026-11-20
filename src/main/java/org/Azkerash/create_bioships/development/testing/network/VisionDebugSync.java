@@ -13,6 +13,10 @@ import org.Azkerash.create_bioships.core.vision.SubLevelVision;
 /** Opt-in nearby debug snapshots only. Vision itself runs without a debug subscriber. */
 @EventBusSubscriber(modid = "create_bioships")
 public final class VisionDebugSync {
+  private static final int SNAPSHOT_INTERVAL_TICKS = 10;
+  private static final int VIEW_RADIUS_BLOCKS = 96;
+  private static final int MAX_VISIBLE_GRIDS = 16;
+
   private static final Map<ServerPlayer, Set<UUID>> VIEWERS = new WeakHashMap<>();
 
   private VisionDebugSync() {}
@@ -48,7 +52,7 @@ public final class VisionDebugSync {
 
   @SubscribeEvent
   public static void tick(net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) {
-    if (event.getServer().getTickCount() % 10 != 0) {
+    if (event.getServer().getTickCount() % SNAPSHOT_INTERVAL_TICKS != 0) {
       return;
     }
     var iterator = VIEWERS.entrySet().iterator();
@@ -73,7 +77,8 @@ public final class VisionDebugSync {
             var center =
                 body.logicalPose()
                     .transformPosition(Vec3.atCenterOf(body.getPlot().getCenterBlock()));
-            if (center.distanceToSqr(player.position()) > 96 * 96 || present.size() >= 16) {
+            if (center.distanceToSqr(player.position()) > VIEW_RADIUS_BLOCKS * VIEW_RADIUS_BLOCKS
+                || present.size() >= MAX_VISIBLE_GRIDS) {
               continue;
             }
             var rays =
@@ -92,7 +97,7 @@ public final class VisionDebugSync {
                     rays,
                     SubLevelVision.detected(body).stream()
                         .map(t -> t.point())
-                        .limit(128)
+                        .limit(VisionDebugPayload.MAX_TARGETS)
                         .toList()));
           }
         }

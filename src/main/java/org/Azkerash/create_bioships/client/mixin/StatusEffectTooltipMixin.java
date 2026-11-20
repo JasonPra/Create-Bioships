@@ -10,6 +10,9 @@ import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+/**
+ * Replays insertion-marked icons in the tooltip text transform, preserving Create tooltip scaling.
+ */
 @Mixin(ClientTextTooltip.class)
 public abstract class StatusEffectTooltipMixin {
   @Shadow @Final private FormattedCharSequence text;

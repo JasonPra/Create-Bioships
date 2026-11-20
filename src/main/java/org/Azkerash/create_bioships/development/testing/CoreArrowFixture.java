@@ -26,6 +26,16 @@ import org.Azkerash.create_bioships.core.*;
 
 /** Three native dispensers test awake core/land/aquatic eyes, then repeat against the corpse. */
 public final class CoreArrowFixture {
+  // Persisted phase IDs retain their original values for existing development saves.
+  private static final int OBSERVING = 0, LIVING_ROUND = 1, CORPSE_ROUND = 2, COMPLETE = 3;
+  private static final int TICKS_PER_SECOND = 20;
+  private static final int OBSERVATION_TICKS = 600;
+  private static final int INITIAL_TIMEOUT_TICKS = 800;
+  private static final int SHOT_INTERVAL_TICKS = 20;
+  private static final int LIVING_TIMEOUT_TICKS = 160;
+  private static final int CORPSE_PAUSE_TICKS = 100;
+  private static final int CORPSE_TIMEOUT_TICKS = 300;
+
   private static final String MARK = "create_bioships.core_arrow_fixture";
 
   private CoreArrowFixture() {}
@@ -151,7 +161,7 @@ public final class CoreArrowFixture {
     state.setArrowBuilt(true);
     state.setArrowRunning(false);
     state.setArrowBody(null);
-    state.setArrowPhase(0);
+    state.setArrowPhase(OBSERVING);
     state.setArrowResult("Ready");
     state.setDirty();
     explain(level);
@@ -234,9 +244,9 @@ public final class CoreArrowFixture {
     DevelopmentTestOwnership.assign(body);
     state.setArrowBody(body.getUniqueId());
     state.setArrowRunning(true);
-    state.setArrowPhase(0);
-    state.setArrowNextAction(level.getGameTime() + 600);
-    state.setArrowDeadline(level.getGameTime() + 800);
+    state.setArrowPhase(OBSERVING);
+    state.setArrowNextAction(level.getGameTime() + OBSERVATION_TICKS);
+    state.setArrowDeadline(level.getGameTime() + INITIAL_TIMEOUT_TICKS);
     state.setArrowResult("Assembled: dispensers appear in 30 seconds");
     state.setDirty();
     explain(level);
@@ -277,7 +287,7 @@ public final class CoreArrowFixture {
 
   public static void tick(ServerLevel level) {
     var state = CoreTestState.get(level);
-    if (!state.isArrowRunning() || state.getArrowPhase() == 3) {
+    if (!state.isArrowRunning() || state.getArrowPhase() == COMPLETE) {
       return;
     }
     var entry = SubLevelContainer.getContainer(level).getSubLevel(state.getArrowBody());
@@ -286,63 +296,77 @@ public final class CoreArrowFixture {
       return;
     }
     long now = level.getGameTime();
-    if (state.getArrowPhase() == 0) {
-      boolean awake =
-          targets(body).stream()
-              .allMatch(
-                  pos -> {
-                    var block = level.getBlockState(pos);
-                    return block.hasProperty(EyeBlink.WAKE)
-                        && block.getValue(EyeBlink.WAKE) == 0
-                        && !block.getValue(EyeBlink.BLINK);
-                  });
-      if (now < state.getArrowNextAction() && now % 20 == 0) {
-        state.setArrowResult(
-            "Dispensers appear in " + ((state.getArrowNextAction() - now + 19) / 20) + "s");
-        explain(level);
+    switch (state.getArrowPhase()) {
+      case OBSERVING -> {
+        boolean awake =
+            targets(body).stream()
+                .allMatch(
+                    pos -> {
+                      var block = level.getBlockState(pos);
+                      return block.hasProperty(EyeBlink.WAKE)
+                          && block.getValue(EyeBlink.WAKE) == 0
+                          && !block.getValue(EyeBlink.BLINK);
+                    });
+        if (now < state.getArrowNextAction() && now % TICKS_PER_SECOND == 0) {
+          state.setArrowResult(
+              "Dispensers appear in "
+                  + ((state.getArrowNextAction() - now + TICKS_PER_SECOND - 1) / TICKS_PER_SECOND)
+                  + "s");
+          explain(level);
+        }
+        if (now >= state.getArrowNextAction()
+            && awake
+            && dispensers(level).stream().allMatch(level::isPositionEntityTicking)) {
+          state.setArrowShotAt(now);
+          fire(level);
+          state.setArrowNextAction(now + SHOT_INTERVAL_TICKS);
+          state.setArrowPhase(LIVING_ROUND);
+          state.setArrowDeadline(now + LIVING_TIMEOUT_TICKS);
+          state.setArrowResult("Firing at living eyes");
+          state.setDirty();
+          explain(level);
+        }
       }
-      if (now >= state.getArrowNextAction()
-          && awake
-          && dispensers(level).stream().allMatch(level::isPositionEntityTicking)) {
-        state.setArrowShotAt(now);
-        fire(level);
-        state.setArrowNextAction(now + 20);
-        state.setArrowPhase(1);
-        state.setArrowDeadline(now + 160);
-        state.setArrowResult("Firing at living eyes");
-        state.setDirty();
-        explain(level);
+      case LIVING_ROUND -> {
+        if (wounded(body, state.getArrowShotAt())) {
+          clearShooters(level);
+          state.setArrowPhase(CORPSE_ROUND);
+          state.setArrowNextAction(now + CORPSE_PAUSE_TICKS);
+          state.setArrowDeadline(now + CORPSE_TIMEOUT_TICKS);
+          state.setArrowResult("Living eyes: PASS. Inspect before corpse round.");
+          state.setDirty();
+          explain(level);
+
+        } else if (now >= state.getArrowNextAction()) {
+          retryMissing(level, body, state.getArrowShotAt());
+          state.setArrowNextAction(now + SHOT_INTERVAL_TICKS);
+        }
       }
-    } else if (state.getArrowPhase() == 1 && wounded(body, state.getArrowShotAt())) {
-      clearShooters(level);
-      state.setArrowPhase(2);
-      state.setArrowNextAction(now + 100);
-      state.setArrowDeadline(now + 300);
-      state.setArrowResult("Living eyes: PASS. Inspect before corpse round.");
-      state.setDirty();
-      explain(level);
-    } else if (state.getArrowPhase() == 1 && now >= state.getArrowNextAction()) {
-      retryMissing(level, body, state.getArrowShotAt());
-      state.setArrowNextAction(now + 20);
-    } else if (state.getArrowPhase() == 2 && now >= state.getArrowNextAction()) {
-      if (!SubLevelHealth.status(body).dead()) {
-        SubLevelHealth.damage(body, SubLevelHealth.status(body).current(), "arrow_test_corpse");
-        state.setArrowShotAt(now);
-        fire(level);
-        state.setArrowNextAction(now + 20);
-        state.setArrowResult("Firing at corpse eyes");
-        state.setDirty();
-        explain(level);
-      } else if (wounded(body, state.getArrowShotAt())) {
-        clearShooters(level);
-        state.setArrowPhase(3);
-        state.setArrowResult("PASS: core, land and aquatic eyes · living + corpse");
-        state.setDirty();
-        explain(level);
-        return;
-      } else {
-        retryMissing(level, body, state.getArrowShotAt());
-        state.setArrowNextAction(now + 20);
+      case CORPSE_ROUND -> {
+        if (now >= state.getArrowNextAction()) {
+          if (!SubLevelHealth.status(body).dead()) {
+            SubLevelHealth.damage(body, SubLevelHealth.status(body).current(), "arrow_test_corpse");
+            state.setArrowShotAt(now);
+            fire(level);
+            state.setArrowNextAction(now + SHOT_INTERVAL_TICKS);
+            state.setArrowResult("Firing at corpse eyes");
+            state.setDirty();
+            explain(level);
+          } else if (wounded(body, state.getArrowShotAt())) {
+            clearShooters(level);
+            state.setArrowPhase(COMPLETE);
+            state.setArrowResult("PASS: core, land and aquatic eyes · living + corpse");
+            state.setDirty();
+            explain(level);
+            return;
+          } else {
+            retryMissing(level, body, state.getArrowShotAt());
+            state.setArrowNextAction(now + SHOT_INTERVAL_TICKS);
+          }
+        }
+      }
+      default -> {
+        // The deadline below still handles an invalid persisted phase.
       }
     }
     if (now >= state.getArrowDeadline()) {

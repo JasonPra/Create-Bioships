@@ -30,6 +30,14 @@ import org.Azkerash.create_bioships.core.*;
 
 /** Visible, repeatable native-dispenser checks. Each case gets a fresh damaged subject. */
 public final class PotionFixture {
+  // These phase IDs are saved in CoreTestState and must survive development-world reloads.
+  private static final int BASELINE_SETUP = 0,
+      BASELINE_HIT = 1,
+      WAIT_RESISTANCE = 2,
+      PROTECTED_HIT = 3;
+  private static final int TRIAL_TIMEOUT_TICKS = 200;
+  private static final double RESISTANCE_I_DAMAGE_MULTIPLIER = .8;
+  private static final double DAMAGE_COMPARISON_TOLERANCE = .001;
   private static final String ZOMBIE_MARK = "create_bioships.potion_zombie";
   private static final String MARK = "create_bioships.potion_fixture";
   public static final List<Holder<MobEffect>> EFFECTS =
@@ -213,9 +221,9 @@ public final class PotionFixture {
     var health = SubLevelHealth.status(body);
     SubLevelHealth.damage(body, health.current() - health.maximum() * .6, "test_setup");
     state.setPotionBefore(SubLevelHealth.status(body).current());
-    state.setPotionDeadline(level.getGameTime() + 200);
+    state.setPotionDeadline(level.getGameTime() + TRIAL_TIMEOUT_TICKS);
     state.setPotionResistanceHit(false);
-    state.setPotionResistancePhase(0);
+    state.setPotionResistancePhase(BASELINE_SETUP);
     state.setPotionProtectedDamage(0);
     state.setPotionBaselineDamage(0);
     var inventory = (DispenserBlockEntity) level.getBlockEntity(dispenser(level));
@@ -308,7 +316,7 @@ public final class PotionFixture {
     zombie.setTarget(CombatAdapter.target(body));
     state.setPotionZombie(zombie.getUUID());
     state.setPotionHitBefore(SubLevelHealth.status(body).current());
-    state.setPotionDeadline(level.getGameTime() + 200);
+    state.setPotionDeadline(level.getGameTime() + TRIAL_TIMEOUT_TICKS);
     state.setDirty();
     return true;
   }
@@ -316,45 +324,54 @@ public final class PotionFixture {
   private static void resistanceTick(ServerLevel level, ServerSubLevel body) {
     var state = CoreTestState.get(level);
     var target = CombatAdapter.target(body);
-    if (state.getPotionResistancePhase() == 0) {
-      if (!spawnZombie(level, body)) {
-        finishResistance(level, false, "zombie spawn failed");
-        return;
-      }
-      state.setPotionResistancePhase(1);
-      explain(level, "Resistance: waiting for ONE unprotected zombie hit");
-    } else if (state.getPotionResistancePhase() == 1 || state.getPotionResistancePhase() == 3) {
-      double damage = state.getPotionHitBefore() - SubLevelHealth.status(body).current();
-      if (damage > 0) {
-        removeZombie(level);
-        if (state.getPotionResistancePhase() == 1) {
-          state.setPotionBaselineDamage(damage);
-          state.setPotionResistancePhase(2);
-          target.invulnerableTime = 0;
-          firePotion(level);
-          state.setPotionDeadline(level.getGameTime() + 200);
-          explain(level, "Baseline hit: " + damage + " HP. Applying resistance; zombie removed.");
-          state.setDirty();
-        } else {
-          state.setPotionProtectedDamage(damage);
-          state.setPotionResistanceHit(true);
-          finishResistance(
-              level,
-              Math.abs(damage - state.getPotionBaselineDamage() * .8) < .001,
-              "one zombie hit before / after Resistance I");
+    switch (state.getPotionResistancePhase()) {
+      case BASELINE_SETUP -> {
+        if (!spawnZombie(level, body)) {
+          finishResistance(level, false, "zombie spawn failed");
+          return;
         }
-        return;
+        state.setPotionResistancePhase(BASELINE_HIT);
+        explain(level, "Resistance: waiting for ONE unprotected zombie hit");
       }
-    } else if (state.getPotionResistancePhase() == 2
-        && target.hasEffect(MobEffects.DAMAGE_RESISTANCE)) {
-      target.invulnerableTime = 0;
-      if (!spawnZombie(level, body)) {
-        finishResistance(level, false, "zombie spawn failed");
-        return;
+      case BASELINE_HIT, PROTECTED_HIT -> {
+        double damage = state.getPotionHitBefore() - SubLevelHealth.status(body).current();
+        if (damage > 0) {
+          removeZombie(level);
+          if (state.getPotionResistancePhase() == BASELINE_HIT) {
+            state.setPotionBaselineDamage(damage);
+            state.setPotionResistancePhase(WAIT_RESISTANCE);
+            target.invulnerableTime = 0;
+            firePotion(level);
+            state.setPotionDeadline(level.getGameTime() + TRIAL_TIMEOUT_TICKS);
+            explain(level, "Baseline hit: " + damage + " HP. Applying resistance; zombie removed.");
+            state.setDirty();
+          } else {
+            state.setPotionProtectedDamage(damage);
+            state.setPotionResistanceHit(true);
+            finishResistance(
+                level,
+                Math.abs(damage - state.getPotionBaselineDamage() * RESISTANCE_I_DAMAGE_MULTIPLIER)
+                    < DAMAGE_COMPARISON_TOLERANCE,
+                "one zombie hit before / after Resistance I");
+          }
+          return;
+        }
       }
-      state.setPotionResistancePhase(3);
-      explain(level, "Resistance: waiting for ONE protected zombie hit");
-      state.setDirty();
+      case WAIT_RESISTANCE -> {
+        if (target.hasEffect(MobEffects.DAMAGE_RESISTANCE)) {
+          target.invulnerableTime = 0;
+          if (!spawnZombie(level, body)) {
+            finishResistance(level, false, "zombie spawn failed");
+            return;
+          }
+          state.setPotionResistancePhase(PROTECTED_HIT);
+          explain(level, "Resistance: waiting for ONE protected zombie hit");
+          state.setDirty();
+        }
+      }
+      default -> {
+        // Preserve timeout reporting for an invalid persisted phase.
+      }
     }
     if (level.getGameTime() >= state.getPotionDeadline()) {
       finishResistance(level, false, "timeout in phase " + state.getPotionResistancePhase());

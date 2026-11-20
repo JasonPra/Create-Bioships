@@ -8,6 +8,9 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 
+/**
+ * Menu-scoped label offsets in sixteenths of a block; the server validates the open display menu.
+ */
 @EventBusSubscriber(modid = "create_bioships")
 public record NameTagDisplayConfig(int menu, int x, int y, int z) implements CustomPacketPayload {
   public static final Type<NameTagDisplayConfig> TYPE =

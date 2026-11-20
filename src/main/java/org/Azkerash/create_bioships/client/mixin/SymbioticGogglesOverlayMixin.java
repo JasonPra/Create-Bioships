@@ -10,6 +10,10 @@ import org.Azkerash.create_bioships.equipment.SymbioticGogglesAccess;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
+/**
+ * Filters Create inspection at the lookup boundary so a denied panel cannot contribute tooltip
+ * data.
+ */
 @Mixin(value = GoggleOverlayRenderer.class, remap = false)
 public abstract class SymbioticGogglesOverlayMixin {
   @WrapOperation(

@@ -17,6 +17,9 @@ import org.Azkerash.create_bioships.equipment.DiagnosticAccess;
  */
 @EventBusSubscriber(modid = "create_bioships")
 public final class DigestiveDebugSync {
+  private static final int SNAPSHOT_INTERVAL_TICKS = 20;
+  private static final int VIEW_RADIUS_BLOCKS = 128;
+
   private static final Map<ServerPlayer, Map<UUID, Integer>> VIEWERS = new WeakHashMap<>();
 
   private DigestiveDebugSync() {}
@@ -51,7 +54,7 @@ public final class DigestiveDebugSync {
 
   @SubscribeEvent
   public static void tick(net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) {
-    if (event.getServer().getTickCount() % 20 != 0 || VIEWERS.isEmpty()) {
+    if (event.getServer().getTickCount() % SNAPSHOT_INTERVAL_TICKS != 0 || VIEWERS.isEmpty()) {
       return;
     }
     var iterator = VIEWERS.entrySet().iterator();
@@ -79,7 +82,7 @@ public final class DigestiveDebugSync {
           var center =
               body.logicalPose()
                   .transformPosition(Vec3.atCenterOf(body.getPlot().getCenterBlock()));
-          if (center.distanceToSqr(player.position()) > 128 * 128) {
+          if (center.distanceToSqr(player.position()) > VIEW_RADIUS_BLOCKS * VIEW_RADIUS_BLOCKS) {
             continue;
           }
           var id = body.getUniqueId();

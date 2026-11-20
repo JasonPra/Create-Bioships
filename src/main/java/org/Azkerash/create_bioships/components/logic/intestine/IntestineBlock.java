@@ -11,6 +11,9 @@ import net.minecraft.world.level.block.state.properties.*;
 import net.minecraft.world.phys.shapes.*;
 import org.Azkerash.create_bioships.components.ComponentRegistry;
 
+/**
+ * Six-face conduit connectivity; inventory transport belongs to the digestion network controller.
+ */
 public final class IntestineBlock
     extends org.Azkerash.create_bioships.components.logic.WaterloggedComponentBlock
     implements com.simibubi.create.content.equipment.wrench.IWrenchable {

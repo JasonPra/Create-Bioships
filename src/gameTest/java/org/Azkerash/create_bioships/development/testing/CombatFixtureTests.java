@@ -124,7 +124,7 @@ public final class CombatFixtureTests {
                   .getBlockState(state.getCombatOrigin().offset(-3, 1, -16))
                   .is(DevelopmentTestBlocks.BUTTON.get()),
               "Protected START button missing");
-          for (var holder : DevelopmentTestBlocks.FLOOR.values()) {
+          for (var holder : DevelopmentTestBlocks.getFloorBlocks().values()) {
             helper.assertTrue(
                 holder.get().asItem() == net.minecraft.world.item.Items.AIR
                     && holder.get().defaultBlockState().getDestroySpeed(level, core) < 0,

@@ -17,6 +17,9 @@ import org.Azkerash.create_bioships.equipment.DiagnosticAccess;
 /** Client-only arrows follow the current render pose of authorized creature roots. */
 @EventBusSubscriber(modid = "create_bioships", value = Dist.CLIENT)
 public final class FacingDebugOverlay {
+  // Expire stale client snapshots even when an unsubscribe/removal packet is missed.
+  private static final int SNAPSHOT_EXPIRY_TICKS = 40;
+
   private record Sample(FacingDebugPayload path, long at) {}
 
   private static final Map<UUID, Sample> ROUTES = new HashMap<>();
@@ -78,7 +81,7 @@ public final class FacingDebugOverlay {
       }
     }
     if (world != null) {
-      ROUTES.values().removeIf(s -> world.getGameTime() - s.at() > 40);
+      ROUTES.values().removeIf(s -> world.getGameTime() - s.at() > SNAPSHOT_EXPIRY_TICKS);
     }
   }
 
