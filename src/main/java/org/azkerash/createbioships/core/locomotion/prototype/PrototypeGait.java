@@ -95,6 +95,8 @@ public final class PrototypeGait {
   private long probes, steps;
   private Vec3 planeUp = new Vec3(0, 1, 0);
   private Vec3 forward = new Vec3(0, 0, 1), center = Vec3.ZERO;
+  private double requestedYaw;
+  private static final double TURN_FOOT_LEAD_SECONDS = .4;
   private PrototypeStance.Surface surface = PrototypeStance.LEVEL;
 
   public void clear() {
@@ -114,6 +116,16 @@ public final class PrototypeGait {
   }
 
   public void update(List<Leg> legs, Vec3 velocity, long tick, Terrain terrain, Vec3 facing) {
+    update(legs, velocity, tick, terrain, facing, 0);
+  }
+
+  public void update(
+      List<Leg> legs, Vec3 velocity, long tick, Terrain terrain, Vec3 facing, double yawRate) {
+    requestedYaw =
+        Math.clamp(
+            yawRate,
+            -org.azkerash.createbioships.core.locomotion.LegTurnDrive.MAX_YAW_RATE,
+            org.azkerash.createbioships.core.locomotion.LegTurnDrive.MAX_YAW_RATE);
     planeUp =
         legs.stream()
             .filter(PrototypeGait::anchored)
@@ -360,7 +372,9 @@ public final class PrototypeGait {
     double spread = (leg.coxa + leg.thigh + leg.shin) * .5;
     var side = planar(leg.outward).normalize();
     var footprint = leg.hip.add(side.scale(spread)).add(planar(velocity).scale(leadSeconds));
-    return PrototypeStance.foot(leg, footprint, center, forward, surface.grade());
+    var offset = footprint.subtract(center);
+    var lead = planeUp.cross(offset).scale(requestedYaw * TURN_FOOT_LEAD_SECONDS);
+    return PrototypeStance.foot(leg, footprint.add(lead), center, forward, surface.grade());
   }
 
   public List<Vec3> pose(Leg leg, double tick, Terrain terrain) {
@@ -451,6 +465,20 @@ public final class PrototypeGait {
       }
     }
     return count == 0 ? Double.NaN : sum / count;
+  }
+
+  public List<org.azkerash.createbioships.core.locomotion.LegTurnDrive.Foot> turnSupports(
+      List<Leg> legs) {
+    var result = new ArrayList<org.azkerash.createbioships.core.locomotion.LegTurnDrive.Foot>();
+    for (var leg : legs) {
+      var foot = feet.get(leg.socket);
+      if (foot != null && foot.planted != null) {
+        result.add(
+            new org.azkerash.createbioships.core.locomotion.LegTurnDrive.Foot(
+                foot.point, foot.planted.support));
+      }
+    }
+    return List.copyOf(result);
   }
 
   public int contacts() {

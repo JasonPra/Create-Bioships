@@ -239,7 +239,8 @@ final class PrototypeCompactMotor {
                 BrainMotorControls.current(body).velocity(),
                 body.getLevel().getGameTime(),
                 terrain,
-                SubLevelFacing.world(body)));
+                SubLevelFacing.world(body),
+                BrainMotorControls.current(body).yawRate()));
   }
 
   void climbIntent(Vec3 movement) {
@@ -325,7 +326,11 @@ final class PrototypeCompactMotor {
         delta = new PrototypeBodyMotor.Delta(Vec3.ZERO, Vec3.ZERO);
       }
     }
-    handle.addLinearAndAngularVelocity(v(delta.velocity()), v(delta.angularVelocity()));
+    var turnAxis = adhesive ? gait.anchorNormal(legs, terrain) : new Vec3(0, 1, 0);
+    var upright =
+        delta.angularVelocity().subtract(turnAxis.scale(delta.angularVelocity().dot(turnAxis)));
+    handle.addLinearAndAngularVelocity(v(delta.velocity()), v(upright));
+    LegTurnPhysics.apply(body, gait.turnSupports(legs), turnAxis, request.yawRate() * mobility, dt);
     for (var binding : bindings) {
       var points = gait.pose(binding.leg, tick - 1 + fraction, terrain);
       for (int i = 0; i < binding.segments.size(); i++) {

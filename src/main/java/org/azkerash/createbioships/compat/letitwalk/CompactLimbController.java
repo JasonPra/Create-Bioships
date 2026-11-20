@@ -133,6 +133,7 @@ public final class CompactLimbController {
     final List<Quaterniond> rest = new ArrayList<>();
     double[] lengths = new double[3];
     boolean contact;
+    Vec3 contactPoint;
     boolean arachnid;
     private long prototypeLimitRevision = Long.MIN_VALUE;
     private List<PrototypeJointPose.Limit> prototypeLimits = List.of();
@@ -784,7 +785,9 @@ public final class CompactLimbController {
         () -> {
           physicalContacts = 0;
           for (var l : limbs.values()) {
-            l.contact = loaded(l) && CompactLegCollisions.grounded(body, l.bodies, l.lengths);
+            l.contactPoint =
+                loaded(l) ? CompactLegCollisions.contact(body, l.bodies, l.lengths) : null;
+            l.contact = l.contactPoint != null;
             if (l.contact) {
               physicalContacts++;
             }
@@ -823,7 +826,12 @@ public final class CompactLimbController {
             }
             walker.input = keys;
             walker.lastInputTime = body.getLevel().getGameTime();
-            walker.receiveTurn(r.yawRate() * .05);
+            walker.receiveTurn(
+                Math.clamp(
+                        r.yawRate(),
+                        -org.azkerash.createbioships.core.locomotion.LegTurnDrive.MAX_YAW_RATE,
+                        org.azkerash.createbioships.core.locomotion.LegTurnDrive.MAX_YAW_RATE)
+                    * .05);
             stancePreference();
             WalkerBrain.tick(walker, body);
             for (var leg : walker.legs) {
@@ -895,7 +903,22 @@ public final class CompactLimbController {
     }
     // Match WalkerCoreBlockEntity's native physics ordering and support decisions.
     // Native WalkerBrain/WalkerPhysics determine loss of footing; no extra contact gate.
+    var beforeTurn = handle.getAngularVelocity(new Vector3d());
     WalkerPhysics.substep(walker, body, handle, dt);
+    var afterTurn = handle.getAngularVelocity(new Vector3d());
+    // Keep native suspension, but replace the hull's yaw servo with contact forces from legs.
+    handle.addLinearAndAngularVelocity(
+        new Vector3d(), new Vector3d(0, beforeTurn.y - afterTurn.y, 0));
+    var stance = new ArrayList<org.azkerash.createbioships.core.locomotion.LegTurnDrive.Foot>();
+    for (var leg : limbs.values()) {
+      if (leg.contactPoint != null && leg.runtime.state == LegRuntime.State.STANCE) {
+        stance.add(
+            new org.azkerash.createbioships.core.locomotion.LegTurnDrive.Foot(
+                leg.contactPoint, null));
+      }
+    }
+    LegTurnPhysics.apply(
+        body, stance, new Vec3(0, 1, 0), BrainMotorControls.current(body).yawRate(), dt);
     for (var l : limbs.values()) {
       SocketJointRig.apply(l.runtime.built);
     }

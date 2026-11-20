@@ -30,6 +30,10 @@ public final class CompactLegCollisions {
 
   public static boolean grounded(
       ServerSubLevel owner, List<ServerSubLevel> parts, double[] lengths) {
+    return contact(owner, parts, lengths) != null;
+  }
+
+  public static Vec3 contact(ServerSubLevel owner, List<ServerSubLevel> parts, double[] lengths) {
     // The distal foot normally supplies contact. Keep proximal checks for fallen/rotated limbs.
     for (int i = parts.size() - 1; i >= 0; i--) {
       var p = parts.get(i);
@@ -62,10 +66,10 @@ public final class CompactLegCollisions {
       if (ground != null
           && TerrainProbe.standable(ground)
           && Math.abs(point.y - ground.point().y) < .15) {
-        return true;
+        return ground.point();
       }
     }
-    return false;
+    return null;
   }
 
   private record Box(Vector3d center, Vector3d extent, Quaterniond rotation) {}
