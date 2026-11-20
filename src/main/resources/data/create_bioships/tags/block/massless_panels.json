@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "create_bioships:name_tag_displayer",
+    "create_bioships:nerve_panel",
+    "create_bioships:vital_readout"
+  ]
+}

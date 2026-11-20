@@ -1,0 +1,8 @@
+{
+  "selector": "#create_bioships:massless_panels",
+  "priority": 400,
+  "properties": {
+    "sable:mass": 0.0,
+    "sable:volume": 0.0
+  }
+}
