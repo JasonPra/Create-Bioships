@@ -80,6 +80,8 @@ public final class CompactLimbController {
   }
 
   private static final class Context extends WalkerCoreBlockEntity {
+    private final ServerSubLevel owner;
+
     Context(ServerSubLevel body) {
       super(
           body.getPlot().getCenterBlock(),
@@ -87,6 +89,7 @@ public final class CompactLimbController {
               .get()
               .defaultBlockState()
               .setValue(WalkerCoreBlock.FACING, Direction.NORTH));
+      owner = body;
       setLevel(body.getLevel());
     }
 
@@ -103,7 +106,13 @@ public final class CompactLimbController {
 
     @Override
     public float getTheoreticalSpeed() {
-      return 32;
+      return owner != null
+              && org.azkerash.createbioships.core.locomotion.prototype.PrototypeLocomotion.get(
+                      owner)
+                  == org.azkerash.createbioships.core.locomotion.prototype.PrototypeLocomotion.Mode
+                      .NATIVE_FAST
+          ? org.azkerash.createbioships.core.locomotion.prototype.PrototypeLocomotion.COMPARISON_RPM
+          : 32;
     }
 
     @Override
@@ -600,7 +609,19 @@ public final class CompactLimbController {
           if (postureEnabled()) {
             var r = BrainMotorControls.current(body);
             var local = body.logicalPose().orientation().transformInverse(v(r.velocity()));
-            int keys = 1 << WalkerBrain.GEAR_SHIFT | WalkerBrain.KEY_CRAB;
+            boolean fast =
+                org.azkerash.createbioships.core.locomotion.prototype.PrototypeLocomotion.get(body)
+                    == org.azkerash.createbioships.core.locomotion.prototype.PrototypeLocomotion
+                        .Mode.NATIVE_FAST;
+            int keys =
+                fast
+                    ? org.azkerash.createbioships.core.locomotion.prototype.PrototypeLocomotion
+                            .COMPARISON_GEAR
+                        << WalkerBrain.GEAR_SHIFT
+                    : 1 << WalkerBrain.GEAR_SHIFT | WalkerBrain.KEY_CRAB;
+            if (fast && r.velocity().horizontalDistance() > 1) {
+              keys |= WalkerBrain.KEY_GALLOP;
+            }
             if (local.z < -.05) {
               keys |= WalkerBrain.KEY_FORWARD;
             }

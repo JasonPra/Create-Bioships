@@ -9,25 +9,34 @@ import org.azkerash.createbioships.core.brain.BrainMotorControls;
 public final class PrototypeLocomotion {
   public enum Mode {
     NATIVE,
+    NATIVE_FAST,
     PROTOTYPE
   }
 
   private static final String KEY = "create_bioships:locomotion_controller";
   public static final double MAX_SPEED_BLOCKS_PER_SECOND = 6;
+  public static final int COMPARISON_GEAR = 3, COMPARISON_RPM = 256;
 
   private PrototypeLocomotion() {}
 
   public static Mode get(ServerSubLevel body) {
     var tag = SubLevelCreatureParts.root(body).getUserDataTag();
-    return tag != null && "prototype".equals(tag.getString(KEY)) ? Mode.PROTOTYPE : Mode.NATIVE;
+    if (tag == null) {
+      return Mode.NATIVE;
+    }
+    return switch (tag.getString(KEY)) {
+      case "prototype" -> Mode.PROTOTYPE;
+      case "native_fast" -> Mode.NATIVE_FAST;
+      default -> Mode.NATIVE;
+    };
   }
 
   public static void set(ServerSubLevel body, Mode mode) {
     body = SubLevelCreatureParts.root(body);
     var existing = body.getUserDataTag();
     var tag = existing == null ? new CompoundTag() : existing.copy();
-    if (mode == Mode.PROTOTYPE) {
-      tag.putString(KEY, "prototype");
+    if (mode != Mode.NATIVE) {
+      tag.putString(KEY, mode.name().toLowerCase(java.util.Locale.ROOT));
     } else {
       tag.remove(KEY);
     }

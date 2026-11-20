@@ -62,8 +62,15 @@ public final class BrainMotorControls {
         mode == org.azkerash.createbioships.core.pathfinding.SubLevelPathfinder.Mode.WATER
             ? velocity
             : new Vec3(velocity.x, 0, velocity.z);
-    if (movement.lengthSqr() > MAX_COMMAND_SPEED * MAX_COMMAND_SPEED) {
-      movement = movement.normalize().scale(MAX_COMMAND_SPEED);
+    double limit =
+        org.azkerash.createbioships.core.locomotion.prototype.PrototypeLocomotion.get(body)
+                == org.azkerash.createbioships.core.locomotion.prototype.PrototypeLocomotion.Mode
+                    .NATIVE
+            ? MAX_COMMAND_SPEED
+            : org.azkerash.createbioships.core.locomotion.prototype.PrototypeLocomotion
+                .MAX_SPEED_BLOCKS_PER_SECOND;
+    if (movement.lengthSqr() > limit * limit) {
+      movement = movement.normalize().scale(limit);
     }
     if (!org.azkerash.createbioships.core.pathfinding.SubLevelPathfinder.movementClear(
         body, movement, yawRate)) {
