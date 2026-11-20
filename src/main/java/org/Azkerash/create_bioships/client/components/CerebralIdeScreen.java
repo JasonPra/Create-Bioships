@@ -1,5 +1,6 @@
 package org.Azkerash.create_bioships.client.components;
 
+import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.*;
@@ -9,23 +10,31 @@ import net.minecraft.world.entity.player.Inventory;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.Azkerash.create_bioships.components.logic.brain.*;
 import org.Azkerash.create_bioships.core.brain.program.ProgramCardData;
+import org.Azkerash.create_bioships.core.brain.program.editor.*;
 
 /** Source editing stays client-side; only explicit saves alter a physical card on the server. */
 public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspaceMenu> {
-  private MultiLineEditBox editor;
+  private CerebralSourceEditor editor;
+  private final SourceDocument document;
+  private List<EditorProblem> problems = List.of();
+  private int analysisDelay = -1;
   private ProgramConsole console;
   private boolean showingConsole;
   private int pollTicks;
   private String runtimeState = "Waiting for runtime status…";
   private java.util.List<String> output = java.util.List.of();
-  private String text, status = "Draft editor · Save explicitly to write the card.";
-  private boolean dirty, replaying;
-  private final java.util.Deque<String> undo = new java.util.ArrayDeque<>(),
-      redo = new java.util.ArrayDeque<>();
+  private String status = "Draft editor · Save explicitly to write the card.";
+  private boolean dirty;
 
   public CerebralIdeScreen(CardWorkspaceMenu menu, Inventory inventory, Component title) {
     super(menu, inventory, title);
-    text = menu.initialSource;
+    document = new SourceDocument(menu.initialSource);
+    document.listener(
+        value -> {
+          dirty = true;
+          analysisDelay = 8;
+          if (editor != null) editor.problems(List.of());
+        });
     if (menu.initiallyCompiled) status = "Compiled card · Changed source must be compiled again.";
   }
 
@@ -36,26 +45,9 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
     super.init();
     editor =
         addRenderableWidget(
-            new MultiLineEditBox(
-                font,
-                leftPos + 12,
-                topPos + 39,
-                imageWidth - 24,
-                imageHeight - 110,
-                Component.literal("C# source"),
-                Component.literal("C# program editor")));
-    editor.setCharacterLimit(ProgramCardData.MAX_SOURCE);
-    editor.setValue(text);
-    editor.setValueListener(
-        value -> {
-          if (!replaying && !text.equals(value)) {
-            undo.push(text);
-            while (undo.size() > 64) undo.removeLast();
-            redo.clear();
-          }
-          text = value;
-          dirty = true;
-        });
+            new CerebralSourceEditor(
+                font, leftPos + 12, topPos + 39, imageWidth - 24, imageHeight - 110, document));
+    analyzeNow();
     addRenderableWidget(
         Button.builder(Component.literal("Save draft"), b -> save())
             .bounds(leftPos + 12, topPos + imageHeight - 32, 100, 20)
@@ -89,6 +81,13 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
     setInitialFocus(showingConsole ? console : editor);
   }
 
+  private void analyzeNow() {
+    analysisDelay = -1;
+    problems =
+        EditorAnalysis.analyze(document.text(), ProgramCardData.fingerprint(document.text()));
+    editor.problems(problems);
+  }
+
   private void save() {
     PacketDistributor.sendToServer(
         new CardWorkspaceNetwork.Save(menu.containerId, menu.identity, editor.getValue()));
@@ -96,6 +95,7 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
   }
 
   private void compile() {
+    analyzeNow();
     PacketDistributor.sendToServer(
         new CardWorkspaceNetwork.Write(menu.containerId, menu.identity, editor.getValue()));
     status = "Compiling on the server…";
@@ -115,6 +115,7 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
   @Override
   public void containerTick() {
     super.containerTick();
+    if (analysisDelay > 0 && --analysisDelay == 0) analyzeNow();
     if (pollTicks++ % 20 == 0)
       PacketDistributor.sendToServer(
           new CardWorkspaceNetwork.Poll(menu.containerId, menu.identity));
@@ -132,30 +133,12 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
 
   @Override
   public boolean keyPressed(int key, int scan, int modifiers) {
-    if (hasControlDown()
-        && (key == org.lwjgl.glfw.GLFW.GLFW_KEY_Z || key == org.lwjgl.glfw.GLFW.GLFW_KEY_Y)) {
-      boolean forward = key == org.lwjgl.glfw.GLFW.GLFW_KEY_Y || hasShiftDown();
-      var from = forward ? redo : undo;
-      var to = forward ? undo : redo;
-      if (!from.isEmpty()) {
-        to.push(editor.getValue());
-        replaying = true;
-        editor.setValue(from.pop());
-        replaying = false;
-        dirty = true;
-      }
-      return true;
-    }
     if (hasControlDown() && key == org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER) {
       compile();
       return true;
     }
     if (hasControlDown() && key == org.lwjgl.glfw.GLFW.GLFW_KEY_S) {
       save();
-      return true;
-    }
-    if (editor.isFocused() && key == org.lwjgl.glfw.GLFW.GLFW_KEY_TAB && !hasShiftDown()) {
-      for (int i = 0; i < 4; i++) editor.charTyped(' ', 0);
       return true;
     }
     if (editor.isFocused() && minecraft.options.keyInventory.matches(key, scan))
@@ -168,7 +151,16 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
     OrganScreenStyle.panel(g, leftPos, topPos, imageWidth, imageHeight);
     g.drawString(
         font,
-        showingConsole ? "Private console" : "Source.cs" + (dirty ? " *" : ""),
+        font.plainSubstrByWidth(
+            showingConsole
+                ? "Private console"
+                : "Source.cs"
+                    + (dirty ? " *" : "")
+                    + " · Ln "
+                    + (document.lineAt(document.caret()) + 1)
+                    + ", Col "
+                    + (document.column() + 1),
+            imageWidth - 132),
         leftPos + 12,
         topPos + 27,
         OrganScreenStyle.MUTED,
@@ -203,6 +195,8 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
   @Override
   public void render(GuiGraphics g, int mx, int my, float partial) {
     super.render(g, mx, my, partial);
+    var hovered = editor.hoveredProblem(mx, my);
+    if (hovered != null) g.renderTooltip(font, Component.literal(hovered.message()), mx, my);
     if (mx >= leftPos + 12
         && mx < leftPos + imageWidth - 12
         && my >= topPos + imageHeight - 63
