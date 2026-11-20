@@ -61,12 +61,30 @@ public final class BrainMenu extends AbstractContainerMenu {
             public int getMaxStackSize() {
               return 1;
             }
+
+            @Override
+            public void onTake(Player actor, ItemStack stack) {
+              org.Azkerash.create_bioships.core.brain.program.PrivateCardBackups.remember(
+                  actor, stack);
+              super.onTake(actor, stack);
+            }
+
+            @Override
+            public void setByPlayer(ItemStack stack) {
+              org.Azkerash.create_bioships.core.brain.program.PrivateCardBackups.restore(
+                  player.player, stack);
+              super.setByPlayer(stack);
+            }
           });
     }
     for (int row = 0; row < 3; row++)
       for (int col = 0; col < 9; col++)
         addSlot(new Slot(player, col + row * 9 + 9, 33 + col * 18, 126 + row * 18));
     for (int col = 0; col < 9; col++) addSlot(new Slot(player, col, 33 + col * 18, 184));
+  }
+
+  public BrainInventory serverMemory() {
+    return memory instanceof BrainInventory brain ? brain : null;
   }
 
   public int capacity() {
@@ -78,7 +96,7 @@ public final class BrainMenu extends AbstractContainerMenu {
   }
 
   public ItemStack quickMoveStack(Player player, int index) {
-    if (index < 0 || index >= slots.size()) return ItemStack.EMPTY;
+    if (!stillValid(player) || index < 0 || index >= slots.size()) return ItemStack.EMPTY;
     var slot = slots.get(index);
     if (!slot.hasItem()) return ItemStack.EMPTY;
     var current = slot.getItem();

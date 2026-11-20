@@ -8,12 +8,69 @@ import org.Azkerash.create_bioships.components.ComponentRegistry;
 import org.Azkerash.create_bioships.components.logic.brain.BrainMenu;
 
 public final class BrainScreen extends AbstractContainerScreen<BrainMenu> {
+  private int selected;
+  private net.minecraft.client.gui.components.Button edit;
+
   public BrainScreen(BrainMenu menu, Inventory inventory, Component title) {
     super(menu, inventory, title);
     imageWidth = 228;
-    imageHeight = 210;
+    imageHeight = 238;
     inventoryLabelX = 33;
     inventoryLabelY = 114;
+  }
+
+  @Override
+  protected void init() {
+    super.init();
+    addRenderableWidget(
+        net.minecraft.client.gui.components.Button.builder(
+                Component.literal("<"),
+                b -> {
+                  selected = Math.floorMod(selected - 1, Math.max(1, menu.capacity()));
+                  updateEditor();
+                })
+            .bounds(leftPos + 20, topPos + imageHeight - 24, 20, 20)
+            .build());
+    edit =
+        addRenderableWidget(
+            net.minecraft.client.gui.components.Button.builder(
+                    Component.literal("Edit card 1"),
+                    b ->
+                        net.neoforged.neoforge.network.PacketDistributor.sendToServer(
+                            new org.Azkerash.create_bioships
+                                .components
+                                .logic
+                                .brain
+                                .CardWorkspaceNetwork
+                                .Open(menu.containerId, selected)))
+                .bounds(leftPos + 44, topPos + imageHeight - 24, 140, 20)
+                .build());
+    addRenderableWidget(
+        net.minecraft.client.gui.components.Button.builder(
+                Component.literal(">"),
+                b -> {
+                  selected = (selected + 1) % Math.max(1, menu.capacity());
+                  updateEditor();
+                })
+            .bounds(leftPos + 188, topPos + imageHeight - 24, 20, 20)
+            .build());
+    updateEditor();
+  }
+
+  private void updateEditor() {
+    if (edit == null) return;
+    selected = Math.min(selected, Math.max(0, menu.capacity() - 1));
+    edit.setMessage(Component.literal("Edit card " + (selected + 1) + " · C#"));
+    edit.active =
+        selected < menu.capacity()
+            && org.Azkerash.create_bioships.core.brain.program.ProgramCardData.editable(
+                menu.getSlot(selected).getItem());
+  }
+
+  @Override
+  protected void containerTick() {
+    super.containerTick();
+    updateEditor();
   }
 
   @Override

@@ -504,6 +504,18 @@ public final class ComponentRegistry {
                       org.Azkerash.create_bioships.components.logic.brain.BrainMenu::fromNetwork));
 
   public static final DeferredHolder<
+          net.minecraft.world.inventory.MenuType<?>,
+          net.minecraft.world.inventory.MenuType<
+              org.Azkerash.create_bioships.components.logic.brain.CardWorkspaceMenu>>
+      CARD_WORKSPACE_MENU =
+          MENUS.register(
+              "card_workspace",
+              () ->
+                  net.neoforged.neoforge.common.extensions.IMenuTypeExtension.create(
+                      org.Azkerash.create_bioships.components.logic.brain.CardWorkspaceMenu
+                          ::fromNetwork));
+
+  public static final DeferredHolder<
           BlockEntityType<?>,
           BlockEntityType<
               org.Azkerash.create_bioships.components.logic.brain.BrainLimbDependencies>>

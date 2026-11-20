@@ -5,7 +5,7 @@ import net.minecraft.nbt.*;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.component.CustomData;
 
-/** Portable graph document, reserved for the later behavior editor. Nothing executes here. */
+/** Portable blank card. Source editing is authoritative on the server; drafts do not execute. */
 public final class BehaviorCardItem extends Item {
   private static CustomData blank() {
     var tag = new CompoundTag();
@@ -20,5 +20,16 @@ public final class BehaviorCardItem extends Item {
 
   public BehaviorCardItem() {
     super(new Properties().stacksTo(1).component(DataComponents.CUSTOM_DATA, blank()));
+  }
+
+  @Override
+  public net.minecraft.world.InteractionResultHolder<net.minecraft.world.item.ItemStack> use(
+      net.minecraft.world.level.Level level,
+      net.minecraft.world.entity.player.Player player,
+      net.minecraft.world.InteractionHand hand) {
+    if (player instanceof net.minecraft.server.level.ServerPlayer server)
+      CardWorkspaces.openHeld(server, hand);
+    return net.minecraft.world.InteractionResultHolder.sidedSuccess(
+        player.getItemInHand(hand), level.isClientSide);
   }
 }

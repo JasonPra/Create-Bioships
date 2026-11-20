@@ -124,6 +124,9 @@ public final class BrainBlock
       var body = CoreAssemblyRules.containing(server, context.getClickedPos());
       if (body == null
           || !SubLevelData.isLiving(body)
+          || context.getPlayer() == null
+          || !org.Azkerash.create_bioships.core.access.SubLevelPermissions.canInspect(
+              body, context.getPlayer().getUUID())
           || !SubLevelBrains.get(body).movePort(context.getClickedPos(), context.getClickedFace()))
         return InteractionResult.FAIL;
       server.playSound(
@@ -158,7 +161,10 @@ public final class BrainBlock
     if (state.getValue(PORT).face != hit.getDirection()) return InteractionResult.PASS;
     if (player instanceof ServerPlayer server && level instanceof ServerLevel world) {
       var body = CoreAssemblyRules.containing(world, pos);
-      if (body == null || !SubLevelData.isLiving(body)) return InteractionResult.FAIL;
+      if (body == null
+          || !SubLevelData.isLiving(body)
+          || !org.Azkerash.create_bioships.core.access.SubLevelPermissions.canInspect(
+              body, player.getUUID())) return InteractionResult.FAIL;
       var brain = SubLevelBrains.get(body);
       if (!pos.equals(brain.port()) || hit.getDirection() != brain.face())
         return InteractionResult.FAIL;

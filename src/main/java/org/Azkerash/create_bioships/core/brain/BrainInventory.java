@@ -20,6 +20,14 @@ public final class BrainInventory implements Container {
     this.brain = brain;
   }
 
+  public dev.ryanhcode.sable.sublevel.ServerSubLevel body() {
+    return brain.body;
+  }
+
+  public BlockPos port() {
+    return brain.port();
+  }
+
   public int capacity() {
     return brain.capacity();
   }
@@ -81,6 +89,9 @@ public final class BrainInventory implements Container {
         && !brain.body.isRemoved()
         && player.level() == brain.body.getLevel()
         && SubLevelData.isLiving(brain.body)
+        && !org.Azkerash.create_bioships.core.SubLevelHealth.status(brain.body).dead()
+        && org.Azkerash.create_bioships.core.access.SubLevelPermissions.canInspect(
+            brain.body, player.getUUID())
         && player
                 .getEyePosition()
                 .distanceToSqr(brain.body.logicalPose().transformPosition(Vec3.atCenterOf(port)))

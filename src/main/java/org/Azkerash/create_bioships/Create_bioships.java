@@ -140,6 +140,7 @@ public final class Create_bioships {
                 EYE_HURTBOX.get(),
                 org.Azkerash.create_bioships.combat.SubLevelCombatTarget.attributes().build()));
     ENTITIES.register(bus);
+    org.Azkerash.create_bioships.core.brain.program.ProgramCardData.register(bus);
     ComponentRegistry.register(bus);
     org.Azkerash.create_bioships.furniture.FurnitureRegistry.register(bus);
     ITEMS.register(bus);

@@ -88,6 +88,8 @@ public final class BrainFoundationTests {
     var player =
         new net.neoforged.neoforge.common.util.FakePlayer(
             level, new com.mojang.authlib.GameProfile(UUID.randomUUID(), "BrainWrench"));
+    org.Azkerash.create_bioships.core.access.SubLevelPermissions.assignIfUnowned(
+        body, player.getUUID());
     player.setItemInHand(
         InteractionHand.MAIN_HAND, Create_bioships.BIOSHIP_WRENCH.get().getDefaultInstance());
     var placement =
