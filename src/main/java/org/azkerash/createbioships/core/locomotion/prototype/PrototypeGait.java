@@ -14,7 +14,20 @@ public final class PrototypeGait {
       double coxa,
       double thigh,
       double shin,
-      int group) {}
+      int group,
+      LegMotionProfile profile) {
+    public Leg(
+        BlockPos socket,
+        Vec3 hip,
+        Vec3 outward,
+        double height,
+        double coxa,
+        double thigh,
+        double shin,
+        int group) {
+      this(socket, hip, outward, height, coxa, thigh, shin, group, LegMotionProfile.GENERIC);
+    }
+  }
 
   public record Contact(Vec3 point, UUID support, Vec3 localPoint) {}
 
@@ -22,6 +35,15 @@ public final class PrototypeGait {
     Contact probe(Vec3 desired, double height);
 
     Vec3 position(Contact contact);
+
+    default List<Vec3> solve(Leg leg, Vec3 target) {
+      return PrototypeLegKinematics.solve(
+          leg.hip, leg.outward, target, leg.coxa, leg.thigh, leg.shin);
+    }
+
+    default double mobility(Leg leg) {
+      return 1;
+    }
   }
 
   private static final int CONTACT_RECHECK_TICKS = 10;
@@ -36,6 +58,9 @@ public final class PrototypeGait {
   private static final double SPEED_STEP_FACTOR = .025, STRIDE_LEAD_FACTOR = .65;
   private static final double OBSTACLE_CLEARANCE = .15;
   private static final int TICKS_PER_SECOND = 20;
+  private static final double REAR_PLANT_THRESHOLD_FACTOR = 1.4;
+  private static final double FRONT_REACH_THRESHOLD_FACTOR = .75;
+  private static final double MIN_REAR_SUPPORTED_DRIVE = .5;
 
   private static final class Foot {
     private Contact planted, destination;
@@ -46,12 +71,34 @@ public final class PrototypeGait {
 
   private final Map<BlockPos, Foot> feet = new HashMap<>();
   private long probes, steps;
+  private Vec3 forward = new Vec3(0, 0, 1), center = Vec3.ZERO;
+  private PrototypeStance.Surface surface = PrototypeStance.LEVEL;
 
   public void clear() {
     feet.clear();
+    surface = PrototypeStance.LEVEL;
   }
 
   public void update(List<Leg> legs, Vec3 velocity, long tick, Terrain terrain) {
+    update(
+        legs,
+        velocity,
+        tick,
+        terrain,
+        velocity.horizontalDistance() > STILL_SPEED
+            ? horizontal(velocity).normalize()
+            : new Vec3(0, 0, 1));
+  }
+
+  public void update(List<Leg> legs, Vec3 velocity, long tick, Terrain terrain, Vec3 facing) {
+    forward = horizontal(facing).normalize();
+    center = Vec3.ZERO;
+    for (var leg : legs) {
+      center = center.add(leg.hip);
+    }
+    if (!legs.isEmpty()) {
+      center = center.scale(1d / legs.size());
+    }
     var present = new HashSet<BlockPos>();
     legs.forEach(l -> present.add(l.socket));
     feet.keySet().retainAll(present);
@@ -99,7 +146,7 @@ public final class PrototypeGait {
         probes++;
         var contact = terrain.probe(ideal(leg, velocity, 0), leg.height + 1);
         foot.nextProbe = tick + RETRY_TICKS;
-        if (contact != null && reachable(leg, contact.point)) {
+        if (contact != null && reachable(leg, contact.point, terrain)) {
           foot.planted = contact;
           foot.point = contact.point;
           foot.nextProbe = tick + CONTACT_RECHECK_TICKS + Math.floorMod(leg.socket.hashCode(), 3);
@@ -109,9 +156,52 @@ public final class PrototypeGait {
     // A cached floor hit cannot support the body after the leg has moved beyond its reach.
     for (var leg : legs) {
       var foot = feet.get(leg.socket);
-      if (foot.planted != null && !reachable(leg, foot.point)) {
+      if (foot.planted != null && !reachable(leg, foot.point, terrain)) {
         foot.planted = null;
       }
+    }
+    var planted =
+        feet.values().stream()
+            .filter(foot -> foot.planted != null)
+            .map(foot -> foot.point)
+            .toList();
+    var measured = PrototypeStance.fit(planted, forward);
+    if (measured.valid()) {
+      surface = measured;
+    } else if (planted.size() < 2) {
+      surface = PrototypeStance.LEVEL;
+    }
+    boolean careful =
+        legs.stream().anyMatch(PrototypeStance::adapts)
+            && Math.abs(surface.grade()) > PrototypeStance.ADAPTATION_GRADE;
+    if (careful) {
+      // One foot swings at a time; retain the rear stance while the front reaches higher ground.
+      if (activeGroup >= 0 || contacts() < Math.min(3, legs.size())) {
+        return;
+      }
+      Leg chosen = null;
+      double best = 1;
+      for (var leg : legs) {
+        var foot = feet.get(leg.socket);
+        if (foot.planted == null || terrain.mobility(leg) <= 0) {
+          continue;
+        }
+        boolean rear = leg.hip.subtract(center).dot(forward) < 0;
+        double threshold = Math.max(MIN_STRIDE_ERROR, leg.height * STRIDE_HEIGHT_FACTOR);
+        if (surface.grade() > 0) {
+          threshold *= rear ? REAR_PLANT_THRESHOLD_FACTOR : FRONT_REACH_THRESHOLD_FACTOR;
+        }
+        double score =
+            horizontal(foot.point.subtract(ideal(leg, velocity, 0))).length() / threshold;
+        if (score > best) {
+          chosen = leg;
+          best = score;
+        }
+      }
+      if (chosen != null && contacts() - 1 >= Math.min(3, legs.size() - 1)) {
+        step(chosen, velocity, speed, tick, terrain);
+      }
+      return;
     }
     int selectedGroup = activeGroup;
     if (selectedGroup < 0) {
@@ -140,43 +230,49 @@ public final class PrototypeGait {
     }
     for (var leg : legs) {
       var foot = feet.get(leg.socket);
-      if (leg.group != group || foot.destination != null || foot.planted == null) {
+      if (leg.group != group
+          || foot.destination != null
+          || foot.planted == null
+          || terrain.mobility(leg) <= 0) {
         continue;
       }
       double error = horizontal(foot.point.subtract(ideal(leg, velocity, 0))).length();
       if (error < MIN_STRIDE_ERROR * GROUP_STEP_THRESHOLD) {
         continue;
       }
-      int duration =
-          (int)
-              Math.ceil(
-                  Math.clamp(
-                          MAX_STEP_SECONDS - speed * SPEED_STEP_FACTOR,
-                          MIN_STEP_SECONDS,
-                          MAX_STEP_SECONDS)
-                      * TICKS_PER_SECOND);
-      double lead =
-          Math.min(
-              STRIDE_LEAD_FACTOR * leg.height,
-              speed * (duration / (double) TICKS_PER_SECOND) * STRIDE_LEAD_FACTOR);
-      probes++;
-      var destination =
-          terrain.probe(
-              ideal(leg, velocity, speed > STILL_SPEED ? lead / speed : 0), leg.height + 1);
-      if (destination != null && reachable(leg, destination.point)) {
-        foot.from = foot.point;
-        foot.planted = null;
-        foot.destination = destination;
-        foot.started = tick;
-        foot.duration = duration;
-        steps++;
-      }
+      step(leg, velocity, speed, tick, terrain);
     }
   }
 
-  private static boolean reachable(Leg leg, Vec3 point) {
-    var solved =
-        PrototypeLegKinematics.solve(leg.hip, leg.outward, point, leg.coxa, leg.thigh, leg.shin);
+  private void step(Leg leg, Vec3 velocity, double speed, long tick, Terrain terrain) {
+    var foot = feet.get(leg.socket);
+    int duration =
+        (int)
+            Math.ceil(
+                Math.clamp(
+                        MAX_STEP_SECONDS - speed * SPEED_STEP_FACTOR,
+                        MIN_STEP_SECONDS,
+                        MAX_STEP_SECONDS)
+                    * TICKS_PER_SECOND);
+    double lead =
+        Math.min(
+            STRIDE_LEAD_FACTOR * leg.height,
+            speed * (duration / (double) TICKS_PER_SECOND) * STRIDE_LEAD_FACTOR);
+    probes++;
+    var destination =
+        terrain.probe(ideal(leg, velocity, speed > STILL_SPEED ? lead / speed : 0), leg.height + 1);
+    if (destination != null && reachable(leg, destination.point, terrain)) {
+      foot.from = foot.point;
+      foot.planted = null;
+      foot.destination = destination;
+      foot.started = tick;
+      foot.duration = duration;
+      steps++;
+    }
+  }
+
+  private static boolean reachable(Leg leg, Vec3 point, Terrain terrain) {
+    var solved = terrain.solve(leg, point);
     return solved.getLast().distanceTo(point) <= CONTACT_REACH_TOLERANCE;
   }
 
@@ -184,10 +280,11 @@ public final class PrototypeGait {
     return new Vec3(v.x, 0, v.z);
   }
 
-  private static Vec3 ideal(Leg leg, Vec3 velocity, double leadSeconds) {
+  private Vec3 ideal(Leg leg, Vec3 velocity, double leadSeconds) {
     double spread = (leg.coxa + leg.thigh + leg.shin) * .5;
     var side = horizontal(leg.outward).normalize();
-    return leg.hip.add(side.scale(spread)).add(horizontal(velocity).scale(leadSeconds));
+    var footprint = leg.hip.add(side.scale(spread)).add(horizontal(velocity).scale(leadSeconds));
+    return PrototypeStance.foot(leg, footprint, center, forward, surface.grade());
   }
 
   public List<Vec3> pose(Leg leg, double tick, Terrain terrain) {
@@ -210,8 +307,7 @@ public final class PrototypeGait {
         target = planted;
       }
     }
-    return PrototypeLegKinematics.solve(
-        leg.hip, leg.outward, target, leg.coxa, leg.thigh, leg.shin);
+    return terrain.solve(leg, target);
   }
 
   public int contacts() {
@@ -229,6 +325,40 @@ public final class PrototypeGait {
       }
     }
     return count == 0 ? Double.NaN : sum / count;
+  }
+
+  public Vec3 bodyUp(List<Leg> legs) {
+    return legs.stream().anyMatch(PrototypeStance::adapts)
+        ? PrototypeStance.bodyUp(surface)
+        : new Vec3(0, 1, 0);
+  }
+
+  public double rearSupport(List<Leg> legs) {
+    int rear = 0, supported = 0;
+    for (var leg : legs) {
+      if (leg.hip.subtract(center).dot(forward) < 0) {
+        rear++;
+        var foot = feet.get(leg.socket);
+        if (foot != null && foot.planted != null) {
+          supported++;
+        }
+      }
+    }
+    return rear == 0 ? 1 : supported / (double) rear;
+  }
+
+  public double driveSupport(List<Leg> legs) {
+    return surface.grade() > PrototypeStance.ADAPTATION_GRADE
+            && legs.stream().anyMatch(leg -> leg.profile.rearLeverage())
+        ? MIN_REAR_SUPPORTED_DRIVE + (1 - MIN_REAR_SUPPORTED_DRIVE) * rearSupport(legs)
+        : 1;
+  }
+
+  public int requiredContacts(List<Leg> legs) {
+    return Math.abs(surface.grade()) > PrototypeStance.ADAPTATION_GRADE
+            && legs.stream().anyMatch(PrototypeStance::adapts)
+        ? Math.max(Math.min(3, legs.size()), legs.size() / 2)
+        : Math.max(2, legs.size() / 2);
   }
 
   public long getProbeCount() {

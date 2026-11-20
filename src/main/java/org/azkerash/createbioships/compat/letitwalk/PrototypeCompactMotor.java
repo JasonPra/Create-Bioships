@@ -12,6 +12,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.azkerash.createbioships.core.SubLevelCreatureParts;
 import org.azkerash.createbioships.core.brain.BrainMotorControls;
+import org.azkerash.createbioships.core.locomotion.SubLevelFacing;
 import org.azkerash.createbioships.core.locomotion.prototype.*;
 import org.azkerash.createbioships.core.vision.VisionRaycaster;
 import org.joml.Quaterniond;
@@ -21,13 +22,20 @@ import org.joml.Vector3d;
  * Sable bridge for the independent gait. Native planning and suspension do not run in this mode.
  */
 final class PrototypeCompactMotor {
-  record Binding(PrototypeGait.Leg leg, List<ServerSubLevel> segments) {}
+  record Binding(
+      PrototypeGait.Leg leg,
+      List<ServerSubLevel> segments,
+      List<Vec3> restDirections,
+      List<PrototypeJointPose.Limit> limits,
+      Vec3 rootUp,
+      double mobility) {}
 
   private record Previous(Vector3d position, Quaterniond turn) {}
 
   private static final double MAX_BONE_SPEED = 40;
   private final ServerSubLevel body;
   private final PrototypeGait gait = new PrototypeGait();
+  private final Map<BlockPos, Binding> definitions = new HashMap<>();
   private final Map<UUID, Previous> previous = new HashMap<>();
   private long physicsTick = Long.MIN_VALUE;
   private double fraction;
@@ -38,6 +46,7 @@ final class PrototypeCompactMotor {
 
   void clear() {
     gait.clear();
+    definitions.clear();
     previous.clear();
     physicsTick = Long.MIN_VALUE;
   }
@@ -82,6 +91,21 @@ final class PrototypeCompactMotor {
         }
 
         @Override
+        public List<Vec3> solve(PrototypeGait.Leg leg, Vec3 target) {
+          var binding = definitions.get(leg.socket());
+          return binding == null
+              ? PrototypeGait.Terrain.super.solve(leg, target)
+              : PrototypeJointPose.solve(
+                  leg, target, binding.restDirections, binding.rootUp, binding.limits);
+        }
+
+        @Override
+        public double mobility(PrototypeGait.Leg leg) {
+          var binding = definitions.get(leg.socket());
+          return binding == null ? 0 : binding.mobility;
+        }
+
+        @Override
         public Vec3 position(PrototypeGait.Contact contact) {
           if (contact.support() == null) {
             return contact.point();
@@ -94,7 +118,13 @@ final class PrototypeCompactMotor {
         }
       };
 
+  private void prepare(List<Binding> bindings) {
+    definitions.clear();
+    bindings.forEach(binding -> definitions.put(binding.leg.socket(), binding));
+  }
+
   void update(List<Binding> bindings) {
+    prepare(bindings);
     var ids = new HashSet<UUID>();
     bindings.forEach(binding -> binding.segments.forEach(part -> ids.add(part.getUniqueId())));
     previous.keySet().retainAll(ids);
@@ -107,7 +137,8 @@ final class PrototypeCompactMotor {
                 bindings.stream().map(Binding::leg).toList(),
                 BrainMotorControls.current(body).velocity(),
                 body.getLevel().getGameTime(),
-                terrain));
+                terrain,
+                SubLevelFacing.world(body)));
   }
 
   int contacts() {
@@ -122,6 +153,7 @@ final class PrototypeCompactMotor {
     if (handle == null || !handle.isValid()) {
       return;
     }
+    prepare(bindings);
     long tick = body.getLevel().getGameTime();
     if (tick != physicsTick) {
       physicsTick = tick;
@@ -134,16 +166,18 @@ final class PrototypeCompactMotor {
     var up = body.logicalPose().orientation().transform(new Vector3d(0, 1, 0));
     var request = BrainMotorControls.current(body);
     double y = body.logicalPose().position().y;
+    double mobility = bindings.stream().mapToDouble(Binding::mobility).average().orElse(0);
     var delta =
         PrototypeBodyMotor.calculate(
             vec(velocity),
             vec(spin),
             vec(up),
-            request.velocity(),
-            request.yawRate(),
+            request.velocity().scale(mobility * gait.driveSupport(legs)),
+            request.yawRate() * mobility,
             gait.supportHeight(legs, y) - y,
             dt,
-            gait.contacts() >= Math.max(2, legs.size() / 2));
+            gait.contacts() >= gait.requiredContacts(legs),
+            gait.bodyUp(legs));
     handle.addLinearAndAngularVelocity(v(delta.velocity()), v(delta.angularVelocity()));
     for (var binding : bindings) {
       var points = gait.pose(binding.leg, tick - 1 + fraction, terrain);

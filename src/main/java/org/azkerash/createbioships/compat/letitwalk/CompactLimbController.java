@@ -133,6 +133,9 @@ public final class CompactLimbController {
     final List<Quaterniond> rest = new ArrayList<>();
     double[] lengths = new double[3];
     boolean contact;
+    private long prototypeLimitRevision = Long.MIN_VALUE;
+    private List<PrototypeJointPose.Limit> prototypeLimits = List.of();
+    private double prototypeMobility;
   }
 
   private final ServerSubLevel body;
@@ -574,6 +577,10 @@ public final class CompactLimbController {
   private List<PrototypeCompactMotor.Binding> prototypeBindings() {
     var result = new ArrayList<PrototypeCompactMotor.Binding>();
     var ranks = new EnumMap<Direction, Integer>(Direction.class);
+    long limitRevision =
+        org.azkerash.createbioships.core.locomotion.SubLevelLocomotion.motionRevision(body);
+    var upVector = body.logicalPose().orientation().transform(new Vector3d(0, 1, 0));
+    var rootUp = new Vec3(upVector.x, upVector.y, upVector.z);
     var ordered = new ArrayList<>(limbs.values());
     ordered.sort(
         Comparator.comparingInt((Limb l) -> l.face.ordinal())
@@ -586,22 +593,75 @@ public final class CompactLimbController {
       int rank = ranks.merge(limb.face, 1, Integer::sum) - 1;
       int group =
           ((limb.face == Direction.NORTH || limb.face == Direction.WEST) ? 0 : 1) ^ (rank % 2);
-      var hip = restPoints(limb.socket, limb.face, limb.extension, limb.restAngle).getFirst();
+      var restPoints = restPoints(limb.socket, limb.face, limb.extension, limb.restAngle);
+      var hip = restPoints.getFirst();
+      if (limb.prototypeLimitRevision != limitRevision) {
+        var limits = new ArrayList<PrototypeJointPose.Limit>();
+        double mobility = 0;
+        for (int i = 0; i < 3; i++) {
+          var setting = SocketJointSettings.get(body, SocketJointSettings.compact(limb.socket, i));
+          limits.add(
+              new PrototypeJointPose.Limit(
+                  Math.toRadians(setting.swivel() / 2d), Math.toRadians(setting.bend())));
+          mobility += Math.min(1, Math.max(setting.swivel() / 360d, setting.bend() / 60d));
+        }
+        limb.prototypeLimits = List.copyOf(limits);
+        limb.prototypeMobility = mobility / 3;
+        limb.prototypeLimitRevision = limitRevision;
+      }
+      var restDirections = new ArrayList<Vec3>();
+      for (int i = 0; i < 3; i++) {
+        var direction =
+            body.logicalPose()
+                .orientation()
+                .transform(v(restPoints.get(i + 1).subtract(restPoints.get(i)).normalize()));
+        restDirections.add(new Vec3(direction.x, direction.y, direction.z));
+      }
       var outward =
           Vec3.atLowerCornerOf(limb.face.getNormal()).yRot((float) Math.toRadians(limb.restAngle));
       var worldOutward = body.logicalPose().orientation().transform(v(outward));
+      var worldHip = body.logicalPose().transformPosition(hip);
+      var leg =
+          new PrototypeGait.Leg(
+              limb.socket,
+              worldHip,
+              new Vec3(worldOutward.x, worldOutward.y, worldOutward.z),
+              limb.extension + .5,
+              limb.lengths[0],
+              limb.lengths[1],
+              limb.lengths[2],
+              group,
+              LegMotionProfile.CRAB);
+      // Locked/narrow joints can require a different neutral standing height, not stretched bones.
+      var neutral =
+          worldHip
+              .add(
+                  new Vec3(worldOutward.x, 0, worldOutward.z)
+                      .normalize()
+                      .scale((limb.lengths[0] + limb.lengths[1] + limb.lengths[2]) * .5))
+              .add(0, -leg.height(), 0);
+      var bounded =
+          PrototypeJointPose.solve(leg, neutral, restDirections, rootUp, limb.prototypeLimits);
+      double standingHeight = Math.max(.1, worldHip.y - bounded.getLast().y);
+      leg =
+          new PrototypeGait.Leg(
+              leg.socket(),
+              leg.hip(),
+              leg.outward(),
+              standingHeight,
+              leg.coxa(),
+              leg.thigh(),
+              leg.shin(),
+              leg.group(),
+              leg.profile());
       result.add(
           new PrototypeCompactMotor.Binding(
-              new PrototypeGait.Leg(
-                  limb.socket,
-                  body.logicalPose().transformPosition(hip),
-                  new Vec3(worldOutward.x, worldOutward.y, worldOutward.z),
-                  limb.extension + .5,
-                  limb.lengths[0],
-                  limb.lengths[1],
-                  limb.lengths[2],
-                  group),
-              List.copyOf(limb.bodies)));
+              leg,
+              List.copyOf(limb.bodies),
+              List.copyOf(restDirections),
+              limb.prototypeLimits,
+              rootUp,
+              limb.prototypeMobility));
     }
     return result;
   }

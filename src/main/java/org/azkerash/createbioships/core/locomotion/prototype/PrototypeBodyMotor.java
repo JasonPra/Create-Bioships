@@ -25,6 +25,21 @@ public final class PrototypeBodyMotor {
       double heightError,
       double dt,
       boolean supported) {
+    return calculate(
+        velocity, spin, up, requested, yawRate, heightError, dt, supported, new Vec3(0, 1, 0));
+  }
+
+  /** Desired up follows bounded uphill support normals; descents retain a level hull. */
+  public static Delta calculate(
+      Vec3 velocity,
+      Vec3 spin,
+      Vec3 up,
+      Vec3 requested,
+      double yawRate,
+      double heightError,
+      double dt,
+      boolean supported,
+      Vec3 desiredUp) {
     if (!supported || !Double.isFinite(heightError) || !(dt > 0 && dt <= .1)) {
       return new Delta(Vec3.ZERO, Vec3.ZERO);
     }
@@ -35,7 +50,7 @@ public final class PrototypeBodyMotor {
     }
     double targetY = Math.clamp(heightError * HEIGHT_GAIN, -MAX_VERTICAL_SPEED, MAX_VERTICAL_SPEED);
     double vertical = (targetY - velocity.y) * Math.min(1, HEIGHT_RESPONSE * dt) + GRAVITY * dt;
-    var upright = up.cross(new Vec3(0, 1, 0)).scale(UPRIGHT_GAIN);
+    var upright = up.cross(desiredUp).scale(UPRIGHT_GAIN);
     var targetSpin = new Vec3(upright.x, Math.clamp(yawRate, -1.5, 1.5), upright.z);
     var turn = targetSpin.subtract(spin).scale(Math.min(1, ANGULAR_RESPONSE * dt));
     return new Delta(new Vec3(horizontal.x, vertical, horizontal.z), turn);
