@@ -61,9 +61,8 @@ public final class LimbPositionerClient {
       return;
     }
     if (mc.hitResult instanceof BlockHitResult hit
-        && mc.level
-            .getBlockState(hit.getBlockPos())
-            .is(org.azkerash.createbioships.components.ComponentRegistry.CRAB_LEG.get())) {
+        && org.azkerash.createbioships.components.logic.legs.CompactLegSocketBlock.isSocket(
+            mc.level.getBlockState(hit.getBlockPos()))) {
       mc.player.displayClientMessage(
           Component.literal("Right-click: general settings · Aim at a socket for joint limits"),
           true);

@@ -61,7 +61,8 @@ public record LimbTuning(int restAngle, double stiffness, double damping) {
       return;
     }
     boolean limb =
-        state.getBlock() instanceof org.azkerash.createbioships.components.logic.legs.CrabLegBlock
+        state.getBlock()
+                instanceof org.azkerash.createbioships.components.logic.legs.CompactLegSocketBlock
             || state.getBlock()
                 instanceof org.azkerash.createbioships.components.logic.legs.ModularJointBlock;
     var id =

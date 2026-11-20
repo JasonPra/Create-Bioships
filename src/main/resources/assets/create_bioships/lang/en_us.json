@@ -48,5 +48,7 @@
   "block.create_bioships.ossuary_cabinet": "Ossuary Cabinet",
   "block.create_bioships.ossuary_bed": "Ossuary Bed",
   "item.create_bioships.program_behavior_card": "Cerebral Program Card",
-  "item.create_bioships.cerebral_codex": "Codex Cerebralis"
+  "item.create_bioships.cerebral_codex": "Codex Cerebralis",
+  "block.create_bioships.arachnid_leg": "Arachnid Leg",
+  "block.create_bioships.arachnid_leg.tooltip": "Adhesive toes. Three planted arachnid legs required for grip. Extend with the Ossified Wrench."
 }

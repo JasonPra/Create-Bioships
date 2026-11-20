@@ -25,7 +25,13 @@ public final class ArmorValues {
     }
     return switch (id.getPath()) {
       case "chitin_armor", "armored_maw" -> 20;
-      case "crab_leg", "limb_joint", "limb_socket", "limb_swivel", "limb_segment", "limb_foot" ->
+      case "crab_leg",
+          "arachnid_leg",
+          "limb_joint",
+          "limb_socket",
+          "limb_swivel",
+          "limb_segment",
+          "limb_foot" ->
           10;
       default -> 0;
     };

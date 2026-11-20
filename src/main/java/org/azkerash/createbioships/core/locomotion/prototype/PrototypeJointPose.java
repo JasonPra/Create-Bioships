@@ -54,7 +54,13 @@ public final class PrototypeJointPose {
       var coxa = aimed.scale(Math.cos(pitch)).add(up.scale(Math.sin(pitch)));
       var analytic =
           PrototypeLegKinematics.solve(
-              leg.hip(), coxa, target, leg.coxa(), leg.thigh(), leg.shin());
+              leg.hip(),
+              coxa,
+              target,
+              leg.coxa(),
+              leg.thigh(),
+              leg.shin(),
+              PrototypeGait.anchored(leg) ? rootUp : new Vec3(0, 1, 0));
       var bounded = constrain(analytic, restDirections, rootUp, limits);
       double distance = bounded.getLast().distanceToSqr(target);
       if (distance < error) {

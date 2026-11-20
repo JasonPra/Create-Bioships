@@ -272,7 +272,8 @@ public final class SubLevelPathfinder {
       return true;
     }
     var level = body.getLevel();
-    var box = SubLevelLocomotion.bounds(body).deflate(.025);
+    var wallBounds = org.azkerash.createbioships.core.legs.SubLevelLegs.wallMotionBounds(body);
+    var box = (wallBounds == null ? SubLevelLocomotion.bounds(body) : wallBounds).deflate(.025);
     var here = position(body);
     var ground =
         TerrainProbe.down(

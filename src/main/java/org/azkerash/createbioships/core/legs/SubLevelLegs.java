@@ -10,12 +10,10 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.azkerash.createbioships.compat.letitwalk.CompactLimbController;
-import org.azkerash.createbioships.components.ComponentRegistry;
+import org.azkerash.createbioships.components.logic.legs.CompactLegSocketBlock;
 import org.azkerash.createbioships.core.*;
 
-/**
- * Grid-owned lifecycle and pose delivery; native Let It Walk owns compact limb gait and support.
- */
+/** Grid-owned lifecycle and pose delivery for native crab and adhesive arachnid controllers. */
 @EventBusSubscriber(modid = "create_bioships")
 public final class SubLevelLegs {
   public record Pose(BlockPos cell, List<Vec3> joints, List<Vec3> collisionEndpoints) {}
@@ -73,10 +71,10 @@ public final class SubLevelLegs {
 
   public static void changed(ServerSubLevel body, BlockPos pos, BlockState state) {
     var c = CONTROLLERS.get(body);
-    if (c != null && (state.is(ComponentRegistry.CRAB_LEG.get()) || c.hasSocket(pos))) {
+    if (c != null && (CompactLegSocketBlock.isSocket(state) || c.hasSocket(pos))) {
       org.azkerash.createbioships.core.locomotion.SubLevelLocomotion.invalidateRoutes(body);
       c.changed(pos, state);
-    } else if (state.is(ComponentRegistry.CRAB_LEG.get())) {
+    } else if (CompactLegSocketBlock.isSocket(state)) {
       request(body);
     }
   }
@@ -104,6 +102,47 @@ public final class SubLevelLegs {
   public static Double stepHeight(ServerSubLevel body) {
     var c = CONTROLLERS.get(SubLevelCreatureParts.root(body));
     return c == null ? null : c.stepHeight();
+  }
+
+  /** A blocked movement can request a foothold search, but never grants an unsafe motor lease. */
+  public static void climbIntent(ServerSubLevel body, Vec3 movement) {
+    var controller = CONTROLLERS.get(SubLevelCreatureParts.root(body));
+    if (controller != null) {
+      controller.climbIntent(movement);
+    }
+  }
+
+  /**
+   * Adhesive toes deliberately touch a surface. Use the hull and non-leg parts for the command
+   * sweep there; each toe has its own reachable collision-face test and Sable collision body.
+   */
+  public static net.minecraft.world.phys.AABB wallMotionBounds(ServerSubLevel body) {
+    body = SubLevelCreatureParts.root(body);
+    var controller = CONTROLLERS.get(body);
+    if (controller == null || !controller.wallAttached()) {
+      return null;
+    }
+    net.minecraft.world.phys.AABB result = null;
+    for (var member : SubLevelCreatureParts.members(body)) {
+      if (member != body
+          && member.getUserDataTag() != null
+          && member.getUserDataTag().contains(CompactLimbController.PART)) {
+        continue;
+      }
+      var box = member.boundingBox();
+      var world =
+          new net.minecraft.world.phys.AABB(
+              box.minX(), box.minY(), box.minZ(), box.maxX(), box.maxY(), box.maxZ());
+      result = result == null ? world : result.minmax(world);
+    }
+    return result;
+  }
+
+  public static Vec3 surfaceMotion(ServerSubLevel body, Vec3 movement) {
+    var controller = CONTROLLERS.get(SubLevelCreatureParts.root(body));
+    return controller == null
+        ? new Vec3(movement.x, 0, movement.z)
+        : controller.surfaceMotion(movement);
   }
 
   public static int contacts(ServerSubLevel body) {
@@ -138,7 +177,7 @@ public final class SubLevelLegs {
                           .getCompound(CompactLimbController.PART)
                           .getLong("Socket"));
               if ((owner != body
-                      && (!level.getBlockState(socket).is(ComponentRegistry.CRAB_LEG.get())
+                      && (!CompactLegSocketBlock.isSocket(level.getBlockState(socket))
                           || !CompactLimbController.ownsSavedSegment(owner, body)))
                   || (!SubLevelCreatureParts.isPart(body) && SubLevelHealth.status(body).dead())) {
                 container.removeSubLevel(

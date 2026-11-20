@@ -12,6 +12,6 @@ public record LegMotionProfile(
       new LegMotionProfile(false, false, false, GroundContact.FRICTION);
   public static final LegMotionProfile CRAB =
       new LegMotionProfile(true, true, true, GroundContact.FRICTION);
-  // A future climbing-leg controller must implement anchored contacts itself; this profile grants
-  // no adhesion.
+  public static final LegMotionProfile ARACHNID =
+      new LegMotionProfile(true, false, false, GroundContact.ANCHORED);
 }

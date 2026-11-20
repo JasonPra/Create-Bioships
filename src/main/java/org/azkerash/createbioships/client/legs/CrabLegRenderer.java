@@ -9,10 +9,11 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.*;
-import org.azkerash.createbioships.components.ComponentRegistry;
+import org.azkerash.createbioships.components.logic.legs.CompactLegSocketBlock;
+import org.azkerash.createbioships.components.logic.legs.CrabLegBlock;
 import org.azkerash.createbioships.core.legs.*;
 
-/** Segmented exoskeleton meshes follow the server's native Let It Walk IK solution. */
+/** Shared compact exoskeleton rendering follows the server's authoritative limb poses. */
 @EventBusSubscriber(modid = "create_bioships", value = Dist.CLIENT)
 public final class CrabLegRenderer {
   private record Snapshot(
@@ -20,6 +21,7 @@ public final class CrabLegRenderer {
       LegPosePayload current,
       long at) {}
 
+  private static final double JOINT_TO_COXA_WIDTH = 24d / 23;
   private static final Map<UUID, Snapshot> POSES = new HashMap<>();
   private static net.minecraft.client.multiplayer.ClientLevel world;
 
@@ -98,9 +100,12 @@ public final class CrabLegRenderer {
                   net.minecraft.world.inventory.InventoryMenu.BLOCK_ATLAS)
               : null;
       for (var pose : snapshot.current.poses()) {
-        if (!mc.level.getBlockState(pose.cell()).is(ComponentRegistry.CRAB_LEG.get())) {
+        var state = mc.level.getBlockState(pose.cell());
+        if (!CompactLegSocketBlock.isSocket(state)) {
           continue;
         }
+        int height = state.getValue(CrabLegBlock.HEIGHT);
+        boolean arachnid = CompactLegSocketBlock.isArachnid(state);
         rendered = true;
         var previous = snapshot.previous.getOrDefault(pose.cell(), pose);
         for (int i = 0; i < 3; i++) {
@@ -121,21 +126,13 @@ public final class CrabLegRenderer {
               to.subtract(pivot),
               (float)
                   org.azkerash.createbioships.compat.letitwalk.CompactLegCollisions.width(
-                      i,
-                      mc.level
-                          .getBlockState(pose.cell())
-                          .getValue(
-                              org.azkerash.createbioships.components.logic.legs.CrabLegBlock
-                                  .HEIGHT)),
+                      i, height, arachnid),
               hurt);
         }
         double size =
-            .24
-                * org.azkerash.createbioships.compat.letitwalk.CrabLegKinematics.thickness(
-                    mc.level
-                        .getBlockState(pose.cell())
-                        .getValue(
-                            org.azkerash.createbioships.components.logic.legs.CrabLegBlock.HEIGHT));
+            JOINT_TO_COXA_WIDTH
+                * org.azkerash.createbioships.compat.letitwalk.CompactLegCollisions.width(
+                    0, height, arachnid);
         for (int joint = 0; joint < 3; joint++) {
           var point =
               previous

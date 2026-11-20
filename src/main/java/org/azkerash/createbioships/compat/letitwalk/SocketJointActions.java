@@ -8,6 +8,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.phys.*;
 import org.azkerash.createbioships.components.ComponentRegistry;
+import org.azkerash.createbioships.components.logic.legs.CompactLegSocketBlock;
 import org.azkerash.createbioships.core.*;
 import org.azkerash.createbioships.core.legs.SubLevelLegs;
 
@@ -29,7 +30,7 @@ public final class SocketJointActions {
     if (!SubLevelData.isLiving(owner)) {
       return null;
     }
-    if (player.level().getBlockState(cell).is(ComponentRegistry.CRAB_LEG.get())) {
+    if (CompactLegSocketBlock.isSocket(player.level().getBlockState(cell))) {
       if (joint < 0 || joint > 2 || physical != owner) {
         return null;
       }

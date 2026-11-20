@@ -5,6 +5,7 @@ import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import java.util.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.*;
+import org.azkerash.createbioships.components.logic.legs.CompactLegSocketBlock;
 import org.azkerash.createbioships.components.logic.legs.CrabLegBlock;
 import org.azkerash.createbioships.core.legs.SubLevelLegs;
 import org.joml.Intersectiond;
@@ -16,6 +17,12 @@ public final class CompactLegCollisions {
   private CompactLegCollisions() {}
 
   private static final double[] WIDTHS = {.23, .17, .09};
+
+  private static final double ARACHNID_WIDTH_FACTOR = .65;
+
+  public static double width(int segment, int height, boolean arachnid) {
+    return width(segment, height) * (arachnid ? ARACHNID_WIDTH_FACTOR : 1);
+  }
 
   public static double width(int segment, int height) {
     return WIDTHS[segment] * CrabLegKinematics.thickness(height);
@@ -82,7 +89,10 @@ public final class CompactLegCollisions {
         result.add(
             new Box(
                 new Vector3d(c.x, c.y, c.z),
-                new Vector3d(width(i, height) / 2, d.length() / 2, width(i, height) / 2),
+                new Vector3d(
+                    width(i, height, CompactLegSocketBlock.isArachnid(state)) / 2,
+                    d.length() / 2,
+                    width(i, height, CompactLegSocketBlock.isArachnid(state)) / 2),
                 new Quaterniond()
                     .rotationTo(new Vector3d(0, 1, 0), new Vector3d(d.x, d.y, d.z).normalize())));
       }

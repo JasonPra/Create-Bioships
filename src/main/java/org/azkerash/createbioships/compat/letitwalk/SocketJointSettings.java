@@ -6,6 +6,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.state.BlockState;
 import org.azkerash.createbioships.components.ComponentRegistry;
+import org.azkerash.createbioships.components.logic.legs.CompactLegSocketBlock;
 import org.azkerash.createbioships.components.logic.legs.ModularJointEntity;
 import org.azkerash.createbioships.core.SubLevelCreatureParts;
 
@@ -113,7 +114,7 @@ public record SocketJointSettings(int swivel, int bend) {
     var tag = body.getUserDataTag() == null ? new CompoundTag() : body.getUserDataTag().copy();
     var data = tag.getCompound(DATA).copy();
     var values = data.getCompound("Values").copy();
-    if (!state.is(ComponentRegistry.CRAB_LEG.get()) && physical == body) {
+    if (!CompactLegSocketBlock.isSocket(state) && physical == body) {
       for (int i = 0; i < 3; i++) {
         values.remove(compact(cell, i));
       }

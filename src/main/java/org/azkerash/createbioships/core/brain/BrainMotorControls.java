@@ -62,6 +62,10 @@ public final class BrainMotorControls {
         mode == org.azkerash.createbioships.core.pathfinding.SubLevelPathfinder.Mode.WATER
             ? velocity
             : new Vec3(velocity.x, 0, velocity.z);
+    if (mode == org.azkerash.createbioships.core.pathfinding.SubLevelPathfinder.Mode.GROUND) {
+      org.azkerash.createbioships.core.legs.SubLevelLegs.climbIntent(body, velocity);
+      movement = org.azkerash.createbioships.core.legs.SubLevelLegs.surfaceMotion(body, velocity);
+    }
     double limit =
         mode == org.azkerash.createbioships.core.pathfinding.SubLevelPathfinder.Mode.WATER
                 || org.azkerash.createbioships.core.locomotion.prototype.PrototypeLocomotion.get(

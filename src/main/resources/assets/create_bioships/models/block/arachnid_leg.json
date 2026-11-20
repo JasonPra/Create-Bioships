@@ -1,0 +1,208 @@
+{
+  "textures": {
+    "skin": "create_bioships:block/living_core",
+    "particle": "create_bioships:block/living_core"
+  },
+  "elements": [
+    {
+      "from": [
+        5,
+        4,
+        10
+      ],
+      "to": [
+        11,
+        8,
+        14
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            0,
+            12,
+            4,
+            16
+          ],
+          "texture": "#skin"
+        },
+        "west": {
+          "uv": [
+            0,
+            12,
+            4,
+            16
+          ],
+          "texture": "#skin"
+        },
+        "north": {
+          "uv": [
+            4,
+            12,
+            12,
+            16
+          ],
+          "texture": "#skin"
+        },
+        "down": {
+          "uv": [
+            4,
+            12,
+            12,
+            16
+          ],
+          "texture": "#skin"
+        }
+      }
+    },
+    {
+      "from": [
+        5,
+        4,
+        14
+      ],
+      "to": [
+        11,
+        8,
+        16
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            4,
+            12,
+            6,
+            16
+          ],
+          "texture": "#skin"
+        },
+        "west": {
+          "uv": [
+            4,
+            12,
+            6,
+            16
+          ],
+          "texture": "#skin"
+        },
+        "south": {
+          "uv": [
+            4,
+            12,
+            12,
+            16
+          ],
+          "texture": "#skin"
+        },
+        "down": {
+          "uv": [
+            4,
+            12,
+            12,
+            14
+          ],
+          "texture": "#skin"
+        }
+      }
+    },
+    {
+      "from": [
+        5,
+        8,
+        10
+      ],
+      "to": [
+        11,
+        12,
+        14
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            0,
+            16,
+            4,
+            12
+          ],
+          "texture": "#skin"
+        },
+        "west": {
+          "uv": [
+            0,
+            16,
+            4,
+            12
+          ],
+          "texture": "#skin"
+        },
+        "north": {
+          "uv": [
+            4,
+            16,
+            12,
+            12
+          ],
+          "texture": "#skin"
+        },
+        "up": {
+          "uv": [
+            4,
+            12,
+            12,
+            16
+          ],
+          "texture": "#skin"
+        }
+      }
+    },
+    {
+      "from": [
+        5,
+        8,
+        14
+      ],
+      "to": [
+        11,
+        12,
+        16
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            4,
+            16,
+            6,
+            12
+          ],
+          "texture": "#skin"
+        },
+        "west": {
+          "uv": [
+            4,
+            16,
+            6,
+            12
+          ],
+          "texture": "#skin"
+        },
+        "south": {
+          "uv": [
+            4,
+            16,
+            12,
+            12
+          ],
+          "texture": "#skin"
+        },
+        "up": {
+          "uv": [
+            4,
+            12,
+            12,
+            14
+          ],
+          "texture": "#skin"
+        }
+      }
+    }
+  ]
+}

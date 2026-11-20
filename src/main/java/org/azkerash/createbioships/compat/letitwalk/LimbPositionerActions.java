@@ -8,6 +8,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.Vec3;
+import org.azkerash.createbioships.components.logic.legs.CompactLegSocketBlock;
 import org.azkerash.createbioships.components.logic.legs.ModularJointEntity;
 import org.azkerash.createbioships.equipment.LimbPositionerItem;
 
@@ -64,8 +65,7 @@ public final class LimbPositionerActions {
     }
     var level = player.serverLevel();
     var state = level.getBlockState(pos);
-    boolean compact =
-        state.is(org.azkerash.createbioships.components.ComponentRegistry.CRAB_LEG.get());
+    boolean compact = CompactLegSocketBlock.isSocket(state);
     if (!compact && !(level.getBlockEntity(pos) instanceof ModularJointEntity)) {
       return false;
     }
@@ -141,8 +141,7 @@ public final class LimbPositionerActions {
   private static void show(ServerPlayer player, BlockPos pos) {
     var level = player.serverLevel();
     var state = level.getBlockState(pos);
-    boolean compact =
-        state.is(org.azkerash.createbioships.components.ComponentRegistry.CRAB_LEG.get());
+    boolean compact = CompactLegSocketBlock.isSocket(state);
     var tuning = LimbTuning.get(level, pos);
     int angle =
         compact
@@ -167,9 +166,7 @@ public final class LimbPositionerActions {
     var level = context.getLevel();
     var pos = context.getClickedPos();
     if (!(level.getBlockEntity(pos) instanceof ModularJointEntity)
-        && !level
-            .getBlockState(pos)
-            .is(org.azkerash.createbioships.components.ComponentRegistry.CRAB_LEG.get())) {
+        && !CompactLegSocketBlock.isSocket(level.getBlockState(pos))) {
       return InteractionResult.PASS;
     }
     if (context.getPlayer() instanceof ServerPlayer player) {

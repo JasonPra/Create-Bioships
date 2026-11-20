@@ -44,7 +44,7 @@ public final class CompactLimbController {
     }
     var socket = BlockPos.of(part.getUserDataTag().getCompound(PART).getLong("Socket"));
     var owner = SubLevelCreatureParts.root(part);
-    if (owner == part || !level.getBlockState(socket).is(ComponentRegistry.CRAB_LEG.get())) {
+    if (owner == part || !CompactLegSocketBlock.isSocket(level.getBlockState(socket))) {
       return context;
     }
     var face =
@@ -133,6 +133,7 @@ public final class CompactLimbController {
     final List<Quaterniond> rest = new ArrayList<>();
     double[] lengths = new double[3];
     boolean contact;
+    boolean arachnid;
     private long prototypeLimitRevision = Long.MIN_VALUE;
     private List<PrototypeJointPose.Limit> prototypeLimits = List.of();
     private double prototypeMobility;
@@ -154,13 +155,35 @@ public final class CompactLimbController {
     restore();
   }
 
+  private boolean hasArachnidLegs() {
+    return limbs.keySet().stream()
+        .anyMatch(
+            socket -> CompactLegSocketBlock.isArachnid(body.getLevel().getBlockState(socket)));
+  }
+
+  public void climbIntent(Vec3 movement) {
+    if (prototypeActive && hasArachnidLegs()) {
+      prototype.climbIntent(movement);
+    }
+  }
+
+  public boolean wallAttached() {
+    return prototypeActive && prototype.wallAttached();
+  }
+
+  public Vec3 surfaceMotion(Vec3 movement) {
+    return prototypeActive
+        ? prototype.surfaceMotion(movement)
+        : new Vec3(movement.x, 0, movement.z);
+  }
+
   public void changed() {
     dirty = true;
   }
 
   public void changed(BlockPos pos, net.minecraft.world.level.block.state.BlockState state) {
     dirty = true;
-    if (limbs.containsKey(pos) && !state.is(ComponentRegistry.CRAB_LEG.get())) {
+    if (limbs.containsKey(pos) && !CompactLegSocketBlock.isSocket(state)) {
       retiredSockets.add(pos.immutable());
     }
   }
@@ -194,6 +217,14 @@ public final class CompactLimbController {
     var normal = Vec3.atLowerCornerOf(face.getNormal());
     var side = normal.yRot((float) Math.toRadians(angle));
     var start = Vec3.atCenterOf(socket).subtract(normal.scale(.25));
+    if (CompactLegSocketBlock.isArachnid(body.getLevel().getBlockState(socket))) {
+      // Blocks in the socket's local frame: a high knee and long, narrow distal segment.
+      return List.of(
+          start,
+          start.add(side.scale(.55 * scale)).add(0, .4 * scale, 0),
+          start.add(side.scale(1.35 * scale)).add(0, .15 * scale, 0),
+          start.add(side.scale(1.6 * scale)).add(0, -1.7 * scale, 0));
+    }
     return List.of(
         start,
         start.add(side.scale(.65 * scale)).add(0, .25 * scale, 0),
@@ -201,7 +232,7 @@ public final class CompactLimbController {
         start.add(side.scale(1.45 * scale)).add(0, -1.45 * scale / .85, 0));
   }
 
-  private void fill(ServerSubLevel part, int bone, int height, double length) {
+  private void fill(ServerSubLevel part, int bone, int height, double length, boolean arachnid) {
     var base = part.getPlot().getCenterBlock();
     for (int y = 0; y < Math.ceil(length); y++) {
       body.getLevel()
@@ -210,6 +241,7 @@ public final class CompactLimbController {
               ComponentRegistry.COMPACT_LIMB
                   .get()
                   .defaultBlockState()
+                  .setValue(CompactLimbBlock.ARACHNID, arachnid)
                   .setValue(CompactLimbBlock.BONE, bone)
                   .setValue(CompactLimbBlock.HEIGHT, height)
                   .setValue(
@@ -222,6 +254,7 @@ public final class CompactLimbController {
   private Limb create(BlockPos socket, int height, Direction face) {
     var limb = new Limb();
     limb.socket = socket.immutable();
+    limb.arachnid = CompactLegSocketBlock.isArachnid(body.getLevel().getBlockState(socket));
     limb.height = height;
     limb.face = face;
     limb.restAngle = LimbTuning.get(body.getLevel(), socket).restAngle();
@@ -247,7 +280,12 @@ public final class CompactLimbController {
       var data = part.getUserDataTag() == null ? new CompoundTag() : part.getUserDataTag().copy();
       data.put(PART, tag);
       part.setUserDataTag(data);
-      fill(part, i, height, limb.lengths[i]);
+      fill(
+          part,
+          i,
+          height,
+          limb.lengths[i],
+          CompactLegSocketBlock.isArachnid(body.getLevel().getBlockState(socket)));
       placeSegment(part, world, new Quaterniond(body.logicalPose().orientation()).mul(q));
       limb.bodies.add(part);
     }
@@ -328,7 +366,12 @@ public final class CompactLimbController {
         axisCursor++;
       }
       var q = new Quaterniond(body.logicalPose().orientation()).mul(turn).mul(limb.rest.get(i));
-      fill(part, i, limb.height, limb.lengths[i]);
+      fill(
+          part,
+          i,
+          limb.height,
+          limb.lengths[i],
+          CompactLegSocketBlock.isArachnid(body.getLevel().getBlockState(limb.socket)));
       for (int y = (int) Math.ceil(limb.lengths[i]); y < (int) Math.ceil(oldLengths[i]); y++) {
         body.getLevel().removeBlock(part.getPlot().getCenterBlock().above(y), false);
       }
@@ -477,7 +520,7 @@ public final class CompactLimbController {
     while (it.hasNext()) {
       var l = it.next();
       if (retiredSockets.remove(l.socket)
-          || !body.getLevel().getBlockState(l.socket).is(ComponentRegistry.CRAB_LEG.get())) {
+          || !CompactLegSocketBlock.isSocket(body.getLevel().getBlockState(l.socket))) {
         destroy(l);
         it.remove();
         removed = true;
@@ -498,7 +541,7 @@ public final class CompactLimbController {
     discardRemoved();
     for (var socket : SubLevelHealth.blocks(body)) {
       var state = body.getLevel().getBlockState(socket);
-      if (!state.is(ComponentRegistry.CRAB_LEG.get())) {
+      if (!CompactLegSocketBlock.isSocket(state)) {
         continue;
       }
       int height = state.getValue(CrabLegBlock.HEIGHT);
@@ -507,7 +550,8 @@ public final class CompactLimbController {
               net.minecraft.world.level.block.state.properties.BlockStateProperties
                   .HORIZONTAL_FACING);
       var old = limbs.get(socket);
-      if (old != null && (old.face != face)) {
+      if (old != null
+          && (old.face != face || old.arachnid != CompactLegSocketBlock.isArachnid(state))) {
         destroy(old);
         limbs.remove(socket);
         old = null;
@@ -631,18 +675,29 @@ public final class CompactLimbController {
               limb.lengths[1],
               limb.lengths[2],
               group,
-              LegMotionProfile.CRAB);
+              CompactLegSocketBlock.isArachnid(body.getLevel().getBlockState(limb.socket))
+                  ? LegMotionProfile.ARACHNID
+                  : LegMotionProfile.CRAB);
       // Locked/narrow joints can require a different neutral standing height, not stretched bones.
       var neutral =
           worldHip
               .add(
-                  new Vec3(worldOutward.x, 0, worldOutward.z)
+                  (PrototypeGait.anchored(leg)
+                          ? ArachnidBodyMotor.tangent(
+                              new Vec3(worldOutward.x, worldOutward.y, worldOutward.z), rootUp)
+                          : new Vec3(worldOutward.x, 0, worldOutward.z))
                       .normalize()
                       .scale((limb.lengths[0] + limb.lengths[1] + limb.lengths[2]) * .5))
-              .add(0, -leg.height(), 0);
+              .subtract(
+                  (PrototypeGait.anchored(leg) ? rootUp : new Vec3(0, 1, 0)).scale(leg.height()));
       var bounded =
           PrototypeJointPose.solve(leg, neutral, restDirections, rootUp, limb.prototypeLimits);
-      double standingHeight = Math.max(.1, worldHip.y - bounded.getLast().y);
+      double standingHeight =
+          Math.max(
+              .1,
+              PrototypeGait.anchored(leg)
+                  ? worldHip.subtract(bounded.getLast()).dot(rootUp)
+                  : worldHip.y - bounded.getLast().y);
       leg =
           new PrototypeGait.Leg(
               leg.socket(),
@@ -691,7 +746,8 @@ public final class CompactLimbController {
       SocketJointRig.apply(l.runtime.built);
     }
     boolean usePrototype =
-        PrototypeLocomotion.get(body) == PrototypeLocomotion.Mode.PROTOTYPE && postureEnabled();
+        (PrototypeLocomotion.get(body) == PrototypeLocomotion.Mode.PROTOTYPE || hasArachnidLegs())
+            && postureEnabled();
     if (usePrototype != prototypeActive) {
       if (!usePrototype) {
         BuiltLegDriver.updateActualFeet(walker, body.getLevel());
@@ -831,7 +887,7 @@ public final class CompactLimbController {
     if (handle == null || !handle.isValid()) {
       return;
     }
-    if (PrototypeLocomotion.get(body) == PrototypeLocomotion.Mode.PROTOTYPE) {
+    if (prototypeActive) {
       if (allLoaded) {
         prototype.physics(prototypeBindings(), dt);
       }
@@ -1018,6 +1074,7 @@ public final class CompactLimbController {
       var t = new CompoundTag();
       t.putLong("Socket", l.socket.asLong());
       t.putInt("Height", l.height);
+      t.putBoolean("Arachnid", l.arachnid);
       t.putInt("RestAngle", l.restAngle);
       t.putDouble("Extension", l.extension);
       t.putString("Face", l.face.getName());
@@ -1042,6 +1099,7 @@ public final class CompactLimbController {
       }
       var l = new Limb();
       l.socket = BlockPos.of(t.getLong("Socket"));
+      l.arachnid = t.getBoolean("Arachnid");
       l.height = Math.clamp(t.getInt("Height"), 1, 3);
       l.extension = Math.clamp(t.getDouble("Extension"), 1, 3);
       l.restAngle = t.getInt("RestAngle");

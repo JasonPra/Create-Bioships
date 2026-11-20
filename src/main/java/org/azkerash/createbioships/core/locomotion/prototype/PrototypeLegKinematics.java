@@ -12,6 +12,11 @@ public final class PrototypeLegKinematics {
 
   public static List<Vec3> solve(
       Vec3 hip, Vec3 outward, Vec3 target, double coxa, double thigh, double shin) {
+    return solve(hip, outward, target, coxa, thigh, shin, new Vec3(0, 1, 0));
+  }
+
+  public static List<Vec3> solve(
+      Vec3 hip, Vec3 outward, Vec3 target, double coxa, double thigh, double shin, Vec3 up) {
     if (!(coxa > 0 && thigh > 0 && shin > 0) || !Double.isFinite(coxa + thigh + shin)) {
       throw new IllegalArgumentException("Segment lengths must be finite and positive");
     }
@@ -27,7 +32,6 @@ public final class PrototypeLegKinematics {
     double projection = (thigh * thigh - shin * shin + distance * distance) / (2 * distance);
     double rise = Math.sqrt(Math.max(0, thigh * thigh - projection * projection));
     // Choose the knee above the hip-to-foot axis; this keeps the existing insect-like silhouette.
-    var up = new Vec3(0, 1, 0);
     var bend = up.subtract(along.scale(up.dot(along)));
     if (bend.lengthSqr() < DEGENERATE_LENGTH_SQUARED) {
       bend = side.subtract(along.scale(side.dot(along)));

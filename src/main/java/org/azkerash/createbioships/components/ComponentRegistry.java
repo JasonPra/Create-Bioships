@@ -29,6 +29,7 @@ import org.azkerash.createbioships.components.logic.eye.EyeBlock;
 import org.azkerash.createbioships.components.logic.flipper.FlipperBlock;
 import org.azkerash.createbioships.components.logic.flipper.FlipperBlockEntity;
 import org.azkerash.createbioships.components.logic.intestine.IntestineBlock;
+import org.azkerash.createbioships.components.logic.legs.ArachnidLegBlock;
 import org.azkerash.createbioships.components.logic.legs.CompactLimbBlock;
 import org.azkerash.createbioships.components.logic.legs.CrabLegBlock;
 import org.azkerash.createbioships.components.logic.legs.ModularFootBlock;
@@ -131,6 +132,10 @@ public final class ComponentRegistry {
           CrabLegBlock::new,
           () -> boneProperties(2, 5).noOcclusion(),
           CrabLegBlock::initialize);
+
+  // The shared compact-rig bounds and step-height providers above cover both socket types.
+  public static final DeferredBlock<ArachnidLegBlock> ARACHNID_LEG =
+      component("arachnid_leg", ArachnidLegBlock::new, () -> boneProperties(2, 5).noOcclusion());
 
   public static final DeferredBlock<ModularJointBlock> LIMB_JOINT =
       component(
