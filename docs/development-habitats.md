@@ -14,7 +14,7 @@ His one lung replaces the redundant packed-flesh block under/behind his core;
 the temporary roof lung is removed. The pen has a moss floor, corner trees, low
 plants, a shallow pond, viewing glass and a two-door entrance. His creature identity,
 owner, inventories and native limbs are retained. Hunger and oxygen stay enabled.
-The habitat builder does not spawn, clone, heal or grant immortality to its subject.
+The pen builder itself does not spawn or heal a subject. The developer world installs its own bundled Junior reference creature once, independently of any player-created Junior.
 
 The Ossified Wrench now checks the root creature's current owner before safe
 shift-removal. Unassigned living sublevels, strangers and inspection-only invitees
@@ -53,4 +53,14 @@ a player schematic system. Unsupported modular assemblies are rejected at captur
 Restoration builds a fresh Sable body, preserves creator ownership and saved organ
 inventories, and updates the caretaker's reference. Its Sable body UUID changes;
 external constructs would need to register that replacement identity again.
-The former subject is removed only after replacement assembly succeeds.
+The former subject is removed only after the replacement and its native compact limbs have initialized.
+
+
+Fresh developer-preset worlds generate the den, wild gardens, ruined outer tower,
+boulders, roads and aquarium automatically. Junior is restored from an authored
+NBT fixture, including the internal lung, underside name panel, organ inventories
+and creator ownership. The template is development-world data; it is not a player
+blueprint feature. The Java implementation contains no account UUID constant.
+Existing developer worlds add the structures and their separate reference creature
+on first load after this update. Its saved exhibit UUID prevents repeated spawning;
+other creatures named Junior remain separate.

@@ -14,6 +14,8 @@ import net.neoforged.fml.common.EventBusSubscriber;
 
 @EventBusSubscriber(modid = "create_bioships")
 public final class JuniorAdminCommands {
+  private static final String CONTROL_LABEL = "bioships.junior_reset_control";
+
   private JuniorAdminCommands() {}
 
   @SubscribeEvent
@@ -84,6 +86,11 @@ public final class JuniorAdminCommands {
 
   public static void installControl(ServerLevel l) {
     var p = NecromancerDenFixture.base(l).offset(5, 0, -23);
+    for (var previous :
+        l.getEntitiesOfClass(
+            net.minecraft.world.entity.Display.TextDisplay.class,
+            new net.minecraft.world.phys.AABB(p).inflate(8),
+            entity -> entity.getTags().contains(CONTROL_LABEL))) previous.discard();
     l.setBlock(p.below(), Blocks.POLISHED_BLACKSTONE_BRICKS.defaultBlockState(), 2);
     l.setBlock(
         p, Blocks.COMMAND_BLOCK.defaultBlockState().setValue(CommandBlock.FACING, Direction.UP), 2);
@@ -112,11 +119,13 @@ public final class JuniorAdminCommands {
                       + "Update baseline: /bioship_dev junior capture"),
               l.registryAccess()));
       tag.putString("billboard", "center");
+      tag.putString("alignment", "center");
       tag.putInt("line_width", 300);
       tag.putInt("background", 0x66000000);
       sign.load(tag);
       sign.setPos(p.getX() + .5, p.getY() + 2.5, p.getZ() - .5);
       sign.addTag(NecromancerDenFixture.MARK);
+      sign.addTag(CONTROL_LABEL);
       l.addFreshEntity(sign);
     }
   }

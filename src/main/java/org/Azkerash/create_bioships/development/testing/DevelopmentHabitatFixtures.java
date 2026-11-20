@@ -207,6 +207,7 @@ public final class DevelopmentHabitatFixtures {
     var tag = new CompoundTag();
     tag.putString("text", Component.Serializer.toJson(Component.literal(text), l.registryAccess()));
     tag.putString("billboard", "center");
+    tag.putString("alignment", "center");
     tag.putInt("line_width", 340);
     tag.putInt("background", 0x66000000);
     tag.putBoolean("shadow", true);

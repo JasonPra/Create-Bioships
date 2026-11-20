@@ -74,5 +74,9 @@ public final class DevelopmentWorldSetup {
       state.combatOrigin = new BlockPos(1024, state.layout().base().getY(), 1024);
       CombatFixture.reset(level);
     }
+    if (!state.necromancerDenBuilt) {
+      NecromancerDenFixture.build(level);
+      DevelopmentJuniorFixture.install(level);
+    }
   }
 }
