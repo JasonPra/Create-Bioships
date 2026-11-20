@@ -13,6 +13,7 @@ public final class CardWorkspaceMenu extends AbstractContainerMenu {
   public final CardWorkspaceTarget target;
   public final UUID identity;
   public final String initialSource;
+  public final boolean initiallyCompiled;
   private long nextCompile, nextPoll;
 
   public boolean allowPoll(long tick) {
@@ -29,20 +30,30 @@ public final class CardWorkspaceMenu extends AbstractContainerMenu {
 
   public CardWorkspaceMenu(int id, CardWorkspaceTarget target) {
     this(
-        id, target, ProgramCardData.identity(target.card()), ProgramCardData.source(target.card()));
+        id,
+        target,
+        ProgramCardData.identity(target.card()),
+        ProgramCardData.source(target.card()),
+        ProgramCardData.executable(target.card()));
   }
 
-  private CardWorkspaceMenu(int id, CardWorkspaceTarget target, UUID identity, String source) {
+  private CardWorkspaceMenu(
+      int id, CardWorkspaceTarget target, UUID identity, String source, boolean compiled) {
     super(ComponentRegistry.CARD_WORKSPACE_MENU.get(), id);
     this.target = target;
     this.identity = identity;
     initialSource = source;
+    initiallyCompiled = compiled;
   }
 
   public static CardWorkspaceMenu fromNetwork(
       int id, Inventory inventory, RegistryFriendlyByteBuf buffer) {
     return new CardWorkspaceMenu(
-        id, null, buffer.readUUID(), buffer.readUtf(ProgramCardData.MAX_SOURCE));
+        id,
+        null,
+        buffer.readUUID(),
+        buffer.readUtf(ProgramCardData.MAX_SOURCE),
+        buffer.readBoolean());
   }
 
   @Override

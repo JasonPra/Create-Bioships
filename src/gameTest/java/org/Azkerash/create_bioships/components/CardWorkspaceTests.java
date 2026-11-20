@@ -55,6 +55,26 @@ public final class CardWorkspaceTests {
             h.getLevel().registryAccess(),
             (net.minecraft.nbt.CompoundTag) card.save(h.getLevel().registryAccess()));
     h.assertTrue(ProgramCardData.executable(loaded), "Saved program card did not reload");
+    var buffer =
+        new net.minecraft.network.RegistryFriendlyByteBuf(
+            io.netty.buffer.Unpooled.buffer(), h.getLevel().registryAccess());
+    buffer.writeUUID(identity);
+    buffer.writeUtf(ProgramCardData.source(card), ProgramCardData.MAX_SOURCE);
+    buffer.writeBoolean(true);
+    var clientMenu = CardWorkspaceMenu.fromNetwork(32, p.getInventory(), buffer);
+    h.assertTrue(
+        clientMenu.initiallyCompiled
+            && clientMenu.identity.equals(identity)
+            && clientMenu.initialSource.equals(ProgramCardData.source(card)),
+        "Private editor opening lost source or compiled status");
+    buffer.clear();
+    var packet =
+        new CardWorkspaceNetwork.Output(32, identity, "COMPLETED", List.of("private line", "42"));
+    CardWorkspaceNetwork.Output.CODEC.encode(buffer, packet);
+    h.assertTrue(
+        CardWorkspaceNetwork.Output.CODEC.decode(buffer).equals(packet),
+        "Private console payload did not round trip");
+    buffer.release();
     var fresh = new ItemStack(ComponentRegistry.BLANK_BEHAVIOR_CARD.get());
     h.assertTrue(
         ProgramCardData.source(fresh).equals(ProgramCardData.TEMPLATE)

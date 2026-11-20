@@ -48,6 +48,7 @@ public final class CardWorkspaces {
         b -> {
           b.writeUUID(identity);
           b.writeUtf(source, ProgramCardData.MAX_SOURCE);
+          b.writeBoolean(ProgramCardData.executable(target.card()));
         });
     return true;
   }

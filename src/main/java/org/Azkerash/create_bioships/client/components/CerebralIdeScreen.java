@@ -26,6 +26,7 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
   public CerebralIdeScreen(CardWorkspaceMenu menu, Inventory inventory, Component title) {
     super(menu, inventory, title);
     text = menu.initialSource;
+    if (menu.initiallyCompiled) status = "Compiled card · Changed source must be compiled again.";
   }
 
   @Override
@@ -202,5 +203,10 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
   @Override
   public void render(GuiGraphics g, int mx, int my, float partial) {
     super.render(g, mx, my, partial);
+    if (mx >= leftPos + 12
+        && mx < leftPos + imageWidth - 12
+        && my >= topPos + imageHeight - 63
+        && my < topPos + imageHeight - 50)
+      g.renderTooltip(font, Component.literal(showingConsole ? runtimeState : status), mx, my);
   }
 }

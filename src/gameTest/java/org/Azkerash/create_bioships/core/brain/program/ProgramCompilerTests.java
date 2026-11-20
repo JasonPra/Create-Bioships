@@ -46,6 +46,58 @@ public final class ProgramCompilerTests {
     h.succeed();
   }
 
+  @GameTest(template = "test_empty", batch = "program_language", timeoutTicks = 20)
+  public static void string_tokens_cannot_impersonate_syntax_and_malformed_programs_fail_closed(
+      GameTestHelper h) {
+    for (String source :
+        java.util.List.of(
+            "\"return\";",
+            "\"Console\".WriteLine(1);",
+            "int x=1 \"+\" 2;",
+            "int x=1; x \"=\" 2;",
+            "Console\".\"WriteLine(1);",
+            "\"int\" x=1;",
+            "int x=1 \"<\" 2;")) rejects(h, source);
+    accepts(h, "Console.WriteLine(\"return\"); Console.WriteLine(-2147483648);");
+    var random = new java.util.Random(31873);
+    String[] words = {
+      "int",
+      "a",
+      "=",
+      "1",
+      "true",
+      "\"x\"",
+      ";",
+      "(",
+      ")",
+      "{",
+      "}",
+      "if",
+      "else",
+      "for",
+      "while",
+      "break",
+      "continue",
+      "return",
+      "+",
+      "++",
+      "&&",
+      "Brain",
+      ".",
+      "Wait",
+      "Console",
+      "WriteLine"
+    };
+    for (int n = 0; n < 5000; n++) {
+      var source = new StringBuilder();
+      int length = random.nextInt(100);
+      for (int i = 0; i < length; i++)
+        source.append(words[random.nextInt(words.length)]).append(' ');
+      ProgramCompiler.compile(source.toString());
+    }
+    h.succeed();
+  }
+
   static void accepts(GameTestHelper h, String source) {
     var result = ProgramCompiler.compile(source);
     h.assertTrue(result.success(), "Valid source rejected: " + result.diagnostic());

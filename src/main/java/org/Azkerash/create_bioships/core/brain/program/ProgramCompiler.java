@@ -77,6 +77,7 @@ public final class ProgramCompiler {
   private void statement() {
     enter();
     try {
+      if (check("class")) fail(peek(), "Choose top-level statements or Program.Main, not both.");
       if (check("{")) {
         block();
         return;
@@ -115,8 +116,7 @@ public final class ProgramCompiler {
   }
 
   private void embedded() {
-    if (Set.of("int", "double", "bool", "string", "var").contains(peek().text()))
-      fail(peek(), "Put local declarations inside a block.");
+    if (typeStart()) fail(peek(), "Put local declarations inside a block.");
     scopes.push(new HashMap<>());
     statement();
     scopes.pop();
@@ -166,8 +166,7 @@ public final class ProgramCompiler {
     int body = emit(Op.JUMP, -1, start);
     int increment = code.size();
     if (!check(")")) {
-      if (Set.of("int", "double", "bool", "string", "var").contains(peek().text()))
-        fail(peek(), "For increment cannot declare a variable.");
+      if (typeStart()) fail(peek(), "For increment cannot declare a variable.");
       simple();
     }
     expect(")");
@@ -188,7 +187,7 @@ public final class ProgramCompiler {
   }
 
   private void simple() {
-    if (Set.of("int", "double", "bool", "string", "var").contains(peek().text())) {
+    if (typeStart()) {
       Token declared = take(), name = name();
       if (reserved(name.text()) || scopes.stream().anyMatch(s -> s.containsKey(name.text())))
         fail(name, "Variable name is reserved or already declared.");
@@ -204,6 +203,7 @@ public final class ProgramCompiler {
     }
     if (peek().kind() == Kind.NAME
         && cursor + 1 < tokens.size()
+        && tokens.get(cursor + 1).kind() == Kind.SYMBOL
         && Set.of("=", "+=", "-=", "*=", "/=", "%=", "++", "--")
             .contains(tokens.get(cursor + 1).text())) {
       Token name = take(), operator = take();
@@ -292,7 +292,7 @@ public final class ProgramCompiler {
 
   private Type comparison() {
     Type left = sum();
-    while (Set.of("<", "<=", ">", ">=").contains(peek().text())) {
+    while (peek().kind() == Kind.SYMBOL && Set.of("<", "<=", ">", ">=").contains(peek().text())) {
       Token op = take();
       left = binary(left, sum(), op.text(), op);
     }
@@ -322,6 +322,13 @@ public final class ProgramCompiler {
     try {
       if (match("!") || match("-") || match("+")) {
         Token op = previous();
+        if (op.text().equals("-")
+            && peek().kind() == Kind.NUMBER
+            && peek().text().equals("2147483648")) {
+          take();
+          emit(Op.PUSH, Integer.MIN_VALUE, op);
+          return Type.INT;
+        }
         Type value = unary();
         if (op.text().equals("!")) {
           require(value, Type.BOOL, op);
@@ -496,13 +503,22 @@ public final class ProgramCompiler {
     return true;
   }
 
+  private boolean typeStart() {
+    return peek().kind() == Kind.NAME
+        && Set.of("int", "double", "bool", "string", "var").contains(peek().text());
+  }
+
+  private static boolean syntax(Token token, String text) {
+    return (token.kind() == Kind.NAME || token.kind() == Kind.SYMBOL) && token.text().equals(text);
+  }
+
   private boolean check(String text) {
-    return peek().text().equals(text);
+    return syntax(peek(), text);
   }
 
   private Token expect(String text) {
     Token token = take();
-    if (!token.text().equals(text)) fail(token, "Expected '" + text + "'.");
+    if (!syntax(token, text)) fail(token, "Expected '" + text + "'.");
     return token;
   }
 
