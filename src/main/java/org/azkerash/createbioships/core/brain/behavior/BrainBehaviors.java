@@ -53,6 +53,7 @@ public final class BrainBehaviors {
 
   static {
     register(WanderBehavior.ID, WanderBehavior::new);
+    register(HuntingBehavior.ID, HuntingBehavior::new);
   }
 
   private BrainBehaviors() {}

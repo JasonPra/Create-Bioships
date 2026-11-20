@@ -16,6 +16,7 @@ public final class ComponentScreens {
     event.register(ComponentRegistry.MOUTH_MENU.get(), MouthScreen::new);
     event.register(ComponentRegistry.BRAIN_MENU.get(), BrainScreen::new);
     event.register(ComponentRegistry.CARD_WORKSPACE_MENU.get(), CerebralIdeScreen::new);
+    event.register(ComponentRegistry.HUNTING_CARD_MENU.get(), HuntingCardScreen::new);
   }
 
   @SubscribeEvent

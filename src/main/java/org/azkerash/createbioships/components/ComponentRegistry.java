@@ -24,6 +24,8 @@ import org.azkerash.createbioships.components.logic.brain.BrainLimbDependencies;
 import org.azkerash.createbioships.components.logic.brain.BrainMenu;
 import org.azkerash.createbioships.components.logic.brain.CardWorkspaceMenu;
 import org.azkerash.createbioships.components.logic.brain.FactoryBehaviorCardItem;
+import org.azkerash.createbioships.components.logic.brain.HuntingBehaviorCardItem;
+import org.azkerash.createbioships.components.logic.brain.HuntingCardMenu;
 import org.azkerash.createbioships.components.logic.core.*;
 import org.azkerash.createbioships.components.logic.eye.EyeBlock;
 import org.azkerash.createbioships.components.logic.flipper.FlipperBlock;
@@ -204,6 +206,8 @@ public final class ComponentRegistry {
   public static final DeferredItem<FactoryBehaviorCardItem> WANDER_BEHAVIOR_CARD =
       ItemRegistration.register(
           ITEMS, "wander_behavior_card", () -> new FactoryBehaviorCardItem(WanderBehavior.ID));
+  public static final DeferredItem<HuntingBehaviorCardItem> HUNTING_BEHAVIOR_CARD =
+      ItemRegistration.register(ITEMS, "hunting_behavior_card", HuntingBehaviorCardItem::new);
   public static final DeferredItem<BehaviorCardItem> BLANK_BEHAVIOR_CARD =
       ItemRegistration.register(ITEMS, "blank_behavior_card", BehaviorCardItem::new);
   public static final DeferredItem<BehaviorCardItem> PROGRAM_BEHAVIOR_CARD =
@@ -274,6 +278,8 @@ public final class ComponentRegistry {
   public static final DeferredHolder<MenuType<?>, MenuType<BrainMenu>> BRAIN_MENU =
       MENUS.register("brain", () -> IMenuTypeExtension.create(BrainMenu::fromNetwork));
 
+  public static final DeferredHolder<MenuType<?>, MenuType<HuntingCardMenu>> HUNTING_CARD_MENU =
+      MENUS.register("hunting_card", () -> IMenuTypeExtension.create(HuntingCardMenu::fromNetwork));
   public static final DeferredHolder<MenuType<?>, MenuType<CardWorkspaceMenu>> CARD_WORKSPACE_MENU =
       MENUS.register(
           "card_workspace", () -> IMenuTypeExtension.create(CardWorkspaceMenu::fromNetwork));
@@ -333,6 +339,7 @@ public final class ComponentRegistry {
     output.accept(BLANK_BEHAVIOR_CARD.get());
     output.accept(PROGRAM_BEHAVIOR_CARD.get());
     output.accept(WANDER_BEHAVIOR_CARD.get());
+    output.accept(HUNTING_BEHAVIOR_CARD.get());
     output.accept(LONGEVITY_SERUM.get());
     output.accept(EFFICIENCY_SERUM.get());
   }

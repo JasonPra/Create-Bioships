@@ -231,6 +231,21 @@ public final class SubLevelVision {
     }
     var controller = CONTROLLERS.computeIfAbsent(root, Controller::new);
     var candidates = VisionDetection.candidates(root, all);
+    if (org.azkerash.createbioships.core.brain.behavior.HuntingBehavior.ID.equals(
+        org.azkerash.createbioships.core.brain.behavior.BrainBehaviors.active(root))) {
+      var preyTypes =
+          org.azkerash.createbioships.core.brain.behavior.HuntingBehavior.preyTypes(root);
+      candidates =
+          candidates.stream()
+              .filter(
+                  candidate -> {
+                    var entity = root.getLevel().getEntity(candidate.entity());
+                    return entity instanceof net.minecraft.world.entity.LivingEntity living
+                        && org.azkerash.createbioships.core.brain.behavior.HuntingBehavior.isPrey(
+                            root, living, preyTypes);
+                  })
+              .toList();
+    }
     var byId = new HashMap<UUID, ServerSubLevel>();
     for (var member : members) {
       byId.put(member.getUniqueId(), member);

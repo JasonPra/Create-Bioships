@@ -36,6 +36,14 @@ public final class CardWorkspaces {
       return false;
     }
     var stack = memory.getItem(slot);
+    if (stack.is(
+        org.azkerash.createbioships.components.ComponentRegistry.HUNTING_BEHAVIOR_CARD.get())) {
+      return HuntingCardMenu.open(
+          player,
+          memory,
+          slot,
+          () -> slot < memory.capacity() && memory.validAt(player, memory.port()));
+    }
     org.azkerash.createbioships.core.brain.program.PrivateCardBackups.restore(player, stack);
     if (!ProgramCardData.editable(stack)) {
       return false;

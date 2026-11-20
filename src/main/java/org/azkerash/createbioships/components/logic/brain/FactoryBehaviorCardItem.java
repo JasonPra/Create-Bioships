@@ -6,7 +6,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.*;
 
 /** Fixed factory program identifier; execution and state belong to the creature's brain. */
-public final class FactoryBehaviorCardItem extends Item {
+public class FactoryBehaviorCardItem extends Item {
   private final ResourceLocation behavior;
 
   public FactoryBehaviorCardItem(ResourceLocation behavior) {

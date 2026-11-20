@@ -54,5 +54,7 @@
   "block.create_bioships.armored_maw.acid_tooltip": "Acid spray: sneak + empty-hand use, or a redstone pulse. Opens for 1 second before firing; costs 50 stomach acid.",
   "entity.create_bioships.acid_burst": "Acid Spray",
   "block.create_bioships.huntsman_armor": "Huntsman Chitin Armor",
-  "block.create_bioships.huntsman_maw": "Huntsman Eldritch Maw"
+  "block.create_bioships.huntsman_maw": "Huntsman Eldritch Maw",
+  "item.create_bioships.hunting_behavior_card": "Hunting Behavior Card",
+  "item.create_bioships.hunting_behavior_card.tooltip": "Hunts visible whitelisted prey. Requires an Eldritch Maw or another registered weapon. Use to edit prey types."
 }

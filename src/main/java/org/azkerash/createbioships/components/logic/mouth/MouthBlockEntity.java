@@ -68,6 +68,15 @@ public final class MouthBlockEntity extends OrganInventory {
     return (ChewingState) ownedState();
   }
 
+  /** A hunting bite shares the existing jaw animation, without inserting imaginary food. */
+  public void snapAtPrey() {
+    if (active()) {
+      chewing().until = level.getGameTime() + CHEW_TICKS;
+      level.scheduleTick(worldPosition, getBlockState().getBlock(), 1);
+      setChanged();
+    }
+  }
+
   public int chewRemaining() {
     return level == null
         ? 0

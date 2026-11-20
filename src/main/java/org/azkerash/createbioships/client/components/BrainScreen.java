@@ -58,11 +58,19 @@ public final class BrainScreen extends AbstractContainerScreen<BrainMenu> {
       return;
     }
     selected = Math.min(selected, Math.max(0, menu.capacity() - 1));
-    edit.setMessage(Component.literal("Edit card " + (selected + 1) + " · C#"));
+    boolean hunt =
+        selected < menu.capacity()
+            && menu.getSlot(selected).getItem().is(ComponentRegistry.HUNTING_BEHAVIOR_CARD.get());
+    edit.setMessage(
+        Component.literal(
+            hunt
+                ? "Prey types · card " + (selected + 1)
+                : "Edit card " + (selected + 1) + " · C#"));
     edit.active =
         selected < menu.capacity()
-            && org.azkerash.createbioships.core.brain.program.ProgramCardData.editable(
-                menu.getSlot(selected).getItem());
+            && (hunt
+                || org.azkerash.createbioships.core.brain.program.ProgramCardData.editable(
+                    menu.getSlot(selected).getItem()));
   }
 
   @Override
