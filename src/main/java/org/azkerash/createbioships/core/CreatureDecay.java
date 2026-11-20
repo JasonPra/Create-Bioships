@@ -26,7 +26,6 @@ public final class CreatureDecay {
   public static final String FAMILY = "create_bioships:remains_family";
   public static final int DURATION_TICKS = DECAY_GAME_DAYS * TICKS_PER_GAME_DAY;
   private static final Set<ResourceLocation> LAST_TO_ROT = new TreeSet<>();
-  private static final Map<ServerSubLevel, Map<Long, ResourceLocation>> CELLS = new WeakHashMap<>();
 
   static {
     for (var name : List.of("living_core", "land_eye", "aquatic_eye")) {
@@ -82,8 +81,8 @@ public final class CreatureDecay {
     data.putUUID(FAMILY, id);
     data.putUUID(CoreAssemblyRules.ID, child.getUniqueId());
     child.setUserDataTag(data);
-    CELLS.remove(child);
     var world = WorldState.get(parent.getLevel());
+    world.cells.remove(child.getUniqueId());
     var family = world.families.computeIfAbsent(id, ignored -> new Family());
     if (!family.members.containsKey(parent.getUniqueId())) {
       family.members.put(parent.getUniqueId(), null);
@@ -94,8 +93,15 @@ public final class CreatureDecay {
 
   /** Update summaries only when block types change; blinking does not trigger a rescan. */
   public static void changed(ServerSubLevel body, BlockPos pos, BlockState state) {
-    var cells = CELLS.get(body);
+    var world = WorldState.get(body.getLevel());
+    var cells = world.cells.get(body.getUniqueId());
     if (cells == null) {
+      return;
+    }
+    // Sable replays plot block notifications before restoring user data on load. A persisted row
+    // already belongs to its saved family; bootstrap notifications must not assign a new one.
+    var data = body.getUserDataTag();
+    if (data == null || !data.hasUUID(FAMILY)) {
       return;
     }
     var next = state.isAir() ? null : BuiltInRegistries.BLOCK.getKey(state.getBlock());
@@ -113,12 +119,14 @@ public final class CreatureDecay {
 
   /** Permanent deletion differs from chunk unloading, which must keep its blocking summary. */
   public static void removed(ServerSubLevel body) {
-    CELLS.remove(body);
+    var world = WorldState.get(body.getLevel());
+    if (world.cells.remove(body.getUniqueId()) != null) {
+      world.setDirty();
+    }
     var data = body.getUserDataTag();
     if (data == null || !data.hasUUID(FAMILY)) {
       return;
     }
-    var world = WorldState.get(body.getLevel());
     var id = data.getUUID(FAMILY);
     var family = world.families.get(id);
     if (family == null) {
@@ -132,7 +140,8 @@ public final class CreatureDecay {
   }
 
   private static void observe(ServerSubLevel body) {
-    if (CELLS.containsKey(body)) {
+    var world = WorldState.get(body.getLevel());
+    if (world.cells.containsKey(body.getUniqueId())) {
       return;
     }
     var cells = new HashMap<Long, ResourceLocation>();
@@ -142,7 +151,7 @@ public final class CreatureDecay {
         cells.put(pos.asLong(), BuiltInRegistries.BLOCK.getKey(state.getBlock()));
       }
     }
-    CELLS.put(body, cells);
+    world.cells.put(body.getUniqueId(), cells);
     summarize(body, cells);
   }
 
@@ -217,7 +226,7 @@ public final class CreatureDecay {
             && summary.keySet().stream().noneMatch(id -> last.contains(id) != ordinary)) {
           continue;
         }
-        for (var cell : CELLS.get(body).entrySet()) {
+        for (var cell : world.cells.get(body.getUniqueId()).entrySet()) {
           if (last.contains(cell.getValue()) == ordinary) {
             continue;
           }
@@ -239,7 +248,7 @@ public final class CreatureDecay {
         continue;
       }
       var selected = eligible.get(level.random.nextInt(eligible.size()));
-      if (CELLS.get(selected.body).size() == 1) {
+      if (world.cells.get(selected.body.getUniqueId()).size() == 1) {
         // Delete the grid through Sable before creating an empty physics body. Never drop loot.
         container.removeSubLevel(selected.body, SubLevelRemovalReason.REMOVED);
       } else {
@@ -300,16 +309,17 @@ public final class CreatureDecay {
     }
   }
 
-  /** Counts persist for unloaded fragments, rather than treating them as already rotted. */
+  /** UUID-owned layouts, summaries and deadlines survive both unloading and server restarts. */
   public static final class WorldState extends SavedData {
+    private static final Factory<WorldState> FACTORY =
+        new Factory<>(WorldState::new, (tag, registries) -> load(tag));
     private final Map<UUID, Family> families = new HashMap<>();
+    // Sable persists plot allocation coordinates. These packed positions belong to that plot,
+    // never the creature's moving world-space pose or an ephemeral ServerSubLevel reference.
+    private final Map<UUID, Map<Long, ResourceLocation>> cells = new HashMap<>();
 
     public static WorldState get(ServerLevel level) {
-      return level
-          .getDataStorage()
-          .computeIfAbsent(
-              new Factory<>(WorldState::new, (tag, registries) -> load(tag)),
-              "create_bioships_decay");
+      return level.getDataStorage().computeIfAbsent(FACTORY, "create_bioships_decay");
     }
 
     public static WorldState load(CompoundTag tag) {
@@ -333,7 +343,41 @@ public final class CreatureDecay {
         }
         result.families.put(saved.getUUID("id"), family);
       }
+      // Older saves contain only family summaries. Missing layouts stay unobserved so the first
+      // loaded instance rebuilds them without resetting the family's existing decay deadline.
+      for (var value : tag.getList("cells", Tag.TAG_COMPOUND)) {
+        var saved = (CompoundTag) value;
+        if (!saved.hasUUID("id")) {
+          continue;
+        }
+        var layout = readCells(saved);
+        if (layout != null) {
+          result.cells.put(saved.getUUID("id"), layout);
+        }
+      }
       return result;
+    }
+
+    private static Map<Long, ResourceLocation> readCells(CompoundTag saved) {
+      if (!saved.contains("positions", Tag.TAG_LONG_ARRAY)
+          || !(saved.get("blocks") instanceof ListTag blocks)) {
+        return null;
+      }
+      var positions = saved.getLongArray("positions");
+      if ((!blocks.isEmpty() && blocks.getElementType() != Tag.TAG_STRING)
+          || positions.length != blocks.size()) {
+        return null;
+      }
+      var layout = new HashMap<Long, ResourceLocation>();
+      for (int i = 0; i < positions.length; i++) {
+        var id = ResourceLocation.tryParse(blocks.getString(i));
+        if (id == null || layout.put(positions[i], id) != null) {
+          // Never interpret an incomplete row as an empty/finished corpse. A loaded body can
+          // rebuild it, while the persisted family summary keeps unloaded fragments blocking.
+          return null;
+        }
+      }
+      return layout;
     }
 
     @Override
@@ -362,7 +406,29 @@ public final class CreatureDecay {
         familiesTag.add(saved);
       }
       tag.put("families", familiesTag);
+      var layoutsTag = new ListTag();
+      for (var entry : cells.entrySet()) {
+        var saved = new CompoundTag();
+        saved.putUUID("id", entry.getKey());
+        // Sort once so the parallel arrays stay aligned and produce stable cell ordering in NBT.
+        long[] positions =
+            entry.getValue().keySet().stream().mapToLong(Long::longValue).sorted().toArray();
+        var blocks = new ListTag();
+        for (long pos : positions) {
+          blocks.add(StringTag.valueOf(entry.getValue().get(pos).toString()));
+        }
+        saved.putLongArray("positions", positions);
+        saved.put("blocks", blocks);
+        layoutsTag.add(saved);
+      }
+      tag.put("cells", layoutsTag);
       return tag;
+    }
+
+    /** Read-only layout snapshot for one persistent sublevel identity. */
+    public Map<Long, ResourceLocation> getCells(UUID subLevelId) {
+      var layout = cells.get(subLevelId);
+      return layout == null ? Map.of() : Map.copyOf(layout);
     }
 
     public Map<UUID, Family> getFamilies() {
