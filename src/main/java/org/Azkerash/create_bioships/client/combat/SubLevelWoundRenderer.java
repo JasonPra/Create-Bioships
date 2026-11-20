@@ -188,7 +188,6 @@ public final class SubLevelWoundRenderer {
       pose.popPose();
     }
     if (mc.getEntityRenderDispatcher().shouldRenderHitBoxes()) {
-      var lines = buffers.getBuffer(RenderType.lines());
       pose.pushPose();
       pose.translate(-camera.x, -camera.y, -camera.z);
       for (var e : mc.level.entitiesForRendering()) {
@@ -200,14 +199,12 @@ public final class SubLevelWoundRenderer {
               var box =
                   new dev.ryanhcode.sable.companion.math.BoundingBox3d(
                       shape.bounds().move(eye.cell()));
-              LevelRenderer.renderLineBox(
+              HitboxDebugRenderer.draw(
+                  org.Azkerash.create_bioships.combat.CustomHitboxes.create(
+                      box.transform(client.renderPose(), box).toMojang()),
                   pose,
-                  lines,
-                  box.transform(client.renderPose(), box).toMojang(),
-                  1,
-                  .25f,
-                  .15f,
-                  1);
+                  buffers,
+                  0xFFFF4026);
             }
           }
         }

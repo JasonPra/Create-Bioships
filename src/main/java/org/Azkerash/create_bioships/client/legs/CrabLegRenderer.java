@@ -208,21 +208,12 @@ public final class CrabLegRenderer {
     int light = net.minecraft.client.renderer.LevelRenderer.getLightColor(mc.level, world);
     CrabLegMesh.render(stack, mc, width, delta.length(), light, hurt);
     if (mc.getEntityRenderDispatcher().shouldRenderHitBoxes()) {
-      net.minecraft.client.renderer.LevelRenderer.renderLineBox(
+      org.Azkerash.create_bioships.client.combat.HitboxDebugRenderer.draw(
+          new net.minecraft.world.phys.AABB(
+              -width / 2, 0, -width / 2, width / 2, delta.length(), width / 2),
           stack,
-          mc.renderBuffers()
-              .bufferSource()
-              .getBuffer(net.minecraft.client.renderer.RenderType.lines()),
-          -width / 2,
-          0,
-          -width / 2,
-          width / 2,
-          delta.length(),
-          width / 2,
-          1,
-          1,
-          1,
-          1);
+          mc.renderBuffers().bufferSource(),
+          0xFFFFFFFF);
     }
     stack.popPose();
   }

@@ -182,8 +182,7 @@ public final class CombatAdapter {
       float damage = 0;
       for (var cell : SubLevelHealth.blocks(body)) {
         for (var local : level.getBlockState(cell).getCollisionShape(level, cell).toAabbs()) {
-          var world = new dev.ryanhcode.sable.companion.math.BoundingBox3d(local.move(cell));
-          var box = world.transform(body.logicalPose(), world).toMojang();
+          var box = CustomHitboxes.create(body, local.move(cell)).getBounds();
           float hit =
               head.intersects(box) || neck.intersects(box)
                   ? 10
@@ -262,8 +261,8 @@ public final class CombatAdapter {
       double distance = Double.POSITIVE_INFINITY;
       for (var cell : SubLevelHealth.blocks(body)) {
         for (var local : level.getBlockState(cell).getCollisionShape(level, cell).toAabbs()) {
-          var box = new dev.ryanhcode.sable.companion.math.BoundingBox3d(local.move(cell));
-          var world = box.transform(body.logicalPose(), box).toMojang();
+          var hitbox = CustomHitboxes.create(body, local.move(cell));
+          var world = hitbox.getBounds();
           if (!world.intersects(bounds)) {
             continue;
           }
@@ -323,8 +322,8 @@ public final class CombatAdapter {
         var state = level.getBlockState(cell);
         for (var local : state.getCollisionShape(level, cell).toAabbs()) {
           var logical = local.move(cell);
-          var box = new dev.ryanhcode.sable.companion.math.BoundingBox3d(logical);
-          if (!box.transform(body.logicalPose(), box).toMojang().intersects(bounds)) {
+          var hitbox = CustomHitboxes.create(body, logical);
+          if (!hitbox.intersects(bounds)) {
             continue;
           }
           var from =

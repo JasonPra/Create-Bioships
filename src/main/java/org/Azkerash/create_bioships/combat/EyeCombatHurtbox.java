@@ -10,6 +10,13 @@ import org.Azkerash.create_bioships.components.logic.eye.*;
 
 /** Reusable component weak point; front-facing eye hits share one grid-health pool. */
 public class EyeCombatHurtbox extends SubLevelCombatTarget {
+  private CustomHitboxes.Hitbox hitbox;
+
+  /** Latest server geometry snapshot; null until this target has been positioned. */
+  public CustomHitboxes.Hitbox getCombatHitbox() {
+    return hitbox;
+  }
+
   private static final net.minecraft.network.syncher.EntityDataAccessor<
           java.util.Optional<java.util.UUID>>
       GRID =
@@ -83,7 +90,7 @@ public class EyeCombatHurtbox extends SubLevelCombatTarget {
     focusForAttack(
         body.logicalPose()
             .transformPosition(center.relative(this.getImpactFace(), extent / 2 + .02)));
-    var box = new dev.ryanhcode.sable.companion.math.BoundingBox3d(local);
-    setBoundingBox(box.transform(body.logicalPose(), box).toMojang());
+    hitbox = CustomHitboxes.create(body, local);
+    setBoundingBox(hitbox.getBounds());
   }
 }
