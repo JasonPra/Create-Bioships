@@ -686,7 +686,11 @@ public final class CompactLimbController {
                             .COMPARISON_GEAR
                         << WalkerBrain.GEAR_SHIFT
                     : 1 << WalkerBrain.GEAR_SHIFT | WalkerBrain.KEY_CRAB;
-            if (fast && r.velocity().horizontalDistance() > 1) {
+            boolean strafe = fast && Math.abs(local.x) > .05;
+            if (strafe) {
+              keys |= WalkerBrain.KEY_CRAB;
+            }
+            if (fast && !strafe && r.velocity().horizontalDistance() > 1) {
               keys |= WalkerBrain.KEY_GALLOP;
             }
             if (local.z < -.05) {

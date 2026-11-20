@@ -42,6 +42,8 @@ public final class PrototypeSpeedComparisonTests {
     add(tests, PrototypeLocomotion.Mode.PROTOTYPE, 2);
     add(tests, PrototypeLocomotion.Mode.PROTOTYPE, 6);
     add(tests, PrototypeLocomotion.Mode.PROTOTYPE, 4);
+    add(tests, PrototypeLocomotion.Mode.NATIVE_FAST, 2);
+    add(tests, PrototypeLocomotion.Mode.PROTOTYPE, 2);
     return tests;
   }
 
@@ -65,12 +67,12 @@ public final class PrototypeSpeedComparisonTests {
     System.out.println("PROTOTYPE_FIXTURE begin=" + index);
     var level = h.getLevel();
     var base = new BlockPos(24000 + index * 64, 80, 128);
-    for (int x = (base.getX() - 16) >> 4; x <= (base.getX() + 16) >> 4; x++) {
+    for (int x = (base.getX() - 16) >> 4; x <= (base.getX() + (index >= 7 ? 130 : 16)) >> 4; x++) {
       for (int z = (base.getZ() - 20) >> 4; z <= (base.getZ() + 130) >> 4; z++) {
         level.setChunkForced(x, z, true);
       }
     }
-    for (int x = -14; x <= 14; x++) {
+    for (int x = -14; x <= (index >= 7 ? 128 : 14); x++) {
       for (int z = -18; z <= 128; z++) {
         level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), Block.UPDATE_ALL);
       }
@@ -168,7 +170,7 @@ public final class PrototypeSpeedComparisonTests {
                 if (index != 6 || tick < 240 || tick >= 280) {
                   BrainMotorControls.move(
                       body,
-                      new Vec3(0, 0, speed),
+                      index >= 7 ? new Vec3(speed, 0, 0) : new Vec3(0, 0, speed),
                       index == 6 && tick < 240 ? .7 : 0,
                       SAMPLE_TICKS * 3);
                 }
@@ -183,6 +185,7 @@ public final class PrototypeSpeedComparisonTests {
                 maximumY = Math.max(maximumY, point.y);
               }
               if (tick >= SETTLE_TICKS + MOVE_TICKS) {
+                double travelled = index >= 7 ? point.x - start.x : point.z - start.z;
                 BrainMotorControls.stop(body);
                 System.out.println(
                     "PROTOTYPE_SPEED mode="
@@ -190,16 +193,16 @@ public final class PrototypeSpeedComparisonTests {
                         + " requested="
                         + speed
                         + " actual="
-                        + (point.z - start.z) / (MOVE_TICKS / 20.0)
+                        + travelled / (MOVE_TICKS / 20.0)
                         + " minUp="
                         + minimumUp
                         + " yRange="
                         + (maximumY - minimumY));
-                if (mode == PrototypeLocomotion.Mode.PROTOTYPE) {
+                if (mode == PrototypeLocomotion.Mode.PROTOTYPE || index == 7) {
                   h.assertTrue(minimumUp > .85, "Prototype lost upright support");
                   h.assertTrue(maximumY - minimumY < 1, "Prototype collapsed or launched");
                   h.assertTrue(
-                      (point.z - start.z) / (MOVE_TICKS / 20.0) > speed * .65,
+                      travelled / (MOVE_TICKS / 20.0) > speed * .65,
                       "Prototype could not sustain requested travel");
                 }
                 if (index == 6) {

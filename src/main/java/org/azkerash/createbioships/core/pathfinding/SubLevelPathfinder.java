@@ -11,7 +11,7 @@ import org.azkerash.createbioships.core.locomotion.SubLevelLocomotion;
 
 /** Bounded shared route planning. Movement and limb actuation remain separate. */
 public final class SubLevelPathfinder {
-  private static final int MAX_ROUTE_DISTANCE_BLOCKS = 20;
+  public static final int MAX_ROUTE_DISTANCE_BLOCKS = 20;
   private static final int GROUND_PROBE_DEPTH_BLOCKS = 12;
   private static final int GROUND_PROBE_ORIGIN_LIFT_BLOCKS = 2;
 
@@ -138,7 +138,8 @@ public final class SubLevelPathfinder {
               return false;
             }
             if (kind == Mode.GROUND) {
-              if (!level.getFluidState(cell).isEmpty()) {
+              if (!level.getFluidState(cell).isEmpty()
+                  && !level.getFluidState(cell).is(FluidTags.WATER)) {
                 return false;
               }
               var below = cell.below();
@@ -194,11 +195,67 @@ public final class SubLevelPathfinder {
                 && swept(begin.move(0, stepHeight, 0), end.move(0, stepHeight, 0));
           }
         };
-    var cells = search(space, start, goal, mode, 256);
+    var cells = waypoints(space, start, search(space, start, goal, mode, 256), mode);
     double lift = here.y - origin.getY();
     return new Route(
         mode,
         cells.stream().map(p -> new Vec3(p.getX() + .5, p.getY() + lift, p.getZ() + .5)).toList());
+  }
+
+  /**
+   * Keep only visible route bends; intermediate cells remain collision/support samples, not
+   * steering targets.
+   */
+  public static List<BlockPos> waypoints(
+      Space world, BlockPos start, List<BlockPos> cells, Mode mode) {
+    if (cells.isEmpty()) {
+      return List.of();
+    }
+    var result = new ArrayList<BlockPos>();
+    var anchor = start;
+    int next = 0;
+    int visibilityBudget = 64;
+    var memo = new HashMap<BlockPos, Boolean>();
+    while (next < cells.size()) {
+      int chosen = next;
+      for (int end = cells.size() - 1; end > next && visibilityBudget > 0; end--) {
+        visibilityBudget--;
+        if (visible(world, anchor, cells.get(end), mode, memo)) {
+          chosen = end;
+          break;
+        }
+      }
+      anchor = cells.get(chosen);
+      result.add(anchor);
+      next = chosen + 1;
+    }
+    return List.copyOf(result);
+  }
+
+  private static boolean visible(
+      Space world, BlockPos from, BlockPos to, Mode mode, Map<BlockPos, Boolean> memo) {
+    // Quarter-block samples retain thin diagonals and ground gaps while skipping redundant targets.
+    final int samplesPerBlock = 4;
+    int samples = Math.max(1, (int) Math.ceil(Math.sqrt(from.distSqr(to)) * samplesPerBlock));
+    var previous = from;
+    for (int sample = 1; sample <= samples; sample++) {
+      double t = sample / (double) samples;
+      var cell =
+          BlockPos.containing(
+              from.getX() + .5 + (to.getX() - from.getX()) * t,
+              from.getY() + .5 + (to.getY() - from.getY()) * t,
+              from.getZ() + .5 + (to.getZ() - from.getZ()) * t);
+      if (cell.equals(previous)) {
+        continue;
+      }
+      if (!memo.computeIfAbsent(cell, key -> world.passable(key, mode))
+          || !cornerClear(world, previous, cell, mode, memo)
+          || !world.edgeClear(previous, cell, mode)) {
+        return false;
+      }
+      previous = cell;
+    }
+    return previous.equals(to);
   }
 
   /**

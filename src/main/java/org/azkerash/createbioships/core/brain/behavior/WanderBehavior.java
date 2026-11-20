@@ -37,6 +37,9 @@ public final class WanderBehavior implements BrainBehavior {
   private static final double MIN_PROGRESS_BLOCKS = .2;
   private static final double MIN_HEADING_PROGRESS_RADIANS = .1;
   private static final double WANDER_SPEED = .65;
+  private final org.azkerash.createbioships.core.pathfinding.WaypointNavigator navigator =
+      new org.azkerash.createbioships.core.pathfinding.WaypointNavigator();
+  private long navigationRevision = Long.MIN_VALUE;
   private List<Vec3> route = List.of();
   private Vec3 escapeVelocity, retryGoal, avoidedDirection;
   private long escapeUntil;
@@ -104,7 +107,8 @@ public final class WanderBehavior implements BrainBehavior {
       return;
     }
     var position = SubLevelPathfinder.position(body);
-    while (waypoint < route.size()
+    while (navigator.getDetourWaypoints().isEmpty()
+        && waypoint < route.size()
         && distance(position, route.get(waypoint)) < WAYPOINT_RADIUS_BLOCKS) {
       waypoint++;
       bestHeading = Double.POSITIVE_INFINITY;
@@ -122,35 +126,31 @@ public final class WanderBehavior implements BrainBehavior {
       }
     }
 
-    double remaining = distance(position, route.get(waypoint));
-    for (int i = waypoint + 1; i < route.size(); i++) {
-      remaining += distance(route.get(i - 1), route.get(i));
+    var progress = navigator.follow(body, route, waypoint, WANDER_SPEED, MOTOR_COMMAND_TICKS, mode);
+    waypoint = progress.next();
+    if (progress.arrived()) {
+      pause(
+          body,
+          now + ARRIVAL_PAUSE_TICKS + body.getLevel().random.nextInt(ARRIVAL_PAUSE_JITTER_TICKS));
+      return;
     }
-    // Rocking or moving sideways against a wall is not progress along the route.
-    if (remaining < bestRemaining - MIN_PROGRESS_BLOCKS) {
-      bestRemaining = remaining;
+    double heading = Math.abs(progress.headingError());
+    if (navigationRevision != progress.revision()) {
+      navigationRevision = progress.revision();
+      // A detour can be longer. Change the distance reference without inventing physical progress.
+      bestRemaining = progress.remaining();
+      bestHeading = heading;
+    }
+    if (progress.remaining() < bestRemaining - MIN_PROGRESS_BLOCKS) {
+      bestRemaining = progress.remaining();
       lastProgress = now;
     }
-    var delta = route.get(waypoint).subtract(position);
-    var steering =
-        org.azkerash.createbioships.core.locomotion.SubLevelFacing.towards(
-            org.azkerash.createbioships.core.locomotion.SubLevelFacing.world(body),
-            delta,
-            WANDER_SPEED,
-            mode == SubLevelPathfinder.Mode.WATER);
-    // A deliberate turn towards the target is progress; rocking against terrain is not.
-    double heading = Math.abs(steering.error());
     if (heading < bestHeading - MIN_HEADING_PROGRESS_RADIANS) {
       bestHeading = heading;
       lastProgress = now;
     }
+    // The navigator gets bounded retries before the behavior abandons the main destination.
     if (now - lastProgress > PROGRESS_TIMEOUT_TICKS) {
-      recover(body, position, now);
-      return;
-    }
-    org.azkerash.createbioships.core.pathfinding.SubLevelPaths.update(body, mode, route, waypoint);
-    if (!BrainMotorControls.move(
-        body, steering.velocity(), steering.yawRate(), MOTOR_COMMAND_TICKS, mode)) {
       recover(body, position, now);
       return;
     }
@@ -184,6 +184,7 @@ public final class WanderBehavior implements BrainBehavior {
     if (!SubLevelPathfinder.movementClear(body, steering.velocity(), steering.yawRate())) {
       return false;
     }
+    navigator.reset();
     route = candidate.points();
     waypoint = first;
     nextDecision = now;
@@ -246,8 +247,13 @@ public final class WanderBehavior implements BrainBehavior {
     var horizontal = new Vec3(forward.x, 0, forward.z).normalize();
     // No obstacle type or world coordinates are assumed. Reverse/side steps create room to turn.
     var directions = new ArrayList<Vec3>();
-    for (int step : new int[] {4, 3, 5, 2, 6, 1, 7, 0}) {
-      directions.add(horizontal.yRot((float) (step * Math.PI / 4)).normalize());
+    if (mode == SubLevelPathfinder.Mode.GROUND) {
+      for (int step : new int[] {4, 3, 5, 2, 6, 1, 7, 0}) {
+        directions.add(horizontal.yRot((float) (step * Math.PI / 4)).normalize());
+      }
+    } else {
+      // Flippers create clearance with forward motion or a climb/dive, never a sideways slide.
+      directions.add(horizontal);
     }
     if (mode == SubLevelPathfinder.Mode.WATER) {
       directions.add(new Vec3(0, 1, 0));
@@ -298,6 +304,7 @@ public final class WanderBehavior implements BrainBehavior {
   }
 
   private void pause(ServerSubLevel body, long until) {
+    navigator.reset();
     org.azkerash.createbioships.core.pathfinding.SubLevelPaths.clear(body);
     escapeVelocity = retryGoal = null;
     nextDecision = until;
@@ -327,6 +334,7 @@ public final class WanderBehavior implements BrainBehavior {
 
   @Override
   public void stop(ServerSubLevel body) {
+    navigator.reset();
     BrainBehavior.super.stop(body);
     if (!body.isRemoved()) {
       save(body, "stopped", 0);

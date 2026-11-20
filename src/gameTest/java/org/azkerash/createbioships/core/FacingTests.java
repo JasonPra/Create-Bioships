@@ -76,6 +76,10 @@ public final class FacingTests {
         "Right turn sign or movement gating incorrect");
     var swim = SubLevelFacing.towards(north, new Vec3(0, 1, -1), .65, true);
     h.assertTrue(swim.velocity().y > 0, "Facing control lost vertical swimming motion");
+    var angled = SubLevelFacing.towards(north, new Vec3(1, 1, -2), .65, true);
+    h.assertTrue(
+        angled.velocity().x == 0 && angled.velocity().y > 0 && angled.yawRate() < 0,
+        "Fin propulsion strafed instead of turning toward its waypoint");
     h.succeed();
   }
 }
