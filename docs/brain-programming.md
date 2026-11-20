@@ -91,8 +91,8 @@ source/console switch. An intermittent Create registry-callback startup failure
 also appears in older pre-change logs; a retry loaded the world and completed the
 native checks. This startup failure has not been fixed by the programming changes.
 
-Final verification: **153/153 required tests passed without Epic Fight**, and
-**153/153 passed with Epic Fight 21.17.3.1**. The release JAR contains the compiler
+Final verification: **155/155 required tests passed without Epic Fight**, and
+**155/155 passed with Epic Fight 21.17.3.1**. The release JAR contains the compiler
 and interpreter and excludes temporary native-QA helpers and development test
 classes. All Brain statistic properties return double values; Brain.Tick is the
 world's current game tick, while Brain.Wait takes an int duration in game ticks.
@@ -162,3 +162,9 @@ Native verification exercised four/eight-space nested indentation, the inventory
 key while typing, warning/error rendering, failed server compile logging, log
 retention after reopening, a persisted compiled switch card, gutter folding,
 diagnostic navigation with focus restoration, and a 320-by-240 GUI layout.
+
+The switch and enhanced-editor integration was validated by the complete 155-test
+suite both without Epic Fight and with Epic Fight 21.17.3.1. Native screenshots
+confirmed diagnostic colors, original line numbering while folded, a separate
+error log, and small-window layout. Temporary QA helpers and test runners are
+excluded from the release JAR.
