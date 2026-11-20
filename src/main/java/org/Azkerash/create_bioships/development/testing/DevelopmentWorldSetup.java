@@ -87,5 +87,7 @@ public final class DevelopmentWorldSetup {
       EstateLandscape.terrain(level, NecromancerDenFixture.surface(level));
     if (state.denLandscapeVersion < 2)
       EstateWaterworks.build(level, NecromancerDenFixture.surface(level));
+    if (state.denLandscapeVersion < 3)
+      EstateRuins.build(level, NecromancerDenFixture.surface(level));
   }
 }
