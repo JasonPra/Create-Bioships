@@ -40,7 +40,18 @@ public final class DebugPanelTests {
     CoreAssemblyRules.mark(level, core);
     DevelopmentLifeSupport.pause(body);
     new SocketJointSettings(0, 0).save(body, SocketJointSettings.compact(core.east(), 1));
+    var flags = org.azkerash.createbioships.core.locomotion.SubLevelLocomotion.get(body);
+    h.assertTrue(
+        flags.hasLegs() && flags.hasWallClimbers(),
+        "Arachnid sockets lost their climber classification");
     var rows = CreatureDiagnostics.inspect(body);
+    h.assertTrue(
+        rows.stream()
+            .anyMatch(
+                row ->
+                    row.title().equals("Brain and locomotion")
+                        && row.detail().contains("climbers=true")),
+        "Diagnostics omitted the climber capability");
     h.assertTrue(
         rows.stream()
             .anyMatch(

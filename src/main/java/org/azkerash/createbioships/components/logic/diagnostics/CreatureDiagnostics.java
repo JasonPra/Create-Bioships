@@ -100,7 +100,9 @@ public final class CreatureDiagnostics {
             + "; legs="
             + flags.hasLegs()
             + ", flippers="
-            + flags.hasFins(),
+            + flags.hasFins()
+            + ", climbers="
+            + flags.hasWallClimbers(),
         brain.capacity() == 0
             ? "Connect a functioning brain before requesting movement."
             : behavior == null
