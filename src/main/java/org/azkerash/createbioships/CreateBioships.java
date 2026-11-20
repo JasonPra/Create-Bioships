@@ -80,6 +80,9 @@ public final class CreateBioships {
   public static final DeferredItem<SomaticResonatorItem> SOMATIC_RESONATOR =
       ItemRegistration.register(ITEMS, "somatic_resonator", SomaticResonatorItem::new);
 
+  public static final DeferredItem<CerebralGuideItem> CEREBRAL_CODEX =
+      ItemRegistration.registerNonStackable(ITEMS, "cerebral_codex", CerebralGuideItem::new);
+
   static {
     TABS.register(
         "core",
@@ -95,6 +98,7 @@ public final class CreateBioships {
                       output.accept(BIOSHIP_WRENCH.get());
                       output.accept(LIMB_POSITIONER.get());
                       output.accept(SOMATIC_RESONATOR.get());
+                      output.accept(CEREBRAL_CODEX.get());
                     })
                 .build());
   }

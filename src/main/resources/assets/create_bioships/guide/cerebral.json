@@ -1,0 +1,94 @@
+{
+  "chapters": [
+    {
+      "title": "Start here",
+      "body": "Codex Cerebralis is the reference for the current Cerebral scripting language: a small, safe C#-style language for creature brains.\n\nA program is a sequence of instructions. It can store values, make decisions, repeat work, read creature statistics, print private output and wait for game time.\n\nNames are case-sensitive: Brain.Health works; brain.health does not. This guide describes implemented features, not the full C# language.\n\nA method is a named action: Brain.Wait(20) calls Wait with the argument 20. A property is a value: Brain.Health reads health without parentheses. Parameters describe the arguments a method accepts.",
+      "example": "Console.WriteLine(\"Hello, creature!\");"
+    },
+    {
+      "title": "Cards & running",
+      "body": "1. Use a Blank Behavior Card to open the Cerebral IDE.\n2. Write your source. Save draft stores it on that physical card, but does not make it executable.\n3. Compile & write validates the source on the server and writes a Cerebral Program Card.\n4. Insert it into an available brain slot on a living creature you can access.\n5. Open that card from the brain UI and choose Source / console to inspect its runtime.\n\nThe brain runs the first runnable card in slot order, including factory behavior cards. An earlier card can therefore take priority over your program. A held card does not run on its own.\n\nSource survives saving/restarting and travels with the card. Unsaved editor changes do not. A running program's local variables and execution position are temporary; they restart when a new runtime is created.",
+      "example": ""
+    },
+    {
+      "title": "Program structure",
+      "body": "You can write top-level statements, as in Start here, or put them in one class Program with one static void Main(). Do not mix the two forms.\n\nusing System; is optional and only allows this exact import. The optional public modifier is supported before static void Main().\n\nCurly braces { } group statements into blocks. Semicolons end declarations, assignments, method calls and return statements. Conditions and loops use parentheses.",
+      "example": "using System;\nclass Program {\n    static void Main() {\n        Console.WriteLine(\"Awake\");\n    }\n}"
+    },
+    {
+      "title": "Values & variables",
+      "body": "A variable is a named value. Declare and initialize it before use:\n\nint: a signed 32-bit whole number.\ndouble: a decimal number.\nbool: true or false.\nstring: text inside double quotes.\nvar: infer the type from the initializer.\n\nUse letters, digits and underscores in names; do not start with a digit. Keywords and host names are reserved. Names must be unique across enclosing scopes. A variable declared inside a block is only usable inside that block.\n\nint values can widen to double. Other automatic type conversions and explicit casts are not supported.",
+      "example": "int count = 3;\ndouble ratio = 0.5;\nbool awake = true;\nstring name = \"Junior\";\nvar message = name + \": \" + count;\nConsole.WriteLine(message);\nConsole.WriteLine(ratio);\nConsole.WriteLine(awake);"
+    },
+    {
+      "title": "Operators",
+      "body": "Arithmetic: + - * / % (remainder).\nComparisons: == != < <= > >=.\nBoolean logic: ! (not), && (and), || (or).\nAssignment: = += -= *= /= %=.\nIncrement/decrement: count++; count--; as statements.\n\n&& and || short-circuit: the second side is evaluated only when needed. Comparisons produce bool values; if and loop conditions require bool.\n\nMultiplication/division/remainder precede addition/subtraction. Comparisons precede equality, then &&, then ||. Use parentheses to make intent clear.\n\nInteger division discards the fractional part. Use a double operand for decimal results. + joins text with other values. Increment/decrement cannot be embedded in expressions. Division by zero faults the program.",
+      "example": "int count = 2;\ncount += 3;\ncount++;\nbool ready = count >= 3 && !(count == 0);\nConsole.WriteLine(\"Ready: \" + ready);\nConsole.WriteLine(5 / 2);\nConsole.WriteLine(5.0 / 2);"
+    },
+    {
+      "title": "Text & comments",
+      "body": "Strings use double quotes. Supported escapes are backslash-n (new line), backslash-r (carriage return), backslash-t (tab), backslash-double-quote and two backslashes for one literal backslash.\n\nA string literal cannot contain an actual line break; use an escape instead. String interpolation, character literals and string methods are not implemented.\n\n// starts a comment to the end of the line.\n/* starts a block comment ending at */.\nComments explain your program and are not executed.",
+      "example": "// A message for the private console\nstring name = \"Junior\";\n/* Join text with +. */\nConsole.WriteLine(\"Hello, \" + name);\nConsole.WriteLine(\"First line\\nSecond line\");"
+    },
+    {
+      "title": "If & else",
+      "body": "if runs a block only when its condition is true. else runs the alternative when it is false. Chain else if for additional conditions.\n\nThe statistics are raw current values, not percentages. Choose thresholds appropriate to your creature's capacity.",
+      "example": "if (Brain.Oxygen <= 0) {\n    Console.WriteLine(\"Out of air\");\n} else if (Brain.Hunger < 2) {\n    Console.WriteLine(\"Hungry\");\n} else {\n    Console.WriteLine(\"Stable\");\n}"
+    },
+    {
+      "title": "While loops",
+      "body": "while repeats while a bool condition remains true. The condition is checked before each iteration.\n\nLong-running loops must call Brain.Wait(...) regularly. Without a wait, exhausting the instruction budget faults the program instead of freezing the server.\n\nThe example deliberately repeats forever, reporting hunger about once a second while its brain is active.",
+      "example": "while (true) {\n    Console.WriteLine(\"Hunger: \" + Brain.Hunger);\n    Brain.Wait(20);\n}"
+    },
+    {
+      "title": "For loops",
+      "body": "for has an initializer, a bool condition and an update, separated by semicolons. The initializer runs once, the condition before each iteration, and the update after each iteration.\n\nA variable declared in the initializer belongs to the loop scope. A loop may omit these parts; an omitted condition means true. The update cannot declare a new variable.",
+      "example": "for (int pulse = 0; pulse < 3; pulse++) {\n    Console.WriteLine(\"Pulse \" + pulse);\n    Brain.Wait(20);\n}"
+    },
+    {
+      "title": "Switch",
+      "body": "switch compares one int, bool or string selector against literal case labels of the same type. default is optional and handles unmatched values.\n\nEach nonempty section must exit with break, continue (inside a surrounding loop) or return. Implicit fall-through is not supported. Adjacent labels can share one section. Duplicate labels are errors.\n\nDouble selectors, variable case labels, patterns and switch expressions are not supported. Each section has its own local scope.",
+      "example": "int mode = 1;\nswitch (mode) {\n    case 0:\n        Console.WriteLine(\"Rest\");\n        break;\n    case 1:\n    case 2:\n        Console.WriteLine(\"Observe\");\n        break;\n    default:\n        Console.WriteLine(\"Unknown mode\");\n        break;\n}"
+    },
+    {
+      "title": "Control flow",
+      "body": "break; exits the nearest enclosing loop or switch.\ncontinue; skips to the next iteration of the nearest enclosing loop. In a for loop, its update still runs.\nreturn; ends the program. It does not return a value or automatically restart the program.\n\nNested blocks are supported. Put local declarations inside braces when they form the body of a condition or loop.",
+      "example": "for (int count = 0; count < 6; count++) {\n    if (count == 1) {\n        continue;\n    }\n    if (count == 4) {\n        break;\n    }\n    Console.WriteLine(count);\n}\nreturn;"
+    },
+    {
+      "title": "Console.WriteLine",
+      "body": "Console.WriteLine(value); prints one value to the card's private runtime console. Text, numbers and bool values are supported. Use + to combine text and values.\n\nConsole.WriteLine(); prints an empty line. One argument at most is supported; format-string overloads and Console.Write are not.\n\nOutput is shown by opening the running card from the brain and choosing Source / console. This is not chat or the server log. The console retains the latest 64 entries, up to 256 characters each.",
+      "example": "Console.WriteLine(\"Health: \" + Brain.Health);\nConsole.WriteLine(42);\nConsole.WriteLine(true);\nConsole.WriteLine();"
+    },
+    {
+      "title": "Brain.Wait",
+      "body": "Brain.Wait(int ticks); pauses this program until at least that many game ticks have passed. It does not pause the creature or the server.\n\n20 ticks are normally one second. Valid waits are 0 through 72,000 ticks (one hour). Wait(0) still yields for at least one tick. Resumption occurs at the next available brain update, so timing is approximate.\n\nUse an int expression, such as Brain.Wait(20);. A double such as 20.0 is rejected. Waiting yields execution and refreshes the instruction budget for the next update.",
+      "example": "Console.WriteLine(\"Before\");\nBrain.Wait(20);\nConsole.WriteLine(\"After\");"
+    },
+    {
+      "title": "Brain statistics",
+      "body": "These are all current read-only statistics. Each expression returns double, even Brain.Tick:\n\nBrain.Health — current creature health points.\nBrain.Hunger — current hunger/satiation points.\nBrain.Oxygen — current oxygen reserve.\nBrain.Tick — current world game time in ticks.\n\nThey are values, not methods: write Brain.Health, not Brain.Health(). They cannot be assigned to. There are currently no maximum-capacity properties or direct component-control methods.\n\nValues are read when the expression executes; assign them to a variable if you need one consistent snapshot.",
+      "example": "double health = Brain.Health;\ndouble hunger = Brain.Hunger;\ndouble air = Brain.Oxygen;\ndouble tick = Brain.Tick;\nConsole.WriteLine(\"HP \" + health + \", food \" + hunger);\nConsole.WriteLine(\"Air \" + air + \", tick \" + tick);"
+    },
+    {
+      "title": "Editor controls",
+      "body": "Drag the divider between source and diagnostics to resize those areas. Hide diagnostics gives the source more room; Show restores the panel. Layout sizes are remembered locally, independently of the card.\n\nType a keyword or Brain./Console. for autocomplete. Ctrl+Space opens suggestions. Up/Down selects, Tab or Enter accepts, and Escape dismisses them. Method completion places the caret inside its argument parentheses.\n\nTab indents; Shift+Tab outdents. Enter preserves nested indentation. The + and - gutter markers fold/unfold blocks without changing source.\n\nCtrl+S saves a draft. Ctrl+Enter compiles and writes. Ctrl+Z undoes; Ctrl+Y or Ctrl+Shift+Z redoes. Shift+wheel scrolls source horizontally. Standard selection and copy/paste work.\n\nCopy example in this book copies only the current chapter's code.",
+      "example": ""
+    },
+    {
+      "title": "Errors & warnings",
+      "body": "Problems shows diagnostics for the current source. Error log retains compile/runtime messages during the session. Click a current-source diagnostic to jump to its line and column.\n\nRed underlines mark errors; green underlines mark warnings, such as unused variables or unreachable code. This is programming analysis, not a natural-language spellchecker.\n\nMessages from an older source revision are labeled and cannot jump to a stale location. Clear empties the retained error log.\n\nA draft save does not compile. After editing source, compile and write it again before expecting it to execute. Runtime states include READY, WAITING, COMPLETED, FAULTED and STOPPED. A fault includes its source location.",
+      "example": ""
+    },
+    {
+      "title": "Sandbox & limits",
+      "body": "This is a custom interpreter with C#-style syntax, not the .NET runtime. Scripts cannot access files, networking, reflection, operating-system commands or arbitrary Java/.NET classes.\n\nOnly Console.WriteLine, Brain.Wait and the four documented Brain statistics are currently exposed. No arrays, collections, objects/new, user-defined methods, recursion, exceptions, async/threads, namespaces or additional imports are supported. Component movement, inventory and pathfinding commands are not exposed yet.\n\nLimits: 8,192 source characters; 2,048 tokens; 4,096 compiled instructions; 128 locals; 64 parser nesting levels; 128 stack entries. Strings are limited to 4,096 characters. Each brain update allows 1,024 instructions before it must yield or finish.\n\nAn empty busy loop may fault quickly. Use Brain.Wait in repeated work.",
+      "example": ""
+    },
+    {
+      "title": "Complete monitor",
+      "body": "This program watches a living creature and reports its current health, hunger and oxygen about once per second. It does not feed, heal or move the creature.\n\nCopy the example into a blank card, compile and write, then install it in the first runnable brain slot. Inspect its private console from that brain's card editor.\n\nThis is also a practical starting point for experimenting with variables, conditions, text output and cooperative loops.",
+      "example": "using System;\nclass Program {\n    static void Main() {\n        while (true) {\n            Console.WriteLine(\"Health: \" + Brain.Health);\n            Console.WriteLine(\"Hunger: \" + Brain.Hunger);\n            Console.WriteLine(\"Oxygen: \" + Brain.Oxygen);\n            if (Brain.Oxygen <= 0) {\n                Console.WriteLine(\"Warning: no air!\");\n            }\n            Brain.Wait(20);\n        }\n    }\n}"
+    }
+  ]
+}

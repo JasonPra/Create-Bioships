@@ -47,5 +47,6 @@
   "block.create_bioships.ossuary_archive": "Chiseled Ossuary Bookcase",
   "block.create_bioships.ossuary_cabinet": "Ossuary Cabinet",
   "block.create_bioships.ossuary_bed": "Ossuary Bed",
-  "item.create_bioships.program_behavior_card": "Cerebral Program Card"
+  "item.create_bioships.program_behavior_card": "Cerebral Program Card",
+  "item.create_bioships.cerebral_codex": "Codex Cerebralis"
 }
