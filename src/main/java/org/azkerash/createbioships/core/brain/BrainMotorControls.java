@@ -27,8 +27,27 @@ public final class BrainMotorControls {
 
   private static final Map<ServerSubLevel, Request> REQUESTS = new WeakHashMap<>();
 
+  private static final int REJECTION_LIFETIME_TICKS = 40;
+
+  public record Rejection(Vec3 movement, long tick) {}
+
+  private static final Map<ServerSubLevel, Rejection> REJECTIONS = new WeakHashMap<>();
+
+  public static Rejection lastRejection(ServerSubLevel body) {
+    var rejection = REJECTIONS.get(SubLevelCreatureParts.root(body));
+    return rejection != null
+            && body.getLevel().getGameTime() - rejection.tick() <= REJECTION_LIFETIME_TICKS
+        ? rejection
+        : null;
+  }
+
   /** Cancel the unsafe lease without locking out a later collision-clear escape request. */
   public static void obstructed(ServerSubLevel body) {
+    var root = SubLevelCreatureParts.root(body);
+    var request = REQUESTS.get(root);
+    if (request != null) {
+      REJECTIONS.put(root, new Rejection(request.velocity(), root.getLevel().getGameTime()));
+    }
     stop(body);
   }
 
@@ -80,8 +99,12 @@ public final class BrainMotorControls {
     }
     if (!org.azkerash.createbioships.core.pathfinding.SubLevelPathfinder.movementClear(
         body, movement, yawRate)) {
+      REJECTIONS.put(body, new Rejection(movement, body.getLevel().getGameTime()));
       stop(body);
       return false;
+    }
+    if (movement.lengthSqr() > .001) {
+      REJECTIONS.remove(body);
     }
     REQUESTS.put(
         body,

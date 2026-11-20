@@ -186,6 +186,13 @@ public final class ComponentRegistry {
           "vital_readout",
           VitalReadoutBlock::new,
           () -> BlockBehaviour.Properties.of().strength(1).noOcclusion());
+  public static final DeferredBlock<
+          org.azkerash.createbioships.components.logic.diagnostics.DebugPanelBlock>
+      DEBUG_PANEL =
+          component(
+              "debug_panel",
+              org.azkerash.createbioships.components.logic.diagnostics.DebugPanelBlock::new,
+              () -> fleshProperties(1).noOcclusion().lightLevel(state -> 3));
   public static final DeferredBlock<NervePanelBlock> NERVE_PANEL =
       component(
           "nerve_panel",

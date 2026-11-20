@@ -1,0 +1,6 @@
+{
+  "parent": "create_bioships:block/nerve_panel",
+  "textures": {
+    "screen": "create_bioships:block/debug_screen"
+  }
+}

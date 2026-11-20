@@ -15,7 +15,7 @@ import net.minecraft.world.phys.shapes.*;
 import org.azkerash.createbioships.core.*;
 
 /** A physical terminal only. Permissions belong to the grid, never this block. */
-public final class NervePanelBlock
+public class NervePanelBlock
     extends org.azkerash.createbioships.components.logic.WaterloggedComponentBlock {
   public static final MapCodec<NervePanelBlock> CODEC = simpleCodec(NervePanelBlock::new);
 
@@ -75,9 +75,14 @@ public final class NervePanelBlock
                 "Connect this panel to a creature sublevel."),
             true);
       } else {
-        NervePanelControl.open(server, body, pos);
+        open(server, body, pos);
       }
     }
     return InteractionResult.sidedSuccess(level.isClientSide);
+  }
+
+  protected void open(
+      ServerPlayer player, dev.ryanhcode.sable.sublevel.ServerSubLevel body, BlockPos panel) {
+    NervePanelControl.open(player, body, panel);
   }
 }

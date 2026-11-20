@@ -142,7 +142,7 @@ public final class CerebralGuideScreen extends Screen {
     }
 
     protected void updateWidgetNarration(NarrationElementOutput output) {
-      output.add(NarratedElementType.TITLE, Component.literal("Select a scripting guide chapter"));
+      output.add(NarratedElementType.TITLE, Component.literal("Select a guide chapter"));
     }
   }
 
@@ -150,7 +150,7 @@ public final class CerebralGuideScreen extends Screen {
     private List<FormattedCharSequence> lines = List.of();
 
     Contents(int x, int y, int width, int height) {
-      super(x, y, width, height, Component.literal("Scripting guide text"));
+      super(x, y, width, height, Component.literal("Guide text"));
     }
 
     void reflow() {
@@ -166,7 +166,7 @@ public final class CerebralGuideScreen extends Screen {
         lines.add(FormattedCharSequence.EMPTY);
         lines.addAll(
             font.split(
-                Component.literal("Example — Copy example copies this code:")
+                Component.literal("Example — Copy example copies this text:")
                     .withStyle(ChatFormatting.ITALIC),
                 available));
         lines.add(FormattedCharSequence.EMPTY);

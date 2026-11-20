@@ -29,7 +29,7 @@
   "block.create_bioships.limb_segment": "Chitin Limb Segment",
   "block.create_bioships.limb_foot": "Armored Foot",
   "item.create_bioships.limb_positioner": "Synaptic Calibrator",
-  "item.create_bioships.limb_positioner.hint": "Rest angle: %s° · Scroll: 5° · Ctrl: 1° · Sneak-use: lock mount",
+  "item.create_bioships.limb_positioner.hint": "Rest angle: %s\u00b0 \u00b7 Scroll: 5\u00b0 \u00b7 Ctrl: 1\u00b0 \u00b7 Sneak-use: lock mount",
   "block.create_bioships.limb_socket": "Synovial Socket",
   "item.create_bioships.development_toolkit": "Development Toolkit",
   "block.create_bioships.armored_maw": "Eldritch Maw",
@@ -58,5 +58,6 @@
   "item.create_bioships.hunting_behavior_card": "Hunting Behavior Card",
   "item.create_bioships.hunting_behavior_card.tooltip": "Starts hunting whitelisted prey at half hunger or less; feeds until full. Requires a mouth or another registered weapon. Collects meat drops to eat. Use to edit prey types.",
   "item.create_bioships.locomotion_codex": "Locomotion Field Guide",
-  "item.create_bioships.locomotion_codex.tooltip": "Leg setup, joint limits, stance, flippers and troubleshooting."
+  "item.create_bioships.locomotion_codex.tooltip": "Leg setup, joint limits, stance, flippers and troubleshooting.",
+  "block.create_bioships.debug_panel": "Debugging Panel"
 }
