@@ -236,6 +236,21 @@ public final class CreatureDiagnostics {
         var state = body.getLevel().getBlockState(cell);
         components.merge(
             BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString(), 1, Integer::sum);
+        if (org.azkerash.createbioships.components.logic.mouth.MouthBlock.isArachnid(state)
+            && body.getLevel().getBlockEntity(cell)
+                instanceof
+                org.azkerash.createbioships.components.logic.mouth.MouthBlockEntity mouth) {
+          add(
+              rows,
+              "Components",
+              "Arachnid mandibles",
+              mouth.getGrabbedPrey() != null
+                  ? "Gripping prey " + mouth.getGrabbedPrey()
+                  : mouth.isHandlingPrey() ? "Opening for a grab" : "Not gripping prey",
+              "Fangs grip small mobs briefly. Sneak-use the empty hand to release; obstacles,"
+                  + " escape, inactivity and the hold timer also release prey.",
+              0);
+        }
         if (!(state.getBlock() instanceof CompactLegSocketBlock)) {
           continue;
         }

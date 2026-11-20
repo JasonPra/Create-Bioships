@@ -106,6 +106,7 @@
     "create_bioships:arachnid_leg",
     "create_bioships:huntsman_armor",
     "create_bioships:huntsman_maw",
-    "create_bioships:debug_panel"
+    "create_bioships:debug_panel",
+    "create_bioships:arachnid_maw"
   ]
 }

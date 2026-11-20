@@ -59,5 +59,7 @@
   "item.create_bioships.hunting_behavior_card.tooltip": "Starts hunting whitelisted prey at half hunger or less; feeds until full. Requires a mouth or another registered weapon. Collects meat drops to eat. Use to edit prey types.",
   "item.create_bioships.locomotion_codex": "Locomotion Field Guide",
   "item.create_bioships.locomotion_codex.tooltip": "Leg setup, joint limits, stance, flippers and troubleshooting.",
-  "block.create_bioships.debug_panel": "Debugging Panel"
+  "block.create_bioships.debug_panel": "Debugging Panel",
+  "block.create_bioships.arachnid_maw": "Arachnid Maw",
+  "block.create_bioships.arachnid_maw.grab_tooltip": "Articulated fangs grip small prey briefly while hunting. Sneak-use empty-handed to release it."
 }

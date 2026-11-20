@@ -22,12 +22,19 @@ public final class MouthBlock extends DirectionalBlock
       net.minecraft.world.level.block.state.properties.IntegerProperty.create("breath", 0, 2);
   public static final net.minecraft.world.level.block.state.properties.BooleanProperty SPITTING =
       net.minecraft.world.level.block.state.properties.BooleanProperty.create("spitting");
+  public static final net.minecraft.world.level.block.state.properties.BooleanProperty GRABBING =
+      net.minecraft.world.level.block.state.properties.BooleanProperty.create("grabbing");
   public static final MapCodec<MouthBlock> CODEC = simpleCodec(MouthBlock::new);
 
-  /** Both shell styles share feeding, armor and acid behavior. */
+  /** Armored mouth variants share feeding, protection and acid behavior. */
   public static boolean isArmored(BlockState state) {
     return state.is(ComponentRegistry.ARMORED_MAW.get())
-        || state.is(ComponentRegistry.HUNTSMAN_MAW.get());
+        || state.is(ComponentRegistry.HUNTSMAN_MAW.get())
+        || isArachnid(state);
+  }
+
+  public static boolean isArachnid(BlockState state) {
+    return state.is(ComponentRegistry.ARACHNID_MAW.get());
   }
 
   public MouthBlock(Properties properties) {
@@ -38,6 +45,7 @@ public final class MouthBlock extends DirectionalBlock
             .setValue(FACING, Direction.NORTH)
             .setValue(CHEW, 0)
             .setValue(SPITTING, false)
+            .setValue(GRABBING, false)
             .setValue(BREATH, 0));
   }
 
@@ -46,7 +54,7 @@ public final class MouthBlock extends DirectionalBlock
   }
 
   protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-    builder.add(FACING, CHEW, BREATH, SPITTING);
+    builder.add(FACING, CHEW, BREATH, SPITTING, GRABBING);
   }
 
   public BlockState getStateForPlacement(BlockPlaceContext context) {
@@ -61,7 +69,21 @@ public final class MouthBlock extends DirectionalBlock
       BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
     if (player instanceof net.minecraft.server.level.ServerPlayer server
         && level.getBlockEntity(pos) instanceof MouthBlockEntity mouth) {
-      if (isArmored(state) && player.isShiftKeyDown() && player.getMainHandItem().isEmpty()) {
+      if (isArachnid(state)
+          && mouth.isHandlingPrey()
+          && player.isShiftKeyDown()
+          && player.getMainHandItem().isEmpty()) {
+        var body =
+            org.azkerash.createbioships.core.CoreAssemblyRules.containing(
+                server.serverLevel(), pos);
+        if (body != null
+            && org.azkerash.createbioships.core.access.SubLevelInteractionInterceptor.canModify(
+                player.getUUID(), body)) {
+          mouth.releasePrey();
+        }
+      } else if (isArmored(state)
+          && player.isShiftKeyDown()
+          && player.getMainHandItem().isEmpty()) {
         var result = mouth.requestAcidAttack(player.getUUID());
         player.displayClientMessage(
             net.minecraft.network.chat.Component.literal(result.getMessage()), true);
@@ -117,10 +139,17 @@ public final class MouthBlock extends DirectionalBlock
       java.util.List<net.minecraft.network.chat.Component> lines,
       net.minecraft.world.item.TooltipFlag flag) {
     if (stack.is(ComponentRegistry.ARMORED_MAW.get().asItem())
-        || stack.is(ComponentRegistry.HUNTSMAN_MAW.get().asItem())) {
+        || stack.is(ComponentRegistry.HUNTSMAN_MAW.get().asItem())
+        || stack.is(ComponentRegistry.ARACHNID_MAW.get().asItem())) {
       lines.add(
           net.minecraft.network.chat.Component.translatable(
                   "block.create_bioships.armored_maw.acid_tooltip")
+              .withStyle(net.minecraft.ChatFormatting.GRAY));
+    }
+    if (stack.is(ComponentRegistry.ARACHNID_MAW.get().asItem())) {
+      lines.add(
+          net.minecraft.network.chat.Component.translatable(
+                  "block.create_bioships.arachnid_maw.grab_tooltip")
               .withStyle(net.minecraft.ChatFormatting.GRAY));
     }
   }
@@ -142,6 +171,9 @@ public final class MouthBlock extends DirectionalBlock
       BlockPos pos,
       net.minecraft.util.RandomSource random) {
     if (!(level.getBlockEntity(pos) instanceof MouthBlockEntity mouth)) {
+      return;
+    }
+    if (mouth.animateMandibles()) {
       return;
     }
     mouth.observeAcidSignal(level.hasNeighborSignal(pos));
@@ -177,6 +209,17 @@ public final class MouthBlock extends DirectionalBlock
       chewingSound(level, pos);
     }
     level.scheduleTick(pos, this, Math.min(3, remaining));
+  }
+
+  @Override
+  protected void onRemove(
+      BlockState state, Level level, BlockPos pos, BlockState next, boolean moved) {
+    if (!state.is(next.getBlock())
+        && !level.isClientSide
+        && level.getBlockEntity(pos) instanceof MouthBlockEntity mouth) {
+      mouth.releasePrey();
+    }
+    super.onRemove(state, level, pos, next, moved);
   }
 
   @Override

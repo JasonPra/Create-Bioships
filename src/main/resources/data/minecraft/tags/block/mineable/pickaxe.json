@@ -16,6 +16,7 @@
     "create_bioships:lung",
     "create_bioships:gills",
     "create_bioships:armored_gills",
-    "create_bioships:huntsman_maw"
+    "create_bioships:huntsman_maw",
+    "create_bioships:arachnid_maw"
   ]
 }

@@ -14,6 +14,7 @@
     "create_bioships:armored_maw",
     "create_bioships:arachnid_leg",
     "create_bioships:huntsman_armor",
-    "create_bioships:huntsman_maw"
+    "create_bioships:huntsman_maw",
+    "create_bioships:arachnid_maw"
   ]
 }

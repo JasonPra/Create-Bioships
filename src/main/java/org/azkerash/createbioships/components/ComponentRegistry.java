@@ -237,6 +237,8 @@ public final class ComponentRegistry {
       component("huntsman_armor", ArmorBlock::new, () -> boneProperties(3, 6));
   public static final DeferredBlock<MouthBlock> HUNTSMAN_MAW =
       component("huntsman_maw", MouthBlock::new, () -> fleshProperties(2));
+  public static final DeferredBlock<MouthBlock> ARACHNID_MAW =
+      component("arachnid_maw", MouthBlock::new, () -> fleshProperties(2));
   public static final DeferredBlock<IntestineBlock> INTESTINE =
       component("fleshy_intestine", IntestineBlock::new, () -> fleshProperties(1).noOcclusion());
   public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MouthBlockEntity>>
@@ -245,7 +247,11 @@ public final class ComponentRegistry {
               "feeding_mouth",
               () ->
                   BlockEntityType.Builder.of(
-                          MouthBlockEntity::new, MOUTH.get(), ARMORED_MAW.get(), HUNTSMAN_MAW.get())
+                          MouthBlockEntity::new,
+                          MOUTH.get(),
+                          ARMORED_MAW.get(),
+                          HUNTSMAN_MAW.get(),
+                          ARACHNID_MAW.get())
                       .build(null));
 
   public static final DeferredItem<BlockItem> CORE_ITEM = item(CORE),

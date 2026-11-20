@@ -69,6 +69,11 @@
       "title": "Debugging Panel",
       "body": "Craft a Debugging Panel from a Nerve Panel, spider eye and redstone. Mount it on your creature and use its front face. Nearby owners and permitted users can inspect it.\n\nThe panel has Overview, Legs, Components, Navigation, Collisions and Advice tabs. It refreshes about once per second while open. Use the Field guide button for these instructions.\n\nLeg rows show each socket’s height, rest angle, passive tuning and three joint-limit pairs. Red locked-joint warnings identify actual zero-range settings. Navigation shows the published waypoint route and cached target count. Collision messages report recent movement-clearance rejection; they do not claim to identify a particular trapped joint without evidence.\n\nSuspected lack of progress means a movement request exists but the body has barely moved across samples. It can be a support, joint, body-clearance or route problem. A missing route alone is not proof of a jam.\n\nSuggestions are read-only. The panel does not silently change limits, teleport legs, run extra vision rays or remove combat collision. Use the Positioner or adjust your route after inspecting the evidence. If snapshots become stale, move near the panel and refresh.",
       "example": ""
+    },
+    {
+      "title": "Arachnid Maw",
+      "body": "The Arachnid Maw uses huntsman chitin with two hinged jaws and independently moving fangs. Craft it from a Huntsman Eldritch Maw, spider eye and bone.\n\nIt remains a feeding mouth and retains the armored Maw’s acid attack. During hunting it can open and close on small prey, pull gently toward its mouth and bite while holding. A grab lasts at most three seconds, followed by recovery. Larger creatures and Sable combat proxy entities are not dragged as if they were small mobs.\n\nThe victim is not teleported or made into a passenger. Escape, intervening solid blocks, a dead/inactive mouth, fullness or loss of the active hunting program releases it. A hold does not survive reloading.\n\nSneak-use the empty hand on a busy mouth to release prey, subject to normal creature permissions. When not gripping, the existing acid control still applies. The Debugging Panel lists whether the mandibles are opening or holding prey.",
+      "example": ""
     }
   ]
 }

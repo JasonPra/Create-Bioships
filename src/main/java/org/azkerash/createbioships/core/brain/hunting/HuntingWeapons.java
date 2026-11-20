@@ -34,6 +34,11 @@ public final class HuntingWeapons {
           public boolean attack(ServerSubLevel member, BlockPos cell, LivingEntity prey) {
             var level = member.getLevel();
             var state = level.getBlockState(cell);
+            if (MouthBlock.isArachnid(state)
+                && level.getBlockEntity(cell) instanceof MouthBlockEntity mandibles
+                && (mandibles.isHandlingPrey() || mandibles.tryGrabPrey(prey))) {
+              return true;
+            }
             var facing = state.getValue(MouthBlock.FACING);
             var origin =
                 member.logicalPose().transformPosition(Vec3.atCenterOf(cell).relative(facing, .6));

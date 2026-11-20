@@ -18,11 +18,37 @@ public final class MouthBlockEntity extends OrganInventory {
   private final ChewingState detachedState = new ChewingState();
   private java.util.List<ItemStack> observed = java.util.List.of();
   private boolean observing;
+  private long renderedJawTick = Long.MIN_VALUE;
+  private double previousJawOpening = .25, jawOpening = .25;
+
+  /** Client-only interpolation state is deliberately separate from saved combat timing. */
+  public double mandibleOpening(float partial) {
+    if (level == null) {
+      return .25;
+    }
+    long now = level.getGameTime();
+    if (renderedJawTick != now) {
+      var state = getBlockState();
+      double target =
+          MandibleGeometry.opening(
+              state.getValue(MouthBlock.CHEW),
+              state.getValue(MouthBlock.GRABBING),
+              state.getValue(MouthBlock.SPITTING),
+              now);
+      double elapsed =
+          renderedJawTick == Long.MIN_VALUE ? 1 : Math.clamp(now - renderedJawTick, 1, 8);
+      previousJawOpening = jawOpening;
+      jawOpening += (target - jawOpening) * (1 - Math.pow(.5, elapsed));
+      renderedJawTick = now;
+    }
+    return previousJawOpening + (jawOpening - previousJawOpening) * Math.clamp(partial, 0, 1);
+  }
 
   /** Only animation timing; inventory remains in the same grid-owned component entry. */
   private static final class ChewingState
       implements org.azkerash.createbioships.core.component.ComponentState {
     long until;
+    private final ArachnidMandibles.State mandibles = new ArachnidMandibles.State();
     private long acidReadyAt, acidReleaseAt, acidOpenUntil;
     private boolean acidPowered;
     private java.util.UUID acidActor;
@@ -31,6 +57,7 @@ public final class MouthBlockEntity extends OrganInventory {
     public net.minecraft.nbt.CompoundTag save(net.minecraft.core.HolderLookup.Provider registries) {
       var tag = new net.minecraft.nbt.CompoundTag();
       tag.putLong("ChewUntil", until);
+      tag.putLong("GrabReadyAt", mandibles.getReadyAt());
       tag.putLong("AcidReadyAt", acidReadyAt);
       tag.putLong("AcidReleaseAt", acidReleaseAt);
       tag.putLong("AcidOpenUntil", acidOpenUntil);
@@ -47,6 +74,7 @@ public final class MouthBlockEntity extends OrganInventory {
     public void load(
         net.minecraft.nbt.CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries) {
       until = tag.getLong("ChewUntil");
+      mandibles.loadCooldown(tag.getLong("GrabReadyAt"));
       acidReadyAt = tag.getLong("AcidReadyAt");
       acidReleaseAt = tag.getLong("AcidReleaseAt");
       acidOpenUntil = tag.getLong("AcidOpenUntil");
@@ -77,6 +105,26 @@ public final class MouthBlockEntity extends OrganInventory {
     }
   }
 
+  public boolean tryGrabPrey(net.minecraft.world.entity.LivingEntity prey) {
+    return ArachnidMandibles.begin(this, chewing().mandibles, prey);
+  }
+
+  public boolean isHandlingPrey() {
+    return chewing().mandibles.isBusy();
+  }
+
+  public java.util.UUID getGrabbedPrey() {
+    return chewing().mandibles.isHolding() ? chewing().mandibles.getPrey() : null;
+  }
+
+  public boolean animateMandibles() {
+    return ArachnidMandibles.animate(this, chewing().mandibles);
+  }
+
+  public void releasePrey() {
+    ArachnidMandibles.release(this, chewing().mandibles);
+  }
+
   public int chewRemaining() {
     return level == null
         ? 0
@@ -105,7 +153,9 @@ public final class MouthBlockEntity extends OrganInventory {
       return ready;
     }
     var state = chewing();
-    if (state.acidReleaseAt > 0 || server.getGameTime() < state.acidReadyAt) {
+    if (state.mandibles.isBusy()
+        || state.acidReleaseAt > 0
+        || server.getGameTime() < state.acidReadyAt) {
       return MawAcidAttack.Result.BUSY;
     }
     state.acidReleaseAt = server.getGameTime() + MawAcidAttack.WINDUP_TICKS;
@@ -193,6 +243,13 @@ public final class MouthBlockEntity extends OrganInventory {
     super.onLoad();
     remember();
     if (level instanceof net.minecraft.server.level.ServerLevel server) {
+      releasePrey();
+      chewing()
+          .mandibles
+          .loadCooldown(
+              Math.min(
+                  chewing().mandibles.getReadyAt(),
+                  server.getGameTime() + ArachnidMandibles.COOLDOWN_TICKS));
       chewing().until = Math.min(chewing().until, server.getGameTime() + CHEW_TICKS);
       // Keep recovery across saves, but never resume an unseen, half-finished telegraph on load.
       chewing().acidReadyAt =

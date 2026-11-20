@@ -24,7 +24,7 @@ public final class ArmorValues {
       return 0;
     }
     return switch (id.getPath()) {
-      case "chitin_armor", "armored_maw", "huntsman_armor", "huntsman_maw" -> 20;
+      case "chitin_armor", "armored_maw", "huntsman_armor", "huntsman_maw", "arachnid_maw" -> 20;
       case "crab_leg",
           "arachnid_leg",
           "limb_joint",
