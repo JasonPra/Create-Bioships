@@ -10,7 +10,7 @@ import net.minecraft.world.level.saveddata.SavedData;
 public final class CoreTestState extends SavedData {
   boolean built, running, combatBuilt, combatRunning;
   boolean visionBuilt, membraneBuilt, brainBuilt, locomotionBuilt, modularLimbsBuilt;
-  int legChamberVersion, denAccessVersion, denFurnitureVersion;
+  int legChamberVersion, denAccessVersion, denFurnitureVersion, denLandscapeVersion;
   boolean waterloggingBuilt, aquariumBuilt, juniorHabitatBuilt, necromancerDenBuilt;
   BlockPos juniorHabitatOrigin = BlockPos.ZERO;
   int waterloggingCatalogSize;
@@ -80,6 +80,7 @@ public final class CoreTestState extends SavedData {
                   state.necromancerDenBuilt = tag.getBoolean("NecromancerDenBuilt");
                   state.denAccessVersion = tag.getInt("DenAccessVersion");
                   state.denFurnitureVersion = tag.getInt("DenFurnitureVersion");
+                  state.denLandscapeVersion = tag.getInt("DenLandscapeVersion");
                   state.juniorHabitatOrigin = BlockPos.of(tag.getLong("JuniorHabitatOrigin"));
                   state.waterloggingCatalogSize = tag.getInt("WaterloggingCatalogSize");
                   state.legChamberVersion = tag.getInt("LegChamberVersion");
@@ -166,6 +167,7 @@ public final class CoreTestState extends SavedData {
     tag.putBoolean("NecromancerDenBuilt", necromancerDenBuilt);
     tag.putInt("DenAccessVersion", denAccessVersion);
     tag.putInt("DenFurnitureVersion", denFurnitureVersion);
+    tag.putInt("DenLandscapeVersion", denLandscapeVersion);
     tag.putLong("JuniorHabitatOrigin", juniorHabitatOrigin.asLong());
     tag.putInt("WaterloggingCatalogSize", waterloggingCatalogSize);
     tag.putInt("LegChamberVersion", legChamberVersion);

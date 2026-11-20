@@ -119,6 +119,7 @@ public final class NecromancerDenFixture {
     repairAccessAndLighting(l);
     EstateInteriors.library(l, s);
     EstateInteriors.rooms(l, s);
+    EstateLandscape.terrain(l, s);
     var state = CoreTestState.get(l);
     state.necromancerDenBuilt = true;
     state.setDirty();

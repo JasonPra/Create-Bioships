@@ -83,5 +83,7 @@ public final class DevelopmentWorldSetup {
       EstateInteriors.library(level, NecromancerDenFixture.surface(level));
     if (state.denFurnitureVersion < 2)
       EstateInteriors.rooms(level, NecromancerDenFixture.surface(level));
+    if (state.denLandscapeVersion < 1)
+      EstateLandscape.terrain(level, NecromancerDenFixture.surface(level));
   }
 }
