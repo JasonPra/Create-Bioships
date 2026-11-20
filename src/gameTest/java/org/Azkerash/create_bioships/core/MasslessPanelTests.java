@@ -19,18 +19,20 @@ public final class MasslessPanelTests {
   public static void panels_add_no_native_mass_buoyancy_hunger_or_oxygen_demand(GameTestHelper h) {
     var l = h.getLevel();
     var at = new BlockPos(8700, 100, 128);
-    for (int x = -2; x <= 12; x++)
+    for (int x = -2; x <= 12; x++) {
       for (int z = -2; z <= 10; z++) {
         l.setChunkForced((at.getX() + x) >> 4, (at.getZ() + z) >> 4, true);
         l.setBlock(at.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 2);
       }
+    }
     var cells = new ArrayList<BlockPos>();
-    for (int x = 0; x < 10; x++)
+    for (int x = 0; x < 10; x++) {
       for (int z = 0; z < 8; z++) {
         var p = at.offset(x, 0, z);
         cells.add(p);
         l.setBlock(p, ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState(), 3);
       }
+    }
     l.setBlock(at, ComponentRegistry.CORE.get().defaultBlockState(), 3);
     var b =
         SubLevelAssemblyHelper.assembleBlocks(

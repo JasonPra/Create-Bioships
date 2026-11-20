@@ -35,15 +35,17 @@ public final class WaterloggingFixtureTests {
     h.runAfterDelay(
         40,
         () -> {
-          for (int i = 0; i < list.size(); i++)
+          for (int i = 0; i < list.size(); i++) {
             if (net.minecraft.core.registries.BuiltInRegistries.BLOCK
                     .getKey(list.get(i))
                     .getNamespace()
                     .equals("create_bioships")
-                && list.get(i).defaultBlockState().hasProperty(BlockStateProperties.WATERLOGGED))
+                && list.get(i).defaultBlockState().hasProperty(BlockStateProperties.WATERLOGGED)) {
               h.assertTrue(
                   l.getBlockState(WaterloggingFixture.sample(l, i)).is(list.get(i)),
                   "Our waterloggable sample washed away: " + list.get(i));
+            }
+          }
           System.out.println(
               "WATERLOGGING_TANK_PASS samples=" + list.size() + " static=true swimming=true");
           h.succeed();

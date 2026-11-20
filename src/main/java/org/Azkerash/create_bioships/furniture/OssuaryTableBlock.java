@@ -28,7 +28,9 @@ public final class OssuaryTableBlock extends WaterloggedComponentBlock {
   public OssuaryTableBlock(Properties properties) {
     super(properties);
     var state = defaultBlockState();
-    for (var property : CONNECTIONS.values()) state = state.setValue(property, false);
+    for (var property : CONNECTIONS.values()) {
+      state = state.setValue(property, false);
+    }
     registerDefaultState(state);
   }
 
@@ -50,7 +52,7 @@ public final class OssuaryTableBlock extends WaterloggedComponentBlock {
   @Override
   public BlockState getStateForPlacement(BlockPlaceContext context) {
     var state = super.getStateForPlacement(context);
-    for (var entry : CONNECTIONS.entrySet())
+    for (var entry : CONNECTIONS.entrySet()) {
       state =
           state.setValue(
               entry.getValue(),
@@ -58,6 +60,7 @@ public final class OssuaryTableBlock extends WaterloggedComponentBlock {
                   .getLevel()
                   .getBlockState(context.getClickedPos().relative(entry.getKey()))
                   .is(this));
+    }
     return state;
   }
 
@@ -77,20 +80,22 @@ public final class OssuaryTableBlock extends WaterloggedComponentBlock {
   @Override
   public BlockState rotate(BlockState state, Rotation rotation) {
     var result = state;
-    for (var side : CONNECTIONS.keySet())
+    for (var side : CONNECTIONS.keySet()) {
       result =
           result.setValue(
               CONNECTIONS.get(rotation.rotate(side)), state.getValue(CONNECTIONS.get(side)));
+    }
     return result;
   }
 
   @Override
   public BlockState mirror(BlockState state, Mirror mirror) {
     var result = state;
-    for (var side : CONNECTIONS.keySet())
+    for (var side : CONNECTIONS.keySet()) {
       result =
           result.setValue(
               CONNECTIONS.get(mirror.mirror(side)), state.getValue(CONNECTIONS.get(side)));
+    }
     return result;
   }
 
@@ -98,14 +103,16 @@ public final class OssuaryTableBlock extends WaterloggedComponentBlock {
   public VoxelShape getShape(
       BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
     var shape = box(0, 12, 0, 16, 16, 16);
-    for (var northSouth : new Direction[] {Direction.NORTH, Direction.SOUTH})
-      for (var eastWest : new Direction[] {Direction.EAST, Direction.WEST})
+    for (var northSouth : new Direction[] {Direction.NORTH, Direction.SOUTH}) {
+      for (var eastWest : new Direction[] {Direction.EAST, Direction.WEST}) {
         if (!state.getValue(CONNECTIONS.get(northSouth))
             && !state.getValue(CONNECTIONS.get(eastWest))) {
           int x = eastWest == Direction.WEST ? 1 : 12;
           int z = northSouth == Direction.NORTH ? 1 : 12;
           shape = Shapes.or(shape, box(x, 0, z, x + 3, 12, z + 3));
         }
+      }
+    }
     return shape;
   }
 }

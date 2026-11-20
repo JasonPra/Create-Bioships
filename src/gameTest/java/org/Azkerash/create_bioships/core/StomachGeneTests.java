@@ -211,20 +211,30 @@ public final class StomachGeneTests {
       helper.assertTrue(
           Math.abs(successes - stomach.genes().extraComponentChance() * 100) < 250,
           "Unexpected component bonus frequency");
-      for (int slot = 0; slot < 27; slot++) stomach.setItem(slot, ItemStack.EMPTY);
+      for (int slot = 0; slot < 27; slot++) {
+        stomach.setItem(slot, ItemStack.EMPTY);
+      }
       stomach.enqueue(new ItemStack(Items.PORKCHOP), false);
-      for (int tick = 0; tick < 2000 && stomach.queued() > 0; tick++) stomach.advance();
+      for (int tick = 0; tick < 2000 && stomach.queued() > 0; tick++) {
+        stomach.advance();
+      }
       int paste = 0;
-      for (int slot = 9; slot < 27; slot++)
-        if (stomach.getItem(slot).is(StomachBlockEntity.paste()))
+      for (int slot = 9; slot < 27; slot++) {
+        if (stomach.getItem(slot).is(StomachBlockEntity.paste())) {
           paste += stomach.getItem(slot).getCount();
+        }
+      }
       helper.assertTrue(paste == tier + 1, "Meal did not guarantee upgraded paste yield");
-      for (int slot = 0; slot < 27; slot++) stomach.setItem(slot, ItemStack.EMPTY);
+      for (int slot = 0; slot < 27; slot++) {
+        stomach.setItem(slot, ItemStack.EMPTY);
+      }
       int restored = 0;
       for (int meal = 0; meal < 5; meal++) {
         SubLevelData.hunger(body, 0);
         stomach.setItem(9, new ItemStack(StomachBlockEntity.paste()));
-        for (int tick = 0; tick < StomachBlockEntity.EAT_TICKS; tick++) stomach.advance();
+        for (int tick = 0; tick < StomachBlockEntity.EAT_TICKS; tick++) {
+          stomach.advance();
+        }
         restored += SubLevelData.hunger(body);
         var nutritionState = stomach.state().save(level.registryAccess());
         stomach.state().load(nutritionState, level.registryAccess());

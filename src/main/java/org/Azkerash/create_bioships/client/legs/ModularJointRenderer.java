@@ -22,7 +22,7 @@ public final class ModularJointRenderer implements BlockEntityRenderer<ModularJo
       PARTS = new java.util.HashMap<>();
 
   static {
-    for (var kind : java.util.List.of("joint", "socket", "swivel"))
+    for (var kind : java.util.List.of("joint", "socket", "swivel")) {
       for (var part : java.util.List.of("base", "knuckle", "tip")) {
         String key = "limb_" + kind + "_" + part;
         PARTS.put(
@@ -30,6 +30,7 @@ public final class ModularJointRenderer implements BlockEntityRenderer<ModularJo
             net.minecraft.client.resources.model.ModelResourceLocation.standalone(
                 net.minecraft.resources.ResourceLocation.parse("create_bioships:block/" + key)));
       }
+    }
   }
 
   @SubscribeEvent
@@ -69,7 +70,9 @@ public final class ModularJointRenderer implements BlockEntityRenderer<ModularJo
       MultiBufferSource buffers,
       int light,
       int overlay) {
-    if (joint.getLevel() == null) return;
+    if (joint.getLevel() == null) {
+      return;
+    }
     var mc = Minecraft.getInstance();
     for (var part : parts(joint, partial)) {
       stack.pushPose();
@@ -94,10 +97,13 @@ public final class ModularJointRenderer implements BlockEntityRenderer<ModularJo
       stack.popPose();
     }
     var player = mc.player;
-    if (player == null || joint.getLevel() == null || !LimbPositionerActions.holding(player))
+    if (player == null || joint.getLevel() == null || !LimbPositionerActions.holding(player)) {
       return;
+    }
     var shape = joint.getBlockState().getShape(joint.getLevel(), joint.getBlockPos());
-    if (shape.isEmpty()) return;
+    if (shape.isEmpty()) {
+      return;
+    }
     LevelRenderer.renderLineBox(
         stack,
         buffers.getBuffer(RenderType.lines()),

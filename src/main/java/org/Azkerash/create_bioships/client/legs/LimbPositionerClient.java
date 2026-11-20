@@ -21,9 +21,13 @@ public final class LimbPositionerClient {
         || mc.screen != null
         || mc.level == null
         || !LimbPositionerActions.holding(mc.player)
-        || event.getScrollDeltaY() == 0) return;
+        || event.getScrollDeltaY() == 0) {
+      return;
+    }
     if (!(mc.hitResult instanceof BlockHitResult hit)
-        || !(mc.level.getBlockEntity(hit.getBlockPos()) instanceof ModularJointEntity)) return;
+        || !(mc.level.getBlockEntity(hit.getBlockPos()) instanceof ModularJointEntity)) {
+      return;
+    }
     int step = Screen.hasControlDown() ? 1 : 5;
     PacketDistributor.sendToServer(
         new LimbPositionerPayload(
@@ -37,7 +41,9 @@ public final class LimbPositionerClient {
     if (mc.player == null
         || mc.level == null
         || mc.screen != null
-        || !LimbPositionerActions.holding(mc.player)) return;
+        || !LimbPositionerActions.holding(mc.player)) {
+      return;
+    }
     if (mc.hitResult instanceof BlockHitResult hit
         && mc.level
             .getBlockState(hit.getBlockPos())
@@ -64,9 +70,10 @@ public final class LimbPositionerClient {
       return;
     }
     if (mc.hitResult instanceof BlockHitResult hit
-        && mc.level.getBlockEntity(hit.getBlockPos()) instanceof ModularJointEntity joint)
+        && mc.level.getBlockEntity(hit.getBlockPos()) instanceof ModularJointEntity joint) {
       mc.player.displayClientMessage(
           Component.translatable("item.create_bioships.limb_positioner.hint", joint.restOffset()),
           true);
+    }
   }
 }

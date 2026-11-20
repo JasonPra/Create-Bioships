@@ -39,7 +39,9 @@ public final class MembraneAccessSync {
 
   @SubscribeEvent
   public static void tick(net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) {
-    if (event.getServer().getTickCount() % 5 != 0) return;
+    if (event.getServer().getTickCount() % 5 != 0) {
+      return;
+    }
     VIEWERS.keySet().retainAll(event.getServer().getPlayerList().getPlayers());
     for (var player : event.getServer().getPlayerList().getPlayers()) {
       var old = VIEWERS.get(player);
@@ -47,13 +49,15 @@ public final class MembraneAccessSync {
           old == null || !old.dimension.equals(player.level().dimension())
               ? new HashMap<UUID, MembraneAccessPayload>()
               : old.known;
-      if (old != null && known != old.known)
-        for (var id : old.known.keySet())
+      if (old != null && known != old.known) {
+        for (var id : old.known.keySet()) {
           PacketDistributor.sendToPlayer(player, new MembraneAccessPayload(id, 0, List.of()));
+        }
+      }
       var present = new HashSet<UUID>();
       var container = SubLevelContainer.getContainer(player.serverLevel());
-      if (container != null)
-        for (var entry : container.getAllSubLevels())
+      if (container != null) {
+        for (var entry : container.getAllSubLevels()) {
           if (entry instanceof ServerSubLevel body
               && !body.isRemoved()
               && SubLevelData.isLiving(body)) {
@@ -65,21 +69,31 @@ public final class MembraneAccessSync {
                     Math.clamp(p.x, bounds.minX, bounds.maxX),
                     Math.clamp(p.y, bounds.minY, bounds.maxY),
                     Math.clamp(p.z, bounds.minZ, bounds.maxZ));
-            if (near.distanceToSqr(p) > 128 * 128) continue;
+            if (near.distanceToSqr(p) > 128 * 128) {
+              continue;
+            }
             var access = SubLevelPermissions.get(body);
             var ids = new ArrayList<UUID>();
-            if (access.owner() != null) ids.add(access.owner());
-            for (var allowed : access.allowed()) ids.add(allowed.id());
+            if (access.owner() != null) {
+              ids.add(access.owner());
+            }
+            for (var allowed : access.allowed()) {
+              ids.add(allowed.id());
+            }
             var snapshot = new MembraneAccessPayload(body.getUniqueId(), 2, List.copyOf(ids));
             present.add(body.getUniqueId());
-            if (!snapshot.equals(known.put(body.getUniqueId(), snapshot)))
+            if (!snapshot.equals(known.put(body.getUniqueId(), snapshot))) {
               PacketDistributor.sendToPlayer(player, snapshot);
+            }
           }
-      for (var id : new HashSet<>(known.keySet()))
+        }
+      }
+      for (var id : new HashSet<>(known.keySet())) {
         if (!present.contains(id)) {
           PacketDistributor.sendToPlayer(player, new MembraneAccessPayload(id, 0, List.of()));
           known.remove(id);
         }
+      }
       VIEWERS.put(player, new Viewer(player.level().dimension(), known));
     }
   }

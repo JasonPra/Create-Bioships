@@ -33,8 +33,9 @@ public final class ExhibitDisplayRenderer {
     if (replaying
         || !(display instanceof Display.TextDisplay)
         || display.getTags().stream()
-            .noneMatch(t -> t.startsWith("create_bioships:") || t.startsWith("create_bioships.")))
+            .noneMatch(t -> t.startsWith("create_bioships:") || t.startsWith("create_bioships."))) {
       return false;
+    }
     var pose = new PoseStack();
     pose.last().pose().set(original.last().pose());
     pose.last().normal().set(original.last().normal());
@@ -44,11 +45,17 @@ public final class ExhibitDisplayRenderer {
 
   @SubscribeEvent(priority = EventPriority.LOWEST)
   public static void render(RenderLevelStageEvent event) {
-    if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_SKY) PENDING.clear();
-    if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_BLOCK_ENTITIES) return;
+    if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_SKY) {
+      PENDING.clear();
+    }
+    if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_BLOCK_ENTITIES) {
+      return;
+    }
     replaying = true;
     try {
-      for (var render : PENDING) render.run();
+      for (var render : PENDING) {
+        render.run();
+      }
       Minecraft.getInstance().renderBuffers().bufferSource().endBatch();
     } finally {
       replaying = false;

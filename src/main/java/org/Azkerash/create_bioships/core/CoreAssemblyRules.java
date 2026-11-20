@@ -27,7 +27,9 @@ public final class CoreAssemblyRules {
 
   public static ServerSubLevel containing(ServerLevel level, BlockPos pos) {
     var container = SubLevelContainer.getContainer(level);
-    if (container == null || !container.inBounds(pos)) return null;
+    if (container == null || !container.inBounds(pos)) {
+      return null;
+    }
     var plot = container.getPlot(new ChunkPos(pos));
     return plot != null && plot.getSubLevel() instanceof ServerSubLevel body && !body.isRemoved()
         ? body
@@ -36,14 +38,19 @@ public final class CoreAssemblyRules {
 
   public static void mark(ServerLevel level, BlockPos core) {
     var body = containing(level, core);
-    if (body == null) return;
-    if (body.getUserDataTag() == null || !body.getUserDataTag().contains(SubLevelData.LIVING))
+    if (body == null) {
+      return;
+    }
+    if (body.getUserDataTag() == null || !body.getUserDataTag().contains(SubLevelData.LIVING)) {
       SubLevelData.living(body, true);
+    }
     var old = body.getUserDataTag();
     if (old != null
         && "amoeba".equals(old.getString(TYPE))
         && old.hasUUID(ID)
-        && old.getUUID(ID).equals(body.getUniqueId())) return;
+        && old.getUUID(ID).equals(body.getUniqueId())) {
+      return;
+    }
     var tag = old == null ? new CompoundTag() : old.copy();
     tag.putString(TYPE, "amoeba");
     tag.putUUID(ID, body.getUniqueId());
@@ -54,9 +61,13 @@ public final class CoreAssemblyRules {
   public static void changed(ServerLevel level, BlockPos core) {
     mark(level, core);
     var body = containing(level, core);
-    if (body == null) return;
+    if (body == null) {
+      return;
+    }
     var tag = body.getUserDataTag().copy();
-    if (!tag.contains(PRIMARY)) tag.putLong(PRIMARY, core.asLong());
+    if (!tag.contains(PRIMARY)) {
+      tag.putLong(PRIMARY, core.asLong());
+    }
     tag.putBoolean(CHECK, true);
     body.setUserDataTag(tag);
   }
@@ -68,17 +79,23 @@ public final class CoreAssemblyRules {
       var sections = chunk.getSections();
       for (int index = 0; index < sections.length; index++) {
         var section = sections[index];
-        if (!section.maybeHas(state -> state.is(ComponentRegistry.CORE.get()))) continue;
+        if (!section.maybeHas(state -> state.is(ComponentRegistry.CORE.get()))) {
+          continue;
+        }
         int floor = chunk.getSectionYFromSectionIndex(index) << 4;
-        for (int x = 0; x < 16; x++)
-          for (int y = 0; y < 16; y++)
-            for (int z = 0; z < 16; z++)
-              if (section.getBlockState(x, y, z).is(ComponentRegistry.CORE.get()))
+        for (int x = 0; x < 16; x++) {
+          for (int y = 0; y < 16; y++) {
+            for (int z = 0; z < 16; z++) {
+              if (section.getBlockState(x, y, z).is(ComponentRegistry.CORE.get())) {
                 result.add(
                     new BlockPos(
                         chunk.getPos().getMinBlockX() + x,
                         floor + y,
                         chunk.getPos().getMinBlockZ() + z));
+              }
+            }
+          }
+        }
       }
     }
     result.sort(Comparator.naturalOrder());
@@ -87,25 +104,34 @@ public final class CoreAssemblyRules {
 
   public static void reconcile(ServerLevel level, BlockPos core) {
     var body = containing(level, core);
-    if (body == null) return;
+    if (body == null) {
+      return;
+    }
     var tag = body.getUserDataTag();
     if (tag == null) {
       mark(level, core);
       tag = body.getUserDataTag();
     }
     // The usual single-core blink does not scan the grid. Extra loaded cores still self-detect.
-    if (tag.contains(PRIMARY) && !tag.getBoolean(CHECK) && tag.getLong(PRIMARY) == core.asLong())
+    if (tag.contains(PRIMARY) && !tag.getBoolean(CHECK) && tag.getLong(PRIMARY) == core.asLong()) {
       return;
+    }
     var positions = cores(body);
-    if (positions.isEmpty()) return;
+    if (positions.isEmpty()) {
+      return;
+    }
     var keeper = tag.contains(PRIMARY) ? BlockPos.of(tag.getLong(PRIMARY)) : positions.getFirst();
-    if (!positions.contains(keeper)) keeper = positions.getFirst();
+    if (!positions.contains(keeper)) {
+      keeper = positions.getFirst();
+    }
     tag = tag.copy();
     tag.putLong(PRIMARY, keeper.asLong());
     tag.putBoolean(CHECK, false);
     body.setUserDataTag(tag);
     for (var extra : positions) {
-      if (extra.equals(keeper)) continue;
+      if (extra.equals(keeper)) {
+        continue;
+      }
       var child =
           SubLevelAssemblyHelper.assembleBlocks(
               level, extra, List.of(extra), new BoundingBox3i(extra, extra));
@@ -146,34 +172,51 @@ public final class CoreAssemblyRules {
       net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) {
     for (var level : event.getServer().getAllLevels()) {
       var positions = PLAYER_PLACEMENTS.remove(level);
-      if (positions == null) continue;
+      if (positions == null) {
+        continue;
+      }
       var owners = PLACERS.remove(level);
       for (var pos : positions) {
-        if (!level.getBlockState(pos).is(ComponentRegistry.CORE.get())) continue;
+        if (!level.getBlockState(pos).is(ComponentRegistry.CORE.get())) {
+          continue;
+        }
         var body = containing(level, pos);
-        if (body != null) changed(level, pos);
-        else
+        if (body != null) {
+          changed(level, pos);
+        } else {
           body =
               SubLevelAssemblyHelper.assembleBlocks(
                   level, pos, List.of(pos), new BoundingBox3i(pos, pos));
-        if (body != null && owners != null)
+        }
+        if (body != null && owners != null) {
           org.Azkerash.create_bioships.core.access.SubLevelPermissions.assignIfUnowned(
               body, owners.get(pos));
+        }
       }
     }
   }
 
   private static boolean creatureSurface(net.minecraft.world.level.Level level, BlockPos pos) {
     var container = SubLevelContainer.getContainer(level);
-    if (container == null || !container.inBounds(pos)) return false;
+    if (container == null || !container.inBounds(pos)) {
+      return false;
+    }
     var plot = container.getPlot(new ChunkPos(pos));
-    if (plot == null) return false;
+    if (plot == null) {
+      return false;
+    }
     var body = plot.getSubLevel();
-    if (body instanceof ServerSubLevel) return isCreature(body);
+    if (body instanceof ServerSubLevel) {
+      return isCreature(body);
+    }
     // The client can reject the click before item prediction using its loaded core geometry.
-    for (var holder : plot.getLoadedChunks())
-      for (var section : holder.getChunk().getSections())
-        if (section.maybeHas(state -> state.is(ComponentRegistry.CORE.get()))) return true;
+    for (var holder : plot.getLoadedChunks()) {
+      for (var section : holder.getChunk().getSections()) {
+        if (section.maybeHas(state -> state.is(ComponentRegistry.CORE.get()))) {
+          return true;
+        }
+      }
+    }
     return false;
   }
 
@@ -181,7 +224,9 @@ public final class CoreAssemblyRules {
   public static void clicked(
       net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickBlock event) {
     if (!(event.getItemStack().getItem() instanceof net.minecraft.world.item.BlockItem item)
-        || BlockPlacementRules.allows(item.getBlock().defaultBlockState())) return;
+        || BlockPlacementRules.allows(item.getBlock().defaultBlockState())) {
+      return;
+    }
     var pos = event.getPos();
     var face = event.getFace();
     if (creatureSurface(event.getLevel(), pos)
@@ -196,6 +241,8 @@ public final class CoreAssemblyRules {
     if (event.getEntity() instanceof Player
         && event.getLevel() instanceof ServerLevel level
         && !BlockPlacementRules.allows(event.getPlacedBlock())
-        && isCreature(containing(level, event.getPos()))) event.setCanceled(true);
+        && isCreature(containing(level, event.getPos()))) {
+      event.setCanceled(true);
+    }
   }
 }

@@ -20,10 +20,12 @@ public record PathDebugPayload(
     if (points.size() > SubLevelPaths.MAX_POINTS
         || next < 0
         || (!points.isEmpty() && next >= points.size())
-        || points.isEmpty() && next != 0)
+        || points.isEmpty() && next != 0) {
       throw new IllegalArgumentException("Invalid path snapshot");
-    if (!finite(position) || points.stream().anyMatch(p -> !finite(p)))
+    }
+    if (!finite(position) || points.stream().anyMatch(p -> !finite(p))) {
       throw new IllegalArgumentException("Invalid path position");
+    }
   }
 
   private static boolean finite(Vec3 v) {
@@ -47,7 +49,9 @@ public record PathDebugPayload(
             b.writeEnum(p.mode);
             vector(b, p.position);
             b.writeVarInt(p.points.size());
-            for (var v : p.points) vector(b, v);
+            for (var v : p.points) {
+              vector(b, v);
+            }
             b.writeVarInt(p.next);
           },
           b -> {
@@ -55,10 +59,13 @@ public record PathDebugPayload(
             var mode = b.readEnum(SubLevelPathfinder.Mode.class);
             var pos = vector(b);
             int n = b.readVarInt();
-            if (n < 0 || n > SubLevelPaths.MAX_POINTS)
+            if (n < 0 || n > SubLevelPaths.MAX_POINTS) {
               throw new IllegalArgumentException("Invalid path count");
+            }
             var points = new ArrayList<Vec3>();
-            for (int i = 0; i < n; i++) points.add(vector(b));
+            for (int i = 0; i < n; i++) {
+              points.add(vector(b));
+            }
             return new PathDebugPayload(id, mode, pos, points, b.readVarInt());
           });
 

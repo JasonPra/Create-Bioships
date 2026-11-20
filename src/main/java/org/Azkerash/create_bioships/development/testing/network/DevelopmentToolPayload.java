@@ -31,12 +31,13 @@ public record DevelopmentToolPayload(boolean navigate) implements CustomPacketPa
         (p, c) ->
             c.enqueueWork(
                 () -> {
-                  if (c.flow() == net.minecraft.network.protocol.PacketFlow.CLIENTBOUND)
+                  if (c.flow() == net.minecraft.network.protocol.PacketFlow.CLIENTBOUND) {
                     org.Azkerash.create_bioships.client.development.DevelopmentToolkitScreen.open();
-                  else if (p.navigate
+                  } else if (p.navigate
                       && c.player() instanceof ServerPlayer server
-                      && DevelopmentToolkitItem.allowed(server))
+                      && DevelopmentToolkitItem.allowed(server)) {
                     DevelopmentNavigatorItem.open(server);
+                  }
                 }));
   }
 }

@@ -27,9 +27,11 @@ public final class EpicFightCompatibilityTests {
     var level = helper.getLevel();
     var origin = new BlockPos(272, 80, 128);
     level.setChunkForced(17, 8, true);
-    for (int x = -4; x <= 4; x++)
-      for (int z = -4; z <= 4; z++)
+    for (int x = -4; x <= 4; x++) {
+      for (int z = -4; z <= 4; z++) {
         level.setBlock(origin.offset(x, -2, z), Blocks.BEDROCK.defaultBlockState(), 3);
+      }
+    }
     helper.runAfterDelay(
         10,
         () -> {

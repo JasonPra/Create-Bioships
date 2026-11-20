@@ -12,6 +12,8 @@ public abstract class CreatureFootstepsMixin {
   private static void bioships$surfaceStep(
       Level level, TerrainProbe.Ground ground, float weight, LegRuntime leg, CallbackInfo ci) {
     if (org.Azkerash.create_bioships.compat.letitwalk.CreatureFootsteps.play(
-        level, ground, weight, leg)) ci.cancel();
+        level, ground, weight, leg)) {
+      ci.cancel();
+    }
   }
 }

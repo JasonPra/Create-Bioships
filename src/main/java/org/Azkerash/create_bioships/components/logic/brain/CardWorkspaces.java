@@ -15,7 +15,9 @@ public final class CardWorkspaces {
     int slot = hand == InteractionHand.MAIN_HAND ? player.getInventory().selected : 40;
     var stack = player.getInventory().getItem(slot);
     org.Azkerash.create_bioships.core.brain.program.PrivateCardBackups.restore(player, stack);
-    if (!ProgramCardData.editable(stack)) return false;
+    if (!ProgramCardData.editable(stack)) {
+      return false;
+    }
     var id = ProgramCardData.identify(stack);
     player.getInventory().setChanged();
     return open(player, new CardWorkspaceTarget.Held(player, slot, id));
@@ -26,19 +28,27 @@ public final class CardWorkspaces {
         || menu.containerId != menuId
         || !menu.stillValid(player)
         || slot < 0
-        || slot >= menu.capacity()) return false;
+        || slot >= menu.capacity()) {
+      return false;
+    }
     var memory = menu.serverMemory();
-    if (memory == null) return false;
+    if (memory == null) {
+      return false;
+    }
     var stack = memory.getItem(slot);
     org.Azkerash.create_bioships.core.brain.program.PrivateCardBackups.restore(player, stack);
-    if (!ProgramCardData.editable(stack)) return false;
+    if (!ProgramCardData.editable(stack)) {
+      return false;
+    }
     var id = ProgramCardData.identify(stack);
     memory.setChanged();
     return open(player, new CardWorkspaceTarget.Brain(memory, memory.port(), slot, id));
   }
 
   private static boolean open(ServerPlayer player, CardWorkspaceTarget target) {
-    if (!target.valid(player)) return false;
+    if (!target.valid(player)) {
+      return false;
+    }
     var identity = ProgramCardData.identity(target.card());
     var source = ProgramCardData.source(target.card());
     player.openMenu(
@@ -59,8 +69,12 @@ public final class CardWorkspaces {
         || menu.containerId != menuId
         || !menu.identity.equals(identity)
         || menu.target == null
-        || !menu.stillValid(player)) return false;
-    if (!ProgramCardData.saveDraft(menu.target.card(), source)) return false;
+        || !menu.stillValid(player)) {
+      return false;
+    }
+    if (!ProgramCardData.saveDraft(menu.target.card(), source)) {
+      return false;
+    }
     menu.target.changed();
     org.Azkerash.create_bioships.core.brain.program.PrivateCardBackups.remember(
         player, menu.target.card());
@@ -75,14 +89,20 @@ public final class CardWorkspaces {
         || menu.containerId != menuId
         || !menu.identity.equals(identity)
         || menu.target == null
-        || !menu.stillValid(player))
+        || !menu.stillValid(player)) {
       return new Written(false, "Card changed or access expired. Reopen the editor.");
-    if (!menu.allowCompile(player.level().getGameTime()))
+    }
+    if (!menu.allowCompile(player.level().getGameTime())) {
       return new Written(false, "Please wait a moment before compiling again.");
+    }
     var result = ProgramCompiler.compile(source);
-    if (!result.success()) return new Written(false, result.diagnostic().toString());
+    if (!result.success()) {
+      return new Written(false, result.diagnostic().toString());
+    }
     var card = ProgramCardData.compiledCopy(menu.target.card(), source);
-    if (card.isEmpty()) return new Written(false, "Unable to write this card.");
+    if (card.isEmpty()) {
+      return new Written(false, "Unable to write this card.");
+    }
     menu.target.replace(card);
     menu.target.changed();
     org.Azkerash.create_bioships.core.brain.program.PrivateCardBackups.remember(player, card);
@@ -97,12 +117,16 @@ public final class CardWorkspaces {
         || menu.containerId != menuId
         || !menu.identity.equals(identity)
         || menu.target == null
-        || !menu.stillValid(player))
+        || !menu.stillValid(player)) {
       return new ProgramBehavior.View("Access expired.", java.util.List.of());
-    if (!menu.allowPoll(player.level().getGameTime())) return null;
+    }
+    if (!menu.allowPoll(player.level().getGameTime())) {
+      return null;
+    }
     var body = menu.target.body();
-    if (body == null)
+    if (body == null) {
       return new ProgramBehavior.View("Held card: install in a brain to run.", java.util.List.of());
+    }
     return org.Azkerash.create_bioships.core.brain.behavior.BrainBehaviors.programView(
         body, menu.target.card());
   }

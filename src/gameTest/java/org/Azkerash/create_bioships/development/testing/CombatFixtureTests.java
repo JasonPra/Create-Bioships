@@ -101,10 +101,12 @@ public final class CombatFixtureTests {
           CombatFixture.toggleFailures(level, true);
           helper.assertTrue(state.combatFailurePage == 1, "Failure dropdown did not page");
           var labels = new java.util.ArrayList<net.minecraft.world.entity.Display.TextDisplay>();
-          for (var entity : level.getAllEntities())
+          for (var entity : level.getAllEntities()) {
             if (entity instanceof net.minecraft.world.entity.Display.TextDisplay display
-                && display.getTags().contains("create_bioships.combat_fixture.failure_label"))
+                && display.getTags().contains("create_bioships.combat_fixture.failure_label")) {
               labels.add(display);
+            }
+          }
           helper.assertTrue(
               labels.stream()
                   .anyMatch(
@@ -132,7 +134,9 @@ public final class CombatFixtureTests {
           dragon.aiStep();
           CombatFixture.contain(level, dragon);
           var box = dragon.getBoundingBox();
-          for (var part : dragon.getSubEntities()) box = box.minmax(part.getBoundingBox());
+          for (var part : dragon.getSubEntities()) {
+            box = box.minmax(part.getBoundingBox());
+          }
           helper.assertTrue(
               box.minX >= state.combatOrigin.getX() - 12
                   && box.maxX <= state.combatOrigin.getX() + 13

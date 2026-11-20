@@ -28,7 +28,9 @@ public final class CrabLegRenderer {
       POSES.clear();
       world = level;
     }
-    if (level == null) return;
+    if (level == null) {
+      return;
+    }
     var old = POSES.get(payload.body());
     POSES.put(
         payload.body(),
@@ -37,21 +39,29 @@ public final class CrabLegRenderer {
 
   @SubscribeEvent
   public static void render(RenderLevelStageEvent event) {
-    if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_BLOCK_ENTITIES) return;
+    if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_BLOCK_ENTITIES) {
+      return;
+    }
     var mc = Minecraft.getInstance();
     if (world != mc.level) {
       POSES.clear();
       world = mc.level;
     }
-    if (mc.level == null) return;
+    if (mc.level == null) {
+      return;
+    }
     var container = SubLevelContainer.getContainer(mc.level);
-    if (container == null) return;
+    if (container == null) {
+      return;
+    }
     POSES.entrySet().removeIf(e -> mc.level.getGameTime() - e.getValue().at > 40);
     var stack = event.getPoseStack();
     var camera = event.getCamera().getPosition();
     for (var snapshot : POSES.values()) {
       var body = container.getSubLevel(snapshot.current.body());
-      if (!(body instanceof ClientSubLevel client) || body.isRemoved()) continue;
+      if (!(body instanceof ClientSubLevel client) || body.isRemoved()) {
+        continue;
+      }
       var t = client.renderPose();
       stack.pushPose();
       stack.translate(
@@ -77,9 +87,13 @@ public final class CrabLegRenderer {
           new HashMap<
               net.minecraft.core.BlockPos,
               org.Azkerash.create_bioships.core.legs.SubLevelLegs.Pose>();
-      for (var old : snapshot.previous.poses()) previousPoses.put(old.cell(), old);
+      for (var old : snapshot.previous.poses()) {
+        previousPoses.put(old.cell(), old);
+      }
       for (var pose : snapshot.current.poses()) {
-        if (!mc.level.getBlockState(pose.cell()).is(ComponentRegistry.CRAB_LEG.get())) continue;
+        if (!mc.level.getBlockState(pose.cell()).is(ComponentRegistry.CRAB_LEG.get())) {
+          continue;
+        }
         var previous = previousPoses.getOrDefault(pose.cell(), pose);
         for (int i = 0; i < 3; i++) {
           var from =
@@ -154,7 +168,7 @@ public final class CrabLegRenderer {
     CrabLegMesh.render(stack, mc, size * 1.18, size * .7, light, hurt);
     stack.translate(0, -size * .15, 0);
     if (mc.player != null
-        && org.Azkerash.create_bioships.compat.letitwalk.LimbPositionerActions.holding(mc.player))
+        && org.Azkerash.create_bioships.compat.letitwalk.LimbPositionerActions.holding(mc.player)) {
       net.minecraft.client.renderer.LevelRenderer.renderLineBox(
           stack,
           mc.renderBuffers()
@@ -170,6 +184,7 @@ public final class CrabLegRenderer {
           .4f,
           1f,
           1f);
+    }
     stack.popPose();
   }
 
@@ -181,7 +196,9 @@ public final class CrabLegRenderer {
       float width,
       net.minecraft.client.renderer.RenderType hurt) {
     var delta = to.subtract(from);
-    if (delta.lengthSqr() < .00001) return;
+    if (delta.lengthSqr() < .00001) {
+      return;
+    }
     stack.pushPose();
     stack.translate(from.x, from.y, from.z);
     var direction =
@@ -190,7 +207,7 @@ public final class CrabLegRenderer {
     var world = mc.gameRenderer.getMainCamera().getBlockPosition();
     int light = net.minecraft.client.renderer.LevelRenderer.getLightColor(mc.level, world);
     CrabLegMesh.render(stack, mc, width, delta.length(), light, hurt);
-    if (mc.getEntityRenderDispatcher().shouldRenderHitBoxes())
+    if (mc.getEntityRenderDispatcher().shouldRenderHitBoxes()) {
       net.minecraft.client.renderer.LevelRenderer.renderLineBox(
           stack,
           mc.renderBuffers()
@@ -206,6 +223,7 @@ public final class CrabLegRenderer {
           1,
           1,
           1);
+    }
     stack.popPose();
   }
 }

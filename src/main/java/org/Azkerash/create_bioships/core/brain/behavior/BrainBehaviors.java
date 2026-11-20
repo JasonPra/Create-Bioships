@@ -38,7 +38,9 @@ public final class BrainBehaviors {
         && key.card() == card
         && ProgramCardData.executable(card)
         && key.fingerprint().equals(ProgramCardData.document(card).getString("CompiledHash"))
-        && active.behavior instanceof ProgramBehavior program) return program.view();
+        && active.behavior instanceof ProgramBehavior program) {
+      return program.view();
+    }
     return new ProgramBehavior.View(
         "Not running: select a compiled card in active brain memory.", java.util.List.of());
   }
@@ -54,8 +56,9 @@ public final class BrainBehaviors {
   private BrainBehaviors() {}
 
   public static void register(ResourceLocation id, Supplier<? extends BrainBehavior> factory) {
-    if (FACTORIES.putIfAbsent(id, factory) != null)
+    if (FACTORIES.putIfAbsent(id, factory) != null) {
       throw new IllegalArgumentException("Duplicate brain behavior: " + id);
+    }
   }
 
   public static ResourceLocation active(ServerSubLevel body) {
@@ -65,11 +68,15 @@ public final class BrainBehaviors {
 
   public static void discard(ServerSubLevel body) {
     var previous = ACTIVE.remove(body);
-    if (previous != null) previous.behavior.stop(body);
+    if (previous != null) {
+      previous.behavior.stop(body);
+    }
   }
 
   public static void advance(ServerSubLevel body) {
-    if (SubLevelCreatureParts.isPart(body)) return;
+    if (SubLevelCreatureParts.isPart(body)) {
+      return;
+    }
     ResourceLocation selected = null;
     Object key = null;
     String source = null;
@@ -102,7 +109,9 @@ public final class BrainBehaviors {
       ACTIVE.remove(body);
       previous = null;
     }
-    if (selected == null) return;
+    if (selected == null) {
+      return;
+    }
     if (previous == null) {
       BrainBehavior behavior =
           selected.equals(PROGRAM_ID) ? new ProgramBehavior(source) : FACTORIES.get(selected).get();
@@ -114,15 +123,24 @@ public final class BrainBehaviors {
 
   @SubscribeEvent
   public static void tick(net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) {
-    for (var body : java.util.List.copyOf(ACTIVE.keySet()))
-      if (body.isRemoved() || !SubLevelData.isLiving(body) || SubLevelHealth.status(body).dead())
+    for (var body : java.util.List.copyOf(ACTIVE.keySet())) {
+      if (body.isRemoved() || !SubLevelData.isLiving(body) || SubLevelHealth.status(body).dead()) {
         discard(body);
-    if (event.getServer().getTickCount() % 10 != 0) return;
+      }
+    }
+    if (event.getServer().getTickCount() % 10 != 0) {
+      return;
+    }
     for (var level : event.getServer().getAllLevels()) {
       var container = SubLevelContainer.getContainer(level);
-      if (container == null) continue;
-      for (var entry : container.getAllSubLevels())
-        if (entry instanceof ServerSubLevel body && SubLevelData.isLiving(body)) advance(body);
+      if (container == null) {
+        continue;
+      }
+      for (var entry : container.getAllSubLevels()) {
+        if (entry instanceof ServerSubLevel body && SubLevelData.isLiving(body)) {
+          advance(body);
+        }
+      }
     }
   }
 

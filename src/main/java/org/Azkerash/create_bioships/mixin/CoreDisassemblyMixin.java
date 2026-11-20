@@ -22,6 +22,8 @@ public abstract class CoreDisassemblyMixin {
       Rotation rotation,
       boolean sound,
       CallbackInfo callback) {
-    if (org.Azkerash.create_bioships.core.CoreAssemblyRules.isCreature(body)) callback.cancel();
+    if (org.Azkerash.create_bioships.core.CoreAssemblyRules.isCreature(body)) {
+      callback.cancel();
+    }
   }
 }

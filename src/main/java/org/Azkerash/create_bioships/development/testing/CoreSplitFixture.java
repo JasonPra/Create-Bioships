@@ -36,10 +36,15 @@ public final class CoreSplitFixture {
 
     public List<BlockPos> cores() {
       var result = new ArrayList<BlockPos>();
-      for (int r = 0; r <= PYRAMID_RADIUS; r++)
-        for (int x = -r; x <= r; x++)
-          for (int z = -r; z <= r; z++)
-            if (r == 0 || Math.abs(x) == r || Math.abs(z) == r) result.add(tip().offset(x, r, z));
+      for (int r = 0; r <= PYRAMID_RADIUS; r++) {
+        for (int x = -r; x <= r; x++) {
+          for (int z = -r; z <= r; z++) {
+            if (r == 0 || Math.abs(x) == r || Math.abs(z) == r) {
+              result.add(tip().offset(x, r, z));
+            }
+          }
+        }
+      }
       return List.copyOf(result);
     }
 
@@ -62,9 +67,13 @@ public final class CoreSplitFixture {
         level.getEntitiesOfClass(
             net.minecraft.world.entity.Display.TextDisplay.class,
             new AABB(position, position).inflate(4),
-            display -> display.getTags().contains(HOLOGRAM_TAG))) old.discard();
+            display -> display.getTags().contains(HOLOGRAM_TAG))) {
+      old.discard();
+    }
     var display = net.minecraft.world.entity.EntityType.TEXT_DISPLAY.create(level);
-    if (display == null) return;
+    if (display == null) {
+      return;
+    }
     var data = new net.minecraft.nbt.CompoundTag();
     data.putString(
         "text",
@@ -90,14 +99,18 @@ public final class CoreSplitFixture {
   public static void build(ServerLevel level, Layout layout) {
     var base = layout.base();
     // A regression fixture must keep running when the observer walks away.
-    for (int x = (base.getX() - 10) >> 4; x <= (base.getX() + 10) >> 4; x++)
-      for (int z = (base.getZ() - 15) >> 4; z <= (base.getZ() + 10) >> 4; z++)
+    for (int x = (base.getX() - 10) >> 4; x <= (base.getX() + 10) >> 4; x++) {
+      for (int z = (base.getZ() - 15) >> 4; z <= (base.getZ() + 10) >> 4; z++) {
         level.setChunkForced(x, z, true);
-    for (int x = -10; x <= 10; x++)
-      for (int z = -15; z <= 10; z++)
+      }
+    }
+    for (int x = -10; x <= 10; x++) {
+      for (int z = -15; z <= 10; z++) {
         level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 2);
-    for (int x = -RADIUS; x <= RADIUS; x++)
-      for (int z = -RADIUS; z <= RADIUS; z++)
+      }
+    }
+    for (int x = -RADIUS; x <= RADIUS; x++) {
+      for (int z = -RADIUS; z <= RADIUS; z++) {
         for (int y = 0; y <= HEIGHT; y++) {
           boolean shell = Math.abs(x) == RADIUS || Math.abs(z) == RADIUS || y == HEIGHT;
           level.setBlock(
@@ -105,10 +118,14 @@ public final class CoreSplitFixture {
               (shell ? DevelopmentTestBlocks.GLASS.get() : Blocks.AIR).defaultBlockState(),
               2);
         }
-    for (int y = 0; y < 4; y++)
+      }
+    }
+    for (int y = 0; y < 4; y++) {
       level.setBlock(base.above(y), Blocks.OAK_LOG.defaultBlockState(), 3);
-    for (var pos : layout.cores())
+    }
+    for (var pos : layout.cores()) {
       level.setBlock(pos, ComponentRegistry.CORE.get().defaultBlockState(), 3);
+    }
     var glue = new HoneyGlueEntity(level, layout.glue());
     level.addFreshEntity(glue);
     glue.setBoundsAndSync(layout.glue());

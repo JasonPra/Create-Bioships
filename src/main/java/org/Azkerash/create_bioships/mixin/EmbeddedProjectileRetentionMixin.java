@@ -11,6 +11,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class EmbeddedProjectileRetentionMixin {
   @Inject(method = "discard", at = @At("HEAD"), cancellable = true)
   private void core$retain(CallbackInfo callback) {
-    if (ProjectileAttachment.retain((Entity) (Object) this)) callback.cancel();
+    if (ProjectileAttachment.retain((Entity) (Object) this)) {
+      callback.cancel();
+    }
   }
 }

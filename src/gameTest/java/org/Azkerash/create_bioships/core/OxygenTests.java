@@ -75,9 +75,11 @@ public final class OxygenTests {
     h.assertTrue(
         SubLevelOxygen.breathing(b, gill), "Gill missed water outside the physical intake");
     l.setBlock(front, Blocks.AIR.defaultBlockState(), 3);
-    for (var face : Direction.values())
-      if (l.getBlockState(lung.relative(face)).isAir())
+    for (var face : Direction.values()) {
+      if (l.getBlockState(lung.relative(face)).isAir()) {
         l.setBlock(lung.relative(face), Blocks.STONE.defaultBlockState(), 3);
+      }
+    }
     h.assertTrue(
         SubLevelOxygen.breathing(b, lung), "Enclosed lung incorrectly required an exposed intake");
     h.succeed();
@@ -153,8 +155,9 @@ public final class OxygenTests {
     h.assertTrue(SubLevelData.oxygen(root).value() == 100, "Linked body simulated reserve twice");
     double demand = SubLevelOxygen.status(root).demand();
     var c = root.getPlot().getCenterBlock();
-    for (int x = 1; x <= 150; x++)
+    for (int x = 1; x <= 150; x++) {
       h.getLevel().setBlock(c.above(x), Blocks.IRON_BLOCK.defaultBlockState(), 3);
+    }
     h.assertTrue(
         SubLevelOxygen.status(root).demand() > demand, "Mass did not increase oxygen demand");
     SubLevelCreatureParts.detach(limb);
@@ -175,7 +178,9 @@ public final class OxygenTests {
             l, p.east(6), List.of(p.east(6)), new BoundingBox3i(p.east(6), p.east(6)));
     SubLevelCreatureParts.attach(root, part);
     var at = List.of(c.east(3), c.above(), part.getPlot().getCenterBlock());
-    for (var pos : at) l.setBlock(pos.north(), Blocks.WATER.defaultBlockState(), 3);
+    for (var pos : at) {
+      l.setBlock(pos.north(), Blocks.WATER.defaultBlockState(), 3);
+    }
     var before = SubLevelData.oxygen(root);
     SubLevelOxygen.animate(root, 12);
     for (var pos : at) {
@@ -204,26 +209,31 @@ public final class OxygenTests {
               && state.getValue(RespiratoryBlock.GASPING) == pos.equals(at.getFirst()),
           "Mixed wet/dry gills failed synchronized faster gasping");
     }
-    for (var pos : at) l.setBlock(pos.north(), Blocks.AIR.defaultBlockState(), 3);
+    for (var pos : at) {
+      l.setBlock(pos.north(), Blocks.AIR.defaultBlockState(), 3);
+    }
     SubLevelOxygen.animate(root, 12);
-    for (var pos : at)
+    for (var pos : at) {
       h.assertTrue(
           l.getBlockState(pos).getValue(RespiratoryBlock.GASPING),
           "All dry gills failed to gasp together without functional lungs");
+    }
     l.setBlock(
         c.east(), l.getBlockState(c.east()).setValue(BlockStateProperties.WATERLOGGED, false), 3);
     SubLevelOxygen.animate(root, 15);
-    for (var pos : at)
+    for (var pos : at) {
       h.assertTrue(
           l.getBlockState(pos).getValue(RespiratoryBlock.BREATH) == 0
               && !l.getBlockState(pos).getValue(RespiratoryBlock.GASPING),
           "Dry gill plates failed to close when lung breathing resumed");
+    }
     h.assertTrue(SubLevelData.oxygen(root).equals(before), "Cosmetic animation advanced oxygen");
     SubLevelHealth.damage(root, 10000, "test");
     SubLevelOxygen.animate(root, 15);
-    for (var pos : at)
+    for (var pos : at) {
       h.assertTrue(
           l.getBlockState(pos).getValue(RespiratoryBlock.BREATH) == 0, "Dead gills kept animating");
+    }
     h.succeed();
   }
 

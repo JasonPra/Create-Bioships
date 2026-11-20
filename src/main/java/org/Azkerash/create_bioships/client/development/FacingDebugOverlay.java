@@ -35,7 +35,9 @@ public final class FacingDebugOverlay {
 
   public static void toggle() {
     var mc = Minecraft.getInstance();
-    if (mc.player == null || mc.level == null || !DiagnosticAccess.allowed(mc.player)) return;
+    if (mc.player == null || mc.level == null || !DiagnosticAccess.allowed(mc.player)) {
+      return;
+    }
     enabled = !enabled;
     world = mc.level;
     ROUTES.clear();
@@ -46,9 +48,14 @@ public final class FacingDebugOverlay {
 
   public static void receive(FacingDebugPayload p) {
     var mc = Minecraft.getInstance();
-    if (!enabled || mc.level == null) return;
-    if (!p.visible()) ROUTES.remove(p.body());
-    else ROUTES.put(p.body(), new Sample(p, mc.level.getGameTime()));
+    if (!enabled || mc.level == null) {
+      return;
+    }
+    if (!p.visible()) {
+      ROUTES.remove(p.body());
+    } else {
+      ROUTES.put(p.body(), new Sample(p, mc.level.getGameTime()));
+    }
   }
 
   @SubscribeEvent
@@ -57,15 +64,22 @@ public final class FacingDebugOverlay {
     if (enabled && (mc.player == null || !DiagnosticAccess.allowed(mc.player))) {
       enabled = false;
       ROUTES.clear();
-      if (mc.getConnection() != null) PacketDistributor.sendToServer(new FacingDebugRequest(false));
+      if (mc.getConnection() != null) {
+        PacketDistributor.sendToServer(new FacingDebugRequest(false));
+      }
     }
     if (world != mc.level) {
       world = mc.level;
       ROUTES.clear();
-      if (world == null) enabled = false;
-      else if (enabled) PacketDistributor.sendToServer(new FacingDebugRequest(true));
+      if (world == null) {
+        enabled = false;
+      } else if (enabled) {
+        PacketDistributor.sendToServer(new FacingDebugRequest(true));
+      }
     }
-    if (world != null) ROUTES.values().removeIf(s -> world.getGameTime() - s.at() > 40);
+    if (world != null) {
+      ROUTES.values().removeIf(s -> world.getGameTime() - s.at() > 40);
+    }
   }
 
   private static void line(
@@ -77,18 +91,23 @@ public final class FacingDebugOverlay {
       float g,
       float blue) {
     var n = b.subtract(a).normalize();
-    for (var p : List.of(a, b))
+    for (var p : List.of(a, b)) {
       lines
           .addVertex(pose.last().pose(), (float) p.x, (float) p.y, (float) p.z)
           .setColor(r, g, blue, 1f)
           .setNormal(pose.last(), (float) n.x, (float) n.y, (float) n.z);
+    }
   }
 
   @SubscribeEvent
   public static void render(RenderLevelStageEvent e) {
-    if (!enabled || e.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) return;
+    if (!enabled || e.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) {
+      return;
+    }
     var mc = Minecraft.getInstance();
-    if (mc.level == null) return;
+    if (mc.level == null) {
+      return;
+    }
     var buffers = mc.renderBuffers().bufferSource();
     var lines = buffers.getBuffer(DevelopmentDebugRenderType.LINES);
     var pose = e.getPoseStack();
@@ -96,9 +115,13 @@ public final class FacingDebugOverlay {
     for (var sample : ROUTES.values()) {
       var p = sample.path();
       var container = dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(mc.level);
-      if (container == null) continue;
+      if (container == null) {
+        continue;
+      }
       if (!(container.getSubLevel(p.body())
-          instanceof dev.ryanhcode.sable.sublevel.ClientSubLevel body)) continue;
+          instanceof dev.ryanhcode.sable.sublevel.ClientSubLevel body)) {
+        continue;
+      }
       var direction = Vec3.atLowerCornerOf(p.front().getNormal());
       var right = direction.cross(new Vec3(0, 1, 0));
       var tip = p.origin().add(direction.scale(2));
@@ -131,8 +154,12 @@ public final class FacingDebugOverlay {
   @SubscribeEvent
   public static void legend(RenderGuiEvent.Post e) {
     if (Minecraft.getInstance().screen
-        instanceof org.Azkerash.create_bioships.client.equipment.SomaticResonatorScreen) return;
-    if (!enabled) return;
+        instanceof org.Azkerash.create_bioships.client.equipment.SomaticResonatorScreen) {
+      return;
+    }
+    if (!enabled) {
+      return;
+    }
     var mc = Minecraft.getInstance();
     int y = mc.getWindow().getGuiScaledHeight() - 102;
     e.getGuiGraphics()

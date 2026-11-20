@@ -14,9 +14,11 @@ public final class EstateInteriorTests {
       GameTestHelper h) {
     var l = h.getLevel();
     var base = new BlockPos(9500, 80, 256);
-    for (int x = -13; x <= 13; x++)
-      for (int z = -13; z <= 13; z++)
+    for (int x = -13; x <= 13; x++) {
+      for (int z = -13; z <= 13; z++) {
         l.setBlock(base.offset(x, 23, z), Blocks.STONE.defaultBlockState(), 2);
+      }
+    }
     var oldChest = base.offset(-8, 24, 9);
     l.setBlock(oldChest, Blocks.CHEST.defaultBlockState(), 3);
     ((net.minecraft.world.Container) l.getBlockEntity(oldChest))
@@ -46,10 +48,13 @@ public final class EstateInteriorTests {
   public static void rooms_have_supported_appliances_and_clear_stair_entry(GameTestHelper h) {
     var l = h.getLevel();
     var base = new BlockPos(9600, 80, 256);
-    for (int floor : new int[] {0, 12, 36})
-      for (int x = -12; x <= 12; x++)
-        for (int z = -12; z <= 12; z++)
+    for (int floor : new int[] {0, 12, 36}) {
+      for (int x = -12; x <= 12; x++) {
+        for (int z = -12; z <= 12; z++) {
           l.setBlock(base.offset(x, floor - 1, z), Blocks.STONE.defaultBlockState(), 2);
+        }
+      }
+    }
     // Model the real stair exit; furnishing must leave these two cells clear.
     EstateInteriors.rooms(l, base);
     var oven = base.offset(-10, 13, 2);

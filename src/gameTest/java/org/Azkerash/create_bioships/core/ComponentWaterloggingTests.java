@@ -36,8 +36,11 @@ public final class ComponentWaterloggingTests {
             ComponentRegistry.LIMB_FOOT.get(),
             ComponentRegistry.LAND_EYE.get(),
             ComponentRegistry.AQUATIC_EYE.get());
-    for (int cx = (base.getX() - 4) >> 4; cx <= (base.getX() + 40) >> 4; cx++)
-      for (int cz = 7; cz <= 9; cz++) l.setChunkForced(cx, cz, true);
+    for (int cx = (base.getX() - 4) >> 4; cx <= (base.getX() + 40) >> 4; cx++) {
+      for (int cz = 7; cz <= 9; cz++) {
+        l.setChunkForced(cx, cz, true);
+      }
+    }
     var player =
         new net.neoforged.neoforge.common.util.FakePlayer(
             l, new com.mojang.authlib.GameProfile(UUID.randomUUID(), "WetComponents"));
@@ -100,8 +103,11 @@ public final class ComponentWaterloggingTests {
       GameTestHelper h) {
     var l = h.getLevel();
     var base = new BlockPos(5760, 80, 128);
-    for (int cx = 359; cx <= 361; cx++)
-      for (int cz = 7; cz <= 9; cz++) l.setChunkForced(cx, cz, true);
+    for (int cx = 359; cx <= 361; cx++) {
+      for (int cz = 7; cz <= 9; cz++) {
+        l.setChunkForced(cx, cz, true);
+      }
+    }
     h.runAfterDelay(
         20,
         () -> {
@@ -143,17 +149,21 @@ public final class ComponentWaterloggingTests {
           h.runAfterDelay(
               40,
               () -> {
-                for (var p : List.of(core.east().north(), core.east(3).north()))
+                for (var p : List.of(core.east().north(), core.east(3).north())) {
                   h.assertTrue(
                       l.getBlockState(p).getBlock()
                               instanceof org.Azkerash.create_bioships.components.logic.eye.EyeBlock
                           && l.getBlockState(p).getValue(BlockStateProperties.WATERLOGGED),
                       "Assembly washed away an eye");
+                }
                 var destination = base.south(8);
-                for (int x = -1; x <= 4; x++)
-                  for (int z = -2; z <= 1; z++)
-                    for (int y = 0; y <= 2; y++)
+                for (int x = -1; x <= 4; x++) {
+                  for (int z = -2; z <= 1; z++) {
+                    for (int y = 0; y <= 2; y++) {
                       l.setBlock(destination.offset(x, y, z), Blocks.WATER.defaultBlockState(), 3);
+                    }
+                  }
+                }
                 dev.ryanhcode.sable.api.SubLevelAssemblyHelper.moveBlocks(
                     l,
                     new dev.ryanhcode.sable.api.SubLevelAssemblyHelper.AssemblyTransform(
@@ -162,13 +172,15 @@ public final class ComponentWaterloggingTests {
                 h.runAfterDelay(
                     40,
                     () -> {
-                      for (var p : List.of(destination.east().north(), destination.east(3).north()))
+                      for (var p :
+                          List.of(destination.east().north(), destination.east(3).north())) {
                         h.assertTrue(
                             l.getBlockState(p).getBlock()
                                     instanceof
                                     org.Azkerash.create_bioships.components.logic.eye.EyeBlock
                                 && l.getBlockState(p).getValue(BlockStateProperties.WATERLOGGED),
                             "Rebuilding into world water lost an eye");
+                      }
                       h.succeed();
                     });
               });

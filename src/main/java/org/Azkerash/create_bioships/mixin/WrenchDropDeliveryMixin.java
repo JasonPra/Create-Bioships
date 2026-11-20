@@ -17,6 +17,8 @@ public abstract class WrenchDropDeliveryMixin {
       at = @At("HEAD"),
       cancellable = true)
   private void core$dropInsteadOfInsert(ItemStack stack, CallbackInfo callback) {
-    if (BioshipWrenchItem.dropRemovalStack(player, stack)) callback.cancel();
+    if (BioshipWrenchItem.dropRemovalStack(player, stack)) {
+      callback.cancel();
+    }
   }
 }

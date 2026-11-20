@@ -23,10 +23,11 @@ public final class NameTagDisplayScreen extends AbstractContainerScreen<NameTagD
   @Override
   protected void init() {
     super.init();
-    for (int i = 0; i < 3; i++)
+    for (int i = 0; i < 3; i++) {
       sliders[i] =
           addRenderableWidget(
               new OffsetSlider(i, leftPos + 32, topPos + 73 + i * 21, menu.offsets.get(i)));
+    }
     addRenderableWidget(
         new OrganButton(
             leftPos + 164,
@@ -35,7 +36,9 @@ public final class NameTagDisplayScreen extends AbstractContainerScreen<NameTagD
             18,
             "Reset",
             button -> {
-              for (int i = 0; i < 3; i++) sliders[i].reset(i == 1 ? 24 : 0);
+              for (int i = 0; i < 3; i++) {
+                sliders[i].reset(i == 1 ? 24 : 0);
+              }
               send();
             }));
   }
@@ -100,7 +103,9 @@ public final class NameTagDisplayScreen extends AbstractContainerScreen<NameTagD
 
     @Override
     protected void applyValue() {
-      if (sliders[0] != null && sliders[1] != null && sliders[2] != null) send();
+      if (sliders[0] != null && sliders[1] != null && sliders[2] != null) {
+        send();
+      }
     }
   }
 
@@ -112,7 +117,9 @@ public final class NameTagDisplayScreen extends AbstractContainerScreen<NameTagD
     g.renderItem(
         ComponentRegistry.NAME_TAG_DISPLAYER.get().asItem().getDefaultInstance(), x + 12, y + 8);
     g.drawString(font, "Named tag", x + 42, y + 48, OrganScreenStyle.MUTED, false);
-    for (var slot : menu.slots) OrganScreenStyle.slot(g, x + slot.x, y + slot.y);
+    for (var slot : menu.slots) {
+      OrganScreenStyle.slot(g, x + slot.x, y + slot.y);
+    }
     g.drawCenteredString(
         font, "Local offsets · text stays upright", x + 114, y + 137, OrganScreenStyle.MUTED);
     OrganScreenStyle.divider(g, x + 12, y + 145, imageWidth - 24);

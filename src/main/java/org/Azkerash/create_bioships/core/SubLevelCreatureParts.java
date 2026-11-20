@@ -20,14 +20,20 @@ public final class SubLevelCreatureParts {
   }
 
   public static ServerSubLevel root(ServerSubLevel body) {
-    if (!isPart(body)) return body;
+    if (!isPart(body)) {
+      return body;
+    }
     var original = body;
     var seen = new HashSet<UUID>();
     var container = SubLevelContainer.getContainer(body.getLevel());
     for (int i = 0; i < 32; i++) {
       var tag = data(body);
-      if (!tag.hasUUID("Root")) return body;
-      if (!seen.add(body.getUniqueId()) || container == null) return original;
+      if (!tag.hasUUID("Root")) {
+        return body;
+      }
+      if (!seen.add(body.getUniqueId()) || container == null) {
+        return original;
+      }
       var found = container.getSubLevel(tag.getUUID("Root"));
       if (!(found instanceof ServerSubLevel parent) || parent.isRemoved()) {
         var retired = Retired.get(body.getLevel());
@@ -61,16 +67,21 @@ public final class SubLevelCreatureParts {
     var result = new ArrayList<ServerSubLevel>();
     result.add(owner);
     var container = SubLevelContainer.getContainer(owner.getLevel());
-    if (container == null) return List.copyOf(result);
-    for (String key : data(owner).getCompound("Members").getAllKeys())
+    if (container == null) {
+      return List.copyOf(result);
+    }
+    for (String key : data(owner).getCompound("Members").getAllKeys()) {
       try {
         var entry = container.getSubLevel(UUID.fromString(key));
         if (entry instanceof ServerSubLevel part
             && !part.isRemoved()
             && data(part).hasUUID("Root")
-            && data(part).getUUID("Root").equals(owner.getUniqueId())) result.add(part);
+            && data(part).getUUID("Root").equals(owner.getUniqueId())) {
+          result.add(part);
+        }
       } catch (IllegalArgumentException ignored) {
       }
+    }
     return List.copyOf(result);
   }
 
@@ -81,14 +92,17 @@ public final class SubLevelCreatureParts {
   public static int extraStomachCapacity(ServerSubLevel owner) {
     double capacity = 0;
     var entries = data(owner).getCompound("Members");
-    for (var key : entries.getAllKeys())
+    for (var key : entries.getAllKeys()) {
       capacity += finite(entries.getCompound(key).getDouble("Hunger"));
+    }
     return (int) Math.min(Integer.MAX_VALUE, capacity);
   }
 
   public static void stomachContribution(ServerSubLevel part, int capacity) {
     contribution(part, "Hunger", capacity);
-    if (available(part)) SubLevelHunger.refreshCapacity(root(part));
+    if (available(part)) {
+      SubLevelHunger.refreshCapacity(root(part));
+    }
   }
 
   public static double extraArmor(ServerSubLevel root) {
@@ -101,9 +115,12 @@ public final class SubLevelCreatureParts {
 
   public static void attach(ServerSubLevel owner, ServerSubLevel part) {
     owner = root(owner);
-    if (part == owner || part.getLevel() != owner.getLevel() || !available(owner)) return;
-    if (isPart(part) && root(part) != owner)
+    if (part == owner || part.getLevel() != owner.getLevel() || !available(owner)) {
+      return;
+    }
+    if (isPart(part) && root(part) != owner) {
       throw new IllegalArgumentException("Limb belongs to another creature");
+    }
     if (SubLevelHealth.blocks(part).stream()
         .anyMatch(
             p ->
@@ -113,11 +130,15 @@ public final class SubLevelCreatureParts {
                         net.minecraft.tags.TagKey.create(
                             net.minecraft.core.registries.Registries.BLOCK,
                             net.minecraft.resources.ResourceLocation.parse(
-                                "create_bioships:creature_cores")))))
+                                "create_bioships:creature_cores"))))) {
       throw new IllegalArgumentException("A living core cannot become a limb");
-    if (isPart(part) && root(part) == owner) return;
-    if (!data(part).getCompound("Members").isEmpty())
+    }
+    if (isPart(part) && root(part) == owner) {
+      return;
+    }
+    if (!data(part).getCompound("Members").isEmpty()) {
       throw new IllegalArgumentException("Cannot attach a creature with its own limbs");
+    }
     org.Azkerash.create_bioships.core.brain.behavior.BrainBehaviors.discard(part);
     org.Azkerash.create_bioships.core.brain.BrainMotorControls.stop(part);
     SubLevelHealth.status(owner);
@@ -145,8 +166,9 @@ public final class SubLevelCreatureParts {
   public static int extraLocomotion(ServerSubLevel owner) {
     int mask = 0;
     var entries = data(owner).getCompound("Members");
-    for (var key : entries.getAllKeys())
+    for (var key : entries.getAllKeys()) {
       mask |= (int) entries.getCompound(key).getDouble("Locomotion");
+    }
     return mask;
   }
 
@@ -155,7 +177,9 @@ public final class SubLevelCreatureParts {
   }
 
   private static void contribution(ServerSubLevel part, String key, double value) {
-    if (!isPart(part) || !available(part)) return;
+    if (!isPart(part) || !available(part)) {
+      return;
+    }
     var owner = root(part);
     var rootTag = owner.getUserDataTag().copy();
     var group = data(owner).copy();
@@ -163,13 +187,16 @@ public final class SubLevelCreatureParts {
     String id = part.getUniqueId().toString();
     var record = members.getCompound(id).copy();
     value = finite(value);
-    if (record.contains(key) && record.getDouble(key) == value) return;
+    if (record.contains(key) && record.getDouble(key) == value) {
+      return;
+    }
     record.putDouble(key, value);
     members.put(id, record);
     group.put("Members", members);
     double total = 0;
-    for (String member : members.getAllKeys())
+    for (String member : members.getAllKeys()) {
       total += finite(members.getCompound(member).getDouble(key));
+    }
     group.putDouble(key, total);
     group.putInt("Version", 1);
     rootTag.put(SubLevelData.PARTS, group);
@@ -178,7 +205,9 @@ public final class SubLevelCreatureParts {
 
   public static void healthContribution(ServerSubLevel part, double value) {
     contribution(part, "Health", value);
-    if (isPart(part) && available(part)) SubLevelHealth.refreshCapacity(root(part));
+    if (isPart(part) && available(part)) {
+      SubLevelHealth.refreshCapacity(root(part));
+    }
   }
 
   public static void armorContribution(ServerSubLevel part, double value) {
@@ -187,9 +216,13 @@ public final class SubLevelCreatureParts {
 
   /** Permanent severance removes capacity; the separated material remains a dead woundable body. */
   public static void detach(ServerSubLevel part) {
-    if (!isPart(part)) return;
+    if (!isPart(part)) {
+      return;
+    }
     var owner = root(part);
-    if (!isPart(part)) return;
+    if (!isPart(part)) {
+      return;
+    }
     var previousRoot = data(part).getUUID("Root");
     var tag = part.getUserDataTag().copy();
     tag.remove(SubLevelData.PARTS);
@@ -202,8 +235,9 @@ public final class SubLevelCreatureParts {
       group.put("Members", members);
       for (String key : List.of("Health", "Armor", "Locomotion")) {
         double total = 0;
-        for (String id : members.getAllKeys())
+        for (String id : members.getAllKeys()) {
           total += finite(members.getCompound(id).getDouble(key));
+        }
         group.putDouble(key, total);
       }
       rootTag.put(SubLevelData.PARTS, group);
@@ -236,39 +270,52 @@ public final class SubLevelCreatureParts {
   public static void sync(ServerSubLevel owner, Collection<ServerSubLevel> parts) {
     var desired = Collections.newSetFromMap(new IdentityHashMap<ServerSubLevel, Boolean>());
     desired.addAll(parts);
-    for (var part : parts) attach(owner, part);
-    for (var old : members(owner)) if (old != owner && !desired.contains(old)) detach(old);
+    for (var part : parts) {
+      attach(owner, part);
+    }
+    for (var old : members(owner)) {
+      if (old != owner && !desired.contains(old)) {
+        detach(old);
+      }
+    }
   }
 
   public static void removed(ServerSubLevel body) {
-    if (isPart(body)) detach(body);
-    else {
+    if (isPart(body)) {
+      detach(body);
+    } else {
       var pending = data(body).getCompound("Members");
       if (!pending.isEmpty()) {
         var retired = Retired.get(body.getLevel());
         pending = pending.copy();
         var health = SubLevelData.health(body);
-        for (var id : pending.getAllKeys())
+        for (var id : pending.getAllKeys()) {
           pending
               .getCompound(id)
               .putString("Cause", health.dead() ? health.causeOfDeath() : "owner_removed");
+        }
         retired.roots.put(body.getUniqueId().toString(), pending);
         retired.setDirty();
       }
-      for (var part : members(body)) if (part != body) detach(part);
+      for (var part : members(body)) {
+        if (part != body) {
+          detach(part);
+        }
+      }
     }
   }
 
   public static void died(ServerSubLevel owner) {
     org.Azkerash.create_bioships.core.trust.SubLevelTrustGains.cancelParticles(owner);
     var source = owner.getUserDataTag();
-    for (var part : members(owner))
+    for (var part : members(owner)) {
       if (part != owner) {
         var tag = part.getUserDataTag().copy();
         tag.put(SubLevelData.HEALTH, source.getCompound(SubLevelData.HEALTH).copy());
         tag.put(SubLevelData.STATE, source.getCompound(SubLevelData.STATE).copy());
         part.setUserDataTag(tag);
       }
+    }
   }
 
   /** Deletion differs from unloading: a later-loaded orphan remains a corpse. */
@@ -293,9 +340,13 @@ public final class SubLevelCreatureParts {
 
     void forget(UUID root, UUID member) {
       var pending = roots.getCompound(root.toString());
-      if (!pending.contains(member.toString())) return;
+      if (!pending.contains(member.toString())) {
+        return;
+      }
       pending.remove(member.toString());
-      if (pending.isEmpty()) roots.remove(root.toString());
+      if (pending.isEmpty()) {
+        roots.remove(root.toString());
+      }
       setDirty();
     }
 

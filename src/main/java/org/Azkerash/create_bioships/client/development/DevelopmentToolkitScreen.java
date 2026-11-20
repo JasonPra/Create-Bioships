@@ -65,6 +65,8 @@ public final class DevelopmentToolkitScreen extends Screen {
     g.fill(0, 0, width, height, 0x99000000);
     int y = (height - 249) / 2;
     g.drawCenteredString(font, title, width / 2, y + 12, 0xffffffff);
-    for (var widget : renderables) widget.render(g, mx, my, partial);
+    for (var widget : renderables) {
+      widget.render(g, mx, my, partial);
+    }
   }
 }

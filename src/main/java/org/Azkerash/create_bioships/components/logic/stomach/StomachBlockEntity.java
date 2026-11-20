@@ -62,7 +62,9 @@ public final class StomachBlockEntity extends OrganInventory implements IHaveGog
     if (level instanceof ServerLevel server) {
       var body = CoreAssemblyRules.containing(server, worldPosition);
       normalizePasteSlot();
-      if (body != null) SubLevelHunger.refreshCapacity(body);
+      if (body != null) {
+        SubLevelHunger.refreshCapacity(body);
+      }
     }
   }
 
@@ -115,10 +117,11 @@ public final class StomachBlockEntity extends OrganInventory implements IHaveGog
   @Override
   public ItemStack insert(ItemStack incoming, int first, int end, boolean simulate) {
     if (first <= PASTE_SLOT && end > PASTE_SLOT) {
-      if (!incoming.is(paste()))
+      if (!incoming.is(paste())) {
         return first < PASTE_SLOT
             ? super.insert(incoming, first, PASTE_SLOT, simulate)
             : incoming.copy();
+      }
       var rest = super.insert(incoming, PASTE_SLOT, PASTE_SLOT + 1, simulate);
       return rest.isEmpty() || first >= PASTE_SLOT
           ? rest
@@ -130,7 +133,9 @@ public final class StomachBlockEntity extends OrganInventory implements IHaveGog
   /** Preserve old inventories while moving a pre-existing component out of the reserved cell. */
   public void normalizePasteSlot() {
     var current = getItem(PASTE_SLOT);
-    if (current.isEmpty() || current.is(paste())) return;
+    if (current.isEmpty() || current.is(paste())) {
+      return;
+    }
     var remainder = super.insert(current, INPUT_SLOTS, PASTE_SLOT, false);
     if (remainder.getCount() != current.getCount()) {
       items().set(PASTE_SLOT, remainder);
@@ -151,7 +156,9 @@ public final class StomachBlockEntity extends OrganInventory implements IHaveGog
   }
 
   public int queued() {
-    if (level != null && level.isClientSide) return clientQueued;
+    if (level != null && level.isClientSide) {
+      return clientQueued;
+    }
     return items().subList(0, INPUT_SLOTS).stream().mapToInt(ItemStack::getCount).sum();
   }
 
@@ -215,7 +222,9 @@ public final class StomachBlockEntity extends OrganInventory implements IHaveGog
     if (level instanceof ServerLevel server) {
       var body = CoreAssemblyRules.containing(server, worldPosition);
       normalizePasteSlot();
-      if (body != null) SubLevelHunger.refreshCapacity(body);
+      if (body != null) {
+        SubLevelHunger.refreshCapacity(body);
+      }
     }
   }
 }

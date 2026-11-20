@@ -29,7 +29,9 @@ public final class DevelopmentWorldSetup {
   @SubscribeEvent
   public static void started(ServerStartedEvent event) {
     var level = event.getServer().overworld();
-    if (!isDevelopment(level)) return;
+    if (!isDevelopment(level)) {
+      return;
+    }
     var state = CoreTestState.get(level);
     if (!state.built) {
       var layout =
@@ -39,8 +41,9 @@ public final class DevelopmentWorldSetup {
       level.setDefaultSpawnPos(layout.base().offset(0, 0, -15), 0);
     }
     if (state.combatBuilt
-        && (state.combatOrigin.getX() != 1024 || state.combatOrigin.getZ() != 1024))
+        && (state.combatOrigin.getX() != 1024 || state.combatOrigin.getZ() != 1024)) {
       CombatFixture.relocate(level, new BlockPos(1024, state.layout().base().getY(), 1024));
+    }
     if (!state.potionBuilt) {
       state.potionOrigin = new BlockPos(256, state.layout().base().getY(), 0);
       PotionFixture.reset(level);
@@ -49,11 +52,21 @@ public final class DevelopmentWorldSetup {
       state.arrowOrigin = new BlockPos(128, state.layout().base().getY(), 0);
       CoreArrowFixture.reset(level);
     }
-    if (!state.visionBuilt) VisionFixture.reset(level);
-    if (!state.membraneBuilt) MembraneFixture.reset(level);
-    if (!state.brainBuilt) BrainFixture.reset(level);
-    if (!state.locomotionBuilt) LocomotionFixture.reset(level);
-    if (!state.modularLimbsBuilt) ModularLimbFixture.reset(level);
+    if (!state.visionBuilt) {
+      VisionFixture.reset(level);
+    }
+    if (!state.membraneBuilt) {
+      MembraneFixture.reset(level);
+    }
+    if (!state.brainBuilt) {
+      BrainFixture.reset(level);
+    }
+    if (!state.locomotionBuilt) {
+      LocomotionFixture.reset(level);
+    }
+    if (!state.modularLimbsBuilt) {
+      ModularLimbFixture.reset(level);
+    }
     if (state.legChamberVersion < 1) {
       DevelopmentLegChambers.build(level, LocomotionFixture.base(level), false, 7);
       DevelopmentLegChambers.build(level, ModularLimbFixture.base(level), false, 11);
@@ -67,8 +80,9 @@ public final class DevelopmentWorldSetup {
       DigestionFixture.reset(level);
     }
     if (!state.waterloggingBuilt
-        || state.waterloggingCatalogSize != WaterloggingFixture.catalog().size())
+        || state.waterloggingCatalogSize != WaterloggingFixture.catalog().size()) {
       WaterloggingFixture.install(level);
+    }
     DevelopmentHabitatFixtures.installAquarium(level);
     if (!state.combatBuilt) {
       state.combatOrigin = new BlockPos(1024, state.layout().base().getY(), 1024);
@@ -78,21 +92,32 @@ public final class DevelopmentWorldSetup {
       NecromancerDenFixture.build(level);
       DevelopmentJuniorFixture.install(level);
     }
-    if (state.denAccessVersion < 1) NecromancerDenFixture.repairAccessAndLighting(level);
-    if (state.denAccessVersion < 2) NecromancerDenFixture.repairStairContinuity(level);
-    if (state.denFurnitureVersion < 1)
+    if (state.denAccessVersion < 1) {
+      NecromancerDenFixture.repairAccessAndLighting(level);
+    }
+    if (state.denAccessVersion < 2) {
+      NecromancerDenFixture.repairStairContinuity(level);
+    }
+    if (state.denFurnitureVersion < 1) {
       EstateInteriors.library(level, NecromancerDenFixture.surface(level));
-    if (state.denFurnitureVersion < 2)
+    }
+    if (state.denFurnitureVersion < 2) {
       EstateInteriors.rooms(level, NecromancerDenFixture.surface(level));
-    if (state.denLandscapeVersion < 1)
+    }
+    if (state.denLandscapeVersion < 1) {
       EstateLandscape.terrain(level, NecromancerDenFixture.surface(level));
-    if (state.denLandscapeVersion < 2)
+    }
+    if (state.denLandscapeVersion < 2) {
       EstateWaterworks.build(level, NecromancerDenFixture.surface(level));
-    if (state.denLandscapeVersion < 3)
+    }
+    if (state.denLandscapeVersion < 3) {
       EstateRuins.build(level, NecromancerDenFixture.surface(level));
-    if (state.denLandscapeVersion < 4)
+    }
+    if (state.denLandscapeVersion < 4) {
       EstateGardens.build(level, NecromancerDenFixture.surface(level));
-    if (state.denFurnitureVersion < 4)
+    }
+    if (state.denFurnitureVersion < 4) {
       EstateInteriors.polish(level, NecromancerDenFixture.surface(level));
+    }
   }
 }

@@ -27,16 +27,22 @@ public final class FlipperTests {
       GameTestHelper h) {
     var l = h.getLevel();
     var origin = new BlockPos(7200, 80, 128);
-    for (int cx = 449; cx <= 451; cx++)
-      for (int cz = 7; cz <= 9; cz++) l.setChunkForced(cx, cz, true);
-    for (int x = -8; x <= 8; x++)
-      for (int z = -8; z <= 8; z++)
-        for (int y = -1; y <= 12; y++)
+    for (int cx = 449; cx <= 451; cx++) {
+      for (int cz = 7; cz <= 9; cz++) {
+        l.setChunkForced(cx, cz, true);
+      }
+    }
+    for (int x = -8; x <= 8; x++) {
+      for (int z = -8; z <= 8; z++) {
+        for (int y = -1; y <= 12; y++) {
           l.setBlock(
               origin.offset(x, y, z),
               (y == -1 || Math.abs(x) == 8 || Math.abs(z) == 8 ? Blocks.GLASS : Blocks.WATER)
                   .defaultBlockState(),
               2);
+        }
+      }
+    }
     h.runAfterDelay(
         20,
         () -> {
@@ -69,7 +75,9 @@ public final class FlipperTests {
           DevelopmentLifeSupport.pause(body);
           SubLevelFlippers.request(body);
           // Restore the volume removed by assembly, so the body is truly submerged in world space.
-          for (var cell : cells) l.setBlock(cell, Blocks.WATER.defaultBlockState(), 2);
+          for (var cell : cells) {
+            l.setBlock(cell, Blocks.WATER.defaultBlockState(), 2);
+          }
           var start = SubLevelPathfinder.position(body);
           h.runAfterDelay(
               60,
@@ -105,9 +113,10 @@ public final class FlipperTests {
                           be != null
                               && !be.points(1).equals(FlipperBlockEntity.rest(be.getBlockState())),
                           "Native rowing failed to animate paddle");
-                      for (var v : be.points(1))
+                      for (var v : be.points(1)) {
                         h.assertTrue(
                             Double.isFinite(v.x + v.y + v.z), "IK produced nonfinite paddle");
+                      }
                       l.removeBlock(p.east(2), false);
                       l.removeBlock(p.west(2), false);
                       h.runAfterDelay(

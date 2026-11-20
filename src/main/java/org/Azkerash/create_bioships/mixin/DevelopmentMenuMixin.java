@@ -14,8 +14,9 @@ public abstract class DevelopmentMenuMixin {
       int slot, int button, ClickType type, Player player, CallbackInfo callback) {
     if (DevelopmentLoadout.rejectsClick(
         (AbstractContainerMenu) (Object) this, slot, button, type, player)) {
-      if (player instanceof net.minecraft.server.level.ServerPlayer server)
+      if (player instanceof net.minecraft.server.level.ServerPlayer server) {
         DevelopmentLoadout.synchronize(server);
+      }
       callback.cancel();
     }
   }

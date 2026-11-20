@@ -47,11 +47,15 @@ public final class CompactLegCollisions {
               -Math.signum(x.y) * x.x * half - Math.signum(z.y) * z.x * half,
               -Math.abs(x.y) * half - Math.abs(z.y) * half,
               -Math.signum(x.y) * x.z * half - Math.signum(z.y) * z.z * half);
-      if (!owner.getLevel().hasChunkAt(BlockPos.containing(point))) continue;
+      if (!owner.getLevel().hasChunkAt(BlockPos.containing(point))) {
+        continue;
+      }
       var ground = TerrainProbe.down(owner.getLevel(), point.add(0, .15, 0), .35, owner);
       if (ground != null
           && TerrainProbe.standable(ground)
-          && Math.abs(point.y - ground.point().y) < .15) return true;
+          && Math.abs(point.y - ground.point().y) < .15) {
+        return true;
+      }
     }
     return false;
   }
@@ -62,13 +66,17 @@ public final class CompactLegCollisions {
     var result = new ArrayList<Box>();
     for (var pose : poses) {
       var state = body.getLevel().getBlockState(pose.cell());
-      if (!state.hasProperty(CrabLegBlock.HEIGHT)) continue;
+      if (!state.hasProperty(CrabLegBlock.HEIGHT)) {
+        continue;
+      }
       int height = state.getValue(CrabLegBlock.HEIGHT);
       for (int i = 0; i < 3; i++) {
         var a = body.logicalPose().transformPosition(pose.collisionEndpoints().get(i * 2));
         var b = body.logicalPose().transformPosition(pose.collisionEndpoints().get(i * 2 + 1));
         var d = b.subtract(a);
-        if (d.lengthSqr() < 1e-8) continue;
+        if (d.lengthSqr() < 1e-8) {
+          continue;
+        }
         var c = a.add(b).scale(.5);
         result.add(
             new Box(
@@ -116,7 +124,9 @@ public final class CompactLegCollisions {
           new Vector3d(1, 0, 0),
           new Vector3d(0, 1, 0),
           new Vector3d(0, 0, 1),
-          e)) return true;
+          e)) {
+        return true;
+      }
     }
     return false;
   }

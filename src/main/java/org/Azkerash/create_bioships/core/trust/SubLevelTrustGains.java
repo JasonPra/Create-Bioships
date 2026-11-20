@@ -16,14 +16,18 @@ public final class SubLevelTrustGains {
   }
 
   public static void add(ServerSubLevel body, double amount) {
-    if (!(amount > 0) || !Double.isFinite(amount) || !SubLevelCreatureParts.available(body)) return;
-    body = SubLevelCreatureParts.root(body);
-    if (body.isRemoved() || !SubLevelData.isLiving(body) || SubLevelHealth.status(body).dead())
+    if (!(amount > 0) || !Double.isFinite(amount) || !SubLevelCreatureParts.available(body)) {
       return;
+    }
+    body = SubLevelCreatureParts.root(body);
+    if (body.isRemoved() || !SubLevelData.isLiving(body) || SubLevelHealth.status(body).dead()) {
+      return;
+    }
     double before = SubLevelData.trust(body);
     SubLevelData.trust(body, before + amount);
-    if (SubLevelData.trust(body) > before)
+    if (SubLevelData.trust(body) > before) {
       PARTICLES.putIfAbsent(body, body.getLevel().getGameTime() + 5);
+    }
   }
 
   @net.neoforged.bus.api.SubscribeEvent
@@ -33,8 +37,12 @@ public final class SubLevelTrustGains {
         .removeIf(
             entry -> {
               var body = entry.getKey();
-              if (body.isRemoved() || SubLevelHealth.status(body).dead()) return true;
-              if (body.getLevel().getGameTime() < entry.getValue()) return false;
+              if (body.isRemoved() || SubLevelHealth.status(body).dead()) {
+                return true;
+              }
+              if (body.getLevel().getGameTime() < entry.getValue()) {
+                return false;
+              }
               var cells = SubLevelHealth.blocks(body);
               int count = Math.min(6, cells.size());
               for (int i = 0; i < count; i++) {

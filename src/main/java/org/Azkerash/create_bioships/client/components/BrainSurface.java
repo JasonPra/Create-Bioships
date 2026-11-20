@@ -28,14 +28,16 @@ final class BrainSurface {
             cells.stream().mapToInt(BlockPos::getY).max().orElse(0) - minimum.getY() + 1,
             cells.stream().mapToInt(BlockPos::getZ).max().orElse(0) - minimum.getZ() + 1);
     var result = new ArrayList<Quad>();
-    for (var cell : cells)
+    for (var cell : cells) {
       for (var face : Direction.values()) {
-        if (cells.contains(cell.relative(face))) continue;
+        if (cells.contains(cell.relative(face))) {
+          continue;
+        }
         var n = Vec3.atLowerCornerOf(face.getNormal());
         var right = face.getAxis() == Direction.Axis.X ? new Vec3(0, 0, 1) : new Vec3(1, 0, 0);
         var up = n.cross(right);
         var center = Vec3.atCenterOf(cell.subtract(minimum)).add(n.scale(.5));
-        for (int x = 0; x < 6; x++)
+        for (int x = 0; x < 6; x++) {
           for (int y = 0; y < 6; y++) {
             var a = vertex(center, right, up, x / 6d, y / 6d, n);
             var b = vertex(center, right, up, (x + 1) / 6d, y / 6d, n);
@@ -43,7 +45,9 @@ final class BrainSurface {
             var d = vertex(center, right, up, x / 6d, (y + 1) / 6d, n);
             result.add(new Quad(a, b, c, d));
           }
+        }
       }
+    }
     quads = List.copyOf(result);
   }
 
@@ -76,7 +80,9 @@ final class BrainSurface {
     var a = surface(logical.add(right.scale(.001))).subtract(point);
     var b = surface(logical.add(up.scale(.001))).subtract(point);
     var normal = a.cross(b).normalize();
-    if (normal.lengthSqr() < .01) normal = face;
+    if (normal.lengthSqr() < .01) {
+      normal = face;
+    }
     var relative = point.subtract(size.scale(.5));
     double flow =
         19 * relative.x / size.x

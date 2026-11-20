@@ -25,13 +25,14 @@ public final class ConstructMembranePhysicsTests {
     var walls = new ArrayList<ServerSubLevel>();
     for (int lane = 0; lane < 2; lane++) {
       var p = new BlockPos(8250 + lane * 24, 90, 128);
-      for (int x = -7; x <= 7; x++)
+      for (int x = -7; x <= 7; x++) {
         for (int z = -7; z <= 32; z++) {
           l.setChunkForced((p.getX() + x) >> 4, (p.getZ() + z) >> 4, true);
           l.setBlock(p.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 2);
         }
+      }
       var cells = new ArrayList<BlockPos>();
-      for (int x = -5; x <= 5; x++)
+      for (int x = -5; x <= 5; x++) {
         for (int y = 0; y < 4; y++) {
           var at = p.offset(x, y, 0);
           cells.add(at);
@@ -43,6 +44,7 @@ public final class ConstructMembranePhysicsTests {
                   .defaultBlockState(),
               3);
         }
+      }
       l.setBlock(p.offset(-4, 0, 0), ComponentRegistry.CORE.get().defaultBlockState(), 3);
       var wall =
           SubLevelAssemblyHelper.assembleBlocks(
@@ -59,7 +61,9 @@ public final class ConstructMembranePhysicsTests {
       craft.setName("Contact test craft");
       var owner = UUID.randomUUID();
       SubLevelPermissions.assignIfUnowned(wall, owner);
-      if (lane == 0) SubLevelPermissions.addConstruct(wall, owner, craft);
+      if (lane == 0) {
+        SubLevelPermissions.addConstruct(wall, owner, craft);
+      }
       var container = dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(l);
       container.addForceLoadTicket(
           wall,
@@ -77,13 +81,14 @@ public final class ConstructMembranePhysicsTests {
         () -> {
           ticks[0]++;
           for (var craft : crafts) {
-            if (craft.isRemoved())
+            if (craft.isRemoved()) {
               throw new IllegalStateException(
                   "Contact craft removed tick="
                       + ticks[0]
                       + " health="
                       + SubLevelHealth.status(craft));
-            if (ticks[0] % 25 == 0)
+            }
+            if (ticks[0] % 25 == 0) {
               System.out.println(
                   "CONTACT_TICK t="
                       + ticks[0]
@@ -91,8 +96,11 @@ public final class ConstructMembranePhysicsTests {
                       + craft
                           .logicalPose()
                           .transformPosition(Vec3.atCenterOf(craft.getPlot().getCenterBlock())));
+            }
             var handle = RigidBodyHandle.of(craft);
-            if (handle == null) continue;
+            if (handle == null) {
+              continue;
+            }
             double v = handle.getLinearVelocity(new Vector3d()).z;
             handle.applyLinearImpulse(
                 new Vector3d(0, 0, craft.getMassTracker().getMass() * Math.clamp(3 - v, -2, 2)));

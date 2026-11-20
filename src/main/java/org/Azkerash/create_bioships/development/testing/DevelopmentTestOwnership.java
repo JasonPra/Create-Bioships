@@ -14,30 +14,41 @@ public final class DevelopmentTestOwnership {
 
   public static void assign(ServerSubLevel body) {
     var level = body.getLevel();
-    if (!DevelopmentWorldSetup.isDevelopment(level)) return;
+    if (!DevelopmentWorldSetup.isDevelopment(level)) {
+      return;
+    }
     var owner = CoreTestState.get(level).developmentOwner;
-    if (owner != null) SubLevelPermissions.assignIfUnowned(body, owner);
+    if (owner != null) {
+      SubLevelPermissions.assignIfUnowned(body, owner);
+    }
   }
 
   @SubscribeEvent
   public static void joined(
       net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent event) {
-    if (!(event.getEntity() instanceof ServerPlayer player)) return;
+    if (!(event.getEntity() instanceof ServerPlayer player)) {
+      return;
+    }
     var level = player.getServer().overworld();
-    if (!DevelopmentWorldSetup.isDevelopment(level)) return;
+    if (!DevelopmentWorldSetup.isDevelopment(level)) {
+      return;
+    }
     var state = CoreTestState.get(level);
     if (state.developmentOwner == null) {
       state.developmentOwner = player.getUUID();
       state.setDirty();
     }
     var container = SubLevelContainer.getContainer(level);
-    if (container != null)
-      for (var entry : container.getAllSubLevels())
+    if (container != null) {
+      for (var entry : container.getAllSubLevels()) {
         if (entry instanceof ServerSubLevel body
             && body.getUserDataTag() != null
             && (state.owned.contains(body.getUniqueId())
                 || body.getUserDataTag().getAllKeys().stream()
-                    .anyMatch(k -> k.startsWith("create_bioships") && k.contains("fixture"))))
+                    .anyMatch(k -> k.startsWith("create_bioships") && k.contains("fixture")))) {
           assign(body);
+        }
+      }
+    }
   }
 }

@@ -46,13 +46,15 @@ public final class WaterloggingFixture {
     var entries = catalog();
     int back = ((entries.size() + COLUMNS - 1) / COLUMNS) * SPACING + 3;
     var base = base(level);
-    for (int cx = (base.getX() - HALF_WIDTH) >> 4; cx <= (base.getX() + HALF_WIDTH) >> 4; cx++)
-      for (int cz = (base.getZ() - 4) >> 4; cz <= (base.getZ() + back) >> 4; cz++)
+    for (int cx = (base.getX() - HALF_WIDTH) >> 4; cx <= (base.getX() + HALF_WIDTH) >> 4; cx++) {
+      for (int cz = (base.getZ() - 4) >> 4; cz <= (base.getZ() + back) >> 4; cz++) {
         level.setChunkForced(cx, cz, true);
-    for (int x = -HALF_WIDTH; x <= HALF_WIDTH; x++)
+      }
+    }
+    for (int x = -HALF_WIDTH; x <= HALF_WIDTH; x++) {
       for (int z = -4; z <= back; z++) {
         level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 2);
-        for (int y = 0; y <= HEIGHT; y++)
+        for (int y = 0; y <= HEIGHT; y++) {
           level.setBlock(
               base.offset(x, y, z),
               (Math.abs(x) == HALF_WIDTH || z == -4 || z == back || y == HEIGHT
@@ -60,9 +62,11 @@ public final class WaterloggingFixture {
                       : y <= 5 ? Blocks.WATER : Blocks.AIR)
                   .defaultBlockState(),
               2);
+        }
       }
-    for (int x = 0; x <= 1; x++)
-      for (var half : DoubleBlockHalf.values())
+    }
+    for (int x = 0; x <= 1; x++) {
+      for (var half : DoubleBlockHalf.values()) {
         level.setBlock(
             base.offset(x, half == DoubleBlockHalf.LOWER ? 0 : 1, -4),
             DevelopmentTestBlocks.GLASS_DOOR
@@ -72,6 +76,8 @@ public final class WaterloggingFixture {
                 .setValue(DoorBlock.HINGE, x == 0 ? DoorHingeSide.LEFT : DoorHingeSide.RIGHT)
                 .setValue(DoorBlock.HALF, half),
             3);
+      }
+    }
     var player =
         new net.neoforged.neoforge.common.util.FakePlayer(
             level,
@@ -97,9 +103,12 @@ public final class WaterloggingFixture {
         state = block.getStateForPlacement(context);
       } catch (RuntimeException ignored) {
       }
-      if (state == null) state = block.defaultBlockState();
-      if (state.hasProperty(BlockStateProperties.WATERLOGGED))
+      if (state == null) {
+        state = block.defaultBlockState();
+      }
+      if (state.hasProperty(BlockStateProperties.WATERLOGGED)) {
         state = state.setValue(BlockStateProperties.WATERLOGGED, true);
+      }
       for (var support :
           List.of(
               flesh,
@@ -107,17 +116,22 @@ public final class WaterloggingFixture {
               Blocks.MYCELIUM.defaultBlockState(),
               Blocks.SOUL_SOIL.defaultBlockState())) {
         level.setBlock(pos.below(), support, 3);
-        if (state.canSurvive(level, pos)) break;
+        if (state.canSurvive(level, pos)) {
+          break;
+        }
       }
       boolean valid = state.canSurvive(level, pos);
-      if (!valid) unsupported++;
+      if (!valid) {
+        unsupported++;
+      }
       level.setBlock(pos, state, 3);
       if (state.hasProperty(BlockStateProperties.DOUBLE_BLOCK_HALF)
-          && state.getValue(BlockStateProperties.DOUBLE_BLOCK_HALF) == DoubleBlockHalf.LOWER)
+          && state.getValue(BlockStateProperties.DOUBLE_BLOCK_HALF) == DoubleBlockHalf.LOWER) {
         level.setBlock(
             pos.above(),
             state.setValue(BlockStateProperties.DOUBLE_BLOCK_HALF, DoubleBlockHalf.UPPER),
             3);
+      }
       label(
           level,
           Vec3.atCenterOf(pos).add(0, 1.3, 0),
@@ -143,7 +157,9 @@ public final class WaterloggingFixture {
 
   private static void label(ServerLevel level, Vec3 at, String text, int width) {
     var display = EntityType.TEXT_DISPLAY.create(level);
-    if (display == null) return;
+    if (display == null) {
+      return;
+    }
     var tag = new CompoundTag();
     tag.putString(
         "text", Component.Serializer.toJson(Component.literal(text), level.registryAccess()));

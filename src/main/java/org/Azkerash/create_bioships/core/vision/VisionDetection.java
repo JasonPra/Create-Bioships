@@ -44,8 +44,9 @@ public final class VisionDetection {
   }
 
   private static UUID creature(LivingEntity entity) {
-    if (entity instanceof SubLevelCombatTarget target && target.body() != null)
+    if (entity instanceof SubLevelCombatTarget target && target.body() != null) {
       return SubLevelCreatureParts.root(target.body()).getUniqueId();
+    }
     return null;
   }
 
@@ -68,16 +69,21 @@ public final class VisionDetection {
       if (entity instanceof SubLevelCombatTarget target
           && (target.body() == null
               || owner.getUniqueId().equals(construct)
-              || SubLevelHealth.status(target.body()).dead())) continue;
-      if (samples(entity, origin).stream().noneMatch(p -> inside(origin, forward, p, range)))
+              || SubLevelHealth.status(target.body()).dead())) {
         continue;
+      }
+      if (samples(entity, origin).stream().noneMatch(p -> inside(origin, forward, p, range))) {
+        continue;
+      }
       candidates.putIfAbsent(construct == null ? entity.getUUID() : construct, entity);
     }
     long now = body.getLevel().getGameTime();
     var observations = new LinkedHashMap<UUID, Observation>();
-    for (var seen : previous)
-      if (now - seen.tick() <= 40 && candidates.containsKey(seen.key()))
+    for (var seen : previous) {
+      if (now - seen.tick() <= 40 && candidates.containsKey(seen.key())) {
         observations.put(seen.key(), seen);
+      }
+    }
     var entries = new ArrayList<>(candidates.entrySet());
     int count = Math.min(TARGETS_PER_REFRESH, entries.size());
     for (int i = 0; i < count; i++) {
@@ -85,7 +91,9 @@ public final class VisionDetection {
       var entity = candidate.getValue();
       Observation visible = null;
       for (var point : samples(entity, origin)) {
-        if (!inside(origin, forward, point, range)) continue;
+        if (!inside(origin, forward, point, range)) {
+          continue;
+        }
         var delta = point.subtract(origin);
         double distance = delta.length();
         var ray =
@@ -106,8 +114,11 @@ public final class VisionDetection {
           break;
         }
       }
-      if (visible == null) observations.remove(candidate.getKey());
-      else observations.put(candidate.getKey(), visible);
+      if (visible == null) {
+        observations.remove(candidate.getKey());
+      } else {
+        observations.put(candidate.getKey(), visible);
+      }
     }
     return new Scan(
         List.copyOf(observations.values()),

@@ -101,7 +101,9 @@ public final class ProgramCardData {
   public static UUID identify(ItemStack stack) {
     var id = identity(stack);
     if (id != null) {
-      if (stack.get(PRIVATE_PROGRAM.get()) == null) write(stack, document(stack));
+      if (stack.get(PRIVATE_PROGRAM.get()) == null) {
+        write(stack, document(stack));
+      }
       return id;
     }
     id = UUID.randomUUID();
@@ -112,11 +114,15 @@ public final class ProgramCardData {
   }
 
   public static boolean saveDraft(ItemStack stack, String source) {
-    if (!editable(stack) || source == null || source.length() > MAX_SOURCE) return false;
+    if (!editable(stack) || source == null || source.length() > MAX_SOURCE) {
+      return false;
+    }
     var d = document(stack);
     d.putInt("Version", 1);
     d.putString("Language", "csharp");
-    if (!source.equals(d.getString("Source"))) d.putBoolean("Compiled", false);
+    if (!source.equals(d.getString("Source"))) {
+      d.putBoolean("Compiled", false);
+    }
     d.putString("Source", source);
     write(stack, d);
     return true;
@@ -124,7 +130,9 @@ public final class ProgramCardData {
 
   /** The server compiler must accept the exact source before this is called. */
   public static ItemStack compiledCopy(ItemStack original, String source) {
-    if (!editable(original) || !ProgramCompiler.compile(source).success()) return ItemStack.EMPTY;
+    if (!editable(original) || !ProgramCompiler.compile(source).success()) {
+      return ItemStack.EMPTY;
+    }
     var result = original.transmuteCopy(ComponentRegistry.PROGRAM_BEHAVIOR_CARD.get(), 1);
     identify(result);
     saveDraft(result, source);
@@ -136,8 +144,9 @@ public final class ProgramCardData {
   }
 
   public static boolean executable(ItemStack stack) {
-    if (!stack.is(ComponentRegistry.PROGRAM_BEHAVIOR_CARD.get()) || stack.getCount() != 1)
+    if (!stack.is(ComponentRegistry.PROGRAM_BEHAVIOR_CARD.get()) || stack.getCount() != 1) {
       return false;
+    }
     var d = document(stack);
     String source = d.getString("Source");
     return d.getBoolean("Compiled")
@@ -161,8 +170,9 @@ public final class ProgramCardData {
 
   private static void write(ItemStack stack, CompoundTag document) {
     var previous = stack.get(PRIVATE_PROGRAM.get());
-    if (previous == null || !previous.copyTag().equals(document) || !document.hasUUID("Revision"))
+    if (previous == null || !previous.copyTag().equals(document) || !document.hasUUID("Revision")) {
       document.putUUID("Revision", UUID.randomUUID());
+    }
     stack.set(PRIVATE_PROGRAM.get(), CustomData.of(document));
     var legacy = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
     if (legacy.contains(KEY)) {

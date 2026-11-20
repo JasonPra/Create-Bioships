@@ -67,14 +67,22 @@ public final class ProgramCompiler {
       expect(")");
       block();
       expect("}");
-    } else while (!atEnd()) statement();
-    if (!atEnd()) fail(peek(), "Only one Program.Main entry point is supported.");
+    } else {
+      while (!atEnd()) {
+        statement();
+      }
+    }
+    if (!atEnd()) {
+      fail(peek(), "Only one Program.Main entry point is supported.");
+    }
     emit(Op.HALT, null, peek());
     return new CerebralProgram(code, locals);
   }
 
   private void enter() {
-    if (++depth > ProgramLimits.NESTING) fail(peek(), "Parser nesting limit exceeded.");
+    if (++depth > ProgramLimits.NESTING) {
+      fail(peek(), "Parser nesting limit exceeded.");
+    }
   }
 
   private void leave() {
@@ -84,7 +92,9 @@ public final class ProgramCompiler {
   private void block() {
     expect("{");
     scopes.push(new HashMap<>());
-    while (!check("}") && !atEnd()) statement();
+    while (!check("}") && !atEnd()) {
+      statement();
+    }
     expect("}");
     scopes.pop();
   }
@@ -92,12 +102,16 @@ public final class ProgramCompiler {
   private void statement() {
     enter();
     try {
-      if (check("class")) fail(peek(), "Choose top-level statements or Program.Main, not both.");
+      if (check("class")) {
+        fail(peek(), "Choose top-level statements or Program.Main, not both.");
+      }
       if (check("{")) {
         block();
         return;
       }
-      if (match(";")) return;
+      if (match(";")) {
+        return;
+      }
       if (match("if")) {
         conditional();
         return;
@@ -118,11 +132,15 @@ public final class ProgramCompiler {
         Token jump = previous();
         expect(";");
         if (jump.text().equals("break")) {
-          if (controls.isEmpty()) fail(jump, "Break requires an enclosing loop or switch.");
+          if (controls.isEmpty()) {
+            fail(jump, "Break requires an enclosing loop or switch.");
+          }
           controls.peek().breaks().add(emit(Op.JUMP, -1, jump));
         } else {
           var loop = controls.stream().filter(control -> control.continueAt() >= 0).findFirst();
-          if (loop.isEmpty()) fail(jump, "Continue requires an enclosing loop.");
+          if (loop.isEmpty()) {
+            fail(jump, "Continue requires an enclosing loop.");
+          }
           emit(Op.JUMP, loop.orElseThrow().continueAt(), jump);
         }
         return;
@@ -140,7 +158,9 @@ public final class ProgramCompiler {
   }
 
   private void embedded() {
-    if (typeStart()) fail(peek(), "Put local declarations inside a block.");
+    if (typeStart()) {
+      fail(peek(), "Put local declarations inside a block.");
+    }
     scopes.push(new HashMap<>());
     statement();
     scopes.pop();
@@ -158,7 +178,9 @@ public final class ProgramCompiler {
       patch(no, code.size());
       embedded();
       patch(end, code.size());
-    } else patch(no, code.size());
+    } else {
+      patch(no, code.size());
+    }
   }
 
   private void whileLoop() {
@@ -180,17 +202,24 @@ public final class ProgramCompiler {
     Token start = previous();
     scopes.push(new HashMap<>());
     expect("(");
-    if (!check(";")) simple();
+    if (!check(";")) {
+      simple();
+    }
     expect(";");
     int condition = code.size();
-    if (!check(";")) require(expression(), Type.BOOL, start);
-    else emit(Op.PUSH, true, start);
+    if (!check(";")) {
+      require(expression(), Type.BOOL, start);
+    } else {
+      emit(Op.PUSH, true, start);
+    }
     expect(";");
     int end = emit(Op.FALSE, -1, start);
     int body = emit(Op.JUMP, -1, start);
     int increment = code.size();
     if (!check(")")) {
-      if (typeStart()) fail(peek(), "For increment cannot declare a variable.");
+      if (typeStart()) {
+        fail(peek(), "For increment cannot declare a variable.");
+      }
       simple();
     }
     expect(")");
@@ -207,7 +236,9 @@ public final class ProgramCompiler {
 
   private void finishLoop(Control loop, int conditionExit) {
     patch(conditionExit, code.size());
-    for (int exit : loop.breaks()) patch(exit, code.size());
+    for (int exit : loop.breaks()) {
+      patch(exit, code.size());
+    }
   }
 
   private record CaseLabel(Object value, int target, Token token) {}
@@ -216,10 +247,14 @@ public final class ProgramCompiler {
     Token start = previous();
     expect("(");
     Type selectorType = expression();
-    if (selectorType == Type.DOUBLE) fail(start, "Switch supports int, bool, or string selectors.");
+    if (selectorType == Type.DOUBLE) {
+      fail(start, "Switch supports int, bool, or string selectors.");
+    }
     expect(")");
     expect("{");
-    if (locals >= ProgramLimits.LOCALS) fail(start, "Local variable limit exceeded.");
+    if (locals >= ProgramLimits.LOCALS) {
+      fail(start, "Local variable limit exceeded.");
+    }
     int selector = locals++;
     emit(Op.STORE, selector, start);
     int dispatch = emit(Op.JUMP, -1, start);
@@ -228,31 +263,39 @@ public final class ProgramCompiler {
     Control control = new Control(-1, new ArrayList<>());
     controls.push(control);
     while (!check("}") && !atEnd()) {
-      if (!check("case") && !check("default")) fail(peek(), "Expected case or default label.");
+      if (!check("case") && !check("default")) {
+        fail(peek(), "Expected case or default label.");
+      }
       Token section = peek();
       int body = code.size();
       do {
         if (match("case")) {
           Token label = peek();
           Object value = caseConstant(selectorType);
-          if (labels.putIfAbsent(value, new CaseLabel(value, body, label)) != null)
+          if (labels.putIfAbsent(value, new CaseLabel(value, body, label)) != null) {
             fail(label, "Duplicate case label.");
+          }
         } else {
           Token label = expect("default");
-          if (defaultTarget != null) fail(label, "Duplicate default label.");
+          if (defaultTarget != null) {
+            fail(label, "Duplicate default label.");
+          }
           defaultTarget = body;
         }
         expect(":");
       } while (check("case") || check("default"));
       // Section locals cannot be read from another case that skipped their initializer.
       scopes.push(new HashMap<>());
-      while (!check("case") && !check("default") && !check("}") && !atEnd()) statement();
+      while (!check("case") && !check("default") && !check("}") && !atEnd()) {
+        statement();
+      }
       scopes.pop();
-      if (code.size() == body || SwitchFlow.canReachEnd(code, body, code.size()))
+      if (code.size() == body || SwitchFlow.canReachEnd(code, body, code.size())) {
         fail(
             section,
             "Switch sections must exit with break, continue, or return; fall-through is"
                 + " unsupported.");
+      }
     }
     expect("}");
     controls.pop();
@@ -264,8 +307,12 @@ public final class ProgramCompiler {
       emit(Op.TRUE, label.target(), label.token());
     }
     int unmatched = emit(Op.JUMP, defaultTarget == null ? -1 : defaultTarget, start);
-    if (defaultTarget == null) patch(unmatched, code.size());
-    for (int exit : control.breaks()) patch(exit, code.size());
+    if (defaultTarget == null) {
+      patch(unmatched, code.size());
+    }
+    for (int exit : control.breaks()) {
+      patch(exit, code.size());
+    }
   }
 
   private Object caseConstant(Type expected) {
@@ -277,8 +324,9 @@ public final class ProgramCompiler {
     if (literal.kind() == Kind.NUMBER && !literal.text().contains(".")) {
       try {
         long number = Long.parseLong((negative ? "-" : "") + literal.text());
-        if (number < Integer.MIN_VALUE || number > Integer.MAX_VALUE)
+        if (number < Integer.MIN_VALUE || number > Integer.MAX_VALUE) {
           fail(token, "Case integer is out of range.");
+        }
         value = (int) number;
         actual = Type.INT;
       } catch (NumberFormatException e) {
@@ -290,7 +338,9 @@ public final class ProgramCompiler {
     } else if (!negative && (syntax(literal, "true") || syntax(literal, "false"))) {
       value = Boolean.parseBoolean(literal.text());
       actual = Type.BOOL;
-    } else fail(token, "Case requires an int, bool, or string literal constant.");
+    } else {
+      fail(token, "Case requires an int, bool, or string literal constant.");
+    }
     require(actual, expected, token);
     return value;
   }
@@ -298,13 +348,16 @@ public final class ProgramCompiler {
   private void simple() {
     if (typeStart()) {
       Token declared = take(), name = name();
-      if (reserved(name.text()) || scopes.stream().anyMatch(s -> s.containsKey(name.text())))
+      if (reserved(name.text()) || scopes.stream().anyMatch(s -> s.containsKey(name.text()))) {
         fail(name, "Variable name is reserved or already declared.");
+      }
       expect("=");
       Type actual = expression();
       Type type = declared.text().equals("var") ? actual : type(declared);
       convert(actual, type, name);
-      if (locals >= ProgramLimits.LOCALS) fail(name, "Local variable limit exceeded.");
+      if (locals >= ProgramLimits.LOCALS) {
+        fail(name, "Local variable limit exceeded.");
+      }
       var local = new Local(locals++, type);
       scopes.peek().put(name.text(), local);
       declarations.add(new CompileWarnings.Declaration(local.index(), name));
@@ -328,8 +381,9 @@ public final class ProgramCompiler {
         value = binary(local.type(), Type.INT, operator.text().equals("++") ? "+" : "-", operator);
       } else {
         value = expression();
-        if (!operator.text().equals("="))
+        if (!operator.text().equals("=")) {
           value = binary(local.type(), value, operator.text().substring(0, 1), operator);
+        }
       }
       convert(value, local.type(), name);
       emit(Op.STORE, local.index(), name);
@@ -340,8 +394,11 @@ public final class ProgramCompiler {
       expect(".");
       expect("WriteLine");
       expect("(");
-      if (check(")")) emit(Op.PUSH, "", start);
-      else expression();
+      if (check(")")) {
+        emit(Op.PUSH, "", start);
+      } else {
+        expression();
+      }
       expect(")");
       emit(Op.PRINT, null, start);
       return;
@@ -350,7 +407,9 @@ public final class ProgramCompiler {
       expect(".");
       expect("Wait");
       expect("(");
-      if (expression() != Type.INT) fail(start, "Brain.Wait requires an int tick count.");
+      if (expression() != Type.INT) {
+        fail(start, "Brain.Wait requires an int tick count.");
+      }
       expect(")");
       emit(Op.WAIT, null, start);
       return;
@@ -447,8 +506,12 @@ public final class ProgramCompiler {
           require(value, Type.BOOL, op);
           emit(Op.NOT, null, op);
         } else {
-          if (!numeric(value)) fail(op, "Unary arithmetic requires a number.");
-          if (op.text().equals("-")) emit(Op.NEGATE, null, op);
+          if (!numeric(value)) {
+            fail(op, "Unary arithmetic requires a number.");
+          }
+          if (op.text().equals("-")) {
+            emit(Op.NEGATE, null, op);
+          }
         }
         return value;
       }
@@ -464,7 +527,9 @@ public final class ProgramCompiler {
       try {
         if (token.text().contains(".")) {
           double value = Double.parseDouble(token.text());
-          if (!Double.isFinite(value)) fail(token, "Numeric literal is out of range.");
+          if (!Double.isFinite(value)) {
+            fail(token, "Numeric literal is out of range.");
+          }
           emit(Op.PUSH, value, token);
           return Type.DOUBLE;
         }
@@ -490,8 +555,9 @@ public final class ProgramCompiler {
     if (token.text().equals("Brain")) {
       expect(".");
       Token stat = name();
-      if (!Set.of("Health", "Hunger", "Oxygen", "Tick").contains(stat.text()))
+      if (!Set.of("Health", "Hunger", "Oxygen", "Tick").contains(stat.text())) {
         fail(stat, "Unknown read-only brain statistic.");
+      }
       emit(Op.STAT, stat.text(), token);
       return Type.DOUBLE;
     }
@@ -524,14 +590,16 @@ public final class ProgramCompiler {
     boolean equality = op == Op.EQ || op == Op.NE;
     boolean comparison = equality || op == Op.LT || op == Op.LE || op == Op.GT || op == Op.GE;
     Type result;
-    if (op == Op.ADD && (left == Type.STRING || right == Type.STRING)) result = Type.STRING;
-    else if (numeric(left) && numeric(right))
+    if (op == Op.ADD && (left == Type.STRING || right == Type.STRING)) {
+      result = Type.STRING;
+    } else if (numeric(left) && numeric(right)) {
       result =
           comparison
               ? Type.BOOL
               : left == Type.DOUBLE || right == Type.DOUBLE ? Type.DOUBLE : Type.INT;
-    else if (equality && left == right) result = Type.BOOL;
-    else {
+    } else if (equality && left == right) {
+      result = Type.BOOL;
+    } else {
       fail(token, "Operator is not valid for these types.");
       return null;
     }
@@ -548,19 +616,25 @@ public final class ProgramCompiler {
   }
 
   private void convert(Type actual, Type expected, Token token) {
-    if (actual == Type.INT && expected == Type.DOUBLE) emit(Op.TO_DOUBLE, null, token);
-    else require(actual, expected, token);
+    if (actual == Type.INT && expected == Type.DOUBLE) {
+      emit(Op.TO_DOUBLE, null, token);
+    } else {
+      require(actual, expected, token);
+    }
   }
 
   private void require(Type actual, Type expected, Token token) {
-    if (actual != expected)
+    if (actual != expected) {
       fail(token, "Expected " + expected.name().toLowerCase(Locale.ROOT) + ".");
+    }
   }
 
   private Local local(Token token) {
     for (var scope : scopes) {
       var value = scope.get(token.text());
-      if (value != null) return value;
+      if (value != null) {
+        return value;
+      }
     }
     fail(token, "Unknown local variable or unsupported API.");
     return null;
@@ -598,7 +672,9 @@ public final class ProgramCompiler {
   }
 
   private int emit(Op op, Object operand, Token token) {
-    if (code.size() >= ProgramLimits.INSTRUCTIONS) fail(token, "Instruction limit exceeded.");
+    if (code.size() >= ProgramLimits.INSTRUCTIONS) {
+      fail(token, "Instruction limit exceeded.");
+    }
     code.add(new Instruction(op, operand, token.line(), token.column()));
     return code.size() - 1;
   }
@@ -610,12 +686,16 @@ public final class ProgramCompiler {
 
   private Token name() {
     Token token = take();
-    if (token.kind() != Kind.NAME) fail(token, "Expected a name.");
+    if (token.kind() != Kind.NAME) {
+      fail(token, "Expected a name.");
+    }
     return token;
   }
 
   private boolean match(String text) {
-    if (!check(text)) return false;
+    if (!check(text)) {
+      return false;
+    }
     cursor++;
     return true;
   }
@@ -635,13 +715,17 @@ public final class ProgramCompiler {
 
   private Token expect(String text) {
     Token token = take();
-    if (!syntax(token, text)) fail(token, "Expected '" + text + "'.");
+    if (!syntax(token, text)) {
+      fail(token, "Expected '" + text + "'.");
+    }
     return token;
   }
 
   private Token take() {
     Token token = peek();
-    if (!atEnd()) cursor++;
+    if (!atEnd()) {
+      cursor++;
+    }
     return token;
   }
 

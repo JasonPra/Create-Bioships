@@ -40,7 +40,9 @@ public final class StomachScreen extends AbstractContainerScreen<StomachMenu> {
     bar(g, x + 12, y + 69, 204, menu.value(1), Math.max(1, menu.value(2)), 0xffc98860);
     g.drawString(font, "Food queue", x + 12, y + 83, 0xffd9c9b4, false);
     g.drawString(font, "Components / paste", x + 104, y + 83, 0xffd9c9b4, false);
-    for (var slot : menu.slots) OrganScreenStyle.slot(g, x + slot.x, y + slot.y);
+    for (var slot : menu.slots) {
+      OrganScreenStyle.slot(g, x + slot.x, y + slot.y);
+    }
     var paste =
         menu.getSlot(
             org.Azkerash.create_bioships.components.logic.stomach.StomachBlockEntity.PASTE_SLOT);
@@ -75,7 +77,8 @@ public final class StomachScreen extends AbstractContainerScreen<StomachMenu> {
     if (hoveredSlot
             == menu.getSlot(
                 org.Azkerash.create_bioships.components.logic.stomach.StomachBlockEntity.PASTE_SLOT)
-        && !hoveredSlot.hasItem())
+        && !hoveredSlot.hasItem()) {
       g.renderTooltip(font, Component.literal("Nutrient paste only"), mouseX, mouseY);
+    }
   }
 }

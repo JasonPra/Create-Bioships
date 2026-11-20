@@ -23,7 +23,9 @@ public record NervePanelAction(UUID grid, BlockPos panel, int action, UUID targe
             var id = b.readUUID();
             var pos = b.readBlockPos();
             int action = b.readUnsignedByte();
-            if (action > 3) throw new IllegalArgumentException("Invalid nerve action");
+            if (action > 3) {
+              throw new IllegalArgumentException("Invalid nerve action");
+            }
             return new NervePanelAction(id, pos, action, b.readUUID());
           });
 

@@ -21,15 +21,22 @@ public final class WaterWeightTests {
       GameTestHelper helper) {
     var level = helper.getLevel();
     var base = new BlockPos(2176, 80, 128);
-    for (int x = 135; x <= 137; x++) for (int z = 7; z <= 9; z++) level.setChunkForced(x, z, true);
-    for (int x = -8; x <= 8; x++)
-      for (int z = -8; z <= 8; z++)
-        for (int y = 0; y <= 16; y++)
+    for (int x = 135; x <= 137; x++) {
+      for (int z = 7; z <= 9; z++) {
+        level.setChunkForced(x, z, true);
+      }
+    }
+    for (int x = -8; x <= 8; x++) {
+      for (int z = -8; z <= 8; z++) {
+        for (int y = 0; y <= 16; y++) {
           level.setBlock(
               base.offset(x, y, z),
               (y == 0 || Math.abs(x) == 8 || Math.abs(z) == 8 ? Blocks.BEDROCK : Blocks.WATER)
                   .defaultBlockState(),
               2);
+        }
+      }
+    }
     helper.runAfterDelay(
         10,
         () -> {

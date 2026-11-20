@@ -63,18 +63,20 @@ public final class EyeSupportTests {
                     level.getBlockState(unsupported).isAir()
                         && level.getBlockState(unsupported.west()).isAir(),
                     "Unsupported eye pair did not fall apart");
-                for (var cell : java.util.List.of(core.east(), core.west()))
+                for (var cell : java.util.List.of(core.east(), core.west())) {
                   helper.assertTrue(
                       level.getBlockState(cell).getValue(EyeBlink.BLINK),
                       "Normal blink reopened an injured eye");
+                }
                 SubLevelWounds.healEyes(body);
                 helper.runAfterDelay(
                     25,
                     () -> {
-                      for (var cell : java.util.List.of(core.east(), core.west()))
+                      for (var cell : java.util.List.of(core.east(), core.west())) {
                         helper.assertTrue(
                             !level.getBlockState(cell).getValue(EyeBlink.BLINK),
                             "Healed eye did not reopen");
+                      }
                       level.removeBlock(core, false);
                       helper.runAfterDelay(
                           5,

@@ -23,7 +23,9 @@ public final class LimbPositionerScreen extends Screen {
         && screen.state.pos().equals(state.pos())) {
       screen.state = state;
       screen.rebuildWidgets();
-    } else mc.setScreen(new LimbPositionerScreen(state));
+    } else {
+      mc.setScreen(new LimbPositionerScreen(state));
+    }
   }
 
   @Override
@@ -35,9 +37,11 @@ public final class LimbPositionerScreen extends Screen {
   protected void init() {
     int x = (width - 252) / 2, y = (height - 196) / 2;
     for (int row = 0; row < 4; row++) {
-      if (row == 0 && !state.compact() || row >= 2 && !state.assembled()) continue;
+      if (row == 0 && !state.compact() || row >= 2 && !state.assembled()) {
+        continue;
+      }
       final int setting = row;
-      for (int sign : new int[] {-1, 1})
+      for (int sign : new int[] {-1, 1}) {
         addRenderableWidget(
             Button.builder(
                     Component.literal(sign < 0 ? "−" : "+"),
@@ -47,6 +51,7 @@ public final class LimbPositionerScreen extends Screen {
                                 state.pos(), setting, sign * (setting == 1 ? 5 : 1))))
                 .bounds(x + (sign < 0 ? 184 : 214), y + 42 + row * 30, 24, 20)
                 .build());
+      }
     }
     addRenderableWidget(
         Button.builder(
@@ -82,8 +87,11 @@ public final class LimbPositionerScreen extends Screen {
           : "Assemble to tune joints",
       String.format(java.util.Locale.ROOT, "Passive damping: %.2f×", state.damping())
     };
-    for (int row = 0; row < 4; row++)
+    for (int row = 0; row < 4; row++) {
       g.drawString(font, labels[row], x + 12, y + 48 + row * 30, OrganScreenStyle.TEXT, false);
-    for (var widget : renderables) widget.render(g, mx, my, partial);
+    }
+    for (var widget : renderables) {
+      widget.render(g, mx, my, partial);
+    }
   }
 }

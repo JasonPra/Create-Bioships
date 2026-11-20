@@ -77,10 +77,14 @@ public final class BrainMenu extends AbstractContainerMenu {
             }
           });
     }
-    for (int row = 0; row < 3; row++)
-      for (int col = 0; col < 9; col++)
+    for (int row = 0; row < 3; row++) {
+      for (int col = 0; col < 9; col++) {
         addSlot(new Slot(player, col + row * 9 + 9, 33 + col * 18, 126 + row * 18));
-    for (int col = 0; col < 9; col++) addSlot(new Slot(player, col, 33 + col * 18, 184));
+      }
+    }
+    for (int col = 0; col < 9; col++) {
+      addSlot(new Slot(player, col, 33 + col * 18, 184));
+    }
   }
 
   public BrainInventory serverMemory() {
@@ -96,17 +100,27 @@ public final class BrainMenu extends AbstractContainerMenu {
   }
 
   public ItemStack quickMoveStack(Player player, int index) {
-    if (!stillValid(player) || index < 0 || index >= slots.size()) return ItemStack.EMPTY;
+    if (!stillValid(player) || index < 0 || index >= slots.size()) {
+      return ItemStack.EMPTY;
+    }
     var slot = slots.get(index);
-    if (!slot.hasItem()) return ItemStack.EMPTY;
+    if (!slot.hasItem()) {
+      return ItemStack.EMPTY;
+    }
     var current = slot.getItem();
     var original = current.copy();
     if (index < 27) {
-      if (!moveItemStackTo(current, 27, slots.size(), true)) return ItemStack.EMPTY;
-    } else if (!current.is(BrainInventory.CARDS) || !moveItemStackTo(current, 0, 27, false))
+      if (!moveItemStackTo(current, 27, slots.size(), true)) {
+        return ItemStack.EMPTY;
+      }
+    } else if (!current.is(BrainInventory.CARDS) || !moveItemStackTo(current, 0, 27, false)) {
       return ItemStack.EMPTY;
-    if (current.isEmpty()) slot.setByPlayer(ItemStack.EMPTY);
-    else slot.setChanged();
+    }
+    if (current.isEmpty()) {
+      slot.setByPlayer(ItemStack.EMPTY);
+    } else {
+      slot.setChanged();
+    }
     slot.onTake(player, current);
     return original;
   }

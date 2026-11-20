@@ -37,9 +37,13 @@ public abstract class OrganInventory extends BlockEntity implements Container, M
   }
 
   private void bind() {
-    if (isRemoved() || !(level instanceof ServerLevel server)) return;
+    if (isRemoved() || !(level instanceof ServerLevel server)) {
+      return;
+    }
     var body = CoreAssemblyRules.containing(server, worldPosition);
-    if (body == null || body == owner && binding != null) return;
+    if (body == null || body == owner && binding != null) {
+      return;
+    }
     binding =
         org.Azkerash.create_bioships
             .core
@@ -67,8 +71,9 @@ public abstract class OrganInventory extends BlockEntity implements Container, M
   @Override
   public void setChanged() {
     super.setChanged();
-    if (owner != null && !owner.isRemoved())
+    if (owner != null && !owner.isRemoved()) {
       org.Azkerash.create_bioships.core.component.SubLevelComponentStore.get(owner).dirty();
+    }
   }
 
   protected OrganInventory(BlockEntityType<?> type, BlockPos pos, BlockState state, int size) {
@@ -90,7 +95,9 @@ public abstract class OrganInventory extends BlockEntity implements Container, M
 
   public ItemStack removeItem(int slot, int count) {
     var result = ContainerHelper.removeItem(items(), slot, count);
-    if (!result.isEmpty()) setChanged();
+    if (!result.isEmpty()) {
+      setChanged();
+    }
     return result;
   }
 
@@ -110,11 +117,15 @@ public abstract class OrganInventory extends BlockEntity implements Container, M
   }
 
   public boolean stillValid(Player player) {
-    if (level == null || level.getBlockEntity(worldPosition) != this) return false;
+    if (level == null || level.getBlockEntity(worldPosition) != this) {
+      return false;
+    }
     var target = Vec3.atCenterOf(worldPosition);
     if (level instanceof ServerLevel server) {
       var body = CoreAssemblyRules.containing(server, worldPosition);
-      if (body != null) target = body.logicalPose().transformPosition(target);
+      if (body != null) {
+        target = body.logicalPose().transformPosition(target);
+      }
     }
     return player.getEyePosition().distanceToSqr(target) <= 64;
   }
@@ -132,9 +143,10 @@ public abstract class OrganInventory extends BlockEntity implements Container, M
   protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
     super.loadAdditional(tag, registries);
     if (tag.hasUUID("ComponentInstance") && !componentId.equals(tag.getUUID("ComponentInstance"))) {
-      if (owner != null && binding != null)
+      if (owner != null && binding != null) {
         org.Azkerash.create_bioships.core.component.SubLevelComponentStore.release(
             owner, binding.id, worldPosition);
+      }
       binding = null;
       owner = null;
       componentId = tag.getUUID("ComponentInstance");
@@ -146,23 +158,33 @@ public abstract class OrganInventory extends BlockEntity implements Container, M
   /** One insertion implementation for transport, with an explicit simulation phase. */
   public ItemStack insert(ItemStack incoming, int first, int end, boolean simulate) {
     var rest = incoming.copy();
-    for (int pass = 0; pass < 2; pass++)
+    for (int pass = 0; pass < 2; pass++) {
       for (int i = first; i < end && !rest.isEmpty(); i++) {
         var current = items().get(i);
-        if (pass == 0 && current.isEmpty() || pass == 1 && !current.isEmpty()) continue;
-        if (!current.isEmpty() && !ItemStack.isSameItemSameComponents(current, rest)) continue;
+        if (pass == 0 && current.isEmpty() || pass == 1 && !current.isEmpty()) {
+          continue;
+        }
+        if (!current.isEmpty() && !ItemStack.isSameItemSameComponents(current, rest)) {
+          continue;
+        }
         int amount =
             Math.min(
                 rest.getCount(),
                 Math.min(rest.getMaxStackSize(), getMaxStackSize()) - current.getCount());
-        if (amount <= 0) continue;
+        if (amount <= 0) {
+          continue;
+        }
         if (!simulate) {
-          if (current.isEmpty()) items().set(i, rest.copyWithCount(amount));
-          else current.grow(amount);
+          if (current.isEmpty()) {
+            items().set(i, rest.copyWithCount(amount));
+          } else {
+            current.grow(amount);
+          }
           setChanged();
         }
         rest.shrink(amount);
       }
+    }
     return rest;
   }
 }

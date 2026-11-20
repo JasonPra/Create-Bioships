@@ -19,10 +19,18 @@ final class DenStaircase {
 
   static List<Step> route(int height) {
     var ring = new ArrayList<BlockPos>();
-    for (int x = 3; x >= -3; x--) ring.add(new BlockPos(x, 0, 3));
-    for (int z = 2; z >= -3; z--) ring.add(new BlockPos(-3, 0, z));
-    for (int x = -2; x <= 3; x++) ring.add(new BlockPos(x, 0, -3));
-    for (int z = -2; z <= 2; z++) ring.add(new BlockPos(3, 0, z));
+    for (int x = 3; x >= -3; x--) {
+      ring.add(new BlockPos(x, 0, 3));
+    }
+    for (int z = 2; z >= -3; z--) {
+      ring.add(new BlockPos(-3, 0, z));
+    }
+    for (int x = -2; x <= 3; x++) {
+      ring.add(new BlockPos(x, 0, -3));
+    }
+    for (int z = -2; z <= 2; z++) {
+      ring.add(new BlockPos(3, 0, z));
+    }
     var result = new ArrayList<Step>();
     for (int n = 0; n <= height * 2; n++) {
       var p = ring.get(n % ring.size());
@@ -33,8 +41,8 @@ final class DenStaircase {
 
   static void build(ServerLevel l, BlockPos origin, int height, boolean vault) {
     // Clear the whole well first. Never clear headroom after placing another tread.
-    for (int x = -5; x <= 5; x++)
-      for (int z = -5; z <= 5; z++)
+    for (int x = -5; x <= 5; x++) {
+      for (int z = -5; z <= 5; z++) {
         for (int y = -1; y <= height + 2; y++) {
           boolean wall = Math.abs(x) == 5 || Math.abs(z) == 5;
           boolean core = Math.abs(x) <= 2 && Math.abs(z) <= 2;
@@ -44,6 +52,8 @@ final class DenStaircase {
                   .defaultBlockState(),
               2);
         }
+      }
+    }
     for (var step : route(height)) {
       int y = (int) Math.ceil(step.height()) - 1;
       var slab =
@@ -60,23 +70,38 @@ final class DenStaircase {
           Math.abs(step.z()) == 3
               ? new int[] {step.z(), step.z() + Integer.signum(step.z())}
               : new int[] {step.z()};
-      for (int x : xs) for (int z : zs) l.setBlock(origin.offset(x, y, z), slab, 2);
+      for (int x : xs) {
+        for (int z : zs) {
+          l.setBlock(origin.offset(x, y, z), slab, 2);
+        }
+      }
     }
     // Inset fungal light wells illuminate every flight without protruding into the walkway.
-    for (int y = 2; y <= height + 1; y += 4)
+    for (int y = 2; y <= height + 1; y += 4) {
       for (var face : Direction.Plane.HORIZONTAL) {
         var p = origin.offset(face.getStepX() * 2, y, face.getStepZ() * 2);
         l.setBlock(p, Blocks.SHROOMLIGHT.defaultBlockState(), 2);
       }
+    }
     if (vault) {
       open(l, origin, 0, 3, 4, 5);
       open(l, origin, height, 3, 4, 5);
       open(l, origin, height, 1, 2, -5);
       // The last partial circuit meets a level east-side landing, outside the solid core.
-      for (int x = 3; x <= 4; x++) for (int z = -4; z <= 5; z++) floor(l, origin, x, height, z);
-      for (int x = 1; x <= 4; x++) for (int z = -5; z <= -3; z++) floor(l, origin, x, height, z);
+      for (int x = 3; x <= 4; x++) {
+        for (int z = -4; z <= 5; z++) {
+          floor(l, origin, x, height, z);
+        }
+      }
+      for (int x = 1; x <= 4; x++) {
+        for (int z = -5; z <= -3; z++) {
+          floor(l, origin, x, height, z);
+        }
+      }
     } else {
-      for (int y = 0; y <= height; y += 12) open(l, origin, y, 3, 4, 5);
+      for (int y = 0; y <= height; y += 12) {
+        open(l, origin, y, 3, 4, 5);
+      }
     }
   }
 
@@ -87,8 +112,9 @@ final class DenStaircase {
   private static void open(ServerLevel l, BlockPos b, int y, int minX, int maxX, int z) {
     for (int x = minX; x <= maxX; x++) {
       floor(l, b, x, y, z);
-      for (int head = 0; head < 4; head++)
+      for (int head = 0; head < 4; head++) {
         l.setBlock(b.offset(x, y + head, z), Blocks.AIR.defaultBlockState(), 2);
+      }
     }
   }
 }

@@ -64,7 +64,9 @@ public final class ProgramMachineChecks {
         stopped.state() == ProgramMachine.State.STOPPED && stopped.output().isEmpty(),
         "Stopped machine resumed");
     var history = machine("for(int i=0;i<80;i++){ Console.WriteLine(i); Brain.Wait(1); }");
-    for (int i = 0; i < 82; i++) history.advance(i, HOST);
+    for (int i = 0; i < 82; i++) {
+      history.advance(i, HOST);
+    }
     check(
         history.output().size() == 64 && history.output().getFirst().equals("16"),
         "History was not bounded");
@@ -91,8 +93,9 @@ public final class ProgramMachineChecks {
             "while(1){}",
             "break;",
             "int a;",
-            "int a=true;"))
+            "int a=true;")) {
       check(!ProgramCompiler.compile(bad).success(), "Unsupported program compiled");
+    }
     check(
         !ProgramCompiler.compile("(".repeat(200) + "1" + ")".repeat(200) + ";").success(),
         "Deep nesting compiled");
@@ -110,7 +113,9 @@ public final class ProgramMachineChecks {
 
   private static ProgramMachine machine(String source) {
     var result = ProgramCompiler.compile(source);
-    if (!result.success()) throw new AssertionError(result.diagnostic());
+    if (!result.success()) {
+      throw new AssertionError(result.diagnostic());
+    }
     return new ProgramMachine(result.program());
   }
 
@@ -132,6 +137,8 @@ public final class ProgramMachineChecks {
   }
 
   private static void check(boolean condition, String message) {
-    if (!condition) throw new AssertionError(message);
+    if (!condition) {
+      throw new AssertionError(message);
+    }
   }
 }

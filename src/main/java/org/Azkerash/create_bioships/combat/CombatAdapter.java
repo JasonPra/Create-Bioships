@@ -21,17 +21,25 @@ public final class CombatAdapter {
   private static final Map<ServerSubLevel, CoreCombatHurtbox> CORES = new WeakHashMap<>();
 
   public static CoreCombatHurtbox coreTarget(ServerSubLevel body) {
-    if (SubLevelHealth.status(body).dead()) return null;
+    if (SubLevelHealth.status(body).dead()) {
+      return null;
+    }
     var current = CORES.get(body);
-    if (current != null && !current.isRemoved()) return current;
+    if (current != null && !current.isRemoved()) {
+      return current;
+    }
     var cell =
         SubLevelHealth.blocks(body).stream()
             .filter(p -> body.getLevel().getBlockState(p).is(ComponentRegistry.CORE.get()))
             .findFirst()
             .orElse(null);
-    if (cell == null) return null;
+    if (cell == null) {
+      return null;
+    }
     var target = Create_bioships.CORE_HURTBOX.get().create(body.getLevel());
-    if (target == null) return null;
+    if (target == null) {
+      return null;
+    }
     target.bindCore(body, cell);
     body.getLevel().addFreshEntity(target);
     CORES.put(body, target);
@@ -42,12 +50,18 @@ public final class CombatAdapter {
       EYES = new WeakHashMap<>();
 
   public static EyeCombatHurtbox eyeTarget(ServerSubLevel body, net.minecraft.core.BlockPos cell) {
-    if (SubLevelHealth.status(body).dead()) return null;
+    if (SubLevelHealth.status(body).dead()) {
+      return null;
+    }
     var eyes = EYES.computeIfAbsent(body, b -> new HashMap<>());
     var old = eyes.get(cell);
-    if (old != null && !old.isRemoved()) return old;
+    if (old != null && !old.isRemoved()) {
+      return old;
+    }
     var eye = Create_bioships.EYE_HURTBOX.get().create(body.getLevel());
-    if (eye == null) return null;
+    if (eye == null) {
+      return null;
+    }
     eye.bindEye(body, cell);
     body.getLevel().addFreshEntity(eye);
     eyes.put(cell.immutable(), eye);
@@ -61,16 +75,22 @@ public final class CombatAdapter {
         org.Azkerash.create_bioships.components.logic.eye.EyeWoundBehavior.isWeakPoint(state, face)
             ? state.is(ComponentRegistry.CORE.get()) ? coreTarget(body) : eyeTarget(body, cell)
             : target(body);
-    if (result != null) result.impact(cell, face);
+    if (result != null) {
+      result.impact(cell, face);
+    }
     return result;
   }
 
   public static void saveEffects(ServerSubLevel body, SubLevelCombatTarget target) {
     var list = new net.minecraft.nbt.ListTag();
-    for (var effect : target.getActiveEffects()) list.add(effect.save());
+    for (var effect : target.getActiveEffects()) {
+      list.add(effect.save());
+    }
     if (body.getUserDataTag()
         .getList(org.Azkerash.create_bioships.core.SubLevelData.EFFECTS, 10)
-        .equals(list)) return;
+        .equals(list)) {
+      return;
+    }
     var root = body.getUserDataTag().copy();
     root.put(org.Azkerash.create_bioships.core.SubLevelData.EFFECTS, list);
     body.setUserDataTag(root);
@@ -78,24 +98,36 @@ public final class CombatAdapter {
 
   public static void restoreEffects(ServerSubLevel body, SubLevelCombatTarget target) {
     var root = body.getUserDataTag();
-    if (root == null) return;
+    if (root == null) {
+      return;
+    }
     for (var entry : root.getList(org.Azkerash.create_bioships.core.SubLevelData.EFFECTS, 10)) {
       var effect =
           net.minecraft.world.effect.MobEffectInstance.load((net.minecraft.nbt.CompoundTag) entry);
-      if (effect != null) target.addEffect(effect);
+      if (effect != null) {
+        target.addEffect(effect);
+      }
     }
   }
 
   private CombatAdapter() {}
 
   public static SubLevelCombatTarget target(ServerSubLevel body) {
-    if (!SubLevelCreatureParts.available(body)) return null;
+    if (!SubLevelCreatureParts.available(body)) {
+      return null;
+    }
     body = SubLevelCreatureParts.root(body);
-    if (SubLevelHealth.status(body).dead()) return null;
+    if (SubLevelHealth.status(body).dead()) {
+      return null;
+    }
     var old = TARGETS.get(body);
-    if (old != null && !old.isRemoved()) return old;
+    if (old != null && !old.isRemoved()) {
+      return old;
+    }
     var target = Create_bioships.COMBAT_TARGET.get().create(body.getLevel());
-    if (target == null) return null;
+    if (target == null) {
+      return null;
+    }
     target.bind(body);
     body.getLevel().addFreshEntity(target);
     TARGETS.put(body, target);
@@ -109,12 +141,18 @@ public final class CombatAdapter {
             instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon dragon)
         || !(dragon.level() instanceof ServerLevel level)
         || dragon.getPhaseManager().getCurrentPhase().getPhase()
-            != net.minecraft.world.entity.boss.enderdragon.phases.EnderDragonPhase.CHARGING_PLAYER)
+            != net.minecraft.world.entity.boss.enderdragon.phases.EnderDragonPhase
+                .CHARGING_PLAYER) {
       return;
+    }
     // Epic Fight keeps hurtTime at 2 to suppress vanilla proxy contact during its boss phases.
-    if (dragon.hurtTime > 2) return;
+    if (dragon.hurtTime > 2) {
+      return;
+    }
     var container = SubLevelContainer.getContainer(level);
-    if (container == null) return;
+    if (container == null) {
+      return;
+    }
     var head = dragon.head.getBoundingBox().inflate(1);
     var neck =
         Arrays.stream(dragon.getSubEntities())
@@ -129,13 +167,17 @@ public final class CombatAdapter {
             .map(part -> part.getBoundingBox().inflate(4, 2, 4).move(0, -2, 0))
             .toList();
     var bounds = head.minmax(neck);
-    for (var wing : wings) bounds = bounds.minmax(wing);
+    for (var wing : wings) {
+      bounds = bounds.minmax(wing);
+    }
     for (var entry : container.getAllSubLevels()) {
       if (!(entry instanceof ServerSubLevel body)
           || body.isRemoved()
           || !CoreAssemblyRules.isCreature(body)
           || SubLevelHealth.status(body).dead()
-          || !body.boundingBox().toMojang().intersects(bounds)) continue;
+          || !body.boundingBox().toMojang().intersects(bounds)) {
+        continue;
+      }
       net.minecraft.core.BlockPos contact = null;
       float damage = 0;
       for (var cell : SubLevelHealth.blocks(body)) {
@@ -158,7 +200,9 @@ public final class CombatAdapter {
             net.minecraft.core.Direction.getNearest(
                 dragon.getX() - point.x, dragon.getY() - point.y, dragon.getZ() - point.z);
         var target = hitTarget(body, contact, face);
-        if (target != null) target.hurt(level.damageSources().mobAttack(dragon), damage);
+        if (target != null) {
+          target.hurt(level.damageSources().mobAttack(dragon), damage);
+        }
       }
     }
   }
@@ -166,20 +210,28 @@ public final class CombatAdapter {
   @SubscribeEvent
   public static void tick(ServerTickEvent.Post event) {
     for (var level : event.getServer().getAllLevels()) {
-      if (level.getGameTime() % 10 != 0) continue;
+      if (level.getGameTime() % 10 != 0) {
+        continue;
+      }
       HostileCombatIntegration.tickBosses(level);
       var container = SubLevelContainer.getContainer(level);
-      if (container == null) continue;
-      for (var body : container.getAllSubLevels())
+      if (container == null) {
+        continue;
+      }
+      for (var body : container.getAllSubLevels()) {
         if (body instanceof ServerSubLevel server
             && !body.isRemoved()
             && CoreAssemblyRules.isCreature(body)) {
           target(server);
           coreTarget(server);
-          for (var cell : SubLevelHealth.blocks(server))
+          for (var cell : SubLevelHealth.blocks(server)) {
             if (org.Azkerash.create_bioships.components.logic.eye.EyeWoundBehavior.isEye(
-                level.getBlockState(cell))) eyeTarget(server, cell);
+                level.getBlockState(cell))) {
+              eyeTarget(server, cell);
+            }
+          }
         }
+      }
     }
     TARGETS.entrySet().removeIf(e -> e.getKey().isRemoved() || e.getValue().isRemoved());
   }
@@ -189,24 +241,32 @@ public final class CombatAdapter {
       net.minecraft.world.level.Level level,
       net.minecraft.world.phys.AABB bounds,
       java.util.List<net.minecraft.world.entity.LivingEntity> nativeTargets) {
-    if (!(level instanceof ServerLevel server)) return nativeTargets;
+    if (!(level instanceof ServerLevel server)) {
+      return nativeTargets;
+    }
     var result = new java.util.ArrayList<>(nativeTargets);
     result.removeIf(e -> e instanceof SubLevelCombatTarget);
     var container = SubLevelContainer.getContainer(server);
-    if (container == null) return result;
+    if (container == null) {
+      return result;
+    }
     for (var entry :
         container.queryIntersecting(new dev.ryanhcode.sable.companion.math.BoundingBox3d(bounds))) {
       if (!(entry instanceof ServerSubLevel body)
           || body.isRemoved()
           || !CoreAssemblyRules.isCreature(body)
-          || SubLevelHealth.status(body).dead()) continue;
+          || SubLevelHealth.status(body).dead()) {
+        continue;
+      }
       net.minecraft.world.phys.Vec3 nearest = null;
       double distance = Double.POSITIVE_INFINITY;
       for (var cell : SubLevelHealth.blocks(body)) {
         for (var local : level.getBlockState(cell).getCollisionShape(level, cell).toAabbs()) {
           var box = new dev.ryanhcode.sable.companion.math.BoundingBox3d(local.move(cell));
           var world = box.transform(body.logicalPose(), box).toMojang();
-          if (!world.intersects(bounds)) continue;
+          if (!world.intersects(bounds)) {
+            continue;
+          }
           double d = world.getCenter().distanceToSqr(bounds.getCenter());
           if (d < distance) {
             nearest = world.getCenter();
@@ -218,7 +278,9 @@ public final class CombatAdapter {
         var target = target(body);
         if (target != null) {
           target.setPos(nearest);
-          if (!result.contains(target)) result.add(target);
+          if (!result.contains(target)) {
+            result.add(target);
+          }
         }
       }
     }
@@ -231,19 +293,28 @@ public final class CombatAdapter {
       net.minecraft.world.phys.AABB bounds,
       net.minecraft.world.entity.Entity primary,
       java.util.List<net.minecraft.world.entity.LivingEntity> nativeTargets) {
-    if (!(player.level() instanceof ServerLevel level)) return nativeTargets;
+    if (!(player.level() instanceof ServerLevel level)) {
+      return nativeTargets;
+    }
     var result = new java.util.ArrayList<>(nativeTargets);
     result.removeIf(e -> e instanceof SubLevelCombatTarget);
-    var primaryBody = primary instanceof SubLevelCombatTarget target ? SubLevelCreatureParts.root(target.body()) : null;
+    var primaryBody =
+        primary instanceof SubLevelCombatTarget target
+            ? SubLevelCreatureParts.root(target.body())
+            : null;
     var container = SubLevelContainer.getContainer(level);
-    if (container == null) return result;
+    if (container == null) {
+      return result;
+    }
     for (var entry : container.getAllSubLevels()) {
       if (!(entry instanceof ServerSubLevel body)
           || SubLevelCreatureParts.root(body) == primaryBody
           || body.isRemoved()
           || !CoreAssemblyRules.isCreature(body)
           || SubLevelHealth.status(body).dead()
-          || !body.boundingBox().toMojang().intersects(bounds)) continue;
+          || !body.boundingBox().toMojang().intersects(bounds)) {
+        continue;
+      }
       SubLevelCombatTarget selected = null;
       net.minecraft.core.BlockPos selectedCell = null;
       net.minecraft.core.Direction selectedFace = null;
@@ -253,7 +324,9 @@ public final class CombatAdapter {
         for (var local : state.getCollisionShape(level, cell).toAabbs()) {
           var logical = local.move(cell);
           var box = new dev.ryanhcode.sable.companion.math.BoundingBox3d(logical);
-          if (!box.transform(body.logicalPose(), box).toMojang().intersects(bounds)) continue;
+          if (!box.transform(body.logicalPose(), box).toMojang().intersects(bounds)) {
+            continue;
+          }
           var from =
               body.logicalPose()
                   .transformPositionInverse(player.getEyePosition())
@@ -261,7 +334,9 @@ public final class CombatAdapter {
           var face = net.minecraft.core.Direction.getNearest(from.x, from.y, from.z);
           var target = hitTarget(body, cell, face);
           if (selected instanceof EyeCombatHurtbox
-              || selected != null && !(target instanceof EyeCombatHurtbox)) continue;
+              || selected != null && !(target instanceof EyeCombatHurtbox)) {
+            continue;
+          }
           selected = target;
           selectedCell = cell;
           selectedFace = face;
@@ -280,7 +355,10 @@ public final class CombatAdapter {
         selected.impact(selectedCell, selectedFace);
         selected.focusForAttack(aim);
         var owner = SubLevelCreatureParts.root(body);
-        result.removeIf(e -> e instanceof SubLevelCombatTarget t && SubLevelCreatureParts.root(t.body()) == owner);
+        result.removeIf(
+            e ->
+                e instanceof SubLevelCombatTarget t
+                    && SubLevelCreatureParts.root(t.body()) == owner);
         result.add(selected);
       }
     }
@@ -289,17 +367,24 @@ public final class CombatAdapter {
 
   @SubscribeEvent
   public static void punch(PlayerInteractEvent.LeftClickBlock event) {
-    if (!(event.getLevel() instanceof ServerLevel level)) return;
+    if (!(event.getLevel() instanceof ServerLevel level)) {
+      return;
+    }
     var body = CoreAssemblyRules.containing(level, event.getPos());
     var impact = body == null ? null : SubLevelImpactAdapter.get(body);
-    if (impact == null) return;
+    if (impact == null) {
+      return;
+    }
     if (SubLevelHealth.status(body).dead()) {
-      if (event.getAction() == PlayerInteractEvent.LeftClickBlock.Action.START)
+      if (event.getAction() == PlayerInteractEvent.LeftClickBlock.Action.START) {
         impact.wound(event.getPos(), event.getFace());
+      }
       return; // Keep ordinary corpse mining intact.
     }
     event.setCanceled(true);
-    if (event.getAction() != PlayerInteractEvent.LeftClickBlock.Action.START) return;
+    if (event.getAction() != PlayerInteractEvent.LeftClickBlock.Action.START) {
+      return;
+    }
     var target = hitTarget(body, event.getPos(), event.getFace());
     if (target != null) {
       target.impact(event.getPos(), event.getFace());
@@ -314,6 +399,8 @@ public final class CombatAdapter {
 
   public static void hurtFlash(ServerSubLevel body) {
     var impacts = SubLevelImpactAdapter.get(body);
-    if (impacts != null) impacts.flash();
+    if (impacts != null) {
+      impacts.flash();
+    }
   }
 }

@@ -48,11 +48,17 @@ public final class CoreArrowFixture {
 
   private static List<BlockPos> cells(BlockPos base) {
     var result = new ArrayList<BlockPos>();
-    for (int x = -3; x <= 3; x++) for (int z = -1; z <= 1; z++) result.add(base.offset(x, 0, z));
+    for (int x = -3; x <= 3; x++) {
+      for (int z = -1; z <= 1; z++) {
+        result.add(base.offset(x, 0, z));
+      }
+    }
     for (int x : new int[] {-3, 0, 3}) {
       result.add(base.offset(x, 1, 0));
       result.add(base.offset(x, 2, 0));
-      if (x != 0) result.add(base.offset(x, 2, -1));
+      if (x != 0) {
+        result.add(base.offset(x, 2, -1));
+      }
     }
     return result;
   }
@@ -62,7 +68,9 @@ public final class CoreArrowFixture {
     var flesh =
         net.minecraft.core.registries.BuiltInRegistries.BLOCK.get(
             net.minecraft.resources.ResourceLocation.parse("biomancy:packed_flesh"));
-    for (var cell : cells(base)) level.setBlock(cell, flesh.defaultBlockState(), 3);
+    for (var cell : cells(base)) {
+      level.setBlock(cell, flesh.defaultBlockState(), 3);
+    }
     level.setBlock(core(level), ComponentRegistry.CORE.get().defaultBlockState(), 3);
     level.setBlock(
         core(level).west(3).north(),
@@ -83,20 +91,24 @@ public final class CoreArrowFixture {
   public static void reset(ServerLevel level) {
     var state = CoreTestState.get(level);
     var base = state.arrowOrigin;
-    for (int x = (base.getX() - 8) >> 4; x <= (base.getX() + 8) >> 4; x++)
-      for (int z = (base.getZ() - 10) >> 4; z <= (base.getZ() + 8) >> 4; z++)
+    for (int x = (base.getX() - 8) >> 4; x <= (base.getX() + 8) >> 4; x++) {
+      for (int z = (base.getZ() - 10) >> 4; z <= (base.getZ() + 8) >> 4; z++) {
         level.setChunkForced(x, z, true);
+      }
+    }
     level
         .getBlockTicks()
         .clearArea(
             net.minecraft.world.level.levelgen.structure.BoundingBox.fromCorners(
                 base.offset(-7, 0, -10), base.offset(7, 8, 7)));
     var container = SubLevelContainer.getContainer(level);
-    for (var entry : List.copyOf(container.getAllSubLevels()))
+    for (var entry : List.copyOf(container.getAllSubLevels())) {
       if (entry instanceof ServerSubLevel body
           && body.getUserDataTag() != null
-          && body.getUserDataTag().getBoolean(MARK))
+          && body.getUserDataTag().getBoolean(MARK)) {
         container.removeSubLevel(body, SubLevelRemovalReason.REMOVED);
+      }
+    }
     var box =
         new AABB(
             Vec3.atLowerCornerOf(base.offset(-7, 0, -10)),
@@ -108,14 +120,18 @@ public final class CoreArrowFixture {
             e ->
                 e.getTags().contains(MARK)
                     || e instanceof net.minecraft.world.entity.projectile.Projectile
-                    || e instanceof net.minecraft.world.entity.item.ItemEntity)) entity.discard();
-    for (int x = -7; x <= 7; x++)
+                    || e instanceof net.minecraft.world.entity.item.ItemEntity)) {
+      entity.discard();
+    }
+    for (int x = -7; x <= 7; x++) {
       for (int z = -10; z <= 7; z++) {
         level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 2);
-        if (Math.abs(x) <= 6 && Math.abs(z) <= 6)
+        if (Math.abs(x) <= 6 && Math.abs(z) <= 6) {
           for (int y = 0; y <= 7; y++) {
             if (level.getBlockEntity(base.offset(x, y, z))
-                instanceof net.minecraft.world.Container inventory) inventory.clearContent();
+                instanceof net.minecraft.world.Container inventory) {
+              inventory.clearContent();
+            }
             level.setBlock(
                 base.offset(x, y, z),
                 (Math.abs(x) == 6 || Math.abs(z) == 6 || y == 7
@@ -124,7 +140,9 @@ public final class CoreArrowFixture {
                     .defaultBlockState(),
                 2);
           }
+        }
       }
+    }
     sleeping(level);
     control(level, base.offset(-3, 0, -8), "arrow_test start");
     control(level, base.offset(3, 0, -8), "arrow_test reset");
@@ -157,10 +175,15 @@ public final class CoreArrowFixture {
     var base = state.arrowOrigin;
     for (var old :
         level.getEntitiesOfClass(
-            Display.TextDisplay.class, new AABB(base).inflate(15), e -> e.getTags().contains(MARK)))
+            Display.TextDisplay.class,
+            new AABB(base).inflate(15),
+            e -> e.getTags().contains(MARK))) {
       old.discard();
+    }
     var display = EntityType.TEXT_DISPLAY.create(level);
-    if (display == null) return;
+    if (display == null) {
+      return;
+    }
     var tag = new CompoundTag();
     tag.putString(
         "text",
@@ -186,7 +209,9 @@ public final class CoreArrowFixture {
 
   public static int start(ServerLevel level) {
     var state = CoreTestState.get(level);
-    if (!state.arrowBuilt || state.arrowBody != null || state.arrowRunning) return 0;
+    if (!state.arrowBuilt || state.arrowBody != null || state.arrowRunning) {
+      return 0;
+    }
     var base = state.arrowOrigin;
     var body =
         SubLevelAssemblyHelper.assembleBlocks(
@@ -194,7 +219,9 @@ public final class CoreArrowFixture {
             core(level),
             cells(base),
             new BoundingBox3i(base.west(3).north(), core(level).east(3).south()));
-    if (body == null) return 0;
+    if (body == null) {
+      return 0;
+    }
     CoreAssemblyRules.changed(level, body.getPlot().getCenterBlock());
     var tag = body.getUserDataTag().copy();
     tag.putBoolean(MARK, true);
@@ -238,8 +265,9 @@ public final class CoreArrowFixture {
 
   private static void clearShooters(ServerLevel level) {
     for (var pos : dispensers(level)) {
-      if (level.getBlockEntity(pos) instanceof net.minecraft.world.Container inventory)
+      if (level.getBlockEntity(pos) instanceof net.minecraft.world.Container inventory) {
         inventory.clearContent();
+      }
       level.removeBlock(pos, false);
       level.removeBlock(pos.north(), false);
     }
@@ -247,7 +275,9 @@ public final class CoreArrowFixture {
 
   public static void tick(ServerLevel level) {
     var state = CoreTestState.get(level);
-    if (!state.arrowRunning || state.arrowPhase == 3) return;
+    if (!state.arrowRunning || state.arrowPhase == 3) {
+      return;
+    }
     var entry = SubLevelContainer.getContainer(level).getSubLevel(state.arrowBody);
     if (!(entry instanceof ServerSubLevel body) || body.isRemoved()) {
       fail(level, "subject lost");
@@ -313,7 +343,9 @@ public final class CoreArrowFixture {
         state.arrowNextAction = now + 20;
       }
     }
-    if (now >= state.arrowDeadline) fail(level, "timeout in phase " + state.arrowPhase);
+    if (now >= state.arrowDeadline) {
+      fail(level, "timeout in phase " + state.arrowPhase);
+    }
   }
 
   /** Native dispensers have random spread. Retry only missing lanes within the same deadline. */
@@ -328,7 +360,9 @@ public final class CoreArrowFixture {
               w ->
                   w.surface().cell().equals(cell)
                       && w.surface().face() == Direction.NORTH
-                      && w.at() >= since)) missing.add(dispensers(level).get(i));
+                      && w.at() >= since)) {
+        missing.add(dispensers(level).get(i));
+      }
     }
     // Remove misses embedded in supporting tissue; retained eye arrows still prove both rounds.
     for (var arrow :
@@ -339,7 +373,9 @@ public final class CoreArrowFixture {
       var data = arrow.getPersistentData().getCompound("create_bioships:embedded_projectile");
       if (data.hasUUID("body")
           && data.getUUID("body").equals(body.getUniqueId())
-          && !targets.contains(BlockPos.of(data.getLong("cell")))) arrow.discard();
+          && !targets.contains(BlockPos.of(data.getLong("cell")))) {
+        arrow.discard();
+      }
     }
     fire(level, missing);
   }

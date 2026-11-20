@@ -22,9 +22,13 @@ public final class EpicFightBlockCollisions {
    */
   public static boolean visibleContact(Entity target, Entity watcher) {
     if (!(target instanceof SubLevelCombatTarget adapter)
-        || !(watcher.level() instanceof net.minecraft.server.level.ServerLevel level)) return false;
+        || !(watcher.level() instanceof net.minecraft.server.level.ServerLevel level)) {
+      return false;
+    }
     var body = adapter.body();
-    if (body == null) return false;
+    if (body == null) {
+      return false;
+    }
     var hit =
         level.clip(
             new net.minecraft.world.level.ClipContext(
@@ -34,19 +38,26 @@ public final class EpicFightBlockCollisions {
                 net.minecraft.world.level.ClipContext.Fluid.NONE,
                 watcher));
     if (hit.getType() != HitResult.Type.BLOCK
-        || CoreAssemblyRules.containing(level, hit.getBlockPos()) != body) return false;
-    if (adapter instanceof EyeCombatHurtbox eye && !eye.cell().equals(hit.getBlockPos()))
+        || CoreAssemblyRules.containing(level, hit.getBlockPos()) != body) {
       return false;
+    }
+    if (adapter instanceof EyeCombatHurtbox eye && !eye.cell().equals(hit.getBlockPos())) {
+      return false;
+    }
     adapter.impact(hit.getBlockPos(), hit.getDirection());
     return true;
   }
 
   public static List<Entity> collectSamples(
       Entity attacker, List<Entity> original, List<?> samples) {
-    if (attacker.level().isClientSide) return original;
+    if (attacker.level().isClientSide) {
+      return original;
+    }
     var hits = new ArrayList<>(original);
     hits.removeIf(e -> e instanceof SubLevelCombatTarget);
-    for (var sample : samples) hits.addAll(collect(sample, attacker, List.of()));
+    for (var sample : samples) {
+      hits.addAll(collect(sample, attacker, List.of()));
+    }
     return onePerGrid(hits);
   }
 
@@ -59,28 +70,39 @@ public final class EpicFightBlockCollisions {
         continue;
       }
       var body = target.body();
-      if (body == null) continue;
+      if (body == null) {
+        continue;
+      }
       var old = grids.get(body.getUniqueId());
-      if (old == null || target instanceof EyeCombatHurtbox && !(old instanceof EyeCombatHurtbox))
+      if (old == null || target instanceof EyeCombatHurtbox && !(old instanceof EyeCombatHurtbox)) {
         grids.put(body.getUniqueId(), target);
+      }
     }
     result.addAll(grids.values());
     return result;
   }
 
   public static List<Entity> collect(Object collider, Entity attacker, List<Entity> original) {
-    if (attacker.level().isClientSide) return original;
+    if (attacker.level().isClientSide) {
+      return original;
+    }
     var result = new ArrayList<>(original);
     result.removeIf(e -> e instanceof SubLevelCombatTarget);
     var container = SubLevelContainer.getContainer(attacker.level());
-    if (container == null) return result;
+    if (container == null) {
+      return result;
+    }
     var access = (EpicFightColliderAccess) collider;
     var attackBox = access.core$bounds();
     for (var entry : container.getAllSubLevels()) {
       if (!(entry instanceof ServerSubLevel body)
           || body.isRemoved()
-          || !SubLevelData.isLiving(body)) continue;
-      if (!body.boundingBox().toMojang().intersects(attackBox)) continue;
+          || !SubLevelData.isLiving(body)) {
+        continue;
+      }
+      if (!body.boundingBox().toMojang().intersects(attackBox)) {
+        continue;
+      }
       SubLevelCombatTarget selected = null;
       Vec3 selectedAim = null;
       net.minecraft.core.BlockPos selectedCell = null;
@@ -88,7 +110,9 @@ public final class EpicFightBlockCollisions {
       double nearest = Double.POSITIVE_INFINITY;
       boolean weak = false;
       var impacts = SubLevelImpactAdapter.get(body);
-      if (impacts == null) continue;
+      if (impacts == null) {
+        continue;
+      }
       boolean dead = SubLevelHealth.status(body).dead();
       var probe = impacts.collisionProbe();
       var oldBox = probe.getBoundingBox();
@@ -100,9 +124,13 @@ public final class EpicFightBlockCollisions {
             var logical = local.move(cell);
             var bounds = new BoundingBox3d(logical);
             var world = bounds.transform(body.logicalPose(), bounds).toMojang();
-            if (!world.intersects(attackBox)) continue;
+            if (!world.intersects(attackBox)) {
+              continue;
+            }
             probe.setBoundingBox(world);
-            if (!access.core$collides(probe)) continue;
+            if (!access.core$collides(probe)) {
+              continue;
+            }
             var from = body.logicalPose().transformPositionInverse(attacker.getEyePosition());
             var delta = from.subtract(logical.getCenter());
             var face = Direction.getNearest(delta.x, delta.y, delta.z);
@@ -124,7 +152,9 @@ public final class EpicFightBlockCollisions {
                               (net.minecraft.server.level.ServerLevel) attacker.level(),
                               visible.getBlockPos())
                           != body
-                      || !visible.getBlockPos().equals(cell))) continue;
+                      || !visible.getBlockPos().equals(cell))) {
+                continue;
+              }
             }
             var target = dead ? null : CombatAdapter.hitTarget(body, cell, face);
             boolean critical =
@@ -132,7 +162,9 @@ public final class EpicFightBlockCollisions {
                     state, face);
             double distance = world.distanceToSqr(attacker.getEyePosition());
             if (selectedCell != null
-                && (!critical && weak || critical == weak && distance >= nearest)) continue;
+                && (!critical && weak || critical == weak && distance >= nearest)) {
+              continue;
+            }
             selected = target;
             selectedCell = cell;
             selectedFace = face;
@@ -152,12 +184,18 @@ public final class EpicFightBlockCollisions {
       } finally {
         probe.setBoundingBox(oldBox);
       }
-      if (dead && selectedCell != null) impacts.wound(selectedCell, selectedFace);
+      if (dead && selectedCell != null) {
+        impacts.wound(selectedCell, selectedFace);
+      }
       if (selected != null) {
         selected.impact(selectedCell, selectedFace);
         selected.focusForAttack(selectedAim);
         var owner = org.Azkerash.create_bioships.core.SubLevelCreatureParts.root(body);
-        result.removeIf(e -> e instanceof org.Azkerash.create_bioships.combat.SubLevelCombatTarget t && org.Azkerash.create_bioships.core.SubLevelCreatureParts.root(t.body()) == owner);
+        result.removeIf(
+            e ->
+                e instanceof org.Azkerash.create_bioships.combat.SubLevelCombatTarget t
+                    && org.Azkerash.create_bioships.core.SubLevelCreatureParts.root(t.body())
+                        == owner);
         result.add(selected);
       }
     }

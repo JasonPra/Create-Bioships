@@ -64,7 +64,9 @@ public final class IntestineTransportTests {
         SubLevelDigestion.transfer(mouth) == 0 && mouth.getItem(0).getCount() == 2,
         "Cached route crossed broken intestine");
     level.setBlock(pos.east(), ComponentRegistry.INTESTINE.get().defaultBlockState(), 3);
-    for (int i = 0; i < 9; i++) stomach.setItem(i, new ItemStack(Items.PORKCHOP, 64));
+    for (int i = 0; i < 9; i++) {
+      stomach.setItem(i, new ItemStack(Items.PORKCHOP, 64));
+    }
     helper.assertTrue(
         SubLevelDigestion.transfer(mouth) == 0 && mouth.getItem(0).getCount() == 2,
         "Full stomach consumed intake items");
@@ -129,7 +131,9 @@ public final class IntestineTransportTests {
           SubLevelData.hunger(body, 1);
           var stomach = (StomachBlockEntity) level.getBlockEntity(core.east());
           stomach.setItem(9, new ItemStack(StomachBlockEntity.paste(), 3));
-          for (int i = 0; i < 31; i++) stomach.advance();
+          for (int i = 0; i < 31; i++) {
+            stomach.advance();
+          }
           helper.assertTrue(
               SubLevelData.hunger(body) == 1, "Paste consumed faster than player eating");
           stomach.advance();
@@ -138,16 +142,22 @@ public final class IntestineTransportTests {
               "One paste did not restore four hunger");
           SubLevelData.hunger(body, SubLevelData.maximumHunger(body) - 1);
           stomach.setItem(9, new ItemStack(StomachBlockEntity.paste(), 6));
-          for (int i = 0; i < 64; i++) stomach.advance();
+          for (int i = 0; i < 64; i++) {
+            stomach.advance();
+          }
           helper.assertTrue(
               SubLevelData.hunger(body) == 10 && stomach.getItem(9).getCount() == 5,
               "Paste did not respect hunger cap");
           stomach.setItem(9, new ItemStack(StomachBlockEntity.paste(), 2));
-          for (int i = 0; i < 64; i++) stomach.advance();
+          for (int i = 0; i < 64; i++) {
+            stomach.advance();
+          }
           helper.assertTrue(stomach.getItem(9).getCount() == 2, "Full creature wasted paste");
           SubLevelHealth.damage(body, SubLevelHealth.status(body).current(), "test");
           int acid = stomach.acid();
-          for (int i = 0; i < 64; i++) stomach.advance();
+          for (int i = 0; i < 64; i++) {
+            stomach.advance();
+          }
           helper.assertTrue(
               stomach.acid() == acid && stomach.getItem(9).getCount() == 2,
               "Dead stomach remained active");

@@ -44,7 +44,9 @@ public final class OrganButton extends Button {
     int bone = active ? 0xffcbb792 : 0xff695460;
     g.fill(x + 1, y + 2, x + 3, y + 5, bone);
     g.fill(x + w - 3, y + h - 5, x + w - 1, y + h - 2, bone);
-    if (selected.getAsBoolean()) g.fill(x + 6, y + h - 3, x + w - 6, y + h - 2, accent);
+    if (selected.getAsBoolean()) {
+      g.fill(x + 6, y + h - 3, x + w - 6, y + h - 2, accent);
+    }
     g.drawCenteredString(
         Minecraft.getInstance().font,
         getMessage(),

@@ -49,8 +49,9 @@ public record LimbPositionerPayload(BlockPos pos, int setting, int degrees)
             (p, c) ->
                 c.enqueueWork(
                     () -> {
-                      if (c.player() instanceof net.minecraft.server.level.ServerPlayer player)
+                      if (c.player() instanceof net.minecraft.server.level.ServerPlayer player) {
                         LimbPositionerActions.configure(player, p.pos, p.setting, p.degrees);
+                      }
                     }));
   }
 }

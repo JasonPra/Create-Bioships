@@ -19,7 +19,11 @@ public final class EyeWoundBehavior {
     var face = eye.getValue(BlockStateProperties.FACING);
     var behind = pos.relative(face.getOpposite());
     var support = level.getBlockState(behind);
-    for (var type : INVALID_SUPPORT_TYPES) if (type.isInstance(support.getBlock())) return false;
+    for (var type : INVALID_SUPPORT_TYPES) {
+      if (type.isInstance(support.getBlock())) {
+        return false;
+      }
+    }
     return support.isCollisionShapeFullBlock(level, behind)
         && support.isFaceSturdy(level, behind, face);
   }

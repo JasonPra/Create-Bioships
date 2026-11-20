@@ -25,12 +25,18 @@ public final class WanderTests {
   public static void underwater_world_routes_include_vertical_motion(GameTestHelper helper) {
     var level = helper.getLevel();
     var base = new BlockPos(3072, 86, 128);
-    for (int cx = 191; cx <= 193; cx++)
-      for (int cz = 7; cz <= 9; cz++) level.setChunkForced(cx, cz, true);
-    for (int x = -5; x <= 5; x++)
-      for (int y = -4; y <= 4; y++)
-        for (int z = -5; z <= 5; z++)
+    for (int cx = 191; cx <= 193; cx++) {
+      for (int cz = 7; cz <= 9; cz++) {
+        level.setChunkForced(cx, cz, true);
+      }
+    }
+    for (int x = -5; x <= 5; x++) {
+      for (int y = -4; y <= 4; y++) {
+        for (int z = -5; z <= 5; z++) {
           level.setBlock(base.offset(x, y, z), Blocks.WATER.defaultBlockState(), 3);
+        }
+      }
+    }
     helper.runAfterDelay(
         20,
         () -> {
@@ -117,11 +123,16 @@ public final class WanderTests {
   public static void grid_flags_factory_card_movement_and_removal(GameTestHelper helper) {
     var level = helper.getLevel();
     var base = new BlockPos(2816, 80, 128);
-    for (int cx = 175; cx <= 177; cx++)
-      for (int cz = 7; cz <= 9; cz++) level.setChunkForced(cx, cz, true);
-    for (int x = -16; x <= 16; x++)
-      for (int z = -16; z <= 22; z++)
+    for (int cx = 175; cx <= 177; cx++) {
+      for (int cz = 7; cz <= 9; cz++) {
+        level.setChunkForced(cx, cz, true);
+      }
+    }
+    for (int x = -16; x <= 16; x++) {
+      for (int z = -16; z <= 22; z++) {
         level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 3);
+      }
+    }
     helper.runAfterDelay(
         20,
         () -> {
@@ -167,7 +178,7 @@ public final class WanderTests {
               "Wander did not activate from the grid inventory");
           var initial = SubLevelPathfinder.position(body);
           boolean[] sawPath = {false};
-          for (int delay = 50; delay < 220; delay += 10)
+          for (int delay = 50; delay < 220; delay += 10) {
             helper.runAfterDelay(
                 delay,
                 () -> {
@@ -178,6 +189,7 @@ public final class WanderTests {
                         path.next() < path.points().size(), "Active path has invalid waypoint");
                   }
                 });
+          }
           helper.runAfterDelay(
               220,
               () -> {
@@ -209,7 +221,9 @@ public final class WanderTests {
                 helper.assertTrue(
                     org.Azkerash.create_bioships.core.pathfinding.SubLevelPaths.get(body) == null,
                     "Removing Wander left a stale path overlay");
-                for (var pose : SubLevelLegs.poses(body)) level.removeBlock(pose.cell(), false);
+                for (var pose : SubLevelLegs.poses(body)) {
+                  level.removeBlock(pose.cell(), false);
+                }
                 helper.assertTrue(
                     !SubLevelLocomotion.get(body).hasLegs(),
                     "Removing the last appendage left hasLegs true");
@@ -236,7 +250,7 @@ public final class WanderTests {
               "Exhibit brain did not contain Wander");
           helper.assertTrue(
               SubLevelData.hungerState(body).paused(), "Exhibit hunger was not paused");
-          for (var cell : SubLevelHealth.blocks(body))
+          for (var cell : SubLevelHealth.blocks(body)) {
             if (level.getBlockState(cell).is(ComponentRegistry.CRAB_LEG.get())) {
               var tuning =
                   org.Azkerash.create_bioships.compat.letitwalk.LimbTuning.get(level, cell);
@@ -244,6 +258,7 @@ public final class WanderTests {
                   tuning.equals(org.Azkerash.create_bioships.compat.letitwalk.LimbTuning.DEFAULT),
                   "Native exhibit unexpectedly overrides default articulation tuning");
             }
+          }
           helper.runAfterDelay(
               20,
               () -> {

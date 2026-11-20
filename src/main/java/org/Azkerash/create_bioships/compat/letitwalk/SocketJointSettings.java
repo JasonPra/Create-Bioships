@@ -23,7 +23,9 @@ public record SocketJointSettings(int swivel, int bend) {
   }
 
   public static String compact(BlockPos socket, int index) {
-    if (index < 0 || index > 2) throw new IllegalArgumentException("compact joint index");
+    if (index < 0 || index > 2) {
+      throw new IllegalArgumentException("compact joint index");
+    }
     return "c:" + socket.asLong() + ":" + index;
   }
 
@@ -32,8 +34,9 @@ public record SocketJointSettings(int swivel, int bend) {
   }
 
   public static String modular(ServerSubLevel owner, ServerSubLevel physical, BlockPos cell) {
-    if (!(physical.getLevel().getBlockEntity(cell) instanceof ModularJointEntity joint))
+    if (!(physical.getLevel().getBlockEntity(cell) instanceof ModularJointEntity joint)) {
       return null;
+    }
     var root = SubLevelCreatureParts.root(owner);
     var tag = root.getUserDataTag() == null ? new CompoundTag() : root.getUserDataTag().copy();
     var data = tag.getCompound(DATA).copy();
@@ -41,8 +44,11 @@ public record SocketJointSettings(int swivel, int bend) {
     String key = "m:" + joint.componentIdentity();
     String address = physical.getUniqueId() + "@" + cell.asLong();
     if (!key.equals(index.getString(address))) {
-      for (var old : java.util.Set.copyOf(index.getAllKeys()))
-        if (key.equals(index.getString(old))) index.remove(old);
+      for (var old : java.util.Set.copyOf(index.getAllKeys())) {
+        if (key.equals(index.getString(old))) {
+          index.remove(old);
+        }
+      }
       index.putString(address, key);
       data.put("Index", index);
       tag.put(DATA, data);
@@ -53,7 +59,9 @@ public record SocketJointSettings(int swivel, int bend) {
 
   public static SocketJointSettings get(ServerSubLevel body, String key) {
     body = SubLevelCreatureParts.root(body);
-    if (key == null || body.getUserDataTag() == null) return DEFAULT;
+    if (key == null || body.getUserDataTag() == null) {
+      return DEFAULT;
+    }
     var value = body.getUserDataTag().getCompound(DATA).getCompound("Values").getCompound(key);
     return value.isEmpty()
         ? DEFAULT
@@ -61,14 +69,17 @@ public record SocketJointSettings(int swivel, int bend) {
   }
 
   public void save(ServerSubLevel body, String key) {
-    if (key == null) throw new IllegalArgumentException("Missing socket identity");
+    if (key == null) {
+      throw new IllegalArgumentException("Missing socket identity");
+    }
     body = SubLevelCreatureParts.root(body);
     boolean changed = !equals(get(body, key));
     var tag = body.getUserDataTag() == null ? new CompoundTag() : body.getUserDataTag().copy();
     var data = tag.getCompound(DATA).copy();
     var values = data.getCompound("Values").copy();
-    if (equals(DEFAULT)) values.remove(key);
-    else {
+    if (equals(DEFAULT)) {
+      values.remove(key);
+    } else {
       var value = new CompoundTag();
       value.putInt("Swivel", swivel);
       value.putInt("Bend", bend);
@@ -77,8 +88,9 @@ public record SocketJointSettings(int swivel, int bend) {
     data.put("Values", values);
     tag.put(DATA, data);
     body.setUserDataTag(tag);
-    if (changed)
+    if (changed) {
       org.Azkerash.create_bioships.core.locomotion.SubLevelLocomotion.invalidateRoutes(body);
+    }
   }
 
   public static <T> T duringMove(Supplier<T> action) {
@@ -91,14 +103,21 @@ public record SocketJointSettings(int swivel, int bend) {
   }
 
   public static void changed(ServerSubLevel physical, BlockPos cell, BlockState state) {
-    if (MOVING.get() != 0) return;
+    if (MOVING.get() != 0) {
+      return;
+    }
     var body = SubLevelCreatureParts.root(physical);
-    if (body.getUserDataTag() == null || !body.getUserDataTag().contains(DATA)) return;
+    if (body.getUserDataTag() == null || !body.getUserDataTag().contains(DATA)) {
+      return;
+    }
     var tag = body.getUserDataTag() == null ? new CompoundTag() : body.getUserDataTag().copy();
     var data = tag.getCompound(DATA).copy();
     var values = data.getCompound("Values").copy();
-    if (!state.is(ComponentRegistry.CRAB_LEG.get()) && physical == body)
-      for (int i = 0; i < 3; i++) values.remove(compact(cell, i));
+    if (!state.is(ComponentRegistry.CRAB_LEG.get()) && physical == body) {
+      for (int i = 0; i < 3; i++) {
+        values.remove(compact(cell, i));
+      }
+    }
     if (!state.is(ComponentRegistry.LIMB_SOCKET.get())) {
       var index = data.getCompound("Index").copy();
       String address = physical.getUniqueId() + "@" + cell.asLong();

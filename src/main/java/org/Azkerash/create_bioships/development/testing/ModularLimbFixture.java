@@ -37,18 +37,22 @@ public final class ModularLimbFixture {
 
   public static ServerSubLevel body(ServerLevel level) {
     var container = SubLevelContainer.getContainer(level);
-    if (container != null)
-      for (var entry : container.getAllSubLevels())
+    if (container != null) {
+      for (var entry : container.getAllSubLevels()) {
         if (entry instanceof ServerSubLevel b
             && !b.isRemoved()
             && b.getUserDataTag() != null
-            && b.getUserDataTag().getBoolean(MARK)) return b;
+            && b.getUserDataTag().getBoolean(MARK)) {
+          return b;
+        }
+      }
+    }
     return null;
   }
 
   public static List<BlockPos> place(ServerLevel level, BlockPos base) {
     var cells = new ArrayList<BlockPos>();
-    for (int x = -1; x <= 1; x++)
+    for (int x = -1; x <= 1; x++) {
       for (int z = -2; z <= 2; z++) {
         var pos = base.offset(x, 4, z);
         level.setBlock(
@@ -58,10 +62,11 @@ public final class ModularLimbFixture {
             3);
         cells.add(pos);
       }
+    }
     var brain = base.offset(0, 5, 0);
     level.setBlock(brain, ComponentRegistry.BRAIN.get().defaultBlockState(), 3);
     cells.add(brain);
-    for (int side : new int[] {-1, 1})
+    for (int side : new int[] {-1, 1}) {
       for (int z : new int[] {-2, 2}) {
         var hip = base.offset(side * 2, 4, z);
         var knee = base.offset(side * 4, 4, z);
@@ -94,6 +99,7 @@ public final class ModularLimbFixture {
         cells.addAll(
             List.of(hip, hip.relative(facing), knee, knee.below(), knee.below(2), knee.below(3)));
       }
+    }
     return cells;
   }
 
@@ -101,21 +107,29 @@ public final class ModularLimbFixture {
     CoreTestState.get(level).modularLimbsBuilt = true;
     CoreTestState.get(level).setDirty();
     var base = base(level);
-    for (int x = (base.getX() - 12) >> 4; x <= (base.getX() + 12) >> 4; x++)
-      for (int z = -1; z <= 2; z++) level.setChunkForced(x, z, true);
+    for (int x = (base.getX() - 12) >> 4; x <= (base.getX() + 12) >> 4; x++) {
+      for (int z = -1; z <= 2; z++) {
+        level.setChunkForced(x, z, true);
+      }
+    }
     var old = body(level);
     if (old != null) {
       var members = SubLevelCreatureParts.members(old);
-      for (var member : members)
-        if (member != old)
+      for (var member : members) {
+        if (member != old) {
           SubLevelContainer.getContainer(level)
               .removeSubLevel(member, SubLevelRemovalReason.REMOVED);
+        }
+      }
       SubLevelContainer.getContainer(level).removeSubLevel(old, SubLevelRemovalReason.REMOVED);
     }
     for (var e :
         level.getEntitiesOfClass(
-            Display.TextDisplay.class, new AABB(base).inflate(40), e -> e.getTags().contains(MARK)))
+            Display.TextDisplay.class,
+            new AABB(base).inflate(40),
+            e -> e.getTags().contains(MARK))) {
       e.discard();
+    }
     DevelopmentLegChambers.build(level, base, true, 11);
     installDoors(level);
     place(level, base);
@@ -164,16 +178,18 @@ public final class ModularLimbFixture {
                     ? 0
                     : 1,
                 -8);
-        if (!level.getBlockState(pos).is(DevelopmentTestBlocks.GLASS_DOOR.get()))
+        if (!level.getBlockState(pos).is(DevelopmentTestBlocks.GLASS_DOOR.get())) {
           level.setBlock(pos, door.setValue(DoorBlock.HALF, half), 3);
+        }
       }
     }
   }
 
   private static void button(ServerLevel level, BlockPos pos, String command) {
     level.setBlock(pos, Blocks.COMMAND_BLOCK.defaultBlockState(), 3);
-    if (level.getBlockEntity(pos) instanceof CommandBlockEntity be)
+    if (level.getBlockEntity(pos) instanceof CommandBlockEntity be) {
       be.getCommandBlock().setCommand(command);
+    }
     level.setBlock(
         pos.north(),
         DevelopmentTestBlocks.BUTTON
@@ -184,7 +200,9 @@ public final class ModularLimbFixture {
   }
 
   public static int start(ServerLevel level) {
-    if (body(level) != null) return 0;
+    if (body(level) != null) {
+      return 0;
+    }
     var base = base(level);
     var cells = place(level, base);
     var body =
@@ -225,8 +243,9 @@ public final class ModularLimbFixture {
                     Commands.literal("reset")
                         .executes(
                             c -> {
-                              if (!DevelopmentWorldSetup.isDevelopment(c.getSource().getLevel()))
+                              if (!DevelopmentWorldSetup.isDevelopment(c.getSource().getLevel())) {
                                 return 0;
+                              }
                               reset(c.getSource().getLevel());
                               return 1;
                             }))
@@ -254,7 +273,9 @@ public final class ModularLimbFixture {
 
   private static void installWander(ServerSubLevel body) {
     var brain = SubLevelBrains.get(body);
-    if (brain.capacity() == 0) return;
+    if (brain.capacity() == 0) {
+      return;
+    }
     brain.inventory().setItem(0, ComponentRegistry.WANDER_BEHAVIOR_CARD.get().getDefaultInstance());
     var tag = body.getUserDataTag().copy();
     tag.putBoolean(WANDER_VERSION, true);
@@ -263,12 +284,17 @@ public final class ModularLimbFixture {
 
   @SubscribeEvent
   public static void tick(net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) {
-    if (event.getServer().getTickCount() % 20 != 0) return;
+    if (event.getServer().getTickCount() % 20 != 0) {
+      return;
+    }
     for (var level : event.getServer().getAllLevels()) {
-      if (!DevelopmentWorldSetup.isDevelopment(level)) continue;
+      if (!DevelopmentWorldSetup.isDevelopment(level)) {
+        continue;
+      }
       var subject = body(level);
-      if (subject != null && !subject.getUserDataTag().getBoolean(WANDER_VERSION))
+      if (subject != null && !subject.getUserDataTag().getBoolean(WANDER_VERSION)) {
         installWander(subject);
+      }
     }
   }
 }

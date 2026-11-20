@@ -19,6 +19,8 @@ public abstract class SlimeCombatTargetMixin {
 
   @Inject(method = "push", at = @At("TAIL"))
   private void core$contact(Entity entity, CallbackInfo callback) {
-    if (entity instanceof SubLevelCombatTarget target && isDealsDamage()) dealDamage(target);
+    if (entity instanceof SubLevelCombatTarget target && isDealsDamage()) {
+      dealDamage(target);
+    }
   }
 }

@@ -117,7 +117,9 @@ public final class ProgramSwitchChecks {
 
   private static ProgramMachine machine(String source) {
     var result = ProgramCompiler.compile(source);
-    if (!result.success()) throw new AssertionError(result.diagnostic());
+    if (!result.success()) {
+      throw new AssertionError(result.diagnostic());
+    }
     return new ProgramMachine(result.program());
   }
 
@@ -140,6 +142,8 @@ public final class ProgramSwitchChecks {
   }
 
   private static void check(boolean condition, String message) {
-    if (!condition) throw new AssertionError(message);
+    if (!condition) {
+      throw new AssertionError(message);
+    }
   }
 }

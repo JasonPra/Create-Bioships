@@ -35,10 +35,11 @@ public final class VisionTests {
       helper.assertTrue(
           rays.size() == 13 && new HashSet<>(rays).size() == 13,
           "Unbounded/duplicate cone samples");
-      for (var ray : rays)
+      for (var ray : rays) {
         helper.assertTrue(
             Math.abs(ray.length() - 1) < 1e-8 && ray.dot(forward) >= Math.cos(Math.PI / 4) - 1e-8,
             "Ray outside circular 90 degree cone");
+      }
     }
     helper.succeed();
   }
@@ -47,7 +48,11 @@ public final class VisionTests {
   public static void assembled_eye_cache_occlusion_wounds_and_death(GameTestHelper helper) {
     var level = helper.getLevel();
     var origin = new BlockPos(1584, 85, 160);
-    for (int x = 97; x <= 101; x++) for (int z = 8; z <= 12; z++) level.setChunkForced(x, z, true);
+    for (int x = 97; x <= 101; x++) {
+      for (int z = 8; z <= 12; z++) {
+        level.setChunkForced(x, z, true);
+      }
+    }
     helper.runAfterDelay(
         10,
         () -> {
@@ -136,7 +141,9 @@ public final class VisionTests {
           level.updateSkyBrightness();
           int loadedX = origin.getX() >> 4;
           int chunkZ = origin.getZ() >> 4;
-          for (int step = 0; step < 256 && level.hasChunk(loadedX + 1, chunkZ); step++) loadedX++;
+          for (int step = 0; step < 256 && level.hasChunk(loadedX + 1, chunkZ); step++) {
+            loadedX++;
+          }
           helper.assertTrue(
               !level.hasChunk(loadedX + 1, chunkZ), "Could not find unloaded chunk boundary");
           var edge = new Vec3((loadedX + 1) * 16.0 - .5, 85, origin.getZ() + .5);

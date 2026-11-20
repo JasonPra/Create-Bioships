@@ -34,8 +34,9 @@ public final class SubLevelNames {
     var known = PANELS.get(root);
     if (state.getBlock()
             instanceof org.Azkerash.create_bioships.components.logic.nametag.NameTagDisplayBlock
-        || known != null && known.stream().anyMatch(panel -> panel.getBlockPos().equals(p)))
+        || known != null && known.stream().anyMatch(panel -> panel.getBlockPos().equals(p))) {
       request(root);
+    }
   }
 
   public static String name(ServerSubLevel body) {
@@ -48,28 +49,38 @@ public final class SubLevelNames {
     boolean dirty = DIRTY.remove(body);
     body = SubLevelCreatureParts.root(body);
     dirty |= DIRTY.remove(body);
-    if (body.isRemoved()) return;
+    if (body.isRemoved()) {
+      return;
+    }
     var members = SubLevelCreatureParts.members(body);
     if (!PANELS.containsKey(body) || dirty || FAMILIES.getOrDefault(body, 0) != members.size()) {
       FAMILIES.put(body, members.size());
       var panels = new ArrayList<NameTagDisplayEntity>();
-      for (var member : members)
-        for (var holder : member.getPlot().getLoadedChunks())
-          for (var be : holder.getChunk().getBlockEntities().values())
-            if (be instanceof NameTagDisplayEntity panel && !panel.isRemoved()) panels.add(panel);
+      for (var member : members) {
+        for (var holder : member.getPlot().getLoadedChunks()) {
+          for (var be : holder.getChunk().getBlockEntities().values()) {
+            if (be instanceof NameTagDisplayEntity panel && !panel.isRemoved()) {
+              panels.add(panel);
+            }
+          }
+        }
+      }
       panels.sort(Comparator.comparing(NameTagDisplayEntity::getBlockPos));
       PANELS.put(body, List.copyOf(panels));
     }
     String chosen = "";
-    for (var panel : PANELS.get(body))
+    for (var panel : PANELS.get(body)) {
       if (!panel.isRemoved() && !panel.label().getString().isBlank()) {
         chosen = panel.label().getString();
         break;
       }
+    }
     var existing = body.getUserDataTag();
     boolean managed = existing != null && existing.getBoolean(MANAGED);
     if (!chosen.isBlank()) {
-      if (!chosen.equals(body.getName())) body.setName(chosen);
+      if (!chosen.equals(body.getName())) {
+        body.setName(chosen);
+      }
       if (!managed) {
         var updated = existing == null ? new net.minecraft.nbt.CompoundTag() : existing.copy();
         updated.putBoolean(MANAGED, true);
@@ -88,14 +99,21 @@ public final class SubLevelNames {
     PANELS.keySet().removeIf(ServerSubLevel::isRemoved);
     FAMILIES.keySet().removeIf(ServerSubLevel::isRemoved);
     DIRTY.removeIf(ServerSubLevel::isRemoved);
-    for (var body : List.copyOf(DIRTY)) refresh(body);
-    if (e.getServer().getTickCount() % 20 == 0)
+    for (var body : List.copyOf(DIRTY)) {
+      refresh(body);
+    }
+    if (e.getServer().getTickCount() % 20 == 0) {
       for (var l : e.getServer().getAllLevels()) {
         var c = SubLevelContainer.getContainer(l);
-        if (c != null)
-          for (var b : List.copyOf(c.getAllSubLevels()))
-            if (!SubLevelCreatureParts.isPart(b)) refresh(b);
+        if (c != null) {
+          for (var b : List.copyOf(c.getAllSubLevels())) {
+            if (!SubLevelCreatureParts.isPart(b)) {
+              refresh(b);
+            }
+          }
+        }
       }
+    }
   }
 
   @SubscribeEvent

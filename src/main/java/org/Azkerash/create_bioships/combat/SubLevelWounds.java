@@ -32,28 +32,35 @@ public final class SubLevelWounds {
               var block = body.getLevel().getBlockState(surface.cell());
               return block.is(ComponentRegistry.CORE.get()) || EyeWoundBehavior.isEye(block);
             });
-    if (cleared.isEmpty()) return;
+    if (cleared.isEmpty()) {
+      return;
+    }
     var now = body.getLevel().getGameTime();
     var root = body.getUserDataTag().copy();
     root.put(DATA, wounds.save(now));
     body.setUserDataTag(root);
-    for (var wound : cleared)
+    for (var wound : cleared) {
       net.neoforged.neoforge.network.PacketDistributor.sendToPlayersInDimension(
           body.getLevel(),
           new WoundPayload(
               body.getUniqueId(), wound.surface().cell(), wound.surface().face(), now, 0));
+    }
   }
 
   public static void hit(ServerSubLevel body, BlockPos cell, Direction face) {
     var impact = SubLevelImpactAdapter.get(body);
-    if (impact != null) impact.wound(cell, face);
+    if (impact != null) {
+      impact.wound(cell, face);
+    }
   }
 
   static void record(ServerSubLevel body, BlockPos cell, Direction face) {
     var block = body.getLevel().getBlockState(cell);
     if (block.is(ComponentRegistry.CORE.get()) || EyeWoundBehavior.isEye(block)) {
       var health = org.Azkerash.create_bioships.core.SubLevelHealth.status(body);
-      if (!health.dead() && health.maximum() > 0 && health.current() == health.maximum()) return;
+      if (!health.dead() && health.maximum() > 0 && health.current() == health.maximum()) {
+        return;
+      }
     }
     var now = body.getLevel().getGameTime();
     var wounds = state(body);

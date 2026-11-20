@@ -53,7 +53,9 @@ public final class SubLevelComponentStore {
   private SubLevelComponentStore(ServerSubLevel body) {
     this.body = body;
     var root = body.getUserDataTag();
-    if (root == null) return;
+    if (root == null) {
+      return;
+    }
     var saved = root.getCompound(KEY);
     for (var key : saved.getAllKeys()) {
       UUID id;
@@ -99,14 +101,18 @@ public final class SubLevelComponentStore {
       entry = null;
     }
     var previous = positions.get(pos);
-    if (previous != null && !previous.equals(requested)) entries.remove(previous);
+    if (previous != null && !previous.equals(requested)) {
+      entries.remove(previous);
+    }
     if (entry == null) {
       entry = new Entry(requested, pos.immutable(), type, local, localState, new CompoundTag());
       entries.put(requested, entry);
       dirty = true;
     } else {
       positions.remove(entry.pos);
-      if (!entry.pos.equals(pos)) dirty = true;
+      if (!entry.pos.equals(pos)) {
+        dirty = true;
+      }
       entry.pos = pos.immutable();
       if (entry.state == null && localState != null) {
         entry.state = localState;
@@ -119,9 +125,13 @@ public final class SubLevelComponentStore {
 
   public static void changed(ServerSubLevel body, BlockPos pos, BlockState state) {
     var store = STORES.get(body);
-    if (store == null) return;
+    if (store == null) {
+      return;
+    }
     var id = store.positions.get(pos);
-    if (id == null) return;
+    if (id == null) {
+      return;
+    }
     var entry = store.entries.get(id);
     if (entry != null
         && !entry.type.equals(
@@ -136,7 +146,9 @@ public final class SubLevelComponentStore {
 
   public static void release(ServerSubLevel body, UUID id, BlockPos pos) {
     var store = STORES.get(body);
-    if (store == null) return;
+    if (store == null) {
+      return;
+    }
     var entry = store.entries.get(id);
     if (entry != null && entry.pos.equals(pos)) {
       store.entries.remove(id);
@@ -155,7 +167,9 @@ public final class SubLevelComponentStore {
 
   public static void flush(ServerSubLevel body) {
     var store = STORES.get(body);
-    if (store == null || !store.dirty) return;
+    if (store == null || !store.dirty) {
+      return;
+    }
     var saved = new CompoundTag();
     for (var entry : store.entries.values()) {
       var tag = new CompoundTag();
@@ -178,10 +192,15 @@ public final class SubLevelComponentStore {
 
   @SubscribeEvent
   public static void tick(net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) {
-    if (event.getServer().getTickCount() % 8 != 0) return;
+    if (event.getServer().getTickCount() % 8 != 0) {
+      return;
+    }
     for (var body : new ArrayList<>(STORES.keySet())) {
-      if (body.isRemoved()) STORES.remove(body);
-      else flush(body);
+      if (body.isRemoved()) {
+        STORES.remove(body);
+      } else {
+        flush(body);
+      }
     }
   }
 

@@ -20,13 +20,19 @@ public final class CreatureFootsteps {
 
   public static boolean play(
       Level level, TerrainProbe.Ground ground, float weight, LegRuntime leg) {
-    if (leg.built.segments.isEmpty()) return false;
+    if (leg.built.segments.isEmpty()) {
+      return false;
+    }
     var container = SubLevelContainer.getContainer(level);
-    if (container == null) return false;
+    if (container == null) {
+      return false;
+    }
     var found = container.getSubLevel(leg.built.segments.getFirst());
     if (!(found instanceof dev.ryanhcode.sable.sublevel.ServerSubLevel part)
         || !SubLevelCreatureParts.isPart(part)
-        || !SubLevelData.isLiving(SubLevelCreatureParts.root(part))) return false;
+        || !SubLevelData.isLiving(SubLevelCreatureParts.root(part))) {
+      return false;
+    }
     var compact =
         level.getBlockState(part.getPlot().getCenterBlock()).getBlock() instanceof CompactLimbBlock;
     var profile = profile(compact);
@@ -42,7 +48,7 @@ public final class CreatureFootsteps {
         SoundSource.NEUTRAL,
         sound.getVolume() * profile.volume() * Math.clamp(weight, .4f, 1.5f),
         sound.getPitch() * profile.pitch() * (.95f + level.random.nextFloat() * .1f));
-    if (level instanceof net.minecraft.server.level.ServerLevel server && !ground.state().isAir())
+    if (level instanceof net.minecraft.server.level.ServerLevel server && !ground.state().isAir()) {
       server.sendParticles(
           new net.minecraft.core.particles.BlockParticleOption(
               net.minecraft.core.particles.ParticleTypes.BLOCK, ground.state()),
@@ -54,6 +60,7 @@ public final class CreatureFootsteps {
           .04,
           compact ? .09 : .16,
           .015);
+    }
     return true;
   }
 }

@@ -21,9 +21,11 @@ public final class BlockPlacementRules {
 
   public static void refresh() {
     var ids = new TreeSet<ResourceLocation>();
-    for (var id : BuiltInRegistries.BLOCK.keySet())
-      if (id.getNamespace().equals("biomancy") || id.getNamespace().equals(Create_bioships.MODID))
+    for (var id : BuiltInRegistries.BLOCK.keySet()) {
+      if (id.getNamespace().equals("biomancy") || id.getNamespace().equals(Create_bioships.MODID)) {
         ids.add(id);
+      }
+    }
     allowed = Collections.unmodifiableSet(ids);
   }
 

@@ -23,9 +23,13 @@ public final class SubLevelSickness {
   private SubLevelSickness() {}
 
   public static int remaining(ServerSubLevel body) {
-    if (!SubLevelCreatureParts.available(body)) return 0;
+    if (!SubLevelCreatureParts.available(body)) {
+      return 0;
+    }
     body = SubLevelCreatureParts.root(body);
-    if (!SubLevelData.isLiving(body) || SubLevelHealth.status(body).dead()) return 0;
+    if (!SubLevelData.isLiving(body) || SubLevelHealth.status(body).dead()) {
+      return 0;
+    }
     return (int)
         Math.clamp(
             SubLevelData.digestiveSickness(body).until() - body.getLevel().getGameTime(),
@@ -34,9 +38,13 @@ public final class SubLevelSickness {
   }
 
   public static void infect(ServerSubLevel body) {
-    if (!SubLevelCreatureParts.available(body)) return;
+    if (!SubLevelCreatureParts.available(body)) {
+      return;
+    }
     body = SubLevelCreatureParts.root(body);
-    if (!SubLevelData.isLiving(body) || SubLevelHealth.status(body).dead()) return;
+    if (!SubLevelData.isLiving(body) || SubLevelHealth.status(body).dead()) {
+      return;
+    }
     long now = body.getLevel().getGameTime();
     var old = SubLevelData.digestiveSickness(body);
     SubLevelData.digestiveSickness(
@@ -47,26 +55,38 @@ public final class SubLevelSickness {
   }
 
   public static int advance(ServerSubLevel body) {
-    if (!SubLevelCreatureParts.available(body)) return 0;
+    if (!SubLevelCreatureParts.available(body)) {
+      return 0;
+    }
     body = SubLevelCreatureParts.root(body);
-    if (!SubLevelData.isLiving(body) || SubLevelHealth.status(body).dead()) return 0;
+    if (!SubLevelData.isLiving(body) || SubLevelHealth.status(body).dead()) {
+      return 0;
+    }
     long now = body.getLevel().getGameTime();
     var state = SubLevelData.digestiveSickness(body);
     if (state.until() <= now) {
-      if (state.until() != 0)
+      if (state.until() != 0) {
         SubLevelData.digestiveSickness(body, new SubLevelData.DigestiveSickness(0, 0));
+      }
       return 0;
     }
-    if (now < state.nextEpisode()) return 0;
+    if (now < state.nextEpisode()) {
+      return 0;
+    }
     SubLevelData.digestiveSickness(
         body, new SubLevelData.DigestiveSickness(state.until(), now + INTERVAL));
     var mouths = new ArrayList<Organ>();
     var stomachs = new ArrayList<Organ>();
-    for (var member : SubLevelCreatureParts.members(body))
+    for (var member : SubLevelCreatureParts.members(body)) {
       for (var group : SubLevelDigestion.groups(member)) {
-        for (var p : group.mouths()) mouths.add(new Organ(member, p));
-        for (var p : group.stomachs()) stomachs.add(new Organ(member, p));
+        for (var p : group.mouths()) {
+          mouths.add(new Organ(member, p));
+        }
+        for (var p : group.stomachs()) {
+          stomachs.add(new Organ(member, p));
+        }
       }
+    }
     if (!mouths.isEmpty()) {
       var mouth = mouths.get(Math.floorMod(now / INTERVAL, mouths.size()));
       var block = mouth.body().getLevel().getBlockState(mouth.pos());
@@ -92,11 +112,12 @@ public final class SubLevelSickness {
         var sound =
             BuiltInRegistries.SOUND_EVENT.get(
                 ResourceLocation.parse("biomancy:block.digester.crafting_random"));
-        if (sound != null)
+        if (sound != null) {
           body.getLevel().playSound(null, at.x, at.y, at.z, sound, SoundSource.NEUTRAL, .4f, .8f);
+        }
       }
     }
-    for (var organ : stomachs)
+    for (var organ : stomachs) {
       if (body.getLevel().getBlockEntity(organ.pos()) instanceof StomachBlockEntity stomach) {
         for (int offset = 0; offset < 18; offset++) {
           int slot =
@@ -109,6 +130,7 @@ public final class SubLevelSickness {
           }
         }
       }
+    }
     return 0;
   }
 }

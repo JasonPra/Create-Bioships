@@ -15,8 +15,9 @@ public abstract class FeedingMenuMixin {
   @Inject(method = "clicked", at = @At("HEAD"))
   private void bioships$beforeDeposit(
       int slot, int button, ClickType type, Player player, CallbackInfo ci) {
-    if (!player.level().isClientSide)
+    if (!player.level().isClientSide) {
       bioships$before = FeedingTrust.snapshot((AbstractContainerMenu) (Object) this);
+    }
   }
 
   @Inject(method = "clicked", at = @At("RETURN"))

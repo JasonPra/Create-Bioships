@@ -19,11 +19,16 @@ public final class ModularWalkingTests {
   public static void repeated_flat_ground_steps_keep_limb_support(GameTestHelper h) {
     var level = h.getLevel();
     var base = new BlockPos(5120, 80, 128);
-    for (int cx = 317; cx <= 323; cx++)
-      for (int cz = 6; cz <= 10; cz++) level.setChunkForced(cx, cz, true);
-    for (int x = -32; x <= 32; x++)
-      for (int z = -16; z <= 16; z++)
+    for (int cx = 317; cx <= 323; cx++) {
+      for (int cz = 6; cz <= 10; cz++) {
+        level.setChunkForced(cx, cz, true);
+      }
+    }
+    for (int x = -32; x <= 32; x++) {
+      for (int z = -16; z <= 16; z++) {
         level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 3);
+      }
+    }
     final dev.ryanhcode.sable.sublevel.ServerSubLevel[] subject = {null};
     final int[] blocked = {0};
     final double[] start = {0};
@@ -43,10 +48,14 @@ public final class ModularWalkingTests {
             h.assertTrue(ModularLimbController.assemble(body), "Assembly failed");
             subject[0] = body;
           }
-          if (ticks < 100) return;
+          if (ticks < 100) {
+            return;
+          }
           var body = subject[0];
           BrainMotorControls.move(body, new Vec3(ticks < 500 ? .6 : -.6, 0, 0), 0, 20);
-          if (ModularLimbCollisions.obstructed(body)) blocked[0]++;
+          if (ModularLimbCollisions.obstructed(body)) {
+            blocked[0]++;
+          }
           var up = body.logicalPose().orientation().transform(new org.joml.Vector3d(0, 1, 0));
           h.assertTrue(up.y > .8, "Flat walking lost support: " + up.y);
           h.assertTrue(
@@ -55,17 +64,24 @@ public final class ModularWalkingTests {
           var rootCenter =
               body.logicalPose()
                   .transformPosition(Vec3.atCenterOf(body.getPlot().getCenterBlock()));
-          for (var part : ModularLimbController.segments(body))
-            for (var cell : SubLevelHealth.blocks(part))
+          for (var part : ModularLimbController.segments(body)) {
+            for (var cell : SubLevelHealth.blocks(part)) {
               if (level
                   .getBlockState(cell)
-                  .is(org.Azkerash.create_bioships.components.ComponentRegistry.LIMB_SOCKET.get()))
+                  .is(
+                      org.Azkerash.create_bioships.components.ComponentRegistry.LIMB_SOCKET
+                          .get())) {
                 h.assertTrue(
                     part.logicalPose().transformPosition(Vec3.atCenterOf(cell)).y
                         > rootCenter.y - 2,
                     "A knee collapsed to the floor during ordinary steps");
-          if (ticks == 100) start[0] = body.logicalPose().position().x();
-          if (ticks % 100 == 0)
+              }
+            }
+          }
+          if (ticks == 100) {
+            start[0] = body.logicalPose().position().x();
+          }
+          if (ticks % 100 == 0) {
             System.out.println(
                 "MODULAR_WALK_TRACE t="
                     + ticks
@@ -73,9 +89,11 @@ public final class ModularWalkingTests {
                     + body.logicalPose().position().x()
                     + " blocked="
                     + blocked[0]);
-          if (ticks == 500)
+          }
+          if (ticks == 500) {
             h.assertTrue(
                 body.logicalPose().position().x() > start[0] + 2, "Continuous walking stalled");
+          }
           if (ticks >= 900) {
             BrainMotorControls.stop(body);
             h.succeed();

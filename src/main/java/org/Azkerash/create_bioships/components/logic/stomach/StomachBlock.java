@@ -48,8 +48,9 @@ public final class StomachBlock extends DirectionalBlock
       net.minecraft.world.InteractionHand hand,
       net.minecraft.world.phys.BlockHitResult hit) {
     if (stack.getItem() instanceof com.github.elenterius.biomancy.item.injector.InjectorItem
-        && level.getBlockEntity(pos) instanceof StomachBlockEntity stomach)
+        && level.getBlockEntity(pos) instanceof StomachBlockEntity stomach) {
       return stomach.genes().inject(player, stack);
+    }
     return stack.getItem() instanceof com.simibubi.create.content.equipment.wrench.WrenchItem
         ? net.minecraft.world.ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION
         : net.minecraft.world.ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
@@ -62,11 +63,13 @@ public final class StomachBlock extends DirectionalBlock
       net.minecraft.core.BlockPos pos,
       net.minecraft.world.entity.player.Player player,
       net.minecraft.world.phys.BlockHitResult hit) {
-    if (hit.getDirection() != state.getValue(FACING))
+    if (hit.getDirection() != state.getValue(FACING)) {
       return net.minecraft.world.InteractionResult.PASS;
+    }
     if (player instanceof net.minecraft.server.level.ServerPlayer server
-        && level.getBlockEntity(pos) instanceof StomachBlockEntity stomach)
+        && level.getBlockEntity(pos) instanceof StomachBlockEntity stomach) {
       server.openMenu(stomach);
+    }
     return net.minecraft.world.InteractionResult.sidedSuccess(level.isClientSide);
   }
 
@@ -77,9 +80,13 @@ public final class StomachBlock extends DirectionalBlock
     var be =
         builder.getOptionalParameter(
             net.minecraft.world.level.storage.loot.parameters.LootContextParams.BLOCK_ENTITY);
-    if (be instanceof StomachBlockEntity stomach)
-      for (var stack : drops)
-        if (stack.is(asItem())) stomach.saveToItem(stack, builder.getLevel().registryAccess());
+    if (be instanceof StomachBlockEntity stomach) {
+      for (var stack : drops) {
+        if (stack.is(asItem())) {
+          stomach.saveToItem(stack, builder.getLevel().registryAccess());
+        }
+      }
+    }
     return drops;
   }
 

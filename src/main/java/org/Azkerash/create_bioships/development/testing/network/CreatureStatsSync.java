@@ -29,9 +29,11 @@ public final class CreatureStatsSync {
             c.enqueueWork(
                 () -> {
                   if (c.player() instanceof ServerPlayer player) {
-                    if (p.enabled() && DevelopmentToolkitItem.allowed(player))
+                    if (p.enabled() && DevelopmentToolkitItem.allowed(player)) {
                       VIEWERS.put(player, new HashSet<>());
-                    else VIEWERS.remove(player);
+                    } else {
+                      VIEWERS.remove(player);
+                    }
                   }
                 }));
     r.playToClient(
@@ -161,7 +163,9 @@ public final class CreatureStatsSync {
 
   @SubscribeEvent
   public static void tick(net.neoforged.neoforge.event.tick.ServerTickEvent.Post e) {
-    if (e.getServer().getTickCount() % 10 != 0) return;
+    if (e.getServer().getTickCount() % 10 != 0) {
+      return;
+    }
     VIEWERS
         .keySet()
         .removeIf(
@@ -170,9 +174,11 @@ public final class CreatureStatsSync {
                     || !DevelopmentToolkitItem.allowed(p));
     for (var player : VIEWERS.keySet()) {
       var c = SubLevelContainer.getContainer(player.serverLevel());
-      if (c == null) continue;
+      if (c == null) {
+        continue;
+      }
       var roots = new ArrayList<ServerSubLevel>();
-      for (var entry : c.getAllSubLevels())
+      for (var entry : c.getAllSubLevels()) {
         if (entry instanceof ServerSubLevel b
             && !b.isRemoved()
             && !SubLevelCreatureParts.isPart(b)
@@ -185,7 +191,10 @@ public final class CreatureStatsSync {
                     .SubLevelPathfinder
                     .position(b)
                     .distanceToSqr(player.position())
-                < 64 * 64) roots.add(b);
+                < 64 * 64) {
+          roots.add(b);
+        }
+      }
       roots.sort(
           Comparator.comparingDouble(
               b ->
@@ -200,10 +209,12 @@ public final class CreatureStatsSync {
         present.add(b.getUniqueId());
         PacketDistributor.sendToPlayer(player, snapshot(b));
       }
-      for (var id : VIEWERS.get(player))
-        if (!present.contains(id))
+      for (var id : VIEWERS.get(player)) {
+        if (!present.contains(id)) {
           PacketDistributor.sendToPlayer(
               player, new CreatureStatsPayload(id, Vec3.ZERO, List.of()));
+        }
+      }
       VIEWERS.put(player, present);
     }
   }

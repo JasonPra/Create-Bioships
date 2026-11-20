@@ -53,30 +53,37 @@ public final class DigestionFixture {
   public static void reset(ServerLevel level) {
     var state = CoreTestState.get(level);
     var base = state.digestionOrigin;
-    for (int x = (base.getX() - 8) >> 4; x <= (base.getX() + 8) >> 4; x++)
-      for (int z = (base.getZ() - 9) >> 4; z <= (base.getZ() + 8) >> 4; z++)
+    for (int x = (base.getX() - 8) >> 4; x <= (base.getX() + 8) >> 4; x++) {
+      for (int z = (base.getZ() - 9) >> 4; z <= (base.getZ() + 8) >> 4; z++) {
         level.setChunkForced(x, z, true);
+      }
+    }
     var container = SubLevelContainer.getContainer(level);
-    for (var entry : List.copyOf(container.getAllSubLevels()))
+    for (var entry : List.copyOf(container.getAllSubLevels())) {
       if (entry instanceof ServerSubLevel body
           && body.getUserDataTag() != null
-          && body.getUserDataTag().getBoolean(MARK))
+          && body.getUserDataTag().getBoolean(MARK)) {
         container.removeSubLevel(body, SubLevelRemovalReason.REMOVED);
+      }
+    }
     for (var entity :
         level.getEntitiesOfClass(
             Entity.class,
             new AABB(base).inflate(15),
             e ->
                 e.getTags().contains(MARK)
-                    || e instanceof net.minecraft.world.entity.item.ItemEntity)) entity.discard();
-    for (int x = -6; x <= 6; x++)
+                    || e instanceof net.minecraft.world.entity.item.ItemEntity)) {
+      entity.discard();
+    }
+    for (int x = -6; x <= 6; x++) {
       for (int z = -8; z <= 6; z++) {
         level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 2);
-        if (Math.abs(x) <= 5 && Math.abs(z) <= 5)
+        if (Math.abs(x) <= 5 && Math.abs(z) <= 5) {
           for (int y = 0; y <= 5; y++) {
             var pos = base.offset(x, y, z);
-            if (level.getBlockEntity(pos) instanceof net.minecraft.world.Container inventory)
+            if (level.getBlockEntity(pos) instanceof net.minecraft.world.Container inventory) {
               inventory.clearContent();
+            }
             level.setBlock(
                 pos,
                 (Math.abs(x) == 5 || Math.abs(z) == 5 || y == 5
@@ -85,9 +92,11 @@ public final class DigestionFixture {
                     .defaultBlockState(),
                 2);
           }
+        }
       }
-    for (int x = 0; x <= 1; x++)
-      for (int y = 0; y <= 1; y++)
+    }
+    for (int x = 0; x <= 1; x++) {
+      for (int y = 0; y <= 1; y++) {
         level.setBlock(
             base.offset(x, y, -5),
             DevelopmentTestBlocks.GLASS_DOOR
@@ -97,6 +106,8 @@ public final class DigestionFixture {
                 .setValue(DoorBlock.HALF, y == 0 ? DoubleBlockHalf.LOWER : DoubleBlockHalf.UPPER)
                 .setValue(DoorBlock.HINGE, x == 0 ? DoorHingeSide.LEFT : DoorHingeSide.RIGHT),
             3);
+      }
+    }
     var m = mouth(level);
     level.setBlock(m, ComponentRegistry.MOUTH.get().defaultBlockState(), 3);
     level.setBlock(m.east(), ComponentRegistry.INTESTINE.get().defaultBlockState(), 3);
@@ -140,7 +151,9 @@ public final class DigestionFixture {
 
   public static int start(ServerLevel level) {
     var state = CoreTestState.get(level);
-    if (!state.digestionBuilt || state.digestionRunning || state.digestionBody != null) return 0;
+    if (!state.digestionBuilt || state.digestionRunning || state.digestionBody != null) {
+      return 0;
+    }
     var m = mouth(level);
     var body =
         SubLevelAssemblyHelper.assembleBlocks(
@@ -148,7 +161,9 @@ public final class DigestionFixture {
             m.east(3).south(),
             cells(level),
             new BoundingBox3i(m.north(), m.east(3).south(2).above()));
-    if (body == null) return 0;
+    if (body == null) {
+      return 0;
+    }
     var core = body.getPlot().getCenterBlock();
     CoreAssemblyRules.changed(level, core);
     var tag = body.getUserDataTag().copy();
@@ -197,7 +212,9 @@ public final class DigestionFixture {
 
   public static void tick(ServerLevel level) {
     var state = CoreTestState.get(level);
-    if (!state.digestionRunning) return;
+    if (!state.digestionRunning) {
+      return;
+    }
     var entry = SubLevelContainer.getContainer(level).getSubLevel(state.digestionBody);
     if (!(entry instanceof ServerSubLevel body) || body.isRemoved()) {
       finish(level, "FAIL: subject lost");
@@ -227,21 +244,28 @@ public final class DigestionFixture {
         return;
       }
     }
-    if (level.getGameTime() >= state.digestionDeadline) finish(level, "FAIL: digestion timed out");
+    if (level.getGameTime() >= state.digestionDeadline) {
+      finish(level, "FAIL: digestion timed out");
+    }
   }
 
   private static int components(StomachBlockEntity stomach) {
     int count = 0;
-    for (int i = 9; i < 27; i++)
-      if (!stomach.getItem(i).is(StomachBlockEntity.paste()))
+    for (int i = 9; i < 27; i++) {
+      if (!stomach.getItem(i).is(StomachBlockEntity.paste())) {
         count += stomach.getItem(i).getCount();
+      }
+    }
     return count;
   }
 
   private static int paste(StomachBlockEntity stomach) {
     int count = 0;
-    for (int i = 9; i < 27; i++)
-      if (stomach.getItem(i).is(StomachBlockEntity.paste())) count += stomach.getItem(i).getCount();
+    for (int i = 9; i < 27; i++) {
+      if (stomach.getItem(i).is(StomachBlockEntity.paste())) {
+        count += stomach.getItem(i).getCount();
+      }
+    }
     return count;
   }
 
@@ -262,10 +286,15 @@ public final class DigestionFixture {
     var base = state.digestionOrigin;
     for (var old :
         level.getEntitiesOfClass(
-            Display.TextDisplay.class, new AABB(base).inflate(15), e -> e.getTags().contains(MARK)))
+            Display.TextDisplay.class,
+            new AABB(base).inflate(15),
+            e -> e.getTags().contains(MARK))) {
       old.discard();
+    }
     var display = EntityType.TEXT_DISPLAY.create(level);
-    if (display == null) return;
+    if (display == null) {
+      return;
+    }
     var tag = new CompoundTag();
     tag.putString(
         "text",

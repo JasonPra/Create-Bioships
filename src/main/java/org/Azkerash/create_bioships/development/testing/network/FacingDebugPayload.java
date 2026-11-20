@@ -14,8 +14,9 @@ public record FacingDebugPayload(UUID body, Direction front, Vec3 origin, boolea
     if (front.getAxis() == Direction.Axis.Y
         || !Double.isFinite(origin.x)
         || !Double.isFinite(origin.y)
-        || !Double.isFinite(origin.z))
+        || !Double.isFinite(origin.z)) {
       throw new IllegalArgumentException("Invalid facing snapshot");
+    }
   }
 
   public static final Type<FacingDebugPayload> TYPE =

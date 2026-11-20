@@ -21,7 +21,9 @@ public record BrainAppearancePayload(
           (b, p) -> {
             b.writeUUID(p.body);
             b.writeVarInt(p.cells.size());
-            for (var cell : p.cells) b.writeBlockPos(cell);
+            for (var cell : p.cells) {
+              b.writeBlockPos(cell);
+            }
             b.writeBlockPos(p.port == null ? BlockPos.ZERO : p.port);
             b.writeEnum(p.face);
             b.writeBoolean(p.alive);
@@ -29,9 +31,13 @@ public record BrainAppearancePayload(
           b -> {
             var id = b.readUUID();
             int count = b.readVarInt();
-            if (count < 0 || count > 27) throw new IllegalArgumentException("Brain size");
+            if (count < 0 || count > 27) {
+              throw new IllegalArgumentException("Brain size");
+            }
             var cells = new ArrayList<BlockPos>();
-            for (int i = 0; i < count; i++) cells.add(b.readBlockPos());
+            for (int i = 0; i < count; i++) {
+              cells.add(b.readBlockPos());
+            }
             return new BrainAppearancePayload(
                 id,
                 List.copyOf(cells),

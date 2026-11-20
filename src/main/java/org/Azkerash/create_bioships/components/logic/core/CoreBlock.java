@@ -90,13 +90,16 @@ public final class CoreBlock extends Block
     super.setPlacedBy(level, pos, state, placer, stack);
     if (level instanceof ServerLevel server
         && placer instanceof net.minecraft.world.entity.player.Player
-        && !(placer instanceof net.neoforged.neoforge.common.util.FakePlayer))
+        && !(placer instanceof net.neoforged.neoforge.common.util.FakePlayer)) {
       CoreAssemblyRules.playerPlaced(server, pos, placer.getUUID());
+    }
   }
 
   static boolean assembled(ServerLevel level, BlockPos pos) {
     var container = SubLevelContainer.getContainer(level);
-    if (container == null || !container.inBounds(pos)) return false;
+    if (container == null || !container.inBounds(pos)) {
+      return false;
+    }
     var plot = container.getPlot(new ChunkPos(pos));
     return plot != null && plot.getSubLevel() instanceof ServerSubLevel body && !body.isRemoved();
   }
@@ -104,13 +107,16 @@ public final class CoreBlock extends Block
   @Override
   protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
     if (!assembled(level, pos)) {
-      if (!state.getValue(BLINK) || state.getValue(STAGE) != 0 || state.getValue(WAKE) != 0)
+      if (!state.getValue(BLINK) || state.getValue(STAGE) != 0 || state.getValue(WAKE) != 0) {
         level.setBlock(pos, state.setValue(BLINK, true).setValue(STAGE, 0).setValue(WAKE, 0), 2);
+      }
       return;
     }
     CoreAssemblyRules.mark(level, pos);
     CoreAssemblyRules.reconcile(level, pos);
-    if (!level.getBlockState(pos).is(this)) return;
+    if (!level.getBlockState(pos).is(this)) {
+      return;
+    }
     var body = CoreAssemblyRules.containing(level, pos);
     if (body != null && SubLevelHealth.status(body).dead()) {
       level.setBlock(pos, state.setValue(BLINK, true).setValue(WAKE, 0).setValue(STAGE, 0), 2);
@@ -143,8 +149,9 @@ public final class CoreBlock extends Block
             .setValue(WAKE, assembled(destination, to) ? 1 : 0),
         2);
     CoreAssemblyRules.changed(destination, to);
-    if (destination.getBlockEntity(to) instanceof CoreGogglesDisplay display)
+    if (destination.getBlockEntity(to) instanceof CoreGogglesDisplay display) {
       display.restoreRecoveredCore();
+    }
     destination.scheduleTick(to, this, 1);
   }
 }

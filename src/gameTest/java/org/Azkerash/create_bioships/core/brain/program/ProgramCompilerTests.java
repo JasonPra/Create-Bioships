@@ -57,7 +57,9 @@ public final class ProgramCompilerTests {
             "int x=1; x \"=\" 2;",
             "Console\".\"WriteLine(1);",
             "\"int\" x=1;",
-            "int x=1 \"<\" 2;")) rejects(h, source);
+            "int x=1 \"<\" 2;")) {
+      rejects(h, source);
+    }
     accepts(h, "Console.WriteLine(\"return\"); Console.WriteLine(-2147483648);");
     var random = new java.util.Random(31873);
     String[] words = {
@@ -91,8 +93,9 @@ public final class ProgramCompilerTests {
     for (int n = 0; n < 5000; n++) {
       var source = new StringBuilder();
       int length = random.nextInt(100);
-      for (int i = 0; i < length; i++)
+      for (int i = 0; i < length; i++) {
         source.append(words[random.nextInt(words.length)]).append(' ');
+      }
       ProgramCompiler.compile(source.toString());
     }
     h.succeed();

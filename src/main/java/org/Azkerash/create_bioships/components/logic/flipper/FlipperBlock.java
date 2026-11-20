@@ -41,7 +41,9 @@ public final class FlipperBlock extends WaterloggedComponentBlock
   @Override
   public BlockState getStateForPlacement(BlockPlaceContext c) {
     var face = c.getClickedFace();
-    if (!face.getAxis().isHorizontal()) return null;
+    if (!face.getAxis().isHorizontal()) {
+      return null;
+    }
     var state =
         placed(defaultBlockState().setValue(BlockStateProperties.HORIZONTAL_FACING, face), c);
     return state.canSurvive(c.getLevel(), c.getClickedPos()) ? state : null;
@@ -57,13 +59,17 @@ public final class FlipperBlock extends WaterloggedComponentBlock
   @Override
   protected BlockState updateShape(
       BlockState s, Direction d, BlockState other, LevelAccessor l, BlockPos p, BlockPos q) {
-    if (!s.canSurvive(l, p)) l.scheduleTick(p, this, 1);
+    if (!s.canSurvive(l, p)) {
+      l.scheduleTick(p, this, 1);
+    }
     return super.updateShape(s, d, other, l, p, q);
   }
 
   @Override
   protected void tick(BlockState s, ServerLevel l, BlockPos p, RandomSource r) {
-    if (!s.canSurvive(l, p)) l.destroyBlock(p, true);
+    if (!s.canSurvive(l, p)) {
+      l.destroyBlock(p, true);
+    }
   }
 
   @Override
@@ -93,6 +99,8 @@ public final class FlipperBlock extends WaterloggedComponentBlock
   public void afterMove(
       ServerLevel source, ServerLevel destination, BlockState state, BlockPos from, BlockPos to) {
     var body = CoreAssemblyRules.containing(destination, to);
-    if (body != null) SubLevelFlippers.request(body);
+    if (body != null) {
+      SubLevelFlippers.request(body);
+    }
   }
 }

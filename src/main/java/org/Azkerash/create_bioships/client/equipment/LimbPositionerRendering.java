@@ -17,7 +17,9 @@ public final class LimbPositionerRendering {
 
           @Override
           public net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer getCustomRenderer() {
-            if (renderer == null) renderer = new dev.letitwalk.client.PositionerRenderer();
+            if (renderer == null) {
+              renderer = new dev.letitwalk.client.PositionerRenderer();
+            }
             return renderer;
           }
         },

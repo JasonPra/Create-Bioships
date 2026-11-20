@@ -25,7 +25,8 @@ public abstract class ExhibitDisplayMixin {
       int light,
       CallbackInfo ci) {
     if (ExhibitDisplayRenderer.defer(
-        (DisplayRenderer<?, ?>) (Object) this, display, yaw, partial, pose, buffers, light))
+        (DisplayRenderer<?, ?>) (Object) this, display, yaw, partial, pose, buffers, light)) {
       ci.cancel();
+    }
   }
 }

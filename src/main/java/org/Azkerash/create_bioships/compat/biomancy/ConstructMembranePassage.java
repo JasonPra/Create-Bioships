@@ -21,14 +21,18 @@ public final class ConstructMembranePassage implements BlockSubLevelCollisionCal
   public static boolean registered(ServerSubLevel host, ServerSubLevel craft) {
     host = SubLevelCreatureParts.root(host);
     craft = SubLevelCreatureParts.root(craft);
-    if (host == craft) return false;
+    if (host == craft) {
+      return false;
+    }
     var id = craft.getUniqueId();
     return SubLevelPermissions.get(host).allowed().stream()
         .anyMatch(entry -> entry.sublevel() && entry.id().equals(id));
   }
 
   public static boolean permitsCollision(ServerLevel l, BlockPos membrane, BlockPos other) {
-    if (other == null) return false;
+    if (other == null) {
+      return false;
+    }
     var host = CoreAssemblyRules.containing(l, membrane);
     var craft = CoreAssemblyRules.containing(l, other);
     return host != null && craft != null && SubLevelData.isLiving(host) && registered(host, craft);
@@ -51,12 +55,16 @@ public final class ConstructMembranePassage implements BlockSubLevelCollisionCal
   public static boolean within(SubLevel craft, Entity entity, Pose3dc pose) {
     if (!(entity instanceof LivingEntity)
         || craft.isRemoved()
-        || craft.getLevel() != entity.level()) return false;
+        || craft.getLevel() != entity.level()) {
+      return false;
+    }
     var local =
         pose.transformPositionInverse(
             new Vec3(entity.getX(), entity.getBoundingBox().minY + .05, entity.getZ()));
     var bounds = craft.getPlot().getBoundingBox();
-    if (bounds == null) return false;
+    if (bounds == null) {
+      return false;
+    }
     double e = .125;
     return local.x >= bounds.minX() - e
         && local.x <= bounds.maxX() + 1 + e
@@ -67,16 +75,26 @@ public final class ConstructMembranePassage implements BlockSubLevelCollisionCal
   }
 
   public static boolean passenger(ServerSubLevel host, Entity entity) {
-    if (!(entity instanceof LivingEntity)) return false;
+    if (!(entity instanceof LivingEntity)) {
+      return false;
+    }
     var container = SubLevelContainer.getContainer(host.getLevel());
-    if (container == null) return false;
-    for (var entry : SubLevelPermissions.get(host).allowed())
+    if (container == null) {
+      return false;
+    }
+    for (var entry : SubLevelPermissions.get(host).allowed()) {
       if (entry.sublevel()) {
         var found = container.getSubLevel(entry.id());
-        if (!(found instanceof ServerSubLevel craft) || craft.isRemoved()) continue;
-        for (var member : SubLevelCreatureParts.members(craft))
-          if (within(member, entity, member.logicalPose())) return true;
+        if (!(found instanceof ServerSubLevel craft) || craft.isRemoved()) {
+          continue;
+        }
+        for (var member : SubLevelCreatureParts.members(craft)) {
+          if (within(member, entity, member.logicalPose())) {
+            return true;
+          }
+        }
       }
+    }
     return false;
   }
 }

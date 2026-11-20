@@ -36,9 +36,12 @@ public final class FeedingTrust {
   }
 
   private static void change(ServerSubLevel body, double amount) {
-    if (body.isRemoved() || SubLevelHealth.status(body).dead()) return;
-    if (amount > 0) org.Azkerash.create_bioships.core.trust.SubLevelTrustGains.add(body, amount);
-    else if (amount < 0) {
+    if (body.isRemoved() || SubLevelHealth.status(body).dead()) {
+      return;
+    }
+    if (amount > 0) {
+      org.Azkerash.create_bioships.core.trust.SubLevelTrustGains.add(body, amount);
+    } else if (amount < 0) {
       SubLevelData.trust(body, SubLevelData.trust(body) + amount);
       org.Azkerash.create_bioships.core.trust.SubLevelTrustGains.cancelParticles(body);
     }
@@ -46,23 +49,26 @@ public final class FeedingTrust {
 
   private static ServerSubLevel recipient(BlockEntity entity) {
     if (entity == null
-        || !(entity.getLevel() instanceof net.minecraft.server.level.ServerLevel level))
+        || !(entity.getLevel() instanceof net.minecraft.server.level.ServerLevel level)) {
       return null;
+    }
     var body = CoreAssemblyRules.containing(level, entity.getBlockPos());
-    if (body == null || !SubLevelData.isLiving(body) || SubLevelHealth.status(body).dead())
+    if (body == null || !SubLevelData.isLiving(body) || SubLevelHealth.status(body).dead()) {
       return null;
+    }
     return body;
   }
 
   public static void hand(ServerPlayer player, BlockPos pos, ItemStack stack, int accepted) {
     var body = recipient(player.serverLevel().getBlockEntity(pos));
-    if (body != null && accepted > 0)
+    if (body != null && accepted > 0) {
       change(
           body,
           accepted
               * (stack.is(net.minecraft.world.item.Items.ROTTEN_FLESH)
                   ? -ROTTEN_PENALTY
                   : unit(stack)));
+    }
   }
 
   public static Snapshot snapshot(AbstractContainerMenu menu) {
@@ -95,10 +101,14 @@ public final class FeedingTrust {
     if (menu instanceof com.github.elenterius.biomancy.menu.StorageSacMenu) {
       var sac = ((org.Azkerash.create_bioships.mixin.StorageSacMenuAccess) menu).bioships$sac();
       var body = recipient(sac);
-      if (body == null) return null;
+      if (body == null) {
+        return null;
+      }
       var handler = sac.getInventory();
       var items = new ArrayList<ItemStack>();
-      for (int i = 0; i < handler.getSlots(); i++) items.add(handler.getStackInSlot(i).copy());
+      for (int i = 0; i < handler.getSlots(); i++) {
+        items.add(handler.getStackInSlot(i).copy());
+      }
       boolean connected =
           SubLevelDigestion.groups(body).stream()
               .anyMatch(g -> g.sacs().contains(sac.getBlockPos()) && !g.stomachs().isEmpty());
@@ -108,14 +118,18 @@ public final class FeedingTrust {
   }
 
   public static void deposited(Snapshot before, Snapshot after) {
-    if (before == null || after == null || before.body != after.body) return;
+    if (before == null || after == null || before.body != after.body) {
+      return;
+    }
     double change = 0;
     var seen = new ArrayList<ItemStack>();
     var all = new ArrayList<>(before.items);
     all.addAll(after.items);
     for (var stack : all) {
       if (stack.isEmpty()
-          || seen.stream().anyMatch(s -> ItemStack.isSameItemSameComponents(s, stack))) continue;
+          || seen.stream().anyMatch(s -> ItemStack.isSameItemSameComponents(s, stack))) {
+        continue;
+      }
       seen.add(stack);
       int old =
           before.items.stream()
@@ -129,8 +143,12 @@ public final class FeedingTrust {
               .sum();
       int delta = now - old;
       if (stack.is(net.minecraft.world.item.Items.ROTTEN_FLESH)) {
-        if (delta > 0 && after.earnsTrust) change -= delta * ROTTEN_PENALTY;
-      } else if (delta < 0 || after.earnsTrust) change += delta * unit(stack);
+        if (delta > 0 && after.earnsTrust) {
+          change -= delta * ROTTEN_PENALTY;
+        }
+      } else if (delta < 0 || after.earnsTrust) {
+        change += delta * unit(stack);
+      }
     }
     change(after.body, change);
   }

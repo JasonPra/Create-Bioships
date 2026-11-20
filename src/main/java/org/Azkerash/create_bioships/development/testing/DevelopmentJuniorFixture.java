@@ -16,8 +16,9 @@ public final class DevelopmentJuniorFixture {
     try (var input = level.getServer().getResourceManager().getResourceOrThrow(TEMPLATE).open()) {
       var resource = NbtIo.readCompressed(input, NbtAccounter.create(8 * 1024 * 1024));
       var baseline = resource.getCompound("baseline").copy();
-      if (baseline.getList("blocks", Tag.TAG_COMPOUND).isEmpty())
+      if (baseline.getList("blocks", Tag.TAG_COMPOUND).isEmpty()) {
         throw new IllegalStateException("Junior's developer template has no blocks");
+      }
       baseline.putDouble(
           "y",
           baseline.getDouble("y")
@@ -36,7 +37,9 @@ public final class DevelopmentJuniorFixture {
       state.setDirty();
     }
     // Only the exhibit UUID identifies this reference creature; names elsewhere do not.
-    if (state.juniorSubject == null) DevelopmentJuniorBaseline.reset(level);
+    if (state.juniorSubject == null) {
+      DevelopmentJuniorBaseline.reset(level);
+    }
     JuniorAdminCommands.installControl(level);
   }
 }

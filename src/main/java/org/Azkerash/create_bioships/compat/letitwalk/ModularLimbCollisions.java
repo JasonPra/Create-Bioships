@@ -37,14 +37,18 @@ public final class ModularLimbCollisions {
     try {
       walker.legs.removeIf(
           leg -> {
-            if (admit(owner, walker.getBlockPos(), leg.built)) return false;
+            if (admit(owner, walker.getBlockPos(), leg.built)) {
+              return false;
+            }
             BRACE.put(leg.built, owner.getLevel().getGameTime() + 2);
             leg.built.prevDesired = null;
             leg.built.prevDesiredRot = null;
             BLOCKED.put(owner, owner.getLevel().getGameTime() + 20);
             var request = BrainMotorControls.current(owner);
             if (!org.Azkerash.create_bioships.core.pathfinding.SubLevelPathfinder.movementClear(
-                owner, request.velocity(), request.yawRate())) BrainMotorControls.obstructed(owner);
+                owner, request.velocity(), request.yawRate())) {
+              BrainMotorControls.obstructed(owner);
+            }
             return true;
           });
       return BuiltLegDriver.substep(walker, owner, dt);
@@ -61,16 +65,19 @@ public final class ModularLimbCollisions {
       return true;
     }
     var previous = ADMITTED.get(built);
-    if (previous == null || previous.length != built.angles.length) return false;
+    if (previous == null || previous.length != built.angles.length) {
+      return false;
+    }
     var desired = built.angles.clone();
     var limits = (org.Azkerash.create_bioships.mixin.JointChainLimitsAccess) (Object) built.chain;
     for (double fraction : new double[] {.5, .25, .125, 0}) {
-      for (int i = 0; i < desired.length; i++)
+      for (int i = 0; i < desired.length; i++) {
         built.angles[i] =
             Math.clamp(
                 previous[i] + fraction * (desired[i] - previous[i]),
                 limits.bioships$minimum()[i],
                 limits.bioships$maximum()[i]);
+      }
       if (clear(owner, core, built)) {
         ADMITTED.put(built, built.angles.clone());
         return true;
@@ -83,7 +90,9 @@ public final class ModularLimbCollisions {
   /** Read the same forward-chain poses used by BuiltLegDriver, including socket rotation axes. */
   public static boolean clear(ServerSubLevel owner, BlockPos core, BuiltLeg built) {
     var container = SubLevelContainer.getContainer(owner.getLevel());
-    if (container == null) return false;
+    if (container == null) {
+      return false;
+    }
     var points = built.chain.forward(built.angles, null);
     var rotation = new Quaterniond();
     int n =
@@ -92,9 +101,12 @@ public final class ModularLimbCollisions {
       var axis = built.restAxes[i];
       rotation.mul(new Quaterniond().fromAxisAngleRad(axis[0], axis[1], axis[2], built.angles[i]));
       // Two socket DOFs can reference one physical body; only the final pose is rendered/driven.
-      if (built.segments.subList(i + 1, n).contains(built.segments.get(i))) continue;
-      if (!(container.getSubLevel(built.segments.get(i)) instanceof ServerSubLevel part))
+      if (built.segments.subList(i + 1, n).contains(built.segments.get(i))) {
+        continue;
+      }
+      if (!(container.getSubLevel(built.segments.get(i)) instanceof ServerSubLevel part)) {
         return false;
+      }
       var origin = part.logicalPose().rotationPoint();
       var off = built.segmentOffsets[i];
       var pivot = built.restPivots[i];
@@ -113,7 +125,9 @@ public final class ModularLimbCollisions {
               .transformPosition(
                   Vec3.atLowerCornerOf(core).add(relative.x, relative.y, relative.z));
       var turn = new Quaterniond(owner.logicalPose().orientation()).mul(rotation);
-      if (!clearSweep(part, desired, turn)) return false;
+      if (!clearSweep(part, desired, turn)) {
+        return false;
+      }
     }
     return true;
   }
@@ -129,7 +143,7 @@ public final class ModularLimbCollisions {
     var origin = pose.rotationPoint();
     var scale = pose.scale();
     double radius = 0;
-    for (var box : shapes)
+    for (var box : shapes) {
       radius =
           java.lang.Math.max(
               radius,
@@ -147,6 +161,7 @@ public final class ModularLimbCollisions {
                               java.lang.Math.abs(box.maxZ - origin.z()))
                           * scale.z())
                   .length());
+    }
     double dot =
         java.lang.Math.min(1, java.lang.Math.abs(new Quaterniond(pose.orientation()).dot(turn)));
     int steps =
@@ -155,7 +170,9 @@ public final class ModularLimbCollisions {
             (int)
                 java.lang.Math.ceil(
                     (from.distance(to) + radius * 2 * java.lang.Math.acos(dot)) / .125));
-    if (steps > 64) return false;
+    if (steps > 64) {
+      return false;
+    }
     for (int step = 1; step <= steps; step++) {
       double t = step / (double) steps;
       var position = new Vector3d(from).lerp(to, t);
@@ -191,8 +208,10 @@ public final class ModularLimbCollisions {
                     + java.lang.Math.abs(z.z) * extent.z);
         var lo = BlockPos.containing(center.x - reach.x, center.y - reach.y, center.z - reach.z);
         var hi = BlockPos.containing(center.x + reach.x, center.y + reach.y, center.z + reach.z);
-        if (!part.getLevel().hasChunksAt(lo, hi)) return false;
-        for (var cell : BlockPos.betweenClosed(lo, hi))
+        if (!part.getLevel().hasChunksAt(lo, hi)) {
+          return false;
+        }
+        for (var cell : BlockPos.betweenClosed(lo, hi)) {
           for (var solid :
               part.getLevel()
                   .getBlockState(cell)
@@ -200,7 +219,9 @@ public final class ModularLimbCollisions {
                   .toAabbs()) {
             var obstacle = solid.move(cell).deflate(.025);
             double depth = penetration(center, x, y, z, extent, obstacle);
-            if (depth <= 0) continue;
+            if (depth <= 0) {
+              continue;
+            }
             // Native physics permits a small resting contact. A sweep out of that contact
             // must remain possible; rejecting its first sample strands the foot in ragdoll.
             var initialRotation = new Quaterniond(pose.orientation());
@@ -221,8 +242,11 @@ public final class ModularLimbCollisions {
                     initialRotation.transform(new Vector3d(0, 0, 1)),
                     extent,
                     obstacle);
-            if (initialDepth <= 0 || depth > initialDepth + 1e-7) return false;
+            if (initialDepth <= 0 || depth > initialDepth + 1e-7) {
+              return false;
+            }
           }
+        }
       }
     }
     return true;
@@ -237,7 +261,11 @@ public final class ModularLimbCollisions {
     var axes = new ArrayList<Vector3d>(15);
     Collections.addAll(axes, world);
     Collections.addAll(axes, local);
-    for (var a : local) for (var b : world) axes.add(a.cross(b, new Vector3d()));
+    for (var a : local) {
+      for (var b : world) {
+        axes.add(a.cross(b, new Vector3d()));
+      }
+    }
     var delta =
         new Vector3d(
                 (obstacle.minX + obstacle.maxX) / 2,
@@ -246,7 +274,9 @@ public final class ModularLimbCollisions {
             .sub(center);
     double minimum = Double.POSITIVE_INFINITY;
     for (var axis : axes) {
-      if (axis.lengthSquared() < 1e-12) continue;
+      if (axis.lengthSquared() < 1e-12) {
+        continue;
+      }
       var a = new Vector3d(axis).normalize();
       double radius =
           Math.abs(a.dot(x)) * extent.x
@@ -256,7 +286,9 @@ public final class ModularLimbCollisions {
               + Math.abs(a.y) * obstacle.getYsize() / 2
               + Math.abs(a.z) * obstacle.getZsize() / 2;
       double depth = radius - Math.abs(a.dot(delta));
-      if (depth <= 0) return 0;
+      if (depth <= 0) {
+        return 0;
+      }
       minimum = Math.min(minimum, depth);
     }
     return minimum;

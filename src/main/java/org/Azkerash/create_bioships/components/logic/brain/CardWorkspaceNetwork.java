@@ -95,20 +95,26 @@ public final class CardWorkspaceNetwork {
               b.writeVarInt(p.menu);
               b.writeUUID(p.identity);
               b.writeUtf(p.state, 512);
-              if (p.lines.size() > 64)
+              if (p.lines.size() > 64) {
                 throw new IllegalArgumentException("Console history exceeds limit");
+              }
               b.writeVarInt(p.lines.size());
-              for (var line : p.lines) b.writeUtf(line, 256);
+              for (var line : p.lines) {
+                b.writeUtf(line, 256);
+              }
             },
             b -> {
               int menu = b.readVarInt();
               UUID id = b.readUUID();
               String state = b.readUtf(512);
               int count = b.readVarInt();
-              if (count < 0 || count > 64)
+              if (count < 0 || count > 64) {
                 throw new IllegalArgumentException("Invalid console history");
+              }
               var lines = new java.util.ArrayList<String>();
-              for (int i = 0; i < count; i++) lines.add(b.readUtf(256));
+              for (int i = 0; i < count; i++) {
+                lines.add(b.readUtf(256));
+              }
               return new Output(menu, id, state, lines);
             });
 
@@ -148,8 +154,9 @@ public final class CardWorkspaceNetwork {
         (p, c) ->
             c.enqueueWork(
                 () -> {
-                  if (c.player() instanceof ServerPlayer player)
+                  if (c.player() instanceof ServerPlayer player) {
                     CardWorkspaces.openBrain(player, p.menu, p.slot);
+                  }
                 }));
     registrar.playToServer(
         Save.TYPE,
@@ -197,9 +204,10 @@ public final class CardWorkspaceNetwork {
                 () -> {
                   if (c.player() instanceof ServerPlayer player) {
                     var view = CardWorkspaces.output(player, p.menu, p.identity);
-                    if (view != null)
+                    if (view != null) {
                       PacketDistributor.sendToPlayer(
                           player, new Output(p.menu, p.identity, view.state(), view.output()));
+                    }
                   }
                 }));
     registrar.playToClient(

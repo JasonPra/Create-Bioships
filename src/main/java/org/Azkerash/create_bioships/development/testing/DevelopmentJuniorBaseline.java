@@ -17,14 +17,16 @@ public final class DevelopmentJuniorBaseline {
   private DevelopmentJuniorBaseline() {}
 
   public static void capture(ServerSubLevel body) {
-    if (SubLevelHealth.status(body).dead())
+    if (SubLevelHealth.status(body).dead()) {
       throw new IllegalArgumentException("Cannot capture a dead subject");
+    }
     for (var part : SubLevelCreatureParts.members(body)) {
       var data = part.getUserDataTag();
-      if (part != body && (data == null || !data.contains(CompactLimbController.PART)))
+      if (part != body && (data == null || !data.contains(CompactLimbController.PART))) {
         throw new IllegalArgumentException(
             "This baseline supports generated compact limbs; modular assemblies require a future"
                 + " multipart schematic");
+      }
     }
     var level = body.getLevel();
     var center = body.getPlot().getCenterBlock();
@@ -36,7 +38,9 @@ public final class DevelopmentJuniorBaseline {
       entry.putLong("offset", p.subtract(center).asLong());
       entry.put("state", NbtUtils.writeBlockState(level.getBlockState(p)));
       var be = level.getBlockEntity(p);
-      if (be != null) entry.put("entity", be.saveWithFullMetadata(level.registryAccess()));
+      if (be != null) {
+        entry.put("entity", be.saveWithFullMetadata(level.registryAccess()));
+      }
       blocks.add(entry);
     }
     result.put("blocks", blocks);
@@ -57,7 +61,9 @@ public final class DevelopmentJuniorBaseline {
     result.putDouble("px", pivot.x());
     result.putDouble("py", pivot.y());
     result.putDouble("pz", pivot.z());
-    if (body.getName() != null) result.putString("name", body.getName());
+    if (body.getName() != null) {
+      result.putString("name", body.getName());
+    }
     var state = CoreTestState.get(level);
     state.juniorBaseline = result;
     state.juniorSubject = body.getUniqueId();
@@ -67,7 +73,9 @@ public final class DevelopmentJuniorBaseline {
   public static ServerSubLevel reset(ServerLevel level) {
     var state = CoreTestState.get(level);
     var snapshot = state.juniorBaseline;
-    if (snapshot.isEmpty()) throw new IllegalStateException("Capture Junior's baseline first");
+    if (snapshot.isEmpty()) {
+      throw new IllegalStateException("Capture Junior's baseline first");
+    }
     var container = SubLevelContainer.getContainer(level);
     var old = state.juniorSubject == null ? null : container.getSubLevel(state.juniorSubject);
     var former = old instanceof ServerSubLevel b ? b : null;
@@ -109,8 +117,9 @@ public final class DevelopmentJuniorBaseline {
     }
     var replacement =
         SubLevelAssemblyHelper.assembleBlocks(level, staging, cells, new BoundingBox3i(low, high));
-    if (replacement == null)
+    if (replacement == null) {
       throw new IllegalStateException("Baseline assembly failed; current Junior was retained");
+    }
     var anchor = replacement.getPlot().getCenterBlock();
     var delta = anchor.subtract(origin);
     var user = snapshot.getCompound("user").copy();
@@ -137,16 +146,24 @@ public final class DevelopmentJuniorBaseline {
     replacement.updateLastPose();
     replacement.updateBoundingBox();
     var handle = dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle.of(replacement);
-    if (handle != null) handle.teleport(pose.position(), pose.orientation());
-    if (snapshot.contains("name")) replacement.setName(snapshot.getString("name"));
+    if (handle != null) {
+      handle.teleport(pose.position(), pose.orientation());
+    }
+    if (snapshot.contains("name")) {
+      replacement.setName(snapshot.getString("name"));
+    }
     // Allocate the complete replacement before freeing any old plot. Reusing a
     // just-retired plot in the same tick can still see Sable's cached old chunks.
     org.Azkerash.create_bioships.core.legs.SubLevelLegs.initialize(replacement);
     if (former != null) {
-      for (var part : SubLevelCreatureParts.members(former))
-        if (part != former && !part.isRemoved())
+      for (var part : SubLevelCreatureParts.members(former)) {
+        if (part != former && !part.isRemoved()) {
           container.removeSubLevel(part, SubLevelRemovalReason.REMOVED);
-      if (!former.isRemoved()) container.removeSubLevel(former, SubLevelRemovalReason.REMOVED);
+        }
+      }
+      if (!former.isRemoved()) {
+        container.removeSubLevel(former, SubLevelRemovalReason.REMOVED);
+      }
     }
     state.juniorSubject = replacement.getUniqueId();
     state.juniorFeedAt = level.getGameTime() + DevelopmentJuniorCare.INTERVAL;
@@ -159,12 +176,17 @@ public final class DevelopmentJuniorBaseline {
     for (var key : List.copyOf(tag.getAllKeys())) {
       var value = tag.get(key);
       String mappedKey = remapText(key, origin, delta);
-      if (value instanceof CompoundTag child) remap(child, origin, delta);
-      else if (value instanceof ListTag list) {
-        for (var element : list)
-          if (element instanceof CompoundTag child) remap(child, origin, delta);
-      } else if (value instanceof LongTag number)
+      if (value instanceof CompoundTag child) {
+        remap(child, origin, delta);
+      } else if (value instanceof ListTag list) {
+        for (var element : list) {
+          if (element instanceof CompoundTag child) {
+            remap(child, origin, delta);
+          }
+        }
+      } else if (value instanceof LongTag number) {
         tag.putLong(key, remapPosition(number.getAsLong(), origin, delta));
+      }
       if (!mappedKey.equals(key)) {
         tag.put(mappedKey, tag.get(key));
         tag.remove(key);
@@ -184,13 +206,14 @@ public final class DevelopmentJuniorBaseline {
   private static String remapText(String text, BlockPos origin, BlockPos delta) {
     var matcher = java.util.regex.Pattern.compile("-?\\d{10,20}").matcher(text);
     var result = new StringBuffer();
-    while (matcher.find())
+    while (matcher.find()) {
       try {
         matcher.appendReplacement(
             result, Long.toString(remapPosition(Long.parseLong(matcher.group()), origin, delta)));
       } catch (NumberFormatException e) {
         matcher.appendReplacement(result, matcher.group());
       }
+    }
     matcher.appendTail(result);
     return result.toString();
   }

@@ -60,7 +60,9 @@ public class SubLevelCombatTarget extends LivingEntity {
 
   @Override
   public double getAttributeValue(net.minecraft.core.Holder<Attribute> attribute) {
-    if (attribute != Attributes.MAX_HEALTH) return super.getAttributeValue(attribute);
+    if (attribute != Attributes.MAX_HEALTH) {
+      return super.getAttributeValue(attribute);
+    }
     var body = body();
     return body == null ? entityData.get(POOL_MAXIMUM) : SubLevelHealth.status(body).maximum();
   }
@@ -72,12 +74,16 @@ public class SubLevelCombatTarget extends LivingEntity {
       amount = net.neoforged.neoforge.event.EventHooks.onLivingHeal(this, amount);
       SubLevelHealth.heal(body, amount);
       syncPool(body);
-    } else if (!level().isClientSide) super.heal(amount);
+    } else if (!level().isClientSide) {
+      super.heal(amount);
+    }
   }
 
   private SubLevelCombatTarget effectOwner() {
     var body = body();
-    if (body == null) return this;
+    if (body == null) {
+      return this;
+    }
     var owner = org.Azkerash.create_bioships.core.SubLevelCreatureParts.root(body);
     return owner != body || this instanceof EyeCombatHurtbox ? CombatAdapter.target(owner) : this;
   }
@@ -85,11 +91,16 @@ public class SubLevelCombatTarget extends LivingEntity {
   @Override
   public boolean addEffect(net.minecraft.world.effect.MobEffectInstance effect, Entity source) {
     var owner = effectOwner();
-    if (owner == null) return false;
-    if (owner != this)
+    if (owner == null) {
+      return false;
+    }
+    if (owner != this) {
       return owner.addEffect(new net.minecraft.world.effect.MobEffectInstance(effect), source);
+    }
     boolean added = super.addEffect(effect, source);
-    if (added && body() != null) CombatAdapter.saveEffects(body(), this);
+    if (added && body() != null) {
+      CombatAdapter.saveEffects(body(), this);
+    }
     return added;
   }
 
@@ -118,19 +129,29 @@ public class SubLevelCombatTarget extends LivingEntity {
   public boolean removeEffect(
       net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect> effect) {
     var owner = effectOwner();
-    if (owner == null) return false;
-    if (owner != this) return owner.removeEffect(effect);
+    if (owner == null) {
+      return false;
+    }
+    if (owner != this) {
+      return owner.removeEffect(effect);
+    }
     boolean removed = super.removeEffect(effect);
-    if (removed && body() != null) CombatAdapter.saveEffects(body(), this);
+    if (removed && body() != null) {
+      CombatAdapter.saveEffects(body(), this);
+    }
     return removed;
   }
 
   @Override
   public boolean removeAllEffects() {
     var owner = effectOwner();
-    if (owner == null) return false;
+    if (owner == null) {
+      return false;
+    }
     boolean changed = owner == this ? super.removeAllEffects() : owner.removeAllEffects();
-    if (owner == this && body() != null) CombatAdapter.saveEffects(body(), this);
+    if (owner == this && body() != null) {
+      CombatAdapter.saveEffects(body(), this);
+    }
     return changed;
   }
 
@@ -143,11 +164,15 @@ public class SubLevelCombatTarget extends LivingEntity {
     setHealth(getMaxHealth());
     position(body);
     syncPool(body);
-    if (!(this instanceof EyeCombatHurtbox)) CombatAdapter.restoreEffects(body, this);
+    if (!(this instanceof EyeCombatHurtbox)) {
+      CombatAdapter.restoreEffects(body, this);
+    }
   }
 
   public ServerSubLevel body() {
-    if (!(level() instanceof ServerLevel server) || bodyId == null) return null;
+    if (!(level() instanceof ServerLevel server) || bodyId == null) {
+      return null;
+    }
     var container = SubLevelContainer.getContainer(server);
     var body = container == null ? null : container.getSubLevel(bodyId);
     return body instanceof ServerSubLevel serverBody && !body.isRemoved() ? serverBody : null;
@@ -180,9 +205,11 @@ public class SubLevelCombatTarget extends LivingEntity {
       double best = Double.POSITIVE_INFINITY;
       for (var physical : members) {
         var cells = new java.util.HashSet<>(SubLevelHealth.blocks(physical));
-        for (var cell : cells)
+        for (var cell : cells) {
           for (var face : net.minecraft.core.Direction.values()) {
-            if (cells.contains(cell.relative(face))) continue;
+            if (cells.contains(cell.relative(face))) {
+              continue;
+            }
             var candidate =
                 physical.logicalPose().transformPosition(Vec3.atCenterOf(cell).relative(face, .55));
             if (level()
@@ -194,7 +221,9 @@ public class SubLevelCombatTarget extends LivingEntity {
                             net.minecraft.world.level.ClipContext.Fluid.NONE,
                             threat))
                     .getType()
-                != net.minecraft.world.phys.HitResult.Type.MISS) continue;
+                != net.minecraft.world.phys.HitResult.Type.MISS) {
+              continue;
+            }
             double distance = candidate.distanceToSqr(threat.position());
             if (distance < best) {
               best = distance;
@@ -204,6 +233,7 @@ public class SubLevelCombatTarget extends LivingEntity {
               impactFace = face;
             }
           }
+        }
       }
     }
     if (threat != null
@@ -234,15 +264,18 @@ public class SubLevelCombatTarget extends LivingEntity {
     var body = body();
     if (body != null) {
       syncPool(body);
-      if (!(this instanceof EyeCombatHurtbox) && tickCount % 20 == 0)
+      if (!(this instanceof EyeCombatHurtbox) && tickCount % 20 == 0) {
         CombatAdapter.saveEffects(body, this);
+      }
     }
   }
 
   @Override
   public boolean hurt(DamageSource source, float amount) {
     var body = body();
-    if (body == null || SubLevelHealth.status(body).dead()) return false;
+    if (body == null || SubLevelHealth.status(body).dead()) {
+      return false;
+    }
     return super.hurt(source, amount);
   }
 
@@ -259,8 +292,9 @@ public class SubLevelCombatTarget extends LivingEntity {
                   (ServerLevel) level(), impactCell);
       if (physical == null
           || org.Azkerash.create_bioships.core.SubLevelCreatureParts.root(physical)
-              != org.Azkerash.create_bioships.core.SubLevelCreatureParts.root(body))
+              != org.Azkerash.create_bioships.core.SubLevelCreatureParts.root(body)) {
         physical = body;
+      }
       double remaining =
           org.Azkerash.create_bioships.core.SubLevelArmor.absorb(
               physical, impactCell, impactFace, source, damage);
@@ -271,11 +305,14 @@ public class SubLevelCombatTarget extends LivingEntity {
       if (impactCell != null
           && (source.getDirectEntity() instanceof LivingEntity
               || source.getDirectEntity()
-                  instanceof net.minecraft.world.entity.projectile.Projectile))
+                  instanceof net.minecraft.world.entity.projectile.Projectile)) {
         SubLevelWounds.hit(physical, impactCell, impactFace);
+      }
     }
     // This entity is an adapter, never a second health pool or loot-bearing creature.
-    if (body != null) syncPool(body);
+    if (body != null) {
+      syncPool(body);
+    }
   }
 
   protected double damageMultiplier() {
@@ -350,7 +387,9 @@ public class SubLevelCombatTarget extends LivingEntity {
   @Override
   public void addAdditionalSaveData(CompoundTag tag) {
     super.addAdditionalSaveData(tag);
-    if (bodyId != null) tag.putUUID("sublevel", bodyId);
+    if (bodyId != null) {
+      tag.putUUID("sublevel", bodyId);
+    }
   }
 
   @Override

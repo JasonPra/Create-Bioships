@@ -66,8 +66,9 @@ public final class PotionFixtureTests {
           helper.assertTrue(body != null, "Potion subject lost");
           var target = CombatAdapter.target(body);
           var effect = PotionFixture.EFFECTS.get(index);
-          if (!effect.value().isInstantenous())
+          if (!effect.value().isInstantenous()) {
             helper.assertTrue(target.hasEffect(effect), "Native dispenser missed effect " + effect);
+          }
           var core = body.getPlot().getCenterBlock();
           var main = (CoreGogglesDisplay) level.getBlockEntity(core);
           var readout = (CoreGogglesDisplay) level.getBlockEntity(core.below().north());
@@ -84,15 +85,20 @@ public final class PotionFixtureTests {
                   && SubLevelData.hungerState(body).paused()
                   && SubLevelData.trust(body) == 0,
               "Placeholder defaults changed");
-          for (int tick = 0; tick < 200; tick++) target.tick();
+          for (int tick = 0; tick < 200; tick++) {
+            target.tick();
+          }
           state.potionDeadline = level.getGameTime();
           PotionFixture.tick(level);
           helper.assertTrue(
               state.potionResults.size() == index + 1
                   && state.potionResults.get(index).contains(": PASS"),
               "Potion case failed: " + state.potionResults);
-          if (index + 1 < PotionFixture.EFFECTS.size()) checkCase(helper, index + 1);
-          else finished(helper);
+          if (index + 1 < PotionFixture.EFFECTS.size()) {
+            checkCase(helper, index + 1);
+          } else {
+            finished(helper);
+          }
         });
   }
 

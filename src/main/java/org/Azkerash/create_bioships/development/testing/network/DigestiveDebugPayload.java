@@ -11,7 +11,9 @@ public record DigestiveDebugPayload(UUID body, List<Node> nodes, boolean truncat
     implements CustomPacketPayload {
   public record ItemTotal(ResourceLocation item, int count) {
     public ItemTotal {
-      if (count <= 0) throw new IllegalArgumentException("Invalid item total");
+      if (count <= 0) {
+        throw new IllegalArgumentException("Invalid item total");
+      }
     }
   }
 
@@ -19,7 +21,9 @@ public record DigestiveDebugPayload(UUID body, List<Node> nodes, boolean truncat
       BlockPos pos, int kind, int slots, int used, int items, List<ItemTotal> contents) {
     public Node {
       contents = List.copyOf(contents);
-      if (contents.size() > 27) throw new IllegalArgumentException("Too many inventory item types");
+      if (contents.size() > 27) {
+        throw new IllegalArgumentException("Too many inventory item types");
+      }
     }
 
     public Node(BlockPos pos, int kind, int slots, int used, int items) {
@@ -59,8 +63,9 @@ public record DigestiveDebugPayload(UUID body, List<Node> nodes, boolean truncat
             var body = buffer.readUUID();
             boolean truncated = buffer.readBoolean();
             int count = buffer.readVarInt();
-            if (count < 0 || count > MAX_NODES)
+            if (count < 0 || count > MAX_NODES) {
               throw new IllegalArgumentException("Invalid graph size");
+            }
             var nodes = new ArrayList<Node>();
             for (int i = 0; i < count; i++) {
               var pos = buffer.readBlockPos();
@@ -69,10 +74,13 @@ public record DigestiveDebugPayload(UUID body, List<Node> nodes, boolean truncat
                   used = buffer.readVarInt(),
                   items = buffer.readVarInt();
               int types = buffer.readVarInt();
-              if (types < 0 || types > 27)
+              if (types < 0 || types > 27) {
                 throw new IllegalArgumentException("Invalid inventory summary");
+              }
               var contents = new ArrayList<ItemTotal>();
-              for (int j = 0; j < types; j++) contents.add(readItem(buffer));
+              for (int j = 0; j < types; j++) {
+                contents.add(readItem(buffer));
+              }
               nodes.add(new Node(pos, kind, slots, used, items, contents));
             }
             return new DigestiveDebugPayload(body, List.copyOf(nodes), truncated);
@@ -81,8 +89,9 @@ public record DigestiveDebugPayload(UUID body, List<Node> nodes, boolean truncat
   private static ItemTotal readItem(RegistryFriendlyByteBuf buffer) {
     int id = buffer.readVarInt();
     var item = net.minecraft.core.registries.BuiltInRegistries.ITEM.byId(id);
-    if (id < 0 || item == null || item == net.minecraft.world.item.Items.AIR)
+    if (id < 0 || item == null || item == net.minecraft.world.item.Items.AIR) {
       throw new IllegalArgumentException("Invalid inventory item");
+    }
     return new ItemTotal(
         net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(item), buffer.readVarInt());
   }

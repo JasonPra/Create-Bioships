@@ -50,7 +50,9 @@ public final class MouthBlock extends DirectionalBlock
   protected InteractionResult useWithoutItem(
       BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
     if (player instanceof net.minecraft.server.level.ServerPlayer server
-        && level.getBlockEntity(pos) instanceof MouthBlockEntity mouth) server.openMenu(mouth);
+        && level.getBlockEntity(pos) instanceof MouthBlockEntity mouth) {
+      server.openMenu(mouth);
+    }
     return InteractionResult.sidedSuccess(level.isClientSide);
   }
 
@@ -62,18 +64,22 @@ public final class MouthBlock extends DirectionalBlock
       Player player,
       InteractionHand hand,
       BlockHitResult hit) {
-    if (stack.getItem() instanceof com.simibubi.create.content.equipment.wrench.WrenchItem)
+    if (stack.getItem() instanceof com.simibubi.create.content.equipment.wrench.WrenchItem) {
       return ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION;
+    }
     if (level.getBlockEntity(pos) instanceof MouthBlockEntity mouth
         && mouth.canPlaceItem(0, stack)) {
       if (!level.isClientSide) {
         var offering = stack.copyWithCount(player.isShiftKeyDown() ? stack.getCount() : 1);
         var rest = mouth.feed(offering, false);
         int accepted = offering.getCount() - rest.getCount();
-        if (!player.getAbilities().instabuild) stack.shrink(accepted);
-        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer)
+        if (!player.getAbilities().instabuild) {
+          stack.shrink(accepted);
+        }
+        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
           org.Azkerash.create_bioships.core.FeedingTrust.hand(
               serverPlayer, pos, offering, accepted);
+        }
       }
       return ItemInteractionResult.sidedSuccess(level.isClientSide);
     }
@@ -96,27 +102,36 @@ public final class MouthBlock extends DirectionalBlock
       net.minecraft.server.level.ServerLevel level,
       BlockPos pos,
       net.minecraft.util.RandomSource random) {
-    if (!(level.getBlockEntity(pos) instanceof MouthBlockEntity mouth)) return;
-    int remaining = mouth.chewRemaining();
-    if (!mouth.active()) {
-      if (state.getValue(CHEW) != 0 || state.getValue(BREATH) != 0)
-        level.setBlock(pos, state.setValue(CHEW, 0).setValue(BREATH, 0), 2);
+    if (!(level.getBlockEntity(pos) instanceof MouthBlockEntity mouth)) {
       return;
     }
-    if (state.is(ComponentRegistry.ARMORED_MAW.get()) && level.random.nextInt(4) == 0)
+    int remaining = mouth.chewRemaining();
+    if (!mouth.active()) {
+      if (state.getValue(CHEW) != 0 || state.getValue(BREATH) != 0) {
+        level.setBlock(pos, state.setValue(CHEW, 0).setValue(BREATH, 0), 2);
+      }
+      return;
+    }
+    if (state.is(ComponentRegistry.ARMORED_MAW.get()) && level.random.nextInt(4) == 0) {
       mouth.salivaParticles();
+    }
     if (remaining == 0) {
       int step = (int) ((level.getGameTime() / 8 + Math.floorMod(pos.asLong(), 8)) % 8);
       int breath = new int[] {0, 0, 1, 2, 2, 1, 0, 0}[step];
-      if (state.getValue(CHEW) != 0 || state.getValue(BREATH) != breath)
+      if (state.getValue(CHEW) != 0 || state.getValue(BREATH) != breath) {
         level.setBlock(pos, state.setValue(CHEW, 0).setValue(BREATH, breath), 2);
+      }
       level.scheduleTick(pos, this, 8);
       return;
     }
     int phase = state.getValue(CHEW) % 3 + 1;
     level.setBlock(pos, state.setValue(CHEW, phase).setValue(BREATH, 0), 2);
-    if (phase == 1) mouth.chewingParticles();
-    if (phase == 1) chewingSound(level, pos);
+    if (phase == 1) {
+      mouth.chewingParticles();
+    }
+    if (phase == 1) {
+      chewingSound(level, pos);
+    }
     level.scheduleTick(pos, this, Math.min(3, remaining));
   }
 
@@ -124,7 +139,9 @@ public final class MouthBlock extends DirectionalBlock
   protected void onPlace(
       BlockState state, Level level, BlockPos pos, BlockState old, boolean moved) {
     super.onPlace(state, level, pos, old, moved);
-    if (!old.is(this) && !level.isClientSide) level.scheduleTick(pos, this, 8);
+    if (!old.is(this) && !level.isClientSide) {
+      level.scheduleTick(pos, this, 8);
+    }
   }
 
   protected BlockState rotate(BlockState state, Rotation rotation) {
@@ -141,9 +158,13 @@ public final class MouthBlock extends DirectionalBlock
     var be =
         builder.getOptionalParameter(
             net.minecraft.world.level.storage.loot.parameters.LootContextParams.BLOCK_ENTITY);
-    if (be instanceof MouthBlockEntity mouth)
-      for (var stack : drops)
-        if (stack.is(asItem())) mouth.saveToItem(stack, builder.getLevel().registryAccess());
+    if (be instanceof MouthBlockEntity mouth) {
+      for (var stack : drops) {
+        if (stack.is(asItem())) {
+          mouth.saveToItem(stack, builder.getLevel().registryAccess());
+        }
+      }
+    }
     return drops;
   }
 }

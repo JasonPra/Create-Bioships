@@ -11,7 +11,7 @@ public final class MembraneCircuitTests {
   @net.neoforged.bus.api.SubscribeEvent
   public static void left(net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent e) {
     if (Boolean.getBoolean("core.membraneTrace")
-        && e.getEntity().getTags().contains("create_bioships:membrane_fixture"))
+        && e.getEntity().getTags().contains("create_bioships:membrane_fixture")) {
       System.out.println(
           "MEMBRANE_GUEST_LEFT "
               + e.getEntity().getName().getString()
@@ -19,6 +19,7 @@ public final class MembraneCircuitTests {
               + e.getEntity().getRemovalReason()
               + " pos="
               + e.getEntity().position());
+    }
   }
 
   @GameTest(template = "test_empty", timeoutTicks = 1600, batch = "membrane_guest_circuit")
@@ -68,7 +69,7 @@ public final class MembraneCircuitTests {
             })
         .thenWaitUntil(
             () -> {
-              for (var mob : guests)
+              for (var mob : guests) {
                 h.assertTrue(
                     mob.getPersistentData().getInt("create_bioships:membrane_phase") == 2
                         && mob.getZ() > MembraneFixture.base(level).getZ() + 2,
@@ -76,17 +77,19 @@ public final class MembraneCircuitTests {
                         + mob.getName().getString()
                         + " "
                         + mob.position());
+              }
             })
         .thenExecute(
             () -> {
-              for (var mob : guests)
+              for (var mob : guests) {
                 h.assertTrue(
                     SubLevelPermissions.remove(body, owner, mob.getUUID()),
                     "Could not revoke guest");
+              }
             })
         .thenWaitUntil(
             () -> {
-              for (var mob : guests)
+              for (var mob : guests) {
                 h.assertTrue(
                     mob.getPersistentData().getInt("create_bioships:membrane_phase") == 13
                         && mob.getZ() < MembraneFixture.base(level).getZ(),
@@ -96,14 +99,16 @@ public final class MembraneCircuitTests {
                         + mob.getPersistentData().getInt("create_bioships:membrane_phase")
                         + " pos="
                         + mob.position());
+              }
             })
         .thenExecuteAfter(
             100,
             () -> {
-              for (var mob : guests)
+              for (var mob : guests) {
                 h.assertTrue(
                     mob.getZ() < MembraneFixture.base(level).getZ() + .4,
                     "Revoked guest passed membrane again");
+              }
               MembraneFixture.reset(level);
             })
         .thenSucceed();

@@ -39,7 +39,9 @@ public final class StomachDigestionTests {
     helper.assertTrue(
         stomach.enqueue(new ItemStack(Items.PORKCHOP), false).isEmpty(),
         "Transport input refused pork");
-    for (int i = 0; i < 1000 && stomach.progress() == 0; i++) stomach.advance();
+    for (int i = 0; i < 1000 && stomach.progress() == 0; i++) {
+      stomach.advance();
+    }
     helper.assertTrue(stomach.duration() > 0, "No native Biomancy recipe started");
     var saved = stomach.saveWithFullMetadata(level.registryAccess());
     var restored =
@@ -50,13 +52,18 @@ public final class StomachDigestionTests {
             && restored.progress() == stomach.progress()
             && restored.queued() == 1,
         "Save/load lost active digestion");
-    for (int i = 0; i < 10000 && restored.queued() > 0; i++) restored.advance();
+    for (int i = 0; i < 10000 && restored.queued() > 0; i++) {
+      restored.advance();
+    }
     helper.assertTrue(restored.queued() == 0, "Disconnected digestion stalled");
     int paste = 0, components = 0;
     for (int i = 9; i < 27; i++) {
       var stack = restored.getItem(i);
-      if (stack.is(StomachBlockEntity.paste())) paste += stack.getCount();
-      else components += stack.getCount();
+      if (stack.is(StomachBlockEntity.paste())) {
+        paste += stack.getCount();
+      } else {
+        components += stack.getCount();
+      }
     }
     helper.assertTrue(
         paste == 1 && components > 0, "Meal did not produce components and nutrient paste");
@@ -64,11 +71,12 @@ public final class StomachDigestionTests {
         new net.neoforged.neoforge.common.util.FakePlayer(
             level, new com.mojang.authlib.GameProfile(java.util.UUID.randomUUID(), "StomachMenu"));
     var menu = new StomachMenu(1, player.getInventory(), restored);
-    for (int i = 0; i < 27; i++)
+    for (int i = 0; i < 27; i++) {
       helper.assertTrue(
           !menu.getSlot(i).mayPlace(new ItemStack(Items.PORKCHOP))
               && menu.getSlot(i).mayPickup(player) == (i == StomachBlockEntity.PASTE_SLOT),
           "Stomach GUI changed internal inventory");
+    }
     helper.succeed();
   }
 
@@ -90,11 +98,14 @@ public final class StomachDigestionTests {
     SubLevelData.hunger(body, SubLevelData.maximumHunger(body));
     pos = body.getPlot().getCenterBlock();
     var stomach = (StomachBlockEntity) level.getBlockEntity(pos);
-    for (int slot = 9; slot < StomachBlockEntity.PASTE_SLOT; slot++)
+    for (int slot = 9; slot < StomachBlockEntity.PASTE_SLOT; slot++) {
       stomach.setItem(slot, new ItemStack(Items.STONE, 64));
+    }
     stomach.setItem(StomachBlockEntity.PASTE_SLOT, new ItemStack(StomachBlockEntity.paste(), 64));
     stomach.enqueue(new ItemStack(Items.PORKCHOP), false);
-    for (int tick = 0; tick < 500; tick++) stomach.advance();
+    for (int tick = 0; tick < 500; tick++) {
+      stomach.advance();
+    }
     helper.assertTrue(
         stomach.queued() == 1 && stomach.progress() == stomach.duration(),
         "Full output storage lost input or failed to pause");
@@ -112,7 +123,9 @@ public final class StomachDigestionTests {
             .getCompound("Pending")
             .equals(restored.saveWithFullMetadata(level.registryAccess()).getCompound("Pending")),
         "Blocked meal rerolled outputs after loading");
-    for (int slot = 9; slot < 27; slot++) restored.setItem(slot, ItemStack.EMPTY);
+    for (int slot = 9; slot < 27; slot++) {
+      restored.setItem(slot, ItemStack.EMPTY);
+    }
     restored.advance();
     helper.assertTrue(restored.queued() == 0, "Freed storage did not finish the pending meal");
     helper.succeed();
@@ -133,10 +146,14 @@ public final class StomachDigestionTests {
     DevelopmentLifeSupport.pause(body);
     SubLevelData.hunger(body, 2);
     var stomach = (StomachBlockEntity) level.getBlockEntity(body.getPlot().getCenterBlock());
-    for (int i = 0; i < StomachBlockEntity.EAT_TICKS * 2; i++) stomach.advance();
+    for (int i = 0; i < StomachBlockEntity.EAT_TICKS * 2; i++) {
+      stomach.advance();
+    }
     h.assertTrue(SubLevelData.hunger(body) == 2, "Empty stomach restored hunger");
     stomach.setItem(11, new ItemStack(StomachBlockEntity.paste()));
-    for (int i = 0; i < StomachBlockEntity.EAT_TICKS - 1; i++) stomach.advance();
+    for (int i = 0; i < StomachBlockEntity.EAT_TICKS - 1; i++) {
+      stomach.advance();
+    }
     h.assertTrue(SubLevelData.hunger(body) == 2, "Paste restored hunger before eating finished");
     stomach.advance();
     h.assertTrue(
@@ -144,7 +161,9 @@ public final class StomachDigestionTests {
         "One paste did not restore four hunger");
     SubLevelData.hunger(body, SubLevelData.maximumHunger(body));
     stomach.setItem(9, new ItemStack(StomachBlockEntity.paste(), 6));
-    for (int i = 0; i < StomachBlockEntity.EAT_TICKS * 2; i++) stomach.advance();
+    for (int i = 0; i < StomachBlockEntity.EAT_TICKS * 2; i++) {
+      stomach.advance();
+    }
     h.assertTrue(stomach.getItem(9).getCount() == 6, "Full hunger wasted paste");
     System.out.println("PASTE_CONVERSION_PASS ratio=1:4 cycle=32 full_hunger_safe=true");
     h.succeed();

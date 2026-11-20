@@ -21,8 +21,11 @@ public final class ClientMembraneAccess {
       ACCESS.clear();
       world = current;
     }
-    if (p.mode() != 2) ACCESS.remove(p.grid());
-    else ACCESS.put(p.grid(), Set.copyOf(p.allowed()));
+    if (p.mode() != 2) {
+      ACCESS.remove(p.grid());
+    } else {
+      ACCESS.put(p.grid(), Set.copyOf(p.allowed()));
+    }
   }
 
   public static Boolean permits(UUID body, UUID entity) {
@@ -32,16 +35,26 @@ public final class ClientMembraneAccess {
 
   public static Boolean permits(UUID host, net.minecraft.world.entity.Entity entity) {
     var allowed = ACCESS.get(host);
-    if (allowed == null) return null;
-    if (allowed.contains(entity.getUUID())) return true;
-    if (!(entity instanceof net.minecraft.world.entity.LivingEntity)) return false;
+    if (allowed == null) {
+      return null;
+    }
+    if (allowed.contains(entity.getUUID())) {
+      return true;
+    }
+    if (!(entity instanceof net.minecraft.world.entity.LivingEntity)) {
+      return false;
+    }
     var container = dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(entity.level());
-    if (container == null) return false;
+    if (container == null) {
+      return false;
+    }
     for (var id : allowed) {
       var found = container.getSubLevel(id);
       if (found instanceof dev.ryanhcode.sable.sublevel.ClientSubLevel craft
           && org.Azkerash.create_bioships.compat.biomancy.ConstructMembranePassage.within(
-              craft, entity, craft.renderPose())) return true;
+              craft, entity, craft.renderPose())) {
+        return true;
+      }
     }
     return false;
   }

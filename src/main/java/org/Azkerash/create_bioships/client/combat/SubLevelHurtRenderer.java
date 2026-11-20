@@ -37,7 +37,9 @@ public final class SubLevelHurtRenderer {
 
   public static void flash(UUID body) {
     var level = Minecraft.getInstance().level;
-    if (level == null) return;
+    if (level == null) {
+      return;
+    }
     if (world != level) {
       FLASHES.clear();
       world = level;
@@ -47,8 +49,9 @@ public final class SubLevelHurtRenderer {
 
   @SubscribeEvent
   public static void render(RenderLevelStageEvent event) {
-    if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_BLOCK_ENTITIES || shader == null)
+    if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_BLOCK_ENTITIES || shader == null) {
       return;
+    }
     var mc = Minecraft.getInstance();
     if (mc.level == null || mc.level != world) {
       FLASHES.clear();
@@ -56,16 +59,22 @@ public final class SubLevelHurtRenderer {
       return;
     }
     FLASHES.entrySet().removeIf(e -> e.getValue() <= mc.level.getGameTime());
-    if (FLASHES.isEmpty()) return;
+    if (FLASHES.isEmpty()) {
+      return;
+    }
     var container = SubLevelContainer.getContainer(mc.level);
-    if (container == null) return;
+    if (container == null) {
+      return;
+    }
     var buffers = mc.renderBuffers().bufferSource();
     var consumer = buffers.getBuffer(HurtType.TYPE);
     var pose = event.getPoseStack();
     var camera = event.getCamera().getPosition();
     for (var id : FLASHES.keySet()) {
       var body = container.getSubLevel(id);
-      if (!(body instanceof ClientSubLevel client) || body.isRemoved()) continue;
+      if (!(body instanceof ClientSubLevel client) || body.isRemoved()) {
+        continue;
+      }
       var transform = client.renderPose();
       var origin = body.getPlot().getCenterBlock();
       pose.pushPose();
@@ -86,14 +95,17 @@ public final class SubLevelHurtRenderer {
         var chunk = holder.getChunk();
         var sections = chunk.getSections();
         for (int i = 0; i < sections.length; i++) {
-          if (sections[i].hasOnlyAir()) continue;
+          if (sections[i].hasOnlyAir()) {
+            continue;
+          }
           int floor = chunk.getSectionYFromSectionIndex(i) << 4;
-          for (int x = 0; x < 16; x++)
-            for (int y = 0; y < 16; y++)
+          for (int x = 0; x < 16; x++) {
+            for (int y = 0; y < 16; y++) {
               for (int z = 0; z < 16; z++) {
                 var state = sections[i].getBlockState(x, y, z);
-                if (state.getRenderShape() != net.minecraft.world.level.block.RenderShape.MODEL)
+                if (state.getRenderShape() != net.minecraft.world.level.block.RenderShape.MODEL) {
                   continue;
+                }
                 var pos =
                     new BlockPos(
                         chunk.getPos().getMinBlockX() + x,
@@ -119,6 +131,8 @@ public final class SubLevelHurtRenderer {
                         OverlayTexture.NO_OVERLAY);
                 pose.popPose();
               }
+            }
+          }
         }
       }
       pose.popPose();

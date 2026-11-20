@@ -36,14 +36,20 @@ public final class CoreTestCommands {
   public static int start(ServerLevel level)
       throws com.simibubi.create.content.contraptions.AssemblyException {
     var state = CoreTestState.get(level);
-    if (!state.built || state.running) return 0;
+    if (!state.built || state.running) {
+      return 0;
+    }
     var layout = state.layout();
     if (layout.cores().stream()
-        .anyMatch(p -> !level.getBlockState(p).is(ComponentRegistry.CORE.get()))) return 0;
+        .anyMatch(p -> !level.getBlockState(p).is(ComponentRegistry.CORE.get()))) {
+      return 0;
+    }
     var result =
         SimAssemblyHelper.assembleFromSingleBlock(
             level, layout.tip().below(), layout.tip(), false, true);
-    if (result == null || !(result.subLevel() instanceof ServerSubLevel body)) return 0;
+    if (result == null || !(result.subLevel() instanceof ServerSubLevel body)) {
+      return 0;
+    }
     state.running = true;
     state.owned.add(body.getUniqueId());
     state.setDirty();
@@ -54,7 +60,9 @@ public final class CoreTestCommands {
   private static void own(ServerLevel level, CoreTestState state, ServerSubLevel body) {
     DevelopmentLifeSupport.pause(body);
     DevelopmentTestOwnership.assign(body);
-    if (state.owned.add(body.getUniqueId())) state.setDirty();
+    if (state.owned.add(body.getUniqueId())) {
+      state.setDirty();
+    }
     var data = body.getUserDataTag();
     if (data == null || !"core_split".equals(data.getString(FIXTURE))) {
       data = data == null ? new net.minecraft.nbt.CompoundTag() : data.copy();
@@ -67,16 +75,20 @@ public final class CoreTestCommands {
 
   public static void observe(ServerLevel level) {
     var state = CoreTestState.get(level);
-    if (!state.running) return;
+    if (!state.running) {
+      return;
+    }
     var bounds = state.layout().arena().inflate(1);
-    for (var body : SubLevelContainer.getContainer(level).getAllSubLevels())
+    for (var body : SubLevelContainer.getContainer(level).getAllSubLevels()) {
       if (!body.isRemoved()
           && (state.owned.contains(body.getUniqueId())
               || CoreAssemblyRules.isCreature(body)
                   && bounds.contains(
                       body.logicalPose()
-                          .transformPosition(Vec3.atCenterOf(body.getPlot().getCenterBlock())))))
+                          .transformPosition(Vec3.atCenterOf(body.getPlot().getCenterBlock()))))) {
         own(level, state, body);
+      }
+    }
   }
 
   private static Component copyableCombatResults(ServerLevel level) {
@@ -123,14 +135,20 @@ public final class CoreTestCommands {
       if (state.owned.contains(body.getUniqueId())
           || data != null && "core_split".equals(data.getString(FIXTURE))) {
         var logical = new AABB(body.getPlot().getCenterBlock()).inflate(10);
-        for (var glue : level.getEntitiesOfClass(HoneyGlueEntity.class, logical)) glue.discard();
+        for (var glue : level.getEntitiesOfClass(HoneyGlueEntity.class, logical)) {
+          glue.discard();
+        }
         container.removeSubLevel(body, SubLevelRemovalReason.REMOVED);
       }
     }
-    for (var glue : level.getEntitiesOfClass(HoneyGlueEntity.class, layout.arena())) glue.discard();
+    for (var glue : level.getEntitiesOfClass(HoneyGlueEntity.class, layout.arena())) {
+      glue.discard();
+    }
     for (var item :
-        level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, layout.arena()))
+        level.getEntitiesOfClass(
+            net.minecraft.world.entity.item.ItemEntity.class, layout.arena())) {
       item.discard();
+    }
     state.owned.clear();
     state.origin = layout.base();
     state.built = true;
@@ -162,7 +180,7 @@ public final class CoreTestCommands {
                               return 1;
                             })));
     var root = Commands.literal("core_test").requires(source -> source.hasPermission(2));
-    for (var action : List.of("start", "reset", "status"))
+    for (var action : List.of("start", "reset", "status")) {
       root.then(
           Commands.literal(action)
               .executes(
@@ -187,10 +205,11 @@ public final class CoreTestCommands {
                     if (action.equals("start")) {
                       try {
                         int result = start(level);
-                        if (result == 0)
+                        if (result == 0) {
                           source.sendFailure(
                               Component.literal(
                                   "Test already running or changed. Reset it first."));
+                        }
                         return result;
                       } catch (com.simibubi.create.content.contraptions.AssemblyException failure) {
                         source.sendFailure(
@@ -208,9 +227,10 @@ public final class CoreTestCommands {
                         false);
                     return 1;
                   }));
+    }
     event.getDispatcher().register(root);
     var combat = Commands.literal("combat_test").requires(source -> source.hasPermission(2));
-    for (var action : List.of("start", "reset", "status", "results"))
+    for (var action : List.of("start", "reset", "status", "results")) {
       combat.then(
           Commands.literal(action)
               .executes(
@@ -221,12 +241,17 @@ public final class CoreTestCommands {
                       source.sendFailure(Component.literal("No combat fixture in this world."));
                       return 0;
                     }
-                    if (action.equals("start")) return CombatFixture.start(level);
-                    if (action.equals("reset")) CombatFixture.reset(level);
+                    if (action.equals("start")) {
+                      return CombatFixture.start(level);
+                    }
+                    if (action.equals("reset")) {
+                      CombatFixture.reset(level);
+                    }
                     if (action.equals("results")) {
                       if (source.getPlayer() == null) {
-                        for (var result : CombatFixture.results(level))
+                        for (var result : CombatFixture.results(level)) {
                           source.sendSuccess(() -> Component.literal(result), false);
+                        }
                       } else {
                         source.sendSuccess(() -> copyableCombatResults(level), false);
                         return 1;
@@ -235,17 +260,22 @@ public final class CoreTestCommands {
                     source.sendSuccess(() -> Component.literal(CombatFixture.status(level)), false);
                     return 1;
                   }));
+    }
     event.getDispatcher().register(combat);
     var potions = Commands.literal("potion_test").requires(source -> source.hasPermission(2));
-    for (var action : List.of("start", "reset", "status", "results"))
+    for (var action : List.of("start", "reset", "status", "results")) {
       potions.then(
           Commands.literal(action)
               .executes(
                   ctx -> {
                     var level = ctx.getSource().getLevel();
-                    if (action.equals("reset")) PotionFixture.reset(level);
-                    if (action.equals("start")) return PotionFixture.start(level);
-                    if (action.equals("results"))
+                    if (action.equals("reset")) {
+                      PotionFixture.reset(level);
+                    }
+                    if (action.equals("start")) {
+                      return PotionFixture.start(level);
+                    }
+                    if (action.equals("results")) {
                       ctx.getSource()
                           .sendSuccess(
                               () ->
@@ -255,14 +285,16 @@ public final class CoreTestCommands {
                                               " [Copy results]",
                                               String.join("\n", PotionFixture.results(level)))),
                               false);
-                    else
+                    } else {
                       ctx.getSource()
                           .sendSuccess(() -> Component.literal(PotionFixture.status(level)), false);
+                    }
                     return 1;
                   }));
+    }
     event.getDispatcher().register(potions);
     var brain = Commands.literal("brain_test").requires(source -> source.hasPermission(2));
-    for (var action : List.of("start", "reset", "feed", "status"))
+    for (var action : List.of("start", "reset", "feed", "status")) {
       brain.then(
           Commands.literal(action)
               .executes(
@@ -272,15 +304,20 @@ public final class CoreTestCommands {
                       BrainFixture.reset(level);
                       return 1;
                     }
-                    if (action.equals("start")) return BrainFixture.start(level);
-                    if (action.equals("feed")) return BrainFixture.feed(level);
+                    if (action.equals("start")) {
+                      return BrainFixture.start(level);
+                    }
+                    if (action.equals("feed")) {
+                      return BrainFixture.feed(level);
+                    }
                     ctx.getSource()
                         .sendSuccess(() -> Component.literal(BrainFixture.status(level)), false);
                     return 1;
                   }));
+    }
     event.getDispatcher().register(brain);
     var membrane = Commands.literal("membrane_test").requires(source -> source.hasPermission(2));
-    for (var action : List.of("start", "reset", "status"))
+    for (var action : List.of("start", "reset", "status")) {
       membrane.then(
           Commands.literal(action)
               .executes(
@@ -290,14 +327,17 @@ public final class CoreTestCommands {
                       MembraneFixture.reset(level);
                       return 1;
                     }
-                    if (action.equals("start")) return MembraneFixture.start(level);
+                    if (action.equals("start")) {
+                      return MembraneFixture.start(level);
+                    }
                     ctx.getSource()
                         .sendSuccess(() -> Component.literal(MembraneFixture.status(level)), false);
                     return 1;
                   }));
+    }
     event.getDispatcher().register(membrane);
     var vision = Commands.literal("vision_test").requires(source -> source.hasPermission(2));
-    for (var action : List.of("start", "reset", "status"))
+    for (var action : List.of("start", "reset", "status")) {
       vision.then(
           Commands.literal(action)
               .executes(
@@ -307,14 +347,17 @@ public final class CoreTestCommands {
                       VisionFixture.reset(level);
                       return 1;
                     }
-                    if (action.equals("start")) return VisionFixture.start(level);
+                    if (action.equals("start")) {
+                      return VisionFixture.start(level);
+                    }
                     ctx.getSource()
                         .sendSuccess(() -> Component.literal(VisionFixture.status(level)), false);
                     return 1;
                   }));
+    }
     event.getDispatcher().register(vision);
     var digestion = Commands.literal("digestion_test").requires(source -> source.hasPermission(2));
-    for (var action : List.of("start", "reset", "status"))
+    for (var action : List.of("start", "reset", "status")) {
       digestion.then(
           Commands.literal(action)
               .executes(
@@ -324,29 +367,39 @@ public final class CoreTestCommands {
                       DigestionFixture.reset(level);
                       return 1;
                     }
-                    if (action.equals("start")) return DigestionFixture.start(level);
+                    if (action.equals("start")) {
+                      return DigestionFixture.start(level);
+                    }
                     ctx.getSource()
                         .sendSuccess(
                             () -> Component.literal(DigestionFixture.status(level)), false);
                     return 1;
                   }));
+    }
     event.getDispatcher().register(digestion);
     var arrow = Commands.literal("arrow_test").requires(source -> source.hasPermission(2));
-    for (var action : List.of("start", "reset", "status"))
+    for (var action : List.of("start", "reset", "status")) {
       arrow.then(
           Commands.literal(action)
               .executes(
                   ctx -> {
                     var level = ctx.getSource().getLevel();
                     var state = CoreTestState.get(level);
-                    if (!state.arrowBuilt) return 0;
-                    if (action.equals("start")) return CoreArrowFixture.start(level);
-                    if (action.equals("reset")) CoreArrowFixture.reset(level);
+                    if (!state.arrowBuilt) {
+                      return 0;
+                    }
+                    if (action.equals("start")) {
+                      return CoreArrowFixture.start(level);
+                    }
+                    if (action.equals("reset")) {
+                      CoreArrowFixture.reset(level);
+                    }
                     ctx.getSource()
                         .sendSuccess(
                             () -> Component.literal(CoreArrowFixture.status(level)), false);
                     return 1;
                   }));
+    }
     event.getDispatcher().register(arrow);
   }
 }

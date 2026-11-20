@@ -30,7 +30,9 @@ public final class NervePanelScreen extends Screen {
         && screen.data.panel().equals(data.panel())) {
       screen.data = data;
       screen.rebuildRows();
-    } else mc.setScreen(new NervePanelScreen(data));
+    } else {
+      mc.setScreen(new NervePanelScreen(data));
+    }
   }
 
   @Override
@@ -125,8 +127,12 @@ public final class NervePanelScreen extends Screen {
   }
 
   private void rebuildRows() {
-    if (previous == null) return;
-    for (var button : rows) removeWidget(button);
+    if (previous == null) {
+      return;
+    }
+    for (var button : rows) {
+      removeWidget(button);
+    }
     rows.clear();
     var entries = entries();
     page = Math.clamp(page, 0, Math.max(0, (entries.size() - 1) / 5));
@@ -221,7 +227,9 @@ public final class NervePanelScreen extends Screen {
           font, "You will lose owner access.", left + 152, top + 65, OrganScreenStyle.TEXT);
       g.drawCenteredString(
           font, "Existing guests will keep access.", left + 152, top + 81, OrganScreenStyle.MUTED);
-      for (var widget : renderables) widget.render(g, mx, my, partial);
+      for (var widget : renderables) {
+        widget.render(g, mx, my, partial);
+      }
     }
   }
 
@@ -319,8 +327,9 @@ public final class NervePanelScreen extends Screen {
     g.fill(x + 20, y + 88, x + 25, y + 89, 0xffb78b9d);
     g.fill(x + 25, y + 89, x + 28, y + 91, 0xffb78b9d);
     inset(g, x + 10, y + 100, 340, 129, 0xff5d344b);
-    if (entries().isEmpty())
+    if (entries().isEmpty()) {
       g.drawCenteredString(font, "No matching entries", x + 180, y + 147, OrganScreenStyle.MUTED);
+    }
     g.drawString(
         font,
         "Page " + (page + 1) + " / " + Math.max(1, (entries().size() + 4) / 5),
@@ -328,6 +337,8 @@ public final class NervePanelScreen extends Screen {
         y + 237,
         OrganScreenStyle.MUTED,
         false);
-    for (var widget : renderables) widget.render(g, mouseX, mouseY, partial);
+    for (var widget : renderables) {
+      widget.render(g, mouseX, mouseY, partial);
+    }
   }
 }

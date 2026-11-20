@@ -21,9 +21,13 @@ public final class MembraneAccess {
           : null;
     }
     var container = SubLevelContainer.getContainer(level);
-    if (container == null || !container.inBounds(pos)) return null;
+    if (container == null || !container.inBounds(pos)) {
+      return null;
+    }
     var plot = container.getPlot(new ChunkPos(pos));
-    if (plot == null || plot.getSubLevel() == null) return null;
+    if (plot == null || plot.getSubLevel() == null) {
+      return null;
+    }
     return org.Azkerash.create_bioships.client.components.ClientMembraneAccess.permits(
         plot.getSubLevel().getUniqueId(), entity);
   }

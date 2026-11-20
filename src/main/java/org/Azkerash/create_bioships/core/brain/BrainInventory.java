@@ -50,13 +50,17 @@ public final class BrainInventory implements Container {
 
   public ItemStack removeItem(int slot, int count) {
     var stack = ContainerHelper.removeItem(brain.cards, slot, count);
-    if (!stack.isEmpty()) setChanged();
+    if (!stack.isEmpty()) {
+      setChanged();
+    }
     return stack;
   }
 
   public ItemStack removeItemNoUpdate(int slot) {
     var stack = ContainerHelper.takeItem(brain.cards, slot);
-    if (!stack.isEmpty()) setChanged();
+    if (!stack.isEmpty()) {
+      setChanged();
+    }
     return stack;
   }
 

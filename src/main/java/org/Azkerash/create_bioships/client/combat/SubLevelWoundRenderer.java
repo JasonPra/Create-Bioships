@@ -37,7 +37,9 @@ public final class SubLevelWoundRenderer {
 
   public static void receive(WoundPayload wound) {
     var level = Minecraft.getInstance().level;
-    if (level == null) return;
+    if (level == null) {
+      return;
+    }
     if (world != level) {
       WOUNDS.clear();
       world = level;
@@ -48,7 +50,9 @@ public final class SubLevelWoundRenderer {
       return;
     }
     WOUNDS.put(key, wound);
-    while (WOUNDS.size() > 512) WOUNDS.remove(WOUNDS.keySet().iterator().next());
+    while (WOUNDS.size() > 512) {
+      WOUNDS.remove(WOUNDS.keySet().iterator().next());
+    }
   }
 
   public static boolean injured(UUID body, BlockPos cell, Direction face, long time) {
@@ -58,26 +62,38 @@ public final class SubLevelWoundRenderer {
 
   @SubscribeEvent
   public static void render(RenderLevelStageEvent event) {
-    if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_BLOCK_ENTITIES) return;
+    if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_BLOCK_ENTITIES) {
+      return;
+    }
     var mc = Minecraft.getInstance();
     if (mc.level == null || mc.level != world) {
       WOUNDS.clear();
       world = mc.level;
     }
-    if (mc.level == null) return;
+    if (mc.level == null) {
+      return;
+    }
     var container = SubLevelContainer.getContainer(mc.level);
-    if (container == null) return;
+    if (container == null) {
+      return;
+    }
     var buffers = mc.renderBuffers().bufferSource();
     var pose = event.getPoseStack();
     var camera = event.getCamera().getPosition();
     WOUNDS.values().removeIf(w -> mc.level.getGameTime() >= w.at() + w.duration());
     for (var wound : WOUNDS.values()) {
       var body = container.getSubLevel(wound.body());
-      if (!(body instanceof ClientSubLevel client) || body.isRemoved()) continue;
+      if (!(body instanceof ClientSubLevel client) || body.isRemoved()) {
+        continue;
+      }
       var state = mc.level.getBlockState(wound.cell());
-      if (state.isAir()) continue;
+      if (state.isAir()) {
+        continue;
+      }
       var shape = state.getShape(mc.level, wound.cell());
-      if (shape.isEmpty()) continue;
+      if (shape.isEmpty()) {
+        continue;
+      }
       var box = shape.bounds();
       var t = client.renderPose();
       pose.pushPose();
@@ -143,9 +159,11 @@ public final class SubLevelWoundRenderer {
         pose.translate(-.5, -.5, -.5);
         var faces = new java.util.ArrayList<Direction>(java.util.List.of(Direction.values()));
         faces.add(null);
-        for (var face : faces)
-          for (var q : model.getQuads(closed, face, net.minecraft.util.RandomSource.create()))
+        for (var face : faces) {
+          for (var q : model.getQuads(closed, face, net.minecraft.util.RandomSource.create())) {
             consumer.putBulkData(pose.last(), q, 1, 1, 1, 1, light, OverlayTexture.NO_OVERLAY);
+          }
+        }
         pose.popPose();
       }
       float
@@ -173,7 +191,7 @@ public final class SubLevelWoundRenderer {
       var lines = buffers.getBuffer(RenderType.lines());
       pose.pushPose();
       pose.translate(-camera.x, -camera.y, -camera.z);
-      for (var e : mc.level.entitiesForRendering())
+      for (var e : mc.level.entitiesForRendering()) {
         if (e instanceof EyeCombatHurtbox eye && eye.gridId().isPresent()) {
           var body = container.getSubLevel(eye.gridId().get());
           if (body instanceof ClientSubLevel client) {
@@ -193,6 +211,7 @@ public final class SubLevelWoundRenderer {
             }
           }
         }
+      }
       pose.popPose();
       buffers.endBatch(RenderType.lines());
     }

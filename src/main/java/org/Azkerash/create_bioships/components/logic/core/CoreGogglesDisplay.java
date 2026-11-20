@@ -19,16 +19,19 @@ public final class CoreGogglesDisplay extends BlockEntity implements IHaveGoggle
   private boolean recoveredDead;
 
   public void restoreRecoveredCore() {
-    if (!getBlockState().is(ComponentRegistry.CORE.get()) || !(level instanceof ServerLevel server))
+    if (!getBlockState().is(ComponentRegistry.CORE.get())
+        || !(level instanceof ServerLevel server)) {
       return;
+    }
     var body = CoreAssemblyRules.containing(server, worldPosition);
     if (body != null
         && SubLevelHealth.blocks(body).stream()
                 .filter(pos -> server.getBlockState(pos).is(ComponentRegistry.CORE.get()))
                 .count()
             == 1
-        && (recoveredDead || coreSnapshot.getCompound(SubLevelData.HEALTH).getBoolean("dead")))
+        && (recoveredDead || coreSnapshot.getCompound(SubLevelData.HEALTH).getBoolean("dead"))) {
       SubLevelData.restoreDeadCore(body, coreSnapshot);
+    }
   }
 
   @Override
@@ -41,12 +44,14 @@ public final class CoreGogglesDisplay extends BlockEntity implements IHaveGoggle
   public void saveToItem(
       net.minecraft.world.item.ItemStack stack, HolderLookup.Provider registries) {
     super.saveToItem(stack, registries);
-    if (!getBlockState().is(ComponentRegistry.CORE.get())) return;
+    if (!getBlockState().is(ComponentRegistry.CORE.get())) {
+      return;
+    }
     var body =
         level instanceof ServerLevel server
             ? CoreAssemblyRules.containing(server, worldPosition)
             : null;
-    if (recoveredDead || body != null && SubLevelData.isLiving(body))
+    if (recoveredDead || body != null && SubLevelData.isLiving(body)) {
       stack.update(
           net.minecraft.core.component.DataComponents.BLOCK_ENTITY_DATA,
           net.minecraft.world.item.component.CustomData.EMPTY,
@@ -55,6 +60,7 @@ public final class CoreGogglesDisplay extends BlockEntity implements IHaveGoggle
             tag.putBoolean("RecoveredDeadCore", true);
             return net.minecraft.world.item.component.CustomData.of(tag);
           });
+    }
   }
 
   public CoreGogglesDisplay(BlockPos pos, BlockState state) {
@@ -68,7 +74,9 @@ public final class CoreGogglesDisplay extends BlockEntity implements IHaveGoggle
     return level.isClientSide || type != ComponentRegistry.CORE_DISPLAY.get()
         ? null
         : (world, pos, state, entity) -> {
-          if (world.getGameTime() % 10 == 0) ((CoreGogglesDisplay) entity).update();
+          if (world.getGameTime() % 10 == 0) {
+            ((CoreGogglesDisplay) entity).update();
+          }
         };
   }
 
@@ -77,7 +85,9 @@ public final class CoreGogglesDisplay extends BlockEntity implements IHaveGoggle
   }
 
   public void update() {
-    if (!(level instanceof ServerLevel server)) return;
+    if (!(level instanceof ServerLevel server)) {
+      return;
+    }
     var body = CoreAssemblyRules.containing(server, worldPosition);
     var next = new CompoundTag();
     if (body != null) {
@@ -110,10 +120,16 @@ public final class CoreGogglesDisplay extends BlockEntity implements IHaveGoggle
           CoreAssemblyRules.isCreature(body)
               ? org.Azkerash.create_bioships.combat.CombatAdapter.target(body)
               : null;
-      if (owner != null) for (var effect : owner.getActiveEffects()) effects.add(effect.save());
+      if (owner != null) {
+        for (var effect : owner.getActiveEffects()) {
+          effects.add(effect.save());
+        }
+      }
       next.put("effects", effects);
     }
-    if (inspection.equals(next)) return;
+    if (inspection.equals(next)) {
+      return;
+    }
     inspection = next;
     setChanged();
     level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 2);
@@ -129,8 +145,9 @@ public final class CoreGogglesDisplay extends BlockEntity implements IHaveGoggle
     tooltip.add(Component.empty());
     tooltip.add(Component.empty());
     tooltip.add(Component.literal("Amoeba · Sublevel"));
-    if (!inspection.contains("maximum")) tooltip.add(Component.literal("Unassembled"));
-    else {
+    if (!inspection.contains("maximum")) {
+      tooltip.add(Component.literal("Unassembled"));
+    } else {
       tooltip.add(
           meter(
               "Health",
@@ -198,19 +215,24 @@ public final class CoreGogglesDisplay extends BlockEntity implements IHaveGoggle
                   + inspection.getInt("gills")
                   + " gills"));
       tooltip.add(meter("Trust", "trust", inspection.getDouble("trust"), 100));
-      if (inspection.getInt("sicknessTicks") > 0)
+      if (inspection.getInt("sicknessTicks") > 0) {
         tooltip.add(
             Component.literal(
                 "Digestive sickness: " + (inspection.getInt("sicknessTicks") + 19) / 20 + "s"));
+      }
       for (var entry : inspection.getList("effects", 10)) {
         var effect = net.minecraft.world.effect.MobEffectInstance.load((CompoundTag) entry);
-        if (effect == null) continue;
+        if (effect == null) {
+          continue;
+        }
         var id =
             net.minecraft.core.registries.BuiltInRegistries.MOB_EFFECT.getKey(
                 effect.getEffect().value());
         int seconds = Math.max(0, effect.getDuration() / 20);
         var label = Component.translatable(effect.getDescriptionId());
-        if (effect.getAmplifier() > 0) label.append(" " + (effect.getAmplifier() + 1));
+        if (effect.getAmplifier() > 0) {
+          label.append(" " + (effect.getAmplifier() + 1));
+        }
         label.append(
             effect.isInfiniteDuration()
                 ? " ∞"
@@ -220,8 +242,9 @@ public final class CoreGogglesDisplay extends BlockEntity implements IHaveGoggle
                 .withStyle(style -> style.withInsertion("create_bioships:effect/" + id))
                 .append(label));
       }
-      if (inspection.getBoolean("dead"))
+      if (inspection.getBoolean("dead")) {
         tooltip.add(Component.literal("Dead · " + inspection.getString("cause")));
+      }
     }
     return true;
   }
@@ -245,7 +268,9 @@ public final class CoreGogglesDisplay extends BlockEntity implements IHaveGoggle
     tag.put("inspection", inspection);
     if (getBlockState().is(ComponentRegistry.CORE.get()) && level instanceof ServerLevel server) {
       var body = CoreAssemblyRules.containing(server, worldPosition);
-      if (body != null) coreSnapshot = SubLevelData.coreSnapshot(body);
+      if (body != null) {
+        coreSnapshot = SubLevelData.coreSnapshot(body);
+      }
     }
     tag.put("CoreSnapshot", coreSnapshot);
     tag.putBoolean("RecoveredDeadCore", recoveredDead);

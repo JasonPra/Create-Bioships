@@ -13,9 +13,15 @@ public final class DevelopmentDisplayPolicy {
   private DevelopmentDisplayPolicy() {}
 
   public static boolean obsolete(Entity e) {
-    if (!(e instanceof Display.TextDisplay)) return false;
-    if (e.getTags().contains("bioships.junior_habitat")) return true;
-    if (!e.getTags().contains(NecromancerDenFixture.MARK)) return false;
+    if (!(e instanceof Display.TextDisplay)) {
+      return false;
+    }
+    if (e.getTags().contains("bioships.junior_habitat")) {
+      return true;
+    }
+    if (!e.getTags().contains(NecromancerDenFixture.MARK)) {
+      return false;
+    }
     var text = e.saveWithoutId(new CompoundTag()).getString("text");
     return !text.contains("THE DEN OF AZ'KERASH") && !text.contains("RESTORE JUNIOR");
   }

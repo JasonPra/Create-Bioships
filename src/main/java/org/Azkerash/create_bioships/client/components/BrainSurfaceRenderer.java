@@ -44,7 +44,9 @@ public final class BrainSurfaceRenderer {
       BRAINS.clear();
       world = level;
     }
-    if (level == null) return;
+    if (level == null) {
+      return;
+    }
     if (data.cells().isEmpty()) {
       BRAINS.remove(data.body());
       return;
@@ -60,7 +62,9 @@ public final class BrainSurfaceRenderer {
 
   public static Vec3 surfaceOffset(UUID body, BlockPos cell, Direction face) {
     var snapshot = BRAINS.get(body);
-    if (snapshot == null || !snapshot.data.cells().contains(cell)) return Vec3.ZERO;
+    if (snapshot == null || !snapshot.data.cells().contains(cell)) {
+      return Vec3.ZERO;
+    }
     var flat =
         Vec3.atCenterOf(cell.subtract(snapshot.mesh.minimum))
             .add(Vec3.atLowerCornerOf(face.getNormal()).scale(.5));
@@ -69,15 +73,21 @@ public final class BrainSurfaceRenderer {
 
   @SubscribeEvent
   public static void render(RenderLevelStageEvent event) {
-    if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_BLOCK_ENTITIES) return;
+    if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_BLOCK_ENTITIES) {
+      return;
+    }
     var mc = Minecraft.getInstance();
     if (world != mc.level) {
       BRAINS.clear();
       world = mc.level;
     }
-    if (mc.level == null) return;
+    if (mc.level == null) {
+      return;
+    }
     var container = SubLevelContainer.getContainer(mc.level);
-    if (container == null) return;
+    if (container == null) {
+      return;
+    }
     BRAINS.entrySet().removeIf(e -> mc.level.getGameTime() - e.getValue().at > 100);
     var stack = event.getPoseStack();
     var camera = event.getCamera().getPosition();
@@ -85,7 +95,9 @@ public final class BrainSurfaceRenderer {
     var type = RenderType.entityCutoutNoCull(SKIN);
     for (var snapshot : BRAINS.values()) {
       var body = container.getSubLevel(snapshot.data.body());
-      if (!(body instanceof ClientSubLevel client) || body.isRemoved()) continue;
+      if (!(body instanceof ClientSubLevel client) || body.isRemoved()) {
+        continue;
+      }
       var mesh = snapshot.mesh;
       var transform = client.renderPose();
       stack.pushPose();
@@ -200,7 +212,7 @@ public final class BrainSurfaceRenderer {
         org.Azkerash.create_bioships.client.combat.SubLevelHurtRenderer.hurtType(
             net.minecraft.world.inventory.InventoryMenu.BLOCK_ATLAS);
     if (hurt != null
-        && org.Azkerash.create_bioships.client.combat.SubLevelHurtRenderer.flashing(data.body()))
+        && org.Azkerash.create_bioships.client.combat.SubLevelHurtRenderer.flashing(data.body())) {
       mc.getBlockRenderer()
           .getModelRenderer()
           .renderModel(
@@ -213,7 +225,10 @@ public final class BrainSurfaceRenderer {
               1,
               light,
               OverlayTexture.NO_OVERLAY);
-    if (hurt != null) buffers.endBatch(hurt);
+    }
+    if (hurt != null) {
+      buffers.endBatch(hurt);
+    }
     if (data.alive()) {
       stack.translate(.5, .52, -3.68 / 16d);
       stack.mulPose(Axis.YP.rotationDegrees(180));

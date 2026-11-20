@@ -50,35 +50,50 @@ public final class CombatFixture {
   public static void relocate(ServerLevel level, BlockPos destination) {
     clearTrial(level);
     var old = base(level);
-    for (int x = -14; x <= 14; x++)
-      for (int z = -19; z <= 14; z++)
+    for (int x = -14; x <= 14; x++) {
+      for (int z = -19; z <= 14; z++) {
         for (int y = 0; y <= HEIGHT; y++) {
           var pos = old.offset(x, y, z);
           var state = level.getBlockState(pos);
-          if (DevelopmentTestBlocks.protectedBlock(state) || state.is(Blocks.COMMAND_BLOCK))
+          if (DevelopmentTestBlocks.protectedBlock(state) || state.is(Blocks.COMMAND_BLOCK)) {
             level.removeBlock(pos, false);
+          }
         }
+      }
+    }
     CoreTestState.get(level).combatOrigin = destination;
     reset(level);
   }
 
   public static List<BlockPos> subject(BlockPos base) {
     var cells = new ArrayList<BlockPos>();
-    for (int y = 0; y < 3; y++)
-      for (int x = -2; x <= 2; x++) for (int z = -2; z <= 2; z++) cells.add(base.offset(x, y, z));
-    for (int y = 3; y < 9; y++)
-      for (int x = -1; x <= 1; x++) for (int z = -1; z <= 1; z++) cells.add(base.offset(x, y, z));
+    for (int y = 0; y < 3; y++) {
+      for (int x = -2; x <= 2; x++) {
+        for (int z = -2; z <= 2; z++) {
+          cells.add(base.offset(x, y, z));
+        }
+      }
+    }
+    for (int y = 3; y < 9; y++) {
+      for (int x = -1; x <= 1; x++) {
+        for (int z = -1; z <= 1; z++) {
+          cells.add(base.offset(x, y, z));
+        }
+      }
+    }
     cells.add(base.above(9));
     return cells;
   }
 
   private static void clearTrial(ServerLevel level) {
     var container = SubLevelContainer.getContainer(level);
-    for (var body : List.copyOf(container.getAllSubLevels()))
+    for (var body : List.copyOf(container.getAllSubLevels())) {
       if (body instanceof ServerSubLevel server
           && server.getUserDataTag() != null
-          && server.getUserDataTag().getBoolean(MARK))
+          && server.getUserDataTag().getBoolean(MARK)) {
         container.removeSubLevel(server, SubLevelRemovalReason.REMOVED);
+      }
+    }
     for (var e :
         level.getEntitiesOfClass(
             Entity.class,
@@ -87,29 +102,40 @@ public final class CombatFixture {
                 e.getTags().contains(MARK)
                     || e instanceof net.minecraft.world.entity.item.ItemEntity
                     || e instanceof net.minecraft.world.entity.projectile.Projectile
-                    || e instanceof net.minecraft.world.entity.AreaEffectCloud)) e.discard();
-    // Summons and enemies from a preceding trial are confined to this reserved test enclosure.
-    for (var e : level.getEntitiesOfClass(Mob.class, bounds(level), e -> e instanceof Enemy))
+                    || e instanceof net.minecraft.world.entity.AreaEffectCloud)) {
       e.discard();
+    }
+    // Summons and enemies from a preceding trial are confined to this reserved test enclosure.
+    for (var e : level.getEntitiesOfClass(Mob.class, bounds(level), e -> e instanceof Enemy)) {
+      e.discard();
+    }
     var removed = new ArrayList<Entity>();
-    for (var entity : level.getAllEntities())
-      if (entity != null && entity.getTags().contains(MARK)) removed.add(entity);
+    for (var entity : level.getAllEntities()) {
+      if (entity != null && entity.getTags().contains(MARK)) {
+        removed.add(entity);
+      }
+    }
     removed.forEach(Entity::discard);
     var state = CoreTestState.get(level);
     state.combatBody = null;
     state.combatEnemy = null;
     state.combatAcquired = false;
-    for (int x = -12; x <= 12; x++)
-      for (int z = -12; z <= 12; z++)
-        for (int y = 0; y < HEIGHT; y++)
+    for (int x = -12; x <= 12; x++) {
+      for (int z = -12; z <= 12; z++) {
+        for (int y = 0; y < HEIGHT; y++) {
           level.setBlock(base(level).offset(x, y, z), Blocks.AIR.defaultBlockState(), 2);
+        }
+      }
+    }
   }
 
   private static void sleepingSubject(ServerLevel level) {
     var flesh =
         BuiltInRegistries.BLOCK.get(
             ResourceLocation.fromNamespaceAndPath("biomancy", "packed_flesh"));
-    for (var pos : subject(base(level))) level.setBlock(pos, flesh.defaultBlockState(), 3);
+    for (var pos : subject(base(level))) {
+      level.setBlock(pos, flesh.defaultBlockState(), 3);
+    }
     level.setBlock(base(level).above(9), ComponentRegistry.CORE.get().defaultBlockState(), 3);
   }
 
@@ -125,20 +151,27 @@ public final class CombatFixture {
     }
     clearTrial(level);
     var b = base(level);
-    for (int x = (b.getX() - 14) >> 4; x <= (b.getX() + 14) >> 4; x++)
-      for (int z = (b.getZ() - 19) >> 4; z <= (b.getZ() + 14) >> 4; z++)
+    for (int x = (b.getX() - 14) >> 4; x <= (b.getX() + 14) >> 4; x++) {
+      for (int z = (b.getZ() - 19) >> 4; z <= (b.getZ() + 14) >> 4; z++) {
         level.setChunkForced(x, z, true);
-    for (int x = -14; x <= 14; x++)
-      for (int z = -19; z <= 14; z++)
+      }
+    }
+    for (int x = -14; x <= 14; x++) {
+      for (int z = -19; z <= 14; z++) {
         level.setBlock(b.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 2);
-    for (int x = -13; x <= 13; x++)
-      for (int z = -13; z <= 13; z++)
+      }
+    }
+    for (int x = -13; x <= 13; x++) {
+      for (int z = -13; z <= 13; z++) {
         for (int y = 0; y <= HEIGHT; y++) {
           int edge = Math.max(Math.abs(x), Math.abs(z));
-          if (edge == 13 || y == HEIGHT)
+          if (edge == 13 || y == HEIGHT) {
             level.setBlock(
                 b.offset(x, y, z), DevelopmentTestBlocks.GLASS.get().defaultBlockState(), 2);
+          }
         }
+      }
+    }
     sleepingSubject(level);
     control(level, b.offset(-3, 0, -16), "combat_test start");
     control(level, b.offset(3, 0, -16), "combat_test reset");
@@ -169,9 +202,13 @@ public final class CombatFixture {
         level.getEntitiesOfClass(
             net.minecraft.world.entity.Display.TextDisplay.class,
             bounds(level),
-            e -> e.getTags().contains(MARK))) old.discard();
+            e -> e.getTags().contains(MARK))) {
+      old.discard();
+    }
     var display = EntityType.TEXT_DISPLAY.create(level);
-    if (display == null) return;
+    if (display == null) {
+      return;
+    }
     var tag = new CompoundTag();
     tag.putString(
         "text",
@@ -200,21 +237,28 @@ public final class CombatFixture {
 
   public static int start(ServerLevel level) {
     var state = CoreTestState.get(level);
-    if (!state.combatBuilt || state.combatRunning) return 0;
+    if (!state.combatBuilt || state.combatRunning) {
+      return 0;
+    }
     state.combatEnemies.clear();
     state.combatResults.clear();
     state.combatIndex = 0;
     for (var type : BuiltInRegistries.ENTITY_TYPE) {
-      if (type.getCategory() != MobCategory.MONSTER) continue;
+      if (type.getCategory() != MobCategory.MONSTER) {
+        continue;
+      }
       // Biomancy categorizes its passive, item-eating blob as MONSTER; it has no attack goal.
       if (BuiltInRegistries.ENTITY_TYPE
           .getKey(type)
           .toString()
-          .equals("biomancy:primordial_flesh_blob")) continue;
+          .equals("biomancy:primordial_flesh_blob")) {
+        continue;
+      }
       try {
         if (type.create(level) instanceof Mob mob
-            && org.Azkerash.create_bioships.combat.HostileCombatIntegration.isHostile(mob))
+            && org.Azkerash.create_bioships.combat.HostileCombatIntegration.isHostile(mob)) {
           state.combatEnemies.add(BuiltInRegistries.ENTITY_TYPE.getKey(type).toString());
+        }
       } catch (RuntimeException error) {
         state.combatResults.add(
             BuiltInRegistries.ENTITY_TYPE.getKey(type)
@@ -274,10 +318,13 @@ public final class CombatFixture {
     if (enemy instanceof net.minecraft.world.entity.monster.Drowned) {
       // Drowned do not attack dry-land targets during daytime. Give this aquatic trial
       // water around the subject instead of changing the entire development world's clock.
-      for (int x = -10; x <= 10; x++)
-        for (int z = -10; z <= 10; z++)
-          for (int y = 0; y < 3; y++)
+      for (int x = -10; x <= 10; x++) {
+        for (int z = -10; z <= 10; z++) {
+          for (int y = 0; y < 3; y++) {
             level.setBlock(base(level).offset(x, y, z), Blocks.WATER.defaultBlockState(), 2);
+          }
+        }
+      }
     }
     enemy.setPos(
         Vec3.atLowerCornerOf(base(level))
@@ -297,11 +344,15 @@ public final class CombatFixture {
       mob.setPersistenceRequired();
       mob.finalizeSpawn(
           level, level.getCurrentDifficultyAt(base(level)), MobSpawnType.COMMAND, null);
-      if (mob instanceof net.minecraft.world.entity.monster.Slime slime) slime.setSize(2, true);
-      if (mob instanceof net.minecraft.world.entity.monster.piglin.AbstractPiglin piglin)
+      if (mob instanceof net.minecraft.world.entity.monster.Slime slime) {
+        slime.setSize(2, true);
+      }
+      if (mob instanceof net.minecraft.world.entity.monster.piglin.AbstractPiglin piglin) {
         piglin.setImmuneToZombification(true);
-      if (mob instanceof net.minecraft.world.entity.monster.hoglin.Hoglin hoglin)
+      }
+      if (mob instanceof net.minecraft.world.entity.monster.hoglin.Hoglin hoglin) {
         hoglin.setImmuneToZombification(true);
+      }
       mob.setItemSlot(EquipmentSlot.HEAD, new ItemStack(Items.IRON_HELMET));
       mob.setDropChance(EquipmentSlot.HEAD, 0);
     }
@@ -354,8 +405,12 @@ public final class CombatFixture {
     if (state.combatBuilt
         && !UI_READY.contains(level)
         && level.isPositionEntityTicking(base(level))
-        && level.isPositionEntityTicking(base(level).north(16))) explanation(level, status(level));
-    if (!state.combatRunning) return;
+        && level.isPositionEntityTicking(base(level).north(16))) {
+      explanation(level, status(level));
+    }
+    if (!state.combatRunning) {
+      return;
+    }
     var enemy = state.combatEnemy == null ? null : level.getEntity(state.combatEnemy);
     if (enemy instanceof Mob mob
         && mob.getTarget() instanceof org.Azkerash.create_bioships.combat.SubLevelCombatTarget
@@ -367,11 +422,13 @@ public final class CombatFixture {
         state.combatBody == null
             ? null
             : SubLevelContainer.getContainer(level).getSubLevel(state.combatBody);
-    if (body instanceof ServerSubLevel server && SubLevelHealth.status(server).dead())
+    if (body instanceof ServerSubLevel server && SubLevelHealth.status(server).dead()) {
       finishTrial(level, "PASS (" + SubLevelHealth.status(server).causeOfDeath() + ")");
-    else if (body == null || body.isRemoved()) finishTrial(level, "FAIL (subject lost)");
-    else if (level.getGameTime() >= state.combatDeadline)
+    } else if (body == null || body.isRemoved()) {
+      finishTrial(level, "FAIL (subject lost)");
+    } else if (level.getGameTime() >= state.combatDeadline) {
       finishTrial(level, "FAIL (no lethal attack within " + state.combatActiveTrialSeconds + "s)");
+    }
   }
 
   public static String status(ServerLevel level) {
@@ -399,8 +456,11 @@ public final class CombatFixture {
 
   public static void toggleFailures(ServerLevel level, boolean nextPage) {
     var state = CoreTestState.get(level);
-    if (nextPage) state.combatFailurePage++;
-    else state.combatFailuresExpanded = !state.combatFailuresExpanded;
+    if (nextPage) {
+      state.combatFailurePage++;
+    } else {
+      state.combatFailuresExpanded = !state.combatFailuresExpanded;
+    }
     state.setDirty();
     failureDisplay(level);
   }
@@ -414,13 +474,16 @@ public final class CombatFixture {
 
   private static void failureDisplay(ServerLevel level) {
     var removed = new ArrayList<Entity>();
-    for (var entity : level.getAllEntities())
+    for (var entity : level.getAllEntities()) {
       if (entity != null
           && (entity.getTags().contains(FAILURE_LABEL)
               || entity.getTags().contains(FAILURE_TOGGLE)
               || entity.getTags().contains(FAILURE_NEXT)
               || entity.getTags().contains(TIME_DECREASE)
-              || entity.getTags().contains(TIME_INCREASE))) removed.add(entity);
+              || entity.getTags().contains(TIME_INCREASE))) {
+        removed.add(entity);
+      }
+    }
     removed.forEach(Entity::discard);
     var state = CoreTestState.get(level);
     var failures = state.combatResults.stream().filter(r -> r.contains(": FAIL")).toList();
@@ -452,7 +515,9 @@ public final class CombatFixture {
         var type = BuiltInRegistries.ENTITY_TYPE.get(ResourceLocation.parse(id));
         lines.add(type.getDescription().getString());
       }
-      if (lines.isEmpty()) lines.add("No failures recorded");
+      if (lines.isEmpty()) {
+        lines.add("No failures recorded");
+      }
       lines.add("Page " + (state.combatFailurePage + 1) + " / " + pages);
       failureText(level, header.add(0, -1.45, 0), String.join("\n", lines));
       if (pages > 1) {
@@ -464,7 +529,9 @@ public final class CombatFixture {
 
   private static void failureText(ServerLevel level, Vec3 pos, String text) {
     var entity = EntityType.TEXT_DISPLAY.create(level);
-    if (entity == null) return;
+    if (entity == null) {
+      return;
+    }
     var tag = new CompoundTag();
     tag.putString(
         "text", Component.Serializer.toJson(Component.literal(text), level.registryAccess()));
@@ -481,7 +548,9 @@ public final class CombatFixture {
 
   private static void failureButton(ServerLevel level, Vec3 pos, String marker, float width) {
     var entity = EntityType.INTERACTION.create(level);
-    if (entity == null) return;
+    if (entity == null) {
+      return;
+    }
     var tag = new CompoundTag();
     tag.putFloat("width", width);
     tag.putFloat("height", .4f);
@@ -495,45 +564,62 @@ public final class CombatFixture {
   @net.neoforged.bus.api.SubscribeEvent
   public static void failureClick(
       net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.EntityInteract event) {
-    if (!(event.getLevel() instanceof ServerLevel level)) return;
+    if (!(event.getLevel() instanceof ServerLevel level)) {
+      return;
+    }
     boolean next = event.getTarget().getTags().contains(FAILURE_NEXT);
     boolean decrease = event.getTarget().getTags().contains(TIME_DECREASE);
     boolean increase = event.getTarget().getTags().contains(TIME_INCREASE);
-    if (!next && !decrease && !increase && !event.getTarget().getTags().contains(FAILURE_TOGGLE))
+    if (!next && !decrease && !increase && !event.getTarget().getTags().contains(FAILURE_TOGGLE)) {
       return;
-    if (!CoreTestState.get(level).combatBuilt) return;
-    if (decrease || increase) adjustTrialDuration(level, increase ? 5 : -5);
-    else toggleFailures(level, next);
+    }
+    if (!CoreTestState.get(level).combatBuilt) {
+      return;
+    }
+    if (decrease || increase) {
+      adjustTrialDuration(level, increase ? 5 : -5);
+    } else {
+      toggleFailures(level, next);
+    }
     event.setCancellationResult(net.minecraft.world.InteractionResult.SUCCESS);
     event.setCanceled(true);
   }
 
   @net.neoforged.bus.api.SubscribeEvent
   public static void trackSummons(net.neoforged.neoforge.event.entity.EntityJoinLevelEvent event) {
-    if (!(event.getLevel() instanceof ServerLevel level)) return;
+    if (!(event.getLevel() instanceof ServerLevel level)) {
+      return;
+    }
     var state = CoreTestState.get(level);
     if (state.combatRunning
         && event.getEntity() instanceof Enemy
-        && bounds(level).inflate(32).contains(event.getEntity().position()))
+        && bounds(level).inflate(32).contains(event.getEntity().position())) {
       event.getEntity().addTag(MARK);
+    }
   }
 
   @net.neoforged.bus.api.SubscribeEvent
   public static void containDragon(net.neoforged.neoforge.event.tick.EntityTickEvent.Post event) {
     if (event.getEntity() instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon dragon
         && dragon.level() instanceof ServerLevel level
-        && dragon.getTags().contains(MARK)) contain(level, dragon);
+        && dragon.getTags().contains(MARK)) {
+      contain(level, dragon);
+    }
   }
 
   public static void contain(
       ServerLevel level, net.minecraft.world.entity.boss.enderdragon.EnderDragon dragon) {
     var b = base(level);
     var box = dragon.getBoundingBox();
-    for (var part : dragon.getSubEntities()) box = box.minmax(part.getBoundingBox());
+    for (var part : dragon.getSubEntities()) {
+      box = box.minmax(part.getBoundingBox());
+    }
     double x = containAxis(box.minX, box.maxX, b.getX() - 12 + .05, b.getX() + 13 - .05);
     double y = containAxis(box.minY, box.maxY, b.getY() + .05, b.getY() + HEIGHT - .05);
     double z = containAxis(box.minZ, box.maxZ, b.getZ() - 12 + .05, b.getZ() + 13 - .05);
-    if (x == 0 && y == 0 && z == 0) return;
+    if (x == 0 && y == 0 && z == 0) {
+      return;
+    }
     var offset = new Vec3(x, y, z);
     dragon.setPos(dragon.position().add(offset));
     dragon.xo += x;
@@ -551,7 +637,9 @@ public final class CombatFixture {
   }
 
   private static double containAxis(double min, double max, double low, double high) {
-    if (max - min > high - low) return (low + high - min - max) / 2;
+    if (max - min > high - low) {
+      return (low + high - min - max) / 2;
+    }
     return min < low ? low - min : max > high ? high - max : 0;
   }
 }

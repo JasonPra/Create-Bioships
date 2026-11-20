@@ -49,44 +49,60 @@ public final class SubLevelImpactAdapter {
     var owner = SubLevelCreatureParts.root(body);
     if (owner != body) {
       var target = get(owner);
-      if (target != null) target.flash();
+      if (target != null) {
+        target.flash();
+      }
       return;
     }
     long now = body.getLevel().getGameTime();
-    if (lastFlash != Long.MIN_VALUE && now - lastFlash < 10) return;
+    if (lastFlash != Long.MIN_VALUE && now - lastFlash < 10) {
+      return;
+    }
     lastFlash = now;
-    for (var member : SubLevelCreatureParts.members(body))
+    for (var member : SubLevelCreatureParts.members(body)) {
       net.neoforged.neoforge.network.PacketDistributor.sendToPlayersInDimension(
           body.getLevel(), new HurtFlashPayload(member.getUniqueId()));
+    }
   }
 
   public void wound(BlockPos cell, Direction face) {
     if (body.isRemoved()
         || !SubLevelData.isLiving(body)
         || face == null
-        || body.getLevel().getBlockState(cell).isAir()) return;
-    if (SubLevelHealth.status(body).dead()) flash();
+        || body.getLevel().getBlockState(cell).isAir()) {
+      return;
+    }
+    if (SubLevelHealth.status(body).dead()) {
+      flash();
+    }
     long now = body.getLevel().getGameTime();
     if (contactTick != now) {
       contactTick = now;
       contacted.clear();
     }
     if (contacted.add(new SurfaceWoundState.Surface(cell.immutable(), face))
-        || !SubLevelWounds.state(body).active(cell, face, now))
+        || !SubLevelWounds.state(body).active(cell, face, now)) {
       SubLevelWounds.record(body, cell, face);
+    }
   }
 
   @SubscribeEvent
   public static void projectile(ProjectileImpactEvent event) {
     if (!(event.getProjectile().level() instanceof ServerLevel level)
-        || !(event.getRayTraceResult() instanceof BlockHitResult hit)) return;
+        || !(event.getRayTraceResult() instanceof BlockHitResult hit)) {
+      return;
+    }
     var body = CoreAssemblyRules.containing(level, hit.getBlockPos());
     var impact = body == null ? null : get(body);
-    if (impact == null) return;
+    if (impact == null) {
+      return;
+    }
     var projectile = event.getProjectile();
     boolean dead = SubLevelHealth.status(body).dead();
     if (dead) {
-      if (projectile instanceof ThrownPotion) return;
+      if (projectile instanceof ThrownPotion) {
+        return;
+      }
       impact.wound(hit.getBlockPos(), hit.getDirection());
       if (projectile instanceof AbstractArrow arrow) {
         ProjectileAttachment.attach(arrow, body, hit, arrow.getDeltaMovement());
@@ -98,35 +114,47 @@ public final class SubLevelImpactAdapter {
         projectile instanceof ThrownPotion
             ? CombatAdapter.target(body)
             : CombatAdapter.hitTarget(body, hit.getBlockPos(), hit.getDirection());
-    if (target == null) return;
+    if (target == null) {
+      return;
+    }
     target.impact(hit.getBlockPos(), hit.getDirection());
     var incoming = projectile.getDeltaMovement();
     boolean embedded = projectile instanceof AbstractArrow;
-    if (embedded) ProjectileAttachment.begin((AbstractArrow) projectile);
+    if (embedded) {
+      ProjectileAttachment.begin((AbstractArrow) projectile);
+    }
     try {
       ((ProjectileImpactInvoker) projectile)
           .core$hitEntity(new EntityHitResult(target, hit.getLocation()));
     } finally {
-      if (embedded) ProjectileAttachment.end();
+      if (embedded) {
+        ProjectileAttachment.end();
+      }
     }
-    if (embedded && !projectile.isRemoved())
+    if (embedded && !projectile.isRemoved()) {
       ProjectileAttachment.attach((AbstractArrow) projectile, body, hit, incoming);
+    }
     event.setCanceled(true);
   }
 
   @SubscribeEvent
   public static void tick(ServerTickEvent.Post event) {
-    if (event.getServer().getTickCount() % 20 != 0) return;
+    if (event.getServer().getTickCount() % 20 != 0) {
+      return;
+    }
     var active = Collections.newSetFromMap(new IdentityHashMap<ServerSubLevel, Boolean>());
     for (var level : event.getServer().getAllLevels()) {
       var container = SubLevelContainer.getContainer(level);
-      if (container == null) continue;
+      if (container == null) {
+        continue;
+      }
       var bodies = new ArrayList<ServerSubLevel>();
-      for (var entry : container.getAllSubLevels())
+      for (var entry : container.getAllSubLevels()) {
         if (entry instanceof ServerSubLevel body && get(body) != null) {
           active.add(body);
           bodies.add(body);
         }
+      }
       var seen = OBSERVERS.computeIfAbsent(level, l -> new HashMap<>());
       var players = new HashSet<UUID>();
       for (var player : level.players()) {
@@ -135,8 +163,8 @@ public final class SubLevelImpactAdapter {
         var present = new HashSet<UUID>();
         for (var body : bodies) {
           present.add(body.getUniqueId());
-          if (known.add(body.getUniqueId()))
-            for (var wound : SubLevelWounds.state(body).active(level.getGameTime()))
+          if (known.add(body.getUniqueId())) {
+            for (var wound : SubLevelWounds.state(body).active(level.getGameTime())) {
               net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(
                   player,
                   new WoundPayload(
@@ -145,6 +173,8 @@ public final class SubLevelImpactAdapter {
                       wound.surface().face(),
                       wound.at(),
                       wound.duration()));
+            }
+          }
         }
         known.retainAll(present);
       }

@@ -23,7 +23,8 @@ public abstract class DevelopmentInventoryMixin {
       method = {"clearContent", "dropAll"},
       at = @At("TAIL"))
   private void core$restoreNavigator(CallbackInfo callback) {
-    if (player instanceof net.minecraft.server.level.ServerPlayer server)
+    if (player instanceof net.minecraft.server.level.ServerPlayer server) {
       DevelopmentLoadout.ensureNavigator(server);
+    }
   }
 }

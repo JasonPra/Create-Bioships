@@ -22,10 +22,16 @@ public final class JuniorBaselineTests {
       GameTestHelper h) {
     var l = h.getLevel();
     var at = new BlockPos(7800, 85, 128);
-    for (int x = 486; x <= 488; x++) for (int z = 7; z <= 9; z++) l.setChunkForced(x, z, true);
-    for (int x = -4; x <= 4; x++)
-      for (int z = -4; z <= 4; z++)
+    for (int x = 486; x <= 488; x++) {
+      for (int z = 7; z <= 9; z++) {
+        l.setChunkForced(x, z, true);
+      }
+    }
+    for (int x = -4; x <= 4; x++) {
+      for (int z = -4; z <= 4; z++) {
         l.setBlock(at.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 2);
+      }
+    }
     l.setBlock(at, ComponentRegistry.CORE.get().defaultBlockState(), 3);
     l.setBlock(at.east(), ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
     l.setBlock(at.west(), ComponentRegistry.MOUTH.get().defaultBlockState(), 3);
@@ -81,26 +87,28 @@ public final class JuniorBaselineTests {
   public static void restored_compact_creature_initializes_native_segment_mass(GameTestHelper h) {
     var l = h.getLevel();
     var floor = new BlockPos(8500, 85, 128);
-    for (int x = -12; x <= 12; x++)
+    for (int x = -12; x <= 12; x++) {
       for (int z = -12; z <= 12; z++) {
         l.setChunkForced((floor.getX() + x) >> 4, (floor.getZ() + z) >> 4, true);
         l.setBlock(floor.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 2);
       }
+    }
     h.runAfterDelay(
         20,
         () -> {
           var p = floor.above(2);
           var cells = new ArrayList<BlockPos>();
-          for (int x = -1; x <= 1; x++)
+          for (int x = -1; x <= 1; x++) {
             for (int z = -1; z <= 1; z++) {
               var at = p.offset(x, 0, z);
               cells.add(at);
               l.setBlock(at, ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState(), 3);
             }
+          }
           l.setBlock(p, ComponentRegistry.CORE.get().defaultBlockState(), 3);
           l.setBlock(p.above(), ComponentRegistry.BRAIN.get().defaultBlockState(), 3);
           cells.add(p.above());
-          for (var face : List.of(Direction.EAST, Direction.WEST))
+          for (var face : List.of(Direction.EAST, Direction.WEST)) {
             for (int z : new int[] {-1, 1}) {
               var at = p.relative(face, 2).offset(0, 0, z);
               cells.add(at);
@@ -115,6 +123,7 @@ public final class JuniorBaselineTests {
                           face),
                   3);
             }
+          }
           var b =
               SubLevelAssemblyHelper.assembleBlocks(
                   l, p, cells, new BoundingBox3i(p.offset(-2, 0, -1), p.offset(2, 1, 1)));
@@ -136,11 +145,12 @@ public final class JuniorBaselineTests {
                       h.assertTrue(
                           members.size() == 13 && !SubLevelHealth.status(restored).dead(),
                           "Reset did not rebuild living compact family");
-                      for (var part : members)
+                      for (var part : members) {
                         h.assertTrue(
                             part.getMassTracker().getCenterOfMass() != null
                                 && part.getMassTracker().getMass() > 0,
                             "Restored segment lacks native mass");
+                      }
                       h.succeed();
                     });
               });

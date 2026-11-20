@@ -100,14 +100,21 @@ public final class FlipperController {
   public void update() {
     var active = new ArrayList<LegRuntime>();
     boolean submerged = wet(Vec3.atCenterOf(body.getPlot().getCenterBlock()));
-    for (var e : fins.entrySet()) if (wet(Vec3.atCenterOf(e.getKey()))) active.add(e.getValue());
+    for (var e : fins.entrySet()) {
+      if (wet(Vec3.atCenterOf(e.getKey()))) {
+        active.add(e.getValue());
+      }
+    }
     supporting = BrainMotorControls.active(body) && submerged && !active.isEmpty();
     if (!supporting) {
       holdY = Double.NaN;
-      if (body.getLevel().getGameTime() % 4 == 0)
-        for (var p : fins.keySet())
-          if (body.getLevel().getBlockEntity(p) instanceof FlipperBlockEntity be)
+      if (body.getLevel().getGameTime() % 4 == 0) {
+        for (var p : fins.keySet()) {
+          if (body.getLevel().getBlockEntity(p) instanceof FlipperBlockEntity be) {
             be.pose(FlipperBlockEntity.rest(be.getBlockState()));
+          }
+        }
+      }
       return;
     }
     walker.setBlockState(
@@ -118,7 +125,9 @@ public final class FlipperController {
     var velocity = request.mode() == SubLevelPathfinder.Mode.WATER ? request.velocity() : Vec3.ZERO;
     var center =
         body.logicalPose().transformPosition(Vec3.atCenterOf(body.getPlot().getCenterBlock()));
-    if (!Double.isFinite(holdY)) holdY = center.y;
+    if (!Double.isFinite(holdY)) {
+      holdY = center.y;
+    }
     // Native surface swimming targets the waterline. Our water paths instead hold the requested
     // depth.
     holdY = Math.clamp(holdY + velocity.y * .05, center.y - .5, center.y + .5);
@@ -136,14 +145,19 @@ public final class FlipperController {
     walker.throttle = Math.clamp(velocity.length() / WalkerSwim.SWIM_SPEED, 0, 1);
     double speed = 0;
     var handle = RigidBodyHandle.of(body);
-    if (handle != null && handle.isValid())
+    if (handle != null && handle.isValid()) {
       speed = handle.getLinearVelocity(new Vector3d()).length();
+    }
     // No bank target: flippers never reach for or anchor to land.
     WalkerSwimInvoker.bioships$row(walker, active, body.logicalPose(), speed, Double.NaN, null);
-    if (body.getLevel().getGameTime() % 4 != 0) return;
+    if (body.getLevel().getGameTime() % 4 != 0) {
+      return;
+    }
     var core = Vec3.atLowerCornerOf(walker.getBlockPos());
     for (var e : fins.entrySet()) {
-      if (!(body.getLevel().getBlockEntity(e.getKey()) instanceof FlipperBlockEntity be)) continue;
+      if (!(body.getLevel().getBlockEntity(e.getKey()) instanceof FlipperBlockEntity be)) {
+        continue;
+      }
       var leg = e.getValue();
       if (!active.contains(leg) || leg.flightFoot == null) {
         be.pose(FlipperBlockEntity.rest(be.getBlockState()));
@@ -152,18 +166,23 @@ public final class FlipperController {
       var b = leg.built;
       b.chain.solveRobust(arr(leg.flightFoot.subtract(core)), b.angles, 10, .01);
       var result = new ArrayList<Vec3>();
-      for (var point : b.chain.forward(b.angles, null))
+      for (var point : b.chain.forward(b.angles, null)) {
         result.add(
             new Vec3(point[0], point[1], point[2])
                 .add(core)
                 .subtract(Vec3.atLowerCornerOf(e.getKey())));
+      }
       be.pose(result);
     }
   }
 
   public void physics(double dt) {
-    if (!supporting || !BrainMotorControls.active(body)) return;
+    if (!supporting || !BrainMotorControls.active(body)) {
+      return;
+    }
     var handle = RigidBodyHandle.of(body);
-    if (handle != null && handle.isValid()) WalkerPhysics.substep(walker, body, handle, dt);
+    if (handle != null && handle.isValid()) {
+      WalkerPhysics.substep(walker, body, handle, dt);
+    }
   }
 }

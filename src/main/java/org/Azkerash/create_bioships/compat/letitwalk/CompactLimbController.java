@@ -30,16 +30,21 @@ public final class CompactLimbController {
   public static net.minecraft.world.item.context.UseOnContext socketContext(
       net.minecraft.world.item.context.UseOnContext context) {
     if (!(context.getLevel() instanceof net.minecraft.server.level.ServerLevel level)
-        || context.getPlayer() == null) return context;
+        || context.getPlayer() == null) {
+      return context;
+    }
     var part = CoreAssemblyRules.containing(level, context.getClickedPos());
     if (part == null
         || part.getUserDataTag() == null
         || !part.getUserDataTag().contains(PART)
-        || !SubLevelCreatureParts.isPart(part)) return context;
+        || !SubLevelCreatureParts.isPart(part)) {
+      return context;
+    }
     var socket = BlockPos.of(part.getUserDataTag().getCompound(PART).getLong("Socket"));
     var owner = SubLevelCreatureParts.root(part);
-    if (owner == part || !level.getBlockState(socket).is(ComponentRegistry.CRAB_LEG.get()))
+    if (owner == part || !level.getBlockState(socket).is(ComponentRegistry.CRAB_LEG.get())) {
       return context;
+    }
     var face =
         level
             .getBlockState(socket)
@@ -54,14 +59,20 @@ public final class CompactLimbController {
 
   /** Reject old streamed-in segments after their socket was broken and replaced. */
   public static boolean ownsSavedSegment(ServerSubLevel owner, ServerSubLevel part) {
-    if (owner.getUserDataTag() == null || part.getUserDataTag() == null) return false;
+    if (owner.getUserDataTag() == null || part.getUserDataTag() == null) {
+      return false;
+    }
     long socket = part.getUserDataTag().getCompound(PART).getLong("Socket");
     for (var raw : owner.getUserDataTag().getCompound(DATA).getList("Legs", 10)) {
       var entry = (CompoundTag) raw;
-      if (entry.getLong("Socket") != socket) continue;
+      if (entry.getLong("Socket") != socket) {
+        continue;
+      }
       for (var segment : entry.getCompound("Leg").getList("segments", 10)) {
         var tag = (CompoundTag) segment;
-        if (tag.hasUUID("id") && tag.getUUID("id").equals(part.getUniqueId())) return true;
+        if (tag.hasUUID("id") && tag.getUUID("id").equals(part.getUniqueId())) {
+          return true;
+        }
       }
     }
     return false;
@@ -132,8 +143,9 @@ public final class CompactLimbController {
 
   public void changed(BlockPos pos, net.minecraft.world.level.block.state.BlockState state) {
     dirty = true;
-    if (limbs.containsKey(pos) && !state.is(ComponentRegistry.CRAB_LEG.get()))
+    if (limbs.containsKey(pos) && !state.is(ComponentRegistry.CRAB_LEG.get())) {
       retiredSockets.add(pos.immutable());
+    }
   }
 
   public boolean hasSocket(BlockPos pos) {
@@ -174,7 +186,7 @@ public final class CompactLimbController {
 
   private void fill(ServerSubLevel part, int bone, int height, double length) {
     var base = part.getPlot().getCenterBlock();
-    for (int y = 0; y < Math.ceil(length); y++)
+    for (int y = 0; y < Math.ceil(length); y++) {
       body.getLevel()
           .setBlock(
               base.above(y),
@@ -187,6 +199,7 @@ public final class CompactLimbController {
                       CompactLimbBlock.FILL,
                       Math.clamp((int) Math.round(Math.min(1, length - y) * 64), 1, 64)),
               3);
+    }
   }
 
   private Limb create(BlockPos socket, int height, Direction face) {
@@ -222,7 +235,9 @@ public final class CompactLimbController {
       limb.bodies.add(part);
     }
     configure(limb, points, null);
-    for (var part : limb.bodies) SubLevelCreatureParts.attach(body, part);
+    for (var part : limb.bodies) {
+      SubLevelCreatureParts.attach(body, part);
+    }
     return limb;
   }
 
@@ -232,9 +247,10 @@ public final class CompactLimbController {
     // its next physics step. Flush native mass data before using its pivot.
     part.updateMergedMassData(1);
     var com = part.getMassTracker().getCenterOfMass();
-    if (com == null)
+    if (com == null) {
       throw new IllegalStateException(
           "Generated compact segment has no native mass: " + part.getUniqueId());
+    }
     var offset = new Vector3d(com).sub(v(anchor(part)));
     var center = orientation.transform(offset).add(v(start));
     part.logicalPose().rotationPoint().set(com);
@@ -255,7 +271,11 @@ public final class CompactLimbController {
     var foot =
         footPart.logicalPose().transformPosition(anchor(footPart).add(0, limb.lengths[2], 0));
     releasePins(limb);
-    for (var filter : limb.runtime.built.contactFilters) if (filter.isValid()) filter.remove();
+    for (var filter : limb.runtime.built.contactFilters) {
+      if (filter.isValid()) {
+        filter.remove();
+      }
+    }
     limb.runtime.built.contactFilters.clear();
     limb.extension = extension;
     int angle = LimbTuning.get(body.getLevel(), limb.socket).restAngle();
@@ -292,13 +312,16 @@ public final class CompactLimbController {
       }
       var q = new Quaterniond(body.logicalPose().orientation()).mul(turn).mul(limb.rest.get(i));
       fill(part, i, limb.height, limb.lengths[i]);
-      for (int y = (int) Math.ceil(limb.lengths[i]); y < (int) Math.ceil(oldLengths[i]); y++)
+      for (int y = (int) Math.ceil(limb.lengths[i]); y < (int) Math.ceil(oldLengths[i]); y++) {
         body.getLevel().removeBlock(part.getPlot().getCenterBlock().above(y), false);
+      }
       placeSegment(part, body.logicalPose().transformPosition(posed.get(i)), q);
     }
     oldRuntime = SocketJointRig.geometry(oldRuntime, limb.runtime);
     var restored = SocketJointRig.loadCompact(body, limb.socket, oldRuntime);
-    if (restored != null && !changedAngle) limb.runtime = restored;
+    if (restored != null && !changedAngle) {
+      limb.runtime = restored;
+    }
   }
 
   private void configure(Limb limb, List<Vec3> points, BuiltLeg saved) {
@@ -339,8 +362,9 @@ public final class CompactLimbController {
     built.footKind = LegFootBlock.Kind.NORMAL;
     built.footKindKnown = true;
     built.segmentOffsets = new Vec3[3];
-    for (int i = 0; i < 3; i++)
+    for (int i = 0; i < 3; i++) {
       built.segmentOffsets[i] = points.get(i).subtract(origin).subtract(anchor(limb.bodies.get(i)));
+    }
     double yaw =
         Math.atan2(-limb.face.getStepZ(), limb.face.getStepX()) + Math.toRadians(limb.restAngle);
     limb.runtime =
@@ -362,10 +386,14 @@ public final class CompactLimbController {
     var found = new ArrayList<ServerSubLevel>();
     for (var id : new LinkedHashSet<>(limb.runtime.built.segments)) {
       var entry = container.getSubLevel(id);
-      if (!(entry instanceof ServerSubLevel part) || part.isRemoved()) return false;
+      if (!(entry instanceof ServerSubLevel part) || part.isRemoved()) {
+        return false;
+      }
       found.add(part);
     }
-    if (found.size() != 3) return false;
+    if (found.size() != 3) {
+      return false;
+    }
     limb.bodies.clear();
     limb.bodies.addAll(found);
     return true;
@@ -376,8 +404,9 @@ public final class CompactLimbController {
       releasePins(limb);
       return;
     }
-    if (limb.pins.size() == 3 && limb.pins.stream().allMatch(GenericConstraintHandle::isValid))
+    if (limb.pins.size() == 3 && limb.pins.stream().allMatch(GenericConstraintHandle::isValid)) {
       return;
+    }
     releasePins(limb);
     var pipe = SubLevelContainer.getContainer(body.getLevel()).physicsSystem().getPipeline();
     for (int i = 0; i < 3; i++) {
@@ -445,12 +474,16 @@ public final class CompactLimbController {
   }
 
   private void rebuild() {
-    if (!dirty) return;
+    if (!dirty) {
+      return;
+    }
     dirty = false;
     discardRemoved();
     for (var socket : SubLevelHealth.blocks(body)) {
       var state = body.getLevel().getBlockState(socket);
-      if (!state.is(ComponentRegistry.CRAB_LEG.get())) continue;
+      if (!state.is(ComponentRegistry.CRAB_LEG.get())) {
+        continue;
+      }
       int height = state.getValue(CrabLegBlock.HEIGHT);
       var face =
           state.getValue(
@@ -462,8 +495,11 @@ public final class CompactLimbController {
         limbs.remove(socket);
         old = null;
       }
-      if (old == null) limbs.put(socket.immutable(), create(socket, height, face));
-      else old.height = height;
+      if (old == null) {
+        limbs.put(socket.immutable(), create(socket, height, face));
+      } else {
+        old.height = height;
+      }
     }
     refreshLegs();
     save();
@@ -471,7 +507,9 @@ public final class CompactLimbController {
 
   private void refreshLegs() {
     walker.legs.clear();
-    for (var l : limbs.values()) walker.legs.add(l.runtime);
+    for (var l : limbs.values()) {
+      walker.legs.add(l.runtime);
+    }
     LegRuntime.countLegs(walker.legs);
     walker.totalMass =
         body.getMassTracker().getMass()
@@ -491,7 +529,9 @@ public final class CompactLimbController {
     double sx = 0, sz = 0, sh = 0;
     int n = limbs.size();
     walker.leanPitchTarget = walker.leanRollTarget = 0;
-    if (n < 3) return;
+    if (n < 3) {
+      return;
+    }
     for (var l : limbs.values()) {
       sx += l.socket.getX();
       sz += l.socket.getZ();
@@ -519,49 +559,67 @@ public final class CompactLimbController {
 
   public void update() {
     rebuild();
-    if (limbs.isEmpty()) return;
+    if (limbs.isEmpty()) {
+      return;
+    }
     if (body.getLevel().getGameTime() % 4 == 0) {
       boolean resized = false;
-      for (var limb : limbs.values())
+      for (var limb : limbs.values()) {
         if (loaded(limb)
             && (Math.abs(limb.extension - limb.height) > .001
                 || limb.restAngle != LimbTuning.get(body.getLevel(), limb.socket).restAngle())) {
           resize(limb, limb.extension + Math.clamp(limb.height - limb.extension, -.125, .125));
           resized = true;
         }
+      }
       if (resized) {
         refreshLegs();
         save();
       }
     }
     SocketJointRig.ensureContactFilters(walker, body.getLevel());
-    for (var l : limbs.values()) SocketJointRig.apply(l.runtime.built);
+    for (var l : limbs.values()) {
+      SocketJointRig.apply(l.runtime.built);
+    }
     BuiltLegDriver.updateActualFeet(walker, body.getLevel());
     var family = new HashSet<UUID>();
-    for (var p : SubLevelCreatureParts.members(body)) family.add(p.getUniqueId());
+    for (var p : SubLevelCreatureParts.members(body)) {
+      family.add(p.getUniqueId());
+    }
     TerrainProbe.withIgnored(
         p -> family.contains(p.getUniqueId()),
         () -> {
           physicalContacts = 0;
           for (var l : limbs.values()) {
             l.contact = loaded(l) && CompactLegCollisions.grounded(body, l.bodies, l.lengths);
-            if (l.contact) physicalContacts++;
+            if (l.contact) {
+              physicalContacts++;
+            }
           }
           if (postureEnabled()) {
             var r = BrainMotorControls.current(body);
             var local = body.logicalPose().orientation().transformInverse(v(r.velocity()));
             int keys = 1 << WalkerBrain.GEAR_SHIFT | WalkerBrain.KEY_CRAB;
-            if (local.z < -.05) keys |= WalkerBrain.KEY_FORWARD;
-            if (local.z > .05) keys |= WalkerBrain.KEY_BACK;
-            if (local.x < -.05) keys |= WalkerBrain.KEY_LEFT;
-            if (local.x > .05) keys |= WalkerBrain.KEY_RIGHT;
+            if (local.z < -.05) {
+              keys |= WalkerBrain.KEY_FORWARD;
+            }
+            if (local.z > .05) {
+              keys |= WalkerBrain.KEY_BACK;
+            }
+            if (local.x < -.05) {
+              keys |= WalkerBrain.KEY_LEFT;
+            }
+            if (local.x > .05) {
+              keys |= WalkerBrain.KEY_RIGHT;
+            }
             walker.input = keys;
             walker.lastInputTime = body.getLevel().getGameTime();
             walker.receiveTurn(r.yawRate() * .05);
             stancePreference();
             WalkerBrain.tick(walker, body);
-            for (var leg : walker.legs)
+            for (var leg : walker.legs) {
               SocketJointRig.prepareSwing(leg, body.getLevel().getGameTime());
+            }
             double wanted = Math.hypot(r.velocity().x, r.velocity().z);
             double permitted = Math.hypot(walker.targetVelocity.x, walker.targetVelocity.z);
             double factor = permitted > 1e-8 ? Math.min(1, wanted / permitted) : 0;
@@ -570,7 +628,9 @@ public final class CompactLimbController {
           }
         });
     // Joint angles and physical poses are serialized by Let It Walk/Sable; no pose teleport driver.
-    if (body.getLevel().getGameTime() % 20 == 0) save();
+    if (body.getLevel().getGameTime() % 20 == 0) {
+      save();
+    }
   }
 
   public void physics(double dt) {
@@ -581,8 +641,9 @@ public final class CompactLimbController {
         releasePins(l);
         continue;
       }
-      if (powered) releasePins(l);
-      else {
+      if (powered) {
+        releasePins(l);
+      } else {
         ensurePins(l);
         var tuning = LimbTuning.get(body.getLevel(), l.socket);
         for (int i = 0; i < l.pins.size(); i++) {
@@ -608,21 +669,31 @@ public final class CompactLimbController {
         }
       }
     }
-    if (!powered) return;
+    if (!powered) {
+      return;
+    }
     var handle = RigidBodyHandle.of(body);
-    if (handle == null || !handle.isValid()) return;
+    if (handle == null || !handle.isValid()) {
+      return;
+    }
     // Match WalkerCoreBlockEntity's native physics ordering and support decisions.
     // Native WalkerBrain/WalkerPhysics determine loss of footing; no extra contact gate.
     WalkerPhysics.substep(walker, body, handle, dt);
-    for (var l : limbs.values()) SocketJointRig.apply(l.runtime.built);
+    for (var l : limbs.values()) {
+      SocketJointRig.apply(l.runtime.built);
+    }
     BuiltLegDriver.solve(walker, body, body.getLevel().getGameTime());
     var posed = BuiltLegDriver.substep(walker, body, dt);
     for (var limb : limbs.values()) {
-      if (!loaded(limb)) continue;
+      if (!loaded(limb)) {
+        continue;
+      }
       for (int i = 0; i < limb.bodies.size(); i++) {
         var part = limb.bodies.get(i);
         var pose = posed.get(part.getUniqueId());
-        if (pose == null) continue;
+        if (pose == null) {
+          continue;
+        }
         // Native built limbs use a shared rest frame. Our narrow collision bones are
         // stored along local +Y, so adapt only that rest frame, not gait or suspension.
         var offset = new Vector3d(pose.rotationPoint()).sub(v(anchor(part)));
@@ -634,14 +705,17 @@ public final class CompactLimbController {
             new Vector3d(pose.velocity()).add(new Vector3d(pose.spin()).cross(correction));
         var spin = new Vector3d(pose.spin());
         var bone = RigidBodyHandle.of(part);
-        if (bone == null || !bone.isValid()) continue;
+        if (bone == null || !bone.isValid()) {
+          continue;
+        }
         bone.teleport(position, turn);
         bone.addLinearAndAngularVelocity(
             velocity.sub(bone.getLinearVelocity(new Vector3d()), new Vector3d()),
             spin.sub(bone.getAngularVelocity(new Vector3d()), new Vector3d()));
-        if (limb.runtime.grip == null && walker.upright())
+        if (limb.runtime.grip == null && walker.upright()) {
           org.Azkerash.create_bioships.mixin.WalkerSnapInvoker.bioships$posed(
               part, position, turn, velocity, spin, dt);
+        }
       }
     }
   }
@@ -650,7 +724,9 @@ public final class CompactLimbController {
     var result = new ArrayList<SubLevelLegs.Pose>();
     var origin = Vec3.atLowerCornerOf(walker.getBlockPos());
     for (var l : limbs.values()) {
-      if (!loaded(l)) continue;
+      if (!loaded(l)) {
+        continue;
+      }
       var points = SocketJointRig.points(l.runtime.built, origin);
       var actual = new ArrayList<Vec3>();
       for (int i = 0; i < 3; i++) {
@@ -677,7 +753,7 @@ public final class CompactLimbController {
 
   public String collisionDetails(net.minecraft.world.phys.AABB box) {
     var out = new StringBuilder();
-    for (var pose : poses())
+    for (var pose : poses()) {
       if (CompactLegCollisions.overlaps(body, java.util.List.of(pose), box, .08)) {
         var leg = limbs.get(pose.cell()).runtime;
         out.append("cell=")
@@ -698,6 +774,7 @@ public final class CompactLimbController {
                     .map(p -> body.logicalPose().transformPosition(p))
                     .toList());
       }
+    }
     return out.toString();
   }
 
@@ -718,13 +795,21 @@ public final class CompactLimbController {
   }
 
   private void releasePins(Limb l) {
-    for (var pin : l.pins) if (pin.isValid()) pin.remove();
+    for (var pin : l.pins) {
+      if (pin.isValid()) {
+        pin.remove();
+      }
+    }
     l.pins.clear();
   }
 
   private void destroy(Limb l) {
     releasePins(l);
-    for (var filter : l.runtime.built.contactFilters) if (filter.isValid()) filter.remove();
+    for (var filter : l.runtime.built.contactFilters) {
+      if (filter.isValid()) {
+        filter.remove();
+      }
+    }
     l.runtime.built.contactFilters.clear();
     var container = SubLevelContainer.getContainer(body.getLevel());
     for (var id : l.runtime.built.segments) {
@@ -738,18 +823,26 @@ public final class CompactLimbController {
   }
 
   public void close() {
-    for (var l : limbs.values()) releasePins(l);
+    for (var l : limbs.values()) {
+      releasePins(l);
+    }
     BuiltLegDriver.releaseAll(walker);
   }
 
   public void removed() {
-    for (var l : limbs.values()) destroy(l);
+    for (var l : limbs.values()) {
+      destroy(l);
+    }
     limbs.clear();
   }
 
   public void save() {
-    if (body.isRemoved()) return;
-    if (!retiredSockets.isEmpty()) discardRemoved();
+    if (body.isRemoved()) {
+      return;
+    }
+    if (!retiredSockets.isEmpty()) {
+      discardRemoved();
+    }
     var data = new CompoundTag();
     var list = new ListTag();
     for (var l : limbs.values()) {
@@ -775,17 +868,23 @@ public final class CompactLimbController {
     for (var raw : data.getList("Legs", 10)) {
       var t = (CompoundTag) raw;
       var built = BuiltLeg.load(t.getCompound("Leg"));
-      if (built == null || new LinkedHashSet<>(built.segments).size() != 3) continue;
+      if (built == null || new LinkedHashSet<>(built.segments).size() != 3) {
+        continue;
+      }
       var l = new Limb();
       l.socket = BlockPos.of(t.getLong("Socket"));
       l.height = Math.clamp(t.getInt("Height"), 1, 3);
       l.extension = Math.clamp(t.getDouble("Extension"), 1, 3);
       l.restAngle = t.getInt("RestAngle");
       l.face = Direction.byName(t.getString("Face"));
-      if (l.face == null || !l.face.getAxis().isHorizontal()) continue;
+      if (l.face == null || !l.face.getAxis().isHorizontal()) {
+        continue;
+      }
       for (var id : new LinkedHashSet<>(built.segments)) {
         var part = container.getSubLevel(id);
-        if (part instanceof ServerSubLevel s && !s.isRemoved()) l.bodies.add(s);
+        if (part instanceof ServerSubLevel s && !s.isRemoved()) {
+          l.bodies.add(s);
+        }
       }
       var points = restPoints(l.socket, l.face, l.extension, l.restAngle);
       for (int i = 0; i < 3; i++) {
@@ -802,10 +901,16 @@ public final class CompactLimbController {
               false);
       if (t.contains("Runtime")) {
         var runtime = SocketJointRig.loadCompact(body, l.socket, t.getCompound("Runtime"));
-        if (runtime != null) l.runtime = runtime;
+        if (runtime != null) {
+          l.runtime = runtime;
+        }
       }
-      if (!t.contains("Runtime")) l.runtime = SocketJointRig.compact(body, l.socket, l.runtime);
-      if (loaded(l)) ensurePins(l);
+      if (!t.contains("Runtime")) {
+        l.runtime = SocketJointRig.compact(body, l.socket, l.runtime);
+      }
+      if (loaded(l)) {
+        ensurePins(l);
+      }
       limbs.put(l.socket, l);
     }
     refreshLegs();

@@ -21,11 +21,16 @@ public final class LocomotionWallTests {
     var level = h.getLevel();
     var base = new BlockPos(7168, 80, 128);
     // Keep this subject away from the compact standing fixture at x=4096.
-    for (int cx = (base.getX() >> 4) - 2; cx <= (base.getX() >> 4) + 2; cx++)
-      for (int cz = 6; cz <= 10; cz++) level.setChunkForced(cx, cz, true);
-    for (int x = -16; x <= 16; x++)
-      for (int z = -16; z <= 16; z++)
+    for (int cx = (base.getX() >> 4) - 2; cx <= (base.getX() >> 4) + 2; cx++) {
+      for (int cz = 6; cz <= 10; cz++) {
+        level.setChunkForced(cx, cz, true);
+      }
+    }
+    for (int x = -16; x <= 16; x++) {
+      for (int z = -16; z <= 16; z++) {
         level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 3);
+      }
+    }
     final dev.ryanhcode.sable.sublevel.ServerSubLevel[] subject = {null};
     final double[] initial = {0};
     h.onEachTick(
@@ -61,12 +66,14 @@ public final class LocomotionWallTests {
                                     body)
                                 .maxX)
                     + 1;
-            for (int z = -16; z <= 16; z++)
-              for (int y = 0; y <= 12; y++)
+            for (int z = -16; z <= 16; z++) {
+              for (int y = 0; y <= 12; y++) {
                 level.setBlock(
                     new BlockPos(wallX, base.getY() + y, base.getZ() + z),
                     Blocks.GLASS.defaultBlockState(),
                     3);
+              }
+            }
             double across = wallX - from.x + 3;
             h.assertTrue(
                 !ModularLimbCollisions.clearSweep(part, from.add(across, 0, 0), pose.orientation()),
@@ -84,12 +91,14 @@ public final class LocomotionWallTests {
                     Math.ceil(
                         org.Azkerash.create_bioships.core.locomotion.SubLevelLocomotion.bounds(body)
                             .maxX);
-            for (int z = -16; z <= 16; z++)
-              for (int y = 0; y <= 12; y++)
+            for (int z = -16; z <= 16; z++) {
+              for (int y = 0; y <= 12; y++) {
                 level.setBlock(
                     new BlockPos(closeX, base.getY() + y, base.getZ() + z),
                     Blocks.GLASS.defaultBlockState(),
                     3);
+              }
+            }
             h.assertTrue(
                 !BrainMotorControls.move(body, new Vec3(2, 0, 0), 0, 100),
                 "Live clearance accepted a drive into the wall");
@@ -103,8 +112,9 @@ public final class LocomotionWallTests {
             // wall.
             initial[0] = body.logicalPose().position().x();
           }
-          if (h.getTick() > 120 && h.getTick() <= 220)
+          if (h.getTick() > 120 && h.getTick() <= 220) {
             BrainMotorControls.move(subject[0], new Vec3(2, 0, 0), 0, 20);
+          }
           if (h.getTick() == 230) {
             var body = subject[0];
             h.assertTrue(

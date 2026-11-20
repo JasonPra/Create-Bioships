@@ -73,8 +73,9 @@ public final class FeedingTrustTests {
     int inventorySlot = -1;
     for (int i = 0; i < sacMenu.slots.size(); i++) {
       var slot = sacMenu.slots.get(i);
-      if (slot.container == player.getInventory() && slot.getContainerSlot() == 9)
+      if (slot.container == player.getInventory() && slot.getContainerSlot() == 9) {
         inventorySlot = i;
+      }
     }
     helper.assertTrue(inventorySlot >= 0, "Native sac menu has no player inventory slot");
     sacMenu.clicked(inventorySlot, 0, ClickType.QUICK_MOVE, player);
@@ -94,12 +95,13 @@ public final class FeedingTrustTests {
         Math.abs(SubLevelData.trust(body) - .4) < 1e-8,
         "Shift-clicking a whole meat slot did not remove proportional trust");
     int sacSlot = -1;
-    for (int i = 0; i < sacMenu.slots.size(); i++)
+    for (int i = 0; i < sacMenu.slots.size(); i++) {
       if (sacMenu.slots.get(i).container != player.getInventory()
           && sacMenu.slots.get(i).getItem().is(Items.BEEF)) {
         sacSlot = i;
         break;
       }
+    }
     helper.assertTrue(sacSlot >= 0, "Deposited sac meat was not found");
     sacMenu.clicked(sacSlot, 0, ClickType.QUICK_MOVE, player);
     helper.assertTrue(
@@ -110,12 +112,13 @@ public final class FeedingTrustTests {
     level.removeBlock(core.east(2), false);
     double beforeDisconnected = SubLevelData.trust(body);
     int detachedSlot = -1;
-    for (int i = 0; i < sacMenu.slots.size(); i++)
+    for (int i = 0; i < sacMenu.slots.size(); i++) {
       if (sacMenu.slots.get(i).container != player.getInventory()
           && sacMenu.slots.get(i).getItem().is(Items.BEEF)) {
         detachedSlot = i;
         break;
       }
+    }
     helper.assertTrue(detachedSlot >= 0, "Disconnected sac meat missing");
     sacMenu.clicked(detachedSlot, 0, ClickType.QUICK_MOVE, player);
     helper.assertTrue(

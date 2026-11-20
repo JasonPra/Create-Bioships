@@ -23,8 +23,9 @@ public final class DevelopmentLoadout {
   private DevelopmentLoadout() {}
 
   public static boolean active(Player player) {
-    if (player instanceof ServerPlayer server)
+    if (player instanceof ServerPlayer server) {
       return DevelopmentWorldSetup.isDevelopment(server.getServer().overworld());
+    }
     return player != null
         && player.level().dimension() == Level.OVERWORLD
         && player
@@ -58,7 +59,9 @@ public final class DevelopmentLoadout {
   }
 
   public static void prepare(ServerPlayer player) {
-    if (!active(player)) return;
+    if (!active(player)) {
+      return;
+    }
     var persistent = player.getPersistentData();
     var data = persistent.getCompound(Player.PERSISTED_NBT_TAG);
     if (!data.getBoolean(GIVEN)) {
@@ -70,12 +73,15 @@ public final class DevelopmentLoadout {
             .clearOrCountMatchingItems(
                 stack -> stack.is(goggles), 1, player.inventoryMenu.getCraftSlots());
         player.setItemSlot(EquipmentSlot.HEAD, goggles.getDefaultInstance());
-        if (!previous.isEmpty() && !player.addItem(previous)) player.drop(previous, false);
+        if (!previous.isEmpty() && !player.addItem(previous)) {
+          player.drop(previous, false);
+        }
       }
       if (!player
           .getInventory()
-          .contains(Create_bioships.BIOSHIP_WRENCH.get().getDefaultInstance()))
+          .contains(Create_bioships.BIOSHIP_WRENCH.get().getDefaultInstance())) {
         player.addItem(Create_bioships.BIOSHIP_WRENCH.get().getDefaultInstance());
+      }
       data.putBoolean(GIVEN, true);
       persistent.put(Player.PERSISTED_NBT_TAG, data);
     }
@@ -85,11 +91,14 @@ public final class DevelopmentLoadout {
   public static void ensureNavigator(ServerPlayer player) {
     var inventory = player.getInventory();
     if (!active(player)) {
-      for (int slot = 0; slot < inventory.getContainerSize(); slot++)
-        if (inventory.getItem(slot).is(DevelopmentToolkitItem.ITEM.get()))
+      for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+        if (inventory.getItem(slot).is(DevelopmentToolkitItem.ITEM.get())) {
           inventory.setItem(slot, ItemStack.EMPTY);
-      if (player.containerMenu.getCarried().is(DevelopmentToolkitItem.ITEM.get()))
+        }
+      }
+      if (player.containerMenu.getCarried().is(DevelopmentToolkitItem.ITEM.get())) {
         player.containerMenu.setCarried(ItemStack.EMPTY);
+      }
       return;
     }
     boolean changed = false;
@@ -111,11 +120,15 @@ public final class DevelopmentLoadout {
           slot == TOOLKIT_SLOT
               ? DevelopmentToolkitItem.ITEM.get()
               : DevelopmentNavigatorItem.ITEM.get();
-      if (inventory.getItem(slot).is(expected)) continue;
+      if (inventory.getItem(slot).is(expected)) {
+        continue;
+      }
       var displaced = inventory.getItem(slot).copy();
       inventory.setItem(slot, new ItemStack(expected));
       changed = true;
-      if (!displaced.isEmpty() && !inventory.add(displaced)) player.drop(displaced, false);
+      if (!displaced.isEmpty() && !inventory.add(displaced)) {
+        player.drop(displaced, false);
+      }
     }
     if (changed) {
       inventory.setChanged();
@@ -125,9 +138,15 @@ public final class DevelopmentLoadout {
 
   public static boolean rejectsClick(
       AbstractContainerMenu menu, int slotId, int button, ClickType type, Player player) {
-    if (!active(player)) return false;
-    if (type == ClickType.SWAP && reservedSlot(button) || managed(menu.getCarried())) return true;
-    if (slotId < 0 || slotId >= menu.slots.size()) return false;
+    if (!active(player)) {
+      return false;
+    }
+    if (type == ClickType.SWAP && reservedSlot(button) || managed(menu.getCarried())) {
+      return true;
+    }
+    if (slotId < 0 || slotId >= menu.slots.size()) {
+      return false;
+    }
     var slot = menu.getSlot(slotId);
     return slot.container == player.getInventory() && reservedSlot(slot.getContainerSlot());
   }
@@ -139,17 +158,23 @@ public final class DevelopmentLoadout {
 
   @SubscribeEvent
   public static void login(PlayerEvent.PlayerLoggedInEvent event) {
-    if (event.getEntity() instanceof ServerPlayer player) prepare(player);
+    if (event.getEntity() instanceof ServerPlayer player) {
+      prepare(player);
+    }
   }
 
   @SubscribeEvent
   public static void respawn(PlayerEvent.PlayerRespawnEvent event) {
-    if (event.getEntity() instanceof ServerPlayer player) ensureNavigator(player);
+    if (event.getEntity() instanceof ServerPlayer player) {
+      ensureNavigator(player);
+    }
   }
 
   @SubscribeEvent
   public static void clone(PlayerEvent.Clone event) {
-    if (!active(event.getOriginal())) return;
+    if (!active(event.getOriginal())) {
+      return;
+    }
     var original = event.getOriginal().getPersistentData().getCompound(Player.PERSISTED_NBT_TAG);
     var data = event.getEntity().getPersistentData().getCompound(Player.PERSISTED_NBT_TAG);
     data.putBoolean(GIVEN, original.getBoolean(GIVEN));
@@ -158,12 +183,15 @@ public final class DevelopmentLoadout {
 
   @SubscribeEvent
   public static void tick(net.neoforged.neoforge.event.tick.PlayerTickEvent.Post event) {
-    if (event.getEntity() instanceof ServerPlayer player) ensureNavigator(player);
+    if (event.getEntity() instanceof ServerPlayer player) {
+      ensureNavigator(player);
+    }
   }
 
   @SubscribeEvent
   public static void drops(net.neoforged.neoforge.event.entity.living.LivingDropsEvent event) {
-    if (event.getEntity() instanceof Player player && active(player))
+    if (event.getEntity() instanceof Player player && active(player)) {
       event.getDrops().removeIf(drop -> managed(drop.getItem()));
+    }
   }
 }

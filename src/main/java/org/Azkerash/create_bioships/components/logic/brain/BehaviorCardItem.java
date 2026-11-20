@@ -27,8 +27,9 @@ public final class BehaviorCardItem extends Item {
       net.minecraft.world.level.Level level,
       net.minecraft.world.entity.player.Player player,
       net.minecraft.world.InteractionHand hand) {
-    if (player instanceof net.minecraft.server.level.ServerPlayer server)
+    if (player instanceof net.minecraft.server.level.ServerPlayer server) {
       CardWorkspaces.openHeld(server, hand);
+    }
     return net.minecraft.world.InteractionResultHolder.sidedSuccess(
         player.getItemInHand(hand), level.isClientSide);
   }

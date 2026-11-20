@@ -24,9 +24,11 @@ public final class CreatureDecayTests {
     var level = helper.getLevel();
     var origin = new BlockPos(464, 80, 128);
     level.setChunkForced(29, 8, true);
-    for (int x = -5; x <= 5; x++)
-      for (int z = -5; z <= 5; z++)
+    for (int x = -5; x <= 5; x++) {
+      for (int z = -5; z <= 5; z++) {
         level.setBlock(origin.offset(x, -2, z), Blocks.BEDROCK.defaultBlockState(), 3);
+      }
+    }
     helper.runAfterDelay(
         10,
         () -> {
@@ -122,8 +124,9 @@ public final class CreatureDecayTests {
                 helper.assertTrue(
                     after == remaining - 1 && after > 1,
                     "Final group did not begin while multiple registered components remain");
-                for (int i = 0; i < 8 && world.families.containsKey(id); i++)
+                for (int i = 0; i < 8 && world.families.containsKey(id); i++) {
                   CreatureDecay.advance(level, family.next);
+                }
                 helper.runAfterDelay(
                     10,
                     () -> {

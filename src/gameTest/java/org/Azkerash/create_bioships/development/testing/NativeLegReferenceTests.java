@@ -23,9 +23,10 @@ public final class NativeLegReferenceTests {
                 h.assertTrue(
                     NativeLegReference.gap(reference) < .08, "Upstream reference pivot gap");
                 var start = reference.body().logicalPose().position().get(new org.joml.Vector3d());
-                for (int delay = 0; delay <= 100; delay += 5)
+                for (int delay = 0; delay <= 100; delay += 5) {
                   h.runAfterDelay(
                       delay, () -> reference.walker().receiveInput(1, h.getLevel().getGameTime()));
+                }
                 h.runAfterDelay(
                     110,
                     () -> {

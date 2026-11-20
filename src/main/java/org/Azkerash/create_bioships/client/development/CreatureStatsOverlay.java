@@ -39,7 +39,9 @@ public final class CreatureStatsOverlay {
 
   public static void receive(CreatureStatsPayload p) {
     var mc = Minecraft.getInstance();
-    if (!enabled || mc.level == null) return;
+    if (!enabled || mc.level == null) {
+      return;
+    }
     if (world != mc.level) {
       STATS.clear();
       world = mc.level;
@@ -57,11 +59,16 @@ public final class CreatureStatsOverlay {
     if (enabled && mc.player != null && !DevelopmentToolkitItem.allowed(mc.player)) {
       toggle();
     }
-    if (world == mc.level) return;
+    if (world == mc.level) {
+      return;
+    }
     world = mc.level;
     STATS.clear();
-    if (mc.level == null) enabled = false;
-    else if (enabled) PacketDistributor.sendToServer(new CreatureStatsRequest(true));
+    if (mc.level == null) {
+      enabled = false;
+    } else if (enabled) {
+      PacketDistributor.sendToServer(new CreatureStatsRequest(true));
+    }
   }
 
   private static void rect(
@@ -74,9 +81,13 @@ public final class CreatureStatsOverlay {
 
   @SubscribeEvent
   public static void render(RenderLevelStageEvent e) {
-    if (!enabled || e.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) return;
+    if (!enabled || e.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) {
+      return;
+    }
     var mc = Minecraft.getInstance();
-    if (mc.level == null) return;
+    if (mc.level == null) {
+      return;
+    }
     STATS.values().removeIf(s -> mc.level.getGameTime() - s.at() > 30);
     var buffers = mc.renderBuffers().bufferSource();
     var type = RenderType.gui();
@@ -109,7 +120,7 @@ public final class CreatureStatsOverlay {
       pose.popPose();
     }
     buffers.endBatch(type);
-    for (var text : labels)
+    for (var text : labels) {
       mc.font.drawInBatch(
           text.value(),
           6,
@@ -121,6 +132,7 @@ public final class CreatureStatsOverlay {
           net.minecraft.client.gui.Font.DisplayMode.SEE_THROUGH,
           0,
           0xf000f0);
+    }
     buffers.endBatch();
   }
 }

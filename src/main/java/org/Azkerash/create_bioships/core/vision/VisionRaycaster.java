@@ -45,7 +45,9 @@ public final class VisionRaycaster {
   public static double loadedDistance(ServerLevel level, Vec3 start, Vec3 direction, double range) {
     int x = net.minecraft.util.Mth.floor(start.x) >> 4;
     int z = net.minecraft.util.Mth.floor(start.z) >> 4;
-    if (!level.hasChunk(x, z)) return 0;
+    if (!level.hasChunk(x, z)) {
+      return 0;
+    }
     int sx = direction.x > 0 ? 1 : -1, sz = direction.z > 0 ? 1 : -1;
     double dx = direction.x == 0 ? Double.POSITIVE_INFINITY : 16 / Math.abs(direction.x);
     double dz = direction.z == 0 ? Double.POSITIVE_INFINITY : 16 / Math.abs(direction.z);
@@ -67,7 +69,9 @@ public final class VisionRaycaster {
         z += sz;
         tz += dz;
       }
-      if (!level.hasChunk(x, z)) return Math.max(0, next - .001);
+      if (!level.hasChunk(x, z)) {
+        return Math.max(0, next - .001);
+      }
     }
     return range;
   }
@@ -89,12 +93,16 @@ public final class VisionRaycaster {
       double min = axis == 0 ? bounds.minX() : axis == 1 ? bounds.minY() : bounds.minZ();
       double max = 1 + (axis == 0 ? bounds.maxX() : axis == 1 ? bounds.maxY() : bounds.maxZ());
       if (Math.abs(velocity) < 1e-9) {
-        if (origin < min || origin > max) return world;
+        if (origin < min || origin > max) {
+          return world;
+        }
       } else {
         double a = (min - origin) / velocity, b = (max - origin) / velocity;
         entry = Math.max(entry, Math.min(a, b));
         exit = Math.min(exit, Math.max(a, b));
-        if (exit < entry) return world;
+        if (exit < entry) {
+          return world;
+        }
       }
     }
     var end = start.add(delta.scale(Math.max(entry, exit - 1e-7)));
@@ -110,8 +118,9 @@ public final class VisionRaycaster {
     var own = level.clip(context);
     if (own.getType() == HitResult.Type.BLOCK) {
       var point = pose.transformPosition(own.getLocation());
-      if (point.distanceToSqr(from) <= world.to().distanceToSqr(from))
+      if (point.distanceToSqr(from) <= world.to().distanceToSqr(from)) {
         return new Ray(from, point, true, false, body.getUniqueId());
+      }
     }
     return world;
   }
@@ -119,7 +128,9 @@ public final class VisionRaycaster {
   public static Ray cast(ServerLevel level, Vec3 from, Vec3 direction, double range) {
     double distance = loadedDistance(level, from, direction, range);
     Vec3 end = from.add(direction.scale(distance));
-    if (distance == 0) return new Ray(from, from, false, true);
+    if (distance == 0) {
+      return new Ray(from, from, false, true);
+    }
     var hit =
         level.clip(
             new ClipContext(
@@ -133,7 +144,9 @@ public final class VisionRaycaster {
     if (blocked) {
       // Native Sable clips return logical plot coordinates for a grid hit.
       var struck = CoreAssemblyRules.containing(level, hit.getBlockPos());
-      if (struck != null) hitBody = struck.getUniqueId();
+      if (struck != null) {
+        hitBody = struck.getUniqueId();
+      }
       end =
           struck == null
               ? hit.getLocation()

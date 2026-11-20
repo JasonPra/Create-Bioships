@@ -18,13 +18,19 @@ public final class SubLevelHungerTests {
   public static void hunger_drains_pauses_persists_and_starves_to_death(GameTestHelper helper) {
     var level = helper.getLevel();
     var origin = new BlockPos(960, 80, 128);
-    for (int x = 59; x <= 60; x++) for (int z = 7; z <= 8; z++) level.setChunkForced(x, z, true);
-    for (int x = -4; x <= 4; x++)
-      for (int z = -4; z <= 4; z++)
+    for (int x = 59; x <= 60; x++) {
+      for (int z = 7; z <= 8; z++) {
+        level.setChunkForced(x, z, true);
+      }
+    }
+    for (int x = -4; x <= 4; x++) {
+      for (int z = -4; z <= 4; z++) {
         level.setBlock(
             origin.offset(x, -2, z),
             net.minecraft.world.level.block.Blocks.BEDROCK.defaultBlockState(),
             3);
+      }
+    }
     helper.runAfterDelay(
         10,
         () -> {

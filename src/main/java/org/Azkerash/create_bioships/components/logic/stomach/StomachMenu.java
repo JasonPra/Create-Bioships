@@ -41,10 +41,14 @@ public final class StomachMenu extends AbstractContainerMenu {
             }
           });
     }
-    for (int row = 0; row < 3; row++)
-      for (int col = 0; col < 9; col++)
+    for (int row = 0; row < 3; row++) {
+      for (int col = 0; col < 9; col++) {
         addSlot(new Slot(inventory, col + row * 9 + 9, 40 + col * 18, 176 + row * 18));
-    for (int col = 0; col < 9; col++) addSlot(new Slot(inventory, col, 40 + col * 18, 234));
+      }
+    }
+    for (int col = 0; col < 9; col++) {
+      addSlot(new Slot(inventory, col, 40 + col * 18, 234));
+    }
   }
 
   public Container pasteIntake() {
@@ -56,20 +60,32 @@ public final class StomachMenu extends AbstractContainerMenu {
   }
 
   public ItemStack quickMoveStack(Player player, int slot) {
-    if (slot < 0 || slot >= slots.size()) return ItemStack.EMPTY;
+    if (slot < 0 || slot >= slots.size()) {
+      return ItemStack.EMPTY;
+    }
     var source = slots.get(slot);
-    if (!source.hasItem()) return ItemStack.EMPTY;
+    if (!source.hasItem()) {
+      return ItemStack.EMPTY;
+    }
     var current = source.getItem();
     var original = current.copy();
     if (slot == StomachBlockEntity.PASTE_SLOT) {
-      if (!moveItemStackTo(current, 27, slots.size(), true)) return ItemStack.EMPTY;
+      if (!moveItemStackTo(current, 27, slots.size(), true)) {
+        return ItemStack.EMPTY;
+      }
     } else if (slot >= 27 && current.is(StomachBlockEntity.paste())) {
       if (!moveItemStackTo(
-          current, StomachBlockEntity.PASTE_SLOT, StomachBlockEntity.PASTE_SLOT + 1, false))
+          current, StomachBlockEntity.PASTE_SLOT, StomachBlockEntity.PASTE_SLOT + 1, false)) {
         return ItemStack.EMPTY;
-    } else return ItemStack.EMPTY;
-    if (current.isEmpty()) source.setByPlayer(ItemStack.EMPTY);
-    else source.setChanged();
+      }
+    } else {
+      return ItemStack.EMPTY;
+    }
+    if (current.isEmpty()) {
+      source.setByPlayer(ItemStack.EMPTY);
+    } else {
+      source.setChanged();
+    }
     source.onTake(player, current);
     return original;
   }

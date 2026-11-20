@@ -36,14 +36,16 @@ public final class DevelopmentFloorFeature extends Feature<NoneFeatureConfigurat
     int startZ = context.origin().getZ() & ~15;
     var palette = DevelopmentTestBlocks.FLOOR.values().stream().map(h -> h.get()).toList();
     var surface = DevelopmentTestBlocks.FLOOR.get("stone_bricks").get();
-    for (int x = startX; x < startX + 16; x++)
+    for (int x = startX; x < startX + 16; x++) {
       for (int z = startZ; z < startZ + 16; z++) {
         var pos = new BlockPos(x, y, z);
         if (level.getBlockState(pos).is(surface)
-            && level.getBlockState(pos.below()).is(Blocks.BEDROCK))
+            && level.getBlockState(pos.below()).is(Blocks.BEDROCK)) {
           level.setBlock(
               pos, palette.get(context.random().nextInt(palette.size())).defaultBlockState(), 2);
+        }
       }
+    }
     return true;
   }
 }

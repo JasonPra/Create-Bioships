@@ -21,14 +21,19 @@ final class ProgramConsole extends AbstractScrollWidget {
   }
 
   void lines(List<String> value) {
-    if (lines.equals(value)) return;
+    if (lines.equals(value)) {
+      return;
+    }
     boolean tail = scrollAmount() >= getMaxScrollAmount() - 1;
     lines = List.copyOf(value);
     var next = new ArrayList<FormattedCharSequence>();
-    for (String line : lines)
+    for (String line : lines) {
       next.addAll(font.split(Component.literal(line), width - totalInnerPadding()));
+    }
     wrapped = List.copyOf(next);
-    if (tail) setScrollAmount(getMaxScrollAmount());
+    if (tail) {
+      setScrollAmount(getMaxScrollAmount());
+    }
   }
 
   protected int getInnerHeight() {
@@ -41,7 +46,7 @@ final class ProgramConsole extends AbstractScrollWidget {
 
   protected void renderContents(GuiGraphics g, int mx, int my, float partial) {
     int y = getY() + innerPadding();
-    if (wrapped.isEmpty())
+    if (wrapped.isEmpty()) {
       g.drawString(
           font,
           "No console output yet.",
@@ -49,6 +54,7 @@ final class ProgramConsole extends AbstractScrollWidget {
           y,
           OrganScreenStyle.MUTED,
           false);
+    }
     for (var line : wrapped) {
       g.drawString(font, line, getX() + innerPadding(), y, OrganScreenStyle.TEXT, false);
       y += font.lineHeight;

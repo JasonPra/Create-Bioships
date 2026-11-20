@@ -12,7 +12,9 @@ public record LimbTuning(int restAngle, double stiffness, double damping) {
 
   public static LimbTuning get(ServerLevel level, BlockPos pos) {
     var body = CoreAssemblyRules.containing(level, pos);
-    if (body == null || body.getUserDataTag() == null) return DEFAULT;
+    if (body == null || body.getUserDataTag() == null) {
+      return DEFAULT;
+    }
     var value = body.getUserDataTag().getCompound(DATA).getCompound(Long.toString(pos.asLong()));
     return new LimbTuning(
         Math.clamp(value.getInt("RestAngle"), -45, 45),
@@ -23,17 +25,26 @@ public record LimbTuning(int restAngle, double stiffness, double damping) {
   /** Delete the component entry, rather than saving defaults at a now-empty position. */
   public static void clear(ServerLevel level, BlockPos pos) {
     var body = CoreAssemblyRules.containing(level, pos);
-    if (body != null) clear(body, pos);
+    if (body != null) {
+      clear(body, pos);
+    }
   }
 
   private static void clear(dev.ryanhcode.sable.sublevel.ServerSubLevel body, BlockPos pos) {
-    if (body.getUserDataTag() == null) return;
+    if (body.getUserDataTag() == null) {
+      return;
+    }
     var root = body.getUserDataTag().copy();
     var values = root.getCompound(DATA).copy();
-    if (!values.contains(Long.toString(pos.asLong()))) return;
+    if (!values.contains(Long.toString(pos.asLong()))) {
+      return;
+    }
     values.remove(Long.toString(pos.asLong()));
-    if (values.isEmpty()) root.remove(DATA);
-    else root.put(DATA, values);
+    if (values.isEmpty()) {
+      root.remove(DATA);
+    } else {
+      root.put(DATA, values);
+    }
     body.setUserDataTag(root);
   }
 
@@ -42,17 +53,22 @@ public record LimbTuning(int restAngle, double stiffness, double damping) {
       dev.ryanhcode.sable.sublevel.ServerSubLevel body,
       BlockPos pos,
       net.minecraft.world.level.block.state.BlockState state) {
-    if (body.getUserDataTag() == null) return;
+    if (body.getUserDataTag() == null) {
+      return;
+    }
     var value = body.getUserDataTag().getCompound(DATA).getCompound(Long.toString(pos.asLong()));
-    if (value.isEmpty()) return;
+    if (value.isEmpty()) {
+      return;
+    }
     boolean limb =
         state.getBlock() instanceof org.Azkerash.create_bioships.components.logic.legs.CrabLegBlock
             || state.getBlock()
                 instanceof org.Azkerash.create_bioships.components.logic.legs.ModularJointBlock;
     var id =
         net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
-    if (!limb || (value.contains("Block") && !value.getString("Block").equals(id)))
+    if (!limb || (value.contains("Block") && !value.getString("Block").equals(id))) {
       clear(body, pos);
+    }
   }
 
   private static double bounded(double n) {
@@ -61,7 +77,9 @@ public record LimbTuning(int restAngle, double stiffness, double damping) {
 
   public void save(ServerLevel level, BlockPos pos) {
     var body = CoreAssemblyRules.containing(level, pos);
-    if (body == null) return;
+    if (body == null) {
+      return;
+    }
     var root = body.getUserDataTag() == null ? new CompoundTag() : body.getUserDataTag().copy();
     var values = root.getCompound(DATA).copy();
     var value = new CompoundTag();

@@ -61,7 +61,9 @@ public final class CrabLegBlock
   @Override
   public BlockState getStateForPlacement(BlockPlaceContext context) {
     var face = context.getClickedFace();
-    if (!face.getAxis().isHorizontal()) return null;
+    if (!face.getAxis().isHorizontal()) {
+      return null;
+    }
     var state =
         placed(defaultBlockState().setValue(BlockStateProperties.HORIZONTAL_FACING, face), context);
     return state.canSurvive(context.getLevel(), context.getClickedPos()) ? state : null;
@@ -86,31 +88,42 @@ public final class CrabLegBlock
       LevelAccessor level,
       BlockPos pos,
       BlockPos otherPos) {
-    if (!state.canSurvive(level, pos)) level.scheduleTick(pos, this, 1);
+    if (!state.canSurvive(level, pos)) {
+      level.scheduleTick(pos, this, 1);
+    }
     return super.updateShape(state, direction, other, level, pos, otherPos);
   }
 
   @Override
   protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
-    if (!state.canSurvive(level, pos)) level.destroyBlock(pos, true);
+    if (!state.canSurvive(level, pos)) {
+      level.destroyBlock(pos, true);
+    }
   }
 
   @Override
   public void afterMove(
       ServerLevel source, ServerLevel destination, BlockState state, BlockPos from, BlockPos to) {
-    if (!state.canSurvive(destination, to)) destination.scheduleTick(to, this, 1);
+    if (!state.canSurvive(destination, to)) {
+      destination.scheduleTick(to, this, 1);
+    }
     var body = org.Azkerash.create_bioships.core.CoreAssemblyRules.containing(destination, to);
-    if (body != null) SubLevelLegs.request(body);
+    if (body != null) {
+      SubLevelLegs.request(body);
+    }
   }
 
   @Override
   public net.minecraft.world.InteractionResult onWrenched(
       BlockState state, net.minecraft.world.item.context.UseOnContext context) {
     if (!(context.getItemInHand().getItem()
-        instanceof org.Azkerash.create_bioships.equipment.BioshipWrenchItem))
+        instanceof org.Azkerash.create_bioships.equipment.BioshipWrenchItem)) {
       return net.minecraft.world.InteractionResult.PASS;
+    }
     var player = context.getPlayer();
-    if (player == null || !player.mayBuild()) return net.minecraft.world.InteractionResult.FAIL;
+    if (player == null || !player.mayBuild()) {
+      return net.minecraft.world.InteractionResult.FAIL;
+    }
     if (!context.getLevel().isClientSide && state.getValue(HEIGHT) < 3) {
       context
           .getLevel()

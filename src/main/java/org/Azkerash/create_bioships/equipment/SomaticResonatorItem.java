@@ -15,8 +15,9 @@ public final class SomaticResonatorItem extends Item {
 
   @Override
   public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
-    if (player instanceof ServerPlayer server)
+    if (player instanceof ServerPlayer server) {
       PacketDistributor.sendToPlayer(server, new SomaticMenuPayload());
+    }
     return InteractionResultHolder.sidedSuccess(player.getItemInHand(hand), level.isClientSide);
   }
 }

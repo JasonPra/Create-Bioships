@@ -8,7 +8,9 @@ public final class EditorLog {
 
   public void add(EditorProblem entry) {
     entries.addFirst(entry);
-    while (entries.size() > 64) entries.removeLast();
+    while (entries.size() > 64) {
+      entries.removeLast();
+    }
   }
 
   public List<EditorProblem> entries() {

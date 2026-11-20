@@ -36,7 +36,9 @@ public final class IntestineBlock
             .setValue(
                 net.minecraft.world.level.block.state.properties.BlockStateProperties.WATERLOGGED,
                 false);
-    for (var property : CONNECTIONS.values()) state = state.setValue(property, false);
+    for (var property : CONNECTIONS.values()) {
+      state = state.setValue(property, false);
+    }
     registerDefaultState(state);
   }
 
@@ -58,18 +60,21 @@ public final class IntestineBlock
 
   protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
     super.createBlockStateDefinition(builder);
-    for (var property : CONNECTIONS.values()) builder.add(property);
+    for (var property : CONNECTIONS.values()) {
+      builder.add(property);
+    }
   }
 
   public BlockState getStateForPlacement(BlockPlaceContext context) {
     var state = placed(defaultBlockState(), context);
-    for (var e : CONNECTIONS.entrySet())
+    for (var e : CONNECTIONS.entrySet()) {
       state =
           state.setValue(
               e.getValue(),
               compatible(
                   context.getLevel().getBlockState(context.getClickedPos().relative(e.getKey())),
                   e.getKey()));
+    }
     return state;
   }
 
@@ -94,12 +99,15 @@ public final class IntestineBlock
     super.onPlace(state, level, pos, old, moved);
     if (!level.isClientSide) {
       var next = state;
-      for (var e : CONNECTIONS.entrySet())
+      for (var e : CONNECTIONS.entrySet()) {
         next =
             next.setValue(
                 e.getValue(),
                 compatible(level.getBlockState(pos.relative(e.getKey())), e.getKey()));
-      if (!next.equals(state)) level.setBlock(pos, next, 3);
+      }
+      if (!next.equals(state)) {
+        level.setBlock(pos, next, 3);
+      }
     }
   }
 
@@ -111,7 +119,7 @@ public final class IntestineBlock
   protected VoxelShape getShape(
       BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
     var shape = box(5, 5, 5, 11, 11, 11);
-    for (var e : CONNECTIONS.entrySet())
+    for (var e : CONNECTIONS.entrySet()) {
       if (state.getValue(e.getValue())) {
         var d = e.getKey();
         shape =
@@ -125,6 +133,7 @@ public final class IntestineBlock
                     d == Direction.UP ? 16 : 10,
                     d == Direction.SOUTH ? 16 : 10));
       }
+    }
     return shape;
   }
 }

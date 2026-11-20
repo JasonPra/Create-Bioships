@@ -24,10 +24,16 @@ public final class SharedPotionEffectsTests {
       GameTestHelper helper) {
     var level = helper.getLevel();
     var origin = new BlockPos(816, 80, 128);
-    for (int x = 50; x <= 52; x++) for (int z = 7; z <= 9; z++) level.setChunkForced(x, z, true);
-    for (int x = -5; x <= 5; x++)
-      for (int z = -5; z <= 5; z++)
+    for (int x = 50; x <= 52; x++) {
+      for (int z = 7; z <= 9; z++) {
+        level.setChunkForced(x, z, true);
+      }
+    }
+    for (int x = -5; x <= 5; x++) {
+      for (int z = -5; z <= 5; z++) {
         level.setBlock(origin.offset(x, -2, z), Blocks.BEDROCK.defaultBlockState(), 3);
+      }
+    }
     helper.runAfterDelay(
         10,
         () -> {
@@ -93,7 +99,9 @@ public final class SharedPotionEffectsTests {
                         && weak.hasEffect(MobEffects.DAMAGE_RESISTANCE),
                     "Weak-point potion did not belong to grid");
                 double resistanceBefore = SubLevelHealth.status(body).current();
-                for (int i = 0; i < 5; i++) target.tick();
+                for (int i = 0; i < 5; i++) {
+                  target.tick();
+                }
                 helper.assertTrue(
                     SubLevelHealth.status(body).current() == resistanceBefore,
                     "Resistance alone caused damage");
@@ -102,7 +110,9 @@ public final class SharedPotionEffectsTests {
                 helper.assertTrue(
                     Math.abs(SubLevelHealth.status(body).current() - (resistanceBefore - 4)) < .001,
                     "Resistance I did not reduce incoming damage by 20%");
-                for (int i = 0; i < 100; i++) target.tick();
+                for (int i = 0; i < 100; i++) {
+                  target.tick();
+                }
                 helper.assertTrue(
                     !target.hasEffect(MobEffects.DAMAGE_RESISTANCE), "Resistance did not expire");
                 double expiredBefore = SubLevelHealth.status(body).current();
@@ -116,7 +126,9 @@ public final class SharedPotionEffectsTests {
                 SubLevelHealth.damage(body, 28, "test");
                 target.invulnerableTime = 0;
                 target.addEffect(new MobEffectInstance(MobEffects.POISON, 100, 4));
-                for (int i = 0; i < 80; i++) target.tick();
+                for (int i = 0; i < 80; i++) {
+                  target.tick();
+                }
                 helper.assertTrue(
                     SubLevelHealth.status(body).current() == 1
                         && !SubLevelHealth.status(body).dead(),
@@ -125,11 +137,15 @@ public final class SharedPotionEffectsTests {
                 SubLevelHealth.heal(body, 9);
                 weak.addEffect(new MobEffectInstance(MobEffects.WITHER, 100, 0));
                 double before = SubLevelHealth.status(body).current();
-                for (int i = 0; i < 40; i++) weak.tick();
+                for (int i = 0; i < 40; i++) {
+                  weak.tick();
+                }
                 helper.assertTrue(
                     SubLevelHealth.status(body).current() == before,
                     "Weak hurtbox ticked shared effect a second time");
-                for (int i = 0; i < 40; i++) target.tick();
+                for (int i = 0; i < 40; i++) {
+                  target.tick();
+                }
                 helper.assertTrue(
                     SubLevelHealth.status(body).current() < before,
                     "Canonical owner did not apply wither");
@@ -148,7 +164,9 @@ public final class SharedPotionEffectsTests {
                 SubLevelHealth.damage(body, SubLevelHealth.status(body).current() - 1, "test");
                 restored.invulnerableTime = 0;
                 restored.addEffect(new MobEffectInstance(MobEffects.WITHER, 100, 4));
-                for (int i = 0; i < 20 && !SubLevelHealth.status(body).dead(); i++) restored.tick();
+                for (int i = 0; i < 20 && !SubLevelHealth.status(body).dead(); i++) {
+                  restored.tick();
+                }
                 helper.assertTrue(
                     SubLevelHealth.status(body).dead()
                         && SubLevelHealth.status(body).causeOfDeath().equals("wither"),

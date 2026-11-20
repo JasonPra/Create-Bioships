@@ -58,7 +58,9 @@ public final class BrainScreen extends AbstractContainerScreen<BrainMenu> {
   }
 
   private void updateEditor() {
-    if (edit == null) return;
+    if (edit == null) {
+      return;
+    }
     selected = Math.min(selected, Math.max(0, menu.capacity() - 1));
     edit.setMessage(Component.literal("Edit card " + (selected + 1) + " · C#"));
     edit.active =

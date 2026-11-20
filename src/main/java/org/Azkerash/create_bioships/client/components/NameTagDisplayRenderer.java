@@ -39,7 +39,9 @@ public final class NameTagDisplayRenderer implements BlockEntityRenderer<NameTag
       MultiBufferSource buffers,
       int light,
       int overlay) {
-    if (panel.getLevel() == null || panel.label().getString().isBlank()) return;
+    if (panel.getLevel() == null || panel.label().getString().isBlank()) {
+      return;
+    }
     var mc = Minecraft.getInstance();
     var o = panel.offset();
     stack.pushPose();
@@ -47,8 +49,9 @@ public final class NameTagDisplayRenderer implements BlockEntityRenderer<NameTag
     var container = SubLevelContainer.getContainer(panel.getLevel());
     if (container != null && container.inBounds(panel.getBlockPos())) {
       var plot = container.getPlot(new ChunkPos(panel.getBlockPos()));
-      if (plot != null && plot.getSubLevel() instanceof ClientSubLevel body)
+      if (plot != null && plot.getSubLevel() instanceof ClientSubLevel body) {
         stack.mulPose(new Quaternionf(body.renderPose().orientation()).conjugate());
+      }
     }
     // Mounting FACING is deliberately ignored. This is a world-upright billboard, even below a
     // hull.

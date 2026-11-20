@@ -20,11 +20,13 @@ public final class SubLevelHunger {
 
   static void initializeCapacity(ServerSubLevel body, java.util.Collection<Long> cells) {
     var stomachs = new java.util.HashSet<Long>();
-    for (long cell : cells)
+    for (long cell : cells) {
       if (body.getLevel()
           .getBlockState(net.minecraft.core.BlockPos.of(cell))
-          .is(org.Azkerash.create_bioships.components.ComponentRegistry.STOMACH.get()))
+          .is(org.Azkerash.create_bioships.components.ComponentRegistry.STOMACH.get())) {
         stomachs.add(cell);
+      }
+    }
     STOMACHS.put(body, stomachs);
     capacityChanged(body, stomachs);
   }
@@ -34,12 +36,16 @@ public final class SubLevelHunger {
       net.minecraft.core.BlockPos pos,
       net.minecraft.world.level.block.state.BlockState state) {
     var stomachs = STOMACHS.get(body);
-    if (stomachs == null) return;
+    if (stomachs == null) {
+      return;
+    }
     boolean changed =
         state.is(org.Azkerash.create_bioships.components.ComponentRegistry.STOMACH.get())
             ? stomachs.add(pos.asLong())
             : stomachs.remove(pos.asLong());
-    if (changed) capacityChanged(body, stomachs);
+    if (changed) {
+      capacityChanged(body, stomachs);
+    }
   }
 
   private static void capacityChanged(ServerSubLevel body, java.util.Set<Long> stomachs) {
@@ -80,7 +86,9 @@ public final class SubLevelHunger {
     }
     SubLevelHealth.status(body);
     var stomachs = STOMACHS.get(body);
-    if (stomachs != null) capacityChanged(body, stomachs);
+    if (stomachs != null) {
+      capacityChanged(body, stomachs);
+    }
   }
 
   public static boolean hasStomach(ServerSubLevel body) {
@@ -114,7 +122,9 @@ public final class SubLevelHunger {
     double mass = 0;
     for (var part : SubLevelCreatureParts.members(body)) {
       double value = part.getMassTracker().getMass();
-      if (Double.isFinite(value) && value > 0) mass += value;
+      if (Double.isFinite(value) && value > 0) {
+        mass += value;
+      }
     }
     return new Metabolism(mass, Math.max(1, mass / SubLevelData.HUNGER_REFERENCE_MASS));
   }
@@ -125,26 +135,37 @@ public final class SubLevelHunger {
   public static void tick(ServerTickEvent.Post event) {
     var pending = java.util.List.copyOf(PENDING_CAPACITY);
     PENDING_CAPACITY.clear();
-    for (var body : pending)
+    for (var body : pending) {
       if (!body.isRemoved()) {
         SubLevelHealth.status(body);
         refreshCapacity(body);
       }
+    }
     for (var level : event.getServer().getAllLevels()) {
-      if (level.getGameTime() % 20 != 0) continue;
+      if (level.getGameTime() % 20 != 0) {
+        continue;
+      }
       var container = SubLevelContainer.getContainer(level);
-      if (container == null) continue;
-      for (var entry : container.getAllSubLevels())
-        if (entry instanceof ServerSubLevel body && CoreAssemblyRules.isCreature(body))
+      if (container == null) {
+        continue;
+      }
+      for (var entry : container.getAllSubLevels()) {
+        if (entry instanceof ServerSubLevel body && CoreAssemblyRules.isCreature(body)) {
           advance(body, 20);
+        }
+      }
     }
   }
 
   /** Advances loaded simulation time only; paused/unloaded creatures accrue no catch-up debt. */
   public static void advance(ServerSubLevel body, int ticks) {
-    if (ticks <= 0 || body.isRemoved() || SubLevelCreatureParts.isPart(body)) return;
+    if (ticks <= 0 || body.isRemoved() || SubLevelCreatureParts.isPart(body)) {
+      return;
+    }
     var state = SubLevelData.hungerState(body);
-    if (state.paused() || SubLevelHealth.status(body).dead()) return;
+    if (state.paused() || SubLevelHealth.status(body).dead()) {
+      return;
+    }
     int value = state.value();
     double drain =
         Double.isFinite(state.drainTicks())
@@ -188,10 +209,16 @@ public final class SubLevelHunger {
           regeneration -= REGENERATION_INTERVAL;
           if (health.current() < health.maximum()) {
             var target = CombatAdapter.target(body);
-            if (target != null) target.heal(1);
-          } else SubLevelArmor.repair(body, 1);
+            if (target != null) {
+              target.heal(1);
+            }
+          } else {
+            SubLevelArmor.repair(body, 1);
+          }
         }
-      } else regeneration = 0;
+      } else {
+        regeneration = 0;
+      }
     }
     SubLevelData.regenerationTicks(body, regeneration);
     SubLevelData.hungerState(body, new SubLevelData.Hunger(value, false, drain, starvation));

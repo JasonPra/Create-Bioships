@@ -33,7 +33,7 @@ public final class StatusEffectIcons {
             if (marker.startsWith("create_bioships:effect/")) {
               var id =
                   ResourceLocation.tryParse(marker.substring("create_bioships:effect/".length()));
-              if (id != null)
+              if (id != null) {
                 BuiltInRegistries.MOB_EFFECT
                     .getHolder(id)
                     .ifPresent(
@@ -45,9 +45,10 @@ public final class StatusEffectIcons {
                                 8,
                                 matrix,
                                 buffers));
+              }
             } else if (marker.startsWith("create_bioships:bar/")) {
               var values = marker.substring("create_bioships:bar/".length()).split("/");
-              if (values.length == 3)
+              if (values.length == 3) {
                 CoreStatusBars.draw(
                     values[0],
                     Double.parseDouble(values[1]),
@@ -56,12 +57,15 @@ public final class StatusEffectIcons {
                     y,
                     matrix,
                     buffers);
+              }
             } else if (marker.startsWith("create_bioships:oxygen/")) {
               var values = marker.substring("create_bioships:oxygen/".length()).split("/");
               double air = Double.parseDouble(values[0]), maximum = Double.parseDouble(values[1]);
               double bubbles = maximum > 0 ? Math.clamp(air / maximum, 0, 1) * 10 : 0;
               for (int i = 0; i < 10; i++) {
-                if (bubbles <= i) continue;
+                if (bubbles <= i) {
+                  continue;
+                }
                 var sprite = bubbles >= i + 1 ? "air" : "air_bursting";
                 draw(
                     mc.getGuiSprites()

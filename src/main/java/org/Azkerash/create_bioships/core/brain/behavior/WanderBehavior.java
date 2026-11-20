@@ -100,8 +100,9 @@ public final class WanderBehavior implements BrainBehavior {
       save(body, mode == SubLevelPathfinder.Mode.WATER ? "swimming" : "walking", now);
     }
     double remaining = distance(position, route.get(waypoint));
-    for (int i = waypoint + 1; i < route.size(); i++)
+    for (int i = waypoint + 1; i < route.size(); i++) {
       remaining += distance(route.get(i - 1), route.get(i));
+    }
     // Rocking or moving sideways against a wall is not progress along the route.
     if (remaining < bestRemaining - .2) {
       bestRemaining = remaining;
@@ -129,8 +130,9 @@ public final class WanderBehavior implements BrainBehavior {
       pause(body, now + 60);
       return;
     }
-    if (waypoint == route.size() - 1 && distance(position, route.getLast()) < .6)
+    if (waypoint == route.size() - 1 && distance(position, route.getLast()) < .6) {
       pause(body, now + 30 + body.getLevel().random.nextInt(50));
+    }
   }
 
   private void pause(ServerSubLevel body, long until) {
@@ -163,6 +165,8 @@ public final class WanderBehavior implements BrainBehavior {
   @Override
   public void stop(ServerSubLevel body) {
     BrainBehavior.super.stop(body);
-    if (!body.isRemoved()) save(body, "stopped", 0);
+    if (!body.isRemoved()) {
+      save(body, "stopped", 0);
+    }
   }
 }

@@ -100,10 +100,11 @@ public final class CoreArrowFixtureTests {
               CoreArrowFixture.reset(level);
               helper.assertTrue(
                   !state.arrowRunning && state.arrowBody == null, "Reset retained subject");
-              for (var pos : CoreArrowFixture.dispensers(level))
+              for (var pos : CoreArrowFixture.dispensers(level)) {
                 helper.assertTrue(
                     level.getBlockState(pos.north()).is(Blocks.AIR),
                     "Reset retained dispenser power");
+              }
               helper.assertTrue(
                   level
                       .getBlockState(CoreArrowFixture.core(level))

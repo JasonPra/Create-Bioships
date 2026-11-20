@@ -25,9 +25,11 @@ public final class CoreBlinkTests {
     var pos = new BlockPos(32, 80, 32);
     var idle = pos.east(8);
     level.getChunk(2, 2);
-    for (int x = -3; x <= 3; x++)
-      for (int z = -3; z <= 3; z++)
+    for (int x = -3; x <= 3; x++) {
+      for (int z = -3; z <= 3; z++) {
         level.setBlock(pos.offset(x, -2, z), Blocks.STONE.defaultBlockState(), 3);
+      }
+    }
     level.setBlock(idle, ComponentRegistry.CORE.get().defaultBlockState(), 3);
     level.setBlock(pos, ComponentRegistry.CORE.get().defaultBlockState(), 3);
     helper.assertTrue(
@@ -85,11 +87,13 @@ public final class CoreBlinkTests {
     for (var tool :
         java.util.List.of(
             net.minecraft.world.item.ItemStack.EMPTY,
-            new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.DIAMOND_PICKAXE)))
+            new net.minecraft.world.item.ItemStack(
+                net.minecraft.world.item.Items.DIAMOND_PICKAXE))) {
       helper.assertTrue(
           net.minecraft.world.level.block.Block.getDrops(state, level, pos, null, null, tool)
               .isEmpty(),
           "Breaking the core yielded drops");
+    }
     var recipe =
         level
             .getRecipeManager()
@@ -160,11 +164,13 @@ public final class CoreBlinkTests {
           helper.assertTrue(
               level.getBlockState(idle).getValue(CoreBlock.BLINK),
               "Unassembled core blinked or opened");
-          if (tick >= 26 && tick <= 100)
+          if (tick >= 26 && tick <= 100) {
             helper.assertTrue(
                 !state.getValue(CoreBlock.BLINK), "Assembled core did not default open-eyed");
-          if (tick >= 26)
+          }
+          if (tick >= 26) {
             helper.assertTrue(state.getValue(CoreBlock.WAKE) == 0, "Wake animation replayed");
+          }
           counts[state.getValue(CoreBlock.BLINK) ? 1 : 0]++;
           if (tick < 170) {
             sample(helper, body, pos, idle, counts, tick + 1);
@@ -210,9 +216,10 @@ public final class CoreBlinkTests {
                   && !body.isRemoved()
                   && level.getBlockState(pos).is(ComponentRegistry.CORE.get()),
               "Native disassembly removed a grid with a core");
-          if (!body.isRemoved())
+          if (!body.isRemoved()) {
             SubLevelContainer.getContainer(level)
                 .removeSubLevel(body, SubLevelRemovalReason.REMOVED);
+          }
           level.removeBlock(target, false);
           level.removeBlock(idle, false);
           helper.succeed();

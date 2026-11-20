@@ -41,7 +41,9 @@ public abstract class DevelopmentCreativeSlotMixin {
               shift = At.Shift.AFTER),
       cancellable = true)
   private void core$keepHandNavigator(ServerboundPlayerActionPacket packet, CallbackInfo callback) {
-    if (!DevelopmentLoadout.active(player)) return;
+    if (!DevelopmentLoadout.active(player)) {
+      return;
+    }
     var action = packet.getAction();
     boolean drop =
         action == ServerboundPlayerActionPacket.Action.DROP_ITEM

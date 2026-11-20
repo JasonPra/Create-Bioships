@@ -56,13 +56,15 @@ public final class BrainFoundationTests {
     var cells = new ArrayList<BlockPos>();
     cells.add(origin);
     level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
-    for (int x = 1; x <= 3; x++)
-      for (int y = 0; y < 3; y++)
+    for (int x = 1; x <= 3; x++) {
+      for (int y = 0; y < 3; y++) {
         for (int z = 0; z < 3; z++) {
           var p = origin.offset(x, y, z);
           cells.add(p);
           level.setBlock(p, ComponentRegistry.BRAIN.get().defaultBlockState(), 3);
         }
+      }
+    }
     var body =
         SubLevelAssemblyHelper.assembleBlocks(
             level, origin, cells, new BoundingBox3i(origin, origin.offset(3, 2, 2)));
@@ -166,7 +168,9 @@ public final class BrainFoundationTests {
     helper.assertTrue(
         !restored.inventory().removeItem(26, 1).isEmpty(),
         "Stored overflow could not be retrieved");
-    for (var cell : new ArrayList<>(restored.cells())) level.removeBlock(cell, false);
+    for (var cell : new ArrayList<>(restored.cells())) {
+      level.removeBlock(cell, false);
+    }
     helper.assertTrue(
         restored.capacity() == 0 && !restored.inventory().getItem(0).isEmpty(),
         "Removing all physical brain blocks deleted grid data");

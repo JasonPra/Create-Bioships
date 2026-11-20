@@ -49,12 +49,14 @@ public final class FullHealthEyeRecoveryTests {
     CoreAssemblyRules.mark(level, core);
     SubLevelHealth.damage(body, 10, "test");
     long now = level.getGameTime();
-    for (var cell : List.of(core, core.east(), core.west(), core.south()))
+    for (var cell : List.of(core, core.east(), core.west(), core.south())) {
       SubLevelWounds.hit(body, cell, Direction.NORTH);
-    for (var cell : List.of(core, core.east(), core.west()))
+    }
+    for (var cell : List.of(core, core.east(), core.west())) {
       helper.assertTrue(
           SubLevelWounds.state(body).active(cell, Direction.NORTH, now),
           "Injured eye cleared before full health");
+    }
     SubLevelHealth.withoutRemovalDamage(
         body,
         () -> {
@@ -77,10 +79,11 @@ public final class FullHealthEyeRecoveryTests {
     helper.assertTrue(
         health.current() == 50 && health.maximum() == 50,
         "Explicit healing did not restore full health");
-    for (var cell : List.of(core, core.east(), core.west()))
+    for (var cell : List.of(core, core.east(), core.west())) {
       helper.assertTrue(
           !SubLevelWounds.state(body).active(cell, Direction.NORTH, now),
           "Full health did not clear an eye type");
+    }
     helper.assertTrue(
         SubLevelWounds.state(body).active(core.south(), Direction.NORTH, now),
         "Eye recovery cleared an unrelated tissue wound");

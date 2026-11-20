@@ -32,7 +32,9 @@ public record NameTagDisplayConfig(int menu, int x, int y, int z) implements Cus
     if (!(player.containerMenu instanceof NameTagDisplayMenu menu)
         || menu.containerId != p.menu
         || menu.display == null
-        || !menu.stillValid(player)) return false;
+        || !menu.stillValid(player)) {
+      return false;
+    }
     menu.display.setOffset(p.x, p.y, p.z);
     menu.broadcastChanges();
     return true;
@@ -47,7 +49,9 @@ public record NameTagDisplayConfig(int menu, int x, int y, int z) implements Cus
             (p, c) ->
                 c.enqueueWork(
                     () -> {
-                      if (c.player() instanceof ServerPlayer player) handle(player, p);
+                      if (c.player() instanceof ServerPlayer player) {
+                        handle(player, p);
+                      }
                     }));
   }
 }

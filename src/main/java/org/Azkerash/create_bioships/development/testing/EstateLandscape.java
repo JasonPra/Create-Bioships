@@ -45,7 +45,9 @@ public final class EstateLandscape {
    * Feet height above the old developer floor; road approaches ease back down to their old level.
    */
   public static int height(int x, int z) {
-    if (central(x, z) || protectedRoad(x, z)) return 0;
+    if (central(x, z) || protectedRoad(x, z)) {
+      return 0;
+    }
     double inner = smooth((Math.max(Math.abs(x), Math.abs(z)) - 42) / 27d);
     double outer = smooth((edge(x, z) - Math.hypot(x, z)) / 38d);
     double hills =
@@ -61,8 +63,12 @@ public final class EstateLandscape {
     double sanctuary = smooth((19 - Math.hypot(x - 65, z - 95)) / 6);
     hills = hills * (1 - sanctuary) + 12 * sanctuary;
     double road = 1;
-    if (z >= -46) road = Math.min(road, smooth((Math.abs(x + 60) - 6) / 17d));
-    if (x >= -66 && x <= 0) road = Math.min(road, smooth((Math.abs(z + 40) - 6) / 17d));
+    if (z >= -46) {
+      road = Math.min(road, smooth((Math.abs(x + 60) - 6) / 17d));
+    }
+    if (x >= -66 && x <= 0) {
+      road = Math.min(road, smooth((Math.abs(z + 40) - 6) / 17d));
+    }
     return Math.max(0, (int) Math.round(inner * outer * road * hills));
   }
 
@@ -78,32 +84,47 @@ public final class EstateLandscape {
   }
 
   public static void terrain(ServerLevel l, BlockPos base) {
-    for (int x = -49; x <= 49; x++)
+    for (int x = -49; x <= 49; x++) {
       for (int z = -49; z <= 49; z++) {
-        if (Math.max(Math.abs(x), Math.abs(z)) != 49) continue;
-        for (int y = 0; y < 3; y++)
-          if (l.getBlockState(base.offset(x, y, z)).getBlock() instanceof LeavesBlock)
+        if (Math.max(Math.abs(x), Math.abs(z)) != 49) {
+          continue;
+        }
+        for (int y = 0; y < 3; y++) {
+          if (l.getBlockState(base.offset(x, y, z)).getBlock() instanceof LeavesBlock) {
             put(l, base.offset(x, y, z), Blocks.AIR);
+          }
+        }
       }
-    for (int x = -RADIUS; x <= RADIUS; x++)
+    }
+    for (int x = -RADIUS; x <= RADIUS; x++) {
       for (int z = -RADIUS; z <= RADIUS; z++) {
-        if (central(x, z) || protectedRoad(x, z) || !within(x, z)) continue;
+        if (central(x, z) || protectedRoad(x, z) || !within(x, z)) {
+          continue;
+        }
         int h = height(x, z);
         // Retire the old square hedge border and plants, without cutting into the central
         // architecture.
-        if (Math.max(Math.abs(x), Math.abs(z)) <= 56)
-          for (int y = 0; y <= 8; y++)
-            if (!l.getBlockState(base.offset(x, y, z)).isAir())
+        if (Math.max(Math.abs(x), Math.abs(z)) <= 56) {
+          for (int y = 0; y <= 8; y++) {
+            if (!l.getBlockState(base.offset(x, y, z)).isAir()) {
               put(l, base.offset(x, y, z), Blocks.AIR);
-        for (int y = 0; y < h - 1; y++)
+            }
+          }
+        }
+        for (int y = 0; y < h - 1; y++) {
           put(l, base.offset(x, y, z), y < h - 4 ? Blocks.STONE : Blocks.DIRT);
+        }
         Block top = soil(x, z);
         int slope = Math.max(Math.abs(h - height(x + 1, z)), Math.abs(h - height(x, z + 1)));
-        if (slope >= 2) top = Blocks.ANDESITE;
-        if (Math.hypot(x, z) > edge(x, z) - 8 && Math.floorMod(x * 13 + z * 19, 5) == 0)
+        if (slope >= 2) {
+          top = Blocks.ANDESITE;
+        }
+        if (Math.hypot(x, z) > edge(x, z) - 8 && Math.floorMod(x * 13 + z * 19, 5) == 0) {
           top = Blocks.COARSE_DIRT;
+        }
         put(l, base.offset(x, h - 1, z), top);
       }
+    }
     var state = CoreTestState.get(l);
     state.denLandscapeVersion = Math.max(1, state.denLandscapeVersion);
     state.setDirty();

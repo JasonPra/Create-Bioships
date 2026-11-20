@@ -26,16 +26,19 @@ public final class CoreGridTests {
     var level = helper.getLevel();
     var origin = new BlockPos(160, 80, 32);
     level.getChunk(10, 2);
-    for (int x = -4; x <= 12; x++)
-      for (int z = -4; z <= 6; z++)
+    for (int x = -4; x <= 12; x++) {
+      for (int z = -4; z <= 6; z++) {
         level.setBlock(origin.offset(x, -2, z), Blocks.STONE.defaultBlockState(), 3);
+      }
+    }
     var blocks = new ArrayList<BlockPos>();
-    for (int x = 0; x < 9; x++)
+    for (int x = 0; x < 9; x++) {
       for (int z = 0; z < 3; z++) {
         var pos = origin.offset(x, 0, z);
         level.setBlock(pos, Blocks.STONE.defaultBlockState(), 3);
         blocks.add(pos);
       }
+    }
     for (int x : new int[] {0, 4, 8}) {
       var pos = origin.offset(x, 1, 1);
       level.setBlock(pos, ComponentRegistry.CORE.get().defaultBlockState(), 3);
@@ -54,12 +57,19 @@ public final class CoreGridTests {
         () -> {
           verify(helper, origin, 3);
           int stones = 0;
-          for (var holder : parent.getPlot().getLoadedChunks())
-            for (var section : holder.getChunk().getSections())
-              for (int x = 0; x < 16; x++)
-                for (int y = 0; y < 16; y++)
-                  for (int z = 0; z < 16; z++)
-                    if (section.getBlockState(x, y, z).is(Blocks.STONE)) stones++;
+          for (var holder : parent.getPlot().getLoadedChunks()) {
+            for (var section : holder.getChunk().getSections()) {
+              for (int x = 0; x < 16; x++) {
+                for (int y = 0; y < 16; y++) {
+                  for (int z = 0; z < 16; z++) {
+                    if (section.getBlockState(x, y, z).is(Blocks.STONE)) {
+                      stones++;
+                    }
+                  }
+                }
+              }
+            }
+          }
           helper.assertTrue(
               stones == 27, "Detaching cores changed the original grid's other blocks");
           helper.runAfterDelay(
@@ -78,9 +88,11 @@ public final class CoreGridTests {
     var level = helper.getLevel();
     var origin = new BlockPos(224, 80, 32);
     level.getChunk(14, 2);
-    for (int x = -4; x <= 4; x++)
-      for (int z = -4; z <= 4; z++)
+    for (int x = -4; x <= 4; x++) {
+      for (int z = -4; z <= 4; z++) {
         level.setBlock(origin.offset(x, -2, z), Blocks.STONE.defaultBlockState(), 3);
+      }
+    }
     level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
     var parent =
         SubLevelAssemblyHelper.assembleBlocks(
@@ -114,14 +126,17 @@ public final class CoreGridTests {
 
   private static List<ServerSubLevel> nearby(ServerLevel level, BlockPos origin) {
     var result = new ArrayList<ServerSubLevel>();
-    for (var entry : SubLevelContainer.getContainer(level).getAllSubLevels())
+    for (var entry : SubLevelContainer.getContainer(level).getAllSubLevels()) {
       if (entry instanceof ServerSubLevel body
           && !body.isRemoved()
           && CoreAssemblyRules.isCreature(body)
           && body.logicalPose()
                   .transformPosition(Vec3.atCenterOf(body.getPlot().getCenterBlock()))
                   .distanceToSqr(Vec3.atCenterOf(origin))
-              < 1600) result.add(body);
+              < 1600) {
+        result.add(body);
+      }
+    }
     return result;
   }
 
@@ -139,7 +154,8 @@ public final class CoreGridTests {
   }
 
   private static void cleanup(ServerLevel level, BlockPos origin) {
-    for (var body : nearby(level, origin))
+    for (var body : nearby(level, origin)) {
       SubLevelContainer.getContainer(level).removeSubLevel(body, SubLevelRemovalReason.REMOVED);
+    }
   }
 }

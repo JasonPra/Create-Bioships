@@ -12,7 +12,7 @@ final class CompileWarnings {
   static List<ProgramDiagnostic> analyze(
       CerebralProgram program, List<Declaration> declarations, Set<Integer> reads) {
     var warnings = new ArrayList<ProgramDiagnostic>();
-    for (var declaration : declarations)
+    for (var declaration : declarations) {
       if (!reads.contains(declaration.index()) && warnings.size() < 64) {
         var token = declaration.token();
         warnings.add(
@@ -23,13 +23,16 @@ final class CompileWarnings {
                     + token.text().substring(0, Math.min(48, token.text().length()))
                     + "' is never read."));
       }
+    }
     var code = program.instructions();
     var visited = new BitSet(code.size());
     var pending = new ArrayDeque<Integer>();
     pending.add(0);
     while (!pending.isEmpty()) {
       int index = pending.removeFirst();
-      if (index < 0 || index >= code.size() || visited.get(index)) continue;
+      if (index < 0 || index >= code.size() || visited.get(index)) {
+        continue;
+      }
       visited.set(index);
       var instruction = code.get(index);
       switch (instruction.op()) {
@@ -45,13 +48,16 @@ final class CompileWarnings {
     var lines = new HashSet<Integer>();
     for (int i = 0; i < code.size() && warnings.size() < 64; i++) {
       var instruction = code.get(i);
-      if (visited.get(i)) continue;
+      if (visited.get(i)) {
+        continue;
+      }
       switch (instruction.op()) {
         case PUSH, LOAD, STORE, PRINT, WAIT, STAT -> {
-          if (lines.add(instruction.line()))
+          if (lines.add(instruction.line())) {
             warnings.add(
                 new ProgramDiagnostic(
                     instruction.line(), instruction.column(), "Unreachable code."));
+          }
         }
         default -> {}
       }

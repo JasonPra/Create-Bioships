@@ -21,7 +21,9 @@ public final class CerebralDiagnosticLogs {
       world = Minecraft.getInstance().level;
     }
     var log = LOGS.computeIfAbsent(identity, id -> new EditorLog());
-    while (LOGS.size() > 32) LOGS.remove(LOGS.keySet().iterator().next());
+    while (LOGS.size() > 32) {
+      LOGS.remove(LOGS.keySet().iterator().next());
+    }
     return log;
   }
 

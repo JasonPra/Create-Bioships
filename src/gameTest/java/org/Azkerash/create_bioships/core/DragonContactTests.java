@@ -58,7 +58,9 @@ public final class DragonContactTests {
                     dragon.getPhaseManager().getCurrentPhase().getPhase()
                         == EnderDragonPhase.CHARGING_PLAYER,
                     "Optional boss integration refused creature charge");
-                for (var part : dragon.getSubEntities()) part.setPos(far);
+                for (var part : dragon.getSubEntities()) {
+                  part.setPos(far);
+                }
                 double before = SubLevelHealth.status(body).current();
                 var event = new net.neoforged.neoforge.event.tick.EntityTickEvent.Post(dragon);
                 CombatAdapter.dragonContact(event);

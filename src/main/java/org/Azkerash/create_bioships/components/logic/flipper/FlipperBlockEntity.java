@@ -31,16 +31,21 @@ public final class FlipperBlockEntity extends BlockEntity {
   }
 
   public List<Vec3> points(float partial) {
-    if (points == null || level == null || level.getGameTime() - received > 12)
+    if (points == null || level == null || level.getGameTime() - received > 12) {
       return rest(getBlockState());
+    }
     double mix = Math.clamp((level.getGameTime() - received + partial) / 4d, 0, 1);
     var result = new ArrayList<Vec3>();
-    for (int i = 0; i < points.size(); i++) result.add(previous.get(i).lerp(points.get(i), mix));
+    for (int i = 0; i < points.size(); i++) {
+      result.add(previous.get(i).lerp(points.get(i), mix));
+    }
     return result;
   }
 
   public void pose(List<Vec3> next) {
-    if (next.size() != 4 || level == null) return;
+    if (next.size() != 4 || level == null) {
+      return;
+    }
     if (points != null && points.equals(next)) {
       received = level.getGameTime();
       return;
@@ -48,8 +53,9 @@ public final class FlipperBlockEntity extends BlockEntity {
     previous = points == null ? next : points;
     points = List.copyOf(next);
     received = level.getGameTime();
-    if (!level.isClientSide)
+    if (!level.isClientSide) {
       level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 2);
+    }
   }
 
   @Override
@@ -73,7 +79,9 @@ public final class FlipperBlockEntity extends BlockEntity {
   public void handleUpdateTag(CompoundTag tag, HolderLookup.Provider registries) {
     super.handleUpdateTag(tag, registries);
     var list = tag.getList("Pose", 10);
-    if (list.size() != 4) return;
+    if (list.size() != 4) {
+      return;
+    }
     var next = new ArrayList<Vec3>();
     for (var raw : list) {
       var t = (CompoundTag) raw;
@@ -87,7 +95,9 @@ public final class FlipperBlockEntity extends BlockEntity {
       net.minecraft.network.Connection connection,
       ClientboundBlockEntityDataPacket packet,
       HolderLookup.Provider registries) {
-    if (packet.getTag() != null) handleUpdateTag(packet.getTag(), registries);
+    if (packet.getTag() != null) {
+      handleUpdateTag(packet.getTag(), registries);
+    }
   }
 
   @Override

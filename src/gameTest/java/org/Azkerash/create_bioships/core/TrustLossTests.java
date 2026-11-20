@@ -18,11 +18,16 @@ import org.Azkerash.create_bioships.development.testing.DevelopmentLifeSupport;
 public final class TrustLossTests {
   private static ServerSubLevel body(GameTestHelper h, BlockPos origin) {
     var level = h.getLevel();
-    for (int cx = (origin.getX() - 8) >> 4; cx <= (origin.getX() + 8) >> 4; cx++)
-      for (int cz = 7; cz <= 9; cz++) level.setChunkForced(cx, cz, true);
-    for (int x = -6; x <= 6; x++)
-      for (int z = -6; z <= 6; z++)
+    for (int cx = (origin.getX() - 8) >> 4; cx <= (origin.getX() + 8) >> 4; cx++) {
+      for (int cz = 7; cz <= 9; cz++) {
+        level.setChunkForced(cx, cz, true);
+      }
+    }
+    for (int x = -6; x <= 6; x++) {
+      for (int z = -6; z <= 6; z++) {
         level.setBlock(origin.offset(x, -2, z), Blocks.BEDROCK.defaultBlockState(), 3);
+      }
+    }
     level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
     level.setBlock(origin.east(), ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState(), 3);
     var result =
@@ -87,8 +92,9 @@ public final class TrustLossTests {
             && SubLevelData.ownerHits(root).getFirst().damage() == 2,
         "Saved attack history was lost");
     // Armor-only attacks record frequency but have no health-based trust cost.
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < 5; i++) {
       hit(target, level.damageSources().playerAttack(owner), 1, cell.east());
+    }
     near(h, SubLevelData.trust(root), 79, "Armor-only hits cost health-based trust");
     h.assertTrue(
         SubLevelData.ownerHits(root).size() == SubLevelData.TRUST_ATTACK_LOG_LIMIT,

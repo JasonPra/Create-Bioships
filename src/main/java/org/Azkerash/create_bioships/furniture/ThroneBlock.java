@@ -45,7 +45,9 @@ public final class ThroneBlock extends SeatBlock {
   @Override
   public BlockState getStateForPlacement(BlockPlaceContext c) {
     if (c.getClickedPos().getY() >= c.getLevel().getMaxBuildHeight() - 1
-        || !c.getLevel().getBlockState(c.getClickedPos().above()).canBeReplaced(c)) return null;
+        || !c.getLevel().getBlockState(c.getClickedPos().above()).canBeReplaced(c)) {
+      return null;
+    }
     var state =
         withWater(
             defaultBlockState()
@@ -85,10 +87,11 @@ public final class ThroneBlock extends SeatBlock {
     boolean counterpart = d == (half == DoubleBlockHalf.LOWER ? Direction.UP : Direction.DOWN);
     if ((counterpart
             && (!other.is(this) || other.getValue(BlockStateProperties.DOUBLE_BLOCK_HALF) == half))
-        || !s.canSurvive(l, p))
+        || !s.canSurvive(l, p)) {
       return s.getValue(BlockStateProperties.WATERLOGGED)
           ? Fluids.WATER.defaultFluidState().createLegacyBlock()
           : Blocks.AIR.defaultBlockState();
+    }
     return s;
   }
 
@@ -96,8 +99,9 @@ public final class ThroneBlock extends SeatBlock {
   public BlockState playerWillDestroy(Level l, BlockPos p, BlockState s, Player player) {
     if (!l.isClientSide
         && s.getValue(BlockStateProperties.DOUBLE_BLOCK_HALF) == DoubleBlockHalf.UPPER
-        && l.getBlockState(p.below()).is(this))
+        && l.getBlockState(p.below()).is(this)) {
       l.destroyBlock(p.below(), !player.isCreative(), player);
+    }
     return super.playerWillDestroy(l, p, s, player);
   }
 
@@ -114,11 +118,16 @@ public final class ThroneBlock extends SeatBlock {
   }
 
   private InteractionResult sit(BlockState state, Level l, BlockPos p, Player player) {
-    if (player.isShiftKeyDown() || player.isSpectator()) return InteractionResult.PASS;
-    if (state.getValue(BlockStateProperties.DOUBLE_BLOCK_HALF) == DoubleBlockHalf.UPPER)
+    if (player.isShiftKeyDown() || player.isSpectator()) {
+      return InteractionResult.PASS;
+    }
+    if (state.getValue(BlockStateProperties.DOUBLE_BLOCK_HALF) == DoubleBlockHalf.UPPER) {
       p = p.below();
+    }
     if (!l.isClientSide) {
-      if (SeatBlock.isSeatOccupied(l, p)) return InteractionResult.FAIL;
+      if (SeatBlock.isSeatOccupied(l, p)) {
+        return InteractionResult.FAIL;
+      }
       SeatBlock.sitDown(l, p, player);
     }
     return InteractionResult.sidedSuccess(l.isClientSide);
@@ -149,8 +158,9 @@ public final class ThroneBlock extends SeatBlock {
   @Override
   public void updateEntityAfterFallOn(BlockGetter l, Entity entity) {
     // Furniture does not automatically capture mobs walking across it.
-    if (entity.getDeltaMovement().y < 0)
+    if (entity.getDeltaMovement().y < 0) {
       entity.setDeltaMovement(entity.getDeltaMovement().multiply(1, 0, 1));
+    }
   }
 
   @Override
@@ -176,14 +186,16 @@ public final class ThroneBlock extends SeatBlock {
             box(13, 8, 3, 16, 14, 15));
     result[1][0] =
         Shapes.or(box(2, 0, 0, 14, 13, 4), box(0, 9, 0, 3, 16, 4), box(13, 9, 0, 16, 16, 4));
-    for (int half = 0; half < 2; half++)
+    for (int half = 0; half < 2; half++) {
       for (int turn = 1; turn < 4; turn++) {
         var shape = Shapes.empty();
-        for (var a : result[half][turn - 1].toAabbs())
+        for (var a : result[half][turn - 1].toAabbs()) {
           shape =
               Shapes.or(shape, Shapes.box(1 - a.maxZ, a.minY, a.minX, 1 - a.minZ, a.maxY, a.maxX));
+        }
         result[half][turn] = shape;
       }
+    }
     return result;
   }
 }

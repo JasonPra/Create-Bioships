@@ -65,20 +65,26 @@ public final class StomachGenes {
   public ItemInteractionResult inject(Player player, ItemStack injector) {
     if (stomach.getLevel() instanceof ServerLevel level) {
       var body = CoreAssemblyRules.containing(level, stomach.getBlockPos());
-      if (body == null || !SubLevelData.isLiving(body) || SubLevelHealth.status(body).dead())
+      if (body == null || !SubLevelData.isLiving(body) || SubLevelHealth.status(body).dead()) {
         return ItemInteractionResult.FAIL;
+      }
     }
     return org.Azkerash.create_bioships.compat.biomancy.BioInjectorIntegration.inject(
         stomach.getLevel(), player, injector, this::accepts, this::apply);
   }
 
   private void apply(Serum serum) {
-    if (serum == ComponentRegistry.LONGEVITY_GENE.get()) stomach.state().longevity++;
-    else stomach.state().efficiency++;
+    if (serum == ComponentRegistry.LONGEVITY_GENE.get()) {
+      stomach.state().longevity++;
+    } else {
+      stomach.state().efficiency++;
+    }
     stomach.setChanged();
     if (stomach.getLevel() instanceof ServerLevel level) {
       var body = CoreAssemblyRules.containing(level, stomach.getBlockPos());
-      if (body != null) SubLevelHunger.refreshCapacity(body);
+      if (body != null) {
+        SubLevelHunger.refreshCapacity(body);
+      }
       level.sendBlockUpdated(
           stomach.getBlockPos(), stomach.getBlockState(), stomach.getBlockState(), 2);
     }
@@ -88,13 +94,16 @@ public final class StomachGenes {
    * Called once when the meal is rolled; pending outputs persist across blocked storage/reloads.
    */
   public void addExtraComponent(java.util.List<ItemStack> outputs, RandomSource random) {
-    if (stomach.state().efficiency == 0 || random.nextInt(100) >= extraComponentChance()) return;
+    if (stomach.state().efficiency == 0 || random.nextInt(100) >= extraComponentChance()) {
+      return;
+    }
     var eligible =
         outputs.stream()
             .filter(stack -> !stack.isEmpty() && !stack.is(StomachBlockEntity.paste()))
             .toList();
-    if (!eligible.isEmpty())
+    if (!eligible.isEmpty()) {
       outputs.add(eligible.get(random.nextInt(eligible.size())).copyWithCount(1));
+    }
   }
 
   public CompoundTag save() {

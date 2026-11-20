@@ -37,10 +37,11 @@ public final class PlayerDiagnosticTests {
             l, new com.mojang.authlib.GameProfile(UUID.randomUUID(), "DiagnosticStranger"));
     SubLevelPermissions.assignIfUnowned(b, owner.getUUID());
     h.assertTrue(!DiagnosticAccess.canInspect(b, owner), "Missing instrument allowed disclosure");
-    for (var player : List.of(owner, guest, stranger))
+    for (var player : List.of(owner, guest, stranger)) {
       player
           .getInventory()
           .setItem(0, Create_bioships.SOMATIC_RESONATOR.get().getDefaultInstance());
+    }
     h.assertTrue(
         !org.Azkerash.create_bioships.development.testing.DevelopmentToolkitItem.allowed(owner),
         "Player instrument granted development-only privileges");

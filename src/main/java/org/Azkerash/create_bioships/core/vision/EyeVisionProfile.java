@@ -10,8 +10,12 @@ public record EyeVisionProfile(boolean aquatic) {
       AQUATIC = new EyeVisionProfile(true);
 
   public static EyeVisionProfile of(BlockState state) {
-    if (state.is(ComponentRegistry.AQUATIC_EYE.get())) return AQUATIC;
-    if (state.is(ComponentRegistry.CORE.get()) || state.getBlock() instanceof EyeBlock) return LAND;
+    if (state.is(ComponentRegistry.AQUATIC_EYE.get())) {
+      return AQUATIC;
+    }
+    if (state.is(ComponentRegistry.CORE.get()) || state.getBlock() instanceof EyeBlock) {
+      return LAND;
+    }
     return null;
   }
 

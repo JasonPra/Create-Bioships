@@ -20,14 +20,17 @@ public final class BioshipWrenchItem extends WrenchItem {
   public static boolean dropRemovalStack(
       net.minecraft.world.entity.player.Player player, net.minecraft.world.item.ItemStack stack) {
     var context = GROUND_DROPS.get();
-    if (context == null || stack.isEmpty() || !context.player().equals(player.getUUID()))
+    if (context == null || stack.isEmpty() || !context.player().equals(player.getUUID())) {
       return false;
+    }
     var point = context.position();
     var drop =
         new net.minecraft.world.entity.item.ItemEntity(
             context.level(), point.x, point.y, point.z, stack.copy());
     drop.setDefaultPickUpDelay();
-    if (!context.level().addFreshEntity(drop)) return false;
+    if (!context.level().addFreshEntity(drop)) {
+      return false;
+    }
     stack.setCount(0);
     return true;
   }
@@ -38,10 +41,14 @@ public final class BioshipWrenchItem extends WrenchItem {
       net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickBlock event) {
     if (!(event.getLevel() instanceof net.minecraft.server.level.ServerLevel level)
         || !(event.getItemStack().getItem() instanceof BioshipWrenchItem wrench)
-        || !event.getEntity().mayBuild()) return;
+        || !event.getEntity().mayBuild()) {
+      return;
+    }
     var body =
         org.Azkerash.create_bioships.core.CoreAssemblyRules.containing(level, event.getPos());
-    if (!supportsGridBlock(body, level.getBlockState(event.getPos()))) return;
+    if (!supportsGridBlock(body, level.getBlockState(event.getPos()))) {
+      return;
+    }
     var context =
         new net.minecraft.world.item.context.UseOnContext(
             event.getEntity(), event.getHand(), event.getHitVec());
@@ -57,13 +64,16 @@ public final class BioshipWrenchItem extends WrenchItem {
       net.minecraft.world.item.context.UseOnContext context) {
     var socketContext =
         org.Azkerash.create_bioships.compat.letitwalk.CompactLimbController.socketContext(context);
-    if (socketContext != context) return useOn(socketContext);
+    if (socketContext != context) {
+      return useOn(socketContext);
+    }
     var level = context.getLevel();
     var player = context.getPlayer();
     var pos = context.getClickedPos();
     var state = level.getBlockState(pos);
-    if (state.is(org.Azkerash.create_bioships.components.ComponentRegistry.CORE.get()))
+    if (state.is(org.Azkerash.create_bioships.components.ComponentRegistry.CORE.get())) {
       return net.minecraft.world.InteractionResult.FAIL;
+    }
     if (level instanceof net.minecraft.server.level.ServerLevel server && player != null) {
       var body = org.Azkerash.create_bioships.core.CoreAssemblyRules.containing(server, pos);
       if (supportsGridBlock(body, state)) {
@@ -92,20 +102,24 @@ public final class BioshipWrenchItem extends WrenchItem {
                     ? super.useOn(context)
                     : PICKUP.onSneakWrenched(state, context);
         var previous = GROUND_DROPS.get();
-        if (player.isShiftKeyDown())
+        if (player.isShiftKeyDown()) {
           GROUND_DROPS.set(
               new DropContext(
                   server,
                   player.getUUID(),
                   body.logicalPose()
                       .transformPosition(net.minecraft.world.phys.Vec3.atCenterOf(pos))));
+        }
         try {
           return org.Azkerash.create_bioships.core.CoreAssemblyRules.isCreature(body)
               ? org.Azkerash.create_bioships.core.SubLevelHealth.withoutRemovalDamage(body, action)
               : action.get();
         } finally {
-          if (previous == null) GROUND_DROPS.remove();
-          else GROUND_DROPS.set(previous);
+          if (previous == null) {
+            GROUND_DROPS.remove();
+          } else {
+            GROUND_DROPS.set(previous);
+          }
         }
       }
     }
@@ -115,7 +129,9 @@ public final class BioshipWrenchItem extends WrenchItem {
   private static boolean supportsGridBlock(
       dev.ryanhcode.sable.sublevel.ServerSubLevel body,
       net.minecraft.world.level.block.state.BlockState state) {
-    if (body == null) return false;
+    if (body == null) {
+      return false;
+    }
     var namespace =
         net.minecraft.core.registries.BuiltInRegistries.BLOCK
             .getKey(state.getBlock())

@@ -18,8 +18,8 @@ final class OrganScreenStyle {
     g.fillGradient(x, y, x + width, y + height, 0xff6c2848, 0xff301226);
     g.fill(x + 2, y + 2, x + width - 2, y + height - 2, 0xff21121e);
     g.setColor(.33f, .17f, .27f, 1f);
-    for (int dx = 4; dx < width - 4; dx += 16)
-      for (int dy = 4; dy < height - 4; dy += 16)
+    for (int dx = 4; dx < width - 4; dx += 16) {
+      for (int dy = 4; dy < height - 4; dy += 16) {
         g.blit(
             FLESH,
             x + dx,
@@ -30,6 +30,8 @@ final class OrganScreenStyle {
             Math.min(16, height - 4 - dy),
             16,
             16);
+      }
+    }
     g.setColor(1, 1, 1, 1);
     g.fill(x + 3, y + 3, x + width - 3, y + 4, 0xffb15b76);
     g.fill(x + 3, y + 4, x + 4, y + height - 4, 0xff84344f);
@@ -63,7 +65,8 @@ final class OrganScreenStyle {
       g.fillGradient(x + 1, y + 1, x + 1 + fill, y + 9, color, 0xff342538);
       g.fill(x + 1, y + 1, x + 1 + fill, y + 2, color);
     }
-    for (int i = 1; i < 4; i++)
+    for (int i = 1; i < 4; i++) {
       g.fill(x + width * i / 4, y + 8, x + width * i / 4 + 1, y + 10, 0xffab7b56);
+    }
   }
 }

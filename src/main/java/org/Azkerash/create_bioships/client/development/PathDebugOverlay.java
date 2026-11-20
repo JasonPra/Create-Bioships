@@ -34,7 +34,9 @@ public final class PathDebugOverlay {
 
   public static void toggle() {
     var mc = Minecraft.getInstance();
-    if (mc.player == null || mc.level == null || !DevelopmentToolkitItem.allowed(mc.player)) return;
+    if (mc.player == null || mc.level == null || !DevelopmentToolkitItem.allowed(mc.player)) {
+      return;
+    }
     enabled = !enabled;
     world = mc.level;
     ROUTES.clear();
@@ -45,9 +47,14 @@ public final class PathDebugOverlay {
 
   public static void receive(PathDebugPayload p) {
     var mc = Minecraft.getInstance();
-    if (!enabled || mc.level == null) return;
-    if (p.points().isEmpty()) ROUTES.remove(p.body());
-    else ROUTES.put(p.body(), new Sample(p, mc.level.getGameTime()));
+    if (!enabled || mc.level == null) {
+      return;
+    }
+    if (p.points().isEmpty()) {
+      ROUTES.remove(p.body());
+    } else {
+      ROUTES.put(p.body(), new Sample(p, mc.level.getGameTime()));
+    }
   }
 
   @SubscribeEvent
@@ -56,15 +63,22 @@ public final class PathDebugOverlay {
     if (enabled && (mc.player == null || !DevelopmentToolkitItem.allowed(mc.player))) {
       enabled = false;
       ROUTES.clear();
-      if (mc.getConnection() != null) PacketDistributor.sendToServer(new PathDebugRequest(false));
+      if (mc.getConnection() != null) {
+        PacketDistributor.sendToServer(new PathDebugRequest(false));
+      }
     }
     if (world != mc.level) {
       world = mc.level;
       ROUTES.clear();
-      if (world == null) enabled = false;
-      else if (enabled) PacketDistributor.sendToServer(new PathDebugRequest(true));
+      if (world == null) {
+        enabled = false;
+      } else if (enabled) {
+        PacketDistributor.sendToServer(new PathDebugRequest(true));
+      }
     }
-    if (world != null) ROUTES.values().removeIf(s -> world.getGameTime() - s.at() > 40);
+    if (world != null) {
+      ROUTES.values().removeIf(s -> world.getGameTime() - s.at() > 40);
+    }
   }
 
   private static void line(
@@ -76,18 +90,23 @@ public final class PathDebugOverlay {
       float g,
       float blue) {
     var n = b.subtract(a).normalize();
-    for (var p : List.of(a, b))
+    for (var p : List.of(a, b)) {
       lines
           .addVertex(pose.last().pose(), (float) p.x, (float) p.y, (float) p.z)
           .setColor(r, g, blue, 1f)
           .setNormal(pose.last(), (float) n.x, (float) n.y, (float) n.z);
+    }
   }
 
   @SubscribeEvent
   public static void render(RenderLevelStageEvent e) {
-    if (!enabled || e.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) return;
+    if (!enabled || e.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) {
+      return;
+    }
     var mc = Minecraft.getInstance();
-    if (mc.level == null) return;
+    if (mc.level == null) {
+      return;
+    }
     var buffers = mc.renderBuffers().bufferSource();
     var lines = buffers.getBuffer(DevelopmentDebugRenderType.LINES);
     var pose = e.getPoseStack();
@@ -99,7 +118,7 @@ public final class PathDebugOverlay {
       for (int i = 0; i < p.points().size(); i++) {
         var at = p.points().get(i).add(0, .12, 0).subtract(camera);
         boolean passed = i < p.next();
-        if (i > 0)
+        if (i > 0) {
           line(
               pose,
               lines,
@@ -108,6 +127,7 @@ public final class PathDebugOverlay {
               passed ? .4f : .2f,
               passed ? .4f : water ? .5f : 1f,
               passed ? .4f : 1f);
+        }
         LevelRenderer.renderLineBox(
             pose,
             lines,
@@ -127,7 +147,9 @@ public final class PathDebugOverlay {
 
   @SubscribeEvent
   public static void legend(RenderGuiEvent.Post e) {
-    if (!enabled) return;
+    if (!enabled) {
+      return;
+    }
     var mc = Minecraft.getInstance();
     int y = mc.getWindow().getGuiScaledHeight() - 102;
     e.getGuiGraphics()

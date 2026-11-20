@@ -63,8 +63,9 @@ public final class MouthChewingTests {
           var menu = new MouthMenu(1, player.getInventory(), mouth);
           menu.quickMoveStack(player, 9);
           helper.assertTrue(mouth.chewRemaining() == 60, "GUI shift-feeding did not start chewing");
-          for (int slot = 0; slot < 9; slot++)
+          for (int slot = 0; slot < 9; slot++) {
             mouth.setItem(slot, new ItemStack(Items.PORKCHOP, 64));
+          }
           helper.assertTrue(
               !mouth.feed(new ItemStack(Items.PORKCHOP), false).isEmpty(),
               "Full mouth accepted more food");

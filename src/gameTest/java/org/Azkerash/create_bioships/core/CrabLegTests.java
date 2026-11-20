@@ -21,11 +21,16 @@ public final class CrabLegTests {
   public static void one_uncommanded_leg_falls_and_ragdolls(GameTestHelper helper) {
     var level = helper.getLevel();
     var base = new BlockPos(2560, 80, 128);
-    for (int cx = 159; cx <= 161; cx++)
-      for (int cz = 7; cz <= 9; cz++) level.setChunkForced(cx, cz, true);
-    for (int x = -8; x <= 8; x++)
-      for (int z = -8; z <= 8; z++)
+    for (int cx = 159; cx <= 161; cx++) {
+      for (int cz = 7; cz <= 9; cz++) {
+        level.setChunkForced(cx, cz, true);
+      }
+    }
+    for (int x = -8; x <= 8; x++) {
+      for (int z = -8; z <= 8; z++) {
         level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 3);
+      }
+    }
     helper.runAfterDelay(
         20,
         () -> {
@@ -98,17 +103,23 @@ public final class CrabLegTests {
   public static void native_segment_middle_collides_with_existing_obstacle(GameTestHelper helper) {
     var level = helper.getLevel();
     var pos = new BlockPos(2432, 80, 128);
-    for (int x = 151; x <= 153; x++) for (int z = 7; z <= 9; z++) level.setChunkForced(x, z, true);
-    for (int x = -3; x <= 3; x++)
-      for (int z = -3; z <= 3; z++)
+    for (int x = 151; x <= 153; x++) {
+      for (int z = 7; z <= 9; z++) {
+        level.setChunkForced(x, z, true);
+      }
+    }
+    for (int x = -3; x <= 3; x++) {
+      for (int z = -3; z <= 3; z++) {
         level.setBlock(pos.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 3);
+      }
+    }
     level.setBlock(pos, Blocks.BEDROCK.defaultBlockState(), 3);
     level.setBlock(pos.above(), Blocks.BEDROCK.defaultBlockState(), 3);
     helper.runAfterDelay(
         20,
         () -> {
           var cells = List.of(pos.above(5), pos.above(6), pos.above(7));
-          for (var cell : cells)
+          for (var cell : cells) {
             level.setBlock(
                 cell,
                 org.Azkerash.create_bioships
@@ -118,6 +129,7 @@ public final class CrabLegTests {
                     .get()
                     .defaultBlockState(),
                 3);
+          }
           var segment =
               SubLevelAssemblyHelper.assembleBlocks(
                   level,
@@ -167,10 +179,16 @@ public final class CrabLegTests {
       GameTestHelper helper) {
     var level = helper.getLevel();
     var base = new BlockPos(2304, 80, 128);
-    for (int x = 143; x <= 145; x++) for (int z = 7; z <= 9; z++) level.setChunkForced(x, z, true);
-    for (int x = -12; x <= 12; x++)
-      for (int z = -12; z <= 12; z++)
+    for (int x = 143; x <= 145; x++) {
+      for (int z = 7; z <= 9; z++) {
+        level.setChunkForced(x, z, true);
+      }
+    }
+    for (int x = -12; x <= 12; x++) {
+      for (int z = -12; z <= 12; z++) {
         level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 3);
+      }
+    }
     helper.runAfterDelay(
         20,
         () -> {
@@ -223,8 +241,8 @@ public final class CrabLegTests {
                           Double.isFinite(after.lengthSqr()) && after.distanceTo(before) < 3,
                           "Adding brain launched asymmetric creature: " + after.subtract(before));
                       BrainMotorControls.move(body, Vec3.ZERO, 0, 200);
-                      for (var pose : SubLevelLegs.poses(body))
-                        if (pose.cell().getZ() < core.getZ())
+                      for (var pose : SubLevelLegs.poses(body)) {
+                        if (pose.cell().getZ() < core.getZ()) {
                           level.setBlock(
                               pose.cell(),
                               level
@@ -238,6 +256,8 @@ public final class CrabLegTests {
                                           .HEIGHT,
                                       3),
                               3);
+                        }
+                      }
                       helper.runAfterDelay(
                           130,
                           () -> {
@@ -266,8 +286,9 @@ public final class CrabLegTests {
                                           .08),
                                       "Leg segment penetrated the floor: "
                                           + SubLevelLegs.collisionBounds(body));
-                                  for (var pose : SubLevelLegs.poses(body))
+                                  for (var pose : SubLevelLegs.poses(body)) {
                                     level.removeBlock(pose.cell(), false);
+                                  }
                                   helper.runAfterDelay(
                                       10,
                                       () -> {
@@ -287,10 +308,16 @@ public final class CrabLegTests {
   public static void native_ik_ground_contact_brain_movement_and_stop(GameTestHelper helper) {
     var level = helper.getLevel();
     var base = new BlockPos(2048, 80, 128);
-    for (int x = 126; x <= 130; x++) for (int z = 6; z <= 10; z++) level.setChunkForced(x, z, true);
-    for (int x = -15; x <= 15; x++)
-      for (int z = -15; z <= 20; z++)
+    for (int x = 126; x <= 130; x++) {
+      for (int z = 6; z <= 10; z++) {
+        level.setChunkForced(x, z, true);
+      }
+    }
+    for (int x = -15; x <= 15; x++) {
+      for (int z = -15; z <= 20; z++) {
         level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 3);
+      }
+    }
     helper.runAfterDelay(
         10,
         () -> {
@@ -326,10 +353,12 @@ public final class CrabLegTests {
                 helper.assertTrue(
                     SubLevelLegs.collisionShapes(body) == 18,
                     "Every leg segment needs a native collision shape");
-                for (var pose : SubLevelLegs.poses(body))
-                  for (var point : pose.joints())
+                for (var pose : SubLevelLegs.poses(body)) {
+                  for (var point : pose.joints()) {
                     helper.assertTrue(
                         Double.isFinite(point.x + point.y + point.z), "Non-finite IK solution");
+                  }
+                }
                 helper.assertTrue(SubLevelLegs.contacts(body) > 0, "No actual ground contacts");
                 helper.assertTrue(
                     end.z - start.z > .15, "Brain movement did not move physical body");
@@ -407,11 +436,16 @@ public final class CrabLegTests {
       GameTestHelper helper) {
     var level = helper.getLevel();
     var base = new BlockPos(3840, 80, 128);
-    for (int cx = 239; cx <= 241; cx++)
-      for (int cz = 7; cz <= 9; cz++) level.setChunkForced(cx, cz, true);
-    for (int x = -12; x <= 12; x++)
-      for (int z = -12; z <= 12; z++)
+    for (int cx = 239; cx <= 241; cx++) {
+      for (int cz = 7; cz <= 9; cz++) {
+        level.setChunkForced(cx, cz, true);
+      }
+    }
+    for (int x = -12; x <= 12; x++) {
+      for (int z = -12; z <= 12; z++) {
         level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 3);
+      }
+    }
     helper.runAfterDelay(
         20,
         () -> {
@@ -433,7 +467,9 @@ public final class CrabLegTests {
                 helper.assertTrue(
                     poses.size() == 6 && SubLevelLegs.collisionShapes(body) == 18,
                     "Removal fixture did not initialize six physical legs");
-                for (var pose : poses) level.removeBlock(pose.cell(), false);
+                for (var pose : poses) {
+                  level.removeBlock(pose.cell(), false);
+                }
                 // Exercise the exact gap in the report: no intervening scheduled controller update.
                 SubLevelLegs.physics(
                     new dev.ryanhcode.sable.neoforge.event.ForgeSablePrePhysicsTickEvent(

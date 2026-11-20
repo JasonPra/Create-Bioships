@@ -558,7 +558,9 @@ public final class ComponentRegistry {
   }
 
   public static void initializeBehaviors() {
-    if (initialized) return;
+    if (initialized) {
+      return;
+    }
     SETUP.forEach(Runnable::run);
     initialized = true;
   }

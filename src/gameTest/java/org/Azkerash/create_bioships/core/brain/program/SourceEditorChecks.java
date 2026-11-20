@@ -87,10 +87,11 @@ public final class SourceEditorChecks {
             && errors.getFirst().fingerprint().equals("source-v1"),
         "Error tracker lost name range or source version");
     var history = new EditorLog();
-    for (int i = 0; i < 100; i++)
+    for (int i = 0; i < 100; i++) {
       history.add(
           EditorAnalysis.logged(
               EditorProblem.Severity.ERROR, "Line 2, column 9: Error " + i, "source-v1"));
+    }
     check(
         history.entries().size() == 64
             && history.entries().getFirst().message().equals("Error 99")
@@ -128,6 +129,8 @@ public final class SourceEditorChecks {
   }
 
   private static void check(boolean condition, String message) {
-    if (!condition) throw new AssertionError(message);
+    if (!condition) {
+      throw new AssertionError(message);
+    }
   }
 }

@@ -73,16 +73,21 @@ public final class PotionFixture {
     var container = SubLevelContainer.getContainer(level);
     if (state.potionBody != null) {
       var body = container.getSubLevel(state.potionBody);
-      if (body != null) container.removeSubLevel(body, SubLevelRemovalReason.REMOVED);
+      if (body != null) {
+        container.removeSubLevel(body, SubLevelRemovalReason.REMOVED);
+      }
     }
     state.potionBody = null;
     removeZombie(level);
     var remove = new ArrayList<Entity>();
     var arena = new AABB(base(level)).inflate(8);
-    for (var entity : level.getAllEntities())
+    for (var entity : level.getAllEntities()) {
       if (entity.getTags().contains(MARK)
           || entity instanceof net.minecraft.world.entity.projectile.ThrownPotion
-              && arena.contains(entity.position())) remove.add(entity);
+              && arena.contains(entity.position())) {
+        remove.add(entity);
+      }
+    }
     remove.forEach(Entity::discard);
   }
 
@@ -90,14 +95,16 @@ public final class PotionFixture {
     clear(level);
     var state = CoreTestState.get(level);
     var b = base(level);
-    for (int x = (b.getX() - 8) >> 4; x <= (b.getX() + 8) >> 4; x++)
-      for (int z = (b.getZ() - 10) >> 4; z <= (b.getZ() + 8) >> 4; z++)
+    for (int x = (b.getX() - 8) >> 4; x <= (b.getX() + 8) >> 4; x++) {
+      for (int z = (b.getZ() - 10) >> 4; z <= (b.getZ() + 8) >> 4; z++) {
         level.setChunkForced(x, z, true);
-    for (int x = -7; x <= 7; x++)
+      }
+    }
+    for (int x = -7; x <= 7; x++) {
       for (int z = -9; z <= 7; z++) {
         level.setBlock(b.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 2);
-        if (Math.abs(x) <= 6 && Math.abs(z) <= 6)
-          for (int y = 0; y <= 7; y++)
+        if (Math.abs(x) <= 6 && Math.abs(z) <= 6) {
+          for (int y = 0; y <= 7; y++) {
             level.setBlock(
                 b.offset(x, y, z),
                 (Math.abs(x) == 6 || Math.abs(z) == 6 || y == 7
@@ -105,7 +112,10 @@ public final class PotionFixture {
                         : Blocks.AIR)
                     .defaultBlockState(),
                 2);
+          }
+        }
       }
+    }
     // Two adjacent, oppositely hinged doors on the front wall.
     for (int x = 1; x <= 2; x++) {
       var door =
@@ -134,7 +144,9 @@ public final class PotionFixture {
     var flesh =
         BuiltInRegistries.BLOCK.get(
             ResourceLocation.fromNamespaceAndPath("biomancy", "packed_flesh"));
-    for (var cell : subject(level)) level.setBlock(cell, flesh.defaultBlockState(), 3);
+    for (var cell : subject(level)) {
+      level.setBlock(cell, flesh.defaultBlockState(), 3);
+    }
     level.setBlock(core(level), ComponentRegistry.CORE.get().defaultBlockState(), 3);
     level.setBlock(
         base(level).above().north(),
@@ -147,7 +159,9 @@ public final class PotionFixture {
 
   public static int start(ServerLevel level) {
     var state = CoreTestState.get(level);
-    if (!state.potionBuilt || state.potionRunning) return 0;
+    if (!state.potionBuilt || state.potionRunning) {
+      return 0;
+    }
     state.potionResults.clear();
     state.potionIndex = 0;
     state.potionRunning = true;
@@ -199,14 +213,18 @@ public final class PotionFixture {
     inventory.clearContent();
     inventory.setItem(0, potion(EFFECTS.get(state.potionIndex)));
     inventory.setChanged();
-    if (EFFECTS.get(state.potionIndex) != MobEffects.DAMAGE_RESISTANCE) firePotion(level);
+    if (EFFECTS.get(state.potionIndex) != MobEffects.DAMAGE_RESISTANCE) {
+      firePotion(level);
+    }
     state.setDirty();
     explain(level, "Running " + (state.potionIndex + 1) + " / " + EFFECTS.size());
   }
 
   public static void tick(ServerLevel level) {
     var state = CoreTestState.get(level);
-    if (!state.potionRunning) return;
+    if (!state.potionRunning) {
+      return;
+    }
     var entry = SubLevelContainer.getContainer(level).getSubLevel(state.potionBody);
     if (!(entry instanceof ServerSubLevel body) || body.isRemoved()) {
       state.potionResults.add("FAIL: subject lost");
@@ -220,7 +238,9 @@ public final class PotionFixture {
       resistanceTick(level, body);
       return;
     }
-    if (level.getGameTime() < state.potionDeadline) return;
+    if (level.getGameTime() < state.potionDeadline) {
+      return;
+    }
     double after = SubLevelHealth.status(body).current(), delta = after - state.potionBefore;
     boolean passed =
         effect == MobEffects.HEAL || effect == MobEffects.REGENERATION ? delta > 0 : delta < 0;
@@ -242,17 +262,24 @@ public final class PotionFixture {
     var state = CoreTestState.get(level);
     if (state.potionZombie != null) {
       var zombie = level.getEntity(state.potionZombie);
-      if (zombie != null) zombie.discard();
+      if (zombie != null) {
+        zombie.discard();
+      }
     }
-    for (var entity : level.getAllEntities())
-      if (entity.getTags().contains(ZOMBIE_MARK)) entity.discard();
+    for (var entity : level.getAllEntities()) {
+      if (entity.getTags().contains(ZOMBIE_MARK)) {
+        entity.discard();
+      }
+    }
     state.potionZombie = null;
   }
 
   private static boolean spawnZombie(ServerLevel level, ServerSubLevel body) {
     var state = CoreTestState.get(level);
     var zombie = EntityType.ZOMBIE.create(level);
-    if (zombie == null) return false;
+    if (zombie == null) {
+      return false;
+    }
     zombie.setPersistenceRequired();
     zombie.setBaby(false);
     zombie.setItemSlot(EquipmentSlot.HEAD, new ItemStack(Items.IRON_HELMET));
@@ -315,8 +342,9 @@ public final class PotionFixture {
       explain(level, "Resistance: waiting for ONE protected zombie hit");
       state.setDirty();
     }
-    if (level.getGameTime() >= state.potionDeadline)
+    if (level.getGameTime() >= state.potionDeadline) {
       finishResistance(level, false, "timeout in phase " + state.potionResistancePhase);
+    }
   }
 
   private static void finishResistance(ServerLevel level, boolean passed, String detail) {
@@ -363,11 +391,16 @@ public final class PotionFixture {
 
   private static void explain(ServerLevel level, String progress) {
     var removed = new ArrayList<Entity>();
-    for (var entity : level.getAllEntities())
-      if (entity.getTags().contains(MARK)) removed.add(entity);
+    for (var entity : level.getAllEntities()) {
+      if (entity.getTags().contains(MARK)) {
+        removed.add(entity);
+      }
+    }
     removed.forEach(Entity::discard);
     var display = EntityType.TEXT_DISPLAY.create(level);
-    if (display == null) return;
+    if (display == null) {
+      return;
+    }
     var tag = new CompoundTag();
     tag.putString(
         "text",

@@ -24,6 +24,8 @@ public abstract class BiometricMembraneAccessMixin {
       CallbackInfoReturnable<Boolean> callback) {
     var allowed =
         org.Azkerash.create_bioships.compat.biomancy.MembraneAccess.permits(level, pos, entity);
-    if (allowed != null) callback.setReturnValue(allowed);
+    if (allowed != null) {
+      callback.setReturnValue(allowed);
+    }
   }
 }

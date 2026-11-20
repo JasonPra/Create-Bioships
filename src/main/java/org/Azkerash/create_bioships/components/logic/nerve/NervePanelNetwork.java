@@ -17,8 +17,9 @@ public final class NervePanelNetwork {
         (p, c) ->
             c.enqueueWork(
                 () -> {
-                  if (c.player() instanceof net.minecraft.server.level.ServerPlayer player)
+                  if (c.player() instanceof net.minecraft.server.level.ServerPlayer player) {
                     NervePanelControl.handle(player, p);
+                  }
                 }));
     r.playToClient(
         NervePanelPayload.TYPE,

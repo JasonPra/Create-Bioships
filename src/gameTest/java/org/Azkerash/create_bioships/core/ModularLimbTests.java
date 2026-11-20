@@ -22,11 +22,16 @@ public final class ModularLimbTests {
   public static void native_assembly_shared_brain_physical_joints_and_death(GameTestHelper h) {
     var level = h.getLevel();
     var base = new BlockPos(3456, 80, 128);
-    for (int cx = 215; cx <= 217; cx++)
-      for (int cz = 7; cz <= 9; cz++) level.setChunkForced(cx, cz, true);
-    for (int x = -12; x <= 12; x++)
-      for (int z = -12; z <= 12; z++)
+    for (int cx = 215; cx <= 217; cx++) {
+      for (int cz = 7; cz <= 9; cz++) {
+        level.setChunkForced(cx, cz, true);
+      }
+    }
+    for (int x = -12; x <= 12; x++) {
+      for (int z = -12; z <= 12; z++) {
         level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 3);
+      }
+    }
     h.runAfterDelay(
         20,
         () -> {

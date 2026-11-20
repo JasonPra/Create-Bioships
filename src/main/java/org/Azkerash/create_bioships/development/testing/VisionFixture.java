@@ -58,22 +58,28 @@ public final class VisionFixture {
 
   public static void reset(ServerLevel level) {
     var base = base(level);
-    for (int x = (base.getX() - 16) >> 4; x <= (base.getX() + 16) >> 4; x++)
-      for (int z = -2; z <= 1; z++) level.setChunkForced(x, z, true);
+    for (int x = (base.getX() - 16) >> 4; x <= (base.getX() + 16) >> 4; x++) {
+      for (int z = -2; z <= 1; z++) {
+        level.setChunkForced(x, z, true);
+      }
+    }
     var container = SubLevelContainer.getContainer(level);
-    for (var entry : List.copyOf(container.getAllSubLevels()))
+    for (var entry : List.copyOf(container.getAllSubLevels())) {
       if (entry instanceof ServerSubLevel body
           && body.getUserDataTag() != null
-          && body.getUserDataTag().getBoolean(MARK))
+          && body.getUserDataTag().getBoolean(MARK)) {
         container.removeSubLevel(body, SubLevelRemovalReason.REMOVED);
+      }
+    }
     for (var entity :
         level.getEntitiesOfClass(
-            Entity.class, new AABB(base).inflate(25), e -> e.getTags().contains(MARK)))
+            Entity.class, new AABB(base).inflate(25), e -> e.getTags().contains(MARK))) {
       entity.discard();
-    for (int x = -12; x <= 12; x++)
+    }
+    for (int x = -12; x <= 12; x++) {
       for (int z = -12; z <= 9; z++) {
         level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 2);
-        if (Math.abs(x) <= 10 && Math.abs(z) <= 8)
+        if (Math.abs(x) <= 10 && Math.abs(z) <= 8) {
           for (int y = 0; y <= 7; y++) {
             boolean wall = Math.abs(x) == 10 || Math.abs(z) == 8 || y == 7 || x == 0;
             level.setBlock(
@@ -84,16 +90,20 @@ public final class VisionFixture {
                     .defaultBlockState(),
                 2);
           }
+        }
       }
+    }
     // Front-facing land and aquatic eyes in each environment; wall only blocks the land-eye lane.
     for (int lane = 0; lane < 2; lane++) {
       var core = subject(level, lane);
       subjectBlocks(level, core);
-      if (lane == 1)
-        for (var eye : java.util.List.of(core.west().north(), core.east().north()))
+      if (lane == 1) {
+        for (var eye : java.util.List.of(core.west().north(), core.east().north())) {
           level.setBlock(
               eye, level.getBlockState(eye).setValue(BlockStateProperties.WATERLOGGED, true), 3);
-      for (int y = 1; y <= 3; y++)
+        }
+      }
+      for (int y = 1; y <= 3; y++) {
         level.setBlock(
             core.offset(-1, y - 2, -4),
             (lane == 0
@@ -101,6 +111,7 @@ public final class VisionFixture {
                     : ComponentRegistry.CHITIN_ARMOR.get())
                 .defaultBlockState(),
             2);
+      }
     }
     level.setBlock(
         base.offset(-8, 0, 5),
@@ -110,9 +121,9 @@ public final class VisionFixture {
             .setValue(BlockStateProperties.FACING, Direction.UP),
         3);
     level.setBlock(base.offset(-8, -1, 5), Blocks.BEDROCK.defaultBlockState(), 3);
-    for (int lane = 0; lane < 2; lane++)
-      for (int x = 0; x <= 1; x++)
-        for (int y = 0; y <= 1; y++)
+    for (int lane = 0; lane < 2; lane++) {
+      for (int x = 0; x <= 1; x++) {
+        for (int y = 0; y <= 1; y++) {
           level.setBlock(
               base.offset((lane == 0 ? -6 : 4) + x, y, -8),
               DevelopmentTestBlocks.GLASS_DOOR
@@ -122,6 +133,9 @@ public final class VisionFixture {
                   .setValue(DoorBlock.HALF, y == 0 ? DoubleBlockHalf.LOWER : DoubleBlockHalf.UPPER)
                   .setValue(DoorBlock.HINGE, x == 0 ? DoorHingeSide.LEFT : DoorHingeSide.RIGHT),
               3);
+        }
+      }
+    }
     control(level, base.offset(-3, 0, -10), "vision_test start");
     control(level, base.offset(3, 0, -10), "vision_test reset");
     CoreTestState.get(level).visionBuilt = true;
@@ -146,11 +160,16 @@ public final class VisionFixture {
 
   public static int start(ServerLevel level) {
     var container = SubLevelContainer.getContainer(level);
-    for (var entry : container.getAllSubLevels())
+    for (var entry : container.getAllSubLevels()) {
       if (entry instanceof ServerSubLevel body
           && body.getUserDataTag() != null
-          && body.getUserDataTag().getBoolean(MARK)) return 0;
-    if (!CoreTestState.get(level).visionBuilt) reset(level);
+          && body.getUserDataTag().getBoolean(MARK)) {
+        return 0;
+      }
+    }
+    if (!CoreTestState.get(level).visionBuilt) {
+      reset(level);
+    }
     for (int lane = 0; lane < 2; lane++) {
       var origin = subject(level, lane);
       var body =
@@ -178,13 +197,14 @@ public final class VisionFixture {
   public static String status(ServerLevel level) {
     var container = SubLevelContainer.getContainer(level);
     int grids = 0, eyes = 0;
-    for (var entry : container.getAllSubLevels())
+    for (var entry : container.getAllSubLevels()) {
       if (entry instanceof ServerSubLevel body
           && body.getUserDataTag() != null
           && body.getUserDataTag().getBoolean(MARK)) {
         grids++;
         eyes += SubLevelVision.sights(body).size();
       }
+    }
     return "Vision fixture: "
         + grids
         + " assembled subjects, "
@@ -196,10 +216,15 @@ public final class VisionFixture {
     var base = base(level);
     for (var old :
         level.getEntitiesOfClass(
-            Display.TextDisplay.class, new AABB(base).inflate(25), e -> e.getTags().contains(MARK)))
+            Display.TextDisplay.class,
+            new AABB(base).inflate(25),
+            e -> e.getTags().contains(MARK))) {
       old.discard();
+    }
     var display = EntityType.TEXT_DISPLAY.create(level);
-    if (display == null) return;
+    if (display == null) {
+      return;
+    }
     var tag = new CompoundTag();
     tag.putString(
         "text",

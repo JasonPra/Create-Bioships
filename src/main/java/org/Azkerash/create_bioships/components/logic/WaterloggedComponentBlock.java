@@ -33,8 +33,9 @@ public class WaterloggedComponentBlock extends Block implements SimpleWaterlogge
   }
 
   public static void schedule(BlockState state, LevelAccessor level, BlockPos pos) {
-    if (state.getValue(BlockStateProperties.WATERLOGGED))
+    if (state.getValue(BlockStateProperties.WATERLOGGED)) {
       level.scheduleTick(pos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
+    }
   }
 
   @Override

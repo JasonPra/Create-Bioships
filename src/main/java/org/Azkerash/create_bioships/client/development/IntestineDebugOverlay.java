@@ -42,7 +42,9 @@ public final class IntestineDebugOverlay {
 
   public static void toggle() {
     var mc = Minecraft.getInstance();
-    if (mc.level == null || mc.player == null || !DiagnosticAccess.allowed(mc.player)) return;
+    if (mc.level == null || mc.player == null || !DiagnosticAccess.allowed(mc.player)) {
+      return;
+    }
     enabled = !enabled;
     GRAPHS.clear();
     world = mc.level;
@@ -52,17 +54,25 @@ public final class IntestineDebugOverlay {
   }
 
   public static void toggleOff() {
-    if (!enabled) return;
+    if (!enabled) {
+      return;
+    }
     enabled = false;
     GRAPHS.clear();
-    if (Minecraft.getInstance().getConnection() != null)
+    if (Minecraft.getInstance().getConnection() != null) {
       PacketDistributor.sendToServer(new DigestiveDebugRequest(false));
+    }
   }
 
   public static void receive(DigestiveDebugPayload payload) {
-    if (!enabled) return;
-    if (payload.nodes().isEmpty()) GRAPHS.remove(payload.body());
-    else GRAPHS.put(payload.body(), payload);
+    if (!enabled) {
+      return;
+    }
+    if (payload.nodes().isEmpty()) {
+      GRAPHS.remove(payload.body());
+    } else {
+      GRAPHS.put(payload.body(), payload);
+    }
   }
 
   @SubscribeEvent
@@ -71,21 +81,32 @@ public final class IntestineDebugOverlay {
     if (enabled && mc.player != null && !DiagnosticAccess.allowed(mc.player)) {
       toggleOff();
     }
-    if (world == mc.level) return;
+    if (world == mc.level) {
+      return;
+    }
     world = mc.level;
     GRAPHS.clear();
-    if (mc.level == null) enabled = false;
-    else if (enabled) PacketDistributor.sendToServer(new DigestiveDebugRequest(true));
+    if (mc.level == null) {
+      enabled = false;
+    } else if (enabled) {
+      PacketDistributor.sendToServer(new DigestiveDebugRequest(true));
+    }
   }
 
   @SubscribeEvent
   public static void render(RenderLevelStageEvent event) {
-    if (!enabled || event.getStage() != RenderLevelStageEvent.Stage.AFTER_LEVEL) return;
+    if (!enabled || event.getStage() != RenderLevelStageEvent.Stage.AFTER_LEVEL) {
+      return;
+    }
     ITEM_STRIPS.clear();
     var mc = Minecraft.getInstance();
-    if (mc.level == null) return;
+    if (mc.level == null) {
+      return;
+    }
     var container = SubLevelContainer.getContainer(mc.level);
-    if (container == null) return;
+    if (container == null) {
+      return;
+    }
     var buffers = mc.renderBuffers().bufferSource();
     var lines = buffers.getBuffer(DevelopmentDebugRenderType.LINES);
     // AFTER_LEVEL supplies no populated pose stack; retain the world camera transform.
@@ -96,11 +117,15 @@ public final class IntestineDebugOverlay {
     var labels = new ArrayList<Label>();
     for (var graph : GRAPHS.values()) {
       var body = container.getSubLevel(graph.body());
-      if (!(body instanceof ClientSubLevel client) || body.isRemoved()) continue;
+      if (!(body instanceof ClientSubLevel client) || body.isRemoved()) {
+        continue;
+      }
       var transform = client.renderPose();
       var origin = body.getPlot().getCenterBlock();
       var nodes = new HashMap<BlockPos, Integer>();
-      for (var node : graph.nodes()) nodes.put(node.pos(), node.kind());
+      for (var node : graph.nodes()) {
+        nodes.put(node.pos(), node.kind());
+      }
       pose.pushPose();
       pose.translate(
           transform.position().x() - camera.x,
@@ -122,14 +147,17 @@ public final class IntestineDebugOverlay {
         for (var face : Direction.values()) {
           var next = node.pos().relative(face);
           if (!org.Azkerash.create_bioships.core.digestion.SubLevelDigestion.connected(
-              node.kind(), nodes.getOrDefault(next, 0), face)) continue;
+              node.kind(), nodes.getOrDefault(next, 0), face)) {
+            continue;
+          }
           degree++;
           neighbor = face;
           var end = point.relative(face, 1);
-          if (node.pos().compareTo(next) < 0)
+          if (node.pos().compareTo(next) < 0) {
             LevelRenderer.renderLineBox(
                 pose, lines, new AABB(point, end).inflate(.008), .25f, .75f, 1f, 1f);
-          if (node.kind() == 1 && nodes.get(next) != 1)
+          }
+          if (node.kind() == 1 && nodes.get(next) != 1) {
             LevelRenderer.renderLineBox(
                 pose,
                 lines,
@@ -138,6 +166,7 @@ public final class IntestineDebugOverlay {
                 1f,
                 .35f,
                 1f);
+          }
         }
         if (node.kind() != 1) {
           float red = node.kind() == 2 ? 1f : node.kind() == 3 ? .8f : .2f;
@@ -154,13 +183,14 @@ public final class IntestineDebugOverlay {
           var endpoint = degree == 0 ? point : point.relative(neighbor.getOpposite(), .5);
           LevelRenderer.renderLineBox(
               pose, lines, new AABB(endpoint, endpoint).inflate(.11), 1f, .15f, .15f, 1f);
-          if (degree == 1)
+          if (degree == 1) {
             LevelRenderer.renderLineBox(
                 pose, lines, new AABB(point, endpoint).inflate(.008), 1f, .3f, .3f, 1f);
+          }
         }
       }
       pose.popPose();
-      for (var node : graph.nodes())
+      for (var node : graph.nodes()) {
         if (node.slots() > 0) {
           var at =
               transform
@@ -197,6 +227,7 @@ public final class IntestineDebugOverlay {
             }
           }
         }
+      }
     }
     buffers.endBatch(DevelopmentDebugRenderType.LINES);
     // Fonts may switch/flush BufferSource's shared builder. Finish ALL geometry first.
@@ -232,11 +263,15 @@ public final class IntestineDebugOverlay {
 
   @SubscribeEvent
   public static void legend(RenderGuiEvent.Post event) {
-    if (!enabled) return;
+    if (!enabled) {
+      return;
+    }
     var mc = Minecraft.getInstance();
-    if (mc.level == null) return;
+    if (mc.level == null) {
+      return;
+    }
     var g = event.getGuiGraphics();
-    if (mc.screen == null)
+    if (mc.screen == null) {
       for (var strip : ITEM_STRIPS) {
         g.pose().pushPose();
         g.pose().translate(strip.x(), strip.y(), 0);
@@ -247,7 +282,9 @@ public final class IntestineDebugOverlay {
               net.minecraft.core.registries.BuiltInRegistries.ITEM
                   .get(item.item())
                   .getDefaultInstance();
-          if (stack.isEmpty()) continue;
+          if (stack.isEmpty()) {
+            continue;
+          }
           String count = Integer.toString(item.count());
           int width = Math.max(20, mc.font.width(count) + 4);
           int iconX = x + width - 20;
@@ -257,6 +294,7 @@ public final class IntestineDebugOverlay {
         }
         g.pose().popPose();
       }
+    }
 
     int y = mc.getWindow().getGuiScaledHeight() - 57;
     String label = "Digestion · red=open · green=connected · " + GRAPHS.size() + " creatures";

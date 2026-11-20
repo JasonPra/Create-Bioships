@@ -26,15 +26,18 @@ public final class SubLevelFlippers {
   private SubLevelFlippers() {}
 
   public static void request(ServerSubLevel body) {
-    if (body.isRemoved() || !SubLevelData.isLiving(body) || SubLevelCreatureParts.isPart(body))
+    if (body.isRemoved() || !SubLevelData.isLiving(body) || SubLevelCreatureParts.isPart(body)) {
       return;
+    }
     CREATURES.computeIfAbsent(
         body,
         b -> {
           var fins = new Fins();
-          for (var p : SubLevelHealth.blocks(b))
-            if (b.getLevel().getBlockState(p).is(ComponentRegistry.FLIPPER.get()))
+          for (var p : SubLevelHealth.blocks(b)) {
+            if (b.getLevel().getBlockState(p).is(ComponentRegistry.FLIPPER.get())) {
               fins.positions.add(p.immutable());
+            }
+          }
           SubLevelLocomotion.get(b);
           return fins;
         });
@@ -43,7 +46,9 @@ public final class SubLevelFlippers {
   public static void changed(ServerSubLevel body, BlockPos p, BlockState state) {
     var fins = CREATURES.get(body);
     if (fins == null) {
-      if (state.is(ComponentRegistry.FLIPPER.get())) request(body);
+      if (state.is(ComponentRegistry.FLIPPER.get())) {
+        request(body);
+      }
       return;
     }
     boolean changed =
@@ -68,22 +73,31 @@ public final class SubLevelFlippers {
 
   @SubscribeEvent
   public static void tick(net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) {
-    if (event.getServer().getTickCount() % 20 == 0)
+    if (event.getServer().getTickCount() % 20 == 0) {
       for (var level : event.getServer().getAllLevels()) {
         var container = SubLevelContainer.getContainer(level);
-        if (container != null)
-          for (var body : List.copyOf(container.getAllSubLevels())) request(body);
+        if (container != null) {
+          for (var body : List.copyOf(container.getAllSubLevels())) {
+            request(body);
+          }
+        }
       }
+    }
     CREATURES.keySet().removeIf(ServerSubLevel::isRemoved);
     for (var e : List.copyOf(CREATURES.entrySet())) {
       var fins = e.getValue();
       if (fins.dirty) {
-        if (!fins.positions.isEmpty() && fins.controller == null)
+        if (!fins.positions.isEmpty() && fins.controller == null) {
           fins.controller = new FlipperController(e.getKey());
-        if (fins.controller != null) fins.controller.rebuild(fins.positions);
+        }
+        if (fins.controller != null) {
+          fins.controller.rebuild(fins.positions);
+        }
         fins.dirty = false;
       }
-      if (fins.controller != null) fins.controller.update();
+      if (fins.controller != null) {
+        fins.controller.update();
+      }
     }
   }
 
@@ -91,11 +105,16 @@ public final class SubLevelFlippers {
   public static void physics(
       dev.ryanhcode.sable.neoforge.event.ForgeSablePrePhysicsTickEvent event) {
     double dt = event.getTimeStep();
-    if (!(dt > 0 && dt <= .1)) return;
-    for (var e : List.copyOf(CREATURES.entrySet()))
+    if (!(dt > 0 && dt <= .1)) {
+      return;
+    }
+    for (var e : List.copyOf(CREATURES.entrySet())) {
       if (!e.getKey().isRemoved()
           && e.getKey().getLevel() == event.getPhysicsSystem().getLevel()
-          && e.getValue().controller != null) e.getValue().controller.physics(dt);
+          && e.getValue().controller != null) {
+        e.getValue().controller.physics(dt);
+      }
+    }
   }
 
   @SubscribeEvent

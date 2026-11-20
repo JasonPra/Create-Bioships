@@ -17,8 +17,9 @@ public final class LimbPositionerItem extends Item {
       net.minecraft.world.InteractionHand hand) {
     if (player instanceof net.minecraft.server.level.ServerPlayer server) {
       var target = org.Azkerash.create_bioships.compat.letitwalk.SocketJointActions.pick(server);
-      if (target == null)
+      if (target == null) {
         return net.minecraft.world.InteractionResultHolder.pass(player.getItemInHand(hand));
+      }
       org.Azkerash.create_bioships.compat.letitwalk.SocketJointActions.show(server, target);
     }
     return net.minecraft.world.InteractionResultHolder.sidedSuccess(
@@ -28,7 +29,9 @@ public final class LimbPositionerItem extends Item {
   @Override
   public InteractionResult useOn(UseOnContext context) {
     var joint = org.Azkerash.create_bioships.compat.letitwalk.SocketJointActions.useOn(context);
-    if (joint != InteractionResult.PASS) return joint;
+    if (joint != InteractionResult.PASS) {
+      return joint;
+    }
     return org.Azkerash.create_bioships.compat.letitwalk.LimbPositionerActions.use(
         org.Azkerash.create_bioships.compat.letitwalk.CompactLimbController.socketContext(context));
   }

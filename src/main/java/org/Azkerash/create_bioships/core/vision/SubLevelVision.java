@@ -45,22 +45,29 @@ public final class SubLevelVision {
     Controller(ServerSubLevel body) {
       for (var pos : SubLevelHealth.blocks(body)) {
         var state = body.getLevel().getBlockState(pos);
-        if (EyeVisionProfile.of(state) != null) organs.put(pos.immutable(), state);
+        if (EyeVisionProfile.of(state) != null) {
+          organs.put(pos.immutable(), state);
+        }
       }
     }
 
     void rebuild() {
-      if (!dirty) return;
+      if (!dirty) {
+        return;
+      }
       var result = new ArrayList<Eye>();
       organs.entrySet().stream()
           .sorted(Map.Entry.comparingByKey())
           .forEach(
               e -> {
-                if (e.getValue().is(ComponentRegistry.CORE.get()))
-                  for (var face : Direction.values()) result.add(new Eye(e.getKey(), face));
-                else
+                if (e.getValue().is(ComponentRegistry.CORE.get())) {
+                  for (var face : Direction.values()) {
+                    result.add(new Eye(e.getKey(), face));
+                  }
+                } else {
                   result.add(
                       new Eye(e.getKey(), e.getValue().getValue(BlockStateProperties.FACING)));
+                }
               });
       eyes = List.copyOf(result);
       cache.keySet().retainAll(eyes);
@@ -73,7 +80,9 @@ public final class SubLevelVision {
 
   public static void changed(ServerSubLevel body, BlockPos pos, BlockState state) {
     var controller = CONTROLLERS.get(body);
-    if (controller == null) return;
+    if (controller == null) {
+      return;
+    }
     var old = controller.organs.get(pos);
     if (EyeVisionProfile.of(state) == null) {
       if (old != null) {
@@ -98,9 +107,13 @@ public final class SubLevelVision {
   }
 
   public static List<Sight> sights(ServerSubLevel body) {
-    if (!active(body)) return List.of();
+    if (!active(body)) {
+      return List.of();
+    }
     var controller = CONTROLLERS.get(body);
-    if (controller == null) return List.of();
+    if (controller == null) {
+      return List.of();
+    }
     controller.rebuild();
     long now = body.getLevel().getGameTime();
     return controller.cache.values().stream()
@@ -111,18 +124,23 @@ public final class SubLevelVision {
   public static List<VisionDetection.Observation> detected(ServerSubLevel body) {
     var seen = new LinkedHashMap<UUID, VisionDetection.Observation>();
     long now = body.getLevel().getGameTime();
-    for (var member : SubLevelCreatureParts.members(body))
-      for (var sight : sights(member))
-        for (var target : sight.detected())
-          if (now - target.tick() <= 40)
+    for (var member : SubLevelCreatureParts.members(body)) {
+      for (var sight : sights(member)) {
+        for (var target : sight.detected()) {
+          if (now - target.tick() <= 40) {
             seen.merge(target.key(), target, (a, b) -> a.tick() > b.tick() ? a : b);
+          }
+        }
+      }
+    }
     return List.copyOf(seen.values());
   }
 
   private static boolean injured(ServerSubLevel body, Eye eye, long now) {
     var wounds = SubLevelWounds.state(body);
-    if (body.getLevel().getBlockState(eye.cell).is(ComponentRegistry.CORE.get()))
+    if (body.getLevel().getBlockState(eye.cell).is(ComponentRegistry.CORE.get())) {
       return wounds.active(eye.cell, eye.face, now);
+    }
     return wounds.active(now).stream().anyMatch(w -> w.surface().cell().equals(eye.cell));
   }
 
@@ -204,12 +222,18 @@ public final class SubLevelVision {
     var bodies = new ArrayList<ServerSubLevel>();
     for (var level : event.getServer().getAllLevels()) {
       var container = SubLevelContainer.getContainer(level);
-      if (container != null)
-        for (var entry : container.getAllSubLevels())
-          if (entry instanceof ServerSubLevel body && active(body)) bodies.add(body);
+      if (container != null) {
+        for (var entry : container.getAllSubLevels()) {
+          if (entry instanceof ServerSubLevel body && active(body)) {
+            bodies.add(body);
+          }
+        }
+      }
     }
     CONTROLLERS.keySet().retainAll(bodies);
-    if (event.getServer().getTickCount() % INTERVAL != 0 || bodies.isEmpty()) return;
+    if (event.getServer().getTickCount() % INTERVAL != 0 || bodies.isEmpty()) {
+      return;
+    }
     int remaining = EYES_PER_TICK;
     for (int i = 0; i < bodies.size() && remaining > 0; i++) {
       var body = bodies.get(Math.floorMod(gridCursor++, bodies.size()));

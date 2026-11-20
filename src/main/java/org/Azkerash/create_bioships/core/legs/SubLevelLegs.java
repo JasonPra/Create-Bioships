@@ -29,7 +29,9 @@ public final class SubLevelLegs {
       Collections.newSetFromMap(new IdentityHashMap<>());
 
   private static void observe(ServerSubLevel body) {
-    if (!OBSERVED.add(body.getLevel())) return;
+    if (!OBSERVED.add(body.getLevel())) {
+      return;
+    }
     SubLevelContainer.getContainer(body.getLevel())
         .addObserver(
             new dev.ryanhcode.sable.api.sublevel.SubLevelObserver() {
@@ -37,12 +39,17 @@ public final class SubLevelLegs {
               public void onSubLevelRemoved(
                   dev.ryanhcode.sable.sublevel.SubLevel removed,
                   dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason reason) {
-                if (!(removed instanceof ServerSubLevel server)) return;
+                if (!(removed instanceof ServerSubLevel server)) {
+                  return;
+                }
                 var controller = CONTROLLERS.get(server);
-                if (controller == null) return;
+                if (controller == null) {
+                  return;
+                }
                 controller.close();
-                if (reason == dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason.REMOVED)
+                if (reason == dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason.REMOVED) {
                   DELETED.add(server);
+                }
               }
             });
   }
@@ -59,7 +66,9 @@ public final class SubLevelLegs {
   public static void initialize(ServerSubLevel body) {
     request(body);
     var controller = CONTROLLERS.get(body);
-    if (controller != null) controller.update();
+    if (controller != null) {
+      controller.update();
+    }
   }
 
   public static void changed(ServerSubLevel body, BlockPos pos, BlockState state) {
@@ -67,7 +76,9 @@ public final class SubLevelLegs {
     if (c != null && (state.is(ComponentRegistry.CRAB_LEG.get()) || c.hasSocket(pos))) {
       org.Azkerash.create_bioships.core.locomotion.SubLevelLocomotion.invalidateRoutes(body);
       c.changed(pos, state);
-    } else if (state.is(ComponentRegistry.CRAB_LEG.get())) request(body);
+    } else if (state.is(ComponentRegistry.CRAB_LEG.get())) {
+      request(body);
+    }
   }
 
   public static List<Pose> poses(ServerSubLevel body) {
@@ -113,11 +124,11 @@ public final class SubLevelLegs {
 
   @SubscribeEvent
   public static void tick(net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) {
-    if (event.getServer().getTickCount() % 20 == 0)
+    if (event.getServer().getTickCount() % 20 == 0) {
       for (var level : event.getServer().getAllLevels()) {
         var container = SubLevelContainer.getContainer(level);
-        if (container != null)
-          for (var body : List.copyOf(container.getAllSubLevels()))
+        if (container != null) {
+          for (var body : List.copyOf(container.getAllSubLevels())) {
             if (body.getUserDataTag() != null
                 && body.getUserDataTag().contains(CompactLimbController.PART)) {
               var owner = SubLevelCreatureParts.root(body);
@@ -129,19 +140,28 @@ public final class SubLevelLegs {
               if ((owner != body
                       && (!level.getBlockState(socket).is(ComponentRegistry.CRAB_LEG.get())
                           || !CompactLimbController.ownsSavedSegment(owner, body)))
-                  || (!SubLevelCreatureParts.isPart(body) && SubLevelHealth.status(body).dead()))
+                  || (!SubLevelCreatureParts.isPart(body) && SubLevelHealth.status(body).dead())) {
                 container.removeSubLevel(
                     body, dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason.REMOVED);
+              }
             } else if (SubLevelData.isLiving(body)
                 && !SubLevelCreatureParts.isPart(body)
-                && !CONTROLLERS.containsKey(body)) request(body);
+                && !CONTROLLERS.containsKey(body)) {
+              request(body);
+            }
+          }
+        }
       }
+    }
     var it = CONTROLLERS.entrySet().iterator();
     while (it.hasNext()) {
       var e = it.next();
       if (e.getKey().isRemoved()) {
-        if (DELETED.remove(e.getKey())) e.getValue().removed();
-        else e.getValue().close();
+        if (DELETED.remove(e.getKey())) {
+          e.getValue().removed();
+        } else {
+          e.getValue().close();
+        }
         it.remove();
       }
     }
@@ -150,13 +170,16 @@ public final class SubLevelLegs {
       var body = e.getKey();
       if (body.getLevel().getGameTime() % 4 == 0) {
         var payload = new LegPosePayload(body.getUniqueId(), e.getValue().poses());
-        for (var player : body.getLevel().players())
+        for (var player : body.getLevel().players()) {
           if (player
                   .position()
                   .distanceToSqr(
                       body.logicalPose()
                           .transformPosition(Vec3.atCenterOf(body.getPlot().getCenterBlock())))
-              < 192 * 192) PacketDistributor.sendToPlayer(player, payload);
+              < 192 * 192) {
+            PacketDistributor.sendToPlayer(player, payload);
+          }
+        }
       }
     }
   }
@@ -165,10 +188,14 @@ public final class SubLevelLegs {
   public static void physics(
       dev.ryanhcode.sable.neoforge.event.ForgeSablePrePhysicsTickEvent event) {
     double dt = event.getTimeStep();
-    if (!(dt > 0 && dt <= .1)) return;
-    for (var e : List.copyOf(CONTROLLERS.entrySet()))
-      if (!e.getKey().isRemoved() && e.getKey().getLevel() == event.getPhysicsSystem().getLevel())
+    if (!(dt > 0 && dt <= .1)) {
+      return;
+    }
+    for (var e : List.copyOf(CONTROLLERS.entrySet())) {
+      if (!e.getKey().isRemoved() && e.getKey().getLevel() == event.getPhysicsSystem().getLevel()) {
         e.getValue().physics(dt);
+      }
+    }
   }
 
   @SubscribeEvent

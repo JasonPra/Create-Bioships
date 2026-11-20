@@ -35,7 +35,9 @@ public final class CoreCombatHurtbox extends EyeCombatHurtbox {
             .stream()
             .min(java.util.Comparator.comparingDouble(m -> m.position().distanceToSqr(center)))
             .orElse(null);
-    if (threat == null) return impactFace;
+    if (threat == null) {
+      return impactFace;
+    }
     var local =
         body.logicalPose()
             .transformPositionInverse(threat.getEyePosition())

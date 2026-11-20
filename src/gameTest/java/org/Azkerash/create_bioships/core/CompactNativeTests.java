@@ -69,11 +69,16 @@ public final class CompactNativeTests {
       GameTestHelper h, int baseX, int delay, int height, boolean armored, boolean editRestPose) {
     var level = h.getLevel();
     var base = new BlockPos(baseX, 80, 128);
-    for (int x = (baseX >> 4) - 2; x <= (baseX >> 4) + 2; x++)
-      for (int z = 6; z <= 10; z++) level.setChunkForced(x, z, true);
-    for (int x = -18; x <= 18; x++)
-      for (int z = -18; z <= 25; z++)
+    for (int x = (baseX >> 4) - 2; x <= (baseX >> 4) + 2; x++) {
+      for (int z = 6; z <= 10; z++) {
+        level.setChunkForced(x, z, true);
+      }
+    }
+    for (int x = -18; x <= 18; x++) {
+      for (int z = -18; z <= 25; z++) {
         level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 3);
+      }
+    }
     h.runAfterDelay(
         delay,
         () -> {
@@ -99,7 +104,7 @@ public final class CompactNativeTests {
                 level.setBlock(p, s, 3);
                 cells.add(p);
               });
-          for (int x : new int[] {-1, 1})
+          for (int x : new int[] {-1, 1}) {
             for (int z : new int[] {-1, 1}) {
               var p = base.offset(x, 1, z);
               level.setBlock(
@@ -114,14 +119,17 @@ public final class CompactNativeTests {
                   3);
               cells.add(p);
             }
+          }
           if (armored) {
-            for (int x = -1; x <= 1; x++)
-              for (int z = -1; z <= 1; z++)
+            for (int x = -1; x <= 1; x++) {
+              for (int z = -1; z <= 1; z++) {
                 for (int y = 3; y <= 4; y++) {
                   var cell = base.offset(x, y, z);
                   level.setBlock(cell, ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState(), 3);
                   cells.add(cell);
                 }
+              }
+            }
           }
           var body =
               SubLevelAssemblyHelper.assembleBlocks(
@@ -141,14 +149,18 @@ public final class CompactNativeTests {
 
             public void run() {
               tick += 5;
-              if ((tick >= 360 && tick < 440) || tick == 520)
+              if ((tick >= 360 && tick < 440) || tick == 520) {
                 BrainMotorControls.move(body, new Vec3(.4, 0, 0), 0, 20);
-              if (tick == 440) BrainMotorControls.stop(body);
-              if (tick < 360 || (tick >= 440 && tick < 520) || tick >= 540)
+              }
+              if (tick == 440) {
+                BrainMotorControls.stop(body);
+              }
+              if (tick < 360 || (tick >= 440 && tick < 520) || tick >= 540) {
                 h.assertTrue(
                     BrainMotorControls.current(body).expires() == 0
                         && BrainMotorControls.current(body).velocity().equals(Vec3.ZERO),
                     "Standing invented or retained a movement request");
+              }
               h.assertTrue(
                   org.Azkerash.create_bioships
                       .core
@@ -184,15 +196,16 @@ public final class CompactNativeTests {
                 h.assertTrue(
                     SubLevelHealth.status(body).maximum() == capacity,
                     "Hidden limb tissue duplicated creature health");
-                for (var part : SubLevelLegs.segments(body))
+                for (var part : SubLevelLegs.segments(body)) {
                   h.assertTrue(
                       SubLevelCreatureParts.root(part) == body, "Limb lost its brain/health owner");
+                }
               }
               if (tick >= 140) {
                 var up = body.logicalPose().orientation().transform(new org.joml.Vector3d(0, 1, 0));
                 var center = body.logicalPose().transformPosition(Vec3.atCenterOf(logical.below()));
                 double clearance = center.y - .5 - base.getY();
-                if (tick % 40 == 0)
+                if (tick % 40 == 0) {
                   System.out.println(
                       "COMPACT_NATIVE_SOAK height="
                           + height
@@ -206,6 +219,7 @@ public final class CompactNativeTests {
                           + clearance
                           + " contacts="
                           + SubLevelLegs.contacts(body));
+                }
                 h.assertTrue(
                     up.y > .85, "Small creature lost upright stance at " + tick + ": " + up.y);
                 h.assertTrue(
@@ -228,16 +242,20 @@ public final class CompactNativeTests {
                         + SubLevelLegs.collisionBounds(body));
               }
               if (editRestPose && tick == 180) {
-                for (int x = 7; x <= 9; x++)
-                  for (int z = -1; z <= 1; z++)
+                for (int x = 7; x <= 9; x++) {
+                  for (int z = -1; z <= 1; z++) {
                     level.setBlock(base.offset(x, 0, z), Blocks.BEDROCK.defaultBlockState(), 3);
-                for (var pose : SubLevelLegs.poses(body))
-                  for (int i = 0; i < 3; i++)
+                  }
+                }
+                for (var pose : SubLevelLegs.poses(body)) {
+                  for (int i = 0; i < 3; i++) {
                     new org.Azkerash.create_bioships.compat.letitwalk.SocketJointSettings(0, 0)
                         .save(
                             body,
                             org.Azkerash.create_bioships.compat.letitwalk.SocketJointSettings
                                 .compact(pose.cell(), i));
+                  }
+                }
                 var goal =
                     org.Azkerash.create_bioships
                         .core
@@ -265,12 +283,14 @@ public final class CompactNativeTests {
                                 .GROUND)
                         .found(),
                     "Pathfinder routed locked joints up a full block");
-                for (var pose : SubLevelLegs.poses(body))
-                  for (int i = 0; i < 3; i++)
+                for (var pose : SubLevelLegs.poses(body)) {
+                  for (int i = 0; i < 3; i++) {
                     org.Azkerash.create_bioships.compat.letitwalk.SocketJointSettings.DEFAULT.save(
                         body,
                         org.Azkerash.create_bioships.compat.letitwalk.SocketJointSettings.compact(
                             pose.cell(), i));
+                  }
+                }
                 h.assertTrue(
                     org.Azkerash.create_bioships
                         .core
@@ -317,9 +337,10 @@ public final class CompactNativeTests {
                             .map(p -> p.getUniqueId())
                             .collect(java.util.stream.Collectors.toSet())),
                     "Native rest-pose change replaced physical segments");
-                if (tick == 280)
+                if (tick == 280) {
                   org.Azkerash.create_bioships.compat.letitwalk.LimbTuning.DEFAULT.save(
                       level, tuned);
+                }
               }
               if (tick == 350) {
                 var ids =
@@ -350,12 +371,14 @@ public final class CompactNativeTests {
                       List.of(
                           pending.getCompound("Leg"),
                           pending.getCompound("Runtime").getCompound("built"),
-                          pending.getCompound("Runtime").getCompound("BioshipSocketBase")))
+                          pending.getCompound("Runtime").getCompound("BioshipSocketBase"))) {
                     for (var rawSegment : definition.getList("segments", 10)) {
                       var segment = (net.minecraft.nbt.CompoundTag) rawSegment;
-                      if (segment.hasUUID("id") && segment.getUUID("id").equals(oldId))
+                      if (segment.hasUUID("id") && segment.getUUID("id").equals(oldId)) {
                         segment.putUUID("id", missing);
+                      }
                     }
+                  }
                   var rootData = body.getUserDataTag().copy();
                   rootData.put(CompactLimbController.DATA, delayed);
                   body.setUserDataTag(rootData);
@@ -467,7 +490,9 @@ public final class CompactNativeTests {
                           "Wrench removal injured the creature");
                       h.succeed();
                     });
-              } else h.runAfterDelay(5, () -> this.run());
+              } else {
+                h.runAfterDelay(5, () -> this.run());
+              }
             }
           }
           h.runAfterDelay(5, new Sample());

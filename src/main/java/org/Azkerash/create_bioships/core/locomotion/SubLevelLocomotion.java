@@ -44,8 +44,9 @@ public final class SubLevelLocomotion {
 
   public static void registerStepHeight(
       ResourceLocation type, java.util.function.Function<ServerSubLevel, Double> provider) {
-    if (STEP_HEIGHTS.putIfAbsent(type, provider) != null)
+    if (STEP_HEIGHTS.putIfAbsent(type, provider) != null) {
       throw new IllegalArgumentException("Duplicate step-height provider: " + type);
+    }
   }
 
   public static double stepHeight(ServerSubLevel body) {
@@ -53,7 +54,9 @@ public final class SubLevelLocomotion {
     double height = 1;
     for (var provider : STEP_HEIGHTS.values()) {
       var limit = provider.apply(body);
-      if (limit != null) height = Math.min(height, Math.max(0, limit));
+      if (limit != null) {
+        height = Math.min(height, Math.max(0, limit));
+      }
     }
     return height;
   }
@@ -61,8 +64,9 @@ public final class SubLevelLocomotion {
   public static void registerBounds(
       ResourceLocation type,
       java.util.function.Function<ServerSubLevel, net.minecraft.world.phys.AABB> provider) {
-    if (BOUNDS.putIfAbsent(type, provider) != null)
+    if (BOUNDS.putIfAbsent(type, provider) != null) {
       throw new IllegalArgumentException("Duplicate appendage bounds: " + type);
+    }
   }
 
   public static net.minecraft.world.phys.AABB bounds(ServerSubLevel body) {
@@ -79,7 +83,9 @@ public final class SubLevelLocomotion {
                   box.minX(), box.minY(), box.minZ(), box.maxX(), box.maxY(), box.maxZ()));
       for (var provider : BOUNDS.values()) {
         var extra = provider.apply(member);
-        if (extra != null) result = result.minmax(extra);
+        if (extra != null) {
+          result = result.minmax(extra);
+        }
       }
     }
     return result;
@@ -92,7 +98,9 @@ public final class SubLevelLocomotion {
     this.body = body;
     for (var p : SubLevelHealth.blocks(body)) {
       int types = classify(body.getLevel().getBlockState(p));
-      if (types != 0) appendages.put(p.immutable(), types);
+      if (types != 0) {
+        appendages.put(p.immutable(), types);
+      }
     }
     save();
   }
@@ -114,12 +122,19 @@ public final class SubLevelLocomotion {
 
   public static void changed(ServerSubLevel body, BlockPos pos, BlockState state) {
     var census = CENSUSES.get(body);
-    if (census == null) return;
+    if (census == null) {
+      return;
+    }
     int type = classify(state);
     int previous = census.appendages.getOrDefault(pos, 0);
-    if (type == previous) return;
-    if (type == 0) census.appendages.remove(pos);
-    else census.appendages.put(pos.immutable(), type);
+    if (type == previous) {
+      return;
+    }
+    if (type == 0) {
+      census.appendages.remove(pos);
+    } else {
+      census.appendages.put(pos.immutable(), type);
+    }
     census.save();
   }
 
@@ -128,12 +143,16 @@ public final class SubLevelLocomotion {
     if (census == null) {
       census = new SubLevelLocomotion(body);
       CENSUSES.put(body, census);
-    } else census.save();
+    } else {
+      census.save();
+    }
   }
 
   private void save() {
     int types = 0;
-    for (int value : appendages.values()) types |= value;
+    for (int value : appendages.values()) {
+      types |= value;
+    }
     var owner = SubLevelCreatureParts.root(body);
     if (owner != body) {
       SubLevelCreatureParts.locomotionContribution(body, types);
@@ -157,7 +176,9 @@ public final class SubLevelLocomotion {
 
   @SubscribeEvent
   public static void tags(net.neoforged.neoforge.event.TagsUpdatedEvent event) {
-    if (!event.shouldUpdateStaticData()) return;
+    if (!event.shouldUpdateStaticData()) {
+      return;
+    }
     CENSUSES.clear();
   }
 }

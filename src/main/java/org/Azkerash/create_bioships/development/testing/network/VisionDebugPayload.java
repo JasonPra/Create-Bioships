@@ -18,8 +18,9 @@ public record VisionDebugPayload(UUID body, List<Ray> rays, List<Vec3> targets)
   public VisionDebugPayload {
     rays = List.copyOf(rays);
     targets = List.copyOf(targets);
-    if (rays.size() > 416 || targets.size() > 128)
+    if (rays.size() > 416 || targets.size() > 128) {
       throw new IllegalArgumentException("Vision snapshot too large");
+    }
   }
 
   public static final int MAX_RAYS = 416;
@@ -47,18 +48,23 @@ public record VisionDebugPayload(UUID body, List<Ray> rays, List<Vec3> targets)
               b.writeBoolean(ray.blocked());
               b.writeBoolean(ray.unloaded());
               b.writeBoolean(ray.hitBody() != null);
-              if (ray.hitBody() != null) b.writeUUID(ray.hitBody());
+              if (ray.hitBody() != null) {
+                b.writeUUID(ray.hitBody());
+              }
             }
             b.writeVarInt(p.targets.size());
-            for (var target : p.targets) vector(b, target);
+            for (var target : p.targets) {
+              vector(b, target);
+            }
           },
           b -> {
             var id = b.readUUID();
             int count = b.readVarInt();
-            if (count < 0 || count > MAX_RAYS)
+            if (count < 0 || count > MAX_RAYS) {
               throw new IllegalArgumentException("Invalid vision sample count");
+            }
             var rays = new ArrayList<Ray>();
-            for (int i = 0; i < count; i++)
+            for (int i = 0; i < count; i++) {
               rays.add(
                   new Ray(
                       vector(b),
@@ -66,11 +72,15 @@ public record VisionDebugPayload(UUID body, List<Ray> rays, List<Vec3> targets)
                       b.readBoolean(),
                       b.readBoolean(),
                       b.readBoolean() ? b.readUUID() : null));
+            }
             int targetCount = b.readVarInt();
-            if (targetCount < 0 || targetCount > 128)
+            if (targetCount < 0 || targetCount > 128) {
               throw new IllegalArgumentException("Invalid vision target count");
+            }
             var targets = new ArrayList<Vec3>();
-            for (int i = 0; i < targetCount; i++) targets.add(vector(b));
+            for (int i = 0; i < targetCount; i++) {
+              targets.add(vector(b));
+            }
             return new VisionDebugPayload(id, List.copyOf(rays), targets);
           });
 

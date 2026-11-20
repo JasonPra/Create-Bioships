@@ -14,12 +14,13 @@ public final class DevelopmentJuniorFixtureTests {
       GameTestHelper h) {
     var l = h.getLevel();
     var base = NecromancerDenFixture.base(l);
-    for (int x = -20; x <= 20; x++)
+    for (int x = -20; x <= 20; x++) {
       for (int z = -20; z <= 20; z++) {
         var p = base.offset(x, -1, z);
         l.setChunkForced(p.getX() >> 4, p.getZ() >> 4, true);
         l.setBlock(p, Blocks.BEDROCK.defaultBlockState(), 2);
       }
+    }
     h.runAfterDelay(
         20,
         () -> {

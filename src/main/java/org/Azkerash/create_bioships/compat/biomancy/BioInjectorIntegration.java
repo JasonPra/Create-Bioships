@@ -20,12 +20,16 @@ public final class BioInjectorIntegration {
       ItemStack stack,
       Predicate<Serum> accepts,
       Consumer<Serum> apply) {
-    if (!(stack.getItem() instanceof InjectorItem injector))
+    if (!(stack.getItem() instanceof InjectorItem injector)) {
       return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+    }
     var serum = injector.getSerum(stack);
-    if (player.getCooldowns().isOnCooldown(injector) || serum.isEmpty() || !accepts.test(serum))
+    if (player.getCooldowns().isOnCooldown(injector) || serum.isEmpty() || !accepts.test(serum)) {
       return ItemInteractionResult.FAIL;
-    if (level.isClientSide) return ItemInteractionResult.SUCCESS;
+    }
+    if (level.isClientSide) {
+      return ItemInteractionResult.SUCCESS;
+    }
     apply.accept(serum);
     injector.consumeSerum(stack, player);
     injector.setInjectionSuccess(stack, true);
@@ -38,12 +42,13 @@ public final class BioInjectorIntegration {
         1,
         1);
     if (player instanceof ServerPlayer server
-        && server.connection.getConnection().channel() != null)
+        && server.connection.getConnection().channel() != null) {
       injector.triggerAnim(
           player,
           software.bernie.geckolib.animatable.GeoItem.getOrAssignId(stack, (ServerLevel) level),
           "main",
           "inject");
+    }
     return ItemInteractionResult.CONSUME;
   }
 }

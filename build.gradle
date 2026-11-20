@@ -196,3 +196,17 @@ neoForge.runs.named('gameTestServer').configure { RunModel run ->
 }
 tasks.register('resetGameTestWorld', Delete) { Delete resetTask -> resetTask.delete layout.buildDirectory.dir('gametest-run/world') }
 tasks.named('prepareGameTestServerRun', Task) { Task prepareTask -> prepareTask.dependsOn 'resetGameTestWorld' }
+
+// Keep single-statement branches explicit; parse the AST so nested else-if chains stay intact.
+tasks.register('checkControlFlowBraces', Exec) {
+    def checkerJava = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+    inputs.files(fileTree('src') { include '**/*.java' })
+    inputs.file('tools/CheckControlFlowBraces.java')
+    commandLine checkerJava.get().executablePath.asFile.absolutePath,
+        '--source', '21', 'tools/CheckControlFlowBraces.java', 'src'
+}
+tasks.named('check', Task) {
+    dependsOn tasks.named('checkControlFlowBraces')
+}

@@ -33,7 +33,9 @@ public final class ModularJointEntity extends LegJointBlockEntity {
       net.minecraft.core.HolderLookup.Provider registries,
       boolean clientPacket) {
     super.read(tag, registries, clientPacket);
-    if (tag.hasUUID("BioshipJointId")) componentIdentity = tag.getUUID("BioshipJointId");
+    if (tag.hasUUID("BioshipJointId")) {
+      componentIdentity = tag.getUUID("BioshipJointId");
+    }
   }
 
   @Override

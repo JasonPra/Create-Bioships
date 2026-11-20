@@ -14,16 +14,22 @@ public final class NativeLegReference {
   public record Reference(ServerSubLevel body, BlockPos core, WalkerCoreBlockEntity walker) {}
 
   public static Reference create(ServerLevel level, BlockPos base) {
-    for (int cx = (base.getX() - 16) >> 4; cx <= (base.getX() + 16) >> 4; cx++)
-      for (int cz = (base.getZ() - 16) >> 4; cz <= (base.getZ() + 16) >> 4; cz++)
+    for (int cx = (base.getX() - 16) >> 4; cx <= (base.getX() + 16) >> 4; cx++) {
+      for (int cz = (base.getZ() - 16) >> 4; cz <= (base.getZ() + 16) >> 4; cz++) {
         level.setChunkForced(cx, cz, true);
-    for (int x = -14; x <= 14; x++)
-      for (int z = -14; z <= 14; z++)
+      }
+    }
+    for (int x = -14; x <= 14; x++) {
+      for (int z = -14; z <= 14; z++) {
         level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 2);
-    for (int x = -1; x <= 1; x++)
-      for (int z = -2; z <= 2; z++)
+      }
+    }
+    for (int x = -1; x <= 1; x++) {
+      for (int z = -2; z <= 2; z++) {
         level.setBlock(
             base.offset(x, 4, z), ModContent.KLAXIUM_CASING.get().defaultBlockState(), 3);
+      }
+    }
     var core = base.above(4);
     level.setBlock(
         core,
@@ -45,7 +51,7 @@ public final class NativeLegReference {
     motorBe.generatedSpeed.setValue(32);
     motorBe.updateGeneratedRotation();
     var beam = com.simibubi.create.AllBlocks.METAL_GIRDER.getDefaultState();
-    for (int side : new int[] {-1, 1})
+    for (int side : new int[] {-1, 1}) {
       for (int z : new int[] {-2, 2}) {
         var hip = base.offset(side * 2, 4, z);
         var knee = base.offset(side * 4, 4, z);
@@ -66,8 +72,9 @@ public final class NativeLegReference {
         level.setBlock(knee.below(2), beam, 3);
         level.setBlock(knee.below(3), ModContent.LEG_FOOT.get().defaultBlockState(), 3);
       }
+    }
     var result = BuiltLegAssembler.assemble(level, core);
-    for (var entry : SubLevelContainer.getContainer(level).getAllSubLevels())
+    for (var entry : SubLevelContainer.getContainer(level).getAllSubLevels()) {
       if (entry instanceof ServerSubLevel body) {
         var c = body.getPlot().getCenterBlock();
         if (level.getBlockEntity(c) instanceof WalkerCoreBlockEntity walker
@@ -75,19 +82,24 @@ public final class NativeLegReference {
             && body.logicalPose()
                     .transformPosition(net.minecraft.world.phys.Vec3.atCenterOf(c))
                     .distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(core))
-                < 4) return new Reference(body, c, walker);
+                < 4) {
+          return new Reference(body, c, walker);
+        }
       }
+    }
     throw new IllegalStateException("Native reference failed: " + result.getString());
   }
 
   public static double gap(Reference ref) {
     var container = SubLevelContainer.getContainer(ref.body.getLevel());
     double gap = 0;
-    for (var leg : ref.walker.legs)
+    for (var leg : ref.walker.legs) {
       for (var j : leg.built.joints) {
         var a = container.getSubLevel(j.parent);
         var b = container.getSubLevel(j.child);
-        if (a == null || b == null) return Double.POSITIVE_INFINITY;
+        if (a == null || b == null) {
+          return Double.POSITIVE_INFINITY;
+        }
         gap =
             Math.max(
                 gap,
@@ -95,6 +107,7 @@ public final class NativeLegReference {
                     .transformPosition(j.parentPlot)
                     .distanceTo(b.logicalPose().transformPosition(j.childPlot)));
       }
+    }
     return gap;
   }
 }

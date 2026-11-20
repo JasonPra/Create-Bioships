@@ -20,12 +20,16 @@ public final class SubLevelCombatTests {
   public static void native_melee_projectile_and_hostile_targeting(GameTestHelper helper) {
     var level = helper.getLevel();
     var origin = new BlockPos(128, 80, 128);
-    for (int x = -5; x <= 5; x++)
-      for (int z = -5; z <= 5; z++)
+    for (int x = -5; x <= 5; x++) {
+      for (int z = -5; z <= 5; z++) {
         level.setBlock(origin.offset(x, -2, z), Blocks.BEDROCK.defaultBlockState(), 3);
-    for (int x = (origin.getX() - 6) >> 4; x <= (origin.getX() + 6) >> 4; x++)
-      for (int z = (origin.getZ() - 6) >> 4; z <= (origin.getZ() + 6) >> 4; z++)
+      }
+    }
+    for (int x = (origin.getX() - 6) >> 4; x <= (origin.getX() + 6) >> 4; x++) {
+      for (int z = (origin.getZ() - 6) >> 4; z <= (origin.getZ() + 6) >> 4; z++) {
         level.setChunkForced(x, z, true);
+      }
+    }
     helper
         .startSequence()
         .thenWaitUntil(
@@ -77,7 +81,9 @@ public final class SubLevelCombatTests {
         () -> {
           target.invulnerableTime = 0;
           double before = SubLevelHealth.status(body).current();
-          for (int i = 0; i < 25; i++) player.doTick();
+          for (int i = 0; i < 25; i++) {
+            player.doTick();
+          }
           player.attack(target);
           double sword = before - SubLevelHealth.status(body).current();
           helper.assertTrue(
@@ -101,8 +107,9 @@ public final class SubLevelCombatTests {
               () -> {
                 target.tick();
                 zombie.getSensing().tick();
-                for (int i = 0; i < 100 && zombie.getTarget() == null; i++)
+                for (int i = 0; i < 100 && zombie.getTarget() == null; i++) {
                   zombie.targetSelector.tick();
+                }
                 helper.assertTrue(
                     zombie.getTarget() instanceof SubLevelCombatTarget acquired
                         && acquired.body() == body,
@@ -146,7 +153,9 @@ public final class SubLevelCombatTests {
                 arrow.setDeltaMovement(0, 0, 2);
                 double arrowBefore = SubLevelHealth.status(body).current();
                 level.addFreshEntity(arrow);
-                for (int i = 0; i < 3 && !arrow.isRemoved(); i++) arrow.tick();
+                for (int i = 0; i < 3 && !arrow.isRemoved(); i++) {
+                  arrow.tick();
+                }
                 helper.assertTrue(
                     SubLevelHealth.status(body).current() < arrowBefore,
                     "Arrow did not collide with the real Sable grid");

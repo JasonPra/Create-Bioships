@@ -24,10 +24,16 @@ public final class CoreFacePlacementTests {
   public static void every_face_accepts_blocks_despite_combat_hurtboxes(GameTestHelper helper) {
     var level = helper.getLevel();
     var origin = new BlockPos(608, 80, 128);
-    for (int x = 37; x <= 39; x++) for (int z = 7; z <= 9; z++) level.setChunkForced(x, z, true);
-    for (int x = -5; x <= 5; x++)
-      for (int z = -5; z <= 5; z++)
+    for (int x = 37; x <= 39; x++) {
+      for (int z = 7; z <= 9; z++) {
+        level.setChunkForced(x, z, true);
+      }
+    }
+    for (int x = -5; x <= 5; x++) {
+      for (int z = -5; z <= 5; z++) {
         level.setBlock(origin.offset(x, -3, z), Blocks.BEDROCK.defaultBlockState(), 3);
+      }
+    }
     helper
         .startSequence()
         .thenWaitUntil(

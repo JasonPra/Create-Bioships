@@ -27,11 +27,17 @@ public final class LimbPositionerActions {
         || !player.mayBuild()
         || Sable.HELPER.distanceSquaredWithSubLevels(
                 player.level(), player.position(), Vec3.atCenterOf(pos))
-            > 100) return false;
-    if (!(player.level().getBlockEntity(pos) instanceof ModularJointEntity joint)) return false;
+            > 100) {
+      return false;
+    }
+    if (!(player.level().getBlockEntity(pos) instanceof ModularJointEntity joint)) {
+      return false;
+    }
     int before = joint.restOffset();
     joint.setRestOffset(before + Math.clamp(degrees, -15, 15));
-    if (before == joint.restOffset()) return false;
+    if (before == joint.restOffset()) {
+      return false;
+    }
     BuiltLegAssembler.markEdited();
     return true;
   }
@@ -42,30 +48,35 @@ public final class LimbPositionerActions {
         || !player.mayBuild()
         || Sable.HELPER.distanceSquaredWithSubLevels(
                 player.level(), player.position(), Vec3.atCenterOf(pos))
-            > 100) return false;
+            > 100) {
+      return false;
+    }
     var level = player.serverLevel();
     var state = level.getBlockState(pos);
     boolean compact =
         state.is(org.Azkerash.create_bioships.components.ComponentRegistry.CRAB_LEG.get());
-    if (!compact && !(level.getBlockEntity(pos) instanceof ModularJointEntity)) return false;
-    if ((setting == 2 || setting == 3)
-        && org.Azkerash.create_bioships.core.CoreAssemblyRules.containing(level, pos) == null)
+    if (!compact && !(level.getBlockEntity(pos) instanceof ModularJointEntity)) {
       return false;
+    }
+    if ((setting == 2 || setting == 3)
+        && org.Azkerash.create_bioships.core.CoreAssemblyRules.containing(level, pos) == null) {
+      return false;
+    }
     var tuning = LimbTuning.get(level, pos);
     int direction = Integer.signum(delta);
     if (setting == RESET) {
       LimbTuning.clear(level, pos);
-      if (compact)
+      if (compact) {
         level.setBlock(
             pos,
             state.setValue(
                 org.Azkerash.create_bioships.components.logic.legs.CrabLegBlock.HEIGHT, 1),
             3);
-      else {
+      } else {
         ((ModularJointEntity) level.getBlockEntity(pos)).setRestOffset(0);
         BuiltLegAssembler.markEdited();
       }
-    } else if (setting == 0 && compact)
+    } else if (setting == 0 && compact) {
       level.setBlock(
           pos,
           state.setValue(
@@ -77,21 +88,25 @@ public final class LimbPositionerActions {
                   1,
                   3)),
           3);
-    else if (setting == 1) {
-      if (compact)
+    } else if (setting == 1) {
+      if (compact) {
         new LimbTuning(
                 Math.clamp(tuning.restAngle() + Math.clamp(delta, -15, 15), -45, 45),
                 tuning.stiffness(),
                 tuning.damping())
             .save(level, pos);
-      else adjust(player, pos, delta);
-    } else if (setting == 2)
+      } else {
+        adjust(player, pos, delta);
+      }
+    } else if (setting == 2) {
       new LimbTuning(tuning.restAngle(), tuning.stiffness() + direction * .25, tuning.damping())
           .save(level, pos);
-    else if (setting == 3)
+    } else if (setting == 3) {
       new LimbTuning(tuning.restAngle(), tuning.stiffness(), tuning.damping() + direction * .25)
           .save(level, pos);
-    else return false;
+    } else {
+      return false;
+    }
     show(player, pos);
     return true;
   }
@@ -127,9 +142,12 @@ public final class LimbPositionerActions {
     if (!(level.getBlockEntity(pos) instanceof ModularJointEntity)
         && !level
             .getBlockState(pos)
-            .is(org.Azkerash.create_bioships.components.ComponentRegistry.CRAB_LEG.get()))
+            .is(org.Azkerash.create_bioships.components.ComponentRegistry.CRAB_LEG.get())) {
       return InteractionResult.PASS;
-    if (context.getPlayer() instanceof ServerPlayer player) show(player, pos);
+    }
+    if (context.getPlayer() instanceof ServerPlayer player) {
+      show(player, pos);
+    }
     return InteractionResult.sidedSuccess(level.isClientSide);
   }
 }

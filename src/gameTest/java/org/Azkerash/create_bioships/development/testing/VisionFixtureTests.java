@@ -24,11 +24,13 @@ public final class VisionFixtureTests {
         50,
         () -> {
           var bodies = new ArrayList<ServerSubLevel>();
-          for (var entry : SubLevelContainer.getContainer(level).getAllSubLevels())
+          for (var entry : SubLevelContainer.getContainer(level).getAllSubLevels()) {
             if (entry instanceof ServerSubLevel body
                 && body.getUserDataTag() != null
-                && body.getUserDataTag().getBoolean("create_bioships:vision_fixture"))
+                && body.getUserDataTag().getBoolean("create_bioships:vision_fixture")) {
               bodies.add(body);
+            }
+          }
           helper.assertTrue(bodies.size() == 2, "Fixture failed to assemble both subjects");
           var all = new ArrayList<SubLevelVision.Sight>();
           for (var body : bodies) {
@@ -50,7 +52,9 @@ public final class VisionFixtureTests {
               VisionDebugPayload.CODEC.decode(buffer).equals(payload),
               "Vision wire data lost ray endpoints");
           buffer.release();
-          for (var body : bodies) SubLevelHealth.damage(body, 10000, "vision_test");
+          for (var body : bodies) {
+            SubLevelHealth.damage(body, 10000, "vision_test");
+          }
           helper.assertTrue(
               bodies.stream().allMatch(b -> SubLevelVision.sights(b).isEmpty()),
               "Dead fixture still exposes vision");

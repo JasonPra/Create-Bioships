@@ -32,9 +32,11 @@ public final class DigestiveDebugSync {
             c.enqueueWork(
                 () -> {
                   if (c.player() instanceof ServerPlayer player) {
-                    if (p.enabled() && DiagnosticAccess.allowed(player))
+                    if (p.enabled() && DiagnosticAccess.allowed(player)) {
                       VIEWERS.put(player, new HashMap<>());
-                    else VIEWERS.remove(player);
+                    } else {
+                      VIEWERS.remove(player);
+                    }
                   }
                 }));
     registrar.playToClient(
@@ -49,7 +51,9 @@ public final class DigestiveDebugSync {
 
   @SubscribeEvent
   public static void tick(net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) {
-    if (event.getServer().getTickCount() % 20 != 0 || VIEWERS.isEmpty()) return;
+    if (event.getServer().getTickCount() % 20 != 0 || VIEWERS.isEmpty()) {
+      return;
+    }
     var iterator = VIEWERS.entrySet().iterator();
     while (iterator.hasNext()) {
       var viewer = iterator.next();
@@ -62,16 +66,22 @@ public final class DigestiveDebugSync {
       var known = viewer.getValue();
       var present = new HashSet<UUID>();
       var container = SubLevelContainer.getContainer(player.serverLevel());
-      if (container == null) continue;
-      for (var entry : container.getAllSubLevels())
+      if (container == null) {
+        continue;
+      }
+      for (var entry : container.getAllSubLevels()) {
         if (entry instanceof ServerSubLevel body
             && !body.isRemoved()
             && SubLevelData.isLiving(body)) {
-          if (!DiagnosticAccess.canInspect(body, player)) continue;
+          if (!DiagnosticAccess.canInspect(body, player)) {
+            continue;
+          }
           var center =
               body.logicalPose()
                   .transformPosition(Vec3.atCenterOf(body.getPlot().getCenterBlock()));
-          if (center.distanceToSqr(player.position()) > 128 * 128) continue;
+          if (center.distanceToSqr(player.position()) > 128 * 128) {
+            continue;
+          }
           var id = body.getUniqueId();
           present.add(id);
           int version = SubLevelDigestion.topologyVersion(body);
@@ -83,16 +93,20 @@ public final class DigestiveDebugSync {
                   .map(n -> inventoryNode(body, n.getKey(), n.getValue()))
                   .toList();
           int signature = 31 * version + points.hashCode();
-          if (known.getOrDefault(id, -1) == signature) continue;
+          if (known.getOrDefault(id, -1) == signature) {
+            continue;
+          }
           PacketDistributor.sendToPlayer(
               player, new DigestiveDebugPayload(id, points, nodes.size() > points.size()));
           known.put(id, signature);
         }
-      for (var id : new HashSet<>(known.keySet()))
+      }
+      for (var id : new HashSet<>(known.keySet())) {
         if (!present.contains(id)) {
           PacketDistributor.sendToPlayer(player, new DigestiveDebugPayload(id, List.of(), false));
           known.remove(id);
         }
+      }
     }
   }
 
@@ -109,11 +123,12 @@ public final class DigestiveDebugSync {
         if (!stack.isEmpty()) {
           used++;
           items += stack.getCount();
-          if (kind == 3)
+          if (kind == 3) {
             totals.merge(
                 net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()),
                 stack.getCount(),
                 Integer::sum);
+          }
         }
       }
     } else if (be instanceof net.minecraft.world.Container inventory) {
@@ -123,11 +138,12 @@ public final class DigestiveDebugSync {
         if (!stack.isEmpty()) {
           used++;
           items += stack.getCount();
-          if (kind == 3)
+          if (kind == 3) {
             totals.merge(
                 net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()),
                 stack.getCount(),
                 Integer::sum);
+          }
         }
       }
     }

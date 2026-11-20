@@ -21,7 +21,11 @@ public final class CombatTimeControlsTests {
     boolean previousBuilt = state.combatBuilt;
     var previousResults = List.copyOf(state.combatResults);
     state.combatOrigin = new BlockPos(560, 80, 128);
-    for (int x = 34; x <= 36; x++) for (int z = 6; z <= 9; z++) level.setChunkForced(x, z, true);
+    for (int x = 34; x <= 36; x++) {
+      for (int z = 6; z <= 9; z++) {
+        level.setChunkForced(x, z, true);
+      }
+    }
     helper
         .startSequence()
         .thenWaitUntil(
@@ -85,22 +89,27 @@ public final class CombatTimeControlsTests {
               state.combatResults.clear();
               state.combatResults.addAll(previousResults);
               var cleanup = new ArrayList<Entity>();
-              for (var entity : level.getAllEntities())
+              for (var entity : level.getAllEntities()) {
                 if (entity.getTags().stream()
                     .anyMatch(
                         t ->
                             t.startsWith("create_bioships.combat_fixture.failure_")
-                                || t.startsWith("create_bioships.combat_fixture.time_")))
+                                || t.startsWith("create_bioships.combat_fixture.time_"))) {
                   cleanup.add(entity);
+                }
+              }
               cleanup.forEach(Entity::discard);
               helper.succeed();
             });
   }
 
   private static Entity findButton(net.minecraft.server.level.ServerLevel level, String suffix) {
-    for (var entity : level.getAllEntities())
+    for (var entity : level.getAllEntities()) {
       if (!entity.isRemoved()
-          && entity.getTags().contains("create_bioships.combat_fixture" + suffix)) return entity;
+          && entity.getTags().contains("create_bioships.combat_fixture" + suffix)) {
+        return entity;
+      }
+    }
     return null;
   }
 }

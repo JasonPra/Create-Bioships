@@ -64,17 +64,24 @@ public final class SourceSyntax {
       }
       if (c == '/' && i + 1 < source.length() && source.charAt(i + 1) == '/') {
         i += 2;
-        while (i < source.length() && source.charAt(i) != '\n') i++;
+        while (i < source.length() && source.charAt(i) != '\n') {
+          i++;
+        }
         spans.add(new Span(start, i, Kind.COMMENT, true));
         continue;
       }
       if (c == '/' && i + 1 < source.length() && source.charAt(i + 1) == '*') {
         i += 2;
         while (i < source.length()
-            && !(source.charAt(i) == '*' && i + 1 < source.length() && source.charAt(i + 1) == '/'))
+            && !(source.charAt(i) == '*'
+                && i + 1 < source.length()
+                && source.charAt(i + 1) == '/')) {
           i++;
+        }
         boolean closed = i < source.length();
-        if (closed) i += 2;
+        if (closed) {
+          i += 2;
+        }
         spans.add(new Span(start, i, Kind.COMMENT, !closed));
         continue;
       }
@@ -83,8 +90,9 @@ public final class SourceSyntax {
         boolean closed = false;
         while (i < source.length() && source.charAt(i) != '\n') {
           char next = source.charAt(i++);
-          if (next == '\\' && i < source.length() && source.charAt(i) != '\n') i++;
-          else if (next == '"') {
+          if (next == '\\' && i < source.length() && source.charAt(i) != '\n') {
+            i++;
+          } else if (next == '"') {
             closed = true;
             break;
           }
@@ -95,10 +103,14 @@ public final class SourceSyntax {
       if (Character.isLetter(c) || c == '_') {
         i++;
         while (i < source.length()
-            && (Character.isLetterOrDigit(source.charAt(i)) || source.charAt(i) == '_')) i++;
+            && (Character.isLetterOrDigit(source.charAt(i)) || source.charAt(i) == '_')) {
+          i++;
+        }
         String word = source.substring(start, i);
         int next = i;
-        while (next < source.length() && Character.isWhitespace(source.charAt(next))) next++;
+        while (next < source.length() && Character.isWhitespace(source.charAt(next))) {
+          next++;
+        }
         Kind kind =
             KEYWORDS.contains(word)
                 ? Kind.KEYWORD
@@ -113,7 +125,9 @@ public final class SourceSyntax {
       if (Character.isDigit(c)) {
         i++;
         while (i < source.length()
-            && (Character.isDigit(source.charAt(i)) || source.charAt(i) == '.')) i++;
+            && (Character.isDigit(source.charAt(i)) || source.charAt(i) == '.')) {
+          i++;
+        }
         spans.add(new Span(start, i, Kind.NUMBER, false));
         continue;
       }
@@ -122,7 +136,9 @@ public final class SourceSyntax {
         open.push(i);
       } else if (c == '}') {
         braces.add(new Brace(i, false));
-        if (!open.isEmpty()) blocks.add(new Block(open.pop(), i));
+        if (!open.isEmpty()) {
+          blocks.add(new Block(open.pop(), i));
+        }
       }
       spans.add(new Span(i, ++i, Kind.SYMBOL, false));
     }
@@ -140,17 +156,22 @@ public final class SourceSyntax {
   }
 
   public boolean codeAt(int offset) {
-    for (var span : spans)
+    for (var span : spans) {
       if ((span.kind() == Kind.COMMENT || span.kind() == Kind.STRING)
           && offset > span.start()
-          && (offset < span.end() || offset == span.end() && span.openEnd())) return false;
+          && (offset < span.end() || offset == span.end() && span.openEnd())) {
+        return false;
+      }
+    }
     return true;
   }
 
   public int depthAt(int offset) {
     int depth = 0;
     for (var brace : braces) {
-      if (brace.offset() >= offset) break;
+      if (brace.offset() >= offset) {
+        break;
+      }
       depth = brace.opening() ? depth + 1 : Math.max(0, depth - 1);
     }
     return depth;

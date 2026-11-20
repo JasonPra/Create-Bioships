@@ -21,7 +21,9 @@ public final class StomachStorageRouting {
   private StomachStorageRouting() {}
 
   private static IItemHandler inventory(Level level, BlockPos pos) {
-    if (!(level.getBlockEntity(pos) instanceof StorageSacBlockEntity sac)) return null;
+    if (!(level.getBlockEntity(pos) instanceof StorageSacBlockEntity sac)) {
+      return null;
+    }
     sac.unpackLootTable(null);
     return sac.getInventory();
   }
@@ -30,9 +32,12 @@ public final class StomachStorageRouting {
     var remaining = stack.copy();
     for (var pos : sacs) {
       var handler = inventory(level, pos);
-      if (handler != null)
+      if (handler != null) {
         remaining = ItemHandlerHelper.insertItemStacked(handler, remaining, false);
-      if (remaining.isEmpty()) break;
+      }
+      if (remaining.isEmpty()) {
+        break;
+      }
     }
     return stack.getCount() - remaining.getCount();
   }
@@ -41,15 +46,18 @@ public final class StomachStorageRouting {
     var level = mouth.getLevel();
     for (int slot = 0; slot < mouth.getContainerSize(); slot++) {
       var source = mouth.getItem(slot);
-      if (source.isEmpty()) continue;
+      if (source.isEmpty()) {
+        continue;
+      }
       var one = source.copyWithCount(1);
-      for (var pos : stomachs)
+      for (var pos : stomachs) {
         if (level.getBlockEntity(pos) instanceof StomachBlockEntity stomach
             && receive(stomach, one, true).isEmpty()
             && receive(stomach, one, false).isEmpty()) {
           mouth.removeItem(slot, 1);
           return 1;
         }
+      }
       if (store(level, sacs, one) == 1) {
         mouth.removeItem(slot, 1);
         return 1;
@@ -66,25 +74,39 @@ public final class StomachStorageRouting {
 
   /** Move a bounded number of native stacks downward; no per-sac ticker or duplicate inventory. */
   public static int compactStacks(Level level, List<BlockPos> sacs, int cursor, int budget) {
-    if (sacs.size() < 2 || budget <= 0) return 0;
+    if (sacs.size() < 2 || budget <= 0) {
+      return 0;
+    }
     var known = new HashSet<>(sacs);
     int moved = 0;
     for (int i = 0; i < Math.min(sacs.size(), 8) && moved < budget; i++) {
       var upper = sacs.get(Math.floorMod(cursor + i, sacs.size()));
-      if (!known.contains(upper.below())) continue;
+      if (!known.contains(upper.below())) {
+        continue;
+      }
       var source = inventory(level, upper);
       var below = inventory(level, upper.below());
-      if (source == null || below == null) continue;
+      if (source == null || below == null) {
+        continue;
+      }
       for (int slot = 0; slot < source.getSlots(); slot++) {
         var preview = source.extractItem(slot, 64, true);
-        if (preview.isEmpty()) continue;
+        if (preview.isEmpty()) {
+          continue;
+        }
         var rest = ItemHandlerHelper.insertItemStacked(below, preview, true);
         int accepted = preview.getCount() - rest.getCount();
-        if (accepted <= 0) continue;
+        if (accepted <= 0) {
+          continue;
+        }
         var extracted = source.extractItem(slot, accepted, false);
         var left = ItemHandlerHelper.insertItemStacked(below, extracted, false);
-        if (!left.isEmpty()) source.insertItem(slot, left, false);
-        if (extracted.getCount() > left.getCount()) moved++;
+        if (!left.isEmpty()) {
+          source.insertItem(slot, left, false);
+        }
+        if (extracted.getCount() > left.getCount()) {
+          moved++;
+        }
         break;
       }
     }
@@ -92,14 +114,17 @@ public final class StomachStorageRouting {
   }
 
   public static int service(StomachBlockEntity stomach, List<BlockPos> sacs, int budget) {
-    if (sacs.isEmpty() || budget <= 0) return 0;
+    if (sacs.isEmpty() || budget <= 0) {
+      return 0;
+    }
     int moved = 0;
     boolean full = true;
-    for (int slot = 9; slot < StomachBlockEntity.PASTE_SLOT; slot++)
+    for (int slot = 9; slot < StomachBlockEntity.PASTE_SLOT; slot++) {
       if (stomach.getItem(slot).isEmpty()) {
         full = false;
         break;
       }
+    }
     if (full || stomach.progress() > 0 && stomach.progress() >= stomach.duration()) {
       var legacy = stomach.getItem(StomachBlockEntity.PASTE_SLOT);
       int candidate =
@@ -109,16 +134,23 @@ public final class StomachStorageRouting {
       int pasteStacks = 0;
       for (int slot = 9; slot < 27; slot++) {
         var stack = stomach.getItem(slot);
-        if (stack.isEmpty()) continue;
-        if (stack.is(StomachBlockEntity.paste())) pasteStacks++;
-        else if (candidate < 0) candidate = slot;
+        if (stack.isEmpty()) {
+          continue;
+        }
+        if (stack.is(StomachBlockEntity.paste())) {
+          pasteStacks++;
+        } else if (candidate < 0) {
+          candidate = slot;
+        }
       }
-      if (candidate < 0 && pasteStacks > 1)
-        for (int slot = 9; slot < 27; slot++)
+      if (candidate < 0 && pasteStacks > 1) {
+        for (int slot = 9; slot < 27; slot++) {
           if (stomach.getItem(slot).is(StomachBlockEntity.paste())) {
             candidate = slot;
             break;
           }
+        }
+      }
       if (candidate >= 0) {
         int count = store(stomach.getLevel(), sacs, stomach.getItem(candidate));
         if (count > 0) {
@@ -127,45 +159,69 @@ public final class StomachStorageRouting {
         }
       }
     }
-    if (moved < budget && pull(stomach, sacs, true)) moved++;
-    if (moved < budget && pull(stomach, sacs, false)) moved++;
+    if (moved < budget && pull(stomach, sacs, true)) {
+      moved++;
+    }
+    if (moved < budget && pull(stomach, sacs, false)) {
+      moved++;
+    }
     return moved;
   }
 
   private static boolean pull(StomachBlockEntity stomach, List<BlockPos> sacs, boolean paste) {
     if (paste) {
-      if (!(stomach.getLevel() instanceof net.minecraft.server.level.ServerLevel level))
+      if (!(stomach.getLevel() instanceof net.minecraft.server.level.ServerLevel level)) {
         return false;
+      }
       var body =
           org.Azkerash.create_bioships.core.CoreAssemblyRules.containing(
               level, stomach.getBlockPos());
       if (body == null
           || org.Azkerash.create_bioships.core.SubLevelData.hunger(body)
-              >= org.Azkerash.create_bioships.core.SubLevelData.maximumHunger(body)) return false;
-      if (StomachDigestion.pasteCount(stomach) >= StomachBlockEntity.PASTE_PER_MEAL) return false;
+              >= org.Azkerash.create_bioships.core.SubLevelData.maximumHunger(body)) {
+        return false;
+      }
+      if (StomachDigestion.pasteCount(stomach) >= StomachBlockEntity.PASTE_PER_MEAL) {
+        return false;
+      }
     }
     for (var pos : sacs) {
       var handler = inventory(stomach.getLevel(), pos);
-      if (handler == null) continue;
+      if (handler == null) {
+        continue;
+      }
       for (int slot = 0; slot < handler.getSlots(); slot++) {
         var current = handler.getStackInSlot(slot);
-        if (current.isEmpty()) continue;
+        if (current.isEmpty()) {
+          continue;
+        }
         if (paste
             ? !current.is(StomachBlockEntity.paste())
             : !current.has(DataComponents.FOOD)
                 || current.is(StomachBlockEntity.paste())
-                || current.is(COMPONENTS)) continue;
+                || current.is(COMPONENTS)) {
+          continue;
+        }
         var preview = handler.extractItem(slot, 1, true);
-        if (preview.isEmpty()) continue;
+        if (preview.isEmpty()) {
+          continue;
+        }
         var remainder =
             paste ? stomach.insert(preview, 9, 27, true) : stomach.enqueue(preview, true);
-        if (!remainder.isEmpty()) continue;
+        if (!remainder.isEmpty()) {
+          continue;
+        }
         var extracted = handler.extractItem(slot, 1, false);
-        if (extracted.isEmpty()) continue;
+        if (extracted.isEmpty()) {
+          continue;
+        }
         remainder =
             paste ? stomach.insert(extracted, 9, 27, false) : stomach.enqueue(extracted, false);
-        if (!remainder.isEmpty()) handler.insertItem(slot, remainder, false);
-        else return true;
+        if (!remainder.isEmpty()) {
+          handler.insertItem(slot, remainder, false);
+        } else {
+          return true;
+        }
       }
     }
     return false;

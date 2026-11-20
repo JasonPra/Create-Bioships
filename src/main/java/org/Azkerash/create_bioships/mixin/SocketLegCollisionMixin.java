@@ -22,9 +22,10 @@ public abstract class SocketLegCollisionMixin {
       BlockPos core,
       Vec3 foot,
       CallbackInfoReturnable<List<Vec3>> callback) {
-    if (SocketJointRig.decorated(leg.built))
+    if (SocketJointRig.decorated(leg.built)) {
       callback.setReturnValue(
           SocketJointRig.collisionSamples(leg.built, callback.getReturnValue()));
+    }
   }
 
   @Inject(method = "hitsBlocks", at = @At("HEAD"), cancellable = true)
@@ -32,8 +33,9 @@ public abstract class SocketLegCollisionMixin {
       net.minecraft.world.level.Level level,
       List<Vec3> points,
       CallbackInfoReturnable<Boolean> callback) {
-    if (points instanceof SocketJointRig.CollisionPoints marked)
+    if (points instanceof SocketJointRig.CollisionPoints marked) {
       callback.setReturnValue(
           LegCollision.hitsBlocks(level, SocketJointRig.completeSamples(marked)));
+    }
   }
 }

@@ -28,7 +28,9 @@ public final class SubLevelPermissions {
   private SubLevelPermissions() {}
 
   public static Access get(ServerSubLevel body) {
-    if (!SubLevelCreatureParts.available(body)) return new Access(null, List.of());
+    if (!SubLevelCreatureParts.available(body)) {
+      return new Access(null, List.of());
+    }
     body = SubLevelCreatureParts.root(body);
     return CACHE.computeIfAbsent(
         body,
@@ -60,12 +62,16 @@ public final class SubLevelPermissions {
   }
 
   private static void save(ServerSubLevel body, Access access) {
-    if (!SubLevelCreatureParts.available(body)) return;
+    if (!SubLevelCreatureParts.available(body)) {
+      return;
+    }
     body = SubLevelCreatureParts.root(body);
     var existing = body.getUserDataTag();
     var root = existing == null ? new CompoundTag() : existing.copy();
     var tag = new CompoundTag();
-    if (access.owner != null) tag.putUUID("owner", access.owner);
+    if (access.owner != null) {
+      tag.putUUID("owner", access.owner);
+    }
     var list = new ListTag();
     for (var entry : access.allowed) {
       var item = new CompoundTag();
@@ -82,22 +88,30 @@ public final class SubLevelPermissions {
   }
 
   public static boolean assignIfUnowned(ServerSubLevel body, UUID owner) {
-    if (!SubLevelCreatureParts.available(body)) return false;
+    if (!SubLevelCreatureParts.available(body)) {
+      return false;
+    }
     var current = get(body);
-    if (owner == null || current.owner != null) return false;
+    if (owner == null || current.owner != null) {
+      return false;
+    }
     save(body, new Access(owner, current.allowed));
     return true;
   }
 
   public static boolean add(ServerSubLevel body, UUID actor, Entity entity) {
-    if (!SubLevelCreatureParts.available(body)) return false;
+    if (!SubLevelCreatureParts.available(body)) {
+      return false;
+    }
     var current = get(body);
     boolean player = entity instanceof net.minecraft.world.entity.player.Player;
     if (!actor.equals(current.owner)
         || (!player
             && (!(entity instanceof net.minecraft.world.entity.Mob) || !entity.hasCustomName()))
         || current.permits(entity.getUUID())
-        || current.allowed.size() >= MAX_ENTRIES) return false;
+        || current.allowed.size() >= MAX_ENTRIES) {
+      return false;
+    }
     var entries = new ArrayList<>(current.allowed);
     entries.add(new Entry(entity.getUUID(), entity.getName().getString(), player));
     save(body, new Access(current.owner, List.copyOf(entries)));
@@ -105,8 +119,9 @@ public final class SubLevelPermissions {
   }
 
   public static boolean addConstruct(ServerSubLevel body, UUID actor, ServerSubLevel target) {
-    if (!SubLevelCreatureParts.available(body) || !SubLevelCreatureParts.available(target))
+    if (!SubLevelCreatureParts.available(body) || !SubLevelCreatureParts.available(target)) {
       return false;
+    }
     body = SubLevelCreatureParts.root(body);
     target = SubLevelCreatureParts.root(target);
     var current = get(body);
@@ -117,7 +132,9 @@ public final class SubLevelPermissions {
         || body.getLevel() != target.getLevel()
         || name.isBlank()
         || current.permits(target.getUniqueId())
-        || current.allowed.size() >= MAX_ENTRIES) return false;
+        || current.allowed.size() >= MAX_ENTRIES) {
+      return false;
+    }
     var entries = new ArrayList<>(current.allowed);
     entries.add(
         new Entry(
@@ -127,19 +144,29 @@ public final class SubLevelPermissions {
   }
 
   public static boolean remove(ServerSubLevel body, UUID actor, UUID target) {
-    if (!SubLevelCreatureParts.available(body)) return false;
+    if (!SubLevelCreatureParts.available(body)) {
+      return false;
+    }
     var current = get(body);
-    if (!actor.equals(current.owner)) return false;
+    if (!actor.equals(current.owner)) {
+      return false;
+    }
     var entries = current.allowed.stream().filter(e -> !e.id.equals(target)).toList();
-    if (entries.size() == current.allowed.size()) return false;
+    if (entries.size() == current.allowed.size()) {
+      return false;
+    }
     save(body, new Access(current.owner, entries));
     return true;
   }
 
   public static boolean transfer(ServerSubLevel body, UUID actor, UUID target) {
-    if (!SubLevelCreatureParts.available(body)) return false;
+    if (!SubLevelCreatureParts.available(body)) {
+      return false;
+    }
     var current = get(body);
-    if (target == null || !actor.equals(current.owner) || actor.equals(target)) return false;
+    if (target == null || !actor.equals(current.owner) || actor.equals(target)) {
+      return false;
+    }
     save(
         body,
         new Access(target, current.allowed.stream().filter(e -> !e.id.equals(target)).toList()));
@@ -147,7 +174,9 @@ public final class SubLevelPermissions {
   }
 
   public static void inherit(ServerSubLevel parent, ServerSubLevel child) {
-    if (get(child).owner == null && get(parent).owner != null) save(child, get(parent));
+    if (get(child).owner == null && get(parent).owner != null) {
+      save(child, get(parent));
+    }
   }
 
   /** Save/reload testing and shutdown do not retain a grid's transient parsed view. */

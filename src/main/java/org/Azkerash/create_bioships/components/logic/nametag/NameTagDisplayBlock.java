@@ -63,13 +63,17 @@ public final class NameTagDisplayBlock extends WaterloggedComponentBlock
   @Override
   protected BlockState updateShape(
       BlockState s, Direction d, BlockState other, LevelAccessor l, BlockPos p, BlockPos q) {
-    if (!s.canSurvive(l, p)) l.scheduleTick(p, this, 1);
+    if (!s.canSurvive(l, p)) {
+      l.scheduleTick(p, this, 1);
+    }
     return super.updateShape(s, d, other, l, p, q);
   }
 
   @Override
   protected void tick(BlockState s, ServerLevel l, BlockPos p, RandomSource random) {
-    if (!s.canSurvive(l, p)) l.destroyBlock(p, true);
+    if (!s.canSurvive(l, p)) {
+      l.destroyBlock(p, true);
+    }
   }
 
   @Override
@@ -92,10 +96,13 @@ public final class NameTagDisplayBlock extends WaterloggedComponentBlock
   @Override
   protected InteractionResult useWithoutItem(
       BlockState s, Level l, BlockPos p, Player player, BlockHitResult hit) {
-    if (!(l.getBlockEntity(p) instanceof NameTagDisplayEntity display))
+    if (!(l.getBlockEntity(p) instanceof NameTagDisplayEntity display)) {
       return InteractionResult.FAIL;
-    if (!l.isClientSide && !display.editable(player)) return InteractionResult.FAIL;
-    if (player instanceof ServerPlayer server)
+    }
+    if (!l.isClientSide && !display.editable(player)) {
+      return InteractionResult.FAIL;
+    }
+    if (player instanceof ServerPlayer server) {
       server.openMenu(
           display,
           buffer -> {
@@ -104,6 +111,7 @@ public final class NameTagDisplayBlock extends WaterloggedComponentBlock
             buffer.writeVarInt(offset.y);
             buffer.writeVarInt(offset.z);
           });
+    }
     return InteractionResult.sidedSuccess(l.isClientSide);
   }
 
@@ -116,15 +124,20 @@ public final class NameTagDisplayBlock extends WaterloggedComponentBlock
       Player player,
       InteractionHand hand,
       BlockHitResult hit) {
-    if (stack.getItem() instanceof com.simibubi.create.content.equipment.wrench.WrenchItem)
+    if (stack.getItem() instanceof com.simibubi.create.content.equipment.wrench.WrenchItem) {
       return ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION;
+    }
     if (NameTagDisplayEntity.accepts(stack)
         && l.getBlockEntity(p) instanceof NameTagDisplayEntity display
         && display.isEmpty()) {
       if (!l.isClientSide) {
-        if (!display.editable(player)) return ItemInteractionResult.FAIL;
+        if (!display.editable(player)) {
+          return ItemInteractionResult.FAIL;
+        }
         display.setItem(0, stack.copyWithCount(1));
-        if (!player.getAbilities().instabuild) stack.shrink(1);
+        if (!player.getAbilities().instabuild) {
+          stack.shrink(1);
+        }
       }
       return ItemInteractionResult.sidedSuccess(l.isClientSide);
     }
@@ -139,7 +152,9 @@ public final class NameTagDisplayBlock extends WaterloggedComponentBlock
       var at = Vec3.atCenterOf(p);
       if (l instanceof ServerLevel server) {
         var b = CoreAssemblyRules.containing(server, p);
-        if (b != null) at = b.logicalPose().transformPosition(at);
+        if (b != null) {
+          at = b.logicalPose().transformPosition(at);
+        }
       }
       Containers.dropContents(l, BlockPos.containing(at), display);
       display.clearContent();
@@ -156,6 +171,8 @@ public final class NameTagDisplayBlock extends WaterloggedComponentBlock
   public void afterMove(
       ServerLevel from, ServerLevel to, BlockState state, BlockPos p, BlockPos q) {
     var b = CoreAssemblyRules.containing(to, q);
-    if (b != null) SubLevelNames.changed(b, q, state);
+    if (b != null) {
+      SubLevelNames.changed(b, q, state);
+    }
   }
 }

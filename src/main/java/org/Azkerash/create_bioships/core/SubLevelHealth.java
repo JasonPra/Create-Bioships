@@ -26,13 +26,17 @@ public final class SubLevelHealth {
   }
 
   public static SubLevelData.Health status(ServerSubLevel body) {
-    if (!SubLevelCreatureParts.available(body)) return SubLevelData.health(body);
+    if (!SubLevelCreatureParts.available(body)) {
+      return SubLevelData.health(body);
+    }
     initialize(body);
     return SubLevelData.health(body);
   }
 
   private static void initialize(ServerSubLevel body) {
-    if (CELLS.containsKey(body)) return;
+    if (CELLS.containsKey(body)) {
+      return;
+    }
     var cells = new HashMap<Long, Double>();
     double maximum = 0;
     for (var holder : body.getPlot().getLoadedChunks()) {
@@ -40,13 +44,17 @@ public final class SubLevelHealth {
       var sections = chunk.getSections();
       for (int i = 0; i < sections.length; i++) {
         var section = sections[i];
-        if (section.hasOnlyAir()) continue;
+        if (section.hasOnlyAir()) {
+          continue;
+        }
         int floor = chunk.getSectionYFromSectionIndex(i) << 4;
-        for (int x = 0; x < 16; x++)
-          for (int y = 0; y < 16; y++)
+        for (int x = 0; x < 16; x++) {
+          for (int y = 0; y < 16; y++) {
             for (int z = 0; z < 16; z++) {
               double hp = BlockHealthValues.health(section.getBlockState(x, y, z));
-              if (hp == 0) continue;
+              if (hp == 0) {
+                continue;
+              }
               cells.put(
                   new BlockPos(
                           chunk.getPos().getMinBlockX() + x,
@@ -56,6 +64,8 @@ public final class SubLevelHealth {
                   hp);
               maximum += hp;
             }
+          }
+        }
       }
     }
     CELLS.put(body, cells);
@@ -86,8 +96,12 @@ public final class SubLevelHealth {
       return removal.get();
     } finally {
       var after = status(body);
-      if (added) active.remove(body);
-      if (active.isEmpty()) SAFE_REMOVALS.remove();
+      if (added) {
+        active.remove(body);
+      }
+      if (active.isEmpty()) {
+        SAFE_REMOVALS.remove();
+      }
       store(
           body,
           Math.max(beforeDamage, damageTaken(body)),
@@ -100,14 +114,21 @@ public final class SubLevelHealth {
   /** Called by Sable after a plot block changes. State-only animations cost no health work. */
   public static void blockChanged(ServerSubLevel body, BlockPos pos, BlockState state) {
     if ((!CoreAssemblyRules.isCreature(body) && !SubLevelData.isLiving(body))
-        || !CELLS.containsKey(body)) return;
+        || !CELLS.containsKey(body)) {
+      return;
+    }
     SubLevelHunger.blockChanged(body, pos, state);
     SubLevelOxygen.changed(body, pos, state);
     var cells = CELLS.get(body);
     double previous = cells.getOrDefault(pos.asLong(), 0d), next = BlockHealthValues.health(state);
-    if (previous == next) return;
-    if (next == 0) cells.remove(pos.asLong());
-    else cells.put(pos.asLong(), next);
+    if (previous == next) {
+      return;
+    }
+    if (next == 0) {
+      cells.remove(pos.asLong());
+    } else {
+      cells.put(pos.asLong(), next);
+    }
     if (SubLevelCreatureParts.isPart(body)) {
       SubLevelCreatureParts.healthContribution(
           body, cells.values().stream().mapToDouble(Double::doubleValue).sum());
@@ -128,22 +149,34 @@ public final class SubLevelHealth {
   }
 
   public static boolean damage(ServerSubLevel body, double amount, String cause) {
-    if (!SubLevelCreatureParts.available(body)) return false;
+    if (!SubLevelCreatureParts.available(body)) {
+      return false;
+    }
     body = SubLevelCreatureParts.root(body);
-    if (!Double.isFinite(amount) || amount <= 0) return false;
+    if (!Double.isFinite(amount) || amount <= 0) {
+      return false;
+    }
     var old = status(body);
-    if (old.dead()) return false;
+    if (old.dead()) {
+      return false;
+    }
     store(body, damageTaken(body) + amount, old.maximum(), amount >= old.current(), cause);
     return true;
   }
 
   /** Explicit healing reduces injury; changing block capacity never calls this. */
   public static boolean heal(ServerSubLevel body, double amount) {
-    if (!SubLevelCreatureParts.available(body)) return false;
+    if (!SubLevelCreatureParts.available(body)) {
+      return false;
+    }
     body = SubLevelCreatureParts.root(body);
-    if (!Double.isFinite(amount) || amount <= 0) return false;
+    if (!Double.isFinite(amount) || amount <= 0) {
+      return false;
+    }
     var old = status(body);
-    if (old.dead() || SubLevelData.oxygen(body).value() <= 0) return false;
+    if (old.dead() || SubLevelData.oxygen(body).value() <= 0) {
+      return false;
+    }
     store(body, Math.max(0, damageTaken(body) - amount), old.maximum(), false, old.causeOfDeath());
     return true;
   }
@@ -179,8 +212,11 @@ public final class SubLevelHealth {
             : died ? cause.isEmpty() ? "component_loss" : cause : "";
     SubLevelData.health(
         body, new SubLevelData.Health(died ? 0 : current, maximum, injury, died, deathCause));
-    if (died && !previous.dead()) SubLevelCreatureParts.died(body);
-    if (!died && injury == 0 && maximum > 0 && !transaction)
+    if (died && !previous.dead()) {
+      SubLevelCreatureParts.died(body);
+    }
+    if (!died && injury == 0 && maximum > 0 && !transaction) {
       org.Azkerash.create_bioships.combat.SubLevelWounds.healEyes(body);
+    }
   }
 }

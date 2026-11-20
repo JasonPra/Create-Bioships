@@ -13,10 +13,12 @@ public final class EditorAnalysis {
   public static List<EditorProblem> analyze(String source, String fingerprint) {
     var compiled = ProgramCompiler.compile(source);
     var result = new ArrayList<EditorProblem>();
-    if (!compiled.success())
+    if (!compiled.success()) {
       result.add(problem(EditorProblem.Severity.ERROR, compiled.diagnostic(), source, fingerprint));
-    for (var warning : compiled.warnings())
+    }
+    for (var warning : compiled.warnings()) {
       result.add(problem(EditorProblem.Severity.WARNING, warning, source, fingerprint));
+    }
     return List.copyOf(result);
   }
 
@@ -33,7 +35,9 @@ public final class EditorAnalysis {
     offset = Math.min(source.length(), offset + Math.max(0, diagnostic.column() - 1));
     int end = offset;
     while (end < source.length()
-        && (Character.isLetterOrDigit(source.charAt(end)) || source.charAt(end) == '_')) end++;
+        && (Character.isLetterOrDigit(source.charAt(end)) || source.charAt(end) == '_')) {
+      end++;
+    }
     return new EditorProblem(
         severity,
         diagnostic.line(),
@@ -46,7 +50,7 @@ public final class EditorAnalysis {
   public static EditorProblem logged(
       EditorProblem.Severity severity, String message, String fingerprint) {
     var location = LOCATION.matcher(message);
-    if (location.matches())
+    if (location.matches()) {
       try {
         return new EditorProblem(
             severity,
@@ -57,6 +61,7 @@ public final class EditorAnalysis {
             fingerprint);
       } catch (NumberFormatException ignored) {
       }
+    }
     return new EditorProblem(severity, 0, 0, 0, message, fingerprint);
   }
 }

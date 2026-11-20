@@ -33,7 +33,9 @@ public final class RegenerationTrustTests {
     SubLevelData.trust(body, 10);
     h.onEachTick(
         () -> {
-          if (h.getTick() != 10) return;
+          if (h.getTick() != 10) {
+            return;
+          }
           body.forceUpdateGlobalBounds();
           var recipient = CombatAdapter.target(body);
           CombatAdapter.coreTarget(body);

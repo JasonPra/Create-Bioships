@@ -54,7 +54,9 @@ public final class FlipperRenderer implements BlockEntityRenderer<FlipperBlockEn
     for (int i = 0; i < 3; i++) {
       var p = points.get(i);
       var delta = points.get(i + 1).subtract(p);
-      if (delta.lengthSqr() < 1e-8) continue;
+      if (delta.lengthSqr() < 1e-8) {
+        continue;
+      }
       stack.pushPose();
       stack.translate(p.x, p.y, p.z);
       stack.mulPose(

@@ -15,9 +15,13 @@ final class SwitchFlow {
     pending.add(start);
     while (!pending.isEmpty()) {
       int address = pending.removeFirst();
-      if (address == end) return true;
+      if (address == end) {
+        return true;
+      }
       // Unpatched break jumps and outer-loop continues leave the section.
-      if (address < start || address > end || !visited.add(address)) continue;
+      if (address < start || address > end || !visited.add(address)) {
+        continue;
+      }
       var instruction = code.get(address);
       switch (instruction.op()) {
         case HALT -> {}

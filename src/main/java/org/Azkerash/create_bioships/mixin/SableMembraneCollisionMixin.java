@@ -30,7 +30,8 @@ public abstract class SableMembraneCollisionMixin {
       LevelReusedVectors vectors,
       CallbackInfoReturnable<VoxelShape> callback) {
     if (state.getBlock()
-        instanceof com.github.elenterius.biomancy.block.membrane.BiometricMembraneBlock)
+        instanceof com.github.elenterius.biomancy.block.membrane.BiometricMembraneBlock) {
       callback.setReturnValue(state.getCollisionShape(level, pos, CollisionContext.of(entity)));
+    }
   }
 }

@@ -54,16 +54,18 @@ public final class CrabLegKinematics {
         new double[] {relative.dot(side), relative.y, relative.dot(tangent)}, angles, 10, .025);
     var points = chain.forward(angles, null);
     var result = new ArrayList<Vec3>();
-    for (var p : points)
+    for (var p : points) {
       result.add(root.add(side.scale(p[0])).add(0, p[1], 0).add(tangent.scale(p[2])));
+    }
     return List.copyOf(result);
   }
 
   public TerrainProbe.Ground ground(ServerSubLevel body, Vec3 desired) {
     var from = desired.add(0, standingHeight(), 0);
     double depth = standingHeight() * 2 + 1;
-    if (VisionRaycaster.loadedDistance(body.getLevel(), from, new Vec3(0, -1, 0), depth) < depth)
+    if (VisionRaycaster.loadedDistance(body.getLevel(), from, new Vec3(0, -1, 0), depth) < depth) {
       return null;
+    }
     var ground = TerrainProbe.down(body.getLevel(), from, depth, body);
     return ground != null && TerrainProbe.standable(ground) ? ground : null;
   }

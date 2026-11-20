@@ -58,9 +58,13 @@ public final class OssuaryChairBlock extends SeatBlock {
   }
 
   private InteractionResult sit(Level l, BlockPos p, Player player) {
-    if (player.isShiftKeyDown() || player.isSpectator()) return InteractionResult.PASS;
+    if (player.isShiftKeyDown() || player.isSpectator()) {
+      return InteractionResult.PASS;
+    }
     if (!l.isClientSide) {
-      if (SeatBlock.isSeatOccupied(l, p)) return InteractionResult.FAIL;
+      if (SeatBlock.isSeatOccupied(l, p)) {
+        return InteractionResult.FAIL;
+      }
       SeatBlock.sitDown(l, p, player);
     }
     return InteractionResult.sidedSuccess(l.isClientSide);
@@ -88,8 +92,9 @@ public final class OssuaryChairBlock extends SeatBlock {
 
   @Override
   public void updateEntityAfterFallOn(BlockGetter l, Entity entity) {
-    if (entity.getDeltaMovement().y < 0)
+    if (entity.getDeltaMovement().y < 0) {
       entity.setDeltaMovement(entity.getDeltaMovement().multiply(1, 0, 1));
+    }
   }
 
   @Override
@@ -98,9 +103,10 @@ public final class OssuaryChairBlock extends SeatBlock {
     int turns = s.getValue(BlockStateProperties.HORIZONTAL_FACING).get2DDataValue();
     for (int i = 0; i < turns; i++) {
       var rotated = Shapes.empty();
-      for (var a : shape.toAabbs())
+      for (var a : shape.toAabbs()) {
         rotated =
             Shapes.or(rotated, Shapes.box(1 - a.maxZ, a.minY, a.minX, 1 - a.minZ, a.maxY, a.maxX));
+      }
       shape = rotated;
     }
     return shape;

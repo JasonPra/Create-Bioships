@@ -17,7 +17,8 @@ public abstract class DevelopmentPlayerDropsMixin {
       cancellable = true)
   private void core$keepNavigator(
       ItemStack stack, boolean around, boolean name, CallbackInfoReturnable<ItemEntity> callback) {
-    if (DevelopmentLoadout.protectedItem((Player) (Object) this, stack))
+    if (DevelopmentLoadout.protectedItem((Player) (Object) this, stack)) {
       callback.setReturnValue(null);
+    }
   }
 }

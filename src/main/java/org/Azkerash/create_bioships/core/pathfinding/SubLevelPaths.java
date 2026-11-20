@@ -42,7 +42,9 @@ public final class SubLevelPaths {
   public static Snapshot get(ServerSubLevel body) {
     body = SubLevelCreatureParts.root(body);
     var route = ACTIVE.get(body);
-    if (route == null) return null;
+    if (route == null) {
+      return null;
+    }
     if (body.isRemoved()
         || SubLevelHealth.status(body).dead()
         || body.getLevel().getGameTime() - route.tick() > 40

@@ -17,12 +17,16 @@ public final class SubLevelFacing {
   private SubLevelFacing() {}
 
   public static Direction local(ServerSubLevel body) {
-    if (!SubLevelCreatureParts.available(body)) return Direction.SOUTH;
+    if (!SubLevelCreatureParts.available(body)) {
+      return Direction.SOUTH;
+    }
     body = SubLevelCreatureParts.root(body);
     SubLevelData.initialize(body);
     var root = body.getUserDataTag();
     var front = Direction.byName(root.getCompound(SubLevelData.STATE).getString(KEY));
-    if (front != null && front.getAxis() != Direction.Axis.Y) return front;
+    if (front != null && front.getAxis() != Direction.Axis.Y) {
+      return front;
+    }
     // Preserve the +Z convention used by existing Wander behaviors.
     write(body, Direction.SOUTH);
     return Direction.SOUTH;
@@ -37,10 +41,16 @@ public final class SubLevelFacing {
   public static boolean set(ServerSubLevel body, Direction front) {
     if (front == null
         || front.getAxis() == Direction.Axis.Y
-        || !SubLevelCreatureParts.available(body)) return false;
+        || !SubLevelCreatureParts.available(body)) {
+      return false;
+    }
     body = SubLevelCreatureParts.root(body);
-    if (!SubLevelData.isLiving(body) || SubLevelHealth.status(body).dead()) return false;
-    if (local(body) == front) return true;
+    if (!SubLevelData.isLiving(body) || SubLevelHealth.status(body).dead()) {
+      return false;
+    }
+    if (local(body) == front) {
+      return true;
+    }
     write(body, front);
     BrainBehaviors.discard(body);
     BrainMotorControls.stop(body);
@@ -65,13 +75,16 @@ public final class SubLevelFacing {
     var horizontal = new Vec3(delta.x, 0, delta.z);
     double error = 0;
     if (horizontal.lengthSqr() > 1e-8) {
-      if (forward.x * forward.x + forward.z * forward.z < 1e-8)
+      if (forward.x * forward.x + forward.z * forward.z < 1e-8) {
         return new Steering(Vec3.ZERO, 0, Math.PI);
+      }
       error = Math.atan2(delta.x, delta.z) - Math.atan2(forward.x, forward.z);
       error = Math.atan2(Math.sin(error), Math.cos(error));
     }
     double alignment = Math.max(0, Math.cos(error));
-    if (Math.abs(error) > Math.PI / 3) alignment = 0;
+    if (Math.abs(error) > Math.PI / 3) {
+      alignment = 0;
+    }
     var direction = (swimming ? delta : horizontal).normalize();
     return new Steering(
         direction.scale(speed * alignment * alignment), Math.clamp(error * 2, -.8, .8), error);

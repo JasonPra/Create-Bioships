@@ -18,8 +18,11 @@ public final class MassHungerTests {
   public static void linked_mass_scales_drain_preserves_fractions_and_pause(GameTestHelper h) {
     var level = h.getLevel();
     var at = new BlockPos(8192, 90, 128);
-    for (int cx = 511; cx <= 515; cx++)
-      for (int cz = 7; cz <= 9; cz++) level.setChunkForced(cx, cz, true);
+    for (int cx = 511; cx <= 515; cx++) {
+      for (int cz = 7; cz <= 9; cz++) {
+        level.setChunkForced(cx, cz, true);
+      }
+    }
     ServerSubLevel[] bodies = new ServerSubLevel[2];
     h.startSequence()
         .thenExecuteAfter(

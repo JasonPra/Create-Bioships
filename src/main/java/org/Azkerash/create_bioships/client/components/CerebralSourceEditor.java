@@ -91,18 +91,25 @@ public final class CerebralSourceEditor extends AbstractScrollWidget {
     int line = document.lineAt(document.caret()),
         row = document.visibleRow(line),
         y = row * rowHeight();
-    if (y < scrollAmount()) setScrollAmount(y);
-    else if (y + rowHeight() > scrollAmount() + height - totalInnerPadding())
+    if (y < scrollAmount()) {
+      setScrollAmount(y);
+    } else if (y + rowHeight() > scrollAmount() + height - totalInnerPadding()) {
       setScrollAmount(y + rowHeight() - height + totalInnerPadding());
+    }
     int x = measure(document.line(line).substring(0, document.column()));
     int available = Math.max(12, width - gutter() - 12);
-    if (x < horizontal) horizontal = x;
-    else if (x > horizontal + available) horizontal = x - available;
+    if (x < horizontal) {
+      horizontal = x;
+    } else if (x > horizontal + available) {
+      horizontal = x - available;
+    }
   }
 
   @Override
   public boolean keyPressed(int key, int scan, int modifiers) {
-    if (!isFocused() || !visible) return false;
+    if (!isFocused() || !visible) {
+      return false;
+    }
     boolean shift = Screen.hasShiftDown(), control = Screen.hasControlDown();
     if (control) {
       switch (key) {
@@ -111,13 +118,18 @@ public final class CerebralSourceEditor extends AbstractScrollWidget {
             Minecraft.getInstance().keyboardHandler.setClipboard(document.selected());
         case GLFW.GLFW_KEY_X -> {
           Minecraft.getInstance().keyboardHandler.setClipboard(document.selected());
-          if (document.caret() != document.anchor()) document.insert("");
+          if (document.caret() != document.anchor()) {
+            document.insert("");
+          }
         }
         case GLFW.GLFW_KEY_V ->
             document.insert(Minecraft.getInstance().keyboardHandler.getClipboard());
         case GLFW.GLFW_KEY_Z -> {
-          if (shift) document.redo();
-          else document.undo();
+          if (shift) {
+            document.redo();
+          } else {
+            document.undo();
+          }
         }
         case GLFW.GLFW_KEY_Y -> document.redo();
         case GLFW.GLFW_KEY_HOME -> document.move(0, shift);
@@ -162,7 +174,9 @@ public final class CerebralSourceEditor extends AbstractScrollWidget {
 
   @Override
   public boolean charTyped(char c, int modifiers) {
-    if (!visible || !isFocused() || !StringUtil.isAllowedChatCharacter(c)) return false;
+    if (!visible || !isFocused() || !StringUtil.isAllowedChatCharacter(c)) {
+      return false;
+    }
     document.type(c);
     ensureCaret();
     return true;
@@ -170,8 +184,9 @@ public final class CerebralSourceEditor extends AbstractScrollWidget {
 
   @Override
   public boolean mouseClicked(double mx, double my, int button) {
-    if (!visible || button != 0 || !withinContentAreaPoint(mx, my))
+    if (!visible || button != 0 || !withinContentAreaPoint(mx, my)) {
       return super.mouseClicked(mx, my, button);
+    }
     int line = mouseLine(my);
     if (mx < textX() && mx >= getX() + gutter() - 9 && document.foldable(line)) {
       document.toggleFold(line);
@@ -202,7 +217,9 @@ public final class CerebralSourceEditor extends AbstractScrollWidget {
 
   @Override
   public boolean mouseScrolled(double mx, double my, double dx, double dy) {
-    if (!visible) return false;
+    if (!visible) {
+      return false;
+    }
     if (Screen.hasShiftDown() || dx != 0) {
       horizontal = Math.max(0, horizontal - (int) ((dx != 0 ? dx : dy) * 18));
       return true;
@@ -224,7 +241,9 @@ public final class CerebralSourceEditor extends AbstractScrollWidget {
     for (int i = 0; i < content.length(); ) {
       int next = i + Character.charCount(content.codePointAt(i));
       int width = measure(content.substring(i, next));
-      if (point < x + width / 2.0) return document.lineStart(line) + i;
+      if (point < x + width / 2.0) {
+        return document.lineStart(line) + i;
+      }
       x += width;
       i = next;
     }
@@ -232,12 +251,17 @@ public final class CerebralSourceEditor extends AbstractScrollWidget {
   }
 
   public EditorProblem hoveredProblem(double mx, double my) {
-    if (!visible || !withinContentAreaPoint(mx, my) || mx < textX()) return null;
+    if (!visible || !withinContentAreaPoint(mx, my) || mx < textX()) {
+      return null;
+    }
     int line = mouseLine(my), offset = mouseOffset(line, mx) - document.lineStart(line);
-    for (var problem : problems)
+    for (var problem : problems) {
       if (problem.line() == line + 1
           && offset >= problem.column() - 1
-          && offset < problem.column() - 1 + problem.length()) return problem;
+          && offset < problem.column() - 1 + problem.length()) {
+        return problem;
+      }
+    }
     return null;
   }
 
@@ -248,16 +272,22 @@ public final class CerebralSourceEditor extends AbstractScrollWidget {
   }
 
   private void refreshParts() {
-    if (getValue().equals(cachedText)) return;
+    if (getValue().equals(cachedText)) {
+      return;
+    }
     cachedText = getValue();
     var result = new ArrayList<List<Part>>();
-    for (int i = 0; i < document.lineCount(); i++) result.add(new ArrayList<>());
+    for (int i = 0; i < document.lineCount(); i++) {
+      result.add(new ArrayList<>());
+    }
     for (var span : document.syntax().spans()) {
       int first = document.lineAt(span.start()), last = document.lineAt(span.end());
       for (int line = first; line <= last; line++) {
         int start = Math.max(span.start(), document.lineStart(line)),
             end = Math.min(span.end(), document.lineEnd(line));
-        if (end > start) result.get(line).add(new Part(start, end, span.kind()));
+        if (end > start) {
+          result.get(line).add(new Part(start, end, span.kind()));
+        }
       }
     }
     parts = List.copyOf(result);
@@ -277,11 +307,12 @@ public final class CerebralSourceEditor extends AbstractScrollWidget {
           problems.stream()
               .anyMatch(
                   p -> p.line() == line + 1 && p.severity() == EditorProblem.Severity.WARNING);
-      if (error || warning)
+      if (error || warning) {
         g.fill(getX() + 3, y + 2, getX() + 5, y + 6, error ? 0xffee7180 : 0xff9bc878);
+      }
       String number = Integer.toString(line + 1);
       g.drawString(font, number, getX() + gutter() - 12 - font.width(number), y, 0xff967d8c, false);
-      if (document.foldable(line))
+      if (document.foldable(line)) {
         g.drawString(
             font,
             document.collapsed(line) ? "+" : "-",
@@ -289,30 +320,38 @@ public final class CerebralSourceEditor extends AbstractScrollWidget {
             y,
             0xffdcc5c0,
             false);
+      }
       g.enableScissor(textX(), getY() + 1, getX() + width - 1, getY() + height - 1);
-      if (document.lineAt(document.caret()) == line)
+      if (document.lineAt(document.caret()) == line) {
         g.fill(textX(), y - 1, getX() + width - 1, y + rowHeight() - 1, 0x203e334a);
+      }
       int selectionStart = Math.max(document.selectionStart(), document.lineStart(line));
       int selectionEnd = Math.min(document.selectionEnd(), document.lineEnd(line));
-      if (selectionEnd > selectionStart)
+      if (selectionEnd > selectionStart) {
         g.fill(
             xAt(line, selectionStart - document.lineStart(line)),
             y - 1,
             xAt(line, selectionEnd - document.lineStart(line)),
             y + rowHeight() - 1,
             0x995f426d);
+      }
       int x = textX() - horizontal, offset = document.lineStart(line);
       for (var part : parts.get(line)) {
-        if (part.start() > offset) x += measure(getValue().substring(offset, part.start()));
+        if (part.start() > offset) {
+          x += measure(getValue().substring(offset, part.start()));
+        }
         String value = getValue().substring(part.start(), part.end()).replace("\t", "    ");
         int width = font.width(value);
-        if (x + width >= textX() && x < getX() + this.width)
+        if (x + width >= textX() && x < getX() + this.width) {
           g.drawString(font, value, x, y, color(part.kind()), false);
+        }
         x += width;
         offset = part.end();
       }
-      if (document.collapsed(line)) g.drawString(font, " …", x, y, 0xffb78b9d, false);
-      for (var problem : problems)
+      if (document.collapsed(line)) {
+        g.drawString(font, " …", x, y, 0xffb78b9d, false);
+      }
+      for (var problem : problems) {
         if (problem.line() == line + 1) {
           int start = xAt(line, Math.max(0, problem.column() - 1)),
               end = xAt(line, Math.max(0, problem.column() - 1) + problem.length());
@@ -320,14 +359,16 @@ public final class CerebralSourceEditor extends AbstractScrollWidget {
           start = Math.max(textX(), start);
           end = Math.min(getX() + width - 2, end);
           int color = problem.severity() == EditorProblem.Severity.ERROR ? 0xffef7583 : 0xff96c76e;
-          for (int at = start; at < end; at++)
+          for (int at = start; at < end; at++) {
             g.fill(
                 at,
                 y + font.lineHeight + (at - start) % 2,
                 at + 1,
                 y + font.lineHeight + (at - start) % 2 + 1,
                 color);
+          }
         }
+      }
       if (isFocused()
           && document.lineAt(document.caret()) == line
           && Util.getMillis() / 500 % 2 == 0) {

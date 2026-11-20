@@ -11,8 +11,9 @@ public record CreatureStatsPayload(UUID body, Vec3 at, List<Metric> rows)
     implements CustomPacketPayload {
   public record Metric(String text, double fraction, int color) {
     public Metric {
-      if (text.length() > 120 || !Double.isFinite(fraction) || fraction < -1 || fraction > 1)
+      if (text.length() > 120 || !Double.isFinite(fraction) || fraction < -1 || fraction > 1) {
         throw new IllegalArgumentException("Invalid statistic");
+      }
     }
   }
 
@@ -21,8 +22,9 @@ public record CreatureStatsPayload(UUID body, Vec3 at, List<Metric> rows)
     if (rows.size() > 14
         || !Double.isFinite(at.x)
         || !Double.isFinite(at.y)
-        || !Double.isFinite(at.z))
+        || !Double.isFinite(at.z)) {
       throw new IllegalArgumentException("Invalid statistics snapshot");
+    }
   }
 
   public static final Type<CreatureStatsPayload> TYPE =
@@ -50,11 +52,13 @@ public record CreatureStatsPayload(UUID body, Vec3 at, List<Metric> rows)
             var id = b.readUUID();
             var pos = new Vec3(b.readDouble(), b.readDouble(), b.readDouble());
             int count = b.readVarInt();
-            if (count < 0 || count > 14)
+            if (count < 0 || count > 14) {
               throw new IllegalArgumentException("Invalid statistics count");
+            }
             var rows = new ArrayList<Metric>();
-            for (int i = 0; i < count; i++)
+            for (int i = 0; i < count; i++) {
               rows.add(new Metric(b.readUtf(120), b.readDouble(), b.readInt()));
+            }
             return new CreatureStatsPayload(id, pos, rows);
           });
 }

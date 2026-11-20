@@ -79,11 +79,15 @@ public final class NameTagDisplayEntity extends OrganInventory {
 
   @Override
   public void setItem(int slot, ItemStack stack) {
-    if (stack.isEmpty() || canPlaceItem(slot, stack)) super.setItem(slot, stack);
+    if (stack.isEmpty() || canPlaceItem(slot, stack)) {
+      super.setItem(slot, stack);
+    }
   }
 
   public boolean editable(Player player) {
-    if (!(level instanceof ServerLevel server)) return true;
+    if (!(level instanceof ServerLevel server)) {
+      return true;
+    }
     var body = CoreAssemblyRules.containing(server, worldPosition);
     return body == null
         || !SubLevelData.isLiving(body)
@@ -108,7 +112,9 @@ public final class NameTagDisplayEntity extends OrganInventory {
     super.setChanged();
     if (level instanceof ServerLevel server) {
       var b = CoreAssemblyRules.containing(server, worldPosition);
-      if (b != null) SubLevelNames.request(b);
+      if (b != null) {
+        SubLevelNames.request(b);
+      }
       level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 2);
     }
   }
@@ -118,7 +124,9 @@ public final class NameTagDisplayEntity extends OrganInventory {
     super.onLoad();
     if (level instanceof ServerLevel server) {
       var b = CoreAssemblyRules.containing(server, worldPosition);
-      if (b != null) SubLevelNames.request(b);
+      if (b != null) {
+        SubLevelNames.request(b);
+      }
     }
   }
 
@@ -159,6 +167,8 @@ public final class NameTagDisplayEntity extends OrganInventory {
       net.minecraft.network.Connection c,
       ClientboundBlockEntityDataPacket p,
       HolderLookup.Provider r) {
-    if (p.getTag() != null) loadWithComponents(p.getTag(), r);
+    if (p.getTag() != null) {
+      loadWithComponents(p.getTag(), r);
+    }
   }
 }

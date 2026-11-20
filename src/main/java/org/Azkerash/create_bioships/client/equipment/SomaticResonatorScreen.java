@@ -19,7 +19,9 @@ public final class SomaticResonatorScreen extends Screen {
 
   public static void open() {
     var mc = Minecraft.getInstance();
-    if (DiagnosticAccess.allowed(mc.player)) mc.setScreen(new SomaticResonatorScreen());
+    if (DiagnosticAccess.allowed(mc.player)) {
+      mc.setScreen(new SomaticResonatorScreen());
+    }
   }
 
   public boolean isPauseScreen() {
@@ -28,7 +30,9 @@ public final class SomaticResonatorScreen extends Screen {
 
   @Override
   public void tick() {
-    if (!DiagnosticAccess.allowed(Minecraft.getInstance().player)) onClose();
+    if (!DiagnosticAccess.allowed(Minecraft.getInstance().player)) {
+      onClose();
+    }
   }
 
   private int sector(double x, double y) {
@@ -38,7 +42,9 @@ public final class SomaticResonatorScreen extends Screen {
 
   @Override
   public boolean mouseClicked(double x, double y, int button) {
-    if (button != 0) return super.mouseClicked(x, y, button);
+    if (button != 0) {
+      return super.mouseClicked(x, y, button);
+    }
     return switch (sector(x, y)) {
       case 0 -> {
         onClose();
@@ -61,7 +67,9 @@ public final class SomaticResonatorScreen extends Screen {
     for (int y = -outer; y <= outer; y++) {
       int edge = (int) Math.sqrt(outer * outer - y * y);
       int hole = Math.abs(y) < inner ? (int) Math.sqrt(inner * inner - y * y) : 0;
-      if (edge <= Math.max(hole, 2)) continue;
+      if (edge <= Math.max(hole, 2)) {
+        continue;
+      }
       g.fill(cx - edge, cy + y, cx - Math.max(hole, 2), cy + y + 1, left);
       g.fill(cx + Math.max(hole, 2), cy + y, cx + edge, cy + y + 1, right);
     }

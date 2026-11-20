@@ -56,8 +56,9 @@ public final class ProjectileAttachment {
   public static void attach(
       AbstractArrow arrow, ServerSubLevel body, BlockHitResult hit, Vec3 incoming) {
     var point = hit.getLocation();
-    if (!new AABB(hit.getBlockPos()).inflate(.01).contains(point))
+    if (!new AABB(hit.getBlockPos()).inflate(.01).contains(point)) {
       point = body.logicalPose().transformPositionInverse(point);
+    }
     var data =
         new Attachment(
             body.getUniqueId(),
@@ -91,10 +92,13 @@ public final class ProjectileAttachment {
 
   @SubscribeEvent
   public static void loaded(net.neoforged.neoforge.event.entity.EntityJoinLevelEvent event) {
-    if (!(event.getEntity() instanceof AbstractArrow arrow) || event.getLevel().isClientSide)
+    if (!(event.getEntity() instanceof AbstractArrow arrow) || event.getLevel().isClientSide) {
       return;
+    }
     var tag = arrow.getPersistentData().getCompound(DATA);
-    if (!tag.hasUUID("body")) return;
+    if (!tag.hasUUID("body")) {
+      return;
+    }
     accept(
         event.getLevel(),
         arrow.getId(),
@@ -109,32 +113,44 @@ public final class ProjectileAttachment {
   @SubscribeEvent
   public static void tracking(
       net.neoforged.neoforge.event.entity.player.PlayerEvent.StartTracking event) {
-    if (!(event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player)) return;
+    if (!(event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player)) {
+      return;
+    }
     var target = event.getTarget();
     var data = ATTACHED.getOrDefault(target.level(), Map.of()).get(target.getId());
-    if (data != null)
+    if (data != null) {
       net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(
           player, new ProjectileAttachmentPayload(target.getId(), data));
+    }
   }
 
   @SubscribeEvent
   public static void removed(net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent event) {
     var map = ATTACHED.get(event.getLevel());
-    if (map != null) map.remove(event.getEntity().getId());
+    if (map != null) {
+      map.remove(event.getEntity().getId());
+    }
   }
 
   @SubscribeEvent
   public static void tick(EntityTickEvent.Pre event) {
-    if (!(event.getEntity() instanceof AbstractArrow arrow)) return;
+    if (!(event.getEntity() instanceof AbstractArrow arrow)) {
+      return;
+    }
     var map = ATTACHED.get(arrow.level());
-    if (map == null) return;
+    if (map == null) {
+      return;
+    }
     var data = map.get(arrow.getId());
-    if (data == null) return;
+    if (data == null) {
+      return;
+    }
     if (arrow.isRemoved() || !update(arrow, data)) {
       map.remove(arrow.getId());
       if (!arrow.level().isClientSide && !arrow.isRemoved()) {
-        if (arrow instanceof ThrownTrident && arrow.pickup == AbstractArrow.Pickup.ALLOWED)
+        if (arrow instanceof ThrownTrident && arrow.pickup == AbstractArrow.Pickup.ALLOWED) {
           arrow.spawnAtLocation(arrow.getPickupItemStackOrigin().copy());
+        }
         arrow.discard();
       }
       return;
@@ -144,11 +160,17 @@ public final class ProjectileAttachment {
 
   private static boolean update(AbstractArrow arrow, Attachment data) {
     var level = arrow.level();
-    if (level.getGameTime() >= data.expires()) return false;
+    if (level.getGameTime() >= data.expires()) {
+      return false;
+    }
     var container = SubLevelContainer.getContainer(level);
     var body = container == null ? null : container.getSubLevel(data.body());
-    if (body == null || body.isRemoved()) return level.isClientSide;
-    if (level.getBlockState(data.cell()).isAir()) return false;
+    if (body == null || body.isRemoved()) {
+      return level.isClientSide;
+    }
+    if (level.getBlockState(data.cell()).isAir()) {
+      return false;
+    }
     var pose = body instanceof ClientSubLevel client ? client.renderPose() : body.logicalPose();
     var point = pose.transformPosition(data.point());
     var direction = pose.transformNormal(data.direction());

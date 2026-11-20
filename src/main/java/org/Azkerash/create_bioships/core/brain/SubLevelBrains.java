@@ -36,14 +36,22 @@ public final class SubLevelBrains {
             ? new CompoundTag()
             : body.getUserDataTag().getCompound(SubLevelData.BRAIN);
     ContainerHelper.loadAllItems(tag, cards, body.getLevel().registryAccess());
-    if (tag.contains("Port")) port = BlockPos.of(tag.getLong("Port"));
-    if (tag.contains("Anchor")) anchor = BlockPos.of(tag.getLong("Anchor"));
+    if (tag.contains("Port")) {
+      port = BlockPos.of(tag.getLong("Port"));
+    }
+    if (tag.contains("Anchor")) {
+      anchor = BlockPos.of(tag.getLong("Anchor"));
+    }
     face = Direction.from3DDataValue(tag.getByte("Face"));
-    if (!tag.contains("Face")) face = Direction.NORTH;
+    if (!tag.contains("Face")) {
+      face = Direction.NORTH;
+    }
     pinned = tag.getBoolean("Pinned");
-    for (var pos : SubLevelHealth.blocks(body))
-      if (body.getLevel().getBlockState(pos).is(ComponentRegistry.BRAIN.get()))
+    for (var pos : SubLevelHealth.blocks(body)) {
+      if (body.getLevel().getBlockState(pos).is(ComponentRegistry.BRAIN.get())) {
         cells.add(pos.immutable());
+      }
+    }
   }
 
   public static SubLevelBrains get(ServerSubLevel body) {
@@ -54,13 +62,17 @@ public final class SubLevelBrains {
   }
 
   public static void request(ServerSubLevel body) {
-    if (body != null && !body.isRemoved()) PENDING.add(body);
+    if (body != null && !body.isRemoved()) {
+      PENDING.add(body);
+    }
   }
 
   public static void changed(ServerSubLevel body, BlockPos pos, BlockState state) {
     var brain = BRAINS.get(body);
     if (brain == null) {
-      if (state.is(ComponentRegistry.BRAIN.get())) request(body);
+      if (state.is(ComponentRegistry.BRAIN.get())) {
+        request(body);
+      }
       return;
     }
     boolean added =
@@ -106,7 +118,9 @@ public final class SubLevelBrains {
 
   public boolean movePort(BlockPos pos, Direction direction) {
     rebuild();
-    if (!active.contains(pos) || cells.contains(pos.relative(direction))) return false;
+    if (!active.contains(pos) || cells.contains(pos.relative(direction))) {
+      return false;
+    }
     port = pos.immutable();
     face = direction;
     pinned = true;
@@ -116,7 +130,9 @@ public final class SubLevelBrains {
   }
 
   private void rebuild() {
-    if (!dirty || rebuilding) return;
+    if (!dirty || rebuilding) {
+      return;
+    }
     rebuilding = true;
     try {
       var valid = BrainShape.groups(cells).stream().filter(BrainShape::bounded).toList();
@@ -172,21 +188,29 @@ public final class SubLevelBrains {
   private void updateVisuals() {
     for (var p : cells) {
       var state = body.getLevel().getBlockState(p);
-      if (!state.is(ComponentRegistry.BRAIN.get())) continue;
+      if (!state.is(ComponentRegistry.BRAIN.get())) {
+        continue;
+      }
       var desired = p.equals(port) ? BrainBlock.Port.of(face) : BrainBlock.Port.NONE;
       boolean formed = active.contains(p);
-      if (state.getValue(BrainBlock.PORT) != desired || state.getValue(BrainBlock.FORMED) != formed)
+      if (state.getValue(BrainBlock.PORT) != desired
+          || state.getValue(BrainBlock.FORMED) != formed) {
         body.getLevel()
             .setBlock(
                 p, state.setValue(BrainBlock.PORT, desired).setValue(BrainBlock.FORMED, formed), 2);
+      }
     }
   }
 
   public void save() {
     var tag = new CompoundTag();
     ContainerHelper.saveAllItems(tag, cards, body.getLevel().registryAccess());
-    if (port != null) tag.putLong("Port", port.asLong());
-    if (anchor != null) tag.putLong("Anchor", anchor.asLong());
+    if (port != null) {
+      tag.putLong("Port", port.asLong());
+    }
+    if (anchor != null) {
+      tag.putLong("Anchor", anchor.asLong());
+    }
     tag.putByte("Face", (byte) face.ordinal());
     tag.putBoolean("Pinned", pinned);
     var root = body.getUserDataTag() == null ? new CompoundTag() : body.getUserDataTag().copy();
@@ -196,7 +220,9 @@ public final class SubLevelBrains {
   }
 
   private void appearance() {
-    if (body.isRemoved()) return;
+    if (body.isRemoved()) {
+      return;
+    }
     var point =
         body.logicalPose()
             .transformPosition(
@@ -208,9 +234,11 @@ public final class SubLevelBrains {
             port,
             face,
             !SubLevelHealth.status(body).dead());
-    for (var player : body.getLevel().players())
-      if (player.position().distanceToSqr(point) < 192 * 192)
+    for (var player : body.getLevel().players()) {
+      if (player.position().distanceToSqr(point) < 192 * 192) {
         net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, payload);
+      }
+    }
   }
 
   public static void forget(ServerSubLevel body) {
@@ -219,23 +247,33 @@ public final class SubLevelBrains {
 
   @SubscribeEvent
   public static void tick(net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) {
-    for (var body : new ArrayList<>(PENDING))
-      if (!body.isRemoved() && SubLevelData.isLiving(body)) get(body);
+    for (var body : new ArrayList<>(PENDING)) {
+      if (!body.isRemoved() && SubLevelData.isLiving(body)) {
+        get(body);
+      }
+    }
     PENDING.clear();
     if (event.getServer().getTickCount() % 20 == 0) {
       for (var level : event.getServer().getAllLevels()) {
         var container = dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(level);
-        if (container != null)
-          for (var entry : container.getAllSubLevels())
+        if (container != null) {
+          for (var entry : container.getAllSubLevels()) {
             if (entry instanceof ServerSubLevel body
                 && SubLevelData.isLiving(body)
                 && !BRAINS.containsKey(body)
                 && SubLevelHealth.blocks(body).stream()
-                    .anyMatch(p -> level.getBlockState(p).is(ComponentRegistry.BRAIN.get())))
+                    .anyMatch(p -> level.getBlockState(p).is(ComponentRegistry.BRAIN.get()))) {
               get(body);
+            }
+          }
+        }
       }
       BRAINS.keySet().removeIf(ServerSubLevel::isRemoved);
-      for (var brain : BRAINS.values()) if (!brain.active.isEmpty()) brain.appearance();
+      for (var brain : BRAINS.values()) {
+        if (!brain.active.isEmpty()) {
+          brain.appearance();
+        }
+      }
     }
   }
 

@@ -30,16 +30,20 @@ public final class NervePanelControl {
   }
 
   public static void open(ServerPlayer player, ServerSubLevel body, BlockPos panel) {
-    if (!usable(player, body, panel)) return;
+    if (!usable(player, body, panel)) {
+      return;
+    }
     var access = SubLevelPermissions.get(body);
     boolean editable = player.getUUID().equals(access.owner());
     var candidates = new ArrayList<SubLevelPermissions.Entry>();
     if (editable) {
-      for (var other : player.getServer().getPlayerList().getPlayers())
-        if (!access.permits(other.getUUID()) && candidates.size() < CANDIDATE_LIMIT)
+      for (var other : player.getServer().getPlayerList().getPlayers()) {
+        if (!access.permits(other.getUUID()) && candidates.size() < CANDIDATE_LIMIT) {
           candidates.add(
               new SubLevelPermissions.Entry(
                   other.getUUID(), other.getGameProfile().getName(), true));
+        }
+      }
       var center = body.logicalPose().transformPosition(Vec3.atCenterOf(panel));
       var mobs =
           body.getLevel()
@@ -48,32 +52,40 @@ public final class NervePanelControl {
                   new AABB(center, center).inflate(32),
                   e -> e.isAlive() && e.hasCustomName());
       mobs.sort(Comparator.comparingDouble(e -> e.position().distanceToSqr(center)));
-      for (var mob : mobs)
-        if (!access.permits(mob.getUUID()) && candidates.size() < CANDIDATE_LIMIT)
+      for (var mob : mobs) {
+        if (!access.permits(mob.getUUID()) && candidates.size() < CANDIDATE_LIMIT) {
           candidates.add(
               new SubLevelPermissions.Entry(mob.getUUID(), mob.getName().getString(), false));
+        }
+      }
       var container =
           dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(body.getLevel());
-      if (container != null)
+      if (container != null) {
         for (var other : container.getAllSubLevels()) {
           if (other == body
               || other.isRemoved()
               || SubLevelCreatureParts.isPart(other)
-              || candidates.size() >= CANDIDATE_LIMIT) continue;
+              || candidates.size() >= CANDIDATE_LIMIT) {
+            continue;
+          }
           var named = org.Azkerash.create_bioships.core.naming.SubLevelNames.name(other);
           if (!named.isBlank()
               && !access.permits(other.getUniqueId())
-              && nearConstruct(center, other))
+              && nearConstruct(center, other)) {
             candidates.add(new SubLevelPermissions.Entry(other.getUniqueId(), named, false, true));
+          }
         }
+      }
       // Allowed players may still be selected as the next owner.
-      for (var other : player.getServer().getPlayerList().getPlayers())
+      for (var other : player.getServer().getPlayerList().getPlayers()) {
         if (!other.getUUID().equals(access.owner())
             && candidates.stream().noneMatch(e -> e.id().equals(other.getUUID()))
-            && candidates.size() < CANDIDATE_LIMIT)
+            && candidates.size() < CANDIDATE_LIMIT) {
           candidates.add(
               new SubLevelPermissions.Entry(
                   other.getUUID(), other.getGameProfile().getName(), true));
+        }
+      }
     }
     String ownerName = "Unassigned";
     if (access.owner() != null) {
@@ -106,8 +118,12 @@ public final class NervePanelControl {
     var body = CoreAssemblyRules.containing(player.serverLevel(), action.panel());
     if (body == null
         || !body.getUniqueId().equals(action.grid())
-        || !usable(player, body, action.panel())) return false;
-    if (!player.getUUID().equals(SubLevelPermissions.get(body).owner())) return false;
+        || !usable(player, body, action.panel())) {
+      return false;
+    }
+    if (!player.getUUID().equals(SubLevelPermissions.get(body).owner())) {
+      return false;
+    }
     boolean changed = false;
     if (action.action() == 1) {
       var target = player.getServer().getPlayerList().getPlayer(action.target());
@@ -118,20 +134,22 @@ public final class NervePanelControl {
           || entity instanceof Mob
               && entity.isAlive()
               && entity.hasCustomName()
-              && entity.position().distanceToSqr(center) <= 32 * 32)
+              && entity.position().distanceToSqr(center) <= 32 * 32) {
         changed = SubLevelPermissions.add(body, player.getUUID(), entity);
-      else {
+      } else {
         var container =
             dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(body.getLevel());
         var other = container == null ? null : container.getSubLevel(action.target());
-        if (other instanceof ServerSubLevel craft && nearConstruct(center, craft))
+        if (other instanceof ServerSubLevel craft && nearConstruct(center, craft)) {
           changed = SubLevelPermissions.addConstruct(body, player.getUUID(), craft);
+        }
       }
-    } else if (action.action() == 2)
+    } else if (action.action() == 2) {
       changed = SubLevelPermissions.remove(body, player.getUUID(), action.target());
-    else if (action.action() == 3
-        && player.getServer().getPlayerList().getPlayer(action.target()) != null)
+    } else if (action.action() == 3
+        && player.getServer().getPlayerList().getPlayer(action.target()) != null) {
       changed = SubLevelPermissions.transfer(body, player.getUUID(), action.target());
+    }
     open(player, body, action.panel());
     return changed;
   }

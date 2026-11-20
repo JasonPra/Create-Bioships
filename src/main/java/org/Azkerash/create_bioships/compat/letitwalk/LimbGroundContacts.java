@@ -21,16 +21,20 @@ public final class LimbGroundContacts {
         physical,
         b -> {
           var result = new ArrayList<AABB>();
-          for (var cell : SubLevelHealth.blocks(b))
+          for (var cell : SubLevelHealth.blocks(b)) {
             for (var box :
-                b.getLevel().getBlockState(cell).getCollisionShape(b.getLevel(), cell).toAabbs())
+                b.getLevel().getBlockState(cell).getCollisionShape(b.getLevel(), cell).toAabbs()) {
               result.add(box.move(cell));
+            }
+          }
           return List.copyOf(result);
         });
   }
 
   public static boolean touching(ServerSubLevel physical, ServerSubLevel observer) {
-    if (physical.isRemoved()) return false;
+    if (physical.isRemoved()) {
+      return false;
+    }
     var shapes = shapes(physical);
     var down =
         physical.logicalPose().orientation().transformInverse(new org.joml.Vector3d(0, -1, 0));
@@ -48,7 +52,9 @@ public final class LimbGroundContacts {
         lowest = p;
       }
     }
-    if (lowest == null) return false;
+    if (lowest == null) {
+      return false;
+    }
     var point = physical.logicalPose().transformPosition(lowest);
     var ground = TerrainProbe.down(physical.getLevel(), point.add(0, .15, 0), .35, observer);
     return ground != null

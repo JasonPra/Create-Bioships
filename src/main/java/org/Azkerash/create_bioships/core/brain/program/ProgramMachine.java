@@ -31,8 +31,9 @@ public final class ProgramMachine {
     if (program == null
         || program.locals() < 0
         || program.locals() > ProgramLimits.LOCALS
-        || program.instructions().size() > ProgramLimits.INSTRUCTIONS)
+        || program.instructions().size() > ProgramLimits.INSTRUCTIONS) {
       throw new IllegalArgumentException("Invalid compiled program");
+    }
     this.program = program;
     locals = new Object[program.locals()];
   }
@@ -58,20 +59,27 @@ public final class ProgramMachine {
 
   /** Called by the server at brain cadence, never recursively or from script threads. */
   public void advance(long gameTick, Host host) {
-    if (state == State.COMPLETED || state == State.FAULTED || state == State.STOPPED) return;
-    if (state == State.WAITING && gameTick < resumeAt) return;
+    if (state == State.COMPLETED || state == State.FAULTED || state == State.STOPPED) {
+      return;
+    }
+    if (state == State.WAITING && gameTick < resumeAt) {
+      return;
+    }
     state = State.READY;
     Instruction current = null;
     try {
       for (int steps = 0; steps < ProgramLimits.STEPS_PER_UPDATE; steps++) {
-        if (pc < 0 || pc >= program.instructions().size())
+        if (pc < 0 || pc >= program.instructions().size()) {
           throw new Fault("Invalid instruction address.");
+        }
         current = program.instructions().get(pc++);
         switch (current.op()) {
           case PUSH -> push(current.operand());
           case LOAD -> {
             Object value = locals[(int) current.operand()];
-            if (value == null) throw new Fault("Variable was not initialized.");
+            if (value == null) {
+              throw new Fault("Variable was not initialized.");
+            }
             push(value);
           }
           case STORE -> locals[(int) current.operand()] = pop();
@@ -79,28 +87,38 @@ public final class ProgramMachine {
           case POP -> pop();
           case NEGATE -> {
             Object value = pop();
-            if (value instanceof Integer n) push(-n);
-            else push(-((Double) value));
+            if (value instanceof Integer n) {
+              push(-n);
+            } else {
+              push(-((Double) value));
+            }
           }
           case NOT -> push(!((Boolean) pop()));
           case ADD, SUB, MUL, DIV, MOD, EQ, NE, LT, LE, GT, GE -> binary(current.op());
           case JUMP -> pc = (int) current.operand();
           case FALSE -> {
-            if (!((Boolean) pop())) pc = (int) current.operand();
+            if (!((Boolean) pop())) {
+              pc = (int) current.operand();
+            }
           }
           case TRUE -> {
-            if ((Boolean) pop()) pc = (int) current.operand();
+            if ((Boolean) pop()) {
+              pc = (int) current.operand();
+            }
           }
           case PRINT -> print(display(pop()));
           case STAT -> {
             double value = host.statistic((String) current.operand());
-            if (!Double.isFinite(value)) throw new Fault("Statistic is not finite.");
+            if (!Double.isFinite(value)) {
+              throw new Fault("Statistic is not finite.");
+            }
             push(value);
           }
           case WAIT -> {
             int ticks = (Integer) pop();
-            if (ticks < 0 || ticks > ProgramLimits.MAX_WAIT)
+            if (ticks < 0 || ticks > ProgramLimits.MAX_WAIT) {
               throw new Fault("Wait must be between 0 and 72000 ticks.");
+            }
             long delay = Math.max(1, ticks);
             resumeAt = gameTick > Long.MAX_VALUE - delay ? Long.MAX_VALUE : gameTick + delay;
             state = State.WAITING;
@@ -130,15 +148,19 @@ public final class ProgramMachine {
     Object right = pop(), left = pop();
     if (op == Op.ADD && (left instanceof String || right instanceof String)) {
       String a = display(left), b = display(right);
-      if (a.length() + b.length() > ProgramLimits.STRING) throw new Fault("String limit exceeded.");
+      if (a.length() + b.length() > ProgramLimits.STRING) {
+        throw new Fault("String limit exceeded.");
+      }
       push(a + b);
       return;
     }
     if (op == Op.EQ || op == Op.NE) {
       boolean equal;
-      if (left instanceof Number a && right instanceof Number b)
+      if (left instanceof Number a && right instanceof Number b) {
         equal = a.doubleValue() == b.doubleValue();
-      else equal = left.equals(right);
+      } else {
+        equal = left.equals(right);
+      }
       push(op == Op.EQ ? equal : !equal);
       return;
     }
@@ -150,11 +172,14 @@ public final class ProgramMachine {
       case GT -> push(x > y);
       case GE -> push(x >= y);
       default -> {
-        if ((op == Op.DIV || op == Op.MOD) && y == 0) throw new Fault("Division by zero.");
+        if ((op == Op.DIV || op == Op.MOD) && y == 0) {
+          throw new Fault("Division by zero.");
+        }
         if (left instanceof Integer && right instanceof Integer) {
           int i = a.intValue(), j = b.intValue();
-          if (op == Op.DIV && i == Integer.MIN_VALUE && j == -1)
+          if (op == Op.DIV && i == Integer.MIN_VALUE && j == -1) {
             throw new Fault("Integer division overflow.");
+          }
           int value =
               switch (op) {
                 case ADD -> i + j;
@@ -175,7 +200,9 @@ public final class ProgramMachine {
                 case MOD -> x % y;
                 default -> throw new Fault("Invalid arithmetic instruction.");
               };
-          if (!Double.isFinite(value)) throw new Fault("Numeric result is not finite.");
+          if (!Double.isFinite(value)) {
+            throw new Fault("Numeric result is not finite.");
+          }
           push(value);
         }
       }
@@ -183,28 +210,37 @@ public final class ProgramMachine {
   }
 
   private void push(Object value) {
-    if (top >= stack.length) throw new Fault("Evaluation stack limit exceeded.");
-    if (value instanceof String s && s.length() > ProgramLimits.STRING)
+    if (top >= stack.length) {
+      throw new Fault("Evaluation stack limit exceeded.");
+    }
+    if (value instanceof String s && s.length() > ProgramLimits.STRING) {
       throw new Fault("String limit exceeded.");
+    }
     stack[top++] = value;
   }
 
   private Object pop() {
-    if (top == 0) throw new Fault("Evaluation stack underflow.");
+    if (top == 0) {
+      throw new Fault("Evaluation stack underflow.");
+    }
     Object value = stack[--top];
     stack[top] = null;
     return value;
   }
 
   private static String display(Object value) {
-    if (value instanceof Boolean b) return b ? "True" : "False";
+    if (value instanceof Boolean b) {
+      return b ? "True" : "False";
+    }
     return value.toString();
   }
 
   private void print(String value) {
     // Split only within the already bounded string, retaining a bounded history.
     for (String line : value.split("\\R", -1)) {
-      if (output.size() == ProgramLimits.OUTPUT_LINES) output.removeFirst();
+      if (output.size() == ProgramLimits.OUTPUT_LINES) {
+        output.removeFirst();
+      }
       String safe = line.replaceAll("[\\p{Cntrl}&&[^\\t]]", "");
       output.addLast(safe.substring(0, Math.min(safe.length(), ProgramLimits.OUTPUT_LINE)));
     }

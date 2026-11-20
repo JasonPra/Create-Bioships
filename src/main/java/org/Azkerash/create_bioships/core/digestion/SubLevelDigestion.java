@@ -35,12 +35,16 @@ public final class SubLevelDigestion {
       this.body = body;
       for (var pos : SubLevelHealth.blocks(body)) {
         int role = role(body.getLevel().getBlockState(pos));
-        if (role != 0) nodes.put(pos.immutable(), role);
+        if (role != 0) {
+          nodes.put(pos.immutable(), role);
+        }
       }
     }
 
     void rebuild() {
-      if (!dirty) return;
+      if (!dirty) {
+        return;
+      }
       var unseen = new HashSet<>(nodes.keySet());
       var result = new ArrayList<Group>();
       while (!unseen.isEmpty()) {
@@ -54,13 +58,20 @@ public final class SubLevelDigestion {
         while (!queue.isEmpty()) {
           var pos = queue.removeFirst();
           int role = nodes.get(pos);
-          if (role == 2) mouths.add(pos);
-          if (role == 3) stomachs.add(pos);
-          if (role == 4) sacs.add(pos);
+          if (role == 2) {
+            mouths.add(pos);
+          }
+          if (role == 3) {
+            stomachs.add(pos);
+          }
+          if (role == 4) {
+            sacs.add(pos);
+          }
           for (var direction : Direction.values()) {
             var next = pos.relative(direction);
-            if (connected(role, nodes.getOrDefault(next, 0), direction) && unseen.remove(next))
+            if (connected(role, nodes.getOrDefault(next, 0), direction) && unseen.remove(next)) {
               queue.add(next);
+            }
           }
         }
         mouths.sort(BlockPos::compareTo);
@@ -71,11 +82,11 @@ public final class SubLevelDigestion {
                 .thenComparingInt(BlockPos::getZ));
         result.add(new Group(List.copyOf(mouths), List.copyOf(stomachs), List.copyOf(sacs)));
       }
-      for (var entry : nodes.entrySet())
+      for (var entry : nodes.entrySet()) {
         if (entry.getValue() == 1) {
           var state = body.getLevel().getBlockState(entry.getKey());
           var next = state;
-          for (var face : Direction.values())
+          for (var face : Direction.values()) {
             next =
                 next.setValue(
                     org.Azkerash.create_bioships.components.logic.intestine.IntestineBlock
@@ -83,8 +94,12 @@ public final class SubLevelDigestion {
                     org.Azkerash.create_bioships.components.logic.intestine.IntestineBlock
                         .compatible(
                             body.getLevel().getBlockState(entry.getKey().relative(face)), face));
-          if (!next.equals(state)) body.getLevel().setBlock(entry.getKey(), next, 2);
+          }
+          if (!next.equals(state)) {
+            body.getLevel().setBlock(entry.getKey(), next, 2);
+          }
         }
+      }
       groups = List.copyOf(result);
       dirty = false;
     }
@@ -100,8 +115,10 @@ public final class SubLevelDigestion {
   }
 
   private static int role(BlockState state) {
-    if (state.getBlock() instanceof com.github.elenterius.biomancy.block.storagesac.StorageSacBlock)
+    if (state.getBlock()
+        instanceof com.github.elenterius.biomancy.block.storagesac.StorageSacBlock) {
       return 4;
+    }
     return state.is(ComponentRegistry.INTESTINE.get())
         ? 1
         : state.getBlock() instanceof org.Azkerash.create_bioships.components.logic.mouth.MouthBlock
@@ -111,11 +128,18 @@ public final class SubLevelDigestion {
 
   public static void changed(ServerSubLevel body, BlockPos pos, BlockState state) {
     var network = NETWORKS.get(body);
-    if (network == null) return;
+    if (network == null) {
+      return;
+    }
     int role = role(state), old = network.nodes.getOrDefault(pos, 0);
-    if (role == old) return;
-    if (role == 0) network.nodes.remove(pos);
-    else network.nodes.put(pos.immutable(), role);
+    if (role == old) {
+      return;
+    }
+    if (role == 0) {
+      network.nodes.remove(pos);
+    } else {
+      network.nodes.put(pos.immutable(), role);
+    }
     network.dirty = true;
     network.version = ++nextVersion;
   }
@@ -137,22 +161,31 @@ public final class SubLevelDigestion {
   }
 
   public static int transfer(MouthBlockEntity mouth) {
-    if (!(mouth.getLevel() instanceof net.minecraft.server.level.ServerLevel level)) return 0;
-    var body = CoreAssemblyRules.containing(level, mouth.getBlockPos());
-    if (body == null || !SubLevelData.isLiving(body) || SubLevelHealth.status(body).dead())
+    if (!(mouth.getLevel() instanceof net.minecraft.server.level.ServerLevel level)) {
       return 0;
+    }
+    var body = CoreAssemblyRules.containing(level, mouth.getBlockPos());
+    if (body == null || !SubLevelData.isLiving(body) || SubLevelHealth.status(body).dead()) {
+      return 0;
+    }
     var network = NETWORKS.get(body);
-    for (var group : groups(body))
-      if (group.mouths.contains(mouth.getBlockPos()))
+    for (var group : groups(body)) {
+      if (group.mouths.contains(mouth.getBlockPos())) {
         return StomachStorageRouting.intake(
             mouth, group.stomachs, storageWindow(group.sacs, network == null ? 0 : network.cursor));
+      }
+    }
     return 0;
   }
 
   private static List<BlockPos> storageWindow(List<BlockPos> sacs, int cursor) {
-    if (sacs.size() <= 8) return sacs;
+    if (sacs.size() <= 8) {
+      return sacs;
+    }
     var result = new ArrayList<BlockPos>();
-    for (int i = 0; i < 8; i++) result.add(sacs.get(Math.floorMod(cursor + i, sacs.size())));
+    for (int i = 0; i < 8; i++) {
+      result.add(sacs.get(Math.floorMod(cursor + i, sacs.size())));
+    }
     return result;
   }
 
@@ -161,35 +194,48 @@ public final class SubLevelDigestion {
     var active = Collections.newSetFromMap(new IdentityHashMap<ServerSubLevel, Boolean>());
     for (var level : event.getServer().getAllLevels()) {
       var container = SubLevelContainer.getContainer(level);
-      if (container == null) continue;
-      for (var entry : container.getAllSubLevels())
+      if (container == null) {
+        continue;
+      }
+      for (var entry : container.getAllSubLevels()) {
         if (entry instanceof ServerSubLevel body
             && SubLevelData.isLiving(body)
             && !body.isRemoved()) {
           active.add(body);
           var groups = groups(body);
-          if (SubLevelHealth.status(body).dead()) continue;
-          for (var group : groups)
-            for (var pos : group.stomachs)
-              if (level.getBlockEntity(pos) instanceof StomachBlockEntity stomach)
+          if (SubLevelHealth.status(body).dead()) {
+            continue;
+          }
+          for (var group : groups) {
+            for (var pos : group.stomachs) {
+              if (level.getBlockEntity(pos) instanceof StomachBlockEntity stomach) {
                 StomachDigestion.advance(stomach);
-          if (!SubLevelCreatureParts.isPart(body)) SubLevelSickness.advance(body);
+              }
+            }
+          }
+          if (!SubLevelCreatureParts.isPart(body)) {
+            SubLevelSickness.advance(body);
+          }
           if (level.getGameTime() % TRANSFER_INTERVAL == 0) {
             var mouths = groups.stream().flatMap(g -> g.mouths.stream()).toList();
             var network = NETWORKS.get(body);
             int count = Math.min(MAX_TRANSFERS, mouths.size());
             for (int i = 0; i < count; i++) {
               var pos = mouths.get(Math.floorMod(network.cursor++, mouths.size()));
-              if (level.getBlockEntity(pos) instanceof MouthBlockEntity mouth) transfer(mouth);
+              if (level.getBlockEntity(pos) instanceof MouthBlockEntity mouth) {
+                transfer(mouth);
+              }
             }
             int remaining = MAX_TRANSFERS;
-            for (var group : groups)
-              if (remaining > 0)
+            for (var group : groups) {
+              if (remaining > 0) {
                 remaining -=
                     StomachStorageRouting.compactStacks(
                         level, group.sacs, network.cursor++, remaining);
-            for (var group : groups)
-              for (var pos : group.stomachs)
+              }
+            }
+            for (var group : groups) {
+              for (var pos : group.stomachs) {
                 if (remaining > 0
                     && level.getBlockEntity(pos) instanceof StomachBlockEntity stomach) {
                   remaining -=
@@ -198,8 +244,11 @@ public final class SubLevelDigestion {
                           StomachStorageRouting.service(
                               stomach, storageWindow(group.sacs, network.cursor++), remaining));
                 }
+              }
+            }
           }
         }
+      }
     }
     NETWORKS.keySet().retainAll(active);
   }

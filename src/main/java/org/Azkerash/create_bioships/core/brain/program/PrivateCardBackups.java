@@ -27,34 +27,45 @@ public final class PrivateCardBackups {
   }
 
   public static void remember(Player player, ItemStack card) {
-    if (!(player instanceof ServerPlayer server) || !ProgramCardData.editable(card)) return;
+    if (!(player instanceof ServerPlayer server) || !ProgramCardData.editable(card)) {
+      return;
+    }
     var document = ProgramCardData.document(card);
     var key = key(document);
-    if (key == null || !document.contains("Source")) return;
+    if (key == null || !document.contains("Source")) {
+      return;
+    }
     var cache = cache(server);
     var record = new CompoundTag();
     record.put("Document", document);
     record.putLong("Seen", server.level().getGameTime());
     cache.put(key, record);
-    while (cache.size() > MAX_BACKUPS)
+    while (cache.size() > MAX_BACKUPS) {
       cache.remove(
           cache.getAllKeys().stream()
               .min(Comparator.comparingLong(k -> cache.getCompound(k).getLong("Seen")))
               .orElseThrow());
+    }
     server.getPersistentData().put(KEY, cache);
   }
 
   public static boolean restore(Player player, ItemStack card) {
-    if (!(player instanceof ServerPlayer server) || !ProgramCardData.editable(card)) return false;
+    if (!(player instanceof ServerPlayer server) || !ProgramCardData.editable(card)) {
+      return false;
+    }
     var current = ProgramCardData.document(card);
     if (current.contains("Source")) {
       remember(server, card);
       return true;
     }
     var key = key(current);
-    if (key == null) return false;
+    if (key == null) {
+      return false;
+    }
     var saved = cache(server).getCompound(key).getCompound("Document");
-    if (!saved.contains("Source")) return false;
+    if (!saved.contains("Source")) {
+      return false;
+    }
     card.set(
         ProgramCardData.PRIVATE_PROGRAM.get(),
         net.minecraft.world.item.component.CustomData.of(saved));
@@ -64,14 +75,18 @@ public final class PrivateCardBackups {
 
   @SubscribeEvent
   public static void tick(net.neoforged.neoforge.event.tick.PlayerTickEvent.Post e) {
-    if (e.getEntity() instanceof ServerPlayer p && p.tickCount % 20 == 0)
-      for (int i = 0; i < p.getInventory().getContainerSize(); i++)
+    if (e.getEntity() instanceof ServerPlayer p && p.tickCount % 20 == 0) {
+      for (int i = 0; i < p.getInventory().getContainerSize(); i++) {
         restore(p, p.getInventory().getItem(i));
+      }
+    }
   }
 
   @SubscribeEvent
   public static void clone(net.neoforged.neoforge.event.entity.player.PlayerEvent.Clone e) {
     var cache = e.getOriginal().getPersistentData().getCompound(KEY);
-    if (!cache.isEmpty()) e.getEntity().getPersistentData().put(KEY, cache.copy());
+    if (!cache.isEmpty()) {
+      e.getEntity().getPersistentData().put(KEY, cache.copy());
+    }
   }
 }

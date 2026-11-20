@@ -57,7 +57,9 @@ public final class SocketJointRig {
           var part =
               dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(owner.getLevel())
                   .getSubLevel(joint.parent);
-          if (!(part instanceof ServerSubLevel physical)) return null;
+          if (!(part instanceof ServerSubLevel physical)) {
+            return null;
+          }
           var cell = BlockPos.containing(joint.parentPlot);
           return owner.getLevel().getBlockState(cell).getBlock() instanceof SocketJointBlock
               ? SocketJointSettings.modular(owner, physical, cell)
@@ -88,14 +90,19 @@ public final class SocketJointRig {
       if (keys[i] != null) {
         added = true;
         Vec3 along = joint.swivel ? joint.axis : Vec3.ZERO;
-        if (!joint.swivel && i > 0)
+        if (!joint.swivel && i > 0) {
           along = vector(original.restPivots[i]).subtract(vector(original.restPivots[i - 1]));
-        if (along.lengthSqr() < 1e-8) along = new Vec3(0, 1, 0);
+        }
+        if (along.lengthSqr() < 1e-8) {
+          along = new Vec3(0, 1, 0);
+        }
         along = along.normalize();
         Vec3 hinge = joint.swivel ? original.planeNormal : joint.axis;
         if (hinge.lengthSqr() < 1e-8 || Math.abs(hinge.normalize().dot(along)) > .99) {
           hinge = along.cross(new Vec3(0, 0, 1));
-          if (hinge.lengthSqr() < 1e-8) hinge = along.cross(new Vec3(1, 0, 0));
+          if (hinge.lengthSqr() < 1e-8) {
+            hinge = along.cross(new Vec3(1, 0, 0));
+          }
         }
         hinge = hinge.subtract(along.scale(hinge.dot(along))).normalize();
         twist[i] = joints.size();
@@ -129,7 +136,9 @@ public final class SocketJointRig {
             sources);
       }
     }
-    if (!added) return runtime;
+    if (!added) {
+      return runtime;
+    }
     var expanded =
         new BuiltLeg(
             joints,
@@ -156,21 +165,25 @@ public final class SocketJointRig {
     var tag = runtime.save();
     tag.put("built", expanded.save());
     var result = LegRuntime.load(tag);
-    if (result == null) throw new IllegalStateException("Native socket runtime could not load");
+    if (result == null) {
+      throw new IllegalStateException("Native socket runtime could not load");
+    }
     RIGS.remove(expanded);
     RIGS.put(result.built, rig);
     rig.preserveNativePosture(result.built);
     if (previous == null) {
       Arrays.fill(result.built.angles, 0);
-      for (int i = 0; i < rig.keys.length; i++)
+      for (int i = 0; i < rig.keys.length; i++) {
         result.built.angles[rig.primary(i)] = runtime.built.angles[i];
+      }
     }
     if (previous != null
         && result.built.angles.length == runtime.built.angles.length
         && Arrays.equals(previous.keys, rig.keys)
-        && Arrays.equals(previous.source, rig.source))
+        && Arrays.equals(previous.source, rig.source)) {
       System.arraycopy(
           runtime.built.angles, 0, result.built.angles, 0, runtime.built.angles.length);
+    }
     apply(result.built);
     return result;
   }
@@ -209,13 +222,17 @@ public final class SocketJointRig {
     var from = (JointChainLimitsAccess) (Object) base.chain;
     var to = (JointChainLimitsAccess) (Object) built.chain;
     Arrays.fill(to.bioships$preferred(), 0);
-    for (var seed : to.bioships$seeds()) Arrays.fill(seed, 0);
+    for (var seed : to.bioships$seeds()) {
+      Arrays.fill(seed, 0);
+    }
     for (int i = 0; i < keys.length; i++) {
       int axis = primary(i);
       to.bioships$preferred()[axis] = from.bioships$preferred()[i];
       for (int seed = 0;
           seed < Math.min(from.bioships$seeds().length, to.bioships$seeds().length);
-          seed++) to.bioships$seeds()[seed][axis] = from.bioships$seeds()[seed][i];
+          seed++) {
+        to.bioships$seeds()[seed][axis] = from.bioships$seeds()[seed][i];
+      }
     }
   }
 
@@ -236,9 +253,13 @@ public final class SocketJointRig {
   }
 
   private double toeMargin() {
-    if (!Double.isNaN(toeMargin)) return toeMargin;
+    if (!Double.isNaN(toeMargin)) {
+      return toeMargin;
+    }
     boolean compact = Arrays.stream(keys).anyMatch(k -> k != null && k.startsWith("c:"));
-    if (!compact) return toeMargin = .7;
+    if (!compact) {
+      return toeMargin = .7;
+    }
     int height = 1;
     var container =
         dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(owner.getLevel());
@@ -246,10 +267,11 @@ public final class SocketJointRig {
     if (part != null) {
       var state = owner.getLevel().getBlockState(part.getPlot().getCenterBlock());
       if (state.hasProperty(
-          org.Azkerash.create_bioships.components.logic.legs.CompactLimbBlock.HEIGHT))
+          org.Azkerash.create_bioships.components.logic.legs.CompactLimbBlock.HEIGHT)) {
         height =
             state.getValue(
                 org.Azkerash.create_bioships.components.logic.legs.CompactLimbBlock.HEIGHT);
+      }
     }
     return toeMargin = CompactLegCollisions.width(2, height) / 2 + .08;
   }
@@ -261,7 +283,9 @@ public final class SocketJointRig {
 
   /** Full native solid sampling, including finite toe width beside a ledge. */
   public static java.util.List<Vec3> completeSamples(CollisionPoints points) {
-    if (points.isEmpty()) return java.util.List.of();
+    if (points.isEmpty()) {
+      return java.util.List.of();
+    }
     var complete = new ArrayList<Vec3>();
     complete.add(points.getFirst());
     complete.add(points.getFirst());
@@ -270,7 +294,9 @@ public final class SocketJointRig {
       var a = points.get(i - 1);
       var b = i == points.size() - 1 ? foot : points.get(i);
       double length = a.distanceTo(b);
-      if (length < 1e-6) continue;
+      if (length < 1e-6) {
+        continue;
+      }
       int count = Math.max(1, (int) Math.ceil(length / .125));
       for (int step = 1; step <= count; step++) {
         var point = a.lerp(b, step / (double) count);
@@ -284,12 +310,14 @@ public final class SocketJointRig {
       }
     }
     double r = points.toeMargin / .8;
-    for (int x = -1; x <= 1; x++)
-      for (int z = -1; z <= 1; z++)
+    for (int x = -1; x <= 1; x++) {
+      for (int z = -1; z <= 1; z++) {
         if (x != 0 || z != 0) {
           complete.add(foot.add(x * r, 0, z * r));
           complete.add(foot);
         }
+      }
+    }
     var tail = foot.add(0, 1, 0);
     complete.add(tail);
     complete.add(tail);
@@ -302,9 +330,13 @@ public final class SocketJointRig {
     if (!decorated(leg.built)
         || leg.state != LegRuntime.State.SWING
         || leg.swingFrom == null
-        || leg.swingTo == null) return;
+        || leg.swingTo == null) {
+      return;
+    }
     double rise = Math.abs(leg.swingTo.y - leg.swingFrom.y);
-    if (rise < .2) return;
+    if (rise < .2) {
+      return;
+    }
     double height = Math.max(leg.swingHeight, rise + .4);
     double horizontal =
         Math.hypot(leg.swingTo.x - leg.swingFrom.x, leg.swingTo.z - leg.swingFrom.z);
@@ -325,13 +357,18 @@ public final class SocketJointRig {
   /** Raise the native point-foot target by the rotated physical sole's lowest corner. */
   public static double soleClearance(BuiltLeg built) {
     var rig = RIGS.get(built);
-    if (rig == null || Arrays.stream(rig.keys).anyMatch(k -> k != null && k.startsWith("c:")))
+    if (rig == null || Arrays.stream(rig.keys).anyMatch(k -> k != null && k.startsWith("c:"))) {
       return 0;
+    }
     var container =
         dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(rig.owner.getLevel());
-    if (container == null || built.footPlot == null) return 0;
+    if (container == null || built.footPlot == null) {
+      return 0;
+    }
     var entry = container.getSubLevel(rig.base.segments.getLast());
-    if (!(entry instanceof ServerSubLevel part)) return 0;
+    if (!(entry instanceof ServerSubLevel part)) {
+      return 0;
+    }
     var rotation = new org.joml.Quaterniond(rig.owner.logicalPose().orientation());
     for (int i = 0; i < built.angles.length; i++) {
       var axis = built.restAxes[i];
@@ -351,14 +388,18 @@ public final class SocketJointRig {
 
   public static SocketJointSettings limits(BuiltLeg built, int joint) {
     var rig = RIGS.get(built);
-    if (rig == null || rig.keys[joint] == null) return null;
+    if (rig == null || rig.keys[joint] == null) {
+      return null;
+    }
     apply(built);
     return rig.configured[joint];
   }
 
   public static org.joml.Quaterniond frame(BuiltLeg built, int joint) {
     var rig = RIGS.get(built);
-    if (rig == null || rig.keys[joint] == null) return null;
+    if (rig == null || rig.keys[joint] == null) {
+      return null;
+    }
     var x = vector(built.restAxes[rig.bend[joint]]);
     var y = vector(built.restAxes[rig.twist[joint]]);
     var z = x.cross(y).normalize();
@@ -382,7 +423,9 @@ public final class SocketJointRig {
 
   public static void apply(BuiltLeg built) {
     var rig = RIGS.get(built);
-    if (rig == null) return;
+    if (rig == null) {
+      return;
+    }
     long revision =
         org.Azkerash.create_bioships.core.locomotion.SubLevelLocomotion.motionRevision(rig.owner);
     if (rig.initialized && rig.appliedRevision == revision) {
@@ -392,7 +435,9 @@ public final class SocketJointRig {
     var limits = (JointChainLimitsAccess) (Object) built.chain;
     long version = 1;
     for (int i = 0; i < rig.keys.length; i++) {
-      if (rig.keys[i] == null) continue;
+      if (rig.keys[i] == null) {
+        continue;
+      }
       var settings = SocketJointSettings.get(rig.owner, rig.keys[i]);
       rig.configured[i] = settings;
       version = version * 31 + settings.hashCode();
@@ -413,13 +458,14 @@ public final class SocketJointRig {
   }
 
   private static void normalizeCyclic(BuiltLeg built, SocketJointRig rig) {
-    for (int i = 0; i < rig.configured.length; i++)
+    for (int i = 0; i < rig.configured.length; i++) {
       if (rig.configured[i] != null && rig.configured[i].swivel() == 360) {
         int axis = rig.twist[i];
         built.angles[axis] =
             built.restOffsets[axis]
                 + Math.IEEEremainder(built.angles[axis] - built.restOffsets[axis], Math.PI * 2);
       }
+    }
   }
 
   private static void set(JointChainLimitsAccess access, BuiltLeg built, int axis, double limit) {
@@ -431,10 +477,14 @@ public final class SocketJointRig {
 
   /** Cached, bounded native-IK samples; route search never solves IK per visited node. */
   public static Double stepHeight(java.util.Collection<LegRuntime> legs) {
-    if (legs.isEmpty()) return null;
+    if (legs.isEmpty()) {
+      return null;
+    }
     var heights = new ArrayList<Double>();
     for (var leg : legs) {
-      if (leg.arm) continue;
+      if (leg.arm) {
+        continue;
+      }
       var rig = RIGS.get(leg.built);
       if (rig == null) {
         heights.add(1d);
@@ -457,13 +507,16 @@ public final class SocketJointRig {
               new double[] {
                 foot[0] + .25 * dx / length, foot[1] + height, foot[2] + .25 * dz / length
               };
-          if (leg.built.chain.reachable(target, leg.built.chain.preferred(), .08, new int[] {1}))
+          if (leg.built.chain.reachable(target, leg.built.chain.preferred(), .08, new int[] {1})) {
             rig.rise = height;
+          }
         }
       }
       heights.add(rig.rise);
     }
-    if (heights.isEmpty()) return null;
+    if (heights.isEmpty()) {
+      return null;
+    }
     heights.sort(java.util.Comparator.reverseOrder());
     return heights.get(Math.max(0, (int) Math.ceil(heights.size() / 2d) - 1));
   }
@@ -471,14 +524,17 @@ public final class SocketJointRig {
   public static java.util.List<net.minecraft.world.phys.Vec3> points(BuiltLeg built, Vec3 origin) {
     var all = built.chain.forward(built.angles, null);
     var rig = RIGS.get(built);
-    if (rig == null) return Arrays.stream(all).map(p -> origin.add(vector(p))).toList();
+    if (rig == null) {
+      return Arrays.stream(all).map(p -> origin.add(vector(p))).toList();
+    }
     var points = new ArrayList<Vec3>();
     int last = -1;
-    for (int i = 0; i < rig.source.length; i++)
+    for (int i = 0; i < rig.source.length; i++) {
       if (rig.source[i] != last) {
         points.add(origin.add(vector(all[i])));
         last = rig.source[i];
       }
+    }
     points.add(origin.add(vector(all[all.length - 1])));
     return List.copyOf(points);
   }
@@ -518,44 +574,58 @@ public final class SocketJointRig {
   private static LegRuntime load(
       ServerSubLevel owner, CompoundTag tag, Function<LegRuntime, LegRuntime> decorate) {
     var saved = LegRuntime.load(tag);
-    if (saved == null) return null;
-    if (!tag.contains(BASE)) return decorate.apply(saved);
+    if (saved == null) {
+      return null;
+    }
+    if (!tag.contains(BASE)) {
+      return decorate.apply(saved);
+    }
     var clean = tag.copy();
     clean.put("built", tag.getCompound(BASE));
     var original = LegRuntime.load(clean);
-    if (original == null) return null;
+    if (original == null) {
+      return null;
+    }
     var keys = tag.getList("BioshipSocketKeys", 8);
     var loaded =
         keys.size() == original.built.joints.size()
             ? decorate(owner, original, i -> keys.getString(i).isEmpty() ? null : keys.getString(i))
             : decorate.apply(original);
-    if (loaded.built.angles.length == saved.built.angles.length)
+    if (loaded.built.angles.length == saved.built.angles.length) {
       System.arraycopy(saved.built.angles, 0, loaded.built.angles, 0, saved.built.angles.length);
+    }
     var rig = RIGS.get(loaded.built);
-    if (rig != null) rig.initialized = false;
+    if (rig != null) {
+      rig.initialized = false;
+    }
     apply(loaded.built);
     return loaded;
   }
 
   private static void writeKeys(CompoundTag tag, SocketJointRig rig) {
     var keys = new ListTag();
-    for (var key : rig.keys) keys.add(StringTag.valueOf(key == null ? "" : key));
+    for (var key : rig.keys) {
+      keys.add(StringTag.valueOf(key == null ? "" : key));
+    }
     tag.put("BioshipSocketKeys", keys);
   }
 
   public static boolean ensureContactFilters(
       WalkerCoreBlockEntity walker, net.minecraft.server.level.ServerLevel level) {
     boolean ready = true;
-    for (var leg : walker.legs)
+    for (var leg : walker.legs) {
       if (leg.built.contactFilters.isEmpty()
           || leg.built.contactFilters.stream().anyMatch(h -> !h.isValid())) {
         ready = false;
         break;
       }
+    }
     if (ready
         && (walker.legs.size() < 2
             || (!walker.crossFilters.isEmpty()
-                && walker.crossFilters.stream().allMatch(h -> h.isValid())))) return true;
+                && walker.crossFilters.stream().allMatch(h -> h.isValid())))) {
+      return true;
+    }
     return physical(walker, () -> BuiltLegDriver.ensureContactFilters(walker, level));
   }
 
@@ -572,7 +642,9 @@ public final class SocketJointRig {
       var tag = runtime.save();
       tag.put("built", rig.base.save());
       var original = LegRuntime.load(tag);
-      if (original == null) throw new IllegalStateException("Missing native socket base");
+      if (original == null) {
+        throw new IllegalStateException("Missing native socket base");
+      }
       rig.base.contactFilters.clear();
       rig.base.contactFilters.addAll(runtime.built.contactFilters);
       original.built.contactFilters.addAll(runtime.built.contactFilters);

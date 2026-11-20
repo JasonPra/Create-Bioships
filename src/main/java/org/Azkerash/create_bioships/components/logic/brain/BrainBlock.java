@@ -41,7 +41,11 @@ public final class BrainBlock
     }
 
     public static Port of(Direction face) {
-      for (var port : values()) if (port.face == face) return port;
+      for (var port : values()) {
+        if (port.face == face) {
+          return port;
+        }
+      }
       return NONE;
     }
   }
@@ -86,30 +90,40 @@ public final class BrainBlock
     var pos = context.getClickedPos();
     if (level instanceof ServerLevel server) {
       var body = CoreAssemblyRules.containing(server, pos);
-      if (body != null && !SubLevelBrains.get(body).canAdd(pos)) return null;
+      if (body != null && !SubLevelBrains.get(body).canAdd(pos)) {
+        return null;
+      }
     } else if (!org.Azkerash.create_bioships.client.components.BrainPlacementView.canPlace(
-        level, pos)) return null;
+        level, pos)) {
+      return null;
+    }
     return placed(defaultBlockState(), context);
   }
 
   private static void changed(Level level, BlockPos pos) {
-    if (level instanceof ServerLevel server)
+    if (level instanceof ServerLevel server) {
       SubLevelBrains.request(CoreAssemblyRules.containing(server, pos));
-    else org.Azkerash.create_bioships.client.components.BrainPlacementView.invalidate(level, pos);
+    } else {
+      org.Azkerash.create_bioships.client.components.BrainPlacementView.invalidate(level, pos);
+    }
   }
 
   @Override
   protected void onPlace(
       BlockState state, Level level, BlockPos pos, BlockState old, boolean moved) {
     super.onPlace(state, level, pos, old, moved);
-    if (old.getBlock() != this) changed(level, pos);
+    if (old.getBlock() != this) {
+      changed(level, pos);
+    }
   }
 
   @Override
   protected void onRemove(
       BlockState state, Level level, BlockPos pos, BlockState next, boolean moved) {
     super.onRemove(state, level, pos, next, moved);
-    if (next.getBlock() != this) changed(level, pos);
+    if (next.getBlock() != this) {
+      changed(level, pos);
+    }
   }
 
   @Override
@@ -127,8 +141,10 @@ public final class BrainBlock
           || context.getPlayer() == null
           || !org.Azkerash.create_bioships.core.access.SubLevelPermissions.canInspect(
               body, context.getPlayer().getUUID())
-          || !SubLevelBrains.get(body).movePort(context.getClickedPos(), context.getClickedFace()))
+          || !SubLevelBrains.get(body)
+              .movePort(context.getClickedPos(), context.getClickedFace())) {
         return InteractionResult.FAIL;
+      }
       server.playSound(
           null,
           context.getClickedPos(),
@@ -158,16 +174,21 @@ public final class BrainBlock
   @Override
   protected InteractionResult useWithoutItem(
       BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-    if (state.getValue(PORT).face != hit.getDirection()) return InteractionResult.PASS;
+    if (state.getValue(PORT).face != hit.getDirection()) {
+      return InteractionResult.PASS;
+    }
     if (player instanceof ServerPlayer server && level instanceof ServerLevel world) {
       var body = CoreAssemblyRules.containing(world, pos);
       if (body == null
           || !SubLevelData.isLiving(body)
           || !org.Azkerash.create_bioships.core.access.SubLevelPermissions.canInspect(
-              body, player.getUUID())) return InteractionResult.FAIL;
-      var brain = SubLevelBrains.get(body);
-      if (!pos.equals(brain.port()) || hit.getDirection() != brain.face())
+              body, player.getUUID())) {
         return InteractionResult.FAIL;
+      }
+      var brain = SubLevelBrains.get(body);
+      if (!pos.equals(brain.port()) || hit.getDirection() != brain.face()) {
+        return InteractionResult.FAIL;
+      }
       server.openMenu(
           new SimpleMenuProvider(
               (id, inv, p) -> new BrainMenu(id, inv, brain.inventory(), pos),

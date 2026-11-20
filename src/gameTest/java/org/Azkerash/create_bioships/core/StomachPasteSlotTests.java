@@ -37,7 +37,9 @@ public final class StomachPasteSlotTests {
             && stomach.canPlaceItem(reserved, new ItemStack(StomachBlockEntity.paste()))
             && !stomach.canPlaceItem(reserved, new ItemStack(Items.BEEF)),
         "Reserved slot changed inventory size or accepts other items");
-    for (int i = 9; i < reserved; i++) stomach.setItem(i, new ItemStack(Items.BONE, 64));
+    for (int i = 9; i < reserved; i++) {
+      stomach.setItem(i, new ItemStack(Items.BONE, 64));
+    }
     h.assertTrue(
         stomach.insert(new ItemStack(StomachBlockEntity.paste(), 32), 9, 27, true).isEmpty()
             && stomach.getItem(reserved).isEmpty(),
@@ -66,7 +68,9 @@ public final class StomachPasteSlotTests {
     h.assertTrue(
         stomach.getItem(reserved).isEmpty() && menu.getCarried().getCount() == 32,
         "Reserved paste could not be retrieved normally");
-    for (int i = 9; i < 27; i++) stomach.setItem(i, new ItemStack(Items.BONE, 64));
+    for (int i = 9; i < 27; i++) {
+      stomach.setItem(i, new ItemStack(Items.BONE, 64));
+    }
     stomach.normalizePasteSlot();
     h.assertTrue(
         stomach.getItem(reserved).getCount() == 64,

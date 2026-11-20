@@ -22,12 +22,16 @@ public final class SwordSweepTests {
       GameTestHelper helper) {
     var level = helper.getLevel();
     var origin = new BlockPos(416, 80, 128);
-    for (int x = (origin.getX() - 6) >> 4; x <= (origin.getX() + 6) >> 4; x++)
-      for (int z = (origin.getZ() - 6) >> 4; z <= (origin.getZ() + 6) >> 4; z++)
+    for (int x = (origin.getX() - 6) >> 4; x <= (origin.getX() + 6) >> 4; x++) {
+      for (int z = (origin.getZ() - 6) >> 4; z <= (origin.getZ() + 6) >> 4; z++) {
         level.setChunkForced(x, z, true);
-    for (int x = -5; x <= 5; x++)
-      for (int z = -5; z <= 5; z++)
+      }
+    }
+    for (int x = -5; x <= 5; x++) {
+      for (int z = -5; z <= 5; z++) {
         level.setBlock(origin.offset(x, -2, z), Blocks.BEDROCK.defaultBlockState(), 3);
+      }
+    }
     helper
         .startSequence()
         .thenWaitUntil(
@@ -74,7 +78,9 @@ public final class SwordSweepTests {
                     player.setItemInHand(
                         net.minecraft.world.InteractionHand.MAIN_HAND,
                         new ItemStack(Items.DIAMOND_SWORD));
-                    for (int i = 0; i < 30; i++) player.doTick();
+                    for (int i = 0; i < 30; i++) {
+                      player.doTick();
+                    }
                     player.setPos(point.add(0, -.5, -2));
                     player.setDeltaMovement(Vec3.ZERO);
                     player.setOnGround(true);

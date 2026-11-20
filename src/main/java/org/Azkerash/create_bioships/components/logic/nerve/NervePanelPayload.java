@@ -31,12 +31,15 @@ public record NervePanelPayload(
 
   private static List<SubLevelPermissions.Entry> entries(RegistryFriendlyByteBuf b) {
     int count = b.readVarInt();
-    if (count < 0 || count > 128) throw new IllegalArgumentException("Invalid nerve list");
+    if (count < 0 || count > 128) {
+      throw new IllegalArgumentException("Invalid nerve list");
+    }
     var entries = new ArrayList<SubLevelPermissions.Entry>();
-    for (int i = 0; i < count; i++)
+    for (int i = 0; i < count; i++) {
       entries.add(
           new SubLevelPermissions.Entry(
               b.readUUID(), b.readUtf(80), b.readBoolean(), b.readBoolean()));
+    }
     return List.copyOf(entries);
   }
 

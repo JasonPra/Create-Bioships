@@ -37,8 +37,13 @@ public final class BrainFixture {
   private static List<BlockPos> cells(ServerLevel level) {
     var cells = new ArrayList<BlockPos>();
     var base = base(level);
-    for (int x = 0; x < 3; x++)
-      for (int y = 1; y <= 3; y++) for (int z = 0; z < 3; z++) cells.add(base.offset(x, y, z));
+    for (int x = 0; x < 3; x++) {
+      for (int y = 1; y <= 3; y++) {
+        for (int z = 0; z < 3; z++) {
+          cells.add(base.offset(x, y, z));
+        }
+      }
+    }
     cells.add(core(level));
     cells.add(core(level).north());
     return cells;
@@ -46,30 +51,40 @@ public final class BrainFixture {
 
   public static ServerSubLevel body(ServerLevel level) {
     var container = SubLevelContainer.getContainer(level);
-    if (container != null)
-      for (var entry : container.getAllSubLevels())
+    if (container != null) {
+      for (var entry : container.getAllSubLevels()) {
         if (entry instanceof ServerSubLevel body
             && !body.isRemoved()
             && body.getUserDataTag() != null
-            && body.getUserDataTag().getBoolean(MARK)) return body;
+            && body.getUserDataTag().getBoolean(MARK)) {
+          return body;
+        }
+      }
+    }
     return null;
   }
 
   public static void reset(ServerLevel level) {
     var base = base(level);
-    for (int x = (base.getX() - 10) >> 4; x <= (base.getX() + 10) >> 4; x++)
-      for (int z = -1; z <= 0; z++) level.setChunkForced(x, z, true);
+    for (int x = (base.getX() - 10) >> 4; x <= (base.getX() + 10) >> 4; x++) {
+      for (int z = -1; z <= 0; z++) {
+        level.setChunkForced(x, z, true);
+      }
+    }
     var body = body(level);
-    if (body != null)
+    if (body != null) {
       SubLevelContainer.getContainer(level).removeSubLevel(body, SubLevelRemovalReason.REMOVED);
+    }
     for (var e :
         level.getEntitiesOfClass(
-            Entity.class, new AABB(base).inflate(20), e -> e.getTags().contains(MARK))) e.discard();
-    for (int x = -8; x <= 8; x++)
+            Entity.class, new AABB(base).inflate(20), e -> e.getTags().contains(MARK))) {
+      e.discard();
+    }
+    for (int x = -8; x <= 8; x++) {
       for (int z = -9; z <= 7; z++) {
         level.setBlock(base.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 2);
-        if (Math.abs(x) <= 6 && Math.abs(z) <= 6)
-          for (int y = 0; y <= 6; y++)
+        if (Math.abs(x) <= 6 && Math.abs(z) <= 6) {
+          for (int y = 0; y <= 6; y++) {
             level.setBlock(
                 base.offset(x, y, z),
                 (Math.abs(x) == 6 || Math.abs(z) == 6 || y == 6
@@ -77,16 +92,20 @@ public final class BrainFixture {
                         : Blocks.AIR)
                     .defaultBlockState(),
                 2);
+          }
+        }
       }
-    for (var cell : cells(level))
+    }
+    for (var cell : cells(level)) {
       level.setBlock(
           cell,
           org.Azkerash.create_bioships.components.ComponentRegistry.BRAIN.get().defaultBlockState(),
           3);
+    }
     level.setBlock(core(level), ComponentRegistry.CORE.get().defaultBlockState(), 3);
     level.setBlock(core(level).north(), ComponentRegistry.MOUTH.get().defaultBlockState(), 3);
-    for (int x = 0; x <= 1; x++)
-      for (int y = 0; y <= 1; y++)
+    for (int x = 0; x <= 1; x++) {
+      for (int y = 0; y <= 1; y++) {
         level.setBlock(
             base.offset(x, y, -6),
             DevelopmentTestBlocks.GLASS_DOOR
@@ -96,6 +115,8 @@ public final class BrainFixture {
                 .setValue(DoorBlock.HALF, y == 0 ? DoubleBlockHalf.LOWER : DoubleBlockHalf.UPPER)
                 .setValue(DoorBlock.HINGE, x == 0 ? DoorHingeSide.LEFT : DoorHingeSide.RIGHT),
             3);
+      }
+    }
     control(level, base.offset(-3, 0, -8), "brain_test start");
     control(level, base.offset(3, 0, -8), "brain_test reset");
     CoreTestState.get(level).brainBuilt = true;
@@ -120,8 +141,12 @@ public final class BrainFixture {
   }
 
   public static int start(ServerLevel level) {
-    if (body(level) != null) return 0;
-    if (!CoreTestState.get(level).brainBuilt) reset(level);
+    if (body(level) != null) {
+      return 0;
+    }
+    if (!CoreTestState.get(level).brainBuilt) {
+      reset(level);
+    }
     var origin = core(level);
     var base = base(level);
     var body =
@@ -130,7 +155,9 @@ public final class BrainFixture {
             origin,
             cells(level),
             new BoundingBox3i(base.offset(-1, 1, -1), base.offset(2, 3, 2)));
-    if (body == null) return 0;
+    if (body == null) {
+      return 0;
+    }
     CoreAssemblyRules.changed(level, body.getPlot().getCenterBlock());
     var tag = body.getUserDataTag().copy();
     tag.putBoolean(MARK, true);
@@ -147,10 +174,12 @@ public final class BrainFixture {
 
   public static int feed(ServerLevel level) {
     var body = body(level);
-    if (body == null) return 0;
+    if (body == null) {
+      return 0;
+    }
     var p = body.getPlot().getCenterBlock().north();
     if (level.getBlockEntity(p)
-        instanceof org.Azkerash.create_bioships.components.logic.mouth.MouthBlockEntity mouth)
+        instanceof org.Azkerash.create_bioships.components.logic.mouth.MouthBlockEntity mouth) {
       return mouth
               .feed(
                   new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.PORKCHOP),
@@ -158,12 +187,15 @@ public final class BrainFixture {
               .isEmpty()
           ? 1
           : 0;
+    }
     return 0;
   }
 
   public static String status(ServerLevel level) {
     var body = body(level);
-    if (body == null) return "Brain fixture: ready, unassembled";
+    if (body == null) {
+      return "Brain fixture: ready, unassembled";
+    }
     var brain = org.Azkerash.create_bioships.core.brain.SubLevelBrains.get(body);
     return "Brain fixture: "
         + brain.capacity()
@@ -176,10 +208,15 @@ public final class BrainFixture {
     var base = base(level);
     for (var old :
         level.getEntitiesOfClass(
-            Display.TextDisplay.class, new AABB(base).inflate(20), e -> e.getTags().contains(MARK)))
+            Display.TextDisplay.class,
+            new AABB(base).inflate(20),
+            e -> e.getTags().contains(MARK))) {
       old.discard();
+    }
     var display = EntityType.TEXT_DISPLAY.create(level);
-    if (display == null) return;
+    if (display == null) {
+      return;
+    }
     var tag = new CompoundTag();
     tag.putString(
         "text",

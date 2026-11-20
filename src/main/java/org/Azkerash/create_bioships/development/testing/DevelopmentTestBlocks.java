@@ -63,12 +63,13 @@ public final class DevelopmentTestBlocks {
             "mossy_stone_bricks",
             "cracked_stone_bricks",
             "cobblestone",
-            "mossy_cobblestone"))
+            "mossy_cobblestone")) {
       FLOOR.put(
           name,
           DeferredHolder.create(
               Registries.BLOCK,
               ResourceLocation.fromNamespaceAndPath(Create_bioships.MODID, "development_" + name)));
+    }
   }
 
   public static boolean protectedBlock(net.minecraft.world.level.block.state.BlockState state) {
@@ -141,7 +142,9 @@ public final class DevelopmentTestBlocks {
   public static final class Protection {
     @SubscribeEvent
     public static void broken(net.neoforged.neoforge.event.level.BlockEvent.BreakEvent event) {
-      if (protectedBlock(event.getState())) event.setCanceled(true);
+      if (protectedBlock(event.getState())) {
+        event.setCanceled(true);
+      }
     }
   }
 }

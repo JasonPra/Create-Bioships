@@ -80,7 +80,9 @@ public final class DigestiveSicknessTests {
       var s = menu.slots.get(i);
       if (player
           ? s.container == f.player.getInventory() && s.getContainerSlot() == 9
-          : s.container != f.player.getInventory() && s.getItem().is(item)) return i;
+          : s.container != f.player.getInventory() && s.getItem().is(item)) {
+        return i;
+      }
     }
     throw new IllegalStateException("Sac slot missing");
   }
@@ -157,7 +159,9 @@ public final class DigestiveSicknessTests {
     sac.clicked(sacSlot(sac, f, false, Items.ROTTEN_FLESH), 0, ClickType.QUICK_MOVE, f.player);
     trust(h, f, 12, "Removing rotten-food stock granted trust");
     h.assertTrue(SubLevelDigestion.transfer(f.mouth) == 1, "Rotten meal did not reach stomach");
-    for (int i = 0; i < 2000 && f.stomach.queued() > 0; i++) f.stomach.advance();
+    for (int i = 0; i < 2000 && f.stomach.queued() > 0; i++) {
+      f.stomach.advance();
+    }
     h.assertTrue(
         f.stomach.queued() == 0 && SubLevelSickness.remaining(f.body) == SubLevelSickness.DURATION,
         "Actual rotten-flesh consumption did not start the sickness timer");

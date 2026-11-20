@@ -62,7 +62,9 @@ public class EyeCombatHurtbox extends SubLevelCombatTarget {
 
   @Override
   protected void position(ServerSubLevel body) {
-    if (impactCell == null) return;
+    if (impactCell == null) {
+      return;
+    }
     var state = body.getLevel().getBlockState(impactCell);
     if (!accepts(state)) {
       discard();

@@ -43,10 +43,14 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
           dirty = true;
           analysisDelay = 8;
           problems = List.of();
-          if (editor != null) editor.problems(List.of());
+          if (editor != null) {
+            editor.problems(List.of());
+          }
           refreshDiagnostics();
         });
-    if (menu.initiallyCompiled) status = "Compiled card · Changed source must be compiled again.";
+    if (menu.initiallyCompiled) {
+      status = "Compiled card · Changed source must be compiled again.";
+    }
   }
 
   @Override
@@ -153,7 +157,9 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
   }
 
   private void refreshDiagnostics() {
-    if (tracker == null) return;
+    if (tracker == null) {
+      return;
+    }
     String fingerprint = ProgramCardData.fingerprint(document.text());
     tracker.entries(showingLog ? log.entries() : problems, fingerprint, showingLog);
     problemsTab.setMessage(
@@ -195,26 +201,37 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
               result.fingerprint()));
       if (result.saved() && result.message().startsWith("Compiled and written")) {
         screen.installedFingerprint = result.fingerprint();
-        if (result.fingerprint().equals(ProgramCardData.fingerprint(screen.document.text())))
-          for (var problem : screen.problems)
-            if (problem.severity() == EditorProblem.Severity.WARNING) screen.log.add(problem);
-      } else if (result.saved() && !result.fingerprint().equals(screen.installedFingerprint))
+        if (result.fingerprint().equals(ProgramCardData.fingerprint(screen.document.text()))) {
+          for (var problem : screen.problems) {
+            if (problem.severity() == EditorProblem.Severity.WARNING) {
+              screen.log.add(problem);
+            }
+          }
+        }
+      } else if (result.saved() && !result.fingerprint().equals(screen.installedFingerprint)) {
         screen.installedFingerprint = "";
-      if (!result.saved()) screen.showingLog = true;
+      }
+      if (!result.saved()) {
+        screen.showingLog = true;
+      }
       screen.refreshDiagnostics();
       if (result.saved()
-          && result.fingerprint().equals(ProgramCardData.fingerprint(screen.editor.getValue())))
+          && result.fingerprint().equals(ProgramCardData.fingerprint(screen.editor.getValue()))) {
         screen.dirty = false;
+      }
     }
   }
 
   @Override
   public void containerTick() {
     super.containerTick();
-    if (analysisDelay > 0 && --analysisDelay == 0) analyzeNow();
-    if (pollTicks++ % 20 == 0)
+    if (analysisDelay > 0 && --analysisDelay == 0) {
+      analyzeNow();
+    }
+    if (pollTicks++ % 20 == 0) {
       PacketDistributor.sendToServer(
           new CardWorkspaceNetwork.Poll(menu.containerId, menu.identity));
+    }
   }
 
   public static void receiveOutput(CardWorkspaceNetwork.Output result) {
@@ -243,7 +260,9 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
             && problem.line() > 0
             && problem.fingerprint().equals(ProgramCardData.fingerprint(document.text()));
     boolean handled = super.mouseClicked(mx, my, button);
-    if (navigable) setFocused(editor);
+    if (navigable) {
+      setFocused(editor);
+    }
     return handled;
   }
 
@@ -257,8 +276,9 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
       save();
       return true;
     }
-    if (editor.isFocused() && minecraft.options.keyInventory.matches(key, scan))
+    if (editor.isFocused() && minecraft.options.keyInventory.matches(key, scan)) {
       return editor.keyPressed(key, scan, modifiers);
+    }
     return super.keyPressed(key, scan, modifiers);
   }
 
@@ -312,19 +332,23 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
   public void render(GuiGraphics g, int mx, int my, float partial) {
     super.render(g, mx, my, partial);
     var hovered = editor.hoveredProblem(mx, my);
-    if (hovered != null) g.renderTooltip(font, Component.literal(hovered.message()), mx, my);
+    if (hovered != null) {
+      g.renderTooltip(font, Component.literal(hovered.message()), mx, my);
+    }
     var diagnostic = tracker.hovered(mx, my);
     if (diagnostic != null) {
       String detail = diagnostic.message();
       if (!diagnostic.fingerprint().isEmpty()
-          && !diagnostic.fingerprint().equals(ProgramCardData.fingerprint(document.text())))
+          && !diagnostic.fingerprint().equals(ProgramCardData.fingerprint(document.text()))) {
         detail += " (Earlier source revision; navigation disabled.)";
+      }
       g.renderTooltip(font, Component.literal(detail), mx, my);
     }
     if (mx >= leftPos + 12
         && mx < leftPos + imageWidth - 12
         && my >= topPos + imageHeight - 63
-        && my < topPos + imageHeight - 50)
+        && my < topPos + imageHeight - 50) {
       g.renderTooltip(font, Component.literal(showingConsole ? runtimeState : status), mx, my);
+    }
   }
 }

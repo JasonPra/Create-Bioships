@@ -38,7 +38,9 @@ public final class StomachLifecycleTests {
     SubLevelData.living(body, true);
     DevelopmentLifeSupport.pause(body);
     SubLevelData.hunger(body, SubLevelData.maximumHunger(body));
-    for (int i = 0; i < 25; i++) stomach.advance();
+    for (int i = 0; i < 25; i++) {
+      stomach.advance();
+    }
     helper.assertTrue(
         stomach.progress() > 0 && stomach.acid() < 200, "Living mouthless grid failed to digest");
     SubLevelData.living(body, false);
@@ -55,7 +57,9 @@ public final class StomachLifecycleTests {
 
   private static void frozen(GameTestHelper helper, StomachBlockEntity stomach, String message) {
     var before = stomach.saveWithFullMetadata(helper.getLevel().registryAccess());
-    for (int i = 0; i < 100; i++) stomach.advance();
+    for (int i = 0; i < 100; i++) {
+      stomach.advance();
+    }
     helper.assertTrue(
         before.equals(stomach.saveWithFullMetadata(helper.getLevel().registryAccess())), message);
   }
@@ -65,7 +69,11 @@ public final class StomachLifecycleTests {
       GameTestHelper helper) {
     var level = helper.getLevel();
     var origin = new BlockPos(1408, 80, 128);
-    for (int x = 87; x <= 88; x++) for (int z = 7; z <= 8; z++) level.setChunkForced(x, z, true);
+    for (int x = 87; x <= 88; x++) {
+      for (int z = 7; z <= 8; z++) {
+        level.setChunkForced(x, z, true);
+      }
+    }
     helper
         .startSequence()
         .thenWaitUntil(
@@ -74,9 +82,11 @@ public final class StomachLifecycleTests {
                     level.isPositionEntityTicking(origin), "Waiting for item-drop chunks"))
         .thenExecute(
             () -> {
-              for (int x = -3; x <= 5; x++)
-                for (int z = -3; z <= 5; z++)
+              for (int x = -3; x <= 5; x++) {
+                for (int z = -3; z <= 5; z++) {
                   level.setBlock(origin.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 3);
+                }
+              }
               level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
               level.setBlock(origin.east(), ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
               var body =
@@ -92,7 +102,9 @@ public final class StomachLifecycleTests {
               var stomach = (StomachBlockEntity) level.getBlockEntity(core.east());
               stomach.enqueue(new ItemStack(Items.PORKCHOP, 3), false);
               stomach.setItem(9, new ItemStack(StomachBlockEntity.paste(), 5));
-              for (int i = 0; i < 25; i++) stomach.advance();
+              for (int i = 0; i < 25; i++) {
+                stomach.advance();
+              }
               int acid = stomach.acid(), progress = stomach.progress();
               var player =
                   new net.neoforged.neoforge.common.util.FakePlayer(

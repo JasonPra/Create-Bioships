@@ -30,8 +30,11 @@ public final class VisionDebugSync {
                   if (c.player() instanceof ServerPlayer player) {
                     if (p.enabled()
                         && org.Azkerash.create_bioships.development.testing.DevelopmentToolkitItem
-                            .allowed(player)) VIEWERS.put(player, new HashSet<>());
-                    else VIEWERS.remove(player);
+                            .allowed(player)) {
+                      VIEWERS.put(player, new HashSet<>());
+                    } else {
+                      VIEWERS.remove(player);
+                    }
                   }
                 }));
     r.playToClient(
@@ -45,7 +48,9 @@ public final class VisionDebugSync {
 
   @SubscribeEvent
   public static void tick(net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) {
-    if (event.getServer().getTickCount() % 10 != 0) return;
+    if (event.getServer().getTickCount() % 10 != 0) {
+      return;
+    }
     var iterator = VIEWERS.entrySet().iterator();
     while (iterator.hasNext()) {
       var viewer = iterator.next();
@@ -58,21 +63,27 @@ public final class VisionDebugSync {
       }
       var present = new HashSet<UUID>();
       var container = SubLevelContainer.getContainer(player.serverLevel());
-      if (container != null)
-        for (var entry : container.getAllSubLevels())
+      if (container != null) {
+        for (var entry : container.getAllSubLevels()) {
           if (entry instanceof ServerSubLevel body && SubLevelVision.active(body)) {
             if (!org.Azkerash.create_bioships.core.access.SubLevelPermissions.canInspect(
-                body, player.getUUID())) continue;
+                body, player.getUUID())) {
+              continue;
+            }
             var center =
                 body.logicalPose()
                     .transformPosition(Vec3.atCenterOf(body.getPlot().getCenterBlock()));
-            if (center.distanceToSqr(player.position()) > 96 * 96 || present.size() >= 16) continue;
+            if (center.distanceToSqr(player.position()) > 96 * 96 || present.size() >= 16) {
+              continue;
+            }
             var rays =
                 SubLevelVision.sights(body).stream()
                     .flatMap(s -> s.rays().stream())
                     .limit(VisionDebugPayload.MAX_RAYS)
                     .toList();
-            if (rays.isEmpty()) continue;
+            if (rays.isEmpty()) {
+              continue;
+            }
             present.add(body.getUniqueId());
             PacketDistributor.sendToPlayer(
                 player,
@@ -84,9 +95,13 @@ public final class VisionDebugSync {
                         .limit(128)
                         .toList()));
           }
-      for (var id : viewer.getValue())
-        if (!present.contains(id))
+        }
+      }
+      for (var id : viewer.getValue()) {
+        if (!present.contains(id)) {
           PacketDistributor.sendToPlayer(player, new VisionDebugPayload(id, List.of()));
+        }
+      }
       viewer.setValue(present);
     }
   }

@@ -32,7 +32,7 @@ public final class SocketJointTests {
     var points = new double[][] {{0, 0, 0}, {.7, .3, 0}, {1.4, -.5, 0}};
     var axes = new double[][] {{0, 1, 0}, {0, 0, 1}, {0, 0, 1}};
     var joints = new ArrayList<BuiltLeg.Joint>();
-    for (int i = 0; i < 3; i++)
+    for (int i = 0; i < 3; i++) {
       joints.add(
           new BuiltLeg.Joint(
               i == 0 ? body.getUniqueId() : ids.get(i - 1),
@@ -41,6 +41,7 @@ public final class SocketJointTests {
               Vec3.ZERO,
               new Vec3(axes[i][0], axes[i][1], axes[i][2]),
               i == 0));
+    }
     var built =
         new BuiltLeg(
             joints,
@@ -102,8 +103,9 @@ public final class SocketJointTests {
     h.assertTrue(
         dev.letitwalk.core.JointChain.WORK.sum() == work,
         "Pathfinding recomputed the unchanged IK envelope");
-    for (int i = 0; i < 3; i++)
+    for (int i = 0; i < 3; i++) {
       new SocketJointSettings(0, 0).save(body, SocketJointSettings.compact(socket, i));
+    }
     h.assertTrue(
         SocketJointRig.stepHeight(List.of(loaded)) == 0,
         "Locked joints retained stair-climbing capability");

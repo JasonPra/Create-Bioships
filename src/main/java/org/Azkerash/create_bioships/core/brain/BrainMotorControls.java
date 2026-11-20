@@ -51,12 +51,16 @@ public final class BrainMotorControls {
         || !Double.isFinite(velocity.x)
         || !Double.isFinite(velocity.y)
         || !Double.isFinite(velocity.z)
-        || !Double.isFinite(yawRate)) return false;
+        || !Double.isFinite(yawRate)) {
+      return false;
+    }
     var movement =
         mode == org.Azkerash.create_bioships.core.pathfinding.SubLevelPathfinder.Mode.WATER
             ? velocity
             : new Vec3(velocity.x, 0, velocity.z);
-    if (movement.lengthSqr() > 4) movement = movement.normalize().scale(2);
+    if (movement.lengthSqr() > 4) {
+      movement = movement.normalize().scale(2);
+    }
     if (!org.Azkerash.create_bioships.core.pathfinding.SubLevelPathfinder.movementClear(
         body, movement, yawRate)) {
       stop(body);
@@ -73,7 +77,9 @@ public final class BrainMotorControls {
   }
 
   public static boolean active(ServerSubLevel body) {
-    if (!SubLevelCreatureParts.available(body)) return false;
+    if (!SubLevelCreatureParts.available(body)) {
+      return false;
+    }
     body = SubLevelCreatureParts.root(body);
     return !body.isRemoved()
         && SubLevelData.isLiving(body)
@@ -83,11 +89,14 @@ public final class BrainMotorControls {
 
   /** Standing is an idle brain reflex, independent of a behavior card or movement lease. */
   public static boolean groundPostureEnabled(ServerSubLevel body) {
-    if (org.Azkerash.create_bioships.core.flippers.SubLevelFlippers.supporting(body)) return false;
+    if (org.Azkerash.create_bioships.core.flippers.SubLevelFlippers.supporting(body)) {
+      return false;
+    }
     if (!active(body)
         || !org.Azkerash.create_bioships.core.pathfinding.SubLevelPathfinder.allowed(
-            body, org.Azkerash.create_bioships.core.pathfinding.SubLevelPathfinder.Mode.GROUND))
+            body, org.Azkerash.create_bioships.core.pathfinding.SubLevelPathfinder.Mode.GROUND)) {
       return false;
+    }
     return current(body).mode()
         == org.Azkerash.create_bioships.core.pathfinding.SubLevelPathfinder.Mode.GROUND;
   }

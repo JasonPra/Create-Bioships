@@ -21,7 +21,9 @@ public final class SubLevelArmor {
 
   private static Capacity capacity(ServerSubLevel body) {
     var cached = CAPACITY.get(body);
-    if (cached != null) return cached;
+    if (cached != null) {
+      return cached;
+    }
     var cells = new HashMap<Long, Double>();
     double total = 0;
     for (var pos : SubLevelHealth.blocks(body)) {
@@ -33,13 +35,17 @@ public final class SubLevelArmor {
     }
     var result = new Capacity(cells, total);
     CAPACITY.put(body, result);
-    if (SubLevelCreatureParts.isPart(body)) SubLevelCreatureParts.armorContribution(body, total);
+    if (SubLevelCreatureParts.isPart(body)) {
+      SubLevelCreatureParts.armorContribution(body, total);
+    }
     return result;
   }
 
   private static double spent(ServerSubLevel body) {
     var root = body.getUserDataTag();
-    if (root == null) return 0;
+    if (root == null) {
+      return 0;
+    }
     double value = root.getCompound(SubLevelData.ARMOR).getDouble("spent");
     return Double.isFinite(value) ? Math.max(0, value) : 0;
   }
@@ -49,7 +55,9 @@ public final class SubLevelArmor {
   }
 
   public static Status status(ServerSubLevel body) {
-    if (!SubLevelCreatureParts.available(body)) return new Status(0, 0);
+    if (!SubLevelCreatureParts.available(body)) {
+      return new Status(0, 0);
+    }
     body = SubLevelCreatureParts.root(body);
     double maximum = capacity(body).total + SubLevelCreatureParts.extraArmor(body);
     return new Status(Math.max(0, maximum - spent(body)), maximum);
@@ -57,30 +65,42 @@ public final class SubLevelArmor {
 
   public static void changed(ServerSubLevel body, BlockPos pos, BlockState state) {
     var cached = CAPACITY.get(body);
-    if (cached == null) return;
+    if (cached == null) {
+      return;
+    }
     double previous = cached.cells.getOrDefault(pos.asLong(), 0d);
     double next = ArmorValues.points(state);
-    if (previous == next) return;
-    if (next == 0) cached.cells.remove(pos.asLong());
-    else cached.cells.put(pos.asLong(), next);
+    if (previous == next) {
+      return;
+    }
+    if (next == 0) {
+      cached.cells.remove(pos.asLong());
+    } else {
+      cached.cells.put(pos.asLong(), next);
+    }
     double total = Math.max(0, cached.total + next - previous);
     CAPACITY.put(body, new Capacity(cached.cells, total));
-    if (SubLevelCreatureParts.isPart(body)) SubLevelCreatureParts.armorContribution(body, total);
+    if (SubLevelCreatureParts.isPart(body)) {
+      SubLevelCreatureParts.armorContribution(body, total);
+    }
   }
 
   /**
    * Repairs the saved wear ledger only after health is fully restored and life support permits it.
    */
   public static boolean repair(ServerSubLevel body, double amount) {
-    if (!SubLevelCreatureParts.available(body) || !Double.isFinite(amount) || amount <= 0)
+    if (!SubLevelCreatureParts.available(body) || !Double.isFinite(amount) || amount <= 0) {
       return false;
+    }
     body = SubLevelCreatureParts.root(body);
     var health = SubLevelHealth.status(body);
     if (health.dead()
         || health.current() < health.maximum()
         || !SubLevelHunger.canRegenerate(body)
         || status(body).maximum() <= 0
-        || spent(body) <= 0) return false;
+        || spent(body) <= 0) {
+      return false;
+    }
     var root = body.getUserDataTag().copy();
     var armor = root.getCompound(SubLevelData.ARMOR).copy();
     armor.putDouble("spent", Math.max(0, spent(body) - amount));
@@ -101,8 +121,12 @@ public final class SubLevelArmor {
       net.minecraft.core.Direction face,
       DamageSource source,
       double damage) {
-    if (!Double.isFinite(damage) || damage <= 0) return 0;
-    if (!SubLevelCreatureParts.available(body)) return damage;
+    if (!Double.isFinite(damage) || damage <= 0) {
+      return 0;
+    }
+    if (!SubLevelCreatureParts.available(body)) {
+      return damage;
+    }
     var compact =
         body.getUserDataTag() == null
             ? new CompoundTag()
@@ -116,8 +140,12 @@ public final class SubLevelArmor {
     if (cell == null
         || source.is(DamageTypeTags.BYPASSES_ARMOR)
         || !ArmorValues.protects(body.getLevel().getBlockState(cell), face)
-        || SubLevelHealth.status(body).dead()) return damage;
-    if (SubLevelCreatureParts.isPart(body)) capacity(body);
+        || SubLevelHealth.status(body).dead()) {
+      return damage;
+    }
+    if (SubLevelCreatureParts.isPart(body)) {
+      capacity(body);
+    }
     double absorbed = Math.min(damage, status(body).current);
     if (absorbed > 0) {
       body = SubLevelCreatureParts.root(body);

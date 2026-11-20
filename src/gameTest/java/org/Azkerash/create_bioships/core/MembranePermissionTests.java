@@ -174,9 +174,12 @@ public final class MembranePermissionTests {
                 var container =
                     dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(level);
                 boolean found = false;
-                for (var entry : container.getAllSubLevels())
+                for (var entry : container.getAllSubLevels()) {
                   if (entry instanceof dev.ryanhcode.sable.sublevel.ServerSubLevel body
-                      && owner.equals(SubLevelPermissions.get(body).owner())) found = true;
+                      && owner.equals(SubLevelPermissions.get(body).owner())) {
+                    found = true;
+                  }
+                }
                 helper.assertTrue(
                     found, "Player-placed core did not save its placer as grid owner");
                 helper.succeed();

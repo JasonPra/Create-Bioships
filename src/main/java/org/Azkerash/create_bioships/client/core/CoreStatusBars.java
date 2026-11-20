@@ -34,8 +34,9 @@ final class CoreStatusBars {
       rect(vertices, matrix, x + 1, y + 2, end, y + 7, color);
       rect(vertices, matrix, x + 1, y + 2, end, y + 3, 0xffead5cf);
     }
-    for (int i = 1; i < 4; i++)
+    for (int i = 1; i < 4; i++) {
       rect(vertices, matrix, x + i * 20, y + 6, x + i * 20 + 1, y + 8, 0xff422431);
+    }
   }
 
   private static void rect(

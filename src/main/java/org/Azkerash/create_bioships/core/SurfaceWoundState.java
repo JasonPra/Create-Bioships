@@ -22,7 +22,9 @@ public final class SurfaceWoundState {
     wounds.values().removeIf(w -> !w.active(at));
     var key = new Surface(cell.immutable(), face);
     wounds.put(key, new Wound(key, at, duration));
-    while (wounds.size() > 256) wounds.remove(wounds.keySet().iterator().next());
+    while (wounds.size() > 256) {
+      wounds.remove(wounds.keySet().iterator().next());
+    }
   }
 
   public boolean active(BlockPos cell, Direction face, long now) {
@@ -56,13 +58,15 @@ public final class SurfaceWoundState {
 
   public static SurfaceWoundState load(ListTag list) {
     var result = new SurfaceWoundState();
-    for (var entry : list)
-      if (entry instanceof CompoundTag t)
+    for (var entry : list) {
+      if (entry instanceof CompoundTag t) {
         result.hit(
             BlockPos.of(t.getLong("cell")),
             Direction.from3DDataValue(t.getByte("face")),
             t.getLong("at"),
             t.getInt("duration"));
+      }
+    }
     return result;
   }
 }

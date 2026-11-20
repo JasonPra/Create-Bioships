@@ -64,16 +64,19 @@ public final class NervePanelBlock
   @Override
   protected InteractionResult useWithoutItem(
       BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-    if (hit.getDirection() != state.getValue(BlockStateProperties.FACING))
+    if (hit.getDirection() != state.getValue(BlockStateProperties.FACING)) {
       return InteractionResult.PASS;
+    }
     if (player instanceof ServerPlayer server && level instanceof ServerLevel world) {
       var body = CoreAssemblyRules.containing(world, pos);
-      if (body == null || !SubLevelData.isLiving(body))
+      if (body == null || !SubLevelData.isLiving(body)) {
         player.displayClientMessage(
             net.minecraft.network.chat.Component.literal(
                 "Connect this panel to a creature sublevel."),
             true);
-      else NervePanelControl.open(server, body, pos);
+      } else {
+        NervePanelControl.open(server, body, pos);
+      }
     }
     return InteractionResult.sidedSuccess(level.isClientSide);
   }

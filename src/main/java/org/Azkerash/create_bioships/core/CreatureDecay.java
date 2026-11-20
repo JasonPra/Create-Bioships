@@ -25,8 +25,9 @@ public final class CreatureDecay {
   private static final Map<ServerSubLevel, Map<Long, ResourceLocation>> CELLS = new WeakHashMap<>();
 
   static {
-    for (var name : List.of("living_core", "land_eye", "aquatic_eye"))
+    for (var name : List.of("living_core", "land_eye", "aquatic_eye")) {
       registerLastToRot(ResourceLocation.fromNamespaceAndPath(Create_bioships.MODID, name));
+    }
   }
 
   private CreatureDecay() {}
@@ -46,7 +47,9 @@ public final class CreatureDecay {
 
   public static UUID familyId(ServerSubLevel body) {
     var root = body.getUserDataTag() == null ? new CompoundTag() : body.getUserDataTag().copy();
-    if (root.hasUUID(FAMILY)) return root.getUUID(FAMILY);
+    if (root.hasUUID(FAMILY)) {
+      return root.getUUID(FAMILY);
+    }
     root.putUUID(FAMILY, body.getUniqueId());
     body.setUserDataTag(root);
     return body.getUniqueId();
@@ -67,7 +70,9 @@ public final class CreatureDecay {
 
   /** Native Sable split notification; physics separates, corpse identity and death do not. */
   public static void inherit(ServerSubLevel parent, ServerSubLevel child) {
-    if (!CoreAssemblyRules.isCreature(parent) || !SubLevelHealth.status(parent).dead()) return;
+    if (!CoreAssemblyRules.isCreature(parent) || !SubLevelHealth.status(parent).dead()) {
+      return;
+    }
     var id = familyId(parent);
     var data = parent.getUserDataTag().copy();
     data.putUUID(FAMILY, id);
@@ -76,8 +81,9 @@ public final class CreatureDecay {
     CELLS.remove(child);
     var world = WorldState.get(parent.getLevel());
     var family = world.families.computeIfAbsent(id, ignored -> new Family());
-    if (!family.members.containsKey(parent.getUniqueId()))
+    if (!family.members.containsKey(parent.getUniqueId())) {
       family.members.put(parent.getUniqueId(), null);
+    }
     family.members.put(child.getUniqueId(), null);
     world.setDirty();
   }
@@ -85,12 +91,19 @@ public final class CreatureDecay {
   /** Update summaries only when block types change; blinking does not trigger a rescan. */
   public static void changed(ServerSubLevel body, BlockPos pos, BlockState state) {
     var cells = CELLS.get(body);
-    if (cells == null) return;
+    if (cells == null) {
+      return;
+    }
     var next = state.isAir() ? null : BuiltInRegistries.BLOCK.getKey(state.getBlock());
     var previous = cells.get(pos.asLong());
-    if (Objects.equals(previous, next)) return;
-    if (next == null) cells.remove(pos.asLong());
-    else cells.put(pos.asLong(), next);
+    if (Objects.equals(previous, next)) {
+      return;
+    }
+    if (next == null) {
+      cells.remove(pos.asLong());
+    } else {
+      cells.put(pos.asLong(), next);
+    }
     summarize(body, cells);
   }
 
@@ -98,22 +111,32 @@ public final class CreatureDecay {
   public static void removed(ServerSubLevel body) {
     CELLS.remove(body);
     var data = body.getUserDataTag();
-    if (data == null || !data.hasUUID(FAMILY)) return;
+    if (data == null || !data.hasUUID(FAMILY)) {
+      return;
+    }
     var world = WorldState.get(body.getLevel());
     var id = data.getUUID(FAMILY);
     var family = world.families.get(id);
-    if (family == null) return;
+    if (family == null) {
+      return;
+    }
     family.members.remove(body.getUniqueId());
-    if (family.members.isEmpty()) world.families.remove(id);
+    if (family.members.isEmpty()) {
+      world.families.remove(id);
+    }
     world.setDirty();
   }
 
   private static void observe(ServerSubLevel body) {
-    if (CELLS.containsKey(body)) return;
+    if (CELLS.containsKey(body)) {
+      return;
+    }
     var cells = new HashMap<Long, ResourceLocation>();
     for (var pos : SubLevelHealth.blocks(body)) {
       var state = body.getLevel().getBlockState(pos);
-      if (!state.isAir()) cells.put(pos.asLong(), BuiltInRegistries.BLOCK.getKey(state.getBlock()));
+      if (!state.isAir()) {
+        cells.put(pos.asLong(), BuiltInRegistries.BLOCK.getKey(state.getBlock()));
+      }
     }
     CELLS.put(body, cells);
     summarize(body, cells);
@@ -121,7 +144,9 @@ public final class CreatureDecay {
 
   private static void summarize(ServerSubLevel body, Map<Long, ResourceLocation> cells) {
     var counts = new HashMap<ResourceLocation, Integer>();
-    for (var id : cells.values()) counts.merge(id, 1, Integer::sum);
+    for (var id : cells.values()) {
+      counts.merge(id, 1, Integer::sum);
+    }
     var world = WorldState.get(body.getLevel());
     var family = world.families.computeIfAbsent(familyId(body), ignored -> new Family());
     family.members.put(body.getUniqueId(), counts);
@@ -130,20 +155,27 @@ public final class CreatureDecay {
 
   @SubscribeEvent
   public static void tick(ServerTickEvent.Post event) {
-    for (var level : event.getServer().getAllLevels())
-      if (level.getGameTime() % 20 == 0) advance(level, level.getGameTime());
+    for (var level : event.getServer().getAllLevels()) {
+      if (level.getGameTime() % 20 == 0) {
+        advance(level, level.getGameTime());
+      }
+    }
   }
 
   /** Explicit simulation time also lets development tests advance decay without waiting an hour. */
   public static void advance(ServerLevel level, long now) {
     var container = SubLevelContainer.getContainer(level);
-    if (container == null) return;
+    if (container == null) {
+      return;
+    }
     var loaded = new HashMap<UUID, List<ServerSubLevel>>();
     for (var entry : List.copyOf(container.getAllSubLevels())) {
       if (!(entry instanceof ServerSubLevel body)
           || body.isRemoved()
           || !CoreAssemblyRules.isCreature(body)
-          || !SubLevelHealth.status(body).dead()) continue;
+          || !SubLevelHealth.status(body).dead()) {
+        continue;
+      }
       observe(body);
       loaded.computeIfAbsent(familyId(body), ignored -> new ArrayList<>()).add(body);
     }
@@ -151,7 +183,9 @@ public final class CreatureDecay {
     var last = lastToRotRegistry();
     for (var entry : loaded.entrySet()) {
       var family = world.families.get(entry.getKey());
-      if (family == null) continue;
+      if (family == null) {
+        continue;
+      }
       if (family.interval == 0) {
         int size =
             family.members.values().stream()
@@ -165,30 +199,38 @@ public final class CreatureDecay {
         world.setDirty();
         continue;
       }
-      if (now < family.next) continue;
+      if (now < family.next) {
+        continue;
+      }
       boolean ordinary = family.hasOrdinary(last);
       var exposed = new ArrayList<Piece>();
       var interior = new ArrayList<Piece>();
       for (var body : entry.getValue()) {
         var summary = family.members.get(body.getUniqueId());
         if (summary != null
-            && summary.keySet().stream().noneMatch(id -> last.contains(id) != ordinary)) continue;
+            && summary.keySet().stream().noneMatch(id -> last.contains(id) != ordinary)) {
+          continue;
+        }
         for (var cell : CELLS.get(body).entrySet()) {
-          if (last.contains(cell.getValue()) == ordinary) continue;
+          if (last.contains(cell.getValue()) == ordinary) {
+            continue;
+          }
           var pos = BlockPos.of(cell.getKey());
           var piece = new Piece(body, pos);
           boolean outside = false;
-          for (var face : Direction.values())
+          for (var face : Direction.values()) {
             if (level.getBlockState(pos.relative(face)).isAir()) {
               outside = true;
               break;
             }
+          }
           (outside ? exposed : interior).add(piece);
         }
       }
       var eligible = exposed.isEmpty() ? interior : exposed;
-      if (eligible.isEmpty())
-        continue; // An unloaded ordinary fragment still blocks the final group.
+      if (eligible.isEmpty()) {
+        continue;
+      } // An unloaded ordinary fragment still blocks the final group.
       var selected = eligible.get(level.random.nextInt(eligible.size()));
       if (CELLS.get(selected.body).size() == 1) {
         // Delete the grid through Sable before creating an empty physics body. Never drop loot.
@@ -212,9 +254,14 @@ public final class CreatureDecay {
 
     public boolean hasOrdinary(Set<ResourceLocation> last) {
       for (var counts : members.values()) {
-        if (counts == null) return true;
-        for (var entry : counts.entrySet())
-          if (entry.getValue() > 0 && !last.contains(entry.getKey())) return true;
+        if (counts == null) {
+          return true;
+        }
+        for (var entry : counts.entrySet()) {
+          if (entry.getValue() > 0 && !last.contains(entry.getKey())) {
+            return true;
+          }
+        }
       }
       return false;
     }
@@ -245,8 +292,9 @@ public final class CreatureDecay {
           if (!member.getBoolean("unknown")) {
             counts = new HashMap<>();
             var data = member.getCompound("counts");
-            for (var key : data.getAllKeys())
+            for (var key : data.getAllKeys()) {
               counts.put(ResourceLocation.parse(key), data.getInt(key));
+            }
           }
           family.members.put(member.getUUID("id"), counts);
         }
@@ -268,8 +316,9 @@ public final class CreatureDecay {
         for (var member : family.members.entrySet()) {
           var item = new CompoundTag();
           item.putUUID("id", member.getKey());
-          if (member.getValue() == null) item.putBoolean("unknown", true);
-          else {
+          if (member.getValue() == null) {
+            item.putBoolean("unknown", true);
+          } else {
             var counts = new CompoundTag();
             member.getValue().forEach((id, count) -> counts.putInt(id.toString(), count));
             item.put("counts", counts);

@@ -10,16 +10,19 @@ public final class EstateLandscapeTests {
   public static void landscape_preserves_vault_and_roads_and_has_substantial_relief(
       GameTestHelper h) {
     int peak = 0;
-    for (int x = -200; x <= 200; x++)
+    for (int x = -200; x <= 200; x++) {
       for (int z = -200; z <= 200; z++) {
         int y = EstateLandscape.height(x, z);
         peak = Math.max(peak, y);
         h.assertTrue(y >= 0 && y <= 32, "Terrain escaped intended vertical bounds");
-        if (EstateLandscape.central(x, z) || EstateLandscape.protectedRoad(x, z))
+        if (EstateLandscape.central(x, z) || EstateLandscape.protectedRoad(x, z)) {
           h.assertTrue(y == 0, "Landscape buries architecture or road");
-        if (!EstateLandscape.within(x, z))
+        }
+        if (!EstateLandscape.within(x, z)) {
           h.assertTrue(y == 0, "Terrain fails to taper at outer boundary");
+        }
       }
+    }
     h.assertTrue(peak >= 20, "Landscape is still effectively flat");
     h.succeed();
   }
@@ -44,9 +47,13 @@ public final class EstateLandscapeTests {
       var target = step.feet(base);
       for (int i = 0; i < 35; i++) {
         var d = target.subtract(player.position());
-        if (Math.abs(d.x) + Math.abs(d.z) < .01 && Math.abs(d.y) < .02) break;
+        if (Math.abs(d.x) + Math.abs(d.z) < .01 && Math.abs(d.y) < .02) {
+          break;
+        }
         var planar = new net.minecraft.world.phys.Vec3(d.x, 0, d.z);
-        if (planar.length() > .15) planar = planar.normalize().scale(.15);
+        if (planar.length() > .15) {
+          planar = planar.normalize().scale(.15);
+        }
         player.move(
             net.minecraft.world.entity.MoverType.SELF,
             new net.minecraft.world.phys.Vec3(planar.x, -.08, planar.z));

@@ -19,23 +19,34 @@ public final class BrainLimbDependencies extends BlockEntity implements BlockEnt
 
   @Override
   public Iterable<SubLevel> sable$getLoadingDependencies() {
-    if (!(level instanceof ServerLevel server)) return List.of();
+    if (!(level instanceof ServerLevel server)) {
+      return List.of();
+    }
     var body = CoreAssemblyRules.containing(server, worldPosition);
-    if (body == null || body.getUserDataTag() == null) return List.of();
+    if (body == null || body.getUserDataTag() == null) {
+      return List.of();
+    }
     var data = body.getUserDataTag().getCompound("create_bioships:modular_limbs");
     if ((data.isEmpty() && !body.getUserDataTag().contains("create_bioships:compact_limbs"))
         || body.getUserDataTag().getCompound(SubLevelData.BRAIN).getLong("Anchor")
-            != worldPosition.asLong()) return List.of();
+            != worldPosition.asLong()) {
+      return List.of();
+    }
     var container = SubLevelContainer.getContainer(server);
-    if (container == null) return List.of();
+    if (container == null) {
+      return List.of();
+    }
     var result = new ArrayList<SubLevel>();
     for (var id :
-        body.getUserDataTag().getCompound(SubLevelData.PARTS).getCompound("Members").getAllKeys())
+        body.getUserDataTag().getCompound(SubLevelData.PARTS).getCompound("Members").getAllKeys()) {
       try {
         var part = container.getSubLevel(UUID.fromString(id));
-        if (part != null && !part.isRemoved()) result.add(part);
+        if (part != null && !part.isRemoved()) {
+          result.add(part);
+        }
       } catch (IllegalArgumentException ignored) {
       }
+    }
     return result;
   }
 

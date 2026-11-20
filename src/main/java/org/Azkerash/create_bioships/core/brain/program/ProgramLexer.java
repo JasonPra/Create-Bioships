@@ -40,8 +40,9 @@ public final class ProgramLexer {
   }
 
   public static List<Token> scan(String source) {
-    if (source == null || source.length() > ProgramLimits.SOURCE)
+    if (source == null || source.length() > ProgramLimits.SOURCE) {
       throw new Failure(new Token(Kind.END, "", 1, 1), "Source exceeds 8192 characters.");
+    }
     return new ProgramLexer(source).read();
   }
 
@@ -53,15 +54,21 @@ public final class ProgramLexer {
         continue;
       }
       if (c == '/' && peek(1) == '/') {
-        while (cursor < source.length() && peek(0) != '\n' && peek(0) != '\r') take();
+        while (cursor < source.length() && peek(0) != '\n' && peek(0) != '\r') {
+          take();
+        }
         continue;
       }
       int row = line, col = column;
       if (c == '/' && peek(1) == '*') {
         take();
         take();
-        while (cursor < source.length() && !(peek(0) == '*' && peek(1) == '/')) take();
-        if (cursor == source.length()) fail(row, col, "Unterminated block comment.");
+        while (cursor < source.length() && !(peek(0) == '*' && peek(1) == '/')) {
+          take();
+        }
+        if (cursor == source.length()) {
+          fail(row, col, "Unterminated block comment.");
+        }
         take();
         take();
         continue;
@@ -74,10 +81,14 @@ public final class ProgramLexer {
         add(Kind.NAME, source.substring(start, cursor), row, col);
       } else if (isDigit(c)) {
         int start = cursor;
-        while (isDigit(peek(0))) take();
+        while (isDigit(peek(0))) {
+          take();
+        }
         if (peek(0) == '.' && isDigit(peek(1))) {
           take();
-          while (isDigit(peek(0))) take();
+          while (isDigit(peek(0))) {
+            take();
+          }
         }
         add(Kind.NUMBER, source.substring(start, cursor), row, col);
       } else if (c == '"') {
@@ -85,9 +96,13 @@ public final class ProgramLexer {
         StringBuilder value = new StringBuilder();
         while (cursor < source.length() && peek(0) != '"') {
           char next = take();
-          if (next == '\n' || next == '\r') fail(row, col, "String literals cannot span lines.");
+          if (next == '\n' || next == '\r') {
+            fail(row, col, "String literals cannot span lines.");
+          }
           if (next == '\\') {
-            if (cursor == source.length()) fail(row, col, "Unterminated string escape.");
+            if (cursor == source.length()) {
+              fail(row, col, "Unterminated string escape.");
+            }
             next =
                 switch (take()) {
                   case 'n' -> '\n';
@@ -99,9 +114,13 @@ public final class ProgramLexer {
                 };
           }
           value.append(next);
-          if (value.length() > ProgramLimits.STRING) fail(row, col, "String literal is too long.");
+          if (value.length() > ProgramLimits.STRING) {
+            fail(row, col, "String literal is too long.");
+          }
         }
-        if (cursor == source.length()) fail(row, col, "Unterminated string literal.");
+        if (cursor == source.length()) {
+          fail(row, col, "Unterminated string literal.");
+        }
         take();
         add(Kind.STRING, value.toString(), row, col);
       } else {
@@ -113,7 +132,9 @@ public final class ProgramLexer {
         } else if ("{}();:,.+-*/%!=<>".indexOf(c) >= 0) {
           take();
           add(Kind.SYMBOL, "" + c, row, col);
-        } else fail(row, col, "Unsupported character.");
+        } else {
+          fail(row, col, "Unsupported character.");
+        }
       }
     }
     tokens.add(new Token(Kind.END, "", line, column));
@@ -121,7 +142,9 @@ public final class ProgramLexer {
   }
 
   private void add(Kind kind, String text, int row, int col) {
-    if (tokens.size() >= ProgramLimits.TOKENS) fail(row, col, "Program exceeds token limit.");
+    if (tokens.size() >= ProgramLimits.TOKENS) {
+      fail(row, col, "Program exceeds token limit.");
+    }
     tokens.add(new Token(kind, text, row, col));
   }
 
@@ -135,9 +158,13 @@ public final class ProgramLexer {
       line++;
       column = 1;
     } else if (c == '\n') {
-      if (cursor < 2 || source.charAt(cursor - 2) != '\r') line++;
+      if (cursor < 2 || source.charAt(cursor - 2) != '\r') {
+        line++;
+      }
       column = 1;
-    } else column++;
+    } else {
+      column++;
+    }
     return c;
   }
 

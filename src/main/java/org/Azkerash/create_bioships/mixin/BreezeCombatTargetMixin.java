@@ -12,6 +12,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class BreezeCombatTargetMixin {
   @Inject(method = "canAttackType", at = @At("HEAD"), cancellable = true)
   private void core$allowGrid(EntityType<?> type, CallbackInfoReturnable<Boolean> callback) {
-    if (type == Create_bioships.COMBAT_TARGET.get()) callback.setReturnValue(true);
+    if (type == Create_bioships.COMBAT_TARGET.get()) {
+      callback.setReturnValue(true);
+    }
   }
 }

@@ -52,16 +52,18 @@ public final class CorePlacementTests {
     helper.runAfterDelay(
         2,
         () -> {
-          for (var body : SubLevelContainer.getContainer(level).getAllSubLevels())
+          for (var body : SubLevelContainer.getContainer(level).getAllSubLevels()) {
             if (!body.isRemoved()
                 && CoreAssemblyRules.isCreature(body)
                 && body.logicalPose()
                         .transformPosition(Vec3.atCenterOf(body.getPlot().getCenterBlock()))
                         .distanceToSqr(Vec3.atCenterOf(pos))
-                    < 4)
+                    < 4) {
               SubLevelContainer.getContainer(level)
                   .addForceLoadTicket(
                       body, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
+            }
+          }
         });
     helper.runAfterDelay(
         5,
@@ -113,7 +115,7 @@ public final class CorePlacementTests {
   public static void every_biomancy_id_is_allowed_and_forbidden_clicks_stop_before_placement(
       GameTestHelper helper) {
     int biomancy = 0;
-    for (var id : BuiltInRegistries.BLOCK.keySet())
+    for (var id : BuiltInRegistries.BLOCK.keySet()) {
       if (id.getNamespace().equals("biomancy")) {
         biomancy++;
         helper.assertTrue(
@@ -121,6 +123,7 @@ public final class CorePlacementTests {
                 && BlockPlacementRules.allows(BuiltInRegistries.BLOCK.get(id).defaultBlockState()),
             "Missing Biomancy block: " + id);
       }
+    }
     helper.assertTrue(biomancy > 0, "Biomancy registry was empty");
     System.out.println("CORE_WHITELIST verifiedBiomancyIds=" + biomancy);
     var level = helper.getLevel();

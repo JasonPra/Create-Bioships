@@ -79,7 +79,9 @@ public final class SacRoutingTests {
                     g.sacs().contains(sac.getBlockPos())
                         && g.stomachs().contains(stomach.getBlockPos())),
         "Native sac missing from cached network");
-    for (int slot = 0; slot < 9; slot++) stomach.setItem(slot, new ItemStack(Items.PORKCHOP, 64));
+    for (int slot = 0; slot < 9; slot++) {
+      stomach.setItem(slot, new ItemStack(Items.PORKCHOP, 64));
+    }
     mouth.feed(new ItemStack(Items.PORKCHOP, 3), false);
     helper.assertTrue(
         SubLevelDigestion.transfer(mouth) == 1
@@ -87,8 +89,9 @@ public final class SacRoutingTests {
             && count(inventory, Items.PORKCHOP) == 1,
         "Full stomach lost food instead of overflowing it");
     var flesh = BuiltInRegistries.ITEM.get(ResourceLocation.parse("biomancy:flesh_bits"));
-    for (int slot = 9; slot < StomachBlockEntity.PASTE_SLOT; slot++)
+    for (int slot = 9; slot < StomachBlockEntity.PASTE_SLOT; slot++) {
       stomach.setItem(slot, new ItemStack(flesh, 64));
+    }
     stomach.setItem(StomachBlockEntity.PASTE_SLOT, new ItemStack(StomachBlockEntity.paste(), 64));
     StomachStorageRouting.service(stomach, List.of(sac.getBlockPos()), 3);
     helper.assertTrue(
@@ -120,8 +123,9 @@ public final class SacRoutingTests {
     l.setBlock(o.east(), ComponentRegistry.MOUTH.get().defaultBlockState(), 3);
     l.setBlock(o.east(2), ComponentRegistry.INTESTINE.get().defaultBlockState(), 3);
     l.setBlock(o.east(3), ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
-    for (var pos : List.of(o.east(2).above(), o.east(2).above(2), o.east(2).south()))
+    for (var pos : List.of(o.east(2).above(), o.east(2).above(2), o.east(2).south())) {
       l.setBlock(pos, sacBlock.defaultBlockState(), 3);
+    }
     var cells =
         List.of(
             o,
@@ -219,9 +223,11 @@ public final class SacRoutingTests {
 
   private static int count(net.neoforged.neoforge.items.IItemHandler inventory, Item item) {
     int count = 0;
-    for (int slot = 0; slot < inventory.getSlots(); slot++)
-      if (inventory.getStackInSlot(slot).is(item))
+    for (int slot = 0; slot < inventory.getSlots(); slot++) {
+      if (inventory.getStackInSlot(slot).is(item)) {
         count += inventory.getStackInSlot(slot).getCount();
+      }
+    }
     return count;
   }
 }

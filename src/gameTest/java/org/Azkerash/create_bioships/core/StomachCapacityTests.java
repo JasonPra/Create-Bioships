@@ -25,10 +25,16 @@ public final class StomachCapacityTests {
   public static void stomach_capacity_threshold_and_inspection_whitelist(GameTestHelper helper) {
     var level = helper.getLevel();
     var origin = new BlockPos(1040, 80, 128);
-    for (int x = 64; x <= 65; x++) for (int z = 7; z <= 8; z++) level.setChunkForced(x, z, true);
-    for (int x = -4; x <= 4; x++)
-      for (int z = -4; z <= 4; z++)
+    for (int x = 64; x <= 65; x++) {
+      for (int z = 7; z <= 8; z++) {
+        level.setChunkForced(x, z, true);
+      }
+    }
+    for (int x = -4; x <= 4; x++) {
+      for (int z = -4; z <= 4; z++) {
         level.setBlock(origin.offset(x, -2, z), Blocks.BEDROCK.defaultBlockState(), 3);
+      }
+    }
     helper.runAfterDelay(
         10,
         () -> {
@@ -121,7 +127,9 @@ public final class StomachCapacityTests {
           owner.addEffect(
               new net.minecraft.world.effect.MobEffectInstance(
                   net.minecraft.world.effect.MobEffects.REGENERATION, 60, 0));
-          for (int tick = 0; tick < 20; tick++) owner.tick();
+          for (int tick = 0; tick < 20; tick++) {
+            owner.tick();
+          }
           helper.assertTrue(
               SubLevelHealth.status(body).current() == before + 1,
               "Regeneration potion was incorrectly gated by hunger");
@@ -166,10 +174,11 @@ public final class StomachCapacityTests {
               "Reverse placement changed diminishing returns or filled hunger");
           long[] raw = {0, 5, 10, 20, 45, 80};
           int[] expected = {5, 10, 12, 15, 20, 25};
-          for (int i = 0; i < raw.length; i++)
+          for (int i = 0; i < raw.length; i++) {
             helper.assertTrue(
                 SubLevelHunger.balancedCapacity(raw[i]) == expected[i],
                 "Unexpected diminishing-return capacity for raw total " + raw[i]);
+          }
           helper.succeed();
         });
   }

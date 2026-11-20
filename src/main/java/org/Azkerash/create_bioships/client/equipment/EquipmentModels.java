@@ -40,7 +40,9 @@ public final class EquipmentModels {
             ResourceLocation.fromNamespaceAndPath(Create_bioships.MODID, item));
     var icon = event.getModels().get(id);
     var model = event.getModels().get(extra(mesh));
-    if (icon == null || model == null) return;
+    if (icon == null || model == null) {
+      return;
+    }
     event
         .getModels()
         .put(

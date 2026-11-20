@@ -26,11 +26,12 @@ public final class CoreDevelopmentTests {
   private static void cycle(GameTestHelper helper, CoreSplitFixture.Layout layout, int pass) {
     var level = helper.getLevel();
     helper.assertTrue(layout.cores().size() == 49, "Unexpected pyramid size");
-    for (var pos : layout.cores())
+    for (var pos : layout.cores()) {
       helper.assertTrue(
           level.getBlockState(pos).is(ComponentRegistry.CORE.get())
               && level.getBlockState(pos).getValue(CoreBlock.BLINK),
           "Fixture core is not closed and unassembled");
+    }
     helper.assertTrue(
         level.getBlockState(layout.tip().above(2)).isAir(), "Pyramid interior is not hollow");
     helper.assertTrue(
@@ -75,14 +76,16 @@ public final class CoreDevelopmentTests {
                   .count();
           helper.assertTrue(
               count == 49, "Honey-glued fixture did not become 49 independent cores: " + count);
-          for (int y = 0; y < 4; y++)
+          for (int y = 0; y < 4; y++) {
             helper.assertTrue(
                 level.getBlockState(layout.base().above(y)).is(Blocks.OAK_LOG),
                 "Assembly took the wooden pole");
+          }
           reset.getCommandBlock().performCommand(level);
           helper.assertTrue(!CoreTestState.get(level).running(), "Reset command left test running");
-          if (pass == 0) helper.runAfterDelay(5, () -> cycle(helper, layout, 1));
-          else
+          if (pass == 0) {
+            helper.runAfterDelay(5, () -> cycle(helper, layout, 1));
+          } else {
             helper.runAfterDelay(
                 5,
                 () -> {
@@ -106,6 +109,7 @@ public final class CoreDevelopmentTests {
                       "Reset left old Sable test objects");
                   helper.succeed();
                 });
+          }
         });
   }
 }

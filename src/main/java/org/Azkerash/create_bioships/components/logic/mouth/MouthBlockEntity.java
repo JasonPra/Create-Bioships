@@ -27,7 +27,9 @@ public final class MouthBlockEntity extends OrganInventory {
     public net.minecraft.nbt.CompoundTag save(net.minecraft.core.HolderLookup.Provider registries) {
       var tag = new net.minecraft.nbt.CompoundTag();
       tag.putLong("ChewUntil", until);
-      if (!food.isEmpty()) tag.put("ChewFood", food.save(registries));
+      if (!food.isEmpty()) {
+        tag.put("ChewFood", food.save(registries));
+      }
       return tag;
     }
 
@@ -57,7 +59,9 @@ public final class MouthBlockEntity extends OrganInventory {
   }
 
   public boolean active() {
-    if (!(level instanceof net.minecraft.server.level.ServerLevel server)) return false;
+    if (!(level instanceof net.minecraft.server.level.ServerLevel server)) {
+      return false;
+    }
     var body =
         org.Azkerash.create_bioships.core.CoreAssemblyRules.containing(server, worldPosition);
     return body != null
@@ -82,11 +86,13 @@ public final class MouthBlockEntity extends OrganInventory {
   @Override
   public void setChanged() {
     super.setChanged();
-    if (observing || !(level instanceof net.minecraft.server.level.ServerLevel server)) return;
+    if (observing || !(level instanceof net.minecraft.server.level.ServerLevel server)) {
+      return;
+    }
     observing = true;
     try {
       boolean added = false;
-      for (var stack : items())
+      for (var stack : items()) {
         if (!stack.isEmpty() && canPlaceItem(0, stack)) {
           int now =
               items().stream()
@@ -104,6 +110,7 @@ public final class MouthBlockEntity extends OrganInventory {
             break;
           }
         }
+      }
       remember();
       if (added && active()) {
         boolean starting = chewRemaining() == 0;
@@ -127,10 +134,14 @@ public final class MouthBlockEntity extends OrganInventory {
   public boolean salivaParticles() {
     if (!(level instanceof net.minecraft.server.level.ServerLevel server)
         || !getBlockState().is(ComponentRegistry.ARMORED_MAW.get())
-        || !active()) return false;
+        || !active()) {
+      return false;
+    }
     var body =
         org.Azkerash.create_bioships.core.CoreAssemblyRules.containing(server, worldPosition);
-    if (body == null) return false;
+    if (body == null) {
+      return false;
+    }
     var face = getBlockState().getValue(MouthBlock.FACING);
     var chin =
         face == Direction.UP
@@ -158,10 +169,14 @@ public final class MouthBlockEntity extends OrganInventory {
   public void chewingParticles() {
     if (!(level instanceof net.minecraft.server.level.ServerLevel server)
         || chewing().food.isEmpty()
-        || !active()) return;
+        || !active()) {
+      return;
+    }
     var body =
         org.Azkerash.create_bioships.core.CoreAssemblyRules.containing(server, worldPosition);
-    if (body == null) return;
+    if (body == null) {
+      return;
+    }
     var face = getBlockState().getValue(MouthBlock.FACING);
     var logical = net.minecraft.world.phys.Vec3.atCenterOf(worldPosition).relative(face, .65);
     var at = body.logicalPose().transformPosition(logical);

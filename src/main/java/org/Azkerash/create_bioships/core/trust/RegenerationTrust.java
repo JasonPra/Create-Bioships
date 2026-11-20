@@ -24,18 +24,26 @@ public final class RegenerationTrust {
         || alreadyRegenerating
         || !(potion.getOwner() instanceof ServerPlayer)
         || !effect.is(MobEffects.REGENERATION)
-        || !(recipient instanceof SubLevelCombatTarget target)) return;
+        || !(recipient instanceof SubLevelCombatTarget target)) {
+      return;
+    }
     var body = target.body();
-    if (body == null || !SubLevelCreatureParts.available(body)) return;
+    if (body == null || !SubLevelCreatureParts.available(body)) {
+      return;
+    }
     body = SubLevelCreatureParts.root(body);
     var health = SubLevelHealth.status(body);
     long now = body.getLevel().getGameTime();
     if (!SubLevelData.isLiving(body)
         || health.dead()
         || health.current() >= health.maximum()
-        || now < SubLevelData.regenerationTrustUntil(body)) return;
+        || now < SubLevelData.regenerationTrustUntil(body)) {
+      return;
+    }
     var active = recipient.getEffect(MobEffects.REGENERATION);
-    if (active == null) return;
+    if (active == null) {
+      return;
+    }
     long until =
         active.isInfiniteDuration()
             ? Long.MAX_VALUE

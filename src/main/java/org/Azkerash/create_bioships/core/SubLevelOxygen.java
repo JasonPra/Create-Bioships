@@ -41,23 +41,32 @@ public final class SubLevelOxygen {
     for (long cell : cells) {
       var p = BlockPos.of(cell);
       var s = body.getLevel().getBlockState(p);
-      if (s.getBlock() instanceof RespiratoryBlock) organs.put(p, s);
+      if (s.getBlock() instanceof RespiratoryBlock) {
+        organs.put(p, s);
+      }
     }
     ORGANS.put(body, organs);
   }
 
   static void changed(ServerSubLevel body, BlockPos p, BlockState state) {
     var organs = ORGANS.get(body);
-    if (organs == null) return;
-    if (state.getBlock() instanceof RespiratoryBlock) organs.put(p.immutable(), state);
-    else organs.remove(p);
+    if (organs == null) {
+      return;
+    }
+    if (state.getBlock() instanceof RespiratoryBlock) {
+      organs.put(p.immutable(), state);
+    } else {
+      organs.remove(p);
+    }
   }
 
   /** Lung needs no exposed port. Gills need water directly outside an unobstructed intake. */
   public static boolean breathing(ServerSubLevel body, BlockPos p) {
     var level = body.getLevel();
     var state = level.getBlockState(p);
-    if (!(state.getBlock() instanceof RespiratoryBlock organ)) return false;
+    if (!(state.getBlock() instanceof RespiratoryBlock organ)) {
+      return false;
+    }
     if (!organ.gills()) {
       var at = BlockPos.containing(body.logicalPose().transformPosition(Vec3.atCenterOf(p)));
       return !state.getValue(BlockStateProperties.WATERLOGGED)
@@ -67,11 +76,15 @@ public final class SubLevelOxygen {
     var face = state.getValue(BlockStateProperties.FACING);
     var neighbor = p.relative(face);
     var local = level.getBlockState(neighbor);
-    if (!local.getCollisionShape(level, neighbor).isEmpty()) return false;
+    if (!local.getCollisionShape(level, neighbor).isEmpty()) {
+      return false;
+    }
     var from = body.logicalPose().transformPosition(Vec3.atCenterOf(p).relative(face, .505));
     var to = body.logicalPose().transformPosition(Vec3.atCenterOf(p).relative(face, .62));
-    if (!level.hasChunkAt(BlockPos.containing(from)) || !level.hasChunkAt(BlockPos.containing(to)))
+    if (!level.hasChunkAt(BlockPos.containing(from))
+        || !level.hasChunkAt(BlockPos.containing(to))) {
       return false;
+    }
     if (level
             .clip(
                 new net.minecraft.world.level.ClipContext(
@@ -81,8 +94,12 @@ public final class SubLevelOxygen {
                     net.minecraft.world.level.ClipContext.Fluid.NONE,
                     net.minecraft.world.phys.shapes.CollisionContext.empty()))
             .getType()
-        != net.minecraft.world.phys.HitResult.Type.MISS) return false;
-    if (level.getFluidState(neighbor).is(FluidTags.WATER)) return true;
+        != net.minecraft.world.phys.HitResult.Type.MISS) {
+      return false;
+    }
+    if (level.getFluidState(neighbor).is(FluidTags.WATER)) {
+      return true;
+    }
     var at =
         BlockPos.containing(
             body.logicalPose().transformPosition(Vec3.atCenterOf(p).relative(face, .6)));
@@ -96,16 +113,23 @@ public final class SubLevelOxygen {
     int lungs = 0, gills = 0, breathingLungs = 0, breathingGills = 0;
     double supply = 0;
     for (var part : SubLevelCreatureParts.members(body)) {
-      if (!ORGANS.containsKey(part))
-        SubLevelHealth.blocks(part); // Initialize only once after load.
+      if (!ORGANS.containsKey(part)) {
+        SubLevelHealth.blocks(part);
+      } // Initialize only once after load.
       for (var e : ORGANS.getOrDefault(part, Map.of()).entrySet()) {
         var organ = (RespiratoryBlock) e.getValue().getBlock();
-        if (organ.gills()) gills++;
-        else lungs++;
+        if (organ.gills()) {
+          gills++;
+        } else {
+          lungs++;
+        }
         if (breathing(part, e.getKey())) {
           supply += SUPPLY_PER_ORGAN;
-          if (organ.gills()) breathingGills++;
-          else breathingLungs++;
+          if (organ.gills()) {
+            breathingGills++;
+          } else {
+            breathingLungs++;
+          }
         }
       }
     }
@@ -125,9 +149,13 @@ public final class SubLevelOxygen {
         || !SubLevelCreatureParts.available(body)
         || SubLevelCreatureParts.isPart(body)
         || !SubLevelData.isLiving(body)
-        || SubLevelHealth.status(body).dead()) return;
+        || SubLevelHealth.status(body).dead()) {
+      return;
+    }
     var state = SubLevelData.oxygen(body);
-    if (state.paused()) return;
+    if (state.paused()) {
+      return;
+    }
     var sample = status(body);
     double air = state.value();
     int suffocation = state.suffocationTicks();
@@ -138,23 +166,32 @@ public final class SubLevelOxygen {
       // step.
       boolean empty = air <= 0;
       air = Math.clamp(air + (sample.supply() - sample.demand()) * step / 20.0, 0, MAXIMUM);
-      if (empty && air == 0) suffocation += step;
-      else suffocation = 0;
+      if (empty && air == 0) {
+        suffocation += step;
+      } else {
+        suffocation = 0;
+      }
       if (suffocation >= SUFFOCATION_INTERVAL) {
         suffocation -= SUFFOCATION_INTERVAL;
         SubLevelHealth.damage(body, 2, "suffocation");
-        if (SubLevelHealth.status(body).dead()) break;
+        if (SubLevelHealth.status(body).dead()) {
+          break;
+        }
       }
     }
     var next = new SubLevelData.Oxygen(air, suffocation, false);
-    if (!next.equals(state)) SubLevelData.oxygen(body, next);
+    if (!next.equals(state)) {
+      SubLevelData.oxygen(body, next);
+    }
   }
 
   private record Gill(ServerSubLevel body, BlockPos pos, boolean wet) {}
 
   /** All gills share one creature-wide phase, even across linked physical bodies. */
   public static void animate(ServerSubLevel body, long now) {
-    if (SubLevelCreatureParts.isPart(body) || !SubLevelCreatureParts.available(body)) return;
+    if (SubLevelCreatureParts.isPart(body) || !SubLevelCreatureParts.available(body)) {
+      return;
+    }
     var gills = new ArrayList<Gill>();
     boolean gasping = false, airBreathing = false;
     for (var part : SubLevelCreatureParts.members(body)) {
@@ -177,7 +214,9 @@ public final class SubLevelOxygen {
         gasping |= !wet;
       }
     }
-    if (gills.isEmpty()) return;
+    if (gills.isEmpty()) {
+      return;
+    }
     gasping &= !airBreathing;
     boolean active = SubLevelData.isLiving(body) && !SubLevelHealth.status(body).dead();
     int phase =
@@ -188,28 +227,40 @@ public final class SubLevelOxygen {
       boolean gasp = active && !gill.wet() && !airBreathing;
       int gillPhase = active && !gill.wet() && airBreathing ? 0 : phase;
       if (state.getValue(RespiratoryBlock.BREATH) != gillPhase
-          || state.getValue(RespiratoryBlock.GASPING) != gasp)
+          || state.getValue(RespiratoryBlock.GASPING) != gasp) {
         level.setBlock(
             gill.pos(),
             state
                 .setValue(RespiratoryBlock.BREATH, gillPhase)
                 .setValue(RespiratoryBlock.GASPING, gasp),
             2);
+      }
     }
   }
 
   @SubscribeEvent
   public static void tick(net.neoforged.neoforge.event.tick.ServerTickEvent.Post e) {
     long now = e.getServer().getTickCount();
-    if (now % 3 == 0)
-      for (var body : new ArrayList<>(ORGANS.keySet()))
-        if (!body.isRemoved() && !SubLevelCreatureParts.isPart(body)) animate(body, now);
-    if (e.getServer().getTickCount() % 20 != 0) return;
+    if (now % 3 == 0) {
+      for (var body : new ArrayList<>(ORGANS.keySet())) {
+        if (!body.isRemoved() && !SubLevelCreatureParts.isPart(body)) {
+          animate(body, now);
+        }
+      }
+    }
+    if (e.getServer().getTickCount() % 20 != 0) {
+      return;
+    }
     for (var level : e.getServer().getAllLevels()) {
       var c = SubLevelContainer.getContainer(level);
-      if (c == null) continue;
-      for (var entry : c.getAllSubLevels())
-        if (entry instanceof ServerSubLevel body) advance(body, 20);
+      if (c == null) {
+        continue;
+      }
+      for (var entry : c.getAllSubLevels()) {
+        if (entry instanceof ServerSubLevel body) {
+          advance(body, 20);
+        }
+      }
     }
     ORGANS.keySet().removeIf(ServerSubLevel::isRemoved);
   }

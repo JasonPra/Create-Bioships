@@ -20,7 +20,11 @@ public final class ImpactAdapterTests {
       GameTestHelper helper) {
     var level = helper.getLevel();
     var origin = new BlockPos(1088, 80, 128);
-    for (int x = 67; x <= 68; x++) for (int z = 7; z <= 8; z++) level.setChunkForced(x, z, true);
+    for (int x = 67; x <= 68; x++) {
+      for (int z = 7; z <= 8; z++) {
+        level.setChunkForced(x, z, true);
+      }
+    }
     helper.runAfterDelay(
         10,
         () -> {

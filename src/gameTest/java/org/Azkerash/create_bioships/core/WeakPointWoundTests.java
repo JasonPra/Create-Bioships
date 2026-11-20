@@ -23,9 +23,11 @@ public final class WeakPointWoundTests {
       GameTestHelper helper) {
     var level = helper.getLevel();
     var origin = new BlockPos(160, 80, 128);
-    for (int x = -5; x <= 5; x++)
-      for (int z = -5; z <= 5; z++)
+    for (int x = -5; x <= 5; x++) {
+      for (int z = -5; z <= 5; z++) {
         level.setBlock(origin.offset(x, -2, z), Blocks.BEDROCK.defaultBlockState(), 3);
+      }
+    }
     level.setChunkForced(10, 8, true);
     helper.runAfterDelay(
         10,
@@ -75,7 +77,9 @@ public final class WeakPointWoundTests {
                     body.logicalPose().transformPosition(Vec3.atCenterOf(core).add(0, 0, -3)));
                 arrow.setDeltaMovement(0, 0, 2);
                 level.addFreshEntity(arrow);
-                for (int i = 0; i < 3 && !ProjectileAttachment.attached(arrow); i++) arrow.tick();
+                for (int i = 0; i < 3 && !ProjectileAttachment.attached(arrow); i++) {
+                  arrow.tick();
+                }
                 helper.assertTrue(
                     !arrow.isRemoved() && ProjectileAttachment.attached(arrow),
                     "Arrow not embedded; removed="

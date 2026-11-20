@@ -34,9 +34,11 @@ public final class FacingDebugSync {
             c.enqueueWork(
                 () -> {
                   if (c.player() instanceof ServerPlayer player) {
-                    if (p.enabled() && DiagnosticAccess.allowed(player))
+                    if (p.enabled() && DiagnosticAccess.allowed(player)) {
                       VIEWERS.put(player, new HashSet<>());
-                    else VIEWERS.remove(player);
+                    } else {
+                      VIEWERS.remove(player);
+                    }
                   }
                 }));
     r.playToClient(
@@ -55,7 +57,9 @@ public final class FacingDebugSync {
   }
 
   public static void setFromLook(ServerPlayer player) {
-    if (!DevelopmentToolkitItem.allowed(player)) return;
+    if (!DevelopmentToolkitItem.allowed(player)) {
+      return;
+    }
     var eye = player.getEyePosition();
     var hit =
         player
@@ -72,23 +76,27 @@ public final class FacingDebugSync {
             ? CoreAssemblyRules.containing(player.serverLevel(), hit.getBlockPos())
             : null;
     String message;
-    if (body == null || !SubLevelData.isLiving(body))
+    if (body == null || !SubLevelData.isLiving(body)) {
       message = "Look at a living creature's side face.";
-    else if (SubLevelCreatureParts.isPart(body) || hit.getDirection().getAxis() == Direction.Axis.Y)
+    } else if (SubLevelCreatureParts.isPart(body)
+        || hit.getDirection().getAxis() == Direction.Axis.Y) {
       message = "Choose a side face on the main body.";
-    else if (!canSet(body, player.getUUID()))
+    } else if (!canSet(body, player.getUUID())) {
       message = "Only the creature's owner can change its front.";
-    else
+    } else {
       message =
           SubLevelFacing.set(body, hit.getDirection())
               ? "Front set to local " + hit.getDirection().getName() + "."
               : "Cannot change this creature's front.";
+    }
     player.displayClientMessage(Component.literal(message), true);
   }
 
   @SubscribeEvent
   public static void tick(net.neoforged.neoforge.event.tick.ServerTickEvent.Post e) {
-    if (e.getServer().getTickCount() % 10 != 0 || VIEWERS.isEmpty()) return;
+    if (e.getServer().getTickCount() % 10 != 0 || VIEWERS.isEmpty()) {
+      return;
+    }
     var it = VIEWERS.entrySet().iterator();
     while (it.hasNext()) {
       var viewer = it.next();
@@ -100,8 +108,8 @@ public final class FacingDebugSync {
       }
       var present = new HashSet<UUID>();
       var c = SubLevelContainer.getContainer(player.serverLevel());
-      if (c != null)
-        for (var entry : c.getAllSubLevels())
+      if (c != null) {
+        for (var entry : c.getAllSubLevels()) {
           if (entry instanceof ServerSubLevel body
               && !body.isRemoved()
               && SubLevelData.isLiving(body)
@@ -115,17 +123,23 @@ public final class FacingDebugSync {
                     (box.minZ() + box.maxZ() + 1) / 2.0);
             if (body.logicalPose().transformPosition(origin).distanceToSqr(player.position())
                     > 96 * 96
-                || present.size() >= 16) continue;
+                || present.size() >= 16) {
+              continue;
+            }
             present.add(body.getUniqueId());
             PacketDistributor.sendToPlayer(
                 player,
                 new FacingDebugPayload(
                     body.getUniqueId(), SubLevelFacing.local(body), origin, true));
           }
-      for (var id : viewer.getValue())
-        if (!present.contains(id))
+        }
+      }
+      for (var id : viewer.getValue()) {
+        if (!present.contains(id)) {
           PacketDistributor.sendToPlayer(
               player, new FacingDebugPayload(id, Direction.SOUTH, Vec3.ZERO, false));
+        }
+      }
       viewer.setValue(present);
     }
   }

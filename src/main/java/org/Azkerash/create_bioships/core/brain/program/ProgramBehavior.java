@@ -24,7 +24,9 @@ public final class ProgramBehavior implements BrainBehavior {
   }
 
   public void tick(ServerSubLevel body) {
-    if (machine == null) return;
+    if (machine == null) {
+      return;
+    }
     machine.advance(
         body.getLevel().getGameTime(),
         name ->
@@ -38,14 +40,20 @@ public final class ProgramBehavior implements BrainBehavior {
   }
 
   public View view() {
-    if (machine == null) return new View("Compile error: " + compileError, List.of());
+    if (machine == null) {
+      return new View("Compile error: " + compileError, List.of());
+    }
     String state = machine.state().name();
-    if (machine.fault() != null) state += ": " + machine.fault();
+    if (machine.fault() != null) {
+      state += ": " + machine.fault();
+    }
     return new View(state, machine.output());
   }
 
   public void stop(ServerSubLevel body) {
-    if (machine != null) machine.stop();
+    if (machine != null) {
+      machine.stop();
+    }
     BrainBehavior.super.stop(body);
   }
 }

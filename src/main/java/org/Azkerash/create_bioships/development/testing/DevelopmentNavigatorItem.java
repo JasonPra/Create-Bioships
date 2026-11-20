@@ -34,7 +34,9 @@ public final class DevelopmentNavigatorItem extends Item {
 
   @Override
   public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
-    if (player instanceof ServerPlayer server) open(server);
+    if (player instanceof ServerPlayer server) {
+      open(server);
+    }
     return InteractionResultHolder.sidedSuccess(player.getItemInHand(hand), level.isClientSide);
   }
 
@@ -85,10 +87,12 @@ public final class DevelopmentNavigatorItem extends Item {
             "Regression: Modular limbs and Synaptic Calibrator"));
     entries.setItem(10, icon(Items.WATER_BUCKET, "Regression: Waterlogging catalogue"));
     entries.setItem(11, icon(Items.KELP, "Habitat: Aquatic homunculus aquarium"));
-    if (state.juniorHabitatBuilt)
+    if (state.juniorHabitatBuilt) {
       entries.setItem(12, icon(Items.POPPY, "Habitat: Junior’s garden"));
-    if (state.necromancerDenBuilt)
+    }
+    if (state.necromancerDenBuilt) {
       entries.setItem(13, icon(Items.BOOKSHELF, "Landmark: The Den of Az’kerash"));
+    }
     player.openMenu(
         new SimpleMenuProvider(
             (id, inventory, viewer) ->
@@ -98,7 +102,9 @@ public final class DevelopmentNavigatorItem extends Item {
                     if (slot < 0
                         || slot > 13
                         || slot == 12 && !state.juniorHabitatBuilt
-                        || slot == 13 && !state.necromancerDenBuilt) return;
+                        || slot == 13 && !state.necromancerDenBuilt) {
+                      return;
+                    }
                     var base =
                         switch (slot) {
                           case 0 -> state.layout().base();

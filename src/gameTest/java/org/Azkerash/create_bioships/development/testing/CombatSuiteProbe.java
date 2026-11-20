@@ -14,12 +14,15 @@ public final class CombatSuiteProbe {
 
   @SubscribeEvent
   public static void tick(ServerTickEvent.Post event) {
-    if (!Boolean.getBoolean("core.combatSuiteProbe")) return;
+    if (!Boolean.getBoolean("core.combatSuiteProbe")) {
+      return;
+    }
     var level = event.getServer().overworld();
     ticks++;
     if (ticks == 20) {
-      if (!DevelopmentWorldSetup.isDevelopment(level))
+      if (!DevelopmentWorldSetup.isDevelopment(level)) {
         throw new IllegalStateException("Not the development preset");
+      }
       CombatFixture.reset(level);
       CoreTestState.get(level).combatTrialSeconds =
           Integer.getInteger("core.combatProbeSeconds", 10);
@@ -28,7 +31,9 @@ public final class CombatSuiteProbe {
       System.out.println(
           "COMBAT_SUITE_BEGIN enemies=" + CoreTestState.get(level).combatEnemies.size());
     }
-    if (ticks < 20) return;
+    if (ticks < 20) {
+      return;
+    }
     var state = CoreTestState.get(level);
     while (printed < state.combatResults.size()) {
       System.out.println(
@@ -41,13 +46,14 @@ public final class CombatSuiteProbe {
       acquired = false;
       diagnostic = "";
     }
-    if (ticks % 10 == 0 && state.combatRunning)
+    if (ticks % 10 == 0 && state.combatRunning) {
       for (var entity : level.getAllEntities()) {
         if (entity instanceof net.minecraft.world.entity.Mob mob
             && mob.getTags().contains("create_bioships.combat_fixture")) {
           var target = mob.getTarget();
-          if (target instanceof org.Azkerash.create_bioships.combat.SubLevelCombatTarget)
+          if (target instanceof org.Azkerash.create_bioships.combat.SubLevelCombatTarget) {
             acquired = true;
+          }
           diagnostic =
               "actual="
                   + net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(
@@ -71,12 +77,16 @@ public final class CombatSuiteProbe {
                       .toList();
         }
       }
-    if (ticks % 2000 == 0)
+    }
+    if (ticks % 2000 == 0) {
       System.out.println("COMBAT_SUITE_PROGRESS " + CombatFixture.status(level));
+    }
     if (!state.combatRunning) {
       System.out.println("COMBAT_SUITE_DONE results=" + state.combatResults.size());
       event.getServer().halt(false);
     }
-    if (ticks > 100000) throw new IllegalStateException("Combat suite stuck");
+    if (ticks > 100000) {
+      throw new IllegalStateException("Combat suite stuck");
+    }
   }
 }

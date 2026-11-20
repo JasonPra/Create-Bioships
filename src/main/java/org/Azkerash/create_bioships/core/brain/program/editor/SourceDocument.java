@@ -121,7 +121,9 @@ public final class SourceDocument {
 
   public void move(int offset, boolean select) {
     caret = clamp(offset, 0, text.length());
-    if (!select) anchor = caret;
+    if (!select) {
+      anchor = caret;
+    }
     reveal(lineAt(caret));
   }
 
@@ -130,21 +132,35 @@ public final class SourceDocument {
       move(direction < 0 ? selectionStart() : selectionEnd(), false);
       return;
     }
-    if (direction < 0 && caret > 0) move(Character.offsetByCodePoints(text, caret, -1), select);
-    else if (direction > 0 && caret < text.length())
+    if (direction < 0 && caret > 0) {
+      move(Character.offsetByCodePoints(text, caret, -1), select);
+    } else if (direction > 0 && caret < text.length()) {
       move(Character.offsetByCodePoints(text, caret, 1), select);
+    }
   }
 
   public void moveWord(int direction, boolean select) {
     int point = caret;
     if (direction < 0) {
-      while (point > 0 && Character.isWhitespace(text.charAt(point - 1))) point--;
-      while (point > 0 && word(text.charAt(point - 1))) point--;
-      if (point == caret && point > 0) point--;
+      while (point > 0 && Character.isWhitespace(text.charAt(point - 1))) {
+        point--;
+      }
+      while (point > 0 && word(text.charAt(point - 1))) {
+        point--;
+      }
+      if (point == caret && point > 0) {
+        point--;
+      }
     } else {
-      while (point < text.length() && word(text.charAt(point))) point++;
-      while (point < text.length() && Character.isWhitespace(text.charAt(point))) point++;
-      if (point == caret && point < text.length()) point++;
+      while (point < text.length() && word(text.charAt(point))) {
+        point++;
+      }
+      while (point < text.length() && Character.isWhitespace(text.charAt(point))) {
+        point++;
+      }
+      if (point == caret && point < text.length()) {
+        point++;
+      }
     }
     move(point, select);
   }
@@ -154,14 +170,20 @@ public final class SourceDocument {
       insert("");
       return;
     }
-    if (caret == 0) return;
+    if (caret == 0) {
+      return;
+    }
     int start = lineStart(lineAt(caret));
     String prefix = text.substring(start, caret);
     if (!prefix.isEmpty() && prefix.chars().allMatch(c -> c == ' ')) {
       int count = prefix.length() % INDENT;
-      if (count == 0) count = INDENT;
+      if (count == 0) {
+        count = INDENT;
+      }
       replace(caret - count, caret, "");
-    } else replace(Character.offsetByCodePoints(text, caret, -1), caret, "");
+    } else {
+      replace(Character.offsetByCodePoints(text, caret, -1), caret, "");
+    }
   }
 
   public void delete() {
@@ -169,7 +191,9 @@ public final class SourceDocument {
       insert("");
       return;
     }
-    if (caret < text.length()) replace(caret, Character.offsetByCodePoints(text, caret, 1), "");
+    if (caret < text.length()) {
+      replace(caret, Character.offsetByCodePoints(text, caret, 1), "");
+    }
   }
 
   public void type(char c) {
@@ -204,10 +228,13 @@ public final class SourceDocument {
     int depth = Math.min(64, syntax.depthAt(point));
     int indent = syntax.codeAt(point) ? depth * INDENT : leadingSpaces(line(lineAt(point)));
     int before = point - 1;
-    while (before >= 0 && (text.charAt(before) == ' ' || text.charAt(before) == '\t')) before--;
+    while (before >= 0 && (text.charAt(before) == ' ' || text.charAt(before) == '\t')) {
+      before--;
+    }
     int after = end;
-    while (after < text.length() && (text.charAt(after) == ' ' || text.charAt(after) == '\t'))
+    while (after < text.length() && (text.charAt(after) == ' ' || text.charAt(after) == '\t')) {
       after++;
+    }
     boolean pair =
         syntax.codeAt(point)
             && before >= 0
@@ -215,9 +242,13 @@ public final class SourceDocument {
             && after < text.length()
             && text.charAt(after) == '}';
     String insertion = "\n" + " ".repeat(indent);
-    if (pair) insertion += "\n" + " ".repeat(Math.max(0, depth - 1) * INDENT);
+    if (pair) {
+      insertion += "\n" + " ".repeat(Math.max(0, depth - 1) * INDENT);
+    }
     replace(point, pair ? after : end, insertion);
-    if (pair) move(Math.min(text.length(), point + 1 + indent), false);
+    if (pair) {
+      move(Math.min(text.length(), point + 1 + indent), false);
+    }
   }
 
   public void indent(boolean outdent) {
@@ -226,7 +257,9 @@ public final class SourceDocument {
       return;
     }
     int first = lineAt(selectionStart()), last = lineAt(selectionEnd());
-    if (last > first && selectionEnd() == lineStart(last)) last--;
+    if (last > first && selectionEnd() == lineStart(last)) {
+      last--;
+    }
     int start = lineStart(first), end = lineEnd(last);
     StringBuilder value = new StringBuilder();
     int firstShift = 0;
@@ -234,13 +267,20 @@ public final class SourceDocument {
       String content = line(line);
       int removed = 0;
       if (outdent) {
-        while (removed < Math.min(INDENT, content.length()) && content.charAt(removed) == ' ')
+        while (removed < Math.min(INDENT, content.length()) && content.charAt(removed) == ' ') {
           removed++;
-        if (removed == 0 && content.startsWith("\t")) removed = 1;
+        }
+        if (removed == 0 && content.startsWith("\t")) {
+          removed = 1;
+        }
       }
-      if (line == first) firstShift = outdent ? -removed : INDENT;
+      if (line == first) {
+        firstShift = outdent ? -removed : INDENT;
+      }
       value.append(outdent ? content.substring(removed) : " ".repeat(INDENT) + content);
-      if (line < last) value.append('\n');
+      if (line < last) {
+        value.append('\n');
+      }
     }
     boolean selection = caret != anchor;
     int oldCaret = caret;
@@ -248,16 +288,22 @@ public final class SourceDocument {
     if (selection) {
       anchor = start;
       caret = start + value.length();
-    } else move(Math.max(start, oldCaret + firstShift), false);
+    } else {
+      move(Math.max(start, oldCaret + firstShift), false);
+    }
   }
 
   public void toggleFold(int line) {
     Integer end = folds.get(line);
-    if (end == null) return;
+    if (end == null) {
+      return;
+    }
     if (!collapsed.remove(line)) {
       collapsed.add(line);
       if (lineAt(caret) > line && lineAt(caret) < end
-          || lineAt(anchor) > line && lineAt(anchor) < end) caret = anchor = lineEnd(line);
+          || lineAt(anchor) > line && lineAt(anchor) < end) {
+        caret = anchor = lineEnd(line);
+      }
     }
     project();
   }
@@ -265,7 +311,9 @@ public final class SourceDocument {
   public void reveal(int line) {
     boolean changed =
         collapsed.removeIf(start -> start < line && line < folds.getOrDefault(start, start));
-    if (changed) project();
+    if (changed) {
+      project();
+    }
   }
 
   public void undo() {
@@ -277,7 +325,9 @@ public final class SourceDocument {
   }
 
   private void restore(Deque<Snapshot> from, Deque<Snapshot> to) {
-    if (from.isEmpty()) return;
+    if (from.isEmpty()) {
+      return;
+    }
     to.push(snapshot());
     Snapshot state = from.pop();
     text = state.text();
@@ -298,7 +348,9 @@ public final class SourceDocument {
       return;
     }
     undo.push(snapshot());
-    while (undo.size() > 64) undo.removeLast();
+    while (undo.size() > 64) {
+      undo.removeLast();
+    }
     redo.clear();
     text = next;
     caret = anchor = start + value.length();
@@ -323,7 +375,9 @@ public final class SourceDocument {
     folds.clear();
     for (var block : syntax.blocks()) {
       int start = lineAt(block.start()), end = lineAt(block.end());
-      if (end > start + 1) folds.merge(start, end, Math::max);
+      if (end > start + 1) {
+        folds.merge(start, end, Math::max);
+      }
     }
     collapsed.retainAll(folds.keySet());
     project();
@@ -333,7 +387,9 @@ public final class SourceDocument {
     var result = new ArrayList<Integer>();
     for (int line = 0; line < starts.length; line++) {
       result.add(line);
-      if (collapsed.contains(line)) line = folds.get(line) - 1;
+      if (collapsed.contains(line)) {
+        line = folds.get(line) - 1;
+      }
     }
     visible = List.copyOf(result);
   }
@@ -349,9 +405,13 @@ public final class SourceDocument {
   private static int leadingSpaces(String line) {
     int n = 0;
     for (int i = 0; i < line.length(); i++) {
-      if (line.charAt(i) == ' ') n++;
-      else if (line.charAt(i) == '\t') n += INDENT;
-      else break;
+      if (line.charAt(i) == ' ') {
+        n++;
+      } else if (line.charAt(i) == '\t') {
+        n += INDENT;
+      } else {
+        break;
+      }
     }
     return Math.min(n, 256);
   }

@@ -50,7 +50,7 @@ public final class EyeWaterTests {
     h.runAfterDelay(
         120,
         () -> {
-          for (var p : java.util.List.of(a, b))
+          for (var p : java.util.List.of(a, b)) {
             h.assertTrue(
                 level.getBlockState(p).getBlock()
                         instanceof org.Azkerash.create_bioships.components.logic.eye.EyeBlock
@@ -62,16 +62,18 @@ public final class EyeWaterTests {
                     + level.getBlockState(p.south())
                     + " above="
                     + level.getBlockState(p.above()));
+          }
           level.removeBlock(a.south(), false);
           level.removeBlock(b.south(), false);
           h.runAfterDelay(
               5,
               () -> {
-                for (var p : java.util.List.of(a, b))
+                for (var p : java.util.List.of(a, b)) {
                   h.assertTrue(
                       !(level.getBlockState(p).getBlock()
                           instanceof org.Azkerash.create_bioships.components.logic.eye.EyeBlock),
                       "Waterlogged eye survived without solid support");
+                }
                 h.succeed();
               });
         });

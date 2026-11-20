@@ -27,16 +27,22 @@ public final class HostileCombatIntegration {
 
   @SubscribeEvent
   public static void join(EntityJoinLevelEvent event) {
-    if (event.getLevel().isClientSide || !(event.getEntity() instanceof Mob mob) || !isHostile(mob))
+    if (event.getLevel().isClientSide
+        || !(event.getEntity() instanceof Mob mob)
+        || !isHostile(mob)) {
       return;
+    }
     attach(mob);
   }
 
   public static void attach(Mob mob) {
-    if (!ATTACHED.add(mob)) return;
+    if (!ATTACHED.add(mob)) {
+      return;
+    }
     // The unused vanilla Giant has no attack goals of its own; use its native attack attributes.
-    if (mob instanceof Giant giant)
+    if (mob instanceof Giant giant) {
       giant.goalSelector.addGoal(2, new MeleeAttackGoal(giant, 1, true));
+    }
     mob.targetSelector.addGoal(
         3,
         new NearestAttackableTargetGoal<>(mob, SubLevelCombatTarget.class, 5, true, false, null));
@@ -44,24 +50,31 @@ public final class HostileCombatIntegration {
 
   public static void updateBrainTarget(Mob mob, LivingEntity target) {
     var brain = mob.getBrain();
-    if (!brain.checkMemory(MemoryModuleType.ATTACK_TARGET, MemoryStatus.REGISTERED)) return;
+    if (!brain.checkMemory(MemoryModuleType.ATTACK_TARGET, MemoryStatus.REGISTERED)) {
+      return;
+    }
     if (target instanceof SubLevelCombatTarget) {
       brain.setMemory(MemoryModuleType.ATTACK_TARGET, target);
-      if (mob instanceof net.minecraft.world.entity.monster.warden.Warden warden)
+      if (mob instanceof net.minecraft.world.entity.monster.warden.Warden warden) {
         warden.increaseAngerAt(target, 80, false);
-      if (brain.checkMemory(MemoryModuleType.ANGRY_AT, MemoryStatus.REGISTERED))
+      }
+      if (brain.checkMemory(MemoryModuleType.ANGRY_AT, MemoryStatus.REGISTERED)) {
         brain.setMemoryWithExpiry(MemoryModuleType.ANGRY_AT, target.getUUID(), 600);
+      }
     } else if (target == null
         && brain.getMemory(MemoryModuleType.ATTACK_TARGET).orElse(null)
-            instanceof SubLevelCombatTarget) brain.eraseMemory(MemoryModuleType.ATTACK_TARGET);
+            instanceof SubLevelCombatTarget) {
+      brain.eraseMemory(MemoryModuleType.ATTACK_TARGET);
+    }
   }
 
   public static void tickBosses(ServerLevel level) {
     // Dragons tick their phase controller instead of Mob's goal selectors.
-    for (var entity : level.getAllEntities())
+    for (var entity : level.getAllEntities()) {
       if (entity instanceof EnderDragon dragon && dragon.isAlive()) {
-        if (dragon.getTarget() != null && !(dragon.getTarget() instanceof SubLevelCombatTarget))
+        if (dragon.getTarget() != null && !(dragon.getTarget() instanceof SubLevelCombatTarget)) {
           continue;
+        }
         var target =
             level
                 .getEntitiesOfClass(
@@ -85,5 +98,6 @@ public final class HostileCombatIntegration {
               .setTarget(target.position());
         }
       }
+    }
   }
 }

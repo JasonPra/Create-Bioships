@@ -23,7 +23,11 @@ public final class WrenchRemovalTests {
       GameTestHelper helper) {
     var level = helper.getLevel();
     var origin = new BlockPos(368, 80, 128);
-    for (int x = 22; x <= 23; x++) for (int z = 7; z <= 8; z++) level.setChunkForced(x, z, true);
+    for (int x = 22; x <= 23; x++) {
+      for (int z = 7; z <= 8; z++) {
+        level.setChunkForced(x, z, true);
+      }
+    }
     helper
         .startSequence()
         .thenWaitUntil(
@@ -37,9 +41,11 @@ public final class WrenchRemovalTests {
 
   private static void exercise(GameTestHelper helper, BlockPos origin) {
     var level = helper.getLevel();
-    for (int x = -4; x <= 4; x++)
-      for (int z = -4; z <= 4; z++)
+    for (int x = -4; x <= 4; x++) {
+      for (int z = -4; z <= 4; z++) {
         level.setBlock(origin.offset(x, -1, z), Blocks.BEDROCK.defaultBlockState(), 3);
+      }
+    }
     level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
     level.setBlock(
         origin.east(),

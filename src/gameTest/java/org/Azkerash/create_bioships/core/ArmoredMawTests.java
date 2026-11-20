@@ -60,11 +60,13 @@ public final class ArmoredMawTests {
     h.assertTrue(SubLevelArmor.status(body).maximum() == 20, "Maw did not add armor capacity");
     for (var facing : Direction.values()) {
       level.setBlock(at, level.getBlockState(at).setValue(MouthBlock.FACING, facing), 3);
-      for (var face : Direction.values())
-        if (face != facing)
+      for (var face : Direction.values()) {
+        if (face != facing) {
           h.assertTrue(
               SubLevelArmor.absorb(body, at, face, source, 2) == 2,
               "Maw armored an exposed face for orientation " + facing);
+        }
+      }
     }
     h.assertTrue(
         SubLevelArmor.status(body).current() == 20

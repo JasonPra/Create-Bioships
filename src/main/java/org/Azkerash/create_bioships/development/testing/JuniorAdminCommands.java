@@ -90,7 +90,9 @@ public final class JuniorAdminCommands {
         l.getEntitiesOfClass(
             net.minecraft.world.entity.Display.TextDisplay.class,
             new net.minecraft.world.phys.AABB(p).inflate(8),
-            entity -> entity.getTags().contains(CONTROL_LABEL))) previous.discard();
+            entity -> entity.getTags().contains(CONTROL_LABEL))) {
+      previous.discard();
+    }
     l.setBlock(p.below(), Blocks.POLISHED_BLACKSTONE_BRICKS.defaultBlockState(), 2);
     l.setBlock(
         p, Blocks.COMMAND_BLOCK.defaultBlockState().setValue(CommandBlock.FACING, Direction.UP), 2);

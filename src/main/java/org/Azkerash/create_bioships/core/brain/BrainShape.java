@@ -10,7 +10,9 @@ public final class BrainShape {
   private BrainShape() {}
 
   public static boolean bounded(Collection<BlockPos> cells) {
-    if (cells.isEmpty() || cells.size() > MAX_BLOCKS) return false;
+    if (cells.isEmpty() || cells.size() > MAX_BLOCKS) {
+      return false;
+    }
     for (var axis : Direction.Axis.values()) {
       int min = Integer.MAX_VALUE, max = Integer.MIN_VALUE;
       for (var p : cells) {
@@ -18,16 +20,21 @@ public final class BrainShape {
         min = Math.min(min, value);
         max = Math.max(max, value);
       }
-      if (max - min >= 3) return false;
+      if (max - min >= 3) {
+        return false;
+      }
     }
     return true;
   }
 
   public static boolean canAdd(Set<BlockPos> cells, BlockPos target) {
-    if (cells.contains(target) || cells.size() >= MAX_BLOCKS) return false;
-    if (!cells.isEmpty()
-        && Arrays.stream(Direction.values()).noneMatch(d -> cells.contains(target.relative(d))))
+    if (cells.contains(target) || cells.size() >= MAX_BLOCKS) {
       return false;
+    }
+    if (!cells.isEmpty()
+        && Arrays.stream(Direction.values()).noneMatch(d -> cells.contains(target.relative(d)))) {
+      return false;
+    }
     var expanded = new HashSet<>(cells);
     expanded.add(target);
     return bounded(expanded) && groups(expanded).size() == 1;
@@ -47,7 +54,9 @@ public final class BrainShape {
         group.add(p);
         for (var d : Direction.values()) {
           var next = p.relative(d);
-          if (left.remove(next)) queue.add(next);
+          if (left.remove(next)) {
+            queue.add(next);
+          }
         }
       }
       groups.add(Set.copyOf(group));

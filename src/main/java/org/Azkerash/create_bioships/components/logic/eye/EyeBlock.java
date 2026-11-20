@@ -25,7 +25,9 @@ public final class EyeBlock extends Block
       dev.ryanhcode.sable.sublevel.ServerSubLevel body, BlockPos pos) {
     var pending = SUPPORT_CHECKS.computeIfAbsent(body.getLevel(), l -> new java.util.HashSet<>());
     pending.add(pos.immutable());
-    for (var face : Direction.values()) pending.add(pos.relative(face));
+    for (var face : Direction.values()) {
+      pending.add(pos.relative(face));
+    }
   }
 
   @net.neoforged.bus.api.SubscribeEvent
@@ -33,11 +35,14 @@ public final class EyeBlock extends Block
       net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) {
     for (var level : event.getServer().getAllLevels()) {
       var pending = SUPPORT_CHECKS.remove(level);
-      if (pending == null) continue;
+      if (pending == null) {
+        continue;
+      }
       for (var pos : pending) {
         var state = level.getBlockState(pos);
-        if (state.getBlock() instanceof EyeBlock && !state.canSurvive(level, pos))
+        if (state.getBlock() instanceof EyeBlock && !state.canSurvive(level, pos)) {
           level.destroyBlock(pos, true);
+        }
       }
     }
   }
@@ -96,13 +101,16 @@ public final class EyeBlock extends Block
       LevelAccessor level,
       BlockPos pos,
       BlockPos otherPos) {
-    if (state.getValue(BlockStateProperties.WATERLOGGED))
+    if (state.getValue(BlockStateProperties.WATERLOGGED)) {
       level.scheduleTick(
           pos,
           net.minecraft.world.level.material.Fluids.WATER,
           net.minecraft.world.level.material.Fluids.WATER.getTickDelay(level));
+    }
     if (direction == state.getValue(BlockStateProperties.FACING).getOpposite()
-        && !state.canSurvive(level, pos)) level.scheduleTick(pos, this, 1);
+        && !state.canSurvive(level, pos)) {
+      level.scheduleTick(pos, this, 1);
+    }
     return super.updateShape(state, direction, other, level, pos, otherPos);
   }
 
@@ -130,7 +138,9 @@ public final class EyeBlock extends Block
   protected void onPlace(
       BlockState state, Level level, BlockPos pos, BlockState old, boolean moved) {
     super.onPlace(state, level, pos, old, moved);
-    if (!old.is(this)) level.scheduleTick(pos, this, 1);
+    if (!old.is(this)) {
+      level.scheduleTick(pos, this, 1);
+    }
   }
 
   @Override

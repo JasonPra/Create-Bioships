@@ -15,7 +15,9 @@ public final class SubLevelData {
   public static final String LIVING = "create_bioships:living";
 
   public static boolean isLiving(dev.ryanhcode.sable.sublevel.SubLevel entry) {
-    if (!(entry instanceof ServerSubLevel body) || body.getUserDataTag() == null) return false;
+    if (!(entry instanceof ServerSubLevel body) || body.getUserDataTag() == null) {
+      return false;
+    }
     var root = body.getUserDataTag();
     // Migrate the old amoeba identity once; an explicit false flag remains authoritative.
     if (!root.contains(LIVING) && "amoeba".equals(root.getString(CoreAssemblyRules.TYPE))) {
@@ -61,10 +63,14 @@ public final class SubLevelData {
   }
 
   public static void restoreDeadCore(ServerSubLevel body, CompoundTag snapshot) {
-    if (!SubLevelCreatureParts.available(body)) return;
+    if (!SubLevelCreatureParts.available(body)) {
+      return;
+    }
     body = SubLevelCreatureParts.root(body);
     var health = SubLevelHealth.status(body);
-    if (health.dead()) return;
+    if (health.dead()) {
+      return;
+    }
     var old = snapshot.getCompound(HEALTH);
     String cause = old.getString("cause");
     health(
@@ -85,12 +91,16 @@ public final class SubLevelData {
   }
 
   public static void initialize(ServerSubLevel body) {
-    if (!SubLevelCreatureParts.available(body)) return;
+    if (!SubLevelCreatureParts.available(body)) {
+      return;
+    }
     body = SubLevelCreatureParts.root(body);
     var existing = body.getUserDataTag();
     if (existing != null
         && existing.contains(HEALTH)
-        && existing.getCompound(STATE).getInt("version") == 4) return;
+        && existing.getCompound(STATE).getInt("version") == 4) {
+      return;
+    }
     var root = existing == null ? new CompoundTag() : existing.copy();
     var health = root.getCompound(HEALTH);
     var state = root.getCompound(STATE);
@@ -148,11 +158,12 @@ public final class SubLevelData {
       state.putInt("trust", DEFAULT_TRUST);
       changed = true;
     }
-    for (var key : new String[] {"hasLegs", "hasFins", "hasWallClimbers"})
+    for (var key : new String[] {"hasLegs", "hasFins", "hasWallClimbers"}) {
       if (!state.contains(key)) {
         state.putBoolean(key, false);
         changed = true;
       }
+    }
     if (state.getInt("version") != 4) {
       state.putInt("version", 4);
       changed = true;
@@ -177,9 +188,13 @@ public final class SubLevelData {
   }
 
   public static void locomotion(ServerSubLevel body, Locomotion value) {
-    if (!SubLevelCreatureParts.available(body)) return;
+    if (!SubLevelCreatureParts.available(body)) {
+      return;
+    }
     body = SubLevelCreatureParts.root(body);
-    if (value.equals(locomotion(body))) return;
+    if (value.equals(locomotion(body))) {
+      return;
+    }
     var root = body.getUserDataTag().copy();
     var state = root.getCompound(STATE);
     state.putBoolean("hasLegs", value.hasLegs());
@@ -201,7 +216,9 @@ public final class SubLevelData {
   }
 
   static void health(ServerSubLevel body, Health value) {
-    if (!SubLevelCreatureParts.available(body)) return;
+    if (!SubLevelCreatureParts.available(body)) {
+      return;
+    }
     body = SubLevelCreatureParts.root(body);
     initialize(body);
     var root = body.getUserDataTag().copy();
@@ -229,11 +246,15 @@ public final class SubLevelData {
   }
 
   static void maximumHunger(ServerSubLevel body, int capacity) {
-    if (!SubLevelCreatureParts.available(body)) return;
+    if (!SubLevelCreatureParts.available(body)) {
+      return;
+    }
     body = SubLevelCreatureParts.root(body);
     initialize(body);
     var current = body.getUserDataTag().getCompound(STATE);
-    if (current.getInt("maximumHunger") == capacity && current.getInt("hunger") <= capacity) return;
+    if (current.getInt("maximumHunger") == capacity && current.getInt("hunger") <= capacity) {
+      return;
+    }
     var root = body.getUserDataTag().copy();
     var state = root.getCompound(STATE);
     state.putInt("maximumHunger", capacity);
@@ -248,7 +269,9 @@ public final class SubLevelData {
   }
 
   static void regenerationTicks(ServerSubLevel body, int ticks) {
-    if (!SubLevelCreatureParts.available(body)) return;
+    if (!SubLevelCreatureParts.available(body)) {
+      return;
+    }
     body = SubLevelCreatureParts.root(body);
     variable(body, "regenerationTicks", Math.max(0, ticks));
   }
@@ -260,7 +283,9 @@ public final class SubLevelData {
   }
 
   public static void hunger(ServerSubLevel body, int value) {
-    if (!SubLevelCreatureParts.available(body)) return;
+    if (!SubLevelCreatureParts.available(body)) {
+      return;
+    }
     body = SubLevelCreatureParts.root(body);
     var old = hungerState(body);
     hungerState(
@@ -280,15 +305,20 @@ public final class SubLevelData {
   }
 
   public static void hungerPaused(ServerSubLevel body, boolean paused) {
-    if (!SubLevelCreatureParts.available(body)) return;
+    if (!SubLevelCreatureParts.available(body)) {
+      return;
+    }
     body = SubLevelCreatureParts.root(body);
     var old = hungerState(body);
-    if (old.paused() != paused)
+    if (old.paused() != paused) {
       hungerState(body, new Hunger(old.value(), paused, old.drainTicks(), old.starvationTicks()));
+    }
   }
 
   static void hungerState(ServerSubLevel body, Hunger value) {
-    if (!SubLevelCreatureParts.available(body)) return;
+    if (!SubLevelCreatureParts.available(body)) {
+      return;
+    }
     body = SubLevelCreatureParts.root(body);
     initialize(body);
     int maximum = maximumHunger(body);
@@ -318,14 +348,17 @@ public final class SubLevelData {
       if (hit.hasUUID("player")
           && hit.getLong("tick") >= 0
           && Double.isFinite(damage)
-          && damage >= 0)
+          && damage >= 0) {
         result.add(new OwnerHit(hit.getLong("tick"), damage, hit.getUUID("player")));
+      }
     }
     return java.util.List.copyOf(result);
   }
 
   public static void ownerHits(ServerSubLevel body, java.util.List<OwnerHit> hits) {
-    if (!SubLevelCreatureParts.available(body)) return;
+    if (!SubLevelCreatureParts.available(body)) {
+      return;
+    }
     body = SubLevelCreatureParts.root(body);
     initialize(body);
     var root = body.getUserDataTag().copy();
@@ -334,7 +367,9 @@ public final class SubLevelData {
       if (hit.player() == null
           || hit.tick() < 0
           || !Double.isFinite(hit.damage())
-          || hit.damage() < 0) continue;
+          || hit.damage() < 0) {
+        continue;
+      }
       var item = new CompoundTag();
       item.putLong("tick", hit.tick());
       item.putDouble("damage", hit.damage());
@@ -366,7 +401,9 @@ public final class SubLevelData {
   }
 
   public static void oxygen(ServerSubLevel body, Oxygen value) {
-    if (!SubLevelCreatureParts.available(body)) return;
+    if (!SubLevelCreatureParts.available(body)) {
+      return;
+    }
     body = SubLevelCreatureParts.root(body);
     initialize(body);
     var root = body.getUserDataTag().copy();
@@ -392,7 +429,9 @@ public final class SubLevelData {
   }
 
   public static void digestiveSickness(ServerSubLevel body, DigestiveSickness value) {
-    if (!SubLevelCreatureParts.available(body)) return;
+    if (!SubLevelCreatureParts.available(body)) {
+      return;
+    }
     body = SubLevelCreatureParts.root(body);
     initialize(body);
     var tag = body.getUserDataTag().copy();
@@ -408,7 +447,9 @@ public final class SubLevelData {
   }
 
   public static void regenerationTrustUntil(ServerSubLevel body, long until) {
-    if (!SubLevelCreatureParts.available(body)) return;
+    if (!SubLevelCreatureParts.available(body)) {
+      return;
+    }
     body = SubLevelCreatureParts.root(body);
     initialize(body);
     var tag = body.getUserDataTag().copy();
@@ -417,9 +458,13 @@ public final class SubLevelData {
   }
 
   public static void trust(ServerSubLevel body, double value) {
-    if (!SubLevelCreatureParts.available(body)) return;
+    if (!SubLevelCreatureParts.available(body)) {
+      return;
+    }
     body = SubLevelCreatureParts.root(body);
-    if (!Double.isFinite(value)) return;
+    if (!Double.isFinite(value)) {
+      return;
+    }
     initialize(body);
     var root = body.getUserDataTag().copy();
     root.getCompound(STATE).putDouble("trust", Math.clamp(value, 0, MAX_TRUST));
@@ -427,7 +472,9 @@ public final class SubLevelData {
   }
 
   private static void variable(ServerSubLevel body, String name, int value) {
-    if (!SubLevelCreatureParts.available(body)) return;
+    if (!SubLevelCreatureParts.available(body)) {
+      return;
+    }
     body = SubLevelCreatureParts.root(body);
     initialize(body);
     var root = body.getUserDataTag().copy();

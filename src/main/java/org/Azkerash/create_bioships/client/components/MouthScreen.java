@@ -22,7 +22,9 @@ public final class MouthScreen extends AbstractContainerScreen<MouthMenu> {
     g.renderItem(ComponentRegistry.MOUTH.get().asItem().getDefaultInstance(), x + 12, y + 8);
     g.drawCenteredString(font, "FOOD INTAKE", x + 114, y + 35, OrganScreenStyle.MUTED);
     g.fill(x + 82, y + 49, x + 146, y + 110, 0xff210e20);
-    for (var slot : menu.slots) OrganScreenStyle.slot(g, x + slot.x, y + slot.y);
+    for (var slot : menu.slots) {
+      OrganScreenStyle.slot(g, x + slot.x, y + slot.y);
+    }
     g.drawCenteredString(font, "Mouth → gut → stomach", x + 114, y + 114, OrganScreenStyle.MUTED);
     OrganScreenStyle.divider(g, x + 12, y + 125, imageWidth - 24);
   }

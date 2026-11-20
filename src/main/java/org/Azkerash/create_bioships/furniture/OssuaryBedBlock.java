@@ -56,8 +56,9 @@ public final class OssuaryBedBlock extends BedBlock implements SimpleWaterlogged
     var head = p.relative(s.getValue(FACING));
     boolean wet = l.getFluidState(head).is(net.minecraft.tags.FluidTags.WATER);
     super.setPlacedBy(l, p, s, placer, stack);
-    if (!l.isClientSide && l.getBlockState(head).is(this))
+    if (!l.isClientSide && l.getBlockState(head).is(this)) {
       l.setBlock(head, l.getBlockState(head).setValue(BlockStateProperties.WATERLOGGED, wet), 3);
+    }
   }
 
   @Override
@@ -75,7 +76,9 @@ public final class OssuaryBedBlock extends BedBlock implements SimpleWaterlogged
     if (!l.isClientSide && player.isCreative() && s.getValue(PART) == BedPart.FOOT) {
       var head = p.relative(s.getValue(FACING));
       var other = l.getBlockState(head);
-      if (other.is(this)) l.setBlock(head, other.getFluidState().createLegacyBlock(), 35);
+      if (other.is(this)) {
+        l.setBlock(head, other.getFluidState().createLegacyBlock(), 35);
+      }
     }
     return super.playerWillDestroy(l, p, s, player);
   }
@@ -90,12 +93,13 @@ public final class OssuaryBedBlock extends BedBlock implements SimpleWaterlogged
     int turns = (s.getValue(FACING).get2DDataValue() + 2) % 4;
     for (int i = 0; i < turns; i++) {
       var rotated = net.minecraft.world.phys.shapes.Shapes.empty();
-      for (var a : shape.toAabbs())
+      for (var a : shape.toAabbs()) {
         rotated =
             net.minecraft.world.phys.shapes.Shapes.or(
                 rotated,
                 net.minecraft.world.phys.shapes.Shapes.box(
                     1 - a.maxZ, a.minY, a.minX, 1 - a.minZ, a.maxY, a.maxX));
+      }
       shape = rotated;
     }
     return shape;

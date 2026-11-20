@@ -34,16 +34,20 @@ public record LegPosePayload(UUID body, List<SubLevelLegs.Pose> poses)
           b -> {
             var id = b.readUUID();
             int count = b.readVarInt();
-            if (count < 0 || count > 4096) throw new IllegalArgumentException("Leg pose count");
+            if (count < 0 || count > 4096) {
+              throw new IllegalArgumentException("Leg pose count");
+            }
             var poses = new ArrayList<SubLevelLegs.Pose>();
             for (int i = 0; i < count; i++) {
               var cell = b.readBlockPos();
               var points = new ArrayList<Vec3>();
-              for (int j = 0; j < 4; j++)
+              for (int j = 0; j < 4; j++) {
                 points.add(new Vec3(b.readDouble(), b.readDouble(), b.readDouble()));
+              }
               var endpoints = new ArrayList<Vec3>();
-              for (int j = 0; j < 6; j++)
+              for (int j = 0; j < 6; j++) {
                 endpoints.add(new Vec3(b.readDouble(), b.readDouble(), b.readDouble()));
+              }
               poses.add(new SubLevelLegs.Pose(cell, List.copyOf(points), List.copyOf(endpoints)));
             }
             return new LegPosePayload(id, List.copyOf(poses));

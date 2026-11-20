@@ -24,7 +24,9 @@ public final class SocketJointScreen extends Screen {
         && screen.state.joint() == state.joint()) {
       screen.state = state;
       screen.rebuildWidgets();
-    } else mc.setScreen(new SocketJointScreen(state));
+    } else {
+      mc.setScreen(new SocketJointScreen(state));
+    }
   }
 
   @Override
@@ -42,11 +44,12 @@ public final class SocketJointScreen extends Screen {
     int x = (width - 252) / 2, y = (height - 160) / 2;
     for (int row = 0; row < 2; row++) {
       final int setting = row;
-      for (int sign : new int[] {-1, 1})
+      for (int sign : new int[] {-1, 1}) {
         addRenderableWidget(
             Button.builder(Component.literal(sign < 0 ? "−" : "+"), b -> send(setting, sign))
                 .bounds(x + (sign < 0 ? 184 : 214), y + 48 + row * 32, 24, 20)
                 .build());
+      }
     }
     addRenderableWidget(
         Button.builder(Component.literal("Reset joint"), b -> send(2, 0))
@@ -81,6 +84,8 @@ public final class SocketJointScreen extends Screen {
         font, "Bend limit: ±" + state.bend() + "°", x + 12, y + 86, OrganScreenStyle.TEXT, false);
     g.drawCenteredString(
         font, "Limits apply to this joint only", x + 126, y + 112, OrganScreenStyle.MUTED);
-    for (var widget : renderables) widget.render(g, mx, my, partial);
+    for (var widget : renderables) {
+      widget.render(g, mx, my, partial);
+    }
   }
 }

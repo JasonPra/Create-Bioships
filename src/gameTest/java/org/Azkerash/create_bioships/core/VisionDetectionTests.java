@@ -20,7 +20,11 @@ public final class VisionDetectionTests {
       GameTestHelper h) {
     var level = h.getLevel();
     var base = new BlockPos(6144, 80, 128);
-    for (int x = 383; x <= 391; x++) for (int z = 7; z <= 10; z++) level.setChunkForced(x, z, true);
+    for (int x = 383; x <= 391; x++) {
+      for (int z = 7; z <= 10; z++) {
+        level.setChunkForced(x, z, true);
+      }
+    }
     level.setDayTime(6000);
     ServerSubLevel[] subject = {null};
     net.minecraft.world.entity.animal.Cow[] target = {null};
@@ -28,12 +32,14 @@ public final class VisionDetectionTests {
         .thenExecuteAfter(
             20,
             () -> {
-              for (int x = -2; x <= 2; x++)
-                for (int z = -2; z <= 2; z++)
+              for (int x = -2; x <= 2; x++) {
+                for (int z = -2; z <= 2; z++) {
                   level.setBlock(
                       base.offset(x, -1, z),
                       ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState(),
                       3);
+                }
+              }
               level.setBlock(base, ComponentRegistry.CORE.get().defaultBlockState(), 3);
               subject[0] =
                   SubLevelAssemblyHelper.assembleBlocks(
@@ -87,12 +93,14 @@ public final class VisionDetectionTests {
                   SubLevelVision.detected(body).stream()
                       .anyMatch(t -> t.entity().equals(cow.getUUID())),
                   "Grid did not expose its actual visible targets");
-              for (int y = -2; y <= 8; y++)
-                for (int z = 6; z <= 14; z++)
+              for (int y = -2; y <= 8; y++) {
+                for (int z = 6; z <= 14; z++) {
                   level.setBlock(
                       base.offset(50, y, z),
                       ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState(),
                       3);
+                }
+              }
               SubLevelVision.refresh(body, 8);
               h.assertTrue(
                   SubLevelVision.detected(body).stream()

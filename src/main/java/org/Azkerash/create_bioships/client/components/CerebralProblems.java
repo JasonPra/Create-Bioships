@@ -28,7 +28,9 @@ final class CerebralProblems extends AbstractScrollWidget {
   }
 
   void entries(List<EditorProblem> value, String fingerprint, boolean log) {
-    if (entries.equals(value) && this.fingerprint.equals(fingerprint) && this.log == log) return;
+    if (entries.equals(value) && this.fingerprint.equals(fingerprint) && this.log == log) {
+      return;
+    }
     this.entries = List.copyOf(value);
     this.fingerprint = fingerprint;
     this.log = log;
@@ -47,14 +49,18 @@ final class CerebralProblems extends AbstractScrollWidget {
       for (var text :
           font.split(
               Component.literal(kind + older + " · " + problem.label()),
-              width - totalInnerPadding())) result.add(new Row(problem, text));
+              width - totalInnerPadding())) {
+        result.add(new Row(problem, text));
+      }
     }
     rows = List.copyOf(result);
     setScrollAmount(0);
   }
 
   EditorProblem hovered(double mx, double my) {
-    if (!visible || !withinContentAreaPoint(mx, my)) return null;
+    if (!visible || !withinContentAreaPoint(mx, my)) {
+      return null;
+    }
     int index = (int) ((my - getY() - innerPadding() + scrollAmount()) / (font.lineHeight + 2));
     return index >= 0 && index < rows.size() ? rows.get(index).problem() : null;
   }
@@ -63,7 +69,9 @@ final class CerebralProblems extends AbstractScrollWidget {
   public boolean mouseClicked(double mx, double my, int button) {
     var problem = hovered(mx, my);
     if (button == 0 && problem != null) {
-      if (problem.line() > 0 && problem.fingerprint().equals(fingerprint)) navigate.accept(problem);
+      if (problem.line() > 0 && problem.fingerprint().equals(fingerprint)) {
+        navigate.accept(problem);
+      }
       return true;
     }
     return super.mouseClicked(mx, my, button);
@@ -81,7 +89,7 @@ final class CerebralProblems extends AbstractScrollWidget {
 
   @Override
   protected void renderContents(GuiGraphics g, int mx, int my, float partial) {
-    if (rows.isEmpty())
+    if (rows.isEmpty()) {
       g.drawString(
           font,
           log ? "No build or runtime messages yet." : "No current errors or warnings.",
@@ -89,6 +97,7 @@ final class CerebralProblems extends AbstractScrollWidget {
           getY() + innerPadding(),
           OrganScreenStyle.MUTED,
           false);
+    }
     int first = Math.max(0, (int) (scrollAmount() / (font.lineHeight + 2)) - 1),
         last = Math.min(rows.size(), first + height / (font.lineHeight + 2) + 4);
     for (int i = first; i < last; i++) {

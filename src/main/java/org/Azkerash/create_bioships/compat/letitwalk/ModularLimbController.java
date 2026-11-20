@@ -81,7 +81,9 @@ public final class ModularLimbController {
     var data = body.getUserDataTag().getCompound(DATA);
     for (var raw : data.getList("Legs", 10)) {
       var runtime = SocketJointRig.loadModular(body, (CompoundTag) raw);
-      if (runtime != null) nativeWalker.legs.add(runtime);
+      if (runtime != null) {
+        nativeWalker.legs.add(runtime);
+      }
     }
     LegRuntime.countLegs(nativeWalker.legs);
     dirty = nativeWalker.legs.isEmpty();
@@ -93,14 +95,21 @@ public final class ModularLimbController {
       BlockPos pos,
       net.minecraft.world.level.block.state.BlockState state) {
     var controller = CONTROLLERS.get(SubLevelCreatureParts.root(physical));
-    if (controller == null) return;
+    if (controller == null) {
+      return;
+    }
     var cells =
         controller.blockTypes.computeIfAbsent(physical.getUniqueId(), ignored -> new HashMap<>());
     var previous = cells.get(pos.asLong());
     var next = structural(state);
-    if (previous == next) return;
-    if (next == null) cells.remove(pos.asLong());
-    else cells.put(pos.asLong(), next);
+    if (previous == next) {
+      return;
+    }
+    if (next == null) {
+      cells.remove(pos.asLong());
+    } else {
+      cells.put(pos.asLong(), next);
+    }
     controller.dirty = true;
     org.Azkerash.create_bioships.core.locomotion.SubLevelLocomotion.invalidateRoutes(
         controller.body);
@@ -108,7 +117,9 @@ public final class ModularLimbController {
 
   private static net.minecraft.world.level.block.state.BlockState structural(
       net.minecraft.world.level.block.state.BlockState state) {
-    if (state.isAir()) return null;
+    if (state.isAir()) {
+      return null;
+    }
     return state.getBlock() instanceof LegJointBlock ? state : state.getBlock().defaultBlockState();
   }
 
@@ -116,8 +127,9 @@ public final class ModularLimbController {
     blockTypes.clear();
     for (var member : SubLevelCreatureParts.members(body)) {
       var cells = new HashMap<Long, net.minecraft.world.level.block.state.BlockState>();
-      for (var pos : SubLevelHealth.blocks(member))
+      for (var pos : SubLevelHealth.blocks(member)) {
         cells.put(pos.asLong(), structural(member.getLevel().getBlockState(pos)));
+      }
       blockTypes.put(member.getUniqueId(), cells);
     }
   }
@@ -145,15 +157,18 @@ public final class ModularLimbController {
   /** Measured world-space pivot separation, for development diagnostics of real native joints. */
   public static double maximumJointSeparation(ServerSubLevel body) {
     var controller = CONTROLLERS.get(SubLevelCreatureParts.root(body));
-    if (controller == null) return 0;
+    if (controller == null) {
+      return 0;
+    }
     var container = SubLevelContainer.getContainer(body.getLevel());
     double gap = 0;
-    for (var runtime : controller.nativeWalker.legs)
+    for (var runtime : controller.nativeWalker.legs) {
       for (var joint : runtime.built.joints) {
         var parent = container.getSubLevel(joint.parent);
         var child = container.getSubLevel(joint.child);
-        if (parent == null || child == null || parent.isRemoved() || child.isRemoved())
+        if (parent == null || child == null || parent.isRemoved() || child.isRemoved()) {
           return Double.POSITIVE_INFINITY;
+        }
         gap =
             Math.max(
                 gap,
@@ -162,6 +177,7 @@ public final class ModularLimbController {
                     .transformPosition(joint.parentPlot)
                     .distanceTo(child.logicalPose().transformPosition(joint.childPlot)));
       }
+    }
     return gap;
   }
 
@@ -206,9 +222,13 @@ public final class ModularLimbController {
   /** Called outside physics iteration; the native assembler moves blocks between physical plots. */
   public static boolean assemble(ServerSubLevel body) {
     body = SubLevelCreatureParts.root(body);
-    if (!SubLevelData.isLiving(body) || SubLevelHealth.status(body).dead()) return false;
+    if (!SubLevelData.isLiving(body) || SubLevelHealth.status(body).dead()) {
+      return false;
+    }
     var brain = SubLevelBrains.get(body);
-    if (brain.activeCells().isEmpty()) return false;
+    if (brain.activeCells().isEmpty()) {
+      return false;
+    }
     var owner = body;
     var c = CONTROLLERS.computeIfAbsent(body, b -> new ModularLimbController(b, origin(b, brain)));
     return SubLevelHealth.withoutRemovalDamage(
@@ -228,13 +248,16 @@ public final class ModularLimbController {
           }
           var assembled = new ArrayList<>(c.nativeWalker.legs);
           c.nativeWalker.legs.clear();
-          for (var runtime : assembled)
+          for (var runtime : assembled) {
             c.nativeWalker.legs.add(SocketJointRig.modular(owner, runtime));
+          }
           LegRuntime.countLegs(c.nativeWalker.legs);
           var members = new ArrayList<>(segments(owner));
-          for (var member : SubLevelCreatureParts.members(owner))
-            if (member != owner && member.getUserDataTag().contains(CompactLimbController.PART))
+          for (var member : SubLevelCreatureParts.members(owner)) {
+            if (member != owner && member.getUserDataTag().contains(CompactLimbController.PART)) {
               members.add(member);
+            }
+          }
           SubLevelCreatureParts.sync(owner, members);
           c.rememberTopology();
           c.dirty = false;
@@ -253,7 +276,9 @@ public final class ModularLimbController {
     var data = new CompoundTag();
     data.putLong("Anchor", nativeWalker.getBlockPos().asLong());
     var saved = new net.minecraft.nbt.ListTag();
-    for (var leg : nativeWalker.legs) saved.add(SocketJointRig.save(leg));
+    for (var leg : nativeWalker.legs) {
+      saved.add(SocketJointRig.save(leg));
+    }
     data.put("Legs", saved);
     root.put(DATA, data);
     body.setUserDataTag(root);
@@ -262,20 +287,28 @@ public final class ModularLimbController {
   private void ensurePins() {
     boolean powered = postureEnabled();
     var wanted = new HashSet<BuiltLeg>();
-    for (var runtime : nativeWalker.legs)
-      if (!powered || ModularLimbCollisions.bracing(runtime.built, body.getLevel().getGameTime()))
+    for (var runtime : nativeWalker.legs) {
+      if (!powered || ModularLimbCollisions.bracing(runtime.built, body.getLevel().getGameTime())) {
         wanted.add(runtime.built);
+      }
+    }
     if (wanted.equals(pinnedLegs)
         && powered == pinsPowered
-        && pins.stream().allMatch(p -> p.handle.isValid())) return;
+        && pins.stream().allMatch(p -> p.handle.isValid())) {
+      return;
+    }
     releasePins();
     pinnedLegs = wanted;
     pinsPowered = powered;
     var container = SubLevelContainer.getContainer(body.getLevel());
-    if (container == null) return;
+    if (container == null) {
+      return;
+    }
     var pipeline = container.physicsSystem().getPipeline();
     for (var runtime : nativeWalker.legs) {
-      if (!wanted.contains(runtime.built)) continue;
+      if (!wanted.contains(runtime.built)) {
+        continue;
+      }
       var leg = SocketJointRig.base(runtime.built);
       for (int i = 0; i < leg.joints.size(); i++) {
         var joint = leg.joints.get(i);
@@ -284,9 +317,13 @@ public final class ModularLimbController {
         if (!(a instanceof ServerSubLevel parent)
             || !(b instanceof ServerSubLevel child)
             || parent.isRemoved()
-            || child.isRemoved()) continue;
+            || child.isRemoved()) {
+          continue;
+        }
         var axis = new Vector3d(joint.axis.x, joint.axis.y, joint.axis.z);
-        if (axis.lengthSquared() < .001) continue;
+        if (axis.lengthSquared() < .001) {
+          continue;
+        }
         var socketFrame = SocketJointRig.frame(runtime.built, i);
         var frame =
             socketFrame == null
@@ -298,7 +335,9 @@ public final class ModularLimbController {
                 ConstraintJointAxis.LINEAR_Y,
                 ConstraintJointAxis.LINEAR_Z,
                 ConstraintJointAxis.ANGULAR_Z);
-        if (socketFrame == null) locked.add(ConstraintJointAxis.ANGULAR_Y);
+        if (socketFrame == null) {
+          locked.add(ConstraintJointAxis.ANGULAR_Y);
+        }
         var parentFrame = new Quaterniond(frame);
         if (powered) {
           // A rejected powered pose should brace at the current physical orientation,
@@ -316,9 +355,13 @@ public final class ModularLimbController {
                 child,
                 new GenericConstraintConfiguration(
                     v(joint.parentPlot), v(joint.childPlot), parentFrame, frame, locked));
-        if (pin == null) continue;
+        if (pin == null) {
+          continue;
+        }
         pin.setContactsEnabled(false);
-        if (!powered) pin.setLimit(ConstraintJointAxis.ANGULAR_X, -Math.PI * .85, Math.PI * .85);
+        if (!powered) {
+          pin.setLimit(ConstraintJointAxis.ANGULAR_X, -Math.PI * .85, Math.PI * .85);
+        }
         pins.add(new Pin(pin, leg, i, runtime.built));
       }
     }
@@ -329,7 +372,11 @@ public final class ModularLimbController {
   }
 
   private void releasePins() {
-    for (var pin : pins) if (pin.handle.isValid()) pin.handle.remove();
+    for (var pin : pins) {
+      if (pin.handle.isValid()) {
+        pin.handle.remove();
+      }
+    }
     pins.clear();
     pinnedLegs = Set.of();
   }
@@ -340,17 +387,23 @@ public final class ModularLimbController {
 
   private void update() {
     SocketJointRig.ensureContactFilters(nativeWalker, body.getLevel());
-    for (var leg : nativeWalker.legs) SocketJointRig.apply(leg.built);
+    for (var leg : nativeWalker.legs) {
+      SocketJointRig.apply(leg.built);
+    }
     BuiltLegDriver.updateActualFeet(nativeWalker, body.getLevel());
     physicalContacts = 0;
     var ignoredBodies = new HashSet<UUID>();
-    for (var member : SubLevelCreatureParts.members(body)) ignoredBodies.add(member.getUniqueId());
+    for (var member : SubLevelCreatureParts.members(body)) {
+      ignoredBodies.add(member.getUniqueId());
+    }
     TerrainProbe.withIgnored(
         s -> ignoredBodies.contains(s.getUniqueId()),
         () -> {
           var container = SubLevelContainer.getContainer(body.getLevel());
           for (var leg : nativeWalker.legs) {
-            if (leg.arm) continue;
+            if (leg.arm) {
+              continue;
+            }
             for (var id : leg.built.segments) {
               var entry = container.getSubLevel(id);
               if (entry instanceof ServerSubLevel part && LimbGroundContacts.touching(part, body)) {
@@ -360,23 +413,36 @@ public final class ModularLimbController {
             }
           }
         });
-    if (!postureEnabled()) return;
+    if (!postureEnabled()) {
+      return;
+    }
     var request = BrainMotorControls.current(body);
     var local = body.logicalPose().orientation().transformInverse(v(request.velocity()));
     int keys = 1 << WalkerBrain.GEAR_SHIFT | WalkerBrain.KEY_CRAB;
-    if (local.z < -.05) keys |= WalkerBrain.KEY_FORWARD;
-    if (local.z > .05) keys |= WalkerBrain.KEY_BACK;
-    if (local.x < -.05) keys |= WalkerBrain.KEY_LEFT;
-    if (local.x > .05) keys |= WalkerBrain.KEY_RIGHT;
+    if (local.z < -.05) {
+      keys |= WalkerBrain.KEY_FORWARD;
+    }
+    if (local.z > .05) {
+      keys |= WalkerBrain.KEY_BACK;
+    }
+    if (local.x < -.05) {
+      keys |= WalkerBrain.KEY_LEFT;
+    }
+    if (local.x > .05) {
+      keys |= WalkerBrain.KEY_RIGHT;
+    }
     nativeWalker.input = keys;
     nativeWalker.lastInputTime = body.getLevel().getGameTime();
     nativeWalker.receiveTurn(request.yawRate() * .05);
     var ignored = new HashSet<UUID>();
-    for (var member : SubLevelCreatureParts.members(body)) ignored.add(member.getUniqueId());
+    for (var member : SubLevelCreatureParts.members(body)) {
+      ignored.add(member.getUniqueId());
+    }
     TerrainProbe.withIgnored(
         s -> ignored.contains(s.getUniqueId()), () -> WalkerBrain.tick(nativeWalker, body));
-    for (var leg : nativeWalker.legs)
+    for (var leg : nativeWalker.legs) {
       SocketJointRig.prepareSwing(leg, body.getLevel().getGameTime());
+    }
     double wanted = Math.hypot(request.velocity().x, request.velocity().z);
     double permitted = Math.hypot(nativeWalker.targetVelocity.x, nativeWalker.targetVelocity.z);
     double factor = permitted > 1e-8 ? Math.min(1, wanted / permitted) : 0;
@@ -388,12 +454,16 @@ public final class ModularLimbController {
   public static void tick(net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) {
     for (var level : event.getServer().getAllLevels()) {
       var container = SubLevelContainer.getContainer(level);
-      if (container == null) continue;
+      if (container == null) {
+        continue;
+      }
       for (var entry : List.copyOf(container.getAllSubLevels())) {
         if (!(entry instanceof ServerSubLevel body)
             || body.isRemoved()
             || !SubLevelData.isLiving(body)
-            || SubLevelCreatureParts.isPart(body)) continue;
+            || SubLevelCreatureParts.isPart(body)) {
+          continue;
+        }
         var c = CONTROLLERS.get(body);
         if (c == null) {
           boolean saved = body.getUserDataTag().contains(DATA);
@@ -408,18 +478,28 @@ public final class ModularLimbController {
                                       .components
                                       .logic
                                       .legs
-                                      .ModularJointBlock))) continue;
+                                      .ModularJointBlock))) {
+            continue;
+          }
           var brain = SubLevelBrains.get(body);
-          if (brain.activeCells().isEmpty()) continue;
+          if (brain.activeCells().isEmpty()) {
+            continue;
+          }
           var data = body.getUserDataTag().getCompound(DATA);
           var anchor =
               data.contains("Anchor") ? BlockPos.of(data.getLong("Anchor")) : origin(body, brain);
           c = new ModularLimbController(body, anchor);
           CONTROLLERS.put(body, c);
         }
-        if (SubLevelHealth.status(body).dead()) continue;
-        if (BuiltLegDriver.missingBodies(c.nativeWalker, level) > 0) continue;
-        if (c.dirty || c.edit != BuiltLegAssembler.edits()) assemble(body);
+        if (SubLevelHealth.status(body).dead()) {
+          continue;
+        }
+        if (BuiltLegDriver.missingBodies(c.nativeWalker, level) > 0) {
+          continue;
+        }
+        if (c.dirty || c.edit != BuiltLegAssembler.edits()) {
+          assemble(body);
+        }
         c.update();
       }
     }
@@ -437,9 +517,13 @@ public final class ModularLimbController {
   @SubscribeEvent
   public static void physics(
       dev.ryanhcode.sable.neoforge.event.ForgeSablePrePhysicsTickEvent event) {
-    if (!(event.getTimeStep() > 0 && event.getTimeStep() <= .1)) return;
+    if (!(event.getTimeStep() > 0 && event.getTimeStep() <= .1)) {
+      return;
+    }
     for (var c : CONTROLLERS.values()) {
-      if (c.body.isRemoved() || c.body.getLevel() != event.getPhysicsSystem().getLevel()) continue;
+      if (c.body.isRemoved() || c.body.getLevel() != event.getPhysicsSystem().getLevel()) {
+        continue;
+      }
       if (!c.postureEnabled()) {
         c.ensurePins();
         for (var pin : c.pins) {
@@ -467,12 +551,17 @@ public final class ModularLimbController {
         }
         continue;
       }
-      if (ModularLimbCollisions.obstructed(c.body)) c.ensurePins();
-      else c.releasePins();
+      if (ModularLimbCollisions.obstructed(c.body)) {
+        c.ensurePins();
+      } else {
+        c.releasePins();
+      }
       var handle = RigidBodyHandle.of(c.body);
       if (handle != null && handle.isValid()) {
         WalkerPhysics.substep(c.nativeWalker, c.body, handle, event.getTimeStep());
-        for (var leg : c.nativeWalker.legs) SocketJointRig.apply(leg.built);
+        for (var leg : c.nativeWalker.legs) {
+          SocketJointRig.apply(leg.built);
+        }
         BuiltLegDriver.solve(c.nativeWalker, c.body, c.body.getLevel().getGameTime());
         WalkerCargo.substep(
             c.nativeWalker,

@@ -30,8 +30,11 @@ public final class PathDebugSync {
                   if (c.player() instanceof ServerPlayer player) {
                     if (p.enabled()
                         && org.Azkerash.create_bioships.development.testing.DevelopmentToolkitItem
-                            .allowed(player)) VIEWERS.put(player, new HashSet<>());
-                    else VIEWERS.remove(player);
+                            .allowed(player)) {
+                      VIEWERS.put(player, new HashSet<>());
+                    } else {
+                      VIEWERS.remove(player);
+                    }
                   }
                 }));
     r.playToClient(
@@ -44,7 +47,9 @@ public final class PathDebugSync {
 
   @SubscribeEvent
   public static void tick(net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) {
-    if (event.getServer().getTickCount() % 10 != 0) return;
+    if (event.getServer().getTickCount() % 10 != 0) {
+      return;
+    }
     var iterator = VIEWERS.entrySet().iterator();
     while (iterator.hasNext()) {
       var viewer = iterator.next();
@@ -57,20 +62,26 @@ public final class PathDebugSync {
       }
       var present = new HashSet<UUID>();
       var container = SubLevelContainer.getContainer(player.serverLevel());
-      if (container != null)
-        for (var entry : container.getAllSubLevels())
+      if (container != null) {
+        for (var entry : container.getAllSubLevels()) {
           if (entry instanceof ServerSubLevel body
               && !body.isRemoved()
               && !org.Azkerash.create_bioships.core.SubLevelCreatureParts.isPart(body)
               && SubLevelPaths.get(body) != null) {
             if (!org.Azkerash.create_bioships.core.access.SubLevelPermissions.canInspect(
-                body, player.getUUID())) continue;
+                body, player.getUUID())) {
+              continue;
+            }
             var center =
                 body.logicalPose()
                     .transformPosition(Vec3.atCenterOf(body.getPlot().getCenterBlock()));
-            if (center.distanceToSqr(player.position()) > 96 * 96 || present.size() >= 16) continue;
+            if (center.distanceToSqr(player.position()) > 96 * 96 || present.size() >= 16) {
+              continue;
+            }
             var route = SubLevelPaths.get(body);
-            if (route == null) continue;
+            if (route == null) {
+              continue;
+            }
             present.add(body.getUniqueId());
             PacketDistributor.sendToPlayer(
                 player,
@@ -81,11 +92,15 @@ public final class PathDebugSync {
                     route.points(),
                     route.next()));
           }
-      for (var id : viewer.getValue())
-        if (!present.contains(id))
+        }
+      }
+      for (var id : viewer.getValue()) {
+        if (!present.contains(id)) {
           PacketDistributor.sendToPlayer(
               player,
               new PathDebugPayload(id, SubLevelPathfinder.Mode.GROUND, Vec3.ZERO, List.of(), 0));
+        }
+      }
       viewer.setValue(present);
     }
   }

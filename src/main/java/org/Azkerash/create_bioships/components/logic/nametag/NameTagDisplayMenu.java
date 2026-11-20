@@ -48,17 +48,23 @@ public final class NameTagDisplayMenu extends AbstractContainerMenu {
             return 1;
           }
         });
-    for (int row = 0; row < 3; row++)
-      for (int col = 0; col < 9; col++)
+    for (int row = 0; row < 3; row++) {
+      for (int col = 0; col < 9; col++) {
         addSlot(new Slot(player, col + row * 9 + 9, 33 + col * 18, 160 + row * 18));
-    for (int col = 0; col < 9; col++) addSlot(new Slot(player, col, 33 + col * 18, 218));
+      }
+    }
+    for (int col = 0; col < 9; col++) {
+      addSlot(new Slot(player, col, 33 + col * 18, 218));
+    }
     addDataSlots(data);
   }
 
   public static NameTagDisplayMenu fromNetwork(
       int id, Inventory player, RegistryFriendlyByteBuf b) {
     var data = new SimpleContainerData(3);
-    for (int i = 0; i < 3; i++) data.set(i, b.readVarInt());
+    for (int i = 0; i < 3; i++) {
+      data.set(i, b.readVarInt());
+    }
     return new NameTagDisplayMenu(id, player, new SimpleContainer(1), null, data);
   }
 
@@ -69,17 +75,27 @@ public final class NameTagDisplayMenu extends AbstractContainerMenu {
 
   @Override
   public ItemStack quickMoveStack(Player player, int index) {
-    if (!stillValid(player) || index < 0 || index >= slots.size()) return ItemStack.EMPTY;
+    if (!stillValid(player) || index < 0 || index >= slots.size()) {
+      return ItemStack.EMPTY;
+    }
     var slot = slots.get(index);
-    if (!slot.hasItem()) return ItemStack.EMPTY;
+    if (!slot.hasItem()) {
+      return ItemStack.EMPTY;
+    }
     var stack = slot.getItem();
     var original = stack.copy();
     if (index == 0) {
-      if (!moveItemStackTo(stack, 1, slots.size(), true)) return ItemStack.EMPTY;
-    } else if (!NameTagDisplayEntity.accepts(stack) || !moveItemStackTo(stack, 0, 1, false))
+      if (!moveItemStackTo(stack, 1, slots.size(), true)) {
+        return ItemStack.EMPTY;
+      }
+    } else if (!NameTagDisplayEntity.accepts(stack) || !moveItemStackTo(stack, 0, 1, false)) {
       return ItemStack.EMPTY;
-    if (stack.isEmpty()) slot.setByPlayer(ItemStack.EMPTY);
-    else slot.setChanged();
+    }
+    if (stack.isEmpty()) {
+      slot.setByPlayer(ItemStack.EMPTY);
+    } else {
+      slot.setChanged();
+    }
     slot.onTake(player, stack);
     return original;
   }

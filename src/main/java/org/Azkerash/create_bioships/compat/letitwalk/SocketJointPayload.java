@@ -71,8 +71,9 @@ public record SocketJointPayload(BlockPos pos, int joint, int setting, int delta
             (p, c) ->
                 c.enqueueWork(
                     () -> {
-                      if (c.player() instanceof net.minecraft.server.level.ServerPlayer player)
+                      if (c.player() instanceof net.minecraft.server.level.ServerPlayer player) {
                         SocketJointActions.configure(player, p.pos, p.joint, p.setting, p.delta);
+                      }
                     }));
     event
         .registrar("1")
