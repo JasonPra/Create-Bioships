@@ -4,6 +4,7 @@ import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason;
 import java.util.*;
+import javax.annotation.Nonnull;
 import net.minecraft.core.*;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.*;
@@ -15,8 +16,6 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import org.azkerash.createbioships.CreateBioships;
-
-import javax.annotation.Nonnull;
 
 /** Two-stage decay shared by every physical fragment of a dead creature. */
 @EventBusSubscriber(modid = CreateBioships.MODID)
@@ -59,11 +58,8 @@ public final class CreatureDecay {
   /** Associate living physical limbs without copying inventories or behavior state. */
   public static void link(ServerSubLevel parent, ServerSubLevel child) {
     var id = familyId(parent);
-    var tag = child.getUserDataTag();
-    if (tag == null){
-      return;
-    }
-    tag.copy();
+    var existing = child.getUserDataTag();
+    var tag = existing == null ? new CompoundTag() : existing.copy();
     tag.putUUID(FAMILY, id);
     child.setUserDataTag(tag);
     var world = WorldState.get(parent.getLevel());
@@ -79,11 +75,12 @@ public final class CreatureDecay {
       return;
     }
     var id = familyId(parent);
-    var data = parent.getUserDataTag();
-    if (data == null) {
+    var existing = parent.getUserDataTag();
+    if (existing == null) {
       return;
     }
-
+    // Fragments inherit a snapshot, not the parent's mutable identity/health container.
+    var data = existing.copy();
     data.putUUID(FAMILY, id);
     data.putUUID(CoreAssemblyRules.ID, child.getUniqueId());
     child.setUserDataTag(data);
