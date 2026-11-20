@@ -117,6 +117,7 @@ public final class NecromancerDenFixture {
     roads(l, s);
     detailExterior(l, s);
     repairAccessAndLighting(l);
+    EstateInteriors.library(l, s);
     var state = CoreTestState.get(l);
     state.necromancerDenBuilt = true;
     state.setDirty();
@@ -379,18 +380,6 @@ public final class NecromancerDenFixture {
     fill(l, b, 6, 13, -7, 10, 13, -7, Blocks.DARK_OAK_TRAPDOOR);
     fill(l, b, 7, 12, -2, 9, 12, 0, Blocks.DARK_OAK_SLAB);
     put(l, b, 11, 12, -1, Blocks.FLOWER_POT);
-    // Study on the second floor, with a central writing desk and a reading alcove.
-    for (int x = -10; x <= 10; x++)
-      for (int y = 24; y <= 27; y++) if (Math.abs(x) > 3) put(l, b, x, y, 11, Blocks.BOOKSHELF);
-    for (int z = -6; z <= 9; z++)
-      for (int y = 24; y <= 27; y++) put(l, b, 11, y, z, Blocks.BOOKSHELF);
-    fill(l, b, -2, 24, 2, 3, 24, 4, Blocks.DARK_OAK_FENCE);
-    fill(l, b, -2, 25, 2, 3, 25, 4, Blocks.DARK_OAK_SLAB);
-    put(l, b, 0, 26, 3, Blocks.LECTERN);
-    put(l, b, 3, 26, 3, Blocks.LANTERN);
-    put(l, b, -4, 24, 3, Blocks.DARK_OAK_STAIRS);
-    put(l, b, -10, 24, 8, Blocks.ENCHANTING_TABLE);
-    put(l, b, -8, 24, 9, Blocks.CHEST);
     // Master bedroom: double bed, wardrobe, bedside lights and a small seating area.
     bed(l, b.offset(-1, 36, 6), Direction.NORTH, Blocks.RED_BED);
     bed(l, b.offset(0, 36, 6), Direction.NORTH, Blocks.RED_BED);

@@ -79,5 +79,7 @@ public final class DevelopmentWorldSetup {
       DevelopmentJuniorFixture.install(level);
     }
     if (state.denAccessVersion < 1) NecromancerDenFixture.repairAccessAndLighting(level);
+    if (state.denFurnitureVersion < 1)
+      EstateInteriors.library(level, NecromancerDenFixture.surface(level));
   }
 }

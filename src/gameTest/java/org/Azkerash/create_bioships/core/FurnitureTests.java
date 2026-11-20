@@ -226,12 +226,14 @@ public final class FurnitureTests {
     player.setPos(net.minecraft.world.phys.Vec3.atCenterOf(p));
     var oldTime = l.getDayTime();
     l.setDayTime(18000);
+    l.updateSkyBrightness();
     var result = player.startSleepInBed(p.south());
     h.assertTrue(player.isSleeping(), "Custom bed did not support native sleep: " + result);
     h.assertTrue(
         p.south().equals(player.getRespawnPosition()), "Custom bed did not set respawn point");
     player.stopSleepInBed(true, true);
     l.setDayTime(oldTime);
+    l.updateSkyBrightness();
     h.succeed();
   }
 }
