@@ -12,6 +12,8 @@
     "create_bioships:limb_foot",
     "create_bioships:limb_socket",
     "create_bioships:armored_maw",
-    "create_bioships:arachnid_leg"
+    "create_bioships:arachnid_leg",
+    "create_bioships:huntsman_armor",
+    "create_bioships:huntsman_maw"
   ]
 }

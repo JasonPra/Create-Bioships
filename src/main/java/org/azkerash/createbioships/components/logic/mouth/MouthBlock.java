@@ -24,6 +24,12 @@ public final class MouthBlock extends DirectionalBlock
       net.minecraft.world.level.block.state.properties.BooleanProperty.create("spitting");
   public static final MapCodec<MouthBlock> CODEC = simpleCodec(MouthBlock::new);
 
+  /** Both shell styles share feeding, armor and acid behavior. */
+  public static boolean isArmored(BlockState state) {
+    return state.is(ComponentRegistry.ARMORED_MAW.get())
+        || state.is(ComponentRegistry.HUNTSMAN_MAW.get());
+  }
+
   public MouthBlock(Properties properties) {
     super(properties);
     registerDefaultState(
@@ -55,9 +61,7 @@ public final class MouthBlock extends DirectionalBlock
       BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
     if (player instanceof net.minecraft.server.level.ServerPlayer server
         && level.getBlockEntity(pos) instanceof MouthBlockEntity mouth) {
-      if (state.is(ComponentRegistry.ARMORED_MAW.get())
-          && player.isShiftKeyDown()
-          && player.getMainHandItem().isEmpty()) {
+      if (isArmored(state) && player.isShiftKeyDown() && player.getMainHandItem().isEmpty()) {
         var result = mouth.requestAcidAttack(player.getUUID());
         player.displayClientMessage(
             net.minecraft.network.chat.Component.literal(result.getMessage()), true);
@@ -112,7 +116,8 @@ public final class MouthBlock extends DirectionalBlock
       net.minecraft.world.item.Item.TooltipContext context,
       java.util.List<net.minecraft.network.chat.Component> lines,
       net.minecraft.world.item.TooltipFlag flag) {
-    if (stack.is(ComponentRegistry.ARMORED_MAW.get().asItem())) {
+    if (stack.is(ComponentRegistry.ARMORED_MAW.get().asItem())
+        || stack.is(ComponentRegistry.HUNTSMAN_MAW.get().asItem())) {
       lines.add(
           net.minecraft.network.chat.Component.translatable(
                   "block.create_bioships.armored_maw.acid_tooltip")
@@ -151,7 +156,7 @@ public final class MouthBlock extends DirectionalBlock
       }
       return;
     }
-    if (state.is(ComponentRegistry.ARMORED_MAW.get()) && level.random.nextInt(4) == 0) {
+    if (isArmored(state) && level.random.nextInt(4) == 0) {
       mouth.salivaParticles();
     }
     if (remaining == 0) {

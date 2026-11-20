@@ -22,6 +22,20 @@ public final class ArmoredMawTests {
   @GameTest(template = "test_empty", batch = "armored_maw", timeoutTicks = 100)
   public static void feeding_and_directional_armor_share_existing_creature_systems(
       GameTestHelper h) {
+    verifyMaw(h, ComponentRegistry.ARMORED_MAW.get());
+  }
+
+  @GameTest(template = "test_empty", batch = "huntsman_maw", timeoutTicks = 100)
+  public static void huntsman_variant_keeps_feeding_and_directional_armor(GameTestHelper h) {
+    var armor = ComponentRegistry.HUNTSMAN_ARMOR.get().defaultBlockState();
+    h.assertTrue(BlockHealthValues.health(armor) == 0, "Huntsman plating added hit points");
+    h.assertTrue(
+        org.azkerash.createbioships.components.logic.armor.ArmorValues.points(armor) == 20,
+        "Huntsman plating lost its protection");
+    verifyMaw(h, ComponentRegistry.HUNTSMAN_MAW.get());
+  }
+
+  private static void verifyMaw(GameTestHelper h, MouthBlock variant) {
     var level = h.getLevel();
     var p = h.absolutePos(new BlockPos(1, 3, 1));
     var blocks = List.of(p, p.east(), p.east(2), p.east(3));
@@ -29,8 +43,7 @@ public final class ArmoredMawTests {
     level.setBlock(p.east(), ComponentRegistry.STOMACH.get().defaultBlockState(), Block.UPDATE_ALL);
     level.setBlock(
         p.east(2), ComponentRegistry.INTESTINE.get().defaultBlockState(), Block.UPDATE_ALL);
-    level.setBlock(
-        p.east(3), ComponentRegistry.ARMORED_MAW.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(p.east(3), variant.defaultBlockState(), Block.UPDATE_ALL);
     var body =
         SubLevelAssemblyHelper.assembleBlocks(level, p, blocks, new BoundingBox3i(p, p.east(3)));
     var core = body.getPlot().getCenterBlock();
@@ -96,7 +109,7 @@ public final class ArmoredMawTests {
         "Native back hit incorrectly used armor");
     level.removeBlock(at, false);
     h.assertTrue(SubLevelArmor.status(body).maximum() == 0, "Removed maw left armor capacity");
-    level.setBlock(at, ComponentRegistry.ARMORED_MAW.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(at, variant.defaultBlockState(), Block.UPDATE_ALL);
     h.assertTrue(SubLevelArmor.status(body).current() == 16, "Replacement refilled spent armor");
     h.assertTrue(
         ((MouthBlockEntity) level.getBlockEntity(at)).salivaParticles(),
@@ -105,7 +118,7 @@ public final class ArmoredMawTests {
     h.assertTrue(
         !((MouthBlockEntity) level.getBlockEntity(at)).salivaParticles(),
         "Ordinary Feeder Mouth emitted Eldritch saliva");
-    level.setBlock(at, ComponentRegistry.ARMORED_MAW.get().defaultBlockState(), Block.UPDATE_ALL);
+    level.setBlock(at, variant.defaultBlockState(), Block.UPDATE_ALL);
     SubLevelHealth.damage(body, 10000, "test");
     h.assertTrue(
         !((MouthBlockEntity) level.getBlockEntity(at)).salivaParticles(),

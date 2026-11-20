@@ -1,0 +1,7 @@
+{
+  "parent": "create_bioships:block/chitin_armor",
+  "textures": {
+    "skin": "create_bioships:block/arachnid_chitin",
+    "particle": "create_bioships:block/arachnid_chitin"
+  }
+}

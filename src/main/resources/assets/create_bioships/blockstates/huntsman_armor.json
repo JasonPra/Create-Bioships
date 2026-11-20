@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "create_bioships:block/huntsman_armor"
+    }
+  }
+}

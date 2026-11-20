@@ -9,7 +9,7 @@ public final class ArmorValues {
 
   /** Direction is in sublevel-local block space; unknown impact faces cannot protect a maw. */
   public static boolean protects(BlockState state, net.minecraft.core.Direction face) {
-    if (state.is(org.azkerash.createbioships.components.ComponentRegistry.ARMORED_MAW.get())) {
+    if (org.azkerash.createbioships.components.logic.mouth.MouthBlock.isArmored(state)) {
       return face != null
           && face
               == state.getValue(
@@ -24,7 +24,7 @@ public final class ArmorValues {
       return 0;
     }
     return switch (id.getPath()) {
-      case "chitin_armor", "armored_maw" -> 20;
+      case "chitin_armor", "armored_maw", "huntsman_armor", "huntsman_maw" -> 20;
       case "crab_leg",
           "arachnid_leg",
           "limb_joint",

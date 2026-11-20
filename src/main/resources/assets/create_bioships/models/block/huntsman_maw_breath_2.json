@@ -1,0 +1,9 @@
+{
+  "parent": "create_bioships:block/armored_maw_breath_2",
+  "textures": {
+    "flesh": "create_bioships:block/arachnid_chitin",
+    "lip": "create_bioships:block/arachnid_chitin",
+    "shell": "create_bioships:block/arachnid_chitin",
+    "particle": "create_bioships:block/arachnid_chitin"
+  }
+}

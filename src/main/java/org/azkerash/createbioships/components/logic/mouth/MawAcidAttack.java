@@ -8,7 +8,6 @@ import net.minecraft.sounds.*;
 import net.minecraft.world.phys.Vec3;
 import org.azkerash.createbioships.CreateBioships;
 import org.azkerash.createbioships.compat.bigcannons.AcidBurstEntity;
-import org.azkerash.createbioships.components.ComponentRegistry;
 import org.azkerash.createbioships.components.logic.stomach.StomachBlockEntity;
 import org.azkerash.createbioships.core.*;
 import org.azkerash.createbioships.core.access.SubLevelInteractionInterceptor;
@@ -62,7 +61,7 @@ public final class MawAcidAttack {
 
   public static Result validate(ServerLevel level, BlockPos pos, UUID actor) {
     var root = body(level, pos);
-    if (!level.getBlockState(pos).is(ComponentRegistry.ARMORED_MAW.get())
+    if (!MouthBlock.isArmored(level.getBlockState(pos))
         || root == null
         || !SubLevelData.isLiving(root)
         || SubLevelHealth.status(root).dead()) {

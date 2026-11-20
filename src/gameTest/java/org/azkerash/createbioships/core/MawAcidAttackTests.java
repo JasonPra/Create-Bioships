@@ -25,6 +25,10 @@ public final class MawAcidAttackTests {
       ServerSubLevel body, MouthBlockEntity maw, StomachBlockEntity stomach, UUID owner) {}
 
   private static Rig rig(GameTestHelper h) {
+    return rig(h, ComponentRegistry.ARMORED_MAW.get());
+  }
+
+  private static Rig rig(GameTestHelper h, MouthBlock variant) {
     var level = h.getLevel();
     var p = h.absolutePos(new BlockPos(2, 4, 2));
     for (int x = -1; x <= 16; x++) {
@@ -39,10 +43,7 @@ public final class MawAcidAttackTests {
         p.east(2), ComponentRegistry.INTESTINE.get().defaultBlockState(), Block.UPDATE_ALL);
     level.setBlock(
         p.east(3),
-        ComponentRegistry.ARMORED_MAW
-            .get()
-            .defaultBlockState()
-            .setValue(MouthBlock.FACING, Direction.EAST),
+        variant.defaultBlockState().setValue(MouthBlock.FACING, Direction.EAST),
         Block.UPDATE_ALL);
     var body =
         SubLevelAssemblyHelper.assembleBlocks(level, p, cells, new BoundingBox3i(p, p.east(3)));
@@ -64,7 +65,16 @@ public final class MawAcidAttackTests {
   @GameTest(template = "test_empty", timeoutTicks = 100, batch = "acid_maw_telegraph")
   public static void mouth_opens_before_cbc_burst_then_spends_acid_and_hits_a_target(
       GameTestHelper h) {
-    var rig = rig(h);
+    verifyAcidAttack(h, ComponentRegistry.ARMORED_MAW.get());
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 100, batch = "huntsman_acid")
+  public static void huntsman_variant_keeps_telegraph_and_acid_projectile(GameTestHelper h) {
+    verifyAcidAttack(h, ComponentRegistry.HUNTSMAN_MAW.get());
+  }
+
+  private static void verifyAcidAttack(GameTestHelper h, MouthBlock variant) {
+    var rig = rig(h, variant);
     h.runAfterDelay(
         20,
         () -> {

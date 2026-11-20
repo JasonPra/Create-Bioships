@@ -29,7 +29,7 @@
   "block.create_bioships.limb_segment": "Chitin Limb Segment",
   "block.create_bioships.limb_foot": "Armored Foot",
   "item.create_bioships.limb_positioner": "Synaptic Calibrator",
-  "item.create_bioships.limb_positioner.hint": "Rest angle: %s° · Scroll: 5° · Ctrl: 1° · Sneak-use: lock mount",
+  "item.create_bioships.limb_positioner.hint": "Rest angle: %s\u00b0 \u00b7 Scroll: 5\u00b0 \u00b7 Ctrl: 1\u00b0 \u00b7 Sneak-use: lock mount",
   "block.create_bioships.limb_socket": "Synovial Socket",
   "item.create_bioships.development_toolkit": "Development Toolkit",
   "block.create_bioships.armored_maw": "Eldritch Maw",
@@ -52,5 +52,7 @@
   "block.create_bioships.arachnid_leg": "Arachnid Leg",
   "block.create_bioships.arachnid_leg.tooltip": "Adhesive toes. Three planted arachnid legs required for grip. Extend with the Ossified Wrench.",
   "block.create_bioships.armored_maw.acid_tooltip": "Acid spray: sneak + empty-hand use, or a redstone pulse. Opens for 1 second before firing; costs 50 stomach acid.",
-  "entity.create_bioships.acid_burst": "Acid Spray"
+  "entity.create_bioships.acid_burst": "Acid Spray",
+  "block.create_bioships.huntsman_armor": "Huntsman Chitin Armor",
+  "block.create_bioships.huntsman_maw": "Huntsman Eldritch Maw"
 }

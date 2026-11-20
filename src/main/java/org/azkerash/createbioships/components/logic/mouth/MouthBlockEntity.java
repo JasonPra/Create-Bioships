@@ -122,9 +122,7 @@ public final class MouthBlockEntity extends OrganInventory {
   }
 
   public void observeAcidSignal(boolean powered) {
-    if (!getBlockState().is(ComponentRegistry.ARMORED_MAW.get())
-        || level == null
-        || level.isClientSide) {
+    if (!MouthBlock.isArmored(getBlockState()) || level == null || level.isClientSide) {
       return;
     }
     var state = chewing();
@@ -143,7 +141,7 @@ public final class MouthBlockEntity extends OrganInventory {
    */
   public boolean animateAcidAttack() {
     if (!(level instanceof net.minecraft.server.level.ServerLevel server)
-        || !getBlockState().is(ComponentRegistry.ARMORED_MAW.get())) {
+        || !MouthBlock.isArmored(getBlockState())) {
       return false;
     }
     var state = chewing();
@@ -246,7 +244,7 @@ public final class MouthBlockEntity extends OrganInventory {
   /** One cosmetic droplet at the lower lip, transformed with the physical creature. */
   public boolean salivaParticles() {
     if (!(level instanceof net.minecraft.server.level.ServerLevel server)
-        || !getBlockState().is(ComponentRegistry.ARMORED_MAW.get())
+        || !MouthBlock.isArmored(getBlockState())
         || !active()) {
       return false;
     }
