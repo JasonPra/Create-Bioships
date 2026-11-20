@@ -127,7 +127,8 @@ public final class CrabLegRenderer {
               (float)
                   org.azkerash.createbioships.compat.letitwalk.CompactLegCollisions.width(
                       i, height, arachnid),
-              hurt);
+              hurt,
+              arachnid);
         }
         double size =
             JOINT_TO_COXA_WIDTH
@@ -140,7 +141,7 @@ public final class CrabLegRenderer {
                   .get(joint * 2)
                   .lerp(pose.collisionEndpoints().get(joint * 2), mix)
                   .subtract(pivot);
-          socket(stack, mc, point, size, hurt);
+          socket(stack, mc, point, size, hurt, arachnid);
         }
       }
       stack.popPose();
@@ -155,15 +156,16 @@ public final class CrabLegRenderer {
       Minecraft mc,
       Vec3 point,
       double size,
-      net.minecraft.client.renderer.RenderType hurt) {
+      net.minecraft.client.renderer.RenderType hurt,
+      boolean arachnid) {
     stack.pushPose();
     stack.translate(point.x, point.y - size / 2, point.z);
     int light =
         net.minecraft.client.renderer.LevelRenderer.getLightColor(
             mc.level, mc.gameRenderer.getMainCamera().getBlockPosition());
-    CrabLegMesh.render(stack, mc, size, size, light, hurt);
+    CrabLegMesh.render(stack, mc, size, size, light, hurt, arachnid, false);
     stack.translate(0, size * .15, 0);
-    CrabLegMesh.render(stack, mc, size * 1.18, size * .7, light, hurt);
+    CrabLegMesh.render(stack, mc, size * 1.18, size * .7, light, hurt, arachnid, false);
     stack.translate(0, -size * .15, 0);
     if (mc.player != null
         && org.azkerash.createbioships.compat.letitwalk.LimbPositionerActions.holding(mc.player)) {
@@ -192,7 +194,8 @@ public final class CrabLegRenderer {
       Vec3 from,
       Vec3 to,
       float width,
-      net.minecraft.client.renderer.RenderType hurt) {
+      net.minecraft.client.renderer.RenderType hurt,
+      boolean arachnid) {
     var delta = to.subtract(from);
     if (delta.lengthSqr() < .00001) {
       return;
@@ -204,7 +207,7 @@ public final class CrabLegRenderer {
     stack.mulPose(new org.joml.Quaternionf().rotationTo(new org.joml.Vector3f(0, 1, 0), direction));
     var world = mc.gameRenderer.getMainCamera().getBlockPosition();
     int light = net.minecraft.client.renderer.LevelRenderer.getLightColor(mc.level, world);
-    CrabLegMesh.render(stack, mc, width, delta.length(), light, hurt);
+    CrabLegMesh.render(stack, mc, width, delta.length(), light, hurt, arachnid, arachnid);
     if (mc.getEntityRenderDispatcher().shouldRenderHitBoxes()) {
       org.azkerash.createbioships.client.combat.HitboxDebugRenderer.draw(
           new net.minecraft.world.phys.AABB(

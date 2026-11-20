@@ -135,11 +135,14 @@ public final class CompactLimbController {
     boolean contact;
     Vec3 contactPoint;
     boolean arachnid;
+    int anatomyVersion, fanAngle;
     private long prototypeLimitRevision = Long.MIN_VALUE;
     private List<PrototypeJointPose.Limit> prototypeLimits = List.of();
     private double prototypeMobility;
   }
 
+  private static final int ARACHNID_ANATOMY_VERSION = 2;
+  private static final int ARACHNID_FAN_DEGREES = 25;
   private final ServerSubLevel body;
   private final Context walker;
   private final PrototypeCompactMotor prototype;
@@ -214,23 +217,54 @@ public final class CompactLimbController {
   }
 
   private List<Vec3> restPoints(BlockPos socket, Direction face, double height, int angle) {
+    var existing = limbs.get(socket);
+    int fan =
+        CompactLegSocketBlock.isArachnid(body.getLevel().getBlockState(socket))
+            ? (existing == null ? arachnidFan(socket, face) : existing.fanAngle)
+            : 0;
+    return restPoints(socket, face, height, angle, fan);
+  }
+
+  private List<Vec3> restPoints(
+      BlockPos socket, Direction face, double height, int angle, int fan) {
     double scale = (height + .5) / 1.45;
     var normal = Vec3.atLowerCornerOf(face.getNormal());
-    var side = normal.yRot((float) Math.toRadians(angle));
+    var side = normal.yRot((float) Math.toRadians(angle + fan));
     var start = Vec3.atCenterOf(socket).subtract(normal.scale(.25));
     if (CompactLegSocketBlock.isArachnid(body.getLevel().getBlockState(socket))) {
-      // Blocks in the socket's local frame: a high knee and long, narrow distal segment.
+      // Huntsman stance, in local blocks: broad lateral reach and a low, outward knee.
       return List.of(
           start,
-          start.add(side.scale(.55 * scale)).add(0, .4 * scale, 0),
-          start.add(side.scale(1.35 * scale)).add(0, .15 * scale, 0),
-          start.add(side.scale(1.6 * scale)).add(0, -1.7 * scale, 0));
+          start.add(side.scale(.65 * scale)).add(0, .25 * scale, 0),
+          start.add(side.scale(1.65 * scale)).add(0, -.2 * scale, 0),
+          start.add(side.scale(2.15 * scale)).add(0, -1.7 * scale, 0));
     }
     return List.of(
         start,
         start.add(side.scale(.65 * scale)).add(0, .25 * scale, 0),
         start.add(side.scale(1.25 * scale)).add(0, -.45 * scale, 0),
         start.add(side.scale(1.45 * scale)).add(0, -1.45 * scale / .85, 0));
+  }
+
+  private int arachnidFan(BlockPos socket, Direction face) {
+    var bounds = body.getPlot().getBoundingBox();
+    var centre =
+        new Vec3(
+            (bounds.minX() + bounds.maxX()) * .5,
+            (bounds.minY() + bounds.maxY()) * .5,
+            (bounds.minZ() + bounds.maxZ()) * .5);
+    var front =
+        Vec3.atLowerCornerOf(
+            org.azkerash.createbioships.core.locomotion.SubLevelFacing.local(body).getNormal());
+    var side = Vec3.atLowerCornerOf(face.getNormal());
+    // Side sockets fan fore/aft; end sockets fan left/right so paired legs remain mirrored.
+    var fanAxis = Math.abs(side.dot(front)) > .5 ? front.yRot((float) (Math.PI / 2)) : front;
+    double role = Vec3.atLowerCornerOf(socket).subtract(centre).dot(fanAxis);
+    var rotated = side.yRot((float) Math.toRadians(ARACHNID_FAN_DEGREES));
+    double swing = rotated.subtract(side).dot(fanAxis);
+    return Math.abs(role) < .25 || Math.abs(swing) < .01
+        ? 0
+        : (int) Math.copySign(ARACHNID_FAN_DEGREES, role * swing);
   }
 
   private void fill(ServerSubLevel part, int bone, int height, double length, boolean arachnid) {
@@ -256,6 +290,8 @@ public final class CompactLimbController {
     var limb = new Limb();
     limb.socket = socket.immutable();
     limb.arachnid = CompactLegSocketBlock.isArachnid(body.getLevel().getBlockState(socket));
+    limb.anatomyVersion = ARACHNID_ANATOMY_VERSION;
+    limb.fanAngle = limb.arachnid ? arachnidFan(socket, face) : 0;
     limb.height = height;
     limb.face = face;
     limb.restAngle = LimbTuning.get(body.getLevel(), socket).restAngle();
@@ -323,6 +359,13 @@ public final class CompactLimbController {
     var oldRuntime = SocketJointRig.save(limb.runtime);
     var angles = limb.runtime.built.angles.clone();
     var oldLengths = limb.lengths.clone();
+    for (int i = 0; i < limb.bodies.size(); i++) {
+      var part = limb.bodies.get(i);
+      oldLengths[i] =
+          Math.max(
+              oldLengths[i],
+              part.getPlot().getBoundingBox().maxY() - part.getPlot().getCenterBlock().getY() + 1);
+    }
     var footPart = limb.bodies.getLast();
     var foot =
         footPart.logicalPose().transformPosition(anchor(footPart).add(0, limb.lengths[2], 0));
@@ -387,10 +430,8 @@ public final class CompactLimbController {
 
   private void configure(Limb limb, List<Vec3> points, BuiltLeg saved) {
     var origin = Vec3.atLowerCornerOf(walker.getBlockPos());
-    var tangent =
-        Vec3.atLowerCornerOf(limb.face.getNormal())
-            .yRot((float) Math.toRadians(limb.restAngle))
-            .cross(new Vec3(0, 1, 0));
+    var coxa = points.get(1).subtract(points.get(0));
+    var tangent = new Vec3(coxa.x, 0, coxa.z).normalize().cross(new Vec3(0, 1, 0));
     var joints = new ArrayList<BuiltLeg.Joint>();
     var ids = new ArrayList<UUID>();
     var pivots = new double[3][];
@@ -662,8 +703,8 @@ public final class CompactLimbController {
                 .transform(v(restPoints.get(i + 1).subtract(restPoints.get(i)).normalize()));
         restDirections.add(new Vec3(direction.x, direction.y, direction.z));
       }
-      var outward =
-          Vec3.atLowerCornerOf(limb.face.getNormal()).yRot((float) Math.toRadians(limb.restAngle));
+      var firstDirection = restPoints.get(1).subtract(hip);
+      var outward = new Vec3(firstDirection.x, 0, firstDirection.z).normalize();
       var worldOutward = body.logicalPose().orientation().transform(v(outward));
       var worldHip = body.logicalPose().transformPosition(hip);
       var leg =
@@ -732,8 +773,10 @@ public final class CompactLimbController {
       for (var limb : limbs.values()) {
         if (loaded(limb)
             && (Math.abs(limb.extension - limb.height) > .001
-                || limb.restAngle != LimbTuning.get(body.getLevel(), limb.socket).restAngle())) {
+                || limb.restAngle != LimbTuning.get(body.getLevel(), limb.socket).restAngle()
+                || (limb.arachnid && limb.anatomyVersion < ARACHNID_ANATOMY_VERSION))) {
           resize(limb, limb.extension + Math.clamp(limb.height - limb.extension, -.125, .125));
+          limb.anatomyVersion = ARACHNID_ANATOMY_VERSION;
           resized = true;
         }
       }
@@ -1098,6 +1141,8 @@ public final class CompactLimbController {
       t.putLong("Socket", l.socket.asLong());
       t.putInt("Height", l.height);
       t.putBoolean("Arachnid", l.arachnid);
+      t.putInt("AnatomyVersion", l.anatomyVersion);
+      t.putInt("FanAngle", l.fanAngle);
       t.putInt("RestAngle", l.restAngle);
       t.putDouble("Extension", l.extension);
       t.putString("Face", l.face.getName());
@@ -1123,6 +1168,7 @@ public final class CompactLimbController {
       var l = new Limb();
       l.socket = BlockPos.of(t.getLong("Socket"));
       l.arachnid = t.getBoolean("Arachnid");
+      l.anatomyVersion = t.getInt("AnatomyVersion");
       l.height = Math.clamp(t.getInt("Height"), 1, 3);
       l.extension = Math.clamp(t.getDouble("Extension"), 1, 3);
       l.restAngle = t.getInt("RestAngle");
@@ -1130,13 +1176,17 @@ public final class CompactLimbController {
       if (l.face == null || !l.face.getAxis().isHorizontal()) {
         continue;
       }
+      l.fanAngle =
+          t.contains("FanAngle")
+              ? t.getInt("FanAngle")
+              : (l.arachnid ? arachnidFan(l.socket, l.face) : 0);
       for (var id : new LinkedHashSet<>(built.segments)) {
         var part = container.getSubLevel(id);
         if (part instanceof ServerSubLevel s && !s.isRemoved()) {
           l.bodies.add(s);
         }
       }
-      var points = restPoints(l.socket, l.face, l.extension, l.restAngle);
+      var points = restPoints(l.socket, l.face, l.extension, l.restAngle, l.fanAngle);
       for (int i = 0; i < 3; i++) {
         var d = points.get(i + 1).subtract(points.get(i));
         l.lengths[i] = d.length();

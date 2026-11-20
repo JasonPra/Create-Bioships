@@ -523,6 +523,16 @@ public final class ArachnidLegTests {
               field.get(null);
       var old = controllers.remove(body);
       old.save();
+      // Simulate an existing pre-huntsman rig. Updating its anatomy must preserve saved parts.
+      var data = body.getUserDataTag().copy();
+      for (var raw :
+          data.getCompound(org.azkerash.createbioships.compat.letitwalk.CompactLimbController.DATA)
+              .getList("Legs", 10)) {
+        var entry = (net.minecraft.nbt.CompoundTag) raw;
+        entry.remove("AnatomyVersion");
+        entry.remove("FanAngle");
+      }
+      body.setUserDataTag(data);
       old.close();
       var restored = new org.azkerash.createbioships.compat.letitwalk.CompactLimbController(body);
       controllers.put(body, restored);

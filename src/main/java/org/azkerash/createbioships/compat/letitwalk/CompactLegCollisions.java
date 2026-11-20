@@ -18,7 +18,7 @@ public final class CompactLegCollisions {
 
   private static final double[] WIDTHS = {.23, .17, .09};
 
-  private static final double ARACHNID_WIDTH_FACTOR = .65;
+  private static final double ARACHNID_WIDTH_FACTOR = 1.1;
 
   public static double width(int segment, int height, boolean arachnid) {
     return width(segment, height) * (arachnid ? ARACHNID_WIDTH_FACTOR : 1);

@@ -1,7 +1,7 @@
 {
   "textures": {
-    "skin": "create_bioships:block/living_core",
-    "particle": "create_bioships:block/living_core"
+    "skin": "create_bioships:block/arachnid_chitin",
+    "particle": "create_bioships:block/arachnid_chitin"
   },
   "elements": [
     {

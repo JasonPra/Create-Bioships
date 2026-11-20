@@ -13,18 +13,76 @@ final class CrabLegMesh {
   private static final ResourceLocation SKIN =
       ResourceLocation.parse("create_bioships:block/living_core");
 
+  private static final ResourceLocation ARACHNID_SKIN =
+      ResourceLocation.parse("create_bioships:block/arachnid_chitin");
+  private static final int MAX_BARBS_PER_SEGMENT = 3;
+
   private CrabLegMesh() {}
 
   static void render(
       PoseStack stack, Minecraft mc, double width, double length, int light, RenderType hurt) {
-    var sprite = mc.getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(SKIN);
+    render(stack, mc, width, length, light, hurt, false, false);
+  }
+
+  static void render(
+      PoseStack stack,
+      Minecraft mc,
+      double width,
+      double length,
+      int light,
+      RenderType hurt,
+      boolean arachnid,
+      boolean barbs) {
+    var sprite =
+        mc.getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(arachnid ? ARACHNID_SKIN : SKIN);
     var buffers = mc.renderBuffers().bufferSource();
     var base = RenderType.entityCutoutNoCull(InventoryMenu.BLOCK_ATLAS);
     draw(stack, buffers.getBuffer(base), sprite, width, length, light);
+    if (barbs) {
+      barbs(stack, buffers.getBuffer(base), sprite, width, length, light);
+    }
     if (hurt != null) {
       buffers.endBatch(base);
       draw(stack, buffers.getBuffer(hurt), sprite, width, length, light);
+      if (barbs) {
+        barbs(stack, buffers.getBuffer(hurt), sprite, width, length, light);
+      }
       buffers.endBatch(hurt);
+    }
+  }
+
+  /** Pointed spines are mesh detail, not extra Sable bodies or per-frame physics queries. */
+  private static void barbs(
+      PoseStack stack,
+      VertexConsumer out,
+      TextureAtlasSprite sprite,
+      double width,
+      double length,
+      int light) {
+    int count = Math.min(MAX_BARBS_PER_SEGMENT, Math.max(1, (int) Math.ceil(length)));
+    for (int i = 0; i < count; i++) {
+      stack.pushPose();
+      double side = i % 2 == 0 ? 1 : -1;
+      stack.translate(side * width * .45, length * (i + 1) / (count + 1), 0);
+      stack.mulPose(new org.joml.Quaternionf().rotationZ((float) (-side * Math.PI / 3)));
+      double half = width * .12, reach = width * .8;
+      var corners =
+          java.util.List.of(
+              new Vec3(-half, 0, -half),
+              new Vec3(half, 0, -half),
+              new Vec3(half, 0, half),
+              new Vec3(-half, 0, half));
+      var tip = new Vec3(0, reach, 0);
+      for (int face = 0; face < 4; face++) {
+        var a = corners.get(face);
+        var b = corners.get((face + 1) % 4);
+        var normal = b.subtract(a).cross(tip.subtract(a)).normalize();
+        vertex(stack, out, sprite, a, normal, 0, 0, light);
+        vertex(stack, out, sprite, b, normal, 1, 0, light);
+        vertex(stack, out, sprite, tip, normal, .5f, 1, light);
+        vertex(stack, out, sprite, tip, normal, .5f, 1, light);
+      }
+      stack.popPose();
     }
   }
 
