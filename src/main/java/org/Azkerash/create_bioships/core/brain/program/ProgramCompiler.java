@@ -17,6 +17,10 @@ public final class ProgramCompiler {
   private final List<Token> tokens;
   private final List<Instruction> code = new ArrayList<>();
   private final Deque<Map<String, Local>> scopes = new ArrayDeque<>();
+
+  private record Loop(int continueAt, List<Integer> breaks) {}
+
+  private final Deque<Loop> loops = new ArrayDeque<>();
   private int cursor, locals, depth;
 
   private ProgramCompiler(List<Token> tokens) {
@@ -78,6 +82,26 @@ public final class ProgramCompiler {
         return;
       }
       if (match(";")) return;
+      if (match("if")) {
+        conditional();
+        return;
+      }
+      if (match("while")) {
+        whileLoop();
+        return;
+      }
+      if (match("for")) {
+        forLoop();
+        return;
+      }
+      if (match("break") || match("continue")) {
+        Token jump = previous();
+        if (loops.isEmpty()) fail(jump, "Loop control requires an enclosing loop.");
+        expect(";");
+        if (jump.text().equals("break")) loops.peek().breaks().add(emit(Op.JUMP, -1, jump));
+        else emit(Op.JUMP, loops.peek().continueAt(), jump);
+        return;
+      }
       if (match("return")) {
         expect(";");
         emit(Op.HALT, null, previous());
@@ -88,6 +112,79 @@ public final class ProgramCompiler {
     } finally {
       leave();
     }
+  }
+
+  private void embedded() {
+    if (Set.of("int", "double", "bool", "string", "var").contains(peek().text()))
+      fail(peek(), "Put local declarations inside a block.");
+    scopes.push(new HashMap<>());
+    statement();
+    scopes.pop();
+  }
+
+  private void conditional() {
+    Token start = previous();
+    expect("(");
+    require(expression(), Type.BOOL, start);
+    expect(")");
+    int no = emit(Op.FALSE, -1, start);
+    embedded();
+    if (match("else")) {
+      int end = emit(Op.JUMP, -1, start);
+      patch(no, code.size());
+      embedded();
+      patch(end, code.size());
+    } else patch(no, code.size());
+  }
+
+  private void whileLoop() {
+    Token start = previous();
+    int condition = code.size();
+    expect("(");
+    require(expression(), Type.BOOL, start);
+    expect(")");
+    int end = emit(Op.FALSE, -1, start);
+    Loop loop = new Loop(condition, new ArrayList<>());
+    loops.push(loop);
+    embedded();
+    emit(Op.JUMP, condition, start);
+    loops.pop();
+    finishLoop(loop, end);
+  }
+
+  private void forLoop() {
+    Token start = previous();
+    scopes.push(new HashMap<>());
+    expect("(");
+    if (!check(";")) simple();
+    expect(";");
+    int condition = code.size();
+    if (!check(";")) require(expression(), Type.BOOL, start);
+    else emit(Op.PUSH, true, start);
+    expect(";");
+    int end = emit(Op.FALSE, -1, start);
+    int body = emit(Op.JUMP, -1, start);
+    int increment = code.size();
+    if (!check(")")) {
+      if (Set.of("int", "double", "bool", "string", "var").contains(peek().text()))
+        fail(peek(), "For increment cannot declare a variable.");
+      simple();
+    }
+    expect(")");
+    emit(Op.JUMP, condition, start);
+    patch(body, code.size());
+    Loop loop = new Loop(increment, new ArrayList<>());
+    loops.push(loop);
+    embedded();
+    emit(Op.JUMP, increment, start);
+    loops.pop();
+    finishLoop(loop, end);
+    scopes.pop();
+  }
+
+  private void finishLoop(Loop loop, int conditionExit) {
+    patch(conditionExit, code.size());
+    for (int exit : loop.breaks()) patch(exit, code.size());
   }
 
   private void simple() {

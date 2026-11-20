@@ -31,6 +31,21 @@ public final class ProgramCompilerTests {
     h.succeed();
   }
 
+  @GameTest(template = "test_empty", batch = "program_language", timeoutTicks = 20)
+  public static void control_flow_is_scoped_and_bounded(GameTestHelper h) {
+    accepts(h, ProgramCardData.TEMPLATE);
+    accepts(h, "int n=0; while(n<10) { n++; if(n==2) continue; if(n==7) break; } return;");
+    accepts(h, "for(int i=0;i<4;i++) { for(int j=0;j<2;j++) { if(j==0) continue; else break; } }");
+    accepts(h, "for(;;) { Brain.Wait(10); }");
+    rejects(h, "break;");
+    rejects(h, "continue;");
+    rejects(h, "if(1) return;");
+    rejects(h, "for(int i=0;i<2;i++) {} Console.WriteLine(i);");
+    rejects(h, "if(true) int x=1;");
+    rejects(h, "{".repeat(80) + "}".repeat(80));
+    h.succeed();
+  }
+
   static void accepts(GameTestHelper h, String source) {
     var result = ProgramCompiler.compile(source);
     h.assertTrue(result.success(), "Valid source rejected: " + result.diagnostic());
