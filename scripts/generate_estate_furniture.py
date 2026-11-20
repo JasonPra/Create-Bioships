@@ -87,5 +87,27 @@ def storage():
     write(ASSETS/'blockstates/ossuary_cabinet.json',dict(variants=variants))
     recipe('ossuary_cabinet',['BCB','F F','BCB'],dict(B='minecraft:bone',C='create_bioships:chitin_armor',F='biomancy:packed_flesh'))
     write(ROOT/'data/minecraft/tags/block/enchantment_power_provider.json',dict(replace=False,values=['create_bioships:ossuary_bookcase']))
+def bed():
+    common=[([0,3,0],[16,5,16],'chitin'),([1,5,0],[15,9,16],'flesh'),([0,4,0],[2,8,16],'bone'),([14,4,0],[16,8,16],'bone')]
+    for part in ['head','foot']:
+        boxes=common+([([0,0,0],[3,3,3],'bone'),([13,0,0],[16,3,3],'bone'),([0,5,0],[16,12,2],'chitin'),([1,9,0],[3,14,2],'bone'),([13,9,0],[15,14,2],'bone'),([3,9,2],[13,10,6],'marrow')] if part=='head' else [([0,0,13],[3,3,16],'bone'),([13,0,13],[16,3,16],'bone'),([0,5,14],[16,10,16],'chitin'),([2,8,14],[14,11,16],'bone')])
+        model('ossuary_bed_'+part,boxes,parent='minecraft:block/block')
+    variants={}
+    # Native facing points from foot toward head. Canonical geometry has the head's end to north.
+    for d,angle in [('north',0),('east',90),('south',180),('west',270)]:
+        for part in ['head','foot']:variants[f'facing={d},part={part}']=dict(model='create_bioships:block/ossuary_bed_'+part,y=angle)
+    write(ASSETS/'blockstates/ossuary_bed.json',dict(variants=variants))
+    # Show both halves in the inventory, at half model scale.
+    combined=[]
+    for part,offset in [('head',0),('foot',8)]:
+        data=json.loads((ASSETS/f'models/block/ossuary_bed_{part}.json').read_text())
+        for e in data['elements']:
+            e['from']=[e['from'][0]*.5+4,e['from'][1]*.5,e['from'][2]*.5+offset]
+            e['to']=[e['to'][0]*.5+4,e['to'][1]*.5,e['to'][2]*.5+offset];combined.append(e)
+    write(ASSETS/'models/block/ossuary_bed_inventory.json',dict(parent='minecraft:block/block',textures=TEXTURES,elements=combined))
+    item('ossuary_bed','ossuary_bed_inventory');loot('ossuary_bed');title('ossuary_bed','Ossuary Bed')
+    recipe('ossuary_bed',['FFF','BCB','B B'],dict(B='minecraft:bone',C='create_bioships:chitin_armor',F='biomancy:packed_flesh'))
+    write(ROOT/'data/minecraft/tags/block/beds.json',dict(replace=False,values=['create_bioships:ossuary_bed']))
+    write(ROOT/'data/minecraft/tags/item/beds.json',dict(replace=False,values=['create_bioships:ossuary_bed']))
 if __name__=='__main__':
-    table();seating();storage()
+    table();seating();storage();bed()

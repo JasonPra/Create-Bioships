@@ -153,4 +153,85 @@ public final class FurnitureTests {
         "Cabinet lost saved inventory or custom type");
     h.succeed();
   }
+
+  @GameTest(template = "test_empty", batch = "estate_bed", timeoutTicks = 40)
+  public static void bed_places_wet_halves_and_removal_preserves_water(GameTestHelper h) {
+    var l = h.getLevel();
+    var p = h.absolutePos(new BlockPos(2, 2, 2));
+    l.setBlock(p.below(), Blocks.STONE.defaultBlockState(), 3);
+    l.setBlock(p.south().below(), Blocks.STONE.defaultBlockState(), 3);
+    l.setBlock(p, Blocks.WATER.defaultBlockState(), 3);
+    l.setBlock(p.south(), Blocks.WATER.defaultBlockState(), 3);
+    var profile = new com.mojang.authlib.GameProfile(java.util.UUID.randomUUID(), "BedTester");
+    var player =
+        new net.minecraft.server.level.ServerPlayer(
+            l.getServer(),
+            l,
+            profile,
+            net.minecraft.server.level.ClientInformation.createDefault());
+    player.connection = new net.neoforged.neoforge.common.util.FakePlayer(l, profile).connection;
+    player.setYRot(0);
+    player.setItemInHand(
+        net.minecraft.world.InteractionHand.MAIN_HAND,
+        new net.minecraft.world.item.ItemStack(FurnitureRegistry.OSSUARY_BED.get()));
+    player
+        .getMainHandItem()
+        .useOn(
+            new net.minecraft.world.item.context.UseOnContext(
+                player,
+                net.minecraft.world.InteractionHand.MAIN_HAND,
+                new net.minecraft.world.phys.BlockHitResult(
+                    net.minecraft.world.phys.Vec3.atCenterOf(p.below()).add(0, .5, 0),
+                    Direction.UP,
+                    p.below(),
+                    false)));
+    h.assertTrue(
+        l.getBlockState(p).is(FurnitureRegistry.OSSUARY_BED.get())
+            && l.getBlockState(p.south()).is(FurnitureRegistry.OSSUARY_BED.get()),
+        "Bed did not place linked halves");
+    h.assertTrue(
+        l.getBlockState(p).getValue(BlockStateProperties.WATERLOGGED)
+            && l.getBlockState(p.south()).getValue(BlockStateProperties.WATERLOGGED),
+        "Bed lost water in one half");
+    h.assertTrue(
+        l.getBlockEntity(p).getType() == FurnitureRegistry.BED_ENTITY.get(),
+        "Bed has incorrect entity type");
+    player.gameMode.destroyBlock(p);
+    h.assertTrue(
+        !l.getBlockState(p.south()).is(FurnitureRegistry.OSSUARY_BED.get())
+            && l.getFluidState(p).is(net.minecraft.tags.FluidTags.WATER)
+            && l.getFluidState(p.south()).is(net.minecraft.tags.FluidTags.WATER),
+        "Removing bed stranded a half or deleted water");
+    h.succeed();
+  }
+
+  @GameTest(template = "test_empty", batch = "estate_bed", timeoutTicks = 40)
+  public static void bed_supports_native_sleep_and_respawn(GameTestHelper h) {
+    var l = h.getLevel();
+    var p = h.absolutePos(new BlockPos(5, 2, 5));
+    var bed = FurnitureRegistry.OSSUARY_BED.get();
+    l.setBlock(p.below(), Blocks.STONE.defaultBlockState(), 3);
+    l.setBlock(p.south().below(), Blocks.STONE.defaultBlockState(), 3);
+    var state = bed.defaultBlockState().setValue(BedBlock.FACING, Direction.SOUTH);
+    l.setBlock(p, state, 2);
+    bed.setPlacedBy(l, p, state, null, net.minecraft.world.item.ItemStack.EMPTY);
+    var profile = new com.mojang.authlib.GameProfile(java.util.UUID.randomUUID(), "SleepTester");
+    var player =
+        new net.minecraft.server.level.ServerPlayer(
+            l.getServer(),
+            l,
+            profile,
+            net.minecraft.server.level.ClientInformation.createDefault());
+    player.connection = new net.neoforged.neoforge.common.util.FakePlayer(l, profile).connection;
+    player.setPos(net.minecraft.world.phys.Vec3.atCenterOf(p));
+    var oldTime = l.getDayTime();
+    l.setDayTime(18000);
+    var result = player.startSleepInBed(p.south());
+    h.assertTrue(player.isSleeping(), "Custom bed did not support native sleep: " + result);
+    h.assertTrue(
+        p.south().equals(player.getRespawnPosition()), "Custom bed did not set respawn point");
+    player.stopSleepInBed(true, true);
+    l.setDayTime(oldTime);
+    h.succeed();
+  }
 }

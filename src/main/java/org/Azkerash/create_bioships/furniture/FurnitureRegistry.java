@@ -63,6 +63,16 @@ public final class FurnitureRegistry {
                           OssuaryCabinetBlock.CabinetEntity::new, OSSUARY_CABINET.get())
                       .build(null));
 
+  public static final DeferredBlock<OssuaryBedBlock> OSSUARY_BED =
+      block("ossuary_bed", () -> new OssuaryBedBlock(properties()));
+  public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<OssuaryBedBlock.BedEntity>>
+      BED_ENTITY =
+          ENTITIES.register(
+              "ossuary_bed",
+              () ->
+                  BlockEntityType.Builder.of(OssuaryBedBlock.BedEntity::new, OSSUARY_BED.get())
+                      .build(null));
+
   private FurnitureRegistry() {}
 
   static BlockBehaviour.Properties properties() {
