@@ -11,7 +11,7 @@ import net.minecraft.world.phys.Vec3;
 import org.azkerash.createbioships.components.ComponentRegistry;
 import org.azkerash.createbioships.core.flippers.FlipperGeometry;
 
-/** Disposable render samples only. No inventory, movement requests or saved creature state. */
+/** Transient pose samples shared by rendering and submerged-paddle queries; no saved creature state. */
 public final class FlipperBlockEntity extends BlockEntity {
   public static final int POSE_INTERVAL_TICKS = 4;
   private static final int STALE_POSE_TICKS = POSE_INTERVAL_TICKS * 3;

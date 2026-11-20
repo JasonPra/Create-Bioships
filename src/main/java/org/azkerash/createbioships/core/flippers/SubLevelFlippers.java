@@ -66,6 +66,11 @@ public final class SubLevelFlippers {
     return fins != null && fins.controller != null && fins.controller.supporting();
   }
 
+  public static Map<BlockPos, Double> getStrokeEfforts(ServerSubLevel body) {
+    var fins = CREATURES.get(SubLevelCreatureParts.root(body));
+    return fins == null || fins.controller == null ? Map.of() : fins.controller.getStrokeEfforts();
+  }
+
   public static int count(ServerSubLevel body) {
     var fins = CREATURES.get(body);
     return fins == null ? 0 : fins.positions.size();

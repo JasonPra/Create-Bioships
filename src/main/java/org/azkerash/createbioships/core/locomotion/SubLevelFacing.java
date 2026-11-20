@@ -90,7 +90,13 @@ public final class SubLevelFacing {
     if (Math.abs(error) > MAX_DRIVE_HEADING_ERROR_RADIANS) {
       alignment = 0;
     }
-    var direction = (swimming ? delta : horizontal).normalize();
+    var direction = horizontal.normalize();
+    if (swimming) {
+      var desired = delta.normalize();
+      var nose = new Vec3(forward.x, 0, forward.z).normalize();
+      // Fin propulsion can climb/dive and turn, but cannot translate sideways relative to its nose.
+      direction = nose.scale(desired.horizontalDistance()).add(0, desired.y, 0);
+    }
     return new Steering(
         direction.scale(speed * alignment * alignment),
         Math.clamp(error * YAW_CORRECTION_GAIN, -MAX_STEERING_YAW_RATE, MAX_STEERING_YAW_RATE),

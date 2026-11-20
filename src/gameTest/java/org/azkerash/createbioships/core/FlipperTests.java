@@ -38,10 +38,19 @@ public final class FlipperTests {
           Math.abs(rest.getFirst().distanceTo(rest.getLast()) + FlipperGeometry.SOCKET_OFFSET - 2)
               < 1e-8,
           "Flipper is not two blocks long");
+      h.assertTrue(rest.getLast().y < rest.getFirst().y, "Flipper lost its downward resting angle");
+      var idleA = FlipperGeometry.stroke(state, 0, 0, Direction.NORTH);
+      var idleB = FlipperGeometry.stroke(state, Math.PI / 2, 0, Direction.NORTH);
+      h.assertTrue(
+          idleA.getLast().distanceTo(idleB.getLast()) > .04, "Idle flipper does not gently paddle");
+      var envelope = state.getCollisionShape(h.getLevel(), BlockPos.ZERO).bounds();
       var previous = rest;
       for (int step = 0; step < 160; step++) {
         var next = FlipperGeometry.stroke(state, step * .1, step / 159d, Direction.NORTH);
         h.assertTrue(next.getFirst().equals(rest.getFirst()), "Stroke detached from socket");
+        h.assertTrue(
+            next.stream().allMatch(point -> envelope.contains(point)),
+            "Angled stroke escaped collision envelope");
         for (var pose : List.of(next, FlipperGeometry.interpolate(previous, next, .5))) {
           for (int section = 0; section < FlipperGeometry.SECTIONS; section++) {
             var delta = pose.get(section + 1).subtract(pose.get(section));
@@ -202,7 +211,7 @@ public final class FlipperTests {
         s.canSurvive(l, p) && s.getFluidState().is(net.minecraft.tags.FluidTags.WATER),
         "Waterlogging removed flipper/support");
     h.assertTrue(
-        !s.getCollisionShape(l, p).isEmpty() && s.getCollisionShape(l, p).bounds().getZsize() == 2,
+        !s.getCollisionShape(l, p).isEmpty() && s.getCollisionShape(l, p).bounds().getZsize() >= 2,
         "Paddle collision only covered its tip");
     h.assertTrue(
         ComponentRegistry.FLIPPER.get().asItem() != net.minecraft.world.item.Items.AIR,
