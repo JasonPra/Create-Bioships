@@ -78,5 +78,6 @@ public final class DevelopmentWorldSetup {
       NecromancerDenFixture.build(level);
       DevelopmentJuniorFixture.install(level);
     }
+    if (state.denAccessVersion < 1) NecromancerDenFixture.repairAccessAndLighting(level);
   }
 }

@@ -54,6 +54,8 @@ public final class NameTagDisplayRenderer implements BlockEntityRenderer<NameTag
     // hull.
     stack.mulPose(mc.getEntityRenderDispatcher().cameraOrientation());
     stack.scale(.025f, -.025f, .025f);
+    // Flush text in the opaque block-entity pass, before glass writes its depth.
+    var textBuffers = mc.renderBuffers().bufferSource();
     mc.font.drawInBatch(
         panel.label(),
         -mc.font.width(panel.label()) / 2f,
@@ -61,10 +63,11 @@ public final class NameTagDisplayRenderer implements BlockEntityRenderer<NameTag
         0xffb8eee4,
         true,
         stack.last().pose(),
-        buffers,
+        textBuffers,
         Font.DisplayMode.NORMAL,
         0x33000000,
         LightTexture.FULL_BRIGHT);
+    textBuffers.endBatch();
     stack.popPose();
   }
 }

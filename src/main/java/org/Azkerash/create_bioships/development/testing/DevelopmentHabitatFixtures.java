@@ -186,14 +186,6 @@ public final class DevelopmentHabitatFixtures {
       for (int z = -half - 2; z <= -half + 4; z++)
         l.setBlock(b.offset(x, -1, z), Blocks.OAK_PLANKS.defaultBlockState(), 2);
     }
-    label(
-        l,
-        Vec3.atLowerCornerOf(b).add(.5, 3.2, -half - 2.5),
-        "JUNIOR'S GARDEN\n"
-            + "Respiration balance reference · one internal lung\n"
-            + "Natural hunger, oxygen and healing remain enabled.\n"
-            + "Please close the glass doors after visiting.",
-        "bioships.junior_habitat");
   }
 
   private static void label(ServerLevel l, Vec3 at, String text, String mark) {

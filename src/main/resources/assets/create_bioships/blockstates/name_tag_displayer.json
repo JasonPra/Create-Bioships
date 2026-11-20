@@ -17,11 +17,11 @@
     },
     "facing=up": {
       "model": "create_bioships:block/name_tag_displayer",
-      "x": 270
+      "x": 90
     },
     "facing=down": {
       "model": "create_bioships:block/name_tag_displayer",
-      "x": 90
+      "x": 270
     }
   }
 }

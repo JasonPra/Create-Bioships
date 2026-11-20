@@ -112,17 +112,11 @@ public final class NecromancerDenFixture {
         put(l, b, x, 2, z, Blocks.SKELETON_SKULL);
         put(l, b, x + 1, 0, z, Blocks.SOUL_LANTERN);
       }
-    label(
-        l,
-        Vec3.atLowerCornerOf(b).add(.5, 5, -38),
-        "THE OBSERVATORY BELOW\n"
-            + "Junior · living reference specimen\n"
-            + "His creator retains ownership.");
     gardens(l, s);
     tower(l, s);
-    stairs(l, b, s);
     roads(l, s);
     detailExterior(l, s);
+    repairAccessAndLighting(l);
     var state = CoreTestState.get(l);
     state.necromancerDenBuilt = true;
     state.setDirty();
@@ -136,7 +130,17 @@ public final class NecromancerDenFixture {
     for (int y : new int[] {7, 17, 26})
       for (var face : Direction.Plane.HORIZONTAL)
         put(l, b, x + face.getStepX() * 2, y, z + face.getStepZ() * 2, Blocks.BONE_BLOCK);
-    put(l, b, x, 3, z - 3, Blocks.SOUL_LANTERN);
+    var hook =
+        Blocks.DEEPSLATE_BRICK_WALL
+            .defaultBlockState()
+            .setValue(WallBlock.NORTH_WALL, WallSide.LOW)
+            .setValue(WallBlock.SOUTH_WALL, WallSide.LOW);
+    l.setBlock(b.offset(x, 4, z - 2), hook, 2);
+    l.setBlock(b.offset(x, 4, z - 3), hook, 2);
+    l.setBlock(
+        b.offset(x, 3, z - 3),
+        Blocks.LANTERN.defaultBlockState().setValue(LanternBlock.HANGING, true),
+        2);
   }
 
   private static void biological(ServerLevel l, BlockPos p, String name) {
@@ -164,10 +168,6 @@ public final class NecromancerDenFixture {
       biological(l, b.offset(x, 1, -30), "packed_flesh");
       biological(l, b.offset(x, 2, -30), "flesh");
     }
-    label(
-        l,
-        Vec3.atLowerCornerOf(b).add(29, 5, -32),
-        "BIOLOGICAL WORKSHOP\nCulture · dissection · reconstruction");
   }
 
   private static void unfinishedCreation(ServerLevel l, BlockPos b) {
@@ -201,10 +201,6 @@ public final class NecromancerDenFixture {
         for (int y = 7; y < 29; y++) put(l, b, x, y, z, Blocks.CHAIN);
         put(l, b, x, 29, z, Blocks.SOUL_LANTERN);
       }
-    label(
-        l,
-        Vec3.atLowerCornerOf(b).add(30, 8, 1),
-        "THE NEXT DESIGN\nUnfinished tissue and bone · inert study model");
   }
 
   private static void holdingCell(ServerLevel l, BlockPos b, int z) {
@@ -412,49 +408,259 @@ public final class NecromancerDenFixture {
     for (int y : new int[] {0, 12, 24, 36, 48})
       for (int x : new int[] {-9, 9})
         for (int z : new int[] {-10, 10}) put(l, b, x, y + 6, z, Blocks.LANTERN);
-    spiral(l, b.offset(-8, 0, -7), 0, 48);
   }
 
-  private static void stairs(ServerLevel l, BlockPos underground, BlockPos surface) {
-    var shaft = new BlockPos(surface.getX(), underground.getY(), surface.getZ() - 30);
-    int height = surface.getY() - underground.getY();
-    fill(l, shaft, -5, 0, -5, 5, height + 7, 5, Blocks.POLISHED_BLACKSTONE_BRICKS);
-    fill(l, shaft, -4, 0, -4, 4, height + 6, 4, Blocks.AIR);
-    spiral(l, shaft, 0, height);
-    // Open doorways at both landings, outside Junior's enclosure.
-    for (int y = 0; y < 4; y++) for (int x = -2; x <= 2; x++) put(l, shaft, x, y, 5, Blocks.AIR);
-    for (int y = height; y < height + 4; y++)
-      for (int x = -2; x <= 2; x++) put(l, shaft, x, y, 5, Blocks.AIR);
-  }
+  /** Incremental repair: preserves Junior, inventories and the surrounding estate. */
+  public static void repairAccessAndLighting(ServerLevel l) {
+    var s = surface(l);
+    var b = base(l);
+    // Remove the old crossed-tread staircase and restore the storeys it perforated.
+    fill(l, s, -12, 0, -11, -4, 49, -3, Blocks.AIR);
+    for (int y : new int[] {-1, 11, 23, 35, 47})
+      for (int x = -12; x <= -4; x++)
+        for (int z = -11; z <= -3; z++)
+          if (towerCell(x, z, 13)) put(l, s, x, y, z, Blocks.DARK_OAK_PLANKS);
+    DenStaircase.build(l, s.offset(-6, 0, -5), 48, false);
+    DenStaircase.build(
+        l, new BlockPos(s.getX(), b.getY(), s.getZ() - 30), s.getY() - b.getY(), true);
+    // Restore only the tower envelope; staircase clearance must never cut the facade.
+    for (int y = 0; y <= 49; y++)
+      for (int x = -14; x <= 14; x++)
+        for (int z = -14; z <= 14; z++) {
+          if (!towerCell(x, z, 14)) continue;
+          boolean edge =
+              !towerCell(x - 1, z, 14)
+                  || !towerCell(x + 1, z, 14)
+                  || !towerCell(x, z - 1, 14)
+                  || !towerCell(x, z + 1, 14);
+          if (!edge || Math.abs(x) <= 2 && z == -14 && y < 5) continue;
+          Block material =
+              Math.floorMod(x * 7 + z * 13 + y, 19) < 3
+                  ? Blocks.CRACKED_DEEPSLATE_BRICKS
+                  : Blocks.POLISHED_BLACKSTONE_BRICKS;
+          if (y % 12 == 11) material = Blocks.CHISELED_POLISHED_BLACKSTONE;
+          int side = Math.abs(x) == 14 ? z : Math.abs(z) == 14 ? x : 99;
+          if (Math.abs(side) <= 2 && y % 12 >= 4 && y % 12 <= 9)
+            material =
+                (Math.abs(side) <= 1 && y % 12 <= 7 || side == 0 && y % 12 == 8)
+                    ? Blocks.PURPLE_STAINED_GLASS
+                    : Blocks.CHISELED_POLISHED_BLACKSTONE;
+          put(l, s, x, y, z, material);
+        }
+    roads(l, s);
+    supportFrame(l, b);
+    interiorLighting(l, s, b);
+    for (int x : new int[] {-38, 38})
+      for (int z : new int[] {-35, 0, 35}) put(l, b, x, 0, z, Blocks.CHISELED_POLISHED_BLACKSTONE);
+    // Replace the inverted chandelier chains with ceiling-anchored pendant lights.
+    for (int x : new int[] {25, 35})
+      for (int z : new int[] {5, 20}) {
+        for (int y = 7; y < 36; y++) {
+          var at = b.offset(x, y, z);
+          var old = l.getBlockState(at);
+          if (old.is(Blocks.CHAIN) || old.getBlock() instanceof LanternBlock)
+            put(l, b, x, y, z, Blocks.AIR);
+        }
+        var lamp = b.offset(x, 12, z);
+        var anchor = lamp.above();
+        while (anchor.getY() < b.getY() + 36 && l.getBlockState(anchor).isAir())
+          anchor = anchor.above();
+        for (var q = lamp.above(); q.getY() < anchor.getY(); q = q.above())
+          l.setBlock(q, Blocks.CHAIN.defaultBlockState(), 2);
+        l.setBlock(
+            lamp, Blocks.LANTERN.defaultBlockState().setValue(LanternBlock.HANGING, true), 2);
+      }
+    supportLights(l, b, s);
+    put(l, b, 19, 0, -36, Blocks.POLISHED_BLACKSTONE_BRICKS);
+    put(l, b, 19, 1, -36, Blocks.BONE_BLOCK);
+    put(l, b, 37, 1, -37, Blocks.CHISELED_POLISHED_BLACKSTONE);
+    var rackBlock = BuiltInRegistries.BLOCK.get(ResourceLocation.parse("biomancy:vial_holder"));
+    var rack = l.getBlockState(b.offset(37, 1, -36));
+    if (!rack.is(rackBlock)) rack = rackBlock.defaultBlockState();
+    rack = rack.setValue(BlockStateProperties.HORIZONTAL_FACING, Direction.SOUTH);
+    l.setBlock(b.offset(37, 1, -36), rack, 3);
+    for (var old :
+        l.getEntitiesOfClass(
+            net.minecraft.world.entity.Display.TextDisplay.class,
+            new AABB(
+                Vec3.atLowerCornerOf(b.offset(-43, 0, -43)),
+                Vec3.atLowerCornerOf(b.offset(43, 36, 43))),
+            DevelopmentDisplayPolicy::obsolete)) old.discard();
 
-  private static void spiral(ServerLevel l, BlockPos b, int from, int to) {
-    int[][] ring = {
-      {-3, -3}, {-2, -3}, {-1, -3}, {0, -3}, {1, -3}, {2, -3}, {3, -3}, {3, -2}, {3, -1}, {3, 0},
-      {3, 1}, {3, 2}, {3, 3}, {2, 3}, {1, 3}, {0, 3}, {-1, 3}, {-2, 3}, {-3, 3}, {-3, 2}, {-3, 1},
-      {-3, 0}, {-3, -1}, {-3, -2}
-    };
-    for (int y = from; y <= to; y++) {
-      var p = ring[Math.floorMod(y - from, ring.length)];
-      var next = ring[Math.floorMod(y - from + 1, ring.length)];
-      Direction facing =
-          next[0] > p[0]
-              ? Direction.EAST
-              : next[0] < p[0]
-                  ? Direction.WEST
-                  : next[1] > p[1] ? Direction.SOUTH : Direction.NORTH;
-      for (int dx = -1; dx <= 1; dx++)
-        for (int dz = -1; dz <= 1; dz++)
-          if (Math.abs(dx) + Math.abs(dz) <= 1) {
-            l.setBlock(
-                b.offset(p[0] + dx, y, p[1] + dz),
-                Blocks.POLISHED_BLACKSTONE_BRICK_STAIRS
-                    .defaultBlockState()
-                    .setValue(StairBlock.FACING, facing),
-                2);
-            for (int head = 1; head <= 3; head++)
-              put(l, b, p[0] + dx, y + head, p[1] + dz, Blocks.AIR);
-          }
+    // Replace the old billboard embedded in the stairwell's north wall.
+    for (var display :
+        l.getEntitiesOfClass(
+            net.minecraft.world.entity.Display.TextDisplay.class,
+            new AABB(
+                Vec3.atLowerCornerOf(s.offset(-10, 0, -40)),
+                Vec3.atLowerCornerOf(s.offset(10, 12, -15))),
+            e -> e.getTags().contains(MARK) && textContains(e, "THE DEN OF AZ'KERASH")))
+      display.discard();
+    var display = net.minecraft.world.entity.EntityType.TEXT_DISPLAY.create(l);
+    if (display != null) {
+      var tag = new CompoundTag();
+      tag.putString(
+          "text",
+          Component.Serializer.toJson(
+              Component.literal(
+                  "THE DEN OF AZ'KERASH\nObservation vault below\nPrivate chambers above"),
+              l.registryAccess()));
+      tag.putString("billboard", "fixed");
+      tag.putString("alignment", "center");
+      tag.putInt("line_width", 150);
+      tag.putInt("background", 0x55000000);
+      var brightness = new CompoundTag();
+      brightness.putInt("block", 15);
+      brightness.putInt("sky", 15);
+      tag.put("brightness", brightness);
+      display.load(tag);
+      display.setYRot(180);
+      display.setPos(s.getX() + .5, s.getY() + 2.3, s.getZ() - 36.2);
+      display.addTag(MARK);
+      l.addFreshEntity(display);
     }
+    var state = CoreTestState.get(l);
+    state.denAccessVersion = 1;
+    state.setDirty();
+  }
+
+  private static boolean textContains(
+      net.minecraft.world.entity.Display.TextDisplay display, String text) {
+    return display.saveWithoutId(new CompoundTag()).getString("text").contains(text);
+  }
+
+  private static void supportFrame(ServerLevel l, BlockPos b) {
+    int[][] old = {
+      {-27, -27},
+      {27, -27},
+      {-27, 27},
+      {27, 27},
+      {-27, 0},
+      {-14, 27},
+      {14, 27},
+      {14, -27},
+      {-14, -27}
+    };
+    for (var p : old) fill(l, b, p[0] - 2, 0, p[1] - 3, p[0] + 2, 29, p[1] + 2, Blocks.AIR);
+    fill(l, b, -42, 29, -42, 42, 35, 42, Blocks.AIR);
+    // Continuous perimeter bearing ring; the roof web rests directly on it.
+    for (int radius : new int[] {23, 35, 42})
+      for (int n = -radius; n <= radius; n++)
+        for (int sign : new int[] {-1, 1}) {
+          fill(l, b, n, 29, sign * radius, n, 35, sign * radius, Blocks.POLISHED_BLACKSTONE_BRICKS);
+          fill(l, b, sign * radius, 29, n, sign * radius, 35, n, Blocks.POLISHED_BLACKSTONE_BRICKS);
+        }
+    for (int radius : new int[] {23, 35})
+      for (var side : Direction.Plane.HORIZONTAL) {
+        int[] offsets =
+            radius == 23 ? new int[] {-23, -12, 12, 23} : new int[] {-35, -18, 0, 18, 35};
+        var tangent = side.getClockWise();
+        for (int n : offsets) {
+          int x = side.getStepX() * radius + tangent.getStepX() * n,
+              z = side.getStepZ() * radius + tangent.getStepZ() * n;
+          // Leave the lab, specimen slab, cells and stair entrances clear.
+          if (radius == 35
+              && (z == -35 && Math.abs(x) < 6
+                  || x == -35 && z > -32 && z < 7
+                  || x == 35 && z >= -2 && z <= 25)) continue;
+          column(l, b, x, z);
+          fill(l, b, x - 1, 29, z - 1, x + 1, 31, z + 1, Blocks.CHISELED_DEEPSLATE);
+        }
+      }
+    for (var side : Direction.Plane.HORIZONTAL)
+      for (int offset : new int[] {-23, -12, 12, 23}) {
+        var tangent = side.getClockWise();
+        for (int r = 23; r <= 42; r++) {
+          int y = 29 + (int) Math.round(3 * Math.sin(Math.PI * (r - 23) / 19d));
+          int x = side.getStepX() * r + tangent.getStepX() * offset,
+              z = side.getStepZ() * r + tangent.getStepZ() * offset;
+          fill(l, b, x, y, z, x, 35, z, Blocks.DEEPSLATE_BRICKS);
+        }
+      }
+  }
+
+  private static void supportLights(ServerLevel l, BlockPos b, BlockPos s) {
+    for (int x = -42; x <= 42; x++)
+      for (int z = -42; z <= 42; z++)
+        for (int y = 0; y < 36; y++) {
+          var p = b.offset(x, y, z);
+          var state = l.getBlockState(p);
+          if (!(state.getBlock() instanceof LanternBlock)) continue;
+          if (state.getValue(LanternBlock.HANGING)
+              && l.getBlockState(p.above())
+                  .isFaceSturdy(l, p.above(), Direction.DOWN, SupportType.CENTER)) continue;
+          if (l.getBlockState(p.below()).isFaceSturdy(l, p.below(), Direction.UP)) continue;
+          // Small attached bone brackets support column lamps; otherwise hang from the ceiling.
+          boolean bracket = false;
+          for (var side : Direction.Plane.HORIZONTAL) {
+            var wall = p.relative(side);
+            if (l.getBlockState(wall).isFaceSturdy(l, wall, side.getOpposite())) {
+              l.setBlock(p.below(), Blocks.BONE_BLOCK.defaultBlockState(), 2);
+              bracket = true;
+              break;
+            }
+          }
+          if (!bracket) {
+            var ceiling = p.above();
+            while (ceiling.getY() < b.getY() + 36 && l.getBlockState(ceiling).isAir())
+              ceiling = ceiling.above();
+            if (!l.getBlockState(ceiling).isAir()) {
+              for (var q = p.above(); q.getY() < ceiling.getY(); q = q.above())
+                l.setBlock(q, Blocks.CHAIN.defaultBlockState(), 2);
+              l.setBlock(p, state.setValue(LanternBlock.HANGING, true), 2);
+            } else l.setBlock(p.below(), Blocks.BONE_BLOCK.defaultBlockState(), 2);
+          }
+        }
+    for (int x = -13; x <= 13; x++)
+      for (int z = -13; z <= 13; z++)
+        for (int y = 0; y < 50; y++) {
+          var p = s.offset(x, y, z);
+          var state = l.getBlockState(p);
+          if (!(state.getBlock() instanceof LanternBlock)
+              || l.getBlockState(p.below()).isFaceSturdy(l, p.below(), Direction.UP)) continue;
+          var ceiling = p.above();
+          while (ceiling.getY() < s.getY() + 50 && l.getBlockState(ceiling).isAir())
+            ceiling = ceiling.above();
+          if (l.getBlockState(ceiling).isAir()) continue;
+          for (var q = p.above(); q.getY() < ceiling.getY(); q = q.above())
+            l.setBlock(q, Blocks.CHAIN.defaultBlockState(), 2);
+          l.setBlock(p, state.setValue(LanternBlock.HANGING, true), 2);
+        }
+  }
+
+  private static void interiorLighting(ServerLevel l, BlockPos s, BlockPos b) {
+    // Recessed lights under carpet keep the large vault navigable, rather than relying on dim soul
+    // lights.
+    for (int x = -39; x <= 39; x += 6)
+      for (int z = -39; z <= 39; z += 6) {
+        var p = b.offset(x, 0, z);
+        if (Math.abs(x) < 18 && Math.abs(z) < 18 || !l.getBlockState(p).isAir()) continue;
+        put(l, b, x, -1, z, Blocks.SHROOMLIGHT);
+        put(l, b, x, 0, z, Blocks.PURPLE_CARPET);
+      }
+    for (int x = -12; x <= 12; x += 6)
+      for (int z = -12; z <= 12; z += 6) {
+        var p = b.offset(x, 0, z);
+        if (l.getBlockState(p).isAir()) {
+          put(l, b, x, -1, z, Blocks.SHROOMLIGHT);
+          put(l, b, x, 0, z, Blocks.MOSS_CARPET);
+        }
+        put(l, b, x, 15, z, Blocks.SEA_LANTERN);
+      }
+    for (int floor : new int[] {0, 12, 24, 36})
+      for (int x : new int[] {-10, -4, 4, 10})
+        for (int z : new int[] {-10, -4, 4, 10}) {
+          var p = s.offset(x, floor, z);
+          if (!towerCell(x, z, 13)
+              || x >= -11 && x <= -1 && z >= -10 && z <= 0
+              || !l.getBlockState(p).isAir()) continue;
+          put(l, s, x, floor - 1, z, Blocks.SHROOMLIGHT);
+          put(l, s, x, floor, z, Blocks.PURPLE_CARPET);
+        }
+    for (int z = -36; z <= -17; z += 4)
+      for (int x : new int[] {-6, 6}) {
+        put(l, s, x, 2, z, Blocks.SHROOMLIGHT);
+      }
   }
 
   public static void roads(ServerLevel l, BlockPos b) {
@@ -494,8 +700,27 @@ public final class NecromancerDenFixture {
       }
       if (i % 32 == 0) {
         var lamp = p.offset(dz == 0 ? 0 : 4, 1, dx == 0 ? 0 : 4);
-        l.setBlock(lamp, Blocks.DEEPSLATE_BRICK_WALL.defaultBlockState(), 2);
-        l.setBlock(lamp.above(), Blocks.SOUL_LANTERN.defaultBlockState(), 2);
+        int hx = dz == 0 ? 0 : -1, hz = dx == 0 ? 0 : -1;
+        for (int up = 0; up < 4; up++)
+          l.setBlock(lamp.above(up), Blocks.DEEPSLATE_BRICK_WALL.defaultBlockState(), 3);
+        for (int arm = 1; arm <= 2; arm++)
+          l.setBlock(
+              lamp.offset(hx * arm, 3, hz * arm),
+              Blocks.DEEPSLATE_BRICK_WALL.defaultBlockState(),
+              3);
+
+        for (int up = 0; up < 4; up++) {
+          var q = lamp.above(up);
+          l.setBlock(q, Block.updateFromNeighbourShapes(l.getBlockState(q), l, q), 2);
+        }
+        for (int arm = 1; arm <= 2; arm++) {
+          var q = lamp.offset(hx * arm, 3, hz * arm);
+          l.setBlock(q, Block.updateFromNeighbourShapes(l.getBlockState(q), l, q), 2);
+        }
+        l.setBlock(
+            lamp.offset(hx * 2, 2, hz * 2),
+            Blocks.LANTERN.defaultBlockState().setValue(LanternBlock.HANGING, true),
+            3);
       }
     }
   }
