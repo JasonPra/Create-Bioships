@@ -1,7 +1,7 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "package": "org.Azkerash.create_bioships.mixin",
+  "package": "org.azkerash.createbioships.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "CoreDisassemblyMixin",

@@ -8,3 +8,5 @@
 - Preserve behavior during readability cleanup. Run the build and relevant regression tests. Do not compile while a Minecraft client or test-server runtime is using the shared build output.
 
 - Use `BlockRegistration` and `ItemRegistration` for block/item construction plumbing. Keep properties fresh and construction deferred; preserve module registry ownership, IDs, and explicit no-item fixture blocks.
+
+- Follow Java naming conventions: PascalCase types, camelCase members, UPPER_SNAKE_CASE constants, and lowercase package words under `org.azkerash.createbioships`. Preserve framework-required names and persisted registry/data identifiers.
