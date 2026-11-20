@@ -16,6 +16,8 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import org.azkerash.createbioships.CreateBioships;
 
+import javax.annotation.Nonnull;
+
 /** Two-stage decay shared by every physical fragment of a dead creature. */
 @EventBusSubscriber(modid = CreateBioships.MODID)
 public final class CreatureDecay {
@@ -44,10 +46,6 @@ public final class CreatureDecay {
     return Set.copyOf(LAST_TO_ROT);
   }
 
-  public static boolean rotsLast(BlockState state) {
-    return lastToRotRegistry().contains(BuiltInRegistries.BLOCK.getKey(state.getBlock()));
-  }
-
   public static UUID familyId(ServerSubLevel body) {
     var root = body.getUserDataTag() == null ? new CompoundTag() : body.getUserDataTag().copy();
     if (root.hasUUID(FAMILY)) {
@@ -61,8 +59,11 @@ public final class CreatureDecay {
   /** Associate living physical limbs without copying inventories or behavior state. */
   public static void link(ServerSubLevel parent, ServerSubLevel child) {
     var id = familyId(parent);
-      assert child.getUserDataTag() != null;
-      var tag = child.getUserDataTag().copy();
+    var tag = child.getUserDataTag();
+    if (tag == null){
+      return;
+    }
+    tag.copy();
     tag.putUUID(FAMILY, id);
     child.setUserDataTag(tag);
     var world = WorldState.get(parent.getLevel());
@@ -78,7 +79,11 @@ public final class CreatureDecay {
       return;
     }
     var id = familyId(parent);
-    var data = parent.getUserDataTag().copy();
+    var data = parent.getUserDataTag();
+    if (data == null) {
+      return;
+    }
+
     data.putUUID(FAMILY, id);
     data.putUUID(CoreAssemblyRules.ID, child.getUniqueId());
     child.setUserDataTag(data);
@@ -183,9 +188,8 @@ public final class CreatureDecay {
       return;
     }
     var loaded = new HashMap<UUID, List<ServerSubLevel>>();
-    for (var entry : List.copyOf(container.getAllSubLevels())) {
-      if (!(entry instanceof ServerSubLevel body)
-          || body.isRemoved()
+    for (var body : List.copyOf(container.getAllSubLevels())) {
+      if (body.isRemoved()
           || !CoreAssemblyRules.isCreature(body)
           || !SubLevelHealth.status(body).dead()) {
         continue;
@@ -382,7 +386,8 @@ public final class CreatureDecay {
     }
 
     @Override
-    public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
+    @Nonnull
+    public CompoundTag save(@Nonnull CompoundTag tag, @Nonnull HolderLookup.Provider registries) {
       var familiesTag = new ListTag();
       for (var entry : families.entrySet()) {
         var saved = new CompoundTag();
