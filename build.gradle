@@ -210,3 +210,5 @@ tasks.register('checkControlFlowBraces', Exec) {
 tasks.named('check', Task) {
     dependsOn tasks.named('checkControlFlowBraces')
 }
+
+apply from: 'gradle/package-output-migration.gradle'

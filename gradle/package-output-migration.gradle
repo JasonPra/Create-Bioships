@@ -1,0 +1,138 @@
+import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.file.FileSystemOperations
+import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.compile.JavaCompile
+import org.gradle.work.DisableCachingByDefault
+
+import javax.inject.Inject
+
+/** Repair only generated Java outputs left behind by the package rename. */
+@DisableCachingByDefault(because = 'Inspects generated output directory spelling before compilation')
+abstract class RepairLegacyPackageOutputs extends DefaultTask {
+    @Internal
+    abstract DirectoryProperty getJavaClassesRoot()
+
+    @Internal
+    abstract DirectoryProperty getCompilationStateRoot()
+
+    @Inject
+    abstract FileSystemOperations getFileSystemOperations()
+
+    @TaskAction
+    void repair() {
+        for (String sourceSet : repairOutputs(javaClassesRoot.get().asFile,
+                compilationStateRoot.get().asFile, fileSystemOperations)) {
+            logger.lifecycle('Removed legacy package outputs for {}; rebuilding Java classes.', sourceSet)
+        }
+    }
+
+    static List<String> repairOutputs(File classesRoot, File stateRoot, FileSystemOperations operations) {
+        List<String> repaired = []
+        File[] outputs = classesRoot.listFiles() ?: new File[0]
+        for (File output : outputs) {
+            if (!output.isDirectory() || !hasLegacyPackage(output)) {
+                continue
+            }
+            String compileTask = output.name == 'main'
+                ? 'compileJava' : "compile${output.name.capitalize()}Java"
+            // Removing the entire affected output and its incremental state forces javac to
+            // recreate correctly cased directories. No run directory or saved world is touched.
+            operations.delete { spec ->
+                spec.delete(output, new File(stateRoot, compileTask))
+            }
+            repaired.add(output.name)
+        }
+        return repaired
+    }
+
+    private static boolean hasLegacyPackage(File output) {
+        File[] namespaces = new File(output, 'org').listFiles() ?: new File[0]
+        for (File namespace : namespaces) {
+            if (!namespace.isDirectory() || !namespace.name.equalsIgnoreCase('azkerash')) {
+                continue
+            }
+            // exists() cannot detect a case-only rename on Windows. Directory enumeration returns
+            // the stored spelling, which also determines NeoForge's module package ownership.
+            if (namespace.name != 'azkerash') {
+                return true
+            }
+            if (new File(namespace, 'create_bioships').exists()) {
+                return true
+            }
+        }
+        return false
+    }
+}
+
+// This task deliberately runs before up-to-date checks on JavaCompile tasks. Healthy outputs are
+// left intact; a pull containing the package migration needs no manual clean, including IDE runs.
+def repairPackageOutputs = tasks.register('repairLegacyPackageOutputs', RepairLegacyPackageOutputs) {
+    javaClassesRoot = layout.buildDirectory.dir('classes/java')
+    compilationStateRoot = layout.buildDirectory.dir('tmp')
+}
+tasks.withType(JavaCompile).configureEach {
+    dependsOn repairPackageOutputs
+    // Old build-cache artifacts can contain the case-preserved directory layout too. A dedicated
+    // input invalidates those artifacts once while keeping incremental builds and new caches usable.
+    inputs.property('bioshipsPackageLayout', 'org.azkerash.createbioships:1')
+}
+
+@DisableCachingByDefault(because = 'Exercises migration against disposable generated-output fixtures')
+abstract class CheckPackageOutputMigration extends DefaultTask {
+    @Internal
+    abstract DirectoryProperty getFixtureRoot()
+
+    @Inject
+    abstract FileSystemOperations getFileSystemOperations()
+
+    @TaskAction
+    void verifyMigration() {
+        File root = fixtureRoot.get().asFile
+        fileSystemOperations.delete { spec -> spec.delete(root) }
+        writeFixture(root, 'classes/java/main/org/Azkerash/createbioships/mixin/EmbeddedArrowAccess.class')
+        writeFixture(root, 'classes/java/gameTest/org/azkerash/create_bioships/Old.class')
+        writeFixture(root, 'classes/java/test/org/azkerash/createbioships/Keep.class')
+        writeFixture(root, 'classes/java/unrelated/org/example/Keep.class')
+        writeFixture(root, 'tmp/compileJava/previous-compilation-data.bin')
+        writeFixture(root, 'tmp/compileGameTestJava/previous-compilation-data.bin')
+        writeFixture(root, 'tmp/compileTestJava/previous-compilation-data.bin')
+        writeFixture(root, 'run/saves/DevWorld/level.dat')
+        File classes = new File(root, 'classes/java')
+        File state = new File(root, 'tmp')
+        List<String> repaired = RepairLegacyPackageOutputs.repairOutputs(classes, state, fileSystemOperations)
+        if (repaired.toSet() != ['main', 'gameTest'].toSet()) {
+            throw new GradleException("Wrong source outputs repaired: ${repaired}")
+        }
+        for (String removed : ['classes/java/main', 'classes/java/gameTest',
+                'tmp/compileJava', 'tmp/compileGameTestJava']) {
+            if (new File(root, removed).exists()) {
+                throw new GradleException("Legacy output survived migration: ${removed}")
+            }
+        }
+        for (String retained : ['classes/java/test/org/azkerash/createbioships/Keep.class',
+                'classes/java/unrelated/org/example/Keep.class',
+                'tmp/compileTestJava/previous-compilation-data.bin', 'run/saves/DevWorld/level.dat']) {
+            if (new File(root, retained).text != 'retain') {
+                throw new GradleException("Migration changed an unrelated file: ${retained}")
+            }
+        }
+        if (!RepairLegacyPackageOutputs.repairOutputs(classes, state, fileSystemOperations).isEmpty()) {
+            throw new GradleException('Healthy outputs were not left alone on the second run')
+        }
+        logger.lifecycle('Package migration checks passed: legacy outputs repaired, healthy outputs and saves retained.')
+    }
+
+    private static void writeFixture(File root, String path) {
+        File file = new File(root, path)
+        file.parentFile.mkdirs()
+        file.text = 'retain'
+    }
+}
+
+tasks.register('checkPackageOutputMigration', CheckPackageOutputMigration) {
+    fixtureRoot = layout.buildDirectory.dir('package-output-migration-check')
+}
+tasks.named('check') {
+    dependsOn tasks.named('checkPackageOutputMigration')
+}
