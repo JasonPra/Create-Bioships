@@ -55,6 +55,13 @@ public final class SubLevelLegs {
     }
   }
 
+  /** Finish a replacement's native limbs while the former body's plots remain occupied. */
+  public static void initialize(ServerSubLevel body) {
+    request(body);
+    var controller = CONTROLLERS.get(body);
+    if (controller != null) controller.update();
+  }
+
   public static void changed(ServerSubLevel body, BlockPos pos, BlockState state) {
     var c = CONTROLLERS.get(body);
     if (c != null && (state.is(ComponentRegistry.CRAB_LEG.get()) || c.hasSocket(pos))) {

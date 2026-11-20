@@ -135,6 +135,9 @@ public final class DevelopmentJuniorBaseline {
     var handle = dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle.of(replacement);
     if (handle != null) handle.teleport(pose.position(), pose.orientation());
     if (snapshot.contains("name")) replacement.setName(snapshot.getString("name"));
+    // Allocate the complete replacement before freeing any old plot. Reusing a
+    // just-retired plot in the same tick can still see Sable's cached old chunks.
+    org.Azkerash.create_bioships.core.legs.SubLevelLegs.initialize(replacement);
     if (former != null) {
       for (var part : SubLevelCreatureParts.members(former))
         if (part != former && !part.isRemoved())
@@ -144,7 +147,6 @@ public final class DevelopmentJuniorBaseline {
     state.juniorSubject = replacement.getUniqueId();
     state.juniorFeedAt = level.getGameTime() + DevelopmentJuniorCare.INTERVAL;
     state.setDirty();
-    org.Azkerash.create_bioships.core.legs.SubLevelLegs.request(replacement);
     return replacement;
   }
 

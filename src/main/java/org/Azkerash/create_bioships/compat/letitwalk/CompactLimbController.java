@@ -228,7 +228,13 @@ public final class CompactLimbController {
 
   /** Geometry edits preserve the planted distal end while rebuilding native chain rest geometry. */
   private void placeSegment(ServerSubLevel part, Vec3 start, Quaterniond orientation) {
+    // During a synchronous restore, Sable can defer the merged mass update until
+    // its next physics step. Flush native mass data before using its pivot.
+    part.updateMergedMassData(1);
     var com = part.getMassTracker().getCenterOfMass();
+    if (com == null)
+      throw new IllegalStateException(
+          "Generated compact segment has no native mass: " + part.getUniqueId());
     var offset = new Vector3d(com).sub(v(anchor(part)));
     var center = orientation.transform(offset).add(v(start));
     part.logicalPose().rotationPoint().set(com);
