@@ -24,9 +24,16 @@ public record EyeVisionProfile(boolean aquatic) {
   }
 
   public double range(boolean underwater, int light, double playerDistance) {
+    return budget(underwater, light, playerDistance)
+        / (underwater && !aquatic
+            ? VisionMaterials.LAND_WATER_COST
+            : VisionMaterials.STANDARD_COST);
+  }
+
+  /** Maximum optical budget; mixed media spend it along the ray, not at the eye's origin. */
+  public double budget(boolean underwater, int light, double playerDistance) {
     double visible = Double.isFinite(playerDistance) ? Math.clamp(playerDistance, 128, 512) : 128;
-    double base = underwater == aquatic ? visible : visible / 2;
     double minimum = aquatic && underwater ? .6 : .25;
-    return base * (minimum + (1 - minimum) * Math.clamp(light, 0, 15) / 15.0);
+    return visible * (minimum + (1 - minimum) * Math.clamp(light, 0, 15) / 15.0);
   }
 }

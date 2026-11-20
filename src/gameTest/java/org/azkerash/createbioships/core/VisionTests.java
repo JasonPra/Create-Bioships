@@ -21,9 +21,9 @@ public final class VisionTests {
   public static void profiles_and_cone_geometry(GameTestHelper helper) {
     helper.assertTrue(
         EyeVisionProfile.LAND.range(false, 15) == 128
-            && EyeVisionProfile.LAND.range(true, 15) == 64
+            && Math.abs(EyeVisionProfile.LAND.range(true, 15) - 128d / 3) < 1e-8
             && EyeVisionProfile.AQUATIC.range(true, 15) == 128
-            && EyeVisionProfile.AQUATIC.range(false, 15) == 64,
+            && EyeVisionProfile.AQUATIC.range(false, 15) == 128,
         "Environment ranges reversed");
     helper.assertTrue(
         EyeVisionProfile.LAND.range(false, 0) < 128
@@ -93,21 +93,21 @@ public final class VisionTests {
                   .filter(s -> s.eye().cell().equals(core) && s.eye().face() == Direction.EAST)
                   .findFirst()
                   .orElseThrow();
+          var eastRay = centerRay(body, east);
           helper.assertTrue(
-              east.rays().getFirst().blocked()
-                  && east.rays().getFirst().from().distanceTo(east.rays().getFirst().to()) < .1,
+              eastRay.blocked() && eastRay.from().distanceTo(eastRay.to()) < .1,
               "Own tissue failed to occlude core vision or hit remained in plot coordinates: "
-                  + east.rays().getFirst());
+                  + eastRay);
           var outer =
               sights.stream()
                   .filter(s -> s.eye().cell().equals(core.east(2)))
                   .findFirst()
                   .orElseThrow();
+          var outerRay = centerRay(body, outer);
           helper.assertTrue(
-              !outer.rays().getFirst().blocked()
-                  && outer.rays().getFirst().from().distanceTo(outer.rays().getFirst().to()) > 2,
+              !outerRay.blocked() && outerRay.from().distanceTo(outerRay.to()) > 2,
               "Eye ray started inside supporting tissue");
-          var start = outer.rays().getFirst().from();
+          var start = outerRay.from();
           var wall = BlockPos.containing(start.add(2.5, 0, 0));
           level.setBlock(wall, Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
           var hit = VisionRaycaster.cast(level, start, new Vec3(1, 0, 0), 6);
@@ -162,8 +162,8 @@ public final class VisionTests {
                   .filter(sight -> sight.eye().cell().equals(core.east(2)))
                   .findFirst()
                   .orElseThrow();
-          var direction =
-              rotated.rays().getFirst().to().subtract(rotated.rays().getFirst().from()).normalize();
+          var rotatedRay = centerRay(body, rotated);
+          var direction = rotatedRay.to().subtract(rotatedRay.from()).normalize();
           helper.assertTrue(
               Math.abs(direction.x) < 1e-5 && Math.abs(direction.z) > .99,
               "Eye cone ignored grid rotation");
@@ -193,5 +193,17 @@ public final class VisionTests {
               "Dead grid still casts");
           helper.succeed();
         });
+  }
+
+  /** Probe geometry explicitly; normal sensing only traces its selected target, never a fan. */
+  private static VisionRaycaster.Ray centerRay(
+      dev.ryanhcode.sable.sublevel.ServerSubLevel body, SubLevelVision.Sight sight) {
+    var sensor =
+        SubLevelVision.sensors(body).stream()
+            .filter(value -> value.key().eye().equals(sight.eye()))
+            .findFirst()
+            .orElseThrow();
+    return VisionRaycaster.cast(
+        body, sensor.origin(), sensor.forward(), sensor.range(), sensor.range(), sensor.aquatic());
   }
 }

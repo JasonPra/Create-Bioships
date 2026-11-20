@@ -29,6 +29,7 @@ public final class VisionDetectionTests {
     level.setDayTime(6000);
     ServerSubLevel[] subject = {null};
     net.minecraft.world.entity.animal.Cow[] target = {null};
+    double[] sightRange = {0};
     h.startSequence()
         .thenExecuteAfter(
             20,
@@ -70,6 +71,7 @@ public final class VisionDetectionTests {
                       .filter(s -> s.eye().face() == Direction.EAST)
                       .findFirst()
                       .orElseThrow();
+              sightRange[0] = eye.range();
               h.assertTrue(
                   eye.range() >= 100,
                   "Physical daytime range was shorter than the distant target: range="
@@ -85,11 +87,11 @@ public final class VisionDetectionTests {
                       .subtract(eye.rays().getFirst().from())
                       .normalize();
               h.assertTrue(
-                  eye.rays().stream()
-                      .allMatch(
-                          r ->
-                              r.to().subtract(r.from()).normalize().dot(direction)
-                                  < Math.cos(Math.toRadians(3))),
+                  VisionRaycaster.directions(
+                          new net.minecraft.world.phys.Vec3(1, 0, 0),
+                          new net.minecraft.world.phys.Vec3(0, 1, 0))
+                      .stream()
+                      .allMatch(r -> r.dot(direction) < Math.cos(Math.toRadians(3))),
                   "Test target accidentally lay on a debug sample ray");
               h.assertTrue(
                   SubLevelVision.detected(body).stream()
@@ -103,6 +105,12 @@ public final class VisionDetectionTests {
                       Block.UPDATE_ALL);
                 }
               }
+            })
+        .thenExecuteAfter(
+            1,
+            () -> {
+              var body = subject[0];
+              var cow = target[0];
               SubLevelVision.refresh(body, 8);
               h.assertTrue(
                   SubLevelVision.detected(body).stream()
@@ -114,7 +122,7 @@ public final class VisionDetectionTests {
                   "Dead creature retained detection");
               System.out.println(
                   "VISION_DETECTION_PASS range="
-                      + eye.range()
+                      + sightRange[0]
                       + " distance=100 between_samples=true wall_occlusion=true dead_off=true");
             })
         .thenSucceed();

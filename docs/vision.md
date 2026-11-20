@@ -6,37 +6,54 @@ sensors; land and aquatic eye components contribute their outward-facing sensor.
 Injured eyes are excluded, and death clears the controller. This supplies sensory data;
 it does not add pathfinding or AI behavior.
 
-`EyeVisionProfile` follows player-scale visibility: full-light preferred range is at
-least 128 blocks, increasing with the server view distance (16 blocks per chunk), capped
-at 512. The non-preferred environment gets half that distance. Physical-world light,
-including sky darkening, reduces range; aquatic eyes retain more underwater range in
-darkness. Core eyes use the land profile. Unloaded chunks still stop every ray.
+`EyeVisionProfile` follows player-scale visibility: the full-light optical budget is at
+least 128 blocks, increasing with server view distance (16 blocks per chunk), capped
+at 512. Physical-world light, including sky darkening, reduces this budget; aquatic
+eyes retain more underwater visibility in darkness. Core sensors use the land profile.
 
-A circular 90-degree cone uses 13 visualization samples. Living entities throughout
-the cone are selected by range/angle, then checked with target-specific native raycasts;
-a target between sample rays is still visible. Up to 16 candidates per eye are checked
-per refresh, in fair rotation. Closest-body, eye and center points allow partial exposure
-without seeing through walls. Own combat proxies are excluded; proxies for one other
-linked creature are deduplicated. `SubLevelVision.detected(root)` exposes the latest
-observations across that creature's physical bodies, including target IDs, observed
-world point and timestamp. Injury and death invalidate affected observations.
+Each creature, including all attached physical bodies, shares **at most two target
+line-of-sight queries per five-tick sensing update** (eight per second at 20 TPS).
+All eligible eyes contribute viewpoints within their circular 90-degree field of view.
+Candidate selection uses position, angle and range before casting; there is no fan of
+terrain rays and targets between the old visualization directions remain eligible.
+Both chosen eyes track the same target. Existing clear locks receive a small preference;
+failed viewpoints temporarily yield to alternatives. Turning, injury, removal and death
+invalidate ineligible eyes. No suitable target means no targeting casts. Two viewpoints
+improve continuity but cannot see around a wall that obstructs every eye.
 
-A long ray's self-occlusion check is clipped to the occupied logical plot bounds in the
-current pose. It never traces the full player-scale distance into unallocated plot chunks.
+`OpticalTargeting` owns this shared budget. `SubLevelVision.detected(root)` exposes
+visible target IDs, the observed world point and timestamp across the creature's bodies.
+Own combat proxies are excluded; other linked creatures are deduplicated.
 
-At most four eyes per grid and 80 eyes globally
-are refreshed every five ticks, in rotation. Cached samples expire after 40 ticks;
-very large populations therefore expose only recently sampled eyes. Results are not
-saved. Rays use native Sable block collision clipping, including the creature's tissue,
-and stop at unloaded physical chunks without requesting them. Water does not occlude.
+`VisionBudgetRay` traverses voxels along one straight line. Each physical metre consumes:
+
+| Medium | Land/core eye | Aquatic eye |
+| --- | ---: | ---: |
+| Air or clear glass/panes | 1 | 1 |
+| Water | 3 | 1 |
+| Stained glass/panes (all colors) | 2 | 2 |
+| Opaque collision geometry | Stops sight | Stops sight |
+
+Costs apply only to the portion of the ray within each medium; mixed air/water/glass
+paths share one remaining optical budget. Overlapping media use the greater cost,
+rather than charging twice for the same physical space. Partial solid collision shapes
+are clipped geometrically. Tinted glass remains opaque. World terrain and rotated Sable
+plots, including the creature's own tissue, participate. Plot traversal is bounded by
+occupied local bounds and transformed distances are measured in world metres.
+Unloaded physical chunks stop sight without fetching or generating chunks.
+
+At most 256 sensor metadata entries per creature and 4096 globally are refreshed every
+five ticks. These are viewpoint/light calculations, not additional line-of-sight casts.
+Cached metadata expires after 40 ticks. Results are transient and are not saved.
 
 ## Development tools
 
-- **Development Toolkit → Vision rays** toggles server ray samples near the player (96 blocks, at most 16 grids,
-  32 recent cones per grid). Cyan means clear to the sampled range, red means a
+- **Development Toolkit → Vision rays** toggles selected target rays near the player (96 blocks, at most 16 grids,
+  32 recent cones per grid). Cyan means clear to the target/range budget, red means a
   collision, yellow means an unloaded-chunk boundary. Small boxes mark endpoints;
   green boxes mark actual detected targets.
   Snapshots refresh twice per second; the overlay shows sampled world positions.
+  Eyes without a selected target ray do not produce a diagnostic fan.
 - **`/vision_test start`**, **`/vision_test reset`**, **`/vision_test status`** control
   the visible air/water comparison fixture at x=512 in the development world.
   START and RESET also have command-block buttons and an explanation hologram.
@@ -62,6 +79,6 @@ Long-range regression also places a target 100 blocks away between debug samples
 verifies detection, adds an armor wall to occlude it, and verifies that death clears it.
 The statistics hologram includes the actual visible-target count.
 
-Final branch QA: all 103 required GameTests passed without Epic Fight and with Epic
-Fight 21.17.3.1. The integrated client also received actual detection markers, rendered
-them with the statistics hologram, and verified the closed-eye 3D inventory preview.
+Additional regression coverage verifies the shared budget across 100 viewpoints,
+blocked-eye handoff, all stained glass colors/panes, mixed underwater range costs,
+and physical path lengths through rotated Sable glass.
