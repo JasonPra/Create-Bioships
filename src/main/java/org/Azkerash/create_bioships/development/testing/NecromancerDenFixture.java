@@ -120,6 +120,7 @@ public final class NecromancerDenFixture {
     EstateInteriors.library(l, s);
     EstateInteriors.rooms(l, s);
     EstateLandscape.terrain(l, s);
+    EstateWaterworks.build(l, s);
     var state = CoreTestState.get(l);
     state.necromancerDenBuilt = true;
     state.setDirty();

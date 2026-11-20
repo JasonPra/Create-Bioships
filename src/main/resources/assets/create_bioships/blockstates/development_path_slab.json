@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "type=bottom": {
+      "model": "create_bioships:block/development_path_slab"
+    },
+    "type=top": {
+      "model": "create_bioships:block/development_path_slab_top"
+    },
+    "type=double": {
+      "model": "create_bioships:block/development_path_slab_double"
+    }
+  }
+}

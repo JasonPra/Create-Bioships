@@ -27,6 +27,11 @@ public final class DevelopmentTestBlocks {
           Registries.BLOCK,
           ResourceLocation.fromNamespaceAndPath(Create_bioships.MODID, "development_dirt_path"));
 
+  public static final DeferredHolder<Block, SlabBlock> PATH_SLAB =
+      DeferredHolder.create(
+          Registries.BLOCK,
+          ResourceLocation.fromNamespaceAndPath(Create_bioships.MODID, "development_path_slab"));
+
   public static final class DevelopmentPathBlock extends DirtPathBlock {
     public DevelopmentPathBlock(BlockBehaviour.Properties properties) {
       super(properties);
@@ -68,6 +73,7 @@ public final class DevelopmentTestBlocks {
 
   public static boolean protectedBlock(net.minecraft.world.level.block.state.BlockState state) {
     return state.is(PATH.get())
+        || state.is(PATH_SLAB.get())
         || state.is(GLASS.get())
         || state.is(GLASS_DOOR.get())
         || state.is(BUTTON.get())
@@ -81,6 +87,12 @@ public final class DevelopmentTestBlocks {
     event.register(
         Registries.BLOCK,
         helper -> {
+          helper.register(
+              PATH_SLAB.getId(),
+              new SlabBlock(
+                  BlockBehaviour.Properties.ofFullCopy(Blocks.STONE_SLAB)
+                      .strength(-1, 3600000)
+                      .noLootTable()));
           helper.register(
               PATH.getId(),
               new DevelopmentPathBlock(
