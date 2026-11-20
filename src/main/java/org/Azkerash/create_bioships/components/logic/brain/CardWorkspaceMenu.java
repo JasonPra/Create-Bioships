@@ -13,7 +13,13 @@ public final class CardWorkspaceMenu extends AbstractContainerMenu {
   public final CardWorkspaceTarget target;
   public final UUID identity;
   public final String initialSource;
-  private long nextCompile;
+  private long nextCompile, nextPoll;
+
+  public boolean allowPoll(long tick) {
+    if (tick < nextPoll) return false;
+    nextPoll = tick + 10;
+    return true;
+  }
 
   public boolean allowCompile(long tick) {
     if (tick < nextCompile) return false;

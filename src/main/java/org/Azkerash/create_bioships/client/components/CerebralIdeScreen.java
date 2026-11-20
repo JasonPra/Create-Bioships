@@ -13,6 +13,11 @@ import org.Azkerash.create_bioships.core.brain.program.ProgramCardData;
 /** Source editing stays client-side; only explicit saves alter a physical card on the server. */
 public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspaceMenu> {
   private MultiLineEditBox editor;
+  private ProgramConsole console;
+  private boolean showingConsole;
+  private int pollTicks;
+  private String runtimeState = "Waiting for runtime status…";
+  private java.util.List<String> output = java.util.List.of();
   private String text, status = "Draft editor · Save explicitly to write the card.";
   private boolean dirty, replaying;
   private final java.util.Deque<String> undo = new java.util.ArrayDeque<>(),
@@ -62,7 +67,25 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
         Button.builder(Component.literal("Compile & write"), b -> compile())
             .bounds(leftPos + 118, topPos + imageHeight - 32, 106, 20)
             .build());
-    setInitialFocus(editor);
+    console =
+        addRenderableWidget(
+            new ProgramConsole(
+                font, leftPos + 12, topPos + 39, imageWidth - 24, imageHeight - 110));
+    console.lines(output);
+    console.visible = showingConsole;
+    editor.visible = !showingConsole;
+    addRenderableWidget(
+        Button.builder(
+                Component.literal("Source / console"),
+                b -> {
+                  showingConsole = !showingConsole;
+                  console.visible = showingConsole;
+                  editor.visible = !showingConsole;
+                  setFocused(showingConsole ? console : editor);
+                })
+            .bounds(leftPos + imageWidth - 112, topPos + 25, 100, 12)
+            .build());
+    setInitialFocus(showingConsole ? console : editor);
   }
 
   private void save() {
@@ -85,6 +108,24 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
       if (result.saved()
           && result.fingerprint().equals(ProgramCardData.fingerprint(screen.editor.getValue())))
         screen.dirty = false;
+    }
+  }
+
+  @Override
+  public void containerTick() {
+    super.containerTick();
+    if (pollTicks++ % 20 == 0)
+      PacketDistributor.sendToServer(
+          new CardWorkspaceNetwork.Poll(menu.containerId, menu.identity));
+  }
+
+  public static void receiveOutput(CardWorkspaceNetwork.Output result) {
+    if (Minecraft.getInstance().screen instanceof CerebralIdeScreen screen
+        && screen.menu.containerId == result.menu()
+        && screen.menu.identity.equals(result.identity())) {
+      screen.runtimeState = result.state();
+      screen.output = result.lines();
+      screen.console.lines(result.lines());
     }
   }
 
@@ -126,7 +167,7 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
     OrganScreenStyle.panel(g, leftPos, topPos, imageWidth, imageHeight);
     g.drawString(
         font,
-        "Source.cs" + (dirty ? " *" : ""),
+        showingConsole ? "Private console" : "Source.cs" + (dirty ? " *" : ""),
         leftPos + 12,
         topPos + 27,
         OrganScreenStyle.MUTED,
@@ -139,7 +180,7 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
         0xff100e16);
     g.drawString(
         font,
-        font.plainSubstrByWidth(status, imageWidth - 24),
+        font.plainSubstrByWidth(showingConsole ? runtimeState : status, imageWidth - 24),
         leftPos + 12,
         topPos + imageHeight - 61,
         OrganScreenStyle.TEXT,

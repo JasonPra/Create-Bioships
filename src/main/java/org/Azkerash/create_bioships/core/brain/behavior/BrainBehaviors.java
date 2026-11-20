@@ -10,6 +10,8 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import org.Azkerash.create_bioships.components.logic.brain.FactoryBehaviorCardItem;
 import org.Azkerash.create_bioships.core.*;
 import org.Azkerash.create_bioships.core.brain.SubLevelBrains;
+import org.Azkerash.create_bioships.core.brain.program.ProgramBehavior;
+import org.Azkerash.create_bioships.core.brain.program.ProgramCardData;
 
 /**
  * Factory registration and one active program per brain. Future cards register their own
@@ -17,7 +19,29 @@ import org.Azkerash.create_bioships.core.brain.SubLevelBrains;
  */
 @EventBusSubscriber(modid = "create_bioships")
 public final class BrainBehaviors {
-  private record Active(ResourceLocation id, BrainBehavior behavior) {}
+  public static final ResourceLocation PROGRAM_ID =
+      ResourceLocation.parse("create_bioships:cerebral_program");
+
+  private record ProgramKey(
+      int slot,
+      java.util.UUID identity,
+      String fingerprint,
+      net.minecraft.world.item.ItemStack card) {}
+
+  private record Active(ResourceLocation id, Object key, BrainBehavior behavior) {}
+
+  public static ProgramBehavior.View programView(
+      ServerSubLevel body, net.minecraft.world.item.ItemStack card) {
+    var active = ACTIVE.get(SubLevelCreatureParts.root(body));
+    if (active != null
+        && active.key instanceof ProgramKey key
+        && key.card() == card
+        && ProgramCardData.executable(card)
+        && key.fingerprint().equals(ProgramCardData.document(card).getString("CompiledHash"))
+        && active.behavior instanceof ProgramBehavior program) return program.view();
+    return new ProgramBehavior.View(
+        "Not running: select a compiled card in active brain memory.", java.util.List.of());
+  }
 
   private static final Map<ResourceLocation, Supplier<? extends BrainBehavior>> FACTORIES =
       new HashMap<>();
@@ -47,24 +71,42 @@ public final class BrainBehaviors {
   public static void advance(ServerSubLevel body) {
     if (SubLevelCreatureParts.isPart(body)) return;
     ResourceLocation selected = null;
+    Object key = null;
+    String source = null;
     if (!body.isRemoved() && SubLevelData.isLiving(body) && !SubLevelHealth.status(body).dead()) {
       var brain = SubLevelBrains.get(body);
-      for (int i = 0; i < brain.capacity(); i++)
-        if (brain.inventory().getItem(i).getItem() instanceof FactoryBehaviorCardItem card
-            && FACTORIES.containsKey(card.behavior())) {
-          selected = card.behavior();
+      for (int i = 0; i < brain.capacity(); i++) {
+        var stack = brain.inventory().getItem(i);
+        if (ProgramCardData.executable(stack)) {
+          selected = PROGRAM_ID;
+          source = ProgramCardData.source(stack);
+          key =
+              new ProgramKey(
+                  i,
+                  ProgramCardData.identity(stack),
+                  ProgramCardData.document(stack).getString("CompiledHash"),
+                  stack);
           break;
         }
+        if (stack.getItem() instanceof FactoryBehaviorCardItem card
+            && FACTORIES.containsKey(card.behavior())) {
+          selected = card.behavior();
+          key = selected;
+          break;
+        }
+      }
     }
     var previous = ACTIVE.get(body);
-    if (previous != null && !previous.id.equals(selected)) {
+    if (previous != null && !java.util.Objects.equals(previous.key, key)) {
       previous.behavior.stop(body);
       ACTIVE.remove(body);
       previous = null;
     }
     if (selected == null) return;
     if (previous == null) {
-      previous = new Active(selected, FACTORIES.get(selected).get());
+      BrainBehavior behavior =
+          selected.equals(PROGRAM_ID) ? new ProgramBehavior(source) : FACTORIES.get(selected).get();
+      previous = new Active(selected, key, behavior);
       ACTIVE.put(body, previous);
     }
     previous.behavior.tick(body);
@@ -72,7 +114,9 @@ public final class BrainBehaviors {
 
   @SubscribeEvent
   public static void tick(net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) {
-    ACTIVE.keySet().removeIf(ServerSubLevel::isRemoved);
+    for (var body : java.util.List.copyOf(ACTIVE.keySet()))
+      if (body.isRemoved() || !SubLevelData.isLiving(body) || SubLevelHealth.status(body).dead())
+        discard(body);
     if (event.getServer().getTickCount() % 10 != 0) return;
     for (var level : event.getServer().getAllLevels()) {
       var container = SubLevelContainer.getContainer(level);

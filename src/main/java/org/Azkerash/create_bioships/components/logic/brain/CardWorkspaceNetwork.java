@@ -65,6 +65,58 @@ public final class CardWorkspaceNetwork {
     }
   }
 
+  public record Poll(int menu, UUID identity) implements CustomPacketPayload {
+    public static final Type<Poll> TYPE =
+        new Type<>(ResourceLocation.parse("create_bioships:card_workspace_poll"));
+    public static final StreamCodec<RegistryFriendlyByteBuf, Poll> CODEC =
+        StreamCodec.of(
+            (b, p) -> {
+              b.writeVarInt(p.menu);
+              b.writeUUID(p.identity);
+            },
+            b -> new Poll(b.readVarInt(), b.readUUID()));
+
+    public Type<Poll> type() {
+      return TYPE;
+    }
+  }
+
+  public record Output(int menu, UUID identity, String state, java.util.List<String> lines)
+      implements CustomPacketPayload {
+    public Output {
+      lines = java.util.List.copyOf(lines);
+    }
+
+    public static final Type<Output> TYPE =
+        new Type<>(ResourceLocation.parse("create_bioships:card_workspace_output"));
+    public static final StreamCodec<RegistryFriendlyByteBuf, Output> CODEC =
+        StreamCodec.of(
+            (b, p) -> {
+              b.writeVarInt(p.menu);
+              b.writeUUID(p.identity);
+              b.writeUtf(p.state, 512);
+              if (p.lines.size() > 64)
+                throw new IllegalArgumentException("Console history exceeds limit");
+              b.writeVarInt(p.lines.size());
+              for (var line : p.lines) b.writeUtf(line, 256);
+            },
+            b -> {
+              int menu = b.readVarInt();
+              UUID id = b.readUUID();
+              String state = b.readUtf(512);
+              int count = b.readVarInt();
+              if (count < 0 || count > 64)
+                throw new IllegalArgumentException("Invalid console history");
+              var lines = new java.util.ArrayList<String>();
+              for (int i = 0; i < count; i++) lines.add(b.readUtf(256));
+              return new Output(menu, id, state, lines);
+            });
+
+    public Type<Output> type() {
+      return TYPE;
+    }
+  }
+
   public record Result(int menu, UUID identity, boolean saved, String message, String fingerprint)
       implements CustomPacketPayload {
     public static final Type<Result> TYPE =
@@ -137,6 +189,27 @@ public final class CardWorkspaceNetwork {
                             result.success() ? ProgramCardData.fingerprint(p.source) : ""));
                   }
                 }));
+    registrar.playToServer(
+        Poll.TYPE,
+        Poll.CODEC,
+        (p, c) ->
+            c.enqueueWork(
+                () -> {
+                  if (c.player() instanceof ServerPlayer player) {
+                    var view = CardWorkspaces.output(player, p.menu, p.identity);
+                    if (view != null)
+                      PacketDistributor.sendToPlayer(
+                          player, new Output(p.menu, p.identity, view.state(), view.output()));
+                  }
+                }));
+    registrar.playToClient(
+        Output.TYPE,
+        Output.CODEC,
+        (p, c) ->
+            c.enqueueWork(
+                () ->
+                    org.Azkerash.create_bioships.client.components.CerebralIdeScreen.receiveOutput(
+                        p)));
     registrar.playToClient(
         Result.TYPE,
         Result.CODEC,

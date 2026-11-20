@@ -3,7 +3,9 @@ package org.Azkerash.create_bioships.components.logic.brain;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.*;
+import org.Azkerash.create_bioships.core.brain.program.ProgramBehavior;
 import org.Azkerash.create_bioships.core.brain.program.ProgramCardData;
+import org.Azkerash.create_bioships.core.brain.program.ProgramCompiler;
 
 /** Authoritative entry points shared by held cards and permission-checked brain memory. */
 public final class CardWorkspaces {
@@ -76,7 +78,7 @@ public final class CardWorkspaces {
       return new Written(false, "Card changed or access expired. Reopen the editor.");
     if (!menu.allowCompile(player.level().getGameTime()))
       return new Written(false, "Please wait a moment before compiling again.");
-    var result = org.Azkerash.create_bioships.core.brain.program.ProgramCompiler.compile(source);
+    var result = ProgramCompiler.compile(source);
     if (!result.success()) return new Written(false, result.diagnostic().toString());
     var card = ProgramCardData.compiledCopy(menu.target.card(), source);
     if (card.isEmpty()) return new Written(false, "Unable to write this card.");
@@ -85,5 +87,22 @@ public final class CardWorkspaces {
     org.Azkerash.create_bioships.core.brain.program.PrivateCardBackups.remember(player, card);
     return new Written(
         true, "Compiled and written. Place this card in active brain memory to run it.");
+  }
+
+  /** An active server lease is the only route to another creature's runtime output. */
+  public static ProgramBehavior.View output(
+      ServerPlayer player, int menuId, java.util.UUID identity) {
+    if (!(player.containerMenu instanceof CardWorkspaceMenu menu)
+        || menu.containerId != menuId
+        || !menu.identity.equals(identity)
+        || menu.target == null
+        || !menu.stillValid(player))
+      return new ProgramBehavior.View("Access expired.", java.util.List.of());
+    if (!menu.allowPoll(player.level().getGameTime())) return null;
+    var body = menu.target.body();
+    if (body == null)
+      return new ProgramBehavior.View("Held card: install in a brain to run.", java.util.List.of());
+    return org.Azkerash.create_bioships.core.brain.behavior.BrainBehaviors.programView(
+        body, menu.target.card());
   }
 }

@@ -137,6 +137,107 @@ public final class CardWorkspaceTests {
     h.succeed();
   }
 
+  @GameTest(template = "test_empty", batch = "program_runtime", timeoutTicks = 60)
+  public static void program_cards_run_once_and_output_requires_a_live_authorized_lease(
+      GameTestHelper h) {
+    var l = h.getLevel();
+    var origin = h.absolutePos(new BlockPos(1, 2, 1));
+    l.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), 3);
+    l.setBlock(origin.east(), ComponentRegistry.BRAIN.get().defaultBlockState(), 3);
+    l.setBlock(origin.east(2), ComponentRegistry.BRAIN.get().defaultBlockState(), 3);
+    var body =
+        SubLevelAssemblyHelper.assembleBlocks(
+            l,
+            origin,
+            List.of(origin, origin.east(), origin.east(2)),
+            new BoundingBox3i(origin, origin.east(2)));
+    CoreAssemblyRules.mark(l, body.getPlot().getCenterBlock());
+    org.Azkerash.create_bioships.development.testing.DevelopmentLifeSupport.pause(body);
+    var owner = player(l, "ProgramOwner");
+    var guest = player(l, "ProgramGuest");
+    SubLevelPermissions.assignIfUnowned(body, owner.getUUID());
+    var brain = SubLevelBrains.get(body);
+    var memory = brain.inventory();
+    var port = brain.port();
+    var point = body.logicalPose().transformPosition(Vec3.atCenterOf(port));
+    owner.setPos(point);
+    guest.setPos(point);
+    var blank = new ItemStack(ComponentRegistry.BLANK_BEHAVIOR_CARD.get());
+    var card =
+        ProgramCardData.compiledCopy(
+            blank, "Console.WriteLine(\"private output\"); Console.WriteLine(Brain.Health);");
+    memory.setItem(0, card);
+    var identity = ProgramCardData.identity(card);
+    org.Azkerash.create_bioships.core.brain.behavior.BrainBehaviors.advance(body);
+    org.Azkerash.create_bioships.core.brain.behavior.BrainBehaviors.advance(body);
+    var target = new CardWorkspaceTarget.Brain(memory, port, 0, identity);
+    owner.containerMenu = new CardWorkspaceMenu(40, target);
+    guest.containerMenu = new CardWorkspaceMenu(41, target);
+    var output = CardWorkspaces.output(owner, 40, identity);
+    h.assertTrue(
+        output != null
+            && output.state().equals("COMPLETED")
+            && output.output().size() == 2
+            && output.output().getFirst().equals("private output"),
+        "Program did not execute once or lost private output");
+    h.assertTrue(
+        CardWorkspaces.output(guest, 41, identity).output().isEmpty(),
+        "Outsider read runtime output");
+    SubLevelPermissions.add(body, owner.getUUID(), guest);
+    guest.containerMenu = new CardWorkspaceMenu(42, target);
+    h.assertTrue(
+        CardWorkspaces.output(guest, 42, identity).output().size() == 2,
+        "Invited viewer could not read output");
+    SubLevelPermissions.remove(body, owner.getUUID(), guest.getUUID());
+    h.assertTrue(
+        CardWorkspaces.output(guest, 42, identity).output().isEmpty(),
+        "Revoked viewer retained output access");
+    ProgramCardData.saveDraft(card, "Console.WriteLine(\"changed\");");
+    org.Azkerash.create_bioships.core.brain.behavior.BrainBehaviors.advance(body);
+    h.assertTrue(
+        org.Azkerash.create_bioships.core.brain.behavior.BrainBehaviors.active(body) == null,
+        "Changed draft continued executing old code");
+    card = ProgramCardData.compiledCopy(card, "Console.WriteLine(\"replacement\");");
+    memory.setItem(0, card);
+    org.Azkerash.create_bioships.core.brain.behavior.BrainBehaviors.advance(body);
+    h.assertTrue(
+        org.Azkerash.create_bioships
+            .core
+            .brain
+            .behavior
+            .BrainBehaviors
+            .programView(body, card)
+            .output()
+            .equals(List.of("replacement")),
+        "Replacement card did not restart with new source");
+    memory.setItem(1, card);
+    memory.setItem(0, new ItemStack(ComponentRegistry.WANDER_BEHAVIOR_CARD.get()));
+    org.Azkerash.create_bioships.core.brain.behavior.BrainBehaviors.advance(body);
+    h.assertTrue(
+        org.Azkerash.create_bioships.core.brain.behavior.WanderBehavior.ID.equals(
+            org.Azkerash.create_bioships.core.brain.behavior.BrainBehaviors.active(body)),
+        "Program bypassed inventory-order factory selection");
+    memory.setItem(0, ItemStack.EMPTY);
+    org.Azkerash.create_bioships.core.brain.behavior.BrainBehaviors.advance(body);
+    h.assertTrue(
+        org.Azkerash.create_bioships.core.brain.behavior.BrainBehaviors.PROGRAM_ID.equals(
+            org.Azkerash.create_bioships.core.brain.behavior.BrainBehaviors.active(body)),
+        "Program in next active slot did not start");
+    memory.setItem(1, ItemStack.EMPTY);
+    org.Azkerash.create_bioships.core.brain.behavior.BrainBehaviors.advance(body);
+    h.assertTrue(
+        org.Azkerash.create_bioships.core.brain.behavior.BrainBehaviors.active(body) == null,
+        "Removed card kept running");
+    memory.setItem(0, card);
+    org.Azkerash.create_bioships.core.brain.behavior.BrainBehaviors.advance(body);
+    SubLevelHealth.damage(body, SubLevelHealth.status(body).current() + 1, "program_test");
+    org.Azkerash.create_bioships.core.brain.behavior.BrainBehaviors.advance(body);
+    h.assertTrue(
+        org.Azkerash.create_bioships.core.brain.behavior.BrainBehaviors.active(body) == null,
+        "Dead creature kept running a program");
+    h.succeed();
+  }
+
   @GameTest(template = "test_empty", batch = "card_editor_permissions", timeoutTicks = 60)
   public static void brain_editor_requires_owner_or_invite_and_revocation_closes_access(
       GameTestHelper h) {
