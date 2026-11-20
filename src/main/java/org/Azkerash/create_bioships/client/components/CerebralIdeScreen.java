@@ -16,6 +16,11 @@ import org.Azkerash.create_bioships.core.brain.program.editor.*;
 public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspaceMenu> {
   private CerebralSourceEditor editor;
   private final SourceDocument document;
+  private final EditorLog log;
+  private CerebralProblems tracker;
+  private Button problemsTab, logTab, clearLog;
+  private boolean showingLog;
+  private String installedFingerprint;
   private List<EditorProblem> problems = List.of();
   private int analysisDelay = -1;
   private ProgramConsole console;
@@ -29,11 +34,17 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
   public CerebralIdeScreen(CardWorkspaceMenu menu, Inventory inventory, Component title) {
     super(menu, inventory, title);
     document = new SourceDocument(menu.initialSource);
+    document.move(0, false);
+    log = CerebralDiagnosticLogs.get(menu.identity);
+    installedFingerprint =
+        menu.initiallyCompiled ? ProgramCardData.fingerprint(menu.initialSource) : "";
     document.listener(
         value -> {
           dirty = true;
           analysisDelay = 8;
+          problems = List.of();
           if (editor != null) editor.problems(List.of());
+          refreshDiagnostics();
         });
     if (menu.initiallyCompiled) status = "Compiled card · Changed source must be compiled again.";
   }
@@ -43,10 +54,56 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
     imageWidth = Math.min(760, width - 20);
     imageHeight = height - 24;
     super.init();
+    int areaHeight = imageHeight - 110;
+    int panelHeight = Math.max(34, Math.min(70, areaHeight / 3));
+    int sourceHeight = areaHeight - panelHeight - 18;
+    int panelTop = topPos + 39 + sourceHeight + 3;
     editor =
         addRenderableWidget(
             new CerebralSourceEditor(
-                font, leftPos + 12, topPos + 39, imageWidth - 24, imageHeight - 110, document));
+                font, leftPos + 12, topPos + 39, imageWidth - 24, sourceHeight, document));
+    tracker =
+        addRenderableWidget(
+            new CerebralProblems(
+                font,
+                leftPos + 12,
+                panelTop + 15,
+                imageWidth - 24,
+                panelHeight,
+                problem -> {
+                  editor.goTo(problem.line(), problem.column());
+                  setFocused(editor);
+                }));
+    problemsTab =
+        addRenderableWidget(
+            Button.builder(
+                    Component.literal("Problems"),
+                    b -> {
+                      showingLog = false;
+                      refreshDiagnostics();
+                    })
+                .bounds(leftPos + 12, panelTop, 112, 12)
+                .build());
+    logTab =
+        addRenderableWidget(
+            Button.builder(
+                    Component.literal("Error log"),
+                    b -> {
+                      showingLog = true;
+                      refreshDiagnostics();
+                    })
+                .bounds(leftPos + 128, panelTop, 104, 12)
+                .build());
+    clearLog =
+        addRenderableWidget(
+            Button.builder(
+                    Component.literal("Clear"),
+                    b -> {
+                      log.clear();
+                      refreshDiagnostics();
+                    })
+                .bounds(leftPos + imageWidth - 64, panelTop, 52, 12)
+                .build());
     analyzeNow();
     addRenderableWidget(
         Button.builder(Component.literal("Save draft"), b -> save())
@@ -74,10 +131,12 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
                   showingConsole = !showingConsole;
                   console.visible = showingConsole;
                   editor.visible = !showingConsole;
+                  updateVisibility();
                   setFocused(showingConsole ? console : editor);
                 })
             .bounds(leftPos + imageWidth - 112, topPos + 25, 100, 12)
             .build());
+    updateVisibility();
     setInitialFocus(showingConsole ? console : editor);
   }
 
@@ -86,6 +145,23 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
     problems =
         EditorAnalysis.analyze(document.text(), ProgramCardData.fingerprint(document.text()));
     editor.problems(problems);
+    refreshDiagnostics();
+  }
+
+  private void updateVisibility() {
+    tracker.visible = problemsTab.visible = logTab.visible = clearLog.visible = !showingConsole;
+  }
+
+  private void refreshDiagnostics() {
+    if (tracker == null) return;
+    String fingerprint = ProgramCardData.fingerprint(document.text());
+    tracker.entries(showingLog ? log.entries() : problems, fingerprint, showingLog);
+    problemsTab.setMessage(
+        Component.literal(analysisDelay > 0 ? "Checking…" : "Problems (" + problems.size() + ")"));
+    logTab.setMessage(Component.literal("Error log (" + log.entries().size() + ")"));
+    problemsTab.active = showingLog;
+    logTab.active = !showingLog;
+    clearLog.active = showingLog && !log.entries().isEmpty();
   }
 
   private void save() {
@@ -98,6 +174,12 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
     analyzeNow();
     PacketDistributor.sendToServer(
         new CardWorkspaceNetwork.Write(menu.containerId, menu.identity, editor.getValue()));
+    log.add(
+        EditorAnalysis.logged(
+            EditorProblem.Severity.INFO,
+            "Compile requested.",
+            ProgramCardData.fingerprint(document.text())));
+    refreshDiagnostics();
     status = "Compiling on the server…";
   }
 
@@ -106,6 +188,20 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
         && screen.menu.containerId == result.menu()
         && screen.menu.identity.equals(result.identity())) {
       screen.status = result.message();
+      screen.log.add(
+          EditorAnalysis.logged(
+              result.saved() ? EditorProblem.Severity.INFO : EditorProblem.Severity.ERROR,
+              result.message(),
+              result.fingerprint()));
+      if (result.saved() && result.message().startsWith("Compiled and written")) {
+        screen.installedFingerprint = result.fingerprint();
+        if (result.fingerprint().equals(ProgramCardData.fingerprint(screen.document.text())))
+          for (var problem : screen.problems)
+            if (problem.severity() == EditorProblem.Severity.WARNING) screen.log.add(problem);
+      } else if (result.saved() && !result.fingerprint().equals(screen.installedFingerprint))
+        screen.installedFingerprint = "";
+      if (!result.saved()) screen.showingLog = true;
+      screen.refreshDiagnostics();
       if (result.saved()
           && result.fingerprint().equals(ProgramCardData.fingerprint(screen.editor.getValue())))
         screen.dirty = false;
@@ -125,10 +221,30 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
     if (Minecraft.getInstance().screen instanceof CerebralIdeScreen screen
         && screen.menu.containerId == result.menu()
         && screen.menu.identity.equals(result.identity())) {
+      if (!screen.runtimeState.equals(result.state())
+          && (result.state().startsWith("FAULTED") || result.state().startsWith("Compile error"))) {
+        screen.log.add(
+            EditorAnalysis.logged(
+                EditorProblem.Severity.ERROR, result.state(), screen.installedFingerprint));
+        screen.refreshDiagnostics();
+      }
       screen.runtimeState = result.state();
       screen.output = result.lines();
       screen.console.lines(result.lines());
     }
+  }
+
+  @Override
+  public boolean mouseClicked(double mx, double my, int button) {
+    var problem = tracker.hovered(mx, my);
+    boolean navigable =
+        button == 0
+            && problem != null
+            && problem.line() > 0
+            && problem.fingerprint().equals(ProgramCardData.fingerprint(document.text()));
+    boolean handled = super.mouseClicked(mx, my, button);
+    if (navigable) setFocused(editor);
+    return handled;
   }
 
   @Override
@@ -180,7 +296,7 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
         false);
     g.drawString(
         font,
-        "Ctrl+S saves · Ctrl+Enter compiles",
+        "Ctrl+S saves · Ctrl+Enter compiles · Tab indents",
         leftPos + 12,
         topPos + imageHeight - 48,
         OrganScreenStyle.MUTED,
@@ -197,6 +313,14 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
     super.render(g, mx, my, partial);
     var hovered = editor.hoveredProblem(mx, my);
     if (hovered != null) g.renderTooltip(font, Component.literal(hovered.message()), mx, my);
+    var diagnostic = tracker.hovered(mx, my);
+    if (diagnostic != null) {
+      String detail = diagnostic.message();
+      if (!diagnostic.fingerprint().isEmpty()
+          && !diagnostic.fingerprint().equals(ProgramCardData.fingerprint(document.text())))
+        detail += " (Earlier source revision; navigation disabled.)";
+      g.renderTooltip(font, Component.literal(detail), mx, my);
+    }
     if (mx >= leftPos + 12
         && mx < leftPos + imageWidth - 12
         && my >= topPos + imageHeight - 63

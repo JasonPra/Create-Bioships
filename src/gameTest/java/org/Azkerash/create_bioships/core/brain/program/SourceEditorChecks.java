@@ -79,6 +79,31 @@ public final class SourceEditorChecks {
     limited.selectAll();
     limited.insert("fresh");
     check(limited.text().equals("fresh"), "Replace selection did not release source capacity");
+    var errors = EditorAnalysis.analyze("Console.WriteLine(missing);", "source-v1");
+    check(
+        errors.size() == 1
+            && errors.getFirst().severity() == EditorProblem.Severity.ERROR
+            && errors.getFirst().length() == 7
+            && errors.getFirst().fingerprint().equals("source-v1"),
+        "Error tracker lost name range or source version");
+    var history = new EditorLog();
+    for (int i = 0; i < 100; i++)
+      history.add(
+          EditorAnalysis.logged(
+              EditorProblem.Severity.ERROR, "Line 2, column 9: Error " + i, "source-v1"));
+    check(
+        history.entries().size() == 64
+            && history.entries().getFirst().message().equals("Error 99")
+            && history.entries().getFirst().line() == 2,
+        "Error history was not bounded or lost source location");
+    history.clear();
+    check(history.entries().isEmpty(), "Error log could not be cleared");
+    var green = EditorAnalysis.analyze("int unused=1;", "source-v2");
+    check(
+        green.size() == 1
+            && green.getFirst().severity() == EditorProblem.Severity.WARNING
+            && green.getFirst().column() == 5,
+        "Warning tracker lost declaration location");
     var warning = ProgramCompiler.compile("int unused=1;\nreturn;\nConsole.WriteLine(3);");
     check(
         warning.success()

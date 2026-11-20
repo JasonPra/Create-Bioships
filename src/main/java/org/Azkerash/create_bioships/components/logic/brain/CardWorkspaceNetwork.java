@@ -168,7 +168,7 @@ public final class CardWorkspaceNetwork {
                             saved
                                 ? "Draft saved. It is not executable until compiled."
                                 : "Card changed or access expired. Reopen the editor.",
-                            saved ? ProgramCardData.fingerprint(p.source) : ""));
+                            ProgramCardData.fingerprint(p.source)));
                   }
                 }));
     registrar.playToServer(
@@ -186,7 +186,7 @@ public final class CardWorkspaceNetwork {
                             p.identity,
                             result.success(),
                             result.message(),
-                            result.success() ? ProgramCardData.fingerprint(p.source) : ""));
+                            ProgramCardData.fingerprint(p.source)));
                   }
                 }));
     registrar.playToServer(

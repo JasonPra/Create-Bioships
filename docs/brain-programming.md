@@ -128,3 +128,37 @@ are not supported. A break exits the nearest switch or loop; continue skips any
 switches to reach the nearest loop. Section-local variables cannot be read from
 another section. Switches use the existing bounded instructions and allocate one
 hidden local slot, so source, nesting, local, and instruction limits still apply.
+
+## Source editor and diagnostics
+
+The source editor colors keywords, types, methods, numbers, strings and comments.
+Its gutter shows original line numbers, problem markers and plus/minus controls
+for brace-block interiors. Folding is a display operation: saving and compiling
+always use the complete source. Selecting a current diagnostic reveals folded
+ancestors and moves the caret to its original line and column.
+
+Enter indents according to nested code braces, using four spaces per level. Between
+an opening and closing brace it creates an indented line and aligns the closing
+brace. Braces in comments and strings do not increase indentation. Tab indents;
+Shift+Tab outdents, including selected lines. The editor supports selection,
+clipboard operations, arrow/Home/End navigation and 64 undo/redo snapshots.
+Long lines scroll horizontally with the caret or Shift+mouse-wheel.
+
+The **Problems** panel previews the first blocking compiler error, or warnings
+once the source compiles. Red squiggles identify syntax/type errors and unknown
+names; green squiggles identify unused locals and unreachable code. This checks
+programming syntax, not English spelling in comments or string literals. Hover
+an underline or diagnostic for its full message. Live checks are debounced and
+do not execute code; the server still independently compiles every write.
+
+The separate **Error log** retains build/save results and runtime faults while
+connected, including across reopening the same card. It keeps 64 recent entries
+for each of at most 32 cards in the client session and clears on disconnect. It
+is private to that client and is not a persistent server/world log. Entries from
+older source revisions are marked and cannot navigate to incorrect current lines.
+Clear removes log history without suppressing current source problems.
+
+Native verification exercised four/eight-space nested indentation, the inventory
+key while typing, warning/error rendering, failed server compile logging, log
+retention after reopening, a persisted compiled switch card, gutter folding,
+diagnostic navigation with focus restoration, and a 320-by-240 GUI layout.
