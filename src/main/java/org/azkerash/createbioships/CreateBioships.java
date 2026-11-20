@@ -21,6 +21,22 @@ public final class CreateBioships {
   public static final DeferredHolder<
           net.minecraft.world.entity.EntityType<?>,
           net.minecraft.world.entity.EntityType<
+              org.azkerash.createbioships.compat.bigcannons.AcidBurstEntity>>
+      ACID_BURST =
+          ENTITIES.register(
+              "acid_burst",
+              () ->
+                  net.minecraft.world.entity.EntityType.Builder
+                      .<org.azkerash.createbioships.compat.bigcannons.AcidBurstEntity>of(
+                          org.azkerash.createbioships.compat.bigcannons.AcidBurstEntity::new,
+                          net.minecraft.world.entity.MobCategory.MISC)
+                      .sized(.2f, .2f)
+                      .clientTrackingRange(8)
+                      .updateInterval(1)
+                      .build("create_bioships:acid_burst"));
+  public static final DeferredHolder<
+          net.minecraft.world.entity.EntityType<?>,
+          net.minecraft.world.entity.EntityType<
               org.azkerash.createbioships.combat.SubLevelCombatTarget>>
       COMBAT_TARGET =
           ENTITIES.register(

@@ -1,362 +1,392 @@
 {
   "variants": {
-    "facing=north,chew=0,breath=0": {
+    "facing=north,chew=0,breath=0,spitting=false": {
       "model": "create_bioships:block/armored_maw",
       "x": 0,
       "y": 0
     },
-    "facing=north,chew=0,breath=1": {
+    "facing=north,chew=0,breath=1,spitting=false": {
       "model": "create_bioships:block/armored_maw_breath_1",
       "x": 0,
       "y": 0
     },
-    "facing=north,chew=0,breath=2": {
+    "facing=north,chew=0,breath=2,spitting=false": {
       "model": "create_bioships:block/armored_maw_breath_2",
       "x": 0,
       "y": 0
     },
-    "facing=north,chew=1,breath=0": {
+    "facing=north,chew=1,breath=0,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_1",
       "x": 0,
       "y": 0
     },
-    "facing=north,chew=1,breath=1": {
+    "facing=north,chew=1,breath=1,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_1",
       "x": 0,
       "y": 0
     },
-    "facing=north,chew=1,breath=2": {
+    "facing=north,chew=1,breath=2,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_1",
       "x": 0,
       "y": 0
     },
-    "facing=north,chew=2,breath=0": {
+    "facing=north,chew=2,breath=0,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_2",
       "x": 0,
       "y": 0
     },
-    "facing=north,chew=2,breath=1": {
+    "facing=north,chew=2,breath=1,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_2",
       "x": 0,
       "y": 0
     },
-    "facing=north,chew=2,breath=2": {
+    "facing=north,chew=2,breath=2,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_2",
       "x": 0,
       "y": 0
     },
-    "facing=north,chew=3,breath=0": {
+    "facing=north,chew=3,breath=0,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_3",
       "x": 0,
       "y": 0
     },
-    "facing=north,chew=3,breath=1": {
+    "facing=north,chew=3,breath=1,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_3",
       "x": 0,
       "y": 0
     },
-    "facing=north,chew=3,breath=2": {
+    "facing=north,chew=3,breath=2,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_3",
       "x": 0,
       "y": 0
     },
-    "facing=south,chew=0,breath=0": {
+    "facing=south,chew=0,breath=0,spitting=false": {
       "model": "create_bioships:block/armored_maw",
       "x": 0,
       "y": 180
     },
-    "facing=south,chew=0,breath=1": {
+    "facing=south,chew=0,breath=1,spitting=false": {
       "model": "create_bioships:block/armored_maw_breath_1",
       "x": 0,
       "y": 180
     },
-    "facing=south,chew=0,breath=2": {
+    "facing=south,chew=0,breath=2,spitting=false": {
       "model": "create_bioships:block/armored_maw_breath_2",
       "x": 0,
       "y": 180
     },
-    "facing=south,chew=1,breath=0": {
+    "facing=south,chew=1,breath=0,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_1",
       "x": 0,
       "y": 180
     },
-    "facing=south,chew=1,breath=1": {
+    "facing=south,chew=1,breath=1,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_1",
       "x": 0,
       "y": 180
     },
-    "facing=south,chew=1,breath=2": {
+    "facing=south,chew=1,breath=2,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_1",
       "x": 0,
       "y": 180
     },
-    "facing=south,chew=2,breath=0": {
+    "facing=south,chew=2,breath=0,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_2",
       "x": 0,
       "y": 180
     },
-    "facing=south,chew=2,breath=1": {
+    "facing=south,chew=2,breath=1,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_2",
       "x": 0,
       "y": 180
     },
-    "facing=south,chew=2,breath=2": {
+    "facing=south,chew=2,breath=2,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_2",
       "x": 0,
       "y": 180
     },
-    "facing=south,chew=3,breath=0": {
+    "facing=south,chew=3,breath=0,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_3",
       "x": 0,
       "y": 180
     },
-    "facing=south,chew=3,breath=1": {
+    "facing=south,chew=3,breath=1,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_3",
       "x": 0,
       "y": 180
     },
-    "facing=south,chew=3,breath=2": {
+    "facing=south,chew=3,breath=2,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_3",
       "x": 0,
       "y": 180
     },
-    "facing=east,chew=0,breath=0": {
+    "facing=east,chew=0,breath=0,spitting=false": {
       "model": "create_bioships:block/armored_maw",
       "x": 0,
       "y": 90
     },
-    "facing=east,chew=0,breath=1": {
+    "facing=east,chew=0,breath=1,spitting=false": {
       "model": "create_bioships:block/armored_maw_breath_1",
       "x": 0,
       "y": 90
     },
-    "facing=east,chew=0,breath=2": {
+    "facing=east,chew=0,breath=2,spitting=false": {
       "model": "create_bioships:block/armored_maw_breath_2",
       "x": 0,
       "y": 90
     },
-    "facing=east,chew=1,breath=0": {
+    "facing=east,chew=1,breath=0,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_1",
       "x": 0,
       "y": 90
     },
-    "facing=east,chew=1,breath=1": {
+    "facing=east,chew=1,breath=1,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_1",
       "x": 0,
       "y": 90
     },
-    "facing=east,chew=1,breath=2": {
+    "facing=east,chew=1,breath=2,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_1",
       "x": 0,
       "y": 90
     },
-    "facing=east,chew=2,breath=0": {
+    "facing=east,chew=2,breath=0,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_2",
       "x": 0,
       "y": 90
     },
-    "facing=east,chew=2,breath=1": {
+    "facing=east,chew=2,breath=1,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_2",
       "x": 0,
       "y": 90
     },
-    "facing=east,chew=2,breath=2": {
+    "facing=east,chew=2,breath=2,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_2",
       "x": 0,
       "y": 90
     },
-    "facing=east,chew=3,breath=0": {
+    "facing=east,chew=3,breath=0,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_3",
       "x": 0,
       "y": 90
     },
-    "facing=east,chew=3,breath=1": {
+    "facing=east,chew=3,breath=1,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_3",
       "x": 0,
       "y": 90
     },
-    "facing=east,chew=3,breath=2": {
+    "facing=east,chew=3,breath=2,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_3",
       "x": 0,
       "y": 90
     },
-    "facing=west,chew=0,breath=0": {
+    "facing=west,chew=0,breath=0,spitting=false": {
       "model": "create_bioships:block/armored_maw",
       "x": 0,
       "y": 270
     },
-    "facing=west,chew=0,breath=1": {
+    "facing=west,chew=0,breath=1,spitting=false": {
       "model": "create_bioships:block/armored_maw_breath_1",
       "x": 0,
       "y": 270
     },
-    "facing=west,chew=0,breath=2": {
+    "facing=west,chew=0,breath=2,spitting=false": {
       "model": "create_bioships:block/armored_maw_breath_2",
       "x": 0,
       "y": 270
     },
-    "facing=west,chew=1,breath=0": {
+    "facing=west,chew=1,breath=0,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_1",
       "x": 0,
       "y": 270
     },
-    "facing=west,chew=1,breath=1": {
+    "facing=west,chew=1,breath=1,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_1",
       "x": 0,
       "y": 270
     },
-    "facing=west,chew=1,breath=2": {
+    "facing=west,chew=1,breath=2,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_1",
       "x": 0,
       "y": 270
     },
-    "facing=west,chew=2,breath=0": {
+    "facing=west,chew=2,breath=0,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_2",
       "x": 0,
       "y": 270
     },
-    "facing=west,chew=2,breath=1": {
+    "facing=west,chew=2,breath=1,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_2",
       "x": 0,
       "y": 270
     },
-    "facing=west,chew=2,breath=2": {
+    "facing=west,chew=2,breath=2,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_2",
       "x": 0,
       "y": 270
     },
-    "facing=west,chew=3,breath=0": {
+    "facing=west,chew=3,breath=0,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_3",
       "x": 0,
       "y": 270
     },
-    "facing=west,chew=3,breath=1": {
+    "facing=west,chew=3,breath=1,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_3",
       "x": 0,
       "y": 270
     },
-    "facing=west,chew=3,breath=2": {
+    "facing=west,chew=3,breath=2,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_3",
       "x": 0,
       "y": 270
     },
-    "facing=up,chew=0,breath=0": {
+    "facing=up,chew=0,breath=0,spitting=false": {
       "model": "create_bioships:block/armored_maw",
       "x": 270,
       "y": 0
     },
-    "facing=up,chew=0,breath=1": {
+    "facing=up,chew=0,breath=1,spitting=false": {
       "model": "create_bioships:block/armored_maw_breath_1",
       "x": 270,
       "y": 0
     },
-    "facing=up,chew=0,breath=2": {
+    "facing=up,chew=0,breath=2,spitting=false": {
       "model": "create_bioships:block/armored_maw_breath_2",
       "x": 270,
       "y": 0
     },
-    "facing=up,chew=1,breath=0": {
+    "facing=up,chew=1,breath=0,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_1",
       "x": 270,
       "y": 0
     },
-    "facing=up,chew=1,breath=1": {
+    "facing=up,chew=1,breath=1,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_1",
       "x": 270,
       "y": 0
     },
-    "facing=up,chew=1,breath=2": {
+    "facing=up,chew=1,breath=2,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_1",
       "x": 270,
       "y": 0
     },
-    "facing=up,chew=2,breath=0": {
+    "facing=up,chew=2,breath=0,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_2",
       "x": 270,
       "y": 0
     },
-    "facing=up,chew=2,breath=1": {
+    "facing=up,chew=2,breath=1,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_2",
       "x": 270,
       "y": 0
     },
-    "facing=up,chew=2,breath=2": {
+    "facing=up,chew=2,breath=2,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_2",
       "x": 270,
       "y": 0
     },
-    "facing=up,chew=3,breath=0": {
+    "facing=up,chew=3,breath=0,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_3",
       "x": 270,
       "y": 0
     },
-    "facing=up,chew=3,breath=1": {
+    "facing=up,chew=3,breath=1,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_3",
       "x": 270,
       "y": 0
     },
-    "facing=up,chew=3,breath=2": {
+    "facing=up,chew=3,breath=2,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_3",
       "x": 270,
       "y": 0
     },
-    "facing=down,chew=0,breath=0": {
+    "facing=down,chew=0,breath=0,spitting=false": {
       "model": "create_bioships:block/armored_maw",
       "x": 90,
       "y": 0
     },
-    "facing=down,chew=0,breath=1": {
+    "facing=down,chew=0,breath=1,spitting=false": {
       "model": "create_bioships:block/armored_maw_breath_1",
       "x": 90,
       "y": 0
     },
-    "facing=down,chew=0,breath=2": {
+    "facing=down,chew=0,breath=2,spitting=false": {
       "model": "create_bioships:block/armored_maw_breath_2",
       "x": 90,
       "y": 0
     },
-    "facing=down,chew=1,breath=0": {
+    "facing=down,chew=1,breath=0,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_1",
       "x": 90,
       "y": 0
     },
-    "facing=down,chew=1,breath=1": {
+    "facing=down,chew=1,breath=1,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_1",
       "x": 90,
       "y": 0
     },
-    "facing=down,chew=1,breath=2": {
+    "facing=down,chew=1,breath=2,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_1",
       "x": 90,
       "y": 0
     },
-    "facing=down,chew=2,breath=0": {
+    "facing=down,chew=2,breath=0,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_2",
       "x": 90,
       "y": 0
     },
-    "facing=down,chew=2,breath=1": {
+    "facing=down,chew=2,breath=1,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_2",
       "x": 90,
       "y": 0
     },
-    "facing=down,chew=2,breath=2": {
+    "facing=down,chew=2,breath=2,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_2",
       "x": 90,
       "y": 0
     },
-    "facing=down,chew=3,breath=0": {
+    "facing=down,chew=3,breath=0,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_3",
       "x": 90,
       "y": 0
     },
-    "facing=down,chew=3,breath=1": {
+    "facing=down,chew=3,breath=1,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_3",
       "x": 90,
       "y": 0
     },
-    "facing=down,chew=3,breath=2": {
+    "facing=down,chew=3,breath=2,spitting=false": {
       "model": "create_bioships:block/armored_maw_chew_3",
+      "x": 90,
+      "y": 0
+    },
+    "facing=north,spitting=true": {
+      "model": "create_bioships:block/armored_maw_spit",
+      "x": 0,
+      "y": 0
+    },
+    "facing=south,spitting=true": {
+      "model": "create_bioships:block/armored_maw_spit",
+      "x": 0,
+      "y": 180
+    },
+    "facing=east,spitting=true": {
+      "model": "create_bioships:block/armored_maw_spit",
+      "x": 0,
+      "y": 90
+    },
+    "facing=west,spitting=true": {
+      "model": "create_bioships:block/armored_maw_spit",
+      "x": 0,
+      "y": 270
+    },
+    "facing=up,spitting=true": {
+      "model": "create_bioships:block/armored_maw_spit",
+      "x": 270,
+      "y": 0
+    },
+    "facing=down,spitting=true": {
+      "model": "create_bioships:block/armored_maw_spit",
       "x": 90,
       "y": 0
     }

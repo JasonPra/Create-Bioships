@@ -20,6 +20,8 @@ public final class MouthBlock extends DirectionalBlock
       net.minecraft.world.level.block.state.properties.IntegerProperty.create("chew", 0, 3);
   public static final net.minecraft.world.level.block.state.properties.IntegerProperty BREATH =
       net.minecraft.world.level.block.state.properties.IntegerProperty.create("breath", 0, 2);
+  public static final net.minecraft.world.level.block.state.properties.BooleanProperty SPITTING =
+      net.minecraft.world.level.block.state.properties.BooleanProperty.create("spitting");
   public static final MapCodec<MouthBlock> CODEC = simpleCodec(MouthBlock::new);
 
   public MouthBlock(Properties properties) {
@@ -29,6 +31,7 @@ public final class MouthBlock extends DirectionalBlock
             .any()
             .setValue(FACING, Direction.NORTH)
             .setValue(CHEW, 0)
+            .setValue(SPITTING, false)
             .setValue(BREATH, 0));
   }
 
@@ -37,7 +40,7 @@ public final class MouthBlock extends DirectionalBlock
   }
 
   protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-    builder.add(FACING, CHEW, BREATH);
+    builder.add(FACING, CHEW, BREATH, SPITTING);
   }
 
   public BlockState getStateForPlacement(BlockPlaceContext context) {
@@ -52,7 +55,15 @@ public final class MouthBlock extends DirectionalBlock
       BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
     if (player instanceof net.minecraft.server.level.ServerPlayer server
         && level.getBlockEntity(pos) instanceof MouthBlockEntity mouth) {
-      server.openMenu(mouth);
+      if (state.is(ComponentRegistry.ARMORED_MAW.get())
+          && player.isShiftKeyDown()
+          && player.getMainHandItem().isEmpty()) {
+        var result = mouth.requestAcidAttack(player.getUUID());
+        player.displayClientMessage(
+            net.minecraft.network.chat.Component.literal(result.getMessage()), true);
+      } else {
+        server.openMenu(mouth);
+      }
     }
     return InteractionResult.sidedSuccess(level.isClientSide);
   }
@@ -86,6 +97,29 @@ public final class MouthBlock extends DirectionalBlock
     return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
   }
 
+  @Override
+  protected void neighborChanged(
+      BlockState state, Level level, BlockPos pos, Block other, BlockPos from, boolean moved) {
+    super.neighborChanged(state, level, pos, other, from, moved);
+    if (!level.isClientSide && level.getBlockEntity(pos) instanceof MouthBlockEntity mouth) {
+      mouth.observeAcidSignal(level.hasNeighborSignal(pos));
+    }
+  }
+
+  @Override
+  public void appendHoverText(
+      ItemStack stack,
+      net.minecraft.world.item.Item.TooltipContext context,
+      java.util.List<net.minecraft.network.chat.Component> lines,
+      net.minecraft.world.item.TooltipFlag flag) {
+    if (stack.is(ComponentRegistry.ARMORED_MAW.get().asItem())) {
+      lines.add(
+          net.minecraft.network.chat.Component.translatable(
+                  "block.create_bioships.armored_maw.acid_tooltip")
+              .withStyle(net.minecraft.ChatFormatting.GRAY));
+    }
+  }
+
   static void chewingSound(net.minecraft.server.level.ServerLevel level, BlockPos pos) {
     level.playSound(
         null,
@@ -105,6 +139,11 @@ public final class MouthBlock extends DirectionalBlock
     if (!(level.getBlockEntity(pos) instanceof MouthBlockEntity mouth)) {
       return;
     }
+    mouth.observeAcidSignal(level.hasNeighborSignal(pos));
+    if (mouth.animateAcidAttack()) {
+      return;
+    }
+    state = level.getBlockState(pos);
     int remaining = mouth.chewRemaining();
     if (!mouth.active()) {
       if (state.getValue(CHEW) != 0 || state.getValue(BREATH) != 0) {

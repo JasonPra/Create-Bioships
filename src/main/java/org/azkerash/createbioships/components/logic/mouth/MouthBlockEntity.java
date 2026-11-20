@@ -12,7 +12,7 @@ import org.azkerash.createbioships.components.ComponentRegistry;
 import org.azkerash.createbioships.components.logic.inventory.OrganInventory;
 import org.azkerash.createbioships.components.logic.stomach.StomachBlockEntity;
 
-/** Food intake only. Digestion belongs to stomachs, routing to intestine transport. */
+/** Food intake and Eldritch Maw wind-up. Digestion and acid ballistics remain separate. */
 public final class MouthBlockEntity extends OrganInventory {
   public static final int CHEW_TICKS = 60;
   private final ChewingState detachedState = new ChewingState();
@@ -23,11 +23,21 @@ public final class MouthBlockEntity extends OrganInventory {
   private static final class ChewingState
       implements org.azkerash.createbioships.core.component.ComponentState {
     long until;
+    private long acidReadyAt, acidReleaseAt, acidOpenUntil;
+    private boolean acidPowered;
+    private java.util.UUID acidActor;
     ItemStack food = ItemStack.EMPTY;
 
     public net.minecraft.nbt.CompoundTag save(net.minecraft.core.HolderLookup.Provider registries) {
       var tag = new net.minecraft.nbt.CompoundTag();
       tag.putLong("ChewUntil", until);
+      tag.putLong("AcidReadyAt", acidReadyAt);
+      tag.putLong("AcidReleaseAt", acidReleaseAt);
+      tag.putLong("AcidOpenUntil", acidOpenUntil);
+      tag.putBoolean("AcidPowered", acidPowered);
+      if (acidActor != null) {
+        tag.putUUID("AcidActor", acidActor);
+      }
       if (!food.isEmpty()) {
         tag.put("ChewFood", food.save(registries));
       }
@@ -37,6 +47,11 @@ public final class MouthBlockEntity extends OrganInventory {
     public void load(
         net.minecraft.nbt.CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries) {
       until = tag.getLong("ChewUntil");
+      acidReadyAt = tag.getLong("AcidReadyAt");
+      acidReleaseAt = tag.getLong("AcidReleaseAt");
+      acidOpenUntil = tag.getLong("AcidOpenUntil");
+      acidPowered = tag.getBoolean("AcidPowered");
+      acidActor = tag.hasUUID("AcidActor") ? tag.getUUID("AcidActor") : null;
       food =
           tag.contains("ChewFood")
               ? ItemStack.parseOptional(registries, tag.getCompound("ChewFood"))
@@ -69,6 +84,99 @@ public final class MouthBlockEntity extends OrganInventory {
         && !org.azkerash.createbioships.core.SubLevelHealth.status(body).dead();
   }
 
+  private static final int ACID_RECOVERY_POSE_TICKS = 6, ACID_CANCEL_COOLDOWN_TICKS = 10;
+  private static final int ACID_POSE_INTERVAL_TICKS = 3;
+
+  public MawAcidAttack.Result requestAcidAttack(java.util.UUID actor) {
+    if (!(level instanceof net.minecraft.server.level.ServerLevel server)) {
+      return MawAcidAttack.Result.INACTIVE;
+    }
+    var ready = MawAcidAttack.validate(server, worldPosition, actor);
+    if (ready != MawAcidAttack.Result.READY) {
+      return ready;
+    }
+    var state = chewing();
+    if (state.acidReleaseAt > 0 || server.getGameTime() < state.acidReadyAt) {
+      return MawAcidAttack.Result.BUSY;
+    }
+    state.acidReleaseAt = server.getGameTime() + MawAcidAttack.WINDUP_TICKS;
+    state.acidActor = actor;
+    setChanged();
+    server.setBlock(
+        worldPosition, getBlockState().setValue(MouthBlock.SPITTING, true), Block.UPDATE_CLIENTS);
+    server.scheduleTick(worldPosition, getBlockState().getBlock(), ACID_POSE_INTERVAL_TICKS);
+    var body = org.azkerash.createbioships.core.CoreAssemblyRules.containing(server, worldPosition);
+    var point =
+        body.logicalPose()
+            .transformPosition(net.minecraft.world.phys.Vec3.atCenterOf(worldPosition));
+    server.playSound(
+        null,
+        point.x,
+        point.y,
+        point.z,
+        net.minecraft.sounds.SoundEvents.SLIME_SQUISH,
+        net.minecraft.sounds.SoundSource.BLOCKS,
+        .8f,
+        .5f);
+    return MawAcidAttack.Result.READY;
+  }
+
+  public void observeAcidSignal(boolean powered) {
+    if (!getBlockState().is(ComponentRegistry.ARMORED_MAW.get())
+        || level == null
+        || level.isClientSide) {
+      return;
+    }
+    var state = chewing();
+    if (powered == state.acidPowered) {
+      return;
+    }
+    state.acidPowered = powered;
+    setChanged();
+    if (powered) {
+      requestAcidAttack(null);
+    }
+  }
+
+  /**
+   * Scheduled alongside the existing mouth animation; there is no new per-creature polling loop.
+   */
+  public boolean animateAcidAttack() {
+    if (!(level instanceof net.minecraft.server.level.ServerLevel server)
+        || !getBlockState().is(ComponentRegistry.ARMORED_MAW.get())) {
+      return false;
+    }
+    var state = chewing();
+    long now = server.getGameTime();
+    if (state.acidReleaseAt > 0 && !active()) {
+      state.acidReleaseAt = state.acidOpenUntil = 0;
+      state.acidActor = null;
+      setChanged();
+    }
+    if (state.acidReleaseAt > 0 && now >= state.acidReleaseAt) {
+      var result = MawAcidAttack.release(server, worldPosition, state.acidActor);
+      state.acidReleaseAt = 0;
+      state.acidActor = null;
+      state.acidReadyAt =
+          now
+              + (result == MawAcidAttack.Result.FIRED
+                  ? MawAcidAttack.COOLDOWN_TICKS
+                  : ACID_CANCEL_COOLDOWN_TICKS);
+      state.acidOpenUntil =
+          result == MawAcidAttack.Result.FIRED ? now + ACID_RECOVERY_POSE_TICKS : 0;
+      setChanged();
+    }
+    boolean open = state.acidReleaseAt > 0 || now < state.acidOpenUntil;
+    if (getBlockState().getValue(MouthBlock.SPITTING) != open) {
+      server.setBlock(
+          worldPosition, getBlockState().setValue(MouthBlock.SPITTING, open), Block.UPDATE_CLIENTS);
+    }
+    if (open) {
+      server.scheduleTick(worldPosition, getBlockState().getBlock(), ACID_POSE_INTERVAL_TICKS);
+    }
+    return open;
+  }
+
   private void remember() {
     observed = items().stream().map(ItemStack::copy).toList();
   }
@@ -79,6 +187,11 @@ public final class MouthBlockEntity extends OrganInventory {
     remember();
     if (level instanceof net.minecraft.server.level.ServerLevel server) {
       chewing().until = Math.min(chewing().until, server.getGameTime() + CHEW_TICKS);
+      // Keep recovery across saves, but never resume an unseen, half-finished telegraph on load.
+      chewing().acidReadyAt =
+          Math.min(chewing().acidReadyAt, server.getGameTime() + MawAcidAttack.COOLDOWN_TICKS);
+      chewing().acidReleaseAt = chewing().acidOpenUntil = 0;
+      chewing().acidActor = null;
       server.scheduleTick(worldPosition, getBlockState().getBlock(), 1);
     }
   }
