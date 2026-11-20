@@ -47,6 +47,54 @@
     "facing=west,height=3": {
       "model": "create_bioships:block/arachnid_leg",
       "y": 270
+    },
+    "facing=north,height=4": {
+      "model": "create_bioships:block/arachnid_leg",
+      "y": 0
+    },
+    "facing=north,height=5": {
+      "model": "create_bioships:block/arachnid_leg",
+      "y": 0
+    },
+    "facing=north,height=6": {
+      "model": "create_bioships:block/arachnid_leg",
+      "y": 0
+    },
+    "facing=east,height=4": {
+      "model": "create_bioships:block/arachnid_leg",
+      "y": 90
+    },
+    "facing=east,height=5": {
+      "model": "create_bioships:block/arachnid_leg",
+      "y": 90
+    },
+    "facing=east,height=6": {
+      "model": "create_bioships:block/arachnid_leg",
+      "y": 90
+    },
+    "facing=south,height=4": {
+      "model": "create_bioships:block/arachnid_leg",
+      "y": 180
+    },
+    "facing=south,height=5": {
+      "model": "create_bioships:block/arachnid_leg",
+      "y": 180
+    },
+    "facing=south,height=6": {
+      "model": "create_bioships:block/arachnid_leg",
+      "y": 180
+    },
+    "facing=west,height=4": {
+      "model": "create_bioships:block/arachnid_leg",
+      "y": 270
+    },
+    "facing=west,height=5": {
+      "model": "create_bioships:block/arachnid_leg",
+      "y": 270
+    },
+    "facing=west,height=6": {
+      "model": "create_bioships:block/arachnid_leg",
+      "y": 270
     }
   }
 }

@@ -52,6 +52,10 @@ final class PrototypeCompactMotor {
     this.body = body;
   }
 
+  void resetRestPose(BlockPos socket) {
+    gait.resetLeg(socket);
+  }
+
   void clear() {
     gait.clear();
     climbIntent = Vec3.ZERO;

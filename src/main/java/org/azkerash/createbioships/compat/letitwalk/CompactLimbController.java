@@ -141,8 +141,7 @@ public final class CompactLimbController {
     private double prototypeMobility;
   }
 
-  private static final int ARACHNID_ANATOMY_VERSION = 2;
-  private static final int ARACHNID_FAN_DEGREES = 25;
+  private static final int ARACHNID_ANATOMY_VERSION = 3;
   private final ServerSubLevel body;
   private final Context walker;
   private final PrototypeCompactMotor prototype;
@@ -217,54 +216,19 @@ public final class CompactLimbController {
   }
 
   private List<Vec3> restPoints(BlockPos socket, Direction face, double height, int angle) {
-    var existing = limbs.get(socket);
-    int fan =
-        CompactLegSocketBlock.isArachnid(body.getLevel().getBlockState(socket))
-            ? (existing == null ? arachnidFan(socket, face) : existing.fanAngle)
-            : 0;
-    return restPoints(socket, face, height, angle, fan);
+    return restPoints(socket, face, height, angle, 0);
   }
 
   private List<Vec3> restPoints(
-      BlockPos socket, Direction face, double height, int angle, int fan) {
-    double scale = (height + .5) / 1.45;
-    var normal = Vec3.atLowerCornerOf(face.getNormal());
-    var side = normal.yRot((float) Math.toRadians(angle + fan));
-    var start = Vec3.atCenterOf(socket).subtract(normal.scale(.25));
-    if (CompactLegSocketBlock.isArachnid(body.getLevel().getBlockState(socket))) {
-      // Huntsman stance, in local blocks: broad lateral reach and a low, outward knee.
-      return List.of(
-          start,
-          start.add(side.scale(.65 * scale)).add(0, .25 * scale, 0),
-          start.add(side.scale(1.65 * scale)).add(0, -.2 * scale, 0),
-          start.add(side.scale(2.15 * scale)).add(0, -1.7 * scale, 0));
-    }
-    return List.of(
-        start,
-        start.add(side.scale(.65 * scale)).add(0, .25 * scale, 0),
-        start.add(side.scale(1.25 * scale)).add(0, -.45 * scale, 0),
-        start.add(side.scale(1.45 * scale)).add(0, -1.45 * scale / .85, 0));
-  }
-
-  private int arachnidFan(BlockPos socket, Direction face) {
-    var bounds = body.getPlot().getBoundingBox();
-    var centre =
-        new Vec3(
-            (bounds.minX() + bounds.maxX()) * .5,
-            (bounds.minY() + bounds.maxY()) * .5,
-            (bounds.minZ() + bounds.maxZ()) * .5);
-    var front =
-        Vec3.atLowerCornerOf(
-            org.azkerash.createbioships.core.locomotion.SubLevelFacing.local(body).getNormal());
-    var side = Vec3.atLowerCornerOf(face.getNormal());
-    // Side sockets fan fore/aft; end sockets fan left/right so paired legs remain mirrored.
-    var fanAxis = Math.abs(side.dot(front)) > .5 ? front.yRot((float) (Math.PI / 2)) : front;
-    double role = Vec3.atLowerCornerOf(socket).subtract(centre).dot(fanAxis);
-    var rotated = side.yRot((float) Math.toRadians(ARACHNID_FAN_DEGREES));
-    double swing = rotated.subtract(side).dot(fanAxis);
-    return Math.abs(role) < .25 || Math.abs(swing) < .01
-        ? 0
-        : (int) Math.copySign(ARACHNID_FAN_DEGREES, role * swing);
+      BlockPos socket, Direction face, double height, int angle, int legacyFan) {
+    // Old saves need their former geometry only while reconnecting the same physical segments.
+    // The version migration below rebuilds them at the player's angle without the hidden fan.
+    return CompactLegGeometry.restPoints(
+        socket,
+        face,
+        height,
+        angle + legacyFan,
+        CompactLegSocketBlock.isArachnid(body.getLevel().getBlockState(socket)));
   }
 
   private void fill(ServerSubLevel part, int bone, int height, double length, boolean arachnid) {
@@ -291,7 +255,7 @@ public final class CompactLimbController {
     limb.socket = socket.immutable();
     limb.arachnid = CompactLegSocketBlock.isArachnid(body.getLevel().getBlockState(socket));
     limb.anatomyVersion = ARACHNID_ANATOMY_VERSION;
-    limb.fanAngle = limb.arachnid ? arachnidFan(socket, face) : 0;
+    limb.fanAngle = 0;
     limb.height = height;
     limb.face = face;
     limb.restAngle = LimbTuning.get(body.getLevel(), socket).restAngle();
@@ -378,7 +342,11 @@ public final class CompactLimbController {
     limb.runtime.built.contactFilters.clear();
     limb.extension = extension;
     int angle = LimbTuning.get(body.getLevel(), limb.socket).restAngle();
-    boolean changedAngle = limb.restAngle != angle;
+    boolean changedAngle = limb.restAngle != angle || limb.fanAngle != 0;
+    limb.fanAngle = 0;
+    if (changedAngle) {
+      prototype.resetRestPose(limb.socket);
+    }
     limb.restAngle = angle;
     var points = restPoints(limb.socket, limb.face, extension);
     limb.rest.clear();
@@ -1169,17 +1137,20 @@ public final class CompactLimbController {
       l.socket = BlockPos.of(t.getLong("Socket"));
       l.arachnid = t.getBoolean("Arachnid");
       l.anatomyVersion = t.getInt("AnatomyVersion");
-      l.height = Math.clamp(t.getInt("Height"), 1, 3);
-      l.extension = Math.clamp(t.getDouble("Extension"), 1, 3);
+      l.height =
+          Math.clamp(
+              t.getInt("Height"), CompactLegGeometry.MIN_HEIGHT, CompactLegGeometry.MAX_HEIGHT);
+      l.extension =
+          Math.clamp(
+              t.getDouble("Extension"),
+              CompactLegGeometry.MIN_HEIGHT,
+              CompactLegGeometry.MAX_HEIGHT);
       l.restAngle = t.getInt("RestAngle");
       l.face = Direction.byName(t.getString("Face"));
       if (l.face == null || !l.face.getAxis().isHorizontal()) {
         continue;
       }
-      l.fanAngle =
-          t.contains("FanAngle")
-              ? t.getInt("FanAngle")
-              : (l.arachnid ? arachnidFan(l.socket, l.face) : 0);
+      l.fanAngle = t.getInt("FanAngle");
       for (var id : new LinkedHashSet<>(built.segments)) {
         var part = container.getSubLevel(id);
         if (part instanceof ServerSubLevel s && !s.isRemoved()) {

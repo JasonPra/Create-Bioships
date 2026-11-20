@@ -57,7 +57,7 @@ public final class CompactLegWrenchTests {
         "Create wrench extended a compact leg");
     player.setItemInHand(
         InteractionHand.MAIN_HAND, new ItemStack(CreateBioships.BIOSHIP_WRENCH.get()));
-    for (int expected : new int[] {2, 3, 3}) {
+    for (int expected : new int[] {2, 3, 4, 5, 6, 6}) {
       player.gameMode.useItemOn(
           player, level, player.getMainHandItem(), InteractionHand.MAIN_HAND, hit);
       var state = level.getBlockState(pos);
@@ -68,8 +68,8 @@ public final class CompactLegWrenchTests {
           "Wrench rotated leg instead of extending it");
     }
     helper.assertTrue(
-        new CrabLegKinematics(3).standingHeight() == 3.5
-            && CrabLegKinematics.thickness(3) > CrabLegKinematics.thickness(1),
+        new CrabLegKinematics(6).standingHeight() == 6.5
+            && CrabLegKinematics.thickness(6) > CrabLegKinematics.thickness(1),
         "Extended legs did not get taller and thicker");
     helper.assertTrue(
         SubLevelArmor.status(body).maximum() == 10, "Extension changed armor capacity");

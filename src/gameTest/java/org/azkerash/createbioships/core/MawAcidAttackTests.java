@@ -122,6 +122,9 @@ public final class MawAcidAttackTests {
                     "Cooldown not saved on the organ");
                 var cow = EntityType.COW.create(h.getLevel());
                 cow.setNoAi(true);
+                // Keep the collision target on the firing line instead of letting gravity
+                // move it below the burst during the eight-tick impact observation.
+                cow.setNoGravity(true);
                 cow.moveTo(burst.getX() + 8, burst.getY() - .7, burst.getZ(), 0, 0);
                 h.getLevel().addFreshEntity(cow);
                 h.runAfterDelay(

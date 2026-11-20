@@ -23,7 +23,10 @@ public abstract class CompactLegSocketBlock
     implements BlockSubLevelAssemblyListener,
         com.simibubi.create.content.equipment.wrench.IWrenchable {
   public static final net.minecraft.world.level.block.state.properties.IntegerProperty HEIGHT =
-      net.minecraft.world.level.block.state.properties.IntegerProperty.create("height", 1, 3);
+      net.minecraft.world.level.block.state.properties.IntegerProperty.create(
+          "height",
+          org.azkerash.createbioships.compat.letitwalk.CompactLegGeometry.MIN_HEIGHT,
+          org.azkerash.createbioships.compat.letitwalk.CompactLegGeometry.MAX_HEIGHT);
 
   public static boolean isSocket(BlockState state) {
     return state.getBlock() instanceof CompactLegSocketBlock;
@@ -126,7 +129,9 @@ public abstract class CompactLegSocketBlock
     if (player == null || !player.mayBuild()) {
       return net.minecraft.world.InteractionResult.FAIL;
     }
-    if (!context.getLevel().isClientSide && state.getValue(HEIGHT) < 3) {
+    if (!context.getLevel().isClientSide
+        && state.getValue(HEIGHT)
+            < org.azkerash.createbioships.compat.letitwalk.CompactLegGeometry.MAX_HEIGHT) {
       context
           .getLevel()
           .setBlock(

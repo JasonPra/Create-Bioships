@@ -101,8 +101,8 @@ public final class LimbPositionerActions {
                     state.getValue(
                             org.azkerash.createbioships.components.logic.legs.CrabLegBlock.HEIGHT)
                         + direction,
-                    1,
-                    3)),
+                    CompactLegGeometry.MIN_HEIGHT,
+                    CompactLegGeometry.MAX_HEIGHT)),
             Block.UPDATE_ALL);
       }
       case REST_ANGLE -> {

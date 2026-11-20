@@ -22,7 +22,8 @@ public final class CrabLegKinematics {
   }
 
   public CrabLegKinematics(double extension) {
-    this.extension = Math.clamp(extension, 1, 3);
+    this.extension =
+        Math.clamp(extension, CompactLegGeometry.MIN_HEIGHT, CompactLegGeometry.MAX_HEIGHT);
     this.height = (int) Math.round(this.extension);
     this.scale = (this.extension + .5) / 1.45;
     chain =
@@ -41,7 +42,9 @@ public final class CrabLegKinematics {
   }
 
   public static double thickness(int height) {
-    return Math.sqrt((Math.clamp(height, 1, 3) + .5) / 1.45);
+    return Math.sqrt(
+        (Math.clamp(height, CompactLegGeometry.MIN_HEIGHT, CompactLegGeometry.MAX_HEIGHT) + .5)
+            / 1.45);
   }
 
   private final double[] angles = new double[3];

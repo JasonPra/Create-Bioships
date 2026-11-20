@@ -286,6 +286,17 @@ public final class ArachnidLegTests {
                       h.runAfterDelay(5, () -> run());
                       return;
                     }
+                    for (var raw :
+                        body.getUserDataTag()
+                            .getCompound(
+                                org.azkerash.createbioships.compat.letitwalk.CompactLimbController
+                                    .DATA)
+                            .getList("Legs", 10)) {
+                      var saved = (net.minecraft.nbt.CompoundTag) raw;
+                      h.assertTrue(
+                          saved.getInt("FanAngle") == 0 && saved.getInt("AnatomyVersion") >= 3,
+                          "Reload retained a hidden arachnid rest-angle offset");
+                    }
                     var end =
                         body.logicalPose()
                             .transformPosition(Vec3.atCenterOf(body.getPlot().getCenterBlock()));
@@ -523,14 +534,14 @@ public final class ArachnidLegTests {
               field.get(null);
       var old = controllers.remove(body);
       old.save();
-      // Simulate an existing pre-huntsman rig. Updating its anatomy must preserve saved parts.
+      // Simulate the former automatic fan. Migrating to neutral sockets must preserve parts.
       var data = body.getUserDataTag().copy();
       for (var raw :
           data.getCompound(org.azkerash.createbioships.compat.letitwalk.CompactLimbController.DATA)
               .getList("Legs", 10)) {
         var entry = (net.minecraft.nbt.CompoundTag) raw;
-        entry.remove("AnatomyVersion");
-        entry.remove("FanAngle");
+        entry.putInt("AnatomyVersion", 2);
+        entry.putInt("FanAngle", 25);
       }
       body.setUserDataTag(data);
       old.close();

@@ -12,7 +12,11 @@ import net.minecraft.world.phys.shapes.*;
 public final class CompactLimbBlock
     extends org.azkerash.createbioships.components.logic.WaterloggedComponentBlock {
   public static final IntegerProperty BONE = IntegerProperty.create("bone", 0, 2);
-  public static final IntegerProperty HEIGHT = IntegerProperty.create("height", 1, 3);
+  public static final IntegerProperty HEIGHT =
+      IntegerProperty.create(
+          "height",
+          org.azkerash.createbioships.compat.letitwalk.CompactLegGeometry.MIN_HEIGHT,
+          org.azkerash.createbioships.compat.letitwalk.CompactLegGeometry.MAX_HEIGHT);
   public static final IntegerProperty FILL = IntegerProperty.create("fill", 1, 64);
   public static final net.minecraft.world.level.block.state.properties.BooleanProperty ARACHNID =
       net.minecraft.world.level.block.state.properties.BooleanProperty.create("arachnid");

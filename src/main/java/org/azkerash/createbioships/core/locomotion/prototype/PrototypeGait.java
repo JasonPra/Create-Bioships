@@ -99,6 +99,11 @@ public final class PrototypeGait {
   private static final double TURN_FOOT_LEAD_SECONDS = .4;
   private PrototypeStance.Surface surface = PrototypeStance.LEVEL;
 
+  /** An edited socket must plant relative to its new rest angle, not retain a cached old toe. */
+  public void resetLeg(BlockPos socket) {
+    feet.remove(socket);
+  }
+
   public void clear() {
     feet.clear();
     surface = PrototypeStance.LEVEL;
