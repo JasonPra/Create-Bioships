@@ -16,7 +16,8 @@ public final class MembraneAccess {
     if (level instanceof net.minecraft.server.level.ServerLevel server) {
       var body = CoreAssemblyRules.containing(server, pos);
       return body != null && SubLevelData.isLiving(body)
-          ? SubLevelPermissions.get(body).permits(entity.getUUID())
+          ? (SubLevelPermissions.get(body).permits(entity.getUUID())
+              || ConstructMembranePassage.passenger(body, entity))
           : null;
     }
     var container = SubLevelContainer.getContainer(level);
@@ -24,6 +25,6 @@ public final class MembraneAccess {
     var plot = container.getPlot(new ChunkPos(pos));
     if (plot == null || plot.getSubLevel() == null) return null;
     return org.Azkerash.create_bioships.client.components.ClientMembraneAccess.permits(
-        plot.getSubLevel().getUniqueId(), entity.getUUID());
+        plot.getSubLevel().getUniqueId(), entity);
   }
 }

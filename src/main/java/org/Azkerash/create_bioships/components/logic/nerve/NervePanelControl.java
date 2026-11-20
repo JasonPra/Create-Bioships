@@ -52,6 +52,20 @@ public final class NervePanelControl {
         if (!access.permits(mob.getUUID()) && candidates.size() < CANDIDATE_LIMIT)
           candidates.add(
               new SubLevelPermissions.Entry(mob.getUUID(), mob.getName().getString(), false));
+      var container =
+          dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(body.getLevel());
+      if (container != null)
+        for (var other : container.getAllSubLevels()) {
+          if (other == body
+              || other.isRemoved()
+              || SubLevelCreatureParts.isPart(other)
+              || candidates.size() >= CANDIDATE_LIMIT) continue;
+          var named = org.Azkerash.create_bioships.core.naming.SubLevelNames.name(other);
+          if (!named.isBlank()
+              && !access.permits(other.getUniqueId())
+              && nearConstruct(center, other))
+            candidates.add(new SubLevelPermissions.Entry(other.getUniqueId(), named, false, true));
+        }
       // Allowed players may still be selected as the next owner.
       for (var other : player.getServer().getPlayerList().getPlayers())
         if (!other.getUUID().equals(access.owner())
@@ -106,6 +120,13 @@ public final class NervePanelControl {
               && entity.hasCustomName()
               && entity.position().distanceToSqr(center) <= 32 * 32)
         changed = SubLevelPermissions.add(body, player.getUUID(), entity);
+      else {
+        var container =
+            dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(body.getLevel());
+        var other = container == null ? null : container.getSubLevel(action.target());
+        if (other instanceof ServerSubLevel craft && nearConstruct(center, craft))
+          changed = SubLevelPermissions.addConstruct(body, player.getUUID(), craft);
+      }
     } else if (action.action() == 2)
       changed = SubLevelPermissions.remove(body, player.getUUID(), action.target());
     else if (action.action() == 3
@@ -113,5 +134,15 @@ public final class NervePanelControl {
       changed = SubLevelPermissions.transfer(body, player.getUUID(), action.target());
     open(player, body, action.panel());
     return changed;
+  }
+
+  private static boolean nearConstruct(Vec3 center, ServerSubLevel other) {
+    var bounds = other.boundingBox().toMojang();
+    var closest =
+        new Vec3(
+            Math.clamp(center.x, bounds.minX, bounds.maxX),
+            Math.clamp(center.y, bounds.minY, bounds.maxY),
+            Math.clamp(center.z, bounds.minZ, bounds.maxZ));
+    return closest.distanceToSqr(center) <= 64 * 64;
   }
 }

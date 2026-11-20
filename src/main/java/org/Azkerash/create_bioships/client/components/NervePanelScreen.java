@@ -43,14 +43,14 @@ public final class NervePanelScreen extends Screen {
     x = (width - 360) / 2;
     y = (height - 258) / 2;
     rows.clear();
-    String[] tabs = {"Allowed", "Players", "Named mobs"};
-    for (int i = 0; i < 3; i++) {
+    String[] tabs = {"Allowed", "Players", "Named mobs", "Constructs"};
+    for (int i = 0; i < tabs.length; i++) {
       final int value = i;
       addRenderableWidget(
           new OrganButton(
-                  x + 12 + i * 113,
+                  x + 12 + i * 85,
                   y + 52,
-                  109,
+                  81,
                   18,
                   tabs[i],
                   b -> {
@@ -109,7 +109,14 @@ public final class NervePanelScreen extends Screen {
   private List<Entry> entries() {
     var source = tab == 0 ? data.allowed() : data.candidates();
     return source.stream()
-        .filter(e -> tab == 0 || e.player() == (tab == 1))
+        .filter(
+            e ->
+                switch (tab) {
+                  case 0 -> true;
+                  case 1 -> e.player();
+                  case 2 -> !e.player() && !e.sublevel();
+                  default -> e.sublevel();
+                })
         .filter(e -> e.name().toLowerCase(Locale.ROOT).contains(search.toLowerCase(Locale.ROOT)))
         .sorted(
             Comparator.comparing(Entry::name, String.CASE_INSENSITIVE_ORDER)
@@ -131,7 +138,7 @@ public final class NervePanelScreen extends Screen {
       info.setTooltip(
           Tooltip.create(
               Component.literal(
-                  (entry.player() ? "Player: " : "Named mob: ")
+                  (entry.player() ? "Player: " : entry.sublevel() ? "Construct: " : "Named mob: ")
                       + entry.name()
                       + "\n"
                       + entry.id())));

@@ -12,6 +12,7 @@ public final class ComponentScreens {
   @SubscribeEvent
   public static void register(RegisterMenuScreensEvent event) {
     event.register(ComponentRegistry.STOMACH_MENU.get(), StomachScreen::new);
+    event.register(ComponentRegistry.NAME_TAG_DISPLAY_MENU.get(), NameTagDisplayScreen::new);
     event.register(ComponentRegistry.MOUTH_MENU.get(), MouthScreen::new);
     event.register(ComponentRegistry.BRAIN_MENU.get(), BrainScreen::new);
   }

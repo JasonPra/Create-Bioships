@@ -11,7 +11,11 @@ import org.Azkerash.create_bioships.core.SubLevelData;
 public final class SubLevelPermissions {
   public static final int MAX_ENTRIES = 128;
 
-  public record Entry(UUID id, String name, boolean player) {}
+  public record Entry(UUID id, String name, boolean player, boolean sublevel) {
+    public Entry(UUID id, String name, boolean player) {
+      this(id, name, player, false);
+    }
+  }
 
   public record Access(UUID owner, List<Entry> allowed) {
     public boolean permits(UUID id) {
@@ -36,7 +40,13 @@ public final class SubLevelPermissions {
             var value = (CompoundTag) element;
             if (value.hasUUID("id") && entries.size() < MAX_ENTRIES) {
               var id = value.getUUID("id");
-              entries.put(id, new Entry(id, value.getString("name"), value.getBoolean("player")));
+              entries.put(
+                  id,
+                  new Entry(
+                      id,
+                      value.getString("name"),
+                      value.getBoolean("player"),
+                      value.getBoolean("sublevel")));
             }
           }
           return new Access(
@@ -61,6 +71,7 @@ public final class SubLevelPermissions {
       item.putUUID("id", entry.id);
       item.putString("name", entry.name);
       item.putBoolean("player", entry.player);
+      item.putBoolean("sublevel", entry.sublevel);
       list.add(item);
     }
     tag.put("allowed", list);
@@ -88,6 +99,28 @@ public final class SubLevelPermissions {
         || current.allowed.size() >= MAX_ENTRIES) return false;
     var entries = new ArrayList<>(current.allowed);
     entries.add(new Entry(entity.getUUID(), entity.getName().getString(), player));
+    save(body, new Access(current.owner, List.copyOf(entries)));
+    return true;
+  }
+
+  public static boolean addConstruct(ServerSubLevel body, UUID actor, ServerSubLevel target) {
+    if (!SubLevelCreatureParts.available(body) || !SubLevelCreatureParts.available(target))
+      return false;
+    body = SubLevelCreatureParts.root(body);
+    target = SubLevelCreatureParts.root(target);
+    var current = get(body);
+    var name = org.Azkerash.create_bioships.core.naming.SubLevelNames.name(target);
+    if (actor == null
+        || !actor.equals(current.owner)
+        || body == target
+        || body.getLevel() != target.getLevel()
+        || name.isBlank()
+        || current.permits(target.getUniqueId())
+        || current.allowed.size() >= MAX_ENTRIES) return false;
+    var entries = new ArrayList<>(current.allowed);
+    entries.add(
+        new Entry(
+            target.getUniqueId(), name.substring(0, Math.min(80, name.length())), false, true));
     save(body, new Access(current.owner, List.copyOf(entries)));
     return true;
   }

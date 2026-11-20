@@ -15,6 +15,7 @@ public abstract class SubLevelHealthMixin {
   private void core$blockChanged(BlockPos pos, BlockState state, CallbackInfo callback) {
     var body = ((ServerLevelPlot) (Object) this).getSubLevel();
     SubLevelHealth.blockChanged(body, pos, state);
+    org.Azkerash.create_bioships.core.naming.SubLevelNames.changed(body, pos, state);
     org.Azkerash.create_bioships.core.flippers.SubLevelFlippers.changed(body, pos, state);
     org.Azkerash.create_bioships.compat.letitwalk.SocketJointSettings.changed(body, pos, state);
     org.Azkerash.create_bioships.compat.letitwalk.LimbTuning.changed(body, pos, state);

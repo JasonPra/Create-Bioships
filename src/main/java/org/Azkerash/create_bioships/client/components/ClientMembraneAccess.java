@@ -30,6 +30,22 @@ public final class ClientMembraneAccess {
     return allowed == null ? null : allowed.contains(entity);
   }
 
+  public static Boolean permits(UUID host, net.minecraft.world.entity.Entity entity) {
+    var allowed = ACCESS.get(host);
+    if (allowed == null) return null;
+    if (allowed.contains(entity.getUUID())) return true;
+    if (!(entity instanceof net.minecraft.world.entity.LivingEntity)) return false;
+    var container = dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(entity.level());
+    if (container == null) return false;
+    for (var id : allowed) {
+      var found = container.getSubLevel(id);
+      if (found instanceof dev.ryanhcode.sable.sublevel.ClientSubLevel craft
+          && org.Azkerash.create_bioships.compat.biomancy.ConstructMembranePassage.within(
+              craft, entity, craft.renderPose())) return true;
+    }
+    return false;
+  }
+
   @SubscribeEvent
   public static void tick(net.neoforged.neoforge.client.event.ClientTickEvent.Post event) {
     var current = Minecraft.getInstance().level;

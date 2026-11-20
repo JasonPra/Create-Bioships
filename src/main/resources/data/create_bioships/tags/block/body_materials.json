@@ -101,6 +101,7 @@
     "create_bioships:lung",
     "create_bioships:gills",
     "create_bioships:armored_gills",
-    "create_bioships:flipper"
+    "create_bioships:flipper",
+    "create_bioships:name_tag_displayer"
   ]
 }

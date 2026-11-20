@@ -68,6 +68,32 @@ public final class ComponentRegistry {
   private static final List<Runnable> SETUP = new ArrayList<>();
   private static boolean initialized;
 
+  public static final DeferredBlock<
+          org.Azkerash.create_bioships.components.logic.nametag.NameTagDisplayBlock>
+      NAME_TAG_DISPLAYER =
+          component(
+              new ComponentDefinition<>(
+                  "name_tag_displayer",
+                  () ->
+                      new org.Azkerash.create_bioships.components.logic.nametag.NameTagDisplayBlock(
+                          BlockBehaviour.Properties.of()
+                              .strength(1.5f)
+                              .noOcclusion()
+                              .sound(SoundType.BONE_BLOCK))));
+  public static final DeferredHolder<
+          BlockEntityType<?>,
+          BlockEntityType<
+              org.Azkerash.create_bioships.components.logic.nametag.NameTagDisplayEntity>>
+      NAME_TAG_DISPLAY_ENTITY =
+          BLOCK_ENTITIES.register(
+              "name_tag_displayer",
+              () ->
+                  BlockEntityType.Builder.of(
+                          org.Azkerash.create_bioships.components.logic.nametag.NameTagDisplayEntity
+                              ::new,
+                          NAME_TAG_DISPLAYER.get())
+                      .build(null));
+
   public static final DeferredBlock<org.Azkerash.create_bioships.furniture.ThroneBlock>
       THRONE_OF_AZKERASH =
           component(
@@ -441,6 +467,18 @@ public final class ComponentRegistry {
               () ->
                   net.neoforged.neoforge.common.extensions.IMenuTypeExtension.create(
                       org.Azkerash.create_bioships.components.logic.stomach.StomachMenu
+                          ::fromNetwork));
+
+  public static final DeferredHolder<
+          net.minecraft.world.inventory.MenuType<?>,
+          net.minecraft.world.inventory.MenuType<
+              org.Azkerash.create_bioships.components.logic.nametag.NameTagDisplayMenu>>
+      NAME_TAG_DISPLAY_MENU =
+          MENUS.register(
+              "name_tag_displayer",
+              () ->
+                  net.neoforged.neoforge.common.extensions.IMenuTypeExtension.create(
+                      org.Azkerash.create_bioships.components.logic.nametag.NameTagDisplayMenu
                           ::fromNetwork));
 
   public static final DeferredHolder<

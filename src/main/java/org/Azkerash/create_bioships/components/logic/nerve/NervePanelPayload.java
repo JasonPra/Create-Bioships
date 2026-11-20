@@ -25,6 +25,7 @@ public record NervePanelPayload(
       b.writeUUID(e.id());
       b.writeUtf(e.name().substring(0, Math.min(80, e.name().length())), 80);
       b.writeBoolean(e.player());
+      b.writeBoolean(e.sublevel());
     }
   }
 
@@ -33,7 +34,9 @@ public record NervePanelPayload(
     if (count < 0 || count > 128) throw new IllegalArgumentException("Invalid nerve list");
     var entries = new ArrayList<SubLevelPermissions.Entry>();
     for (int i = 0; i < count; i++)
-      entries.add(new SubLevelPermissions.Entry(b.readUUID(), b.readUtf(80), b.readBoolean()));
+      entries.add(
+          new SubLevelPermissions.Entry(
+              b.readUUID(), b.readUtf(80), b.readBoolean(), b.readBoolean()));
     return List.copyOf(entries);
   }
 

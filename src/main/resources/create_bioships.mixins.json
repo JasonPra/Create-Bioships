@@ -33,7 +33,8 @@
     "SocketFootholdMixin",
     "SocketSoleClearanceMixin",
     "CreatureFootstepsMixin",
-    "WalkerSwimInvoker"
+    "WalkerSwimInvoker",
+    "BiometricSubLevelCollisionMixin"
   ],
   "client": [
     "client.ExhibitDisplayMixin"
