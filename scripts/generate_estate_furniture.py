@@ -43,4 +43,19 @@ def table():
     model('ossuary_table_inventory',boxes,parent='minecraft:block/block');item('ossuary_table','ossuary_table_inventory');loot('ossuary_table')
     recipe('ossuary_table',['CCC','BFB','B B'],dict(C='create_bioships:chitin_armor',B='minecraft:bone',F='biomancy:packed_flesh'),2)
     title('ossuary_table','Ossuary Table')
-if __name__=='__main__': table()
+def horizontal(name, canonical='south'):
+    angles={'south':0,'west':90,'north':180,'east':270}
+    offset=angles[canonical]
+    write(ASSETS/f'blockstates/{name}.json',dict(variants={f'facing={d}':dict(model='create_bioships:block/'+name,y=(a-offset)%360) for d,a in angles.items()}))
+def seating():
+    boxes=[([2,6,2],[14,8,14],'chitin'),([3,8,4],[13,9,13],'flesh'),([2,9,1],[14,16,4],'chitin'),([4,10,3.9],[12,15,4.3],'flesh')]
+    for x in [2,11]:
+        for z in [2,11]: boxes += [([x,0,z],[x+3,6,z+3],'bone')]
+    boxes += [([2,8,1],[4,16,4],'bone'),([12,8,1],[14,16,4],'bone'),([4,14,1],[12,16,3],'marrow')]
+    model('ossuary_chair',boxes,parent='minecraft:block/block');horizontal('ossuary_chair');item('ossuary_chair');loot('ossuary_chair');title('ossuary_chair','Ossuary Chair')
+    recipe('ossuary_chair',['B B','CFC','B B'],dict(B='minecraft:bone',C='create_bioships:chitin_armor',F='biomancy:packed_flesh'),2)
+    boxes=[([1,0,1],[15,2,15],'chitin'),([3,2,3],[13,4,13],'bone'),([6,4,5],[10,13,10],'bone'),([5,5,6],[11,11,9],'flesh'),([1,12,2],[15,14,15],'chitin'),([1,14,2],[15,18,6],'bone'),([1,12,6],[15,16,10],'bone'),([1,10,10],[15,14,15],'bone'),([2,14,13],[14,15,15],'flesh')]
+    model('ossuary_lectern',boxes,parent='minecraft:block/block');horizontal('ossuary_lectern','south');item('ossuary_lectern');loot('ossuary_lectern');title('ossuary_lectern','Ossuary Reading Stand')
+    recipe('ossuary_lectern',['CCC',' B ','BFB'],dict(B='minecraft:bone',C='create_bioships:chitin_armor',F='biomancy:packed_flesh'))
+if __name__=='__main__':
+    table();seating()
