@@ -82,7 +82,7 @@ public final class EstateWaterworks {
     }
     EstatePaths.build(l, base);
     var state = CoreTestState.get(l);
-    state.denLandscapeVersion = Math.max(2, state.denLandscapeVersion);
+    state.setDenLandscapeVersion(Math.max(2, state.getDenLandscapeVersion()));
     state.setDirty();
   }
 }

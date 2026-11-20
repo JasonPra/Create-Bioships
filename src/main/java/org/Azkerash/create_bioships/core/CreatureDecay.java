@@ -248,9 +248,9 @@ public final class CreatureDecay {
   private record Piece(ServerSubLevel body, BlockPos pos) {}
 
   public static final class Family {
-    final Map<UUID, Map<ResourceLocation, Integer>> members = new HashMap<>();
-    long next;
-    int interval;
+    private final Map<UUID, Map<ResourceLocation, Integer>> members = new HashMap<>();
+    private long next;
+    private int interval;
 
     public boolean hasOrdinary(Set<ResourceLocation> last) {
       for (var counts : members.values()) {
@@ -265,11 +265,37 @@ public final class CreatureDecay {
       }
       return false;
     }
+
+    /**
+     * Snapshot preserves null summaries: an unloaded unknown member must still block the final
+     * stage.
+     */
+    public Map<UUID, Map<ResourceLocation, Integer>> getMembers() {
+      var snapshot = new HashMap<UUID, Map<ResourceLocation, Integer>>();
+      members.forEach((id, counts) -> snapshot.put(id, counts == null ? null : Map.copyOf(counts)));
+      return Collections.unmodifiableMap(snapshot);
+    }
+
+    void rememberMember(UUID id, Map<ResourceLocation, Integer> counts) {
+      members.put(id, counts == null ? null : new HashMap<>(counts));
+    }
+
+    void forgetMember(UUID id) {
+      members.remove(id);
+    }
+
+    public long getNext() {
+      return this.next;
+    }
+
+    public int getInterval() {
+      return this.interval;
+    }
   }
 
   /** Counts persist for unloaded fragments, rather than treating them as already rotted. */
   public static final class WorldState extends SavedData {
-    final Map<UUID, Family> families = new HashMap<>();
+    private final Map<UUID, Family> families = new HashMap<>();
 
     public static WorldState get(ServerLevel level) {
       return level
@@ -330,6 +356,10 @@ public final class CreatureDecay {
       }
       tag.put("families", familiesTag);
       return tag;
+    }
+
+    public Map<UUID, Family> getFamilies() {
+      return Collections.unmodifiableMap(this.families);
     }
   }
 }

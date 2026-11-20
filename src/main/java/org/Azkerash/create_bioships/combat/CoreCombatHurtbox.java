@@ -25,7 +25,7 @@ public final class CoreCombatHurtbox extends EyeCombatHurtbox {
 
   @Override
   protected Direction facing(ServerSubLevel body, BlockState state) {
-    var center = body.logicalPose().transformPosition(Vec3.atCenterOf(impactCell));
+    var center = body.logicalPose().transformPosition(Vec3.atCenterOf(this.getImpactCell()));
     var threat =
         level()
             .getEntitiesOfClass(
@@ -36,12 +36,12 @@ public final class CoreCombatHurtbox extends EyeCombatHurtbox {
             .min(java.util.Comparator.comparingDouble(m -> m.position().distanceToSqr(center)))
             .orElse(null);
     if (threat == null) {
-      return impactFace;
+      return this.getImpactFace();
     }
     var local =
         body.logicalPose()
             .transformPositionInverse(threat.getEyePosition())
-            .subtract(Vec3.atCenterOf(impactCell));
+            .subtract(Vec3.atCenterOf(this.getImpactCell()));
     return Direction.getNearest(local.x, local.y, local.z);
   }
 }

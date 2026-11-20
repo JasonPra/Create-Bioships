@@ -39,13 +39,13 @@ public final class StomachDigestion {
       return;
     }
     stomach.normalizePasteSlot();
-    if (state.acid < MAX_ACID) {
-      state.acid++;
+    if (state.getAcid() < MAX_ACID) {
+      state.incrementAcid();
       stomach.setChanged();
     }
     if (SubLevelData.hunger(body) < SubLevelData.maximumHunger(body)) {
       if (pasteCount(stomach) >= PASTE_PER_MEAL) {
-        if (++state.eating >= EAT_TICKS) {
+        if (state.incrementAndGetEating() >= EAT_TICKS) {
           int remaining = PASTE_PER_MEAL;
           for (int offset = 0; offset < items.size() - INPUT_SLOTS && remaining > 0; offset++) {
             int i = offset == 0 ? PASTE_SLOT : INPUT_SLOTS + offset - 1;
@@ -57,19 +57,19 @@ public final class StomachDigestion {
             stack.shrink(consumed);
             remaining -= consumed;
           }
-          int nutrition = genes.nutritionFifths() + state.nutritionRemainder;
+          int nutrition = genes.nutritionFifths() + state.getNutritionRemainder();
           SubLevelData.hunger(body, SubLevelData.hunger(body) + nutrition / 5);
-          state.nutritionRemainder = nutrition % 5;
-          state.eating = 0;
+          state.setNutritionRemainder(nutrition % 5);
+          state.setEating(0);
         }
         stomach.setChanged();
       } else {
-        state.eating = 0;
+        state.setEating(0);
       }
     } else {
-      state.eating = 0;
+      state.setEating(0);
     }
-    if (state.activeSlot < 0) {
+    if (state.getActiveSlot() < 0) {
       for (int slot = 0; slot < INPUT_SLOTS; slot++) {
         var match = recipe(level, items.get(slot));
         if (match.isEmpty()) {
@@ -80,50 +80,51 @@ public final class StomachDigestion {
           continue;
         }
         int cost = Math.clamp(value.getCraftingCostNutrients() * 100, 50, MAX_ACID);
-        if (state.acid < cost) {
+        if (state.getAcid() < cost) {
           continue;
         }
-        state.acid -= cost;
-        state.activeSlot = slot;
-        state.recipeId = match.get().id().toString();
-        state.duration = Math.max(1, value.getCraftingTimeTicks());
-        state.progress = 0;
-        state.pending = NonNullList.create();
+        state.setAcid(state.getAcid() - cost);
+        state.setActiveSlot(slot);
+        state.setRecipeId(match.get().id().toString());
+        state.setDuration(Math.max(1, value.getCraftingTimeTicks()));
+        state.setProgress(0);
+        state.setPending(NonNullList.create());
         for (var output : value.getOutputs()) {
           var result = output.getItemStack(level.random);
           if (!result.isEmpty()) {
-            state.pending.add(result.copy());
+            state.getPending().add(result.copy());
           }
         }
-        genes.addExtraComponent(state.pending, level.random);
+        genes.addExtraComponent(state.getPending(), level.random);
         if (items.get(slot).has(DataComponents.FOOD) && !items.get(slot).is(paste())) {
-          state.pending.add(new ItemStack(paste(), genes.pastePerMeal()));
+          state.getPending().add(new ItemStack(paste(), genes.pastePerMeal()));
         }
         stomach.setChanged();
         break;
       }
     }
-    if (state.activeSlot < 0) {
+    if (state.getActiveSlot() < 0) {
       return;
     }
-    var match = recipe(level, items.get(state.activeSlot));
+    var match = recipe(level, items.get(state.getActiveSlot()));
     if (match.isEmpty()
-        || !match.get().id().toString().equals(state.recipeId)
-        || items.get(state.activeSlot).getCount()
+        || !match.get().id().toString().equals(state.getRecipeId())
+        || items.get(state.getActiveSlot()).getCount()
             < match.get().value().getIngredientQuantity().count()) {
       // Inputs are read-only during processing. Commands invalidating a recipe cancel it without
       // outputs.
-      state.activeSlot = -1;
-      state.progress = state.duration = 0;
-      state.pending = NonNullList.create();
+      state.setActiveSlot(-1);
+      state.setDuration(0);
+      state.setProgress(0);
+      state.setPending(NonNullList.create());
       stomach.setChanged();
       return;
     }
-    if (state.progress < state.duration) {
-      state.progress++;
+    if (state.getProgress() < state.getDuration()) {
+      state.incrementProgress();
       stomach.setChanged();
     }
-    if (state.progress < state.duration) {
+    if (state.getProgress() < state.getDuration()) {
       return;
     }
     var snapshot = NonNullList.withSize(items.size(), ItemStack.EMPTY);
@@ -131,7 +132,7 @@ public final class StomachDigestion {
       snapshot.set(i, items.get(i).copy());
     }
     boolean fits = true;
-    for (var output : state.pending) {
+    for (var output : state.getPending()) {
       if (!stomach.insert(output, INPUT_SLOTS, items.size(), false).isEmpty()) {
         fits = false;
         break;
@@ -143,14 +144,15 @@ public final class StomachDigestion {
       }
       return;
     }
-    boolean rotten = items.get(state.activeSlot).is(Items.ROTTEN_FLESH);
-    items.get(state.activeSlot).shrink(match.get().value().getIngredientQuantity().count());
+    boolean rotten = items.get(state.getActiveSlot()).is(Items.ROTTEN_FLESH);
+    items.get(state.getActiveSlot()).shrink(match.get().value().getIngredientQuantity().count());
     if (rotten) {
       org.Azkerash.create_bioships.core.digestion.SubLevelSickness.infect(body);
     }
-    state.activeSlot = -1;
-    state.progress = state.duration = 0;
-    state.pending = NonNullList.create();
+    state.setActiveSlot(-1);
+    state.setDuration(0);
+    state.setProgress(0);
+    state.setPending(NonNullList.create());
     stomach.setChanged();
   }
 }

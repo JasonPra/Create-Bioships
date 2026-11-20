@@ -43,7 +43,7 @@ public final class PotionFixture {
   private PotionFixture() {}
 
   private static BlockPos base(ServerLevel level) {
-    return CoreTestState.get(level).potionOrigin;
+    return CoreTestState.get(level).getPotionOrigin();
   }
 
   public static BlockPos core(ServerLevel level) {
@@ -71,13 +71,13 @@ public final class PotionFixture {
   private static void clear(ServerLevel level) {
     var state = CoreTestState.get(level);
     var container = SubLevelContainer.getContainer(level);
-    if (state.potionBody != null) {
-      var body = container.getSubLevel(state.potionBody);
+    if (state.getPotionBody() != null) {
+      var body = container.getSubLevel(state.getPotionBody());
       if (body != null) {
         container.removeSubLevel(body, SubLevelRemovalReason.REMOVED);
       }
     }
-    state.potionBody = null;
+    state.setPotionBody(null);
     removeZombie(level);
     var remove = new ArrayList<Entity>();
     var arena = new AABB(base(level)).inflate(8);
@@ -134,8 +134,8 @@ public final class PotionFixture {
         3);
     button(level, b.offset(-3, 0, -8), "potion_test start");
     button(level, b.offset(3, 0, -8), "potion_test reset");
-    state.potionBuilt = true;
-    state.potionRunning = false;
+    state.setPotionBuilt(true);
+    state.setPotionRunning(false);
     state.setDirty();
     explain(level, "Ready");
   }
@@ -159,19 +159,19 @@ public final class PotionFixture {
 
   public static int start(ServerLevel level) {
     var state = CoreTestState.get(level);
-    if (!state.potionBuilt || state.potionRunning) {
+    if (!state.isPotionBuilt() || state.isPotionRunning()) {
       return 0;
     }
-    state.potionResults.clear();
-    state.potionIndex = 0;
-    state.potionRunning = true;
+    state.getPotionResults().clear();
+    state.setPotionIndex(0);
+    state.setPotionRunning(true);
     next(level);
     return 1;
   }
 
   private static void next(ServerLevel level) {
     var state = CoreTestState.get(level);
-    if (state.potionIndex >= EFFECTS.size()) {
+    if (state.getPotionIndex() >= EFFECTS.size()) {
       reset(level);
       explain(level, "Finished; results retained");
       return;
@@ -187,8 +187,8 @@ public final class PotionFixture {
             cells,
             new BoundingBox3i(base(level).north(), base(level).offset(1, 2, 0)));
     if (body == null) {
-      state.potionResults.add("FAIL: assembly");
-      state.potionRunning = false;
+      state.getPotionResults().add("FAIL: assembly");
+      state.setPotionRunning(false);
       state.setDirty();
       return;
     }
@@ -201,55 +201,59 @@ public final class PotionFixture {
         .addForceLoadTicket(body, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
     DevelopmentLifeSupport.pause(body);
     DevelopmentTestOwnership.assign(body);
-    state.potionBody = body.getUniqueId();
+    state.setPotionBody(body.getUniqueId());
     var health = SubLevelHealth.status(body);
     SubLevelHealth.damage(body, health.current() - health.maximum() * .6, "test_setup");
-    state.potionBefore = SubLevelHealth.status(body).current();
-    state.potionDeadline = level.getGameTime() + 200;
-    state.potionResistanceHit = false;
-    state.potionResistancePhase = 0;
-    state.potionBaselineDamage = state.potionProtectedDamage = 0;
+    state.setPotionBefore(SubLevelHealth.status(body).current());
+    state.setPotionDeadline(level.getGameTime() + 200);
+    state.setPotionResistanceHit(false);
+    state.setPotionResistancePhase(0);
+    state.setPotionProtectedDamage(0);
+    state.setPotionBaselineDamage(0);
     var inventory = (DispenserBlockEntity) level.getBlockEntity(dispenser(level));
     inventory.clearContent();
-    inventory.setItem(0, potion(EFFECTS.get(state.potionIndex)));
+    inventory.setItem(0, potion(EFFECTS.get(state.getPotionIndex())));
     inventory.setChanged();
-    if (EFFECTS.get(state.potionIndex) != MobEffects.DAMAGE_RESISTANCE) {
+    if (EFFECTS.get(state.getPotionIndex()) != MobEffects.DAMAGE_RESISTANCE) {
       firePotion(level);
     }
     state.setDirty();
-    explain(level, "Running " + (state.potionIndex + 1) + " / " + EFFECTS.size());
+    explain(level, "Running " + (state.getPotionIndex() + 1) + " / " + EFFECTS.size());
   }
 
   public static void tick(ServerLevel level) {
     var state = CoreTestState.get(level);
-    if (!state.potionRunning) {
+    if (!state.isPotionRunning()) {
       return;
     }
-    var entry = SubLevelContainer.getContainer(level).getSubLevel(state.potionBody);
+    var entry = SubLevelContainer.getContainer(level).getSubLevel(state.getPotionBody());
     if (!(entry instanceof ServerSubLevel body) || body.isRemoved()) {
-      state.potionResults.add("FAIL: subject lost");
-      state.potionRunning = false;
+      state.getPotionResults().add("FAIL: subject lost");
+      state.setPotionRunning(false);
       state.setDirty();
       return;
     }
     var target = CombatAdapter.target(body);
-    var effect = EFFECTS.get(state.potionIndex);
+    var effect = EFFECTS.get(state.getPotionIndex());
     if (effect == MobEffects.DAMAGE_RESISTANCE) {
       resistanceTick(level, body);
       return;
     }
-    if (level.getGameTime() < state.potionDeadline) {
+    if (level.getGameTime() < state.getPotionDeadline()) {
       return;
     }
-    double after = SubLevelHealth.status(body).current(), delta = after - state.potionBefore;
+    double after = SubLevelHealth.status(body).current(), delta = after - state.getPotionBefore();
     boolean passed =
         effect == MobEffects.HEAL || effect == MobEffects.REGENERATION ? delta > 0 : delta < 0;
-    state.potionResults.add(
-        BuiltInRegistries.MOB_EFFECT.getKey(effect.value())
-            + ": "
-            + (passed ? "PASS" : "FAIL")
-            + String.format(java.util.Locale.ROOT, " (HP %.1f → %.1f)", state.potionBefore, after));
-    state.potionIndex++;
+    state
+        .getPotionResults()
+        .add(
+            BuiltInRegistries.MOB_EFFECT.getKey(effect.value())
+                + ": "
+                + (passed ? "PASS" : "FAIL")
+                + String.format(
+                    java.util.Locale.ROOT, " (HP %.1f → %.1f)", state.getPotionBefore(), after));
+    state.incrementPotionIndex();
     next(level);
   }
 
@@ -260,8 +264,8 @@ public final class PotionFixture {
 
   private static void removeZombie(ServerLevel level) {
     var state = CoreTestState.get(level);
-    if (state.potionZombie != null) {
-      var zombie = level.getEntity(state.potionZombie);
+    if (state.getPotionZombie() != null) {
+      var zombie = level.getEntity(state.getPotionZombie());
       if (zombie != null) {
         zombie.discard();
       }
@@ -271,7 +275,7 @@ public final class PotionFixture {
         entity.discard();
       }
     }
-    state.potionZombie = null;
+    state.setPotionZombie(null);
   }
 
   private static boolean spawnZombie(ServerLevel level, ServerSubLevel body) {
@@ -293,9 +297,9 @@ public final class PotionFixture {
     // Compare the same body adapter in both trials, never a critical-hit weak point or visitor.
     zombie.targetSelector.removeAllGoals(goal -> true);
     zombie.setTarget(CombatAdapter.target(body));
-    state.potionZombie = zombie.getUUID();
-    state.potionHitBefore = SubLevelHealth.status(body).current();
-    state.potionDeadline = level.getGameTime() + 200;
+    state.setPotionZombie(zombie.getUUID());
+    state.setPotionHitBefore(SubLevelHealth.status(body).current());
+    state.setPotionDeadline(level.getGameTime() + 200);
     state.setDirty();
     return true;
   }
@@ -303,75 +307,78 @@ public final class PotionFixture {
   private static void resistanceTick(ServerLevel level, ServerSubLevel body) {
     var state = CoreTestState.get(level);
     var target = CombatAdapter.target(body);
-    if (state.potionResistancePhase == 0) {
+    if (state.getPotionResistancePhase() == 0) {
       if (!spawnZombie(level, body)) {
         finishResistance(level, false, "zombie spawn failed");
         return;
       }
-      state.potionResistancePhase = 1;
+      state.setPotionResistancePhase(1);
       explain(level, "Resistance: waiting for ONE unprotected zombie hit");
-    } else if (state.potionResistancePhase == 1 || state.potionResistancePhase == 3) {
-      double damage = state.potionHitBefore - SubLevelHealth.status(body).current();
+    } else if (state.getPotionResistancePhase() == 1 || state.getPotionResistancePhase() == 3) {
+      double damage = state.getPotionHitBefore() - SubLevelHealth.status(body).current();
       if (damage > 0) {
         removeZombie(level);
-        if (state.potionResistancePhase == 1) {
-          state.potionBaselineDamage = damage;
-          state.potionResistancePhase = 2;
+        if (state.getPotionResistancePhase() == 1) {
+          state.setPotionBaselineDamage(damage);
+          state.setPotionResistancePhase(2);
           target.invulnerableTime = 0;
           firePotion(level);
-          state.potionDeadline = level.getGameTime() + 200;
+          state.setPotionDeadline(level.getGameTime() + 200);
           explain(level, "Baseline hit: " + damage + " HP. Applying resistance; zombie removed.");
           state.setDirty();
         } else {
-          state.potionProtectedDamage = damage;
-          state.potionResistanceHit = true;
+          state.setPotionProtectedDamage(damage);
+          state.setPotionResistanceHit(true);
           finishResistance(
               level,
-              Math.abs(damage - state.potionBaselineDamage * .8) < .001,
+              Math.abs(damage - state.getPotionBaselineDamage() * .8) < .001,
               "one zombie hit before / after Resistance I");
         }
         return;
       }
-    } else if (state.potionResistancePhase == 2 && target.hasEffect(MobEffects.DAMAGE_RESISTANCE)) {
+    } else if (state.getPotionResistancePhase() == 2
+        && target.hasEffect(MobEffects.DAMAGE_RESISTANCE)) {
       target.invulnerableTime = 0;
       if (!spawnZombie(level, body)) {
         finishResistance(level, false, "zombie spawn failed");
         return;
       }
-      state.potionResistancePhase = 3;
+      state.setPotionResistancePhase(3);
       explain(level, "Resistance: waiting for ONE protected zombie hit");
       state.setDirty();
     }
-    if (level.getGameTime() >= state.potionDeadline) {
-      finishResistance(level, false, "timeout in phase " + state.potionResistancePhase);
+    if (level.getGameTime() >= state.getPotionDeadline()) {
+      finishResistance(level, false, "timeout in phase " + state.getPotionResistancePhase());
     }
   }
 
   private static void finishResistance(ServerLevel level, boolean passed, String detail) {
     var state = CoreTestState.get(level);
     removeZombie(level);
-    state.potionResults.add(
-        String.format(
-            java.util.Locale.ROOT,
-            "minecraft:resistance: %s (zombie damage %.2f → %.2f; %s)",
-            passed ? "PASS" : "FAIL",
-            state.potionBaselineDamage,
-            state.potionProtectedDamage,
-            detail));
-    state.potionIndex++;
+    state
+        .getPotionResults()
+        .add(
+            String.format(
+                java.util.Locale.ROOT,
+                "minecraft:resistance: %s (zombie damage %.2f → %.2f; %s)",
+                passed ? "PASS" : "FAIL",
+                state.getPotionBaselineDamage(),
+                state.getPotionProtectedDamage(),
+                detail));
+    state.incrementPotionIndex();
     next(level);
   }
 
   public static String status(ServerLevel level) {
     var s = CoreTestState.get(level);
     return "Potion test: "
-        + (s.potionRunning ? "running " + (s.potionIndex + 1) + "/6" : "ready")
+        + (s.isPotionRunning() ? "running " + (s.getPotionIndex() + 1) + "/6" : "ready")
         + ", saved results: "
-        + s.potionResults.size();
+        + s.getPotionResults().size();
   }
 
   public static List<String> results(ServerLevel level) {
-    return List.copyOf(CoreTestState.get(level).potionResults);
+    return List.copyOf(CoreTestState.get(level).getPotionResults());
   }
 
   private static void button(ServerLevel level, BlockPos pos, String command) {

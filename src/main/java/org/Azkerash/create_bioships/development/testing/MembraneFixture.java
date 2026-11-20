@@ -140,7 +140,7 @@ public final class MembraneFixture {
     }
     control(level, base.offset(-3, 0, -8), "membrane_test start");
     control(level, base.offset(3, 0, -8), "membrane_test reset");
-    CoreTestState.get(level).membraneBuilt = true;
+    CoreTestState.get(level).setMembraneBuilt(true);
     CoreTestState.get(level).setDirty();
     explain(level, "Ready: START assembles the wall");
   }
@@ -164,7 +164,7 @@ public final class MembraneFixture {
     if (body(level) != null) {
       return 0;
     }
-    if (!CoreTestState.get(level).membraneBuilt) {
+    if (!CoreTestState.get(level).isMembraneBuilt()) {
       reset(level);
     }
     var origin = core(level);
@@ -258,7 +258,7 @@ public final class MembraneFixture {
       return;
     }
     for (var level : e.getServer().getAllLevels()) {
-      if (CoreTestState.get(level).membraneBuilt && body(level) != null) {
+      if (CoreTestState.get(level).isMembraneBuilt() && body(level) != null) {
         for (var mob : guests(level)) {
           configureGuest(mob);
         }

@@ -10,10 +10,10 @@ import org.Azkerash.create_bioships.core.brain.program.ProgramCardData;
 
 /** The server keeps the editing lease; clients receive only this card's source and identity. */
 public final class CardWorkspaceMenu extends AbstractContainerMenu {
-  public final CardWorkspaceTarget target;
-  public final UUID identity;
-  public final String initialSource;
-  public final boolean initiallyCompiled;
+  private final CardWorkspaceTarget target;
+  private final UUID identity;
+  private final String initialSource;
+  private final boolean initiallyCompiled;
   private long nextCompile, nextPoll;
 
   public boolean allowPoll(long tick) {
@@ -68,5 +68,21 @@ public final class CardWorkspaceMenu extends AbstractContainerMenu {
   @Override
   public ItemStack quickMoveStack(Player player, int index) {
     return ItemStack.EMPTY;
+  }
+
+  public CardWorkspaceTarget getTarget() {
+    return this.target;
+  }
+
+  public UUID getIdentity() {
+    return this.identity;
+  }
+
+  public String getInitialSource() {
+    return this.initialSource;
+  }
+
+  public boolean isInitiallyCompiled() {
+    return this.initiallyCompiled;
   }
 }

@@ -38,7 +38,7 @@ public final class CombatFixture {
   private CombatFixture() {}
 
   private static BlockPos base(ServerLevel level) {
-    return CoreTestState.get(level).combatOrigin;
+    return CoreTestState.get(level).getCombatOrigin();
   }
 
   private static AABB bounds(ServerLevel level) {
@@ -61,7 +61,7 @@ public final class CombatFixture {
         }
       }
     }
-    CoreTestState.get(level).combatOrigin = destination;
+    CoreTestState.get(level).setCombatOrigin(destination);
     reset(level);
   }
 
@@ -117,9 +117,9 @@ public final class CombatFixture {
     }
     removed.forEach(Entity::discard);
     var state = CoreTestState.get(level);
-    state.combatBody = null;
-    state.combatEnemy = null;
-    state.combatAcquired = false;
+    state.setCombatBody(null);
+    state.setCombatEnemy(null);
+    state.setCombatAcquired(false);
     for (int x = -12; x <= 12; x++) {
       for (int z = -12; z <= 12; z++) {
         for (int y = 0; y < HEIGHT; y++) {
@@ -143,10 +143,11 @@ public final class CombatFixture {
     var state = CoreTestState.get(level);
     // Below sea level a drowned's native, flagless SwimUpGoal continuously overwrites
     // its attack navigation. A sea-level enclosure also gives phantoms a natural flight volume.
-    if (state.combatOrigin.getY() < level.getSeaLevel()) {
+    if (state.getCombatOrigin().getY() < level.getSeaLevel()) {
       relocate(
           level,
-          new BlockPos(state.combatOrigin.getX(), level.getSeaLevel(), state.combatOrigin.getZ()));
+          new BlockPos(
+              state.getCombatOrigin().getX(), level.getSeaLevel(), state.getCombatOrigin().getZ()));
       return;
     }
     clearTrial(level);
@@ -175,8 +176,8 @@ public final class CombatFixture {
     sleepingSubject(level);
     control(level, b.offset(-3, 0, -16), "combat_test start");
     control(level, b.offset(3, 0, -16), "combat_test reset");
-    state.combatRunning = false;
-    state.combatBuilt = true;
+    state.setCombatRunning(false);
+    state.setCombatBuilt(true);
     state.setDirty();
     explanation(level, "Ready · subject is unassembled");
   }
@@ -237,12 +238,12 @@ public final class CombatFixture {
 
   public static int start(ServerLevel level) {
     var state = CoreTestState.get(level);
-    if (!state.combatBuilt || state.combatRunning) {
+    if (!state.isCombatBuilt() || state.isCombatRunning()) {
       return 0;
     }
-    state.combatEnemies.clear();
-    state.combatResults.clear();
-    state.combatIndex = 0;
+    state.getCombatEnemies().clear();
+    state.getCombatResults().clear();
+    state.setCombatIndex(0);
     for (var type : BuiltInRegistries.ENTITY_TYPE) {
       if (type.getCategory() != MobCategory.MONSTER) {
         continue;
@@ -257,18 +258,20 @@ public final class CombatFixture {
       try {
         if (type.create(level) instanceof Mob mob
             && org.Azkerash.create_bioships.combat.HostileCombatIntegration.isHostile(mob)) {
-          state.combatEnemies.add(BuiltInRegistries.ENTITY_TYPE.getKey(type).toString());
+          state.getCombatEnemies().add(BuiltInRegistries.ENTITY_TYPE.getKey(type).toString());
         }
       } catch (RuntimeException error) {
-        state.combatResults.add(
-            BuiltInRegistries.ENTITY_TYPE.getKey(type)
-                + ": SKIP (cannot construct: "
-                + error.getClass().getSimpleName()
-                + ")");
+        state
+            .getCombatResults()
+            .add(
+                BuiltInRegistries.ENTITY_TYPE.getKey(type)
+                    + ": SKIP (cannot construct: "
+                    + error.getClass().getSimpleName()
+                    + ")");
       }
     }
-    Collections.sort(state.combatEnemies);
-    state.combatRunning = true;
+    Collections.sort(state.getCombatEnemies());
+    state.setCombatRunning(true);
     state.setDirty();
     next(level);
     return 1;
@@ -276,9 +279,9 @@ public final class CombatFixture {
 
   private static void next(ServerLevel level) {
     var state = CoreTestState.get(level);
-    if (state.combatIndex >= state.combatEnemies.size()) {
+    if (state.getCombatIndex() >= state.getCombatEnemies().size()) {
       reset(level);
-      explanation(level, "Finished · " + state.combatResults.size() + " results retained");
+      explanation(level, "Finished · " + state.getCombatResults().size() + " results retained");
       return;
     }
     clearTrial(level);
@@ -302,14 +305,14 @@ public final class CombatFixture {
         .addForceLoadTicket(body, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
     DevelopmentLifeSupport.pause(body);
     DevelopmentTestOwnership.assign(body);
-    state.combatBody = body.getUniqueId();
+    state.setCombatBody(body.getUniqueId());
     var health = SubLevelHealth.status(body);
     SubLevelHealth.damage(body, health.current() - 1, "test_setup");
-    state.combatActiveTrialSeconds = state.combatTrialSeconds;
-    state.combatDeadline = level.getGameTime() + state.combatActiveTrialSeconds * 20L;
+    state.setCombatActiveTrialSeconds(state.getCombatTrialSeconds());
+    state.setCombatDeadline(level.getGameTime() + state.getCombatActiveTrialSeconds() * 20L);
     var type =
         BuiltInRegistries.ENTITY_TYPE.get(
-            ResourceLocation.parse(state.combatEnemies.get(state.combatIndex)));
+            ResourceLocation.parse(state.getCombatEnemies().get(state.getCombatIndex())));
     var enemy = type.create(level);
     if (enemy == null) {
       finishTrial(level, "SKIP (spawn unavailable)");
@@ -338,8 +341,8 @@ public final class CombatFixture {
                     : enemy instanceof net.minecraft.world.entity.monster.Vex ? 2 : 0,
                 .5));
     enemy.addTag(MARK);
-    state.combatEnemy = enemy.getUUID();
-    state.combatAcquired = false;
+    state.setCombatEnemy(enemy.getUUID());
+    state.setCombatAcquired(false);
     if (enemy instanceof Mob mob) {
       mob.setPersistenceRequired();
       mob.finalizeSpawn(
@@ -381,71 +384,74 @@ public final class CombatFixture {
     state.setDirty();
     explanation(
         level,
-        (state.combatIndex + 1)
+        (state.getCombatIndex() + 1)
             + " / "
-            + state.combatEnemies.size()
+            + state.getCombatEnemies().size()
             + " · "
-            + state.combatEnemies.get(state.combatIndex));
+            + state.getCombatEnemies().get(state.getCombatIndex()));
   }
 
   private static void finishTrial(ServerLevel level, String result) {
     var state = CoreTestState.get(level);
-    state.combatResults.add(
-        state.combatEnemies.get(state.combatIndex)
-            + ": "
-            + result
-            + (state.combatAcquired ? "; target acquired" : "; no target acquired"));
-    state.combatIndex++;
+    state
+        .getCombatResults()
+        .add(
+            state.getCombatEnemies().get(state.getCombatIndex())
+                + ": "
+                + result
+                + (state.isCombatAcquired() ? "; target acquired" : "; no target acquired"));
+    state.incrementCombatIndex();
     state.setDirty();
     next(level);
   }
 
   public static void tick(ServerLevel level) {
     var state = CoreTestState.get(level);
-    if (state.combatBuilt
+    if (state.isCombatBuilt()
         && !UI_READY.contains(level)
         && level.isPositionEntityTicking(base(level))
         && level.isPositionEntityTicking(base(level).north(16))) {
       explanation(level, status(level));
     }
-    if (!state.combatRunning) {
+    if (!state.isCombatRunning()) {
       return;
     }
-    var enemy = state.combatEnemy == null ? null : level.getEntity(state.combatEnemy);
+    var enemy = state.getCombatEnemy() == null ? null : level.getEntity(state.getCombatEnemy());
     if (enemy instanceof Mob mob
         && mob.getTarget() instanceof org.Azkerash.create_bioships.combat.SubLevelCombatTarget
-        && !state.combatAcquired) {
-      state.combatAcquired = true;
+        && !state.isCombatAcquired()) {
+      state.setCombatAcquired(true);
       state.setDirty();
     }
     var body =
-        state.combatBody == null
+        state.getCombatBody() == null
             ? null
-            : SubLevelContainer.getContainer(level).getSubLevel(state.combatBody);
+            : SubLevelContainer.getContainer(level).getSubLevel(state.getCombatBody());
     if (body instanceof ServerSubLevel server && SubLevelHealth.status(server).dead()) {
       finishTrial(level, "PASS (" + SubLevelHealth.status(server).causeOfDeath() + ")");
     } else if (body == null || body.isRemoved()) {
       finishTrial(level, "FAIL (subject lost)");
-    } else if (level.getGameTime() >= state.combatDeadline) {
-      finishTrial(level, "FAIL (no lethal attack within " + state.combatActiveTrialSeconds + "s)");
+    } else if (level.getGameTime() >= state.getCombatDeadline()) {
+      finishTrial(
+          level, "FAIL (no lethal attack within " + state.getCombatActiveTrialSeconds() + "s)");
     }
   }
 
   public static String status(ServerLevel level) {
     var s = CoreTestState.get(level);
     return "Combat test: "
-        + (s.combatRunning
-            ? "running " + (s.combatIndex + 1) + " / " + s.combatEnemies.size()
+        + (s.isCombatRunning()
+            ? "running " + (s.getCombatIndex() + 1) + " / " + s.getCombatEnemies().size()
             : "ready")
         + ", saved results: "
-        + s.combatResults.size()
+        + s.getCombatResults().size()
         + ", trial limit: "
-        + s.combatTrialSeconds
+        + s.getCombatTrialSeconds()
         + "s";
   }
 
   public static List<String> results(ServerLevel level) {
-    return List.copyOf(CoreTestState.get(level).combatResults);
+    return List.copyOf(CoreTestState.get(level).getCombatResults());
   }
 
   private static final String FAILURE_LABEL = MARK + ".failure_label",
@@ -457,9 +463,9 @@ public final class CombatFixture {
   public static void toggleFailures(ServerLevel level, boolean nextPage) {
     var state = CoreTestState.get(level);
     if (nextPage) {
-      state.combatFailurePage++;
+      state.incrementCombatFailurePage();
     } else {
-      state.combatFailuresExpanded = !state.combatFailuresExpanded;
+      state.setCombatFailuresExpanded(!state.isCombatFailuresExpanded());
     }
     state.setDirty();
     failureDisplay(level);
@@ -467,7 +473,7 @@ public final class CombatFixture {
 
   public static void adjustTrialDuration(ServerLevel level, int seconds) {
     var state = CoreTestState.get(level);
-    state.combatTrialSeconds = Math.clamp(state.combatTrialSeconds + seconds, 5, 120);
+    state.setCombatTrialSeconds(Math.clamp(state.getCombatTrialSeconds() + seconds, 5, 120));
     state.setDirty();
     failureDisplay(level);
   }
@@ -486,9 +492,9 @@ public final class CombatFixture {
     }
     removed.forEach(Entity::discard);
     var state = CoreTestState.get(level);
-    var failures = state.combatResults.stream().filter(r -> r.contains(": FAIL")).toList();
+    var failures = state.getCombatResults().stream().filter(r -> r.contains(": FAIL")).toList();
     int pages = Math.max(1, (failures.size() + 3) / 4);
-    state.combatFailurePage = Math.floorMod(state.combatFailurePage, pages);
+    state.setCombatFailurePage(Math.floorMod(state.getCombatFailurePage(), pages));
     var header = Vec3.atLowerCornerOf(base(level)).add(8.5, 1.62, -15.5);
     failureText(
         level,
@@ -496,20 +502,22 @@ public final class CombatFixture {
         "Failures ("
             + failures.size()
             + ") "
-            + (state.combatFailuresExpanded ? "▲" : "▼")
+            + (state.isCombatFailuresExpanded() ? "▲" : "▼")
             + " · right-click");
     failureButton(level, header.add(0, -.17, 0), FAILURE_TOGGLE, 4);
     var timerRow = header.add(0, .9, 0);
     failureText(
-        level, timerRow, "Trial limit: " + state.combatTrialSeconds + "s\nApplies to next test");
+        level,
+        timerRow,
+        "Trial limit: " + state.getCombatTrialSeconds() + "s\nApplies to next test");
     failureText(level, timerRow.add(-3, 0, 0), "[−5s]");
     failureText(level, timerRow.add(3, 0, 0), "[+5s]");
     failureButton(level, timerRow.add(-3, -.17, 0), TIME_DECREASE, 1.2f);
     failureButton(level, timerRow.add(3, -.17, 0), TIME_INCREASE, 1.2f);
-    if (state.combatFailuresExpanded) {
+    if (state.isCombatFailuresExpanded()) {
       var lines = new java.util.ArrayList<String>();
-      for (int i = state.combatFailurePage * 4;
-          i < Math.min(failures.size(), state.combatFailurePage * 4 + 4);
+      for (int i = state.getCombatFailurePage() * 4;
+          i < Math.min(failures.size(), state.getCombatFailurePage() * 4 + 4);
           i++) {
         String id = failures.get(i).substring(0, failures.get(i).indexOf(": FAIL"));
         var type = BuiltInRegistries.ENTITY_TYPE.get(ResourceLocation.parse(id));
@@ -518,7 +526,7 @@ public final class CombatFixture {
       if (lines.isEmpty()) {
         lines.add("No failures recorded");
       }
-      lines.add("Page " + (state.combatFailurePage + 1) + " / " + pages);
+      lines.add("Page " + (state.getCombatFailurePage() + 1) + " / " + pages);
       failureText(level, header.add(0, -1.45, 0), String.join("\n", lines));
       if (pages > 1) {
         failureText(level, header.add(4, 0, 0), "Next ›");
@@ -573,7 +581,7 @@ public final class CombatFixture {
     if (!next && !decrease && !increase && !event.getTarget().getTags().contains(FAILURE_TOGGLE)) {
       return;
     }
-    if (!CoreTestState.get(level).combatBuilt) {
+    if (!CoreTestState.get(level).isCombatBuilt()) {
       return;
     }
     if (decrease || increase) {
@@ -591,7 +599,7 @@ public final class CombatFixture {
       return;
     }
     var state = CoreTestState.get(level);
-    if (state.combatRunning
+    if (state.isCombatRunning()
         && event.getEntity() instanceof Enemy
         && bounds(level).inflate(32).contains(event.getEntity().position())) {
       event.getEntity().addTag(MARK);

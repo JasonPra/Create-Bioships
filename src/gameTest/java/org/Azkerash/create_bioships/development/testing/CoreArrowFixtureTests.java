@@ -21,7 +21,7 @@ public final class CoreArrowFixtureTests {
       GameTestHelper helper) {
     var level = helper.getLevel();
     var state = CoreTestState.get(level);
-    state.arrowOrigin = new BlockPos(224, 80, 128);
+    state.setArrowOrigin(new BlockPos(224, 80, 128));
     CoreArrowFixture.reset(level);
     helper
         .startSequence()
@@ -60,13 +60,13 @@ public final class CoreArrowFixtureTests {
         .thenWaitUntil(
             () ->
                 helper.assertTrue(
-                    state.arrowPhase == 3,
-                    "Waiting for living/corpse rounds: " + state.arrowResult))
+                    state.getArrowPhase() == 3,
+                    "Waiting for living/corpse rounds: " + state.getArrowResult()))
         .thenExecute(
             () -> {
               var body =
                   (ServerSubLevel)
-                      SubLevelContainer.getContainer(level).getSubLevel(state.arrowBody);
+                      SubLevelContainer.getContainer(level).getSubLevel(state.getArrowBody());
               helper.assertTrue(
                   body != null && SubLevelHealth.status(body).dead(), "Corpse round did not run");
               helper.assertTrue(
@@ -75,7 +75,7 @@ public final class CoreArrowFixtureTests {
               var arrows =
                   level.getEntitiesOfClass(
                       Arrow.class,
-                      new AABB(state.arrowOrigin).inflate(12),
+                      new AABB(state.getArrowOrigin()).inflate(12),
                       ProjectileAttachment::attached);
               helper.assertTrue(
                   arrows.size() >= 6,
@@ -99,7 +99,8 @@ public final class CoreArrowFixtureTests {
               }
               CoreArrowFixture.reset(level);
               helper.assertTrue(
-                  !state.arrowRunning && state.arrowBody == null, "Reset retained subject");
+                  !state.isArrowRunning() && state.getArrowBody() == null,
+                  "Reset retained subject");
               for (var pos : CoreArrowFixture.dispensers(level)) {
                 helper.assertTrue(
                     level.getBlockState(pos.north()).is(Blocks.AIR),

@@ -26,7 +26,7 @@ public final class NameTagDisplayScreen extends AbstractContainerScreen<NameTagD
     for (int i = 0; i < 3; i++) {
       sliders[i] =
           addRenderableWidget(
-              new OffsetSlider(i, leftPos + 32, topPos + 73 + i * 21, menu.offsets.get(i)));
+              new OffsetSlider(i, leftPos + 32, topPos + 73 + i * 21, menu.getOffsets().get(i)));
     }
     addRenderableWidget(
         new OrganButton(

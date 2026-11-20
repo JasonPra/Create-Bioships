@@ -19,8 +19,8 @@ public final class SubLevelBrains {
   private static final Map<ServerSubLevel, SubLevelBrains> BRAINS = new IdentityHashMap<>();
   private static final Set<ServerSubLevel> PENDING =
       Collections.newSetFromMap(new IdentityHashMap<>());
-  public final ServerSubLevel body;
-  final NonNullList<ItemStack> cards = NonNullList.withSize(27, ItemStack.EMPTY);
+  private final ServerSubLevel body;
+  private final NonNullList<ItemStack> cards = NonNullList.withSize(27, ItemStack.EMPTY);
   private final Set<BlockPos> cells = new HashSet<>();
   private Set<BlockPos> active = Set.of();
   private BlockPos port, anchor;
@@ -281,5 +281,16 @@ public final class SubLevelBrains {
   public static void stopped(net.neoforged.neoforge.event.server.ServerStoppedEvent event) {
     BRAINS.clear();
     PENDING.clear();
+  }
+
+  public ServerSubLevel getBody() {
+    return this.body;
+  }
+
+  /**
+   * Live memory backing for BrainInventory; its mutation methods handle persistence notifications.
+   */
+  public NonNullList<ItemStack> getCards() {
+    return this.cards;
   }
 }

@@ -269,7 +269,7 @@ public final class EstateRuins {
       }
     }
     var state = CoreTestState.get(l);
-    state.denLandscapeVersion = Math.max(3, state.denLandscapeVersion);
+    state.setDenLandscapeVersion(Math.max(3, state.getDenLandscapeVersion()));
     state.setDirty();
   }
 }

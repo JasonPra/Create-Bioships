@@ -272,7 +272,7 @@ public final class EstateGardens {
     pathLights(l, base, route);
     vines(l, base);
     var state = CoreTestState.get(l);
-    state.denLandscapeVersion = 4;
+    state.setDenLandscapeVersion(4);
     state.setDirty();
   }
 }

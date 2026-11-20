@@ -107,9 +107,9 @@ public final class NameTagDisplayBlock extends WaterloggedComponentBlock
           display,
           buffer -> {
             var offset = display.offset();
-            buffer.writeVarInt(offset.x);
-            buffer.writeVarInt(offset.y);
-            buffer.writeVarInt(offset.z);
+            buffer.writeVarInt(offset.getX());
+            buffer.writeVarInt(offset.getY());
+            buffer.writeVarInt(offset.getZ());
           });
     }
     return InteractionResult.sidedSuccess(l.isClientSide);

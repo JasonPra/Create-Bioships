@@ -72,7 +72,7 @@ public final class CoreDevelopmentTests {
                       b ->
                           !b.isRemoved()
                               && CoreAssemblyRules.isCreature(b)
-                              && CoreTestState.get(level).owned.contains(b.getUniqueId()))
+                              && CoreTestState.get(level).getOwned().contains(b.getUniqueId()))
                   .count();
           helper.assertTrue(
               count == 49, "Honey-glued fixture did not become 49 independent cores: " + count);

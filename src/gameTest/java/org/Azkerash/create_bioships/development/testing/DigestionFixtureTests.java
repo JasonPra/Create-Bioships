@@ -13,7 +13,7 @@ public final class DigestionFixtureTests {
       GameTestHelper helper) {
     var level = helper.getLevel();
     var state = CoreTestState.get(level);
-    state.digestionOrigin = new BlockPos(1344, 80, 128);
+    state.setDigestionOrigin(new BlockPos(1344, 80, 128));
     DigestionFixture.reset(level);
     helper
         .startSequence()
@@ -27,7 +27,7 @@ public final class DigestionFixtureTests {
                 helper.assertTrue(
                     DigestionFixture.start(level) == 1, "Digestion fixture failed to start"))
         .thenWaitUntil(
-            () -> helper.assertTrue(!state.digestionRunning, "Waiting for four native meals"))
+            () -> helper.assertTrue(!state.isDigestionRunning(), "Waiting for four native meals"))
         .thenExecute(
             () -> {
               helper.assertTrue(
@@ -35,7 +35,8 @@ public final class DigestionFixtureTests {
                   DigestionFixture.status(level));
               DigestionFixture.reset(level);
               helper.assertTrue(
-                  state.digestionBody == null && !state.digestionRunning, "Reset retained subject");
+                  state.getDigestionBody() == null && !state.isDigestionRunning(),
+                  "Reset retained subject");
               helper.assertTrue(DigestionFixture.start(level) == 1, "Fixture could not restart");
               DigestionFixture.reset(level);
             })

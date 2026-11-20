@@ -12,9 +12,9 @@ final class BrainSurface {
 
   record Quad(Vertex a, Vertex b, Vertex c, Vertex d) {}
 
-  final BlockPos minimum;
+  private final BlockPos minimum;
   final Vec3 size;
-  final List<Quad> quads;
+  private final List<Quad> quads;
 
   BrainSurface(Set<BlockPos> cells) {
     minimum =
@@ -90,5 +90,13 @@ final class BrainSurface {
             + 2 * Math.sin(8 * relative.y / size.y);
     float shade = (float) (.83 + .17 * (.5 + .5 * Math.cos(flow)));
     return new Vertex(point, normal, shade, (float) u, (float) v);
+  }
+
+  public BlockPos getMinimum() {
+    return this.minimum;
+  }
+
+  public List<Quad> getQuads() {
+    return this.quads;
   }
 }

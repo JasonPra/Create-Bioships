@@ -87,10 +87,10 @@ public final class DevelopmentNavigatorItem extends Item {
             "Regression: Modular limbs and Synaptic Calibrator"));
     entries.setItem(10, icon(Items.WATER_BUCKET, "Regression: Waterlogging catalogue"));
     entries.setItem(11, icon(Items.KELP, "Habitat: Aquatic homunculus aquarium"));
-    if (state.juniorHabitatBuilt) {
+    if (state.isJuniorHabitatBuilt()) {
       entries.setItem(12, icon(Items.POPPY, "Habitat: Junior’s garden"));
     }
-    if (state.necromancerDenBuilt) {
+    if (state.isNecromancerDenBuilt()) {
       entries.setItem(13, icon(Items.BOOKSHELF, "Landmark: The Den of Az’kerash"));
     }
     player.openMenu(
@@ -101,17 +101,17 @@ public final class DevelopmentNavigatorItem extends Item {
                   public void clicked(int slot, int button, ClickType type, Player clicking) {
                     if (slot < 0
                         || slot > 13
-                        || slot == 12 && !state.juniorHabitatBuilt
-                        || slot == 13 && !state.necromancerDenBuilt) {
+                        || slot == 12 && !state.isJuniorHabitatBuilt()
+                        || slot == 13 && !state.isNecromancerDenBuilt()) {
                       return;
                     }
                     var base =
                         switch (slot) {
                           case 0 -> state.layout().base();
-                          case 1 -> state.combatOrigin;
-                          case 2 -> state.arrowOrigin;
-                          case 3 -> state.potionOrigin;
-                          case 4 -> state.digestionOrigin;
+                          case 1 -> state.getCombatOrigin();
+                          case 2 -> state.getArrowOrigin();
+                          case 3 -> state.getPotionOrigin();
+                          case 4 -> state.getDigestionOrigin();
                           case 5 -> VisionFixture.base(level);
                           case 6 -> MembraneFixture.base(level);
                           case 7 -> BrainFixture.base(level);
@@ -119,7 +119,7 @@ public final class DevelopmentNavigatorItem extends Item {
                           case 9 -> ModularLimbFixture.base(level);
                           case 10 -> WaterloggingFixture.base(level);
                           case 11 -> DevelopmentHabitatFixtures.aquariumBase(level);
-                          case 12 -> state.juniorHabitatOrigin;
+                          case 12 -> state.getJuniorHabitatOrigin();
                           default -> NecromancerDenFixture.surface(level);
                         };
                     int approach =

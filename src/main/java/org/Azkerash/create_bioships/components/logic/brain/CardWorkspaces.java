@@ -67,17 +67,17 @@ public final class CardWorkspaces {
       ServerPlayer player, int menuId, java.util.UUID identity, String source) {
     if (!(player.containerMenu instanceof CardWorkspaceMenu menu)
         || menu.containerId != menuId
-        || !menu.identity.equals(identity)
-        || menu.target == null
+        || !menu.getIdentity().equals(identity)
+        || menu.getTarget() == null
         || !menu.stillValid(player)) {
       return false;
     }
-    if (!ProgramCardData.saveDraft(menu.target.card(), source)) {
+    if (!ProgramCardData.saveDraft(menu.getTarget().card(), source)) {
       return false;
     }
-    menu.target.changed();
+    menu.getTarget().changed();
     org.Azkerash.create_bioships.core.brain.program.PrivateCardBackups.remember(
-        player, menu.target.card());
+        player, menu.getTarget().card());
     return true;
   }
 
@@ -87,8 +87,8 @@ public final class CardWorkspaces {
       ServerPlayer player, int menuId, java.util.UUID identity, String source) {
     if (!(player.containerMenu instanceof CardWorkspaceMenu menu)
         || menu.containerId != menuId
-        || !menu.identity.equals(identity)
-        || menu.target == null
+        || !menu.getIdentity().equals(identity)
+        || menu.getTarget() == null
         || !menu.stillValid(player)) {
       return new Written(false, "Card changed or access expired. Reopen the editor.");
     }
@@ -99,12 +99,12 @@ public final class CardWorkspaces {
     if (!result.success()) {
       return new Written(false, result.diagnostic().toString());
     }
-    var card = ProgramCardData.compiledCopy(menu.target.card(), source);
+    var card = ProgramCardData.compiledCopy(menu.getTarget().card(), source);
     if (card.isEmpty()) {
       return new Written(false, "Unable to write this card.");
     }
-    menu.target.replace(card);
-    menu.target.changed();
+    menu.getTarget().replace(card);
+    menu.getTarget().changed();
     org.Azkerash.create_bioships.core.brain.program.PrivateCardBackups.remember(player, card);
     return new Written(
         true, "Compiled and written. Place this card in active brain memory to run it.");
@@ -115,19 +115,19 @@ public final class CardWorkspaces {
       ServerPlayer player, int menuId, java.util.UUID identity) {
     if (!(player.containerMenu instanceof CardWorkspaceMenu menu)
         || menu.containerId != menuId
-        || !menu.identity.equals(identity)
-        || menu.target == null
+        || !menu.getIdentity().equals(identity)
+        || menu.getTarget() == null
         || !menu.stillValid(player)) {
       return new ProgramBehavior.View("Access expired.", java.util.List.of());
     }
     if (!menu.allowPoll(player.level().getGameTime())) {
       return null;
     }
-    var body = menu.target.body();
+    var body = menu.getTarget().body();
     if (body == null) {
       return new ProgramBehavior.View("Held card: install in a brain to run.", java.util.List.of());
     }
     return org.Azkerash.create_bioships.core.brain.behavior.BrainBehaviors.programView(
-        body, menu.target.card());
+        body, menu.getTarget().card());
   }
 }

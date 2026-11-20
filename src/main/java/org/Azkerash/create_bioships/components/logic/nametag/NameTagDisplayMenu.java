@@ -9,8 +9,8 @@ import org.Azkerash.create_bioships.components.ComponentRegistry;
 
 public final class NameTagDisplayMenu extends AbstractContainerMenu {
   private final Container inventory;
-  public final NameTagDisplayEntity display;
-  public final ContainerData offsets;
+  private final NameTagDisplayEntity display;
+  private final ContainerData offsets;
 
   public NameTagDisplayMenu(int id, Inventory player, NameTagDisplayEntity display) {
     this(
@@ -21,7 +21,7 @@ public final class NameTagDisplayMenu extends AbstractContainerMenu {
         new ContainerData() {
           public int get(int i) {
             var o = display.offset();
-            return i == 0 ? o.x : i == 1 ? o.y : o.z;
+            return i == 0 ? o.getX() : i == 1 ? o.getY() : o.getZ();
           }
 
           public void set(int i, int v) {}
@@ -98,5 +98,13 @@ public final class NameTagDisplayMenu extends AbstractContainerMenu {
     }
     slot.onTake(player, stack);
     return original;
+  }
+
+  public NameTagDisplayEntity getDisplay() {
+    return this.display;
+  }
+
+  public ContainerData getOffsets() {
+    return this.offsets;
   }
 }

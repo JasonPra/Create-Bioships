@@ -63,9 +63,9 @@ public final class CardWorkspaceTests {
     buffer.writeBoolean(true);
     var clientMenu = CardWorkspaceMenu.fromNetwork(32, p.getInventory(), buffer);
     h.assertTrue(
-        clientMenu.initiallyCompiled
-            && clientMenu.identity.equals(identity)
-            && clientMenu.initialSource.equals(ProgramCardData.source(card)),
+        clientMenu.isInitiallyCompiled()
+            && clientMenu.getIdentity().equals(identity)
+            && clientMenu.getInitialSource().equals(ProgramCardData.source(card)),
         "Private editor opening lost source or compiled status");
     buffer.clear();
     var packet =

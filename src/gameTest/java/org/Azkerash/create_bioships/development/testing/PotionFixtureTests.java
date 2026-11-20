@@ -19,7 +19,7 @@ public final class PotionFixtureTests {
   public static void all_six_native_dispenser_cases_pass_and_reset(GameTestHelper helper) {
     var level = helper.getLevel();
     var state = CoreTestState.get(level);
-    state.potionOrigin = new BlockPos(768, 80, 128);
+    state.setPotionOrigin(new BlockPos(768, 80, 128));
     PotionFixture.reset(level);
     helper
         .startSequence()
@@ -44,16 +44,16 @@ public final class PotionFixtureTests {
           .thenWaitUntil(
               () ->
                   helper.assertTrue(
-                      !state.potionRunning, "Waiting for baseline and protected zombie hits"))
+                      !state.isPotionRunning(), "Waiting for baseline and protected zombie hits"))
           .thenExecute(
               () -> {
                 helper.assertTrue(
-                    state.potionResults.size() == 6
-                        && state.potionResults.get(5).contains(": PASS")
-                        && state.potionResults.get(5).contains("zombie damage"),
-                    "Zombie resistance comparison failed: " + state.potionResults);
+                    state.getPotionResults().size() == 6
+                        && state.getPotionResults().get(5).contains(": PASS")
+                        && state.getPotionResults().get(5).contains("zombie damage"),
+                    "Zombie resistance comparison failed: " + state.getPotionResults());
                 helper.assertTrue(
-                    state.potionZombie == null, "Resistance zombie remained after test");
+                    state.getPotionZombie() == null, "Resistance zombie remained after test");
                 finished(helper);
               });
       return;
@@ -62,7 +62,8 @@ public final class PotionFixtureTests {
         18,
         () -> {
           var body =
-              (ServerSubLevel) SubLevelContainer.getContainer(level).getSubLevel(state.potionBody);
+              (ServerSubLevel)
+                  SubLevelContainer.getContainer(level).getSubLevel(state.getPotionBody());
           helper.assertTrue(body != null, "Potion subject lost");
           var target = CombatAdapter.target(body);
           var effect = PotionFixture.EFFECTS.get(index);
@@ -88,12 +89,12 @@ public final class PotionFixtureTests {
           for (int tick = 0; tick < 200; tick++) {
             target.tick();
           }
-          state.potionDeadline = level.getGameTime();
+          state.setPotionDeadline(level.getGameTime());
           PotionFixture.tick(level);
           helper.assertTrue(
-              state.potionResults.size() == index + 1
-                  && state.potionResults.get(index).contains(": PASS"),
-              "Potion case failed: " + state.potionResults);
+              state.getPotionResults().size() == index + 1
+                  && state.getPotionResults().get(index).contains(": PASS"),
+              "Potion case failed: " + state.getPotionResults());
           if (index + 1 < PotionFixture.EFFECTS.size()) {
             checkCase(helper, index + 1);
           } else {
@@ -106,7 +107,7 @@ public final class PotionFixtureTests {
     var level = helper.getLevel();
     var state = CoreTestState.get(level);
     helper.assertTrue(
-        !state.potionRunning && state.potionBody == null,
+        !state.isPotionRunning() && state.getPotionBody() == null,
         "Finished suite did not restore non-started state");
     helper.assertTrue(
         level.getBlockState(PotionFixture.core(level)).is(ComponentRegistry.CORE.get()),
@@ -115,7 +116,7 @@ public final class PotionFixtureTests {
         level.getBlockState(PotionFixture.dispenser(level).north()).is(Blocks.AIR),
         "Reset left dispenser powered");
     for (int x = 1; x <= 2; x++) {
-      var pos = state.potionOrigin.offset(x, 0, -6);
+      var pos = state.getPotionOrigin().offset(x, 0, -6);
       var door = level.getBlockState(pos);
       helper.assertTrue(
           door.is(DevelopmentTestBlocks.GLASS_DOOR.get())

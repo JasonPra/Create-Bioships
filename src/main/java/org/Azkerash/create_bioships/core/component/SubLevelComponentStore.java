@@ -21,12 +21,16 @@ public final class SubLevelComponentStore {
   public static final String KEY = "create_bioships:components";
   private static final Map<ServerSubLevel, SubLevelComponentStore> STORES = new IdentityHashMap<>();
 
+  /**
+   * Stable component identity; block entities borrow this state rather than owning duplicate
+   * inventories.
+   */
   public static final class Entry {
-    public final UUID id;
-    public BlockPos pos;
-    public final String type;
-    public final NonNullList<ItemStack> items;
-    public ComponentState state;
+    private final UUID id;
+    private BlockPos pos;
+    private final String type;
+    private final NonNullList<ItemStack> items;
+    private ComponentState state;
     private CompoundTag storedState;
 
     Entry(
@@ -42,6 +46,33 @@ public final class SubLevelComponentStore {
       this.items = items;
       this.state = state;
       this.storedState = storedState;
+    }
+
+    public UUID getId() {
+      return this.id;
+    }
+
+    public BlockPos getPos() {
+      return this.pos;
+    }
+
+    public String getType() {
+      return this.type;
+    }
+
+    /**
+     * Live fixed-size inventory backing. Views must notify their container's dirty hook after
+     * edits.
+     */
+    public NonNullList<ItemStack> getItems() {
+      return this.items;
+    }
+
+    /**
+     * Live component-specific state, shared by replacement views of the same physical component.
+     */
+    public ComponentState getState() {
+      return this.state;
     }
   }
 

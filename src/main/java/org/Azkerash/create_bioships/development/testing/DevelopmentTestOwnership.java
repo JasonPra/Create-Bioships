@@ -17,7 +17,7 @@ public final class DevelopmentTestOwnership {
     if (!DevelopmentWorldSetup.isDevelopment(level)) {
       return;
     }
-    var owner = CoreTestState.get(level).developmentOwner;
+    var owner = CoreTestState.get(level).getDevelopmentOwner();
     if (owner != null) {
       SubLevelPermissions.assignIfUnowned(body, owner);
     }
@@ -34,8 +34,8 @@ public final class DevelopmentTestOwnership {
       return;
     }
     var state = CoreTestState.get(level);
-    if (state.developmentOwner == null) {
-      state.developmentOwner = player.getUUID();
+    if (state.getDevelopmentOwner() == null) {
+      state.setDevelopmentOwner(player.getUUID());
       state.setDirty();
     }
     var container = SubLevelContainer.getContainer(level);
@@ -43,7 +43,7 @@ public final class DevelopmentTestOwnership {
       for (var entry : container.getAllSubLevels()) {
         if (entry instanceof ServerSubLevel body
             && body.getUserDataTag() != null
-            && (state.owned.contains(body.getUniqueId())
+            && (state.getOwned().contains(body.getUniqueId())
                 || body.getUserDataTag().getAllKeys().stream()
                     .anyMatch(k -> k.startsWith("create_bioships") && k.contains("fixture")))) {
           assign(body);

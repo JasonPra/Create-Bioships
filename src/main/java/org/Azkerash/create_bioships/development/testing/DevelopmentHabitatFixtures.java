@@ -29,11 +29,11 @@ public final class DevelopmentHabitatFixtures {
 
   public static void installAquarium(ServerLevel l) {
     var state = CoreTestState.get(l);
-    if (state.aquariumBuilt) {
+    if (state.isAquariumBuilt()) {
       return;
     }
     buildAquarium(l, aquariumBase(l));
-    state.aquariumBuilt = true;
+    state.setAquariumBuilt(true);
     state.setDirty();
   }
 
@@ -138,8 +138,8 @@ public final class DevelopmentHabitatFixtures {
 
   public static void buildJuniorPen(ServerLevel l, BlockPos b) {
     var fixtureState = CoreTestState.get(l);
-    fixtureState.juniorHabitatBuilt = true;
-    fixtureState.juniorHabitatOrigin = b.immutable();
+    fixtureState.setJuniorHabitatBuilt(true);
+    fixtureState.setJuniorHabitatOrigin(b.immutable());
     fixtureState.setDirty();
     int half = 17;
     keepLoaded(l, b, half + 3, half + 4);

@@ -17,10 +17,10 @@ public final class CombatTimeControlsTests {
   public static void hologram_controls_keep_results_and_current_deadline(GameTestHelper helper) {
     var level = helper.getLevel();
     var state = CoreTestState.get(level);
-    var previousOrigin = state.combatOrigin;
-    boolean previousBuilt = state.combatBuilt;
-    var previousResults = List.copyOf(state.combatResults);
-    state.combatOrigin = new BlockPos(560, 80, 128);
+    var previousOrigin = state.getCombatOrigin();
+    boolean previousBuilt = state.isCombatBuilt();
+    var previousResults = List.copyOf(state.getCombatResults());
+    state.setCombatOrigin(new BlockPos(560, 80, 128));
     for (int x = 34; x <= 36; x++) {
       for (int z = 6; z <= 9; z++) {
         level.setChunkForced(x, z, true);
@@ -31,63 +31,67 @@ public final class CombatTimeControlsTests {
         .thenWaitUntil(
             () ->
                 helper.assertTrue(
-                    level.isPositionEntityTicking(state.combatOrigin.north(16)),
+                    level.isPositionEntityTicking(state.getCombatOrigin().north(16)),
                     "Waiting for control chunks"))
         .thenExecute(
             () -> {
-              state.combatBuilt = true;
-              state.combatTrialSeconds = 10;
-              state.combatResults.add(
-                  "minecraft:drowned: FAIL (no lethal attack within 10s); target acquired");
-              var expectedResults = List.copyOf(state.combatResults);
+              state.setCombatBuilt(true);
+              state.setCombatTrialSeconds(10);
+              state
+                  .getCombatResults()
+                  .add("minecraft:drowned: FAIL (no lethal attack within 10s); target acquired");
+              var expectedResults = List.copyOf(state.getCombatResults());
               var player =
                   new net.neoforged.neoforge.common.util.FakePlayer(
                       level,
                       new com.mojang.authlib.GameProfile(
                           UUID.randomUUID(), "timeout-control-test"));
               CombatFixture.adjustTrialDuration(level, 0);
-              state.combatRunning = true;
-              state.combatActiveTrialSeconds = 10;
-              state.combatDeadline = 12345;
+              state.setCombatRunning(true);
+              state.setCombatActiveTrialSeconds(10);
+              state.setCombatDeadline(12345);
               var plus = findButton(level, ".time_increase");
               helper.assertTrue(plus != null, "Increase interaction missing from hologram");
               var click =
                   new PlayerInteractEvent.EntityInteract(player, InteractionHand.MAIN_HAND, plus);
               CombatFixture.failureClick(click);
               helper.assertTrue(
-                  click.isCanceled() && state.combatTrialSeconds == 15,
+                  click.isCanceled() && state.getCombatTrialSeconds() == 15,
                   "Hologram plus did not add five seconds");
               helper.assertTrue(
-                  state.combatDeadline == 12345 && state.combatActiveTrialSeconds == 10,
+                  state.getCombatDeadline() == 12345 && state.getCombatActiveTrialSeconds() == 10,
                   "Changing setting rewrote active trial");
               var minus = findButton(level, ".time_decrease");
               helper.assertTrue(minus != null, "Decrease interaction missing from hologram");
               CombatFixture.failureClick(
                   new PlayerInteractEvent.EntityInteract(player, InteractionHand.MAIN_HAND, minus));
               helper.assertTrue(
-                  state.combatTrialSeconds == 10, "Hologram minus did not subtract five seconds");
+                  state.getCombatTrialSeconds() == 10,
+                  "Hologram minus did not subtract five seconds");
               CombatFixture.adjustTrialDuration(level, -1000);
-              helper.assertTrue(state.combatTrialSeconds == 5, "Minimum duration was not clamped");
+              helper.assertTrue(
+                  state.getCombatTrialSeconds() == 5, "Minimum duration was not clamped");
               CombatFixture.adjustTrialDuration(level, 1000);
               helper.assertTrue(
-                  state.combatTrialSeconds == 120, "Maximum duration was not clamped");
+                  state.getCombatTrialSeconds() == 120, "Maximum duration was not clamped");
               var saved = state.save(new CompoundTag(), level.registryAccess());
               helper.assertTrue(
                   saved.getInt("CombatTrialSeconds") == 120
                       && saved.getInt("CombatActiveTrialSeconds") == 10,
                   "Duration setting was not saved separately from current trial");
               helper.assertTrue(
-                  state.combatResults.equals(expectedResults), "Controls changed saved outcomes");
+                  state.getCombatResults().equals(expectedResults),
+                  "Controls changed saved outcomes");
               helper.assertTrue(
-                  new CoreTestState().combatTrialSeconds == 10,
+                  new CoreTestState().getCombatTrialSeconds() == 10,
                   "Old saves no longer default to ten seconds");
-              state.combatRunning = false;
-              state.combatDeadline = 0;
-              state.combatTrialSeconds = 10;
-              state.combatOrigin = previousOrigin;
-              state.combatBuilt = previousBuilt;
-              state.combatResults.clear();
-              state.combatResults.addAll(previousResults);
+              state.setCombatRunning(false);
+              state.setCombatDeadline(0);
+              state.setCombatTrialSeconds(10);
+              state.setCombatOrigin(previousOrigin);
+              state.setCombatBuilt(previousBuilt);
+              state.getCombatResults().clear();
+              state.getCombatResults().addAll(previousResults);
               var cleanup = new ArrayList<Entity>();
               for (var entity : level.getAllEntities()) {
                 if (entity.getTags().stream()

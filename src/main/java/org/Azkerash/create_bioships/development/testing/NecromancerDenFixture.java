@@ -146,7 +146,7 @@ public final class NecromancerDenFixture {
     EstateGardens.build(l, s);
     EstateInteriors.polish(l, s);
     var state = CoreTestState.get(l);
-    state.necromancerDenBuilt = true;
+    state.setNecromancerDenBuilt(true);
     state.setDirty();
     l.setDefaultSpawnPos(s.offset(0, 0, -20), 0);
   }
@@ -602,7 +602,7 @@ public final class NecromancerDenFixture {
       l.addFreshEntity(display);
     }
     var state = CoreTestState.get(l);
-    state.denAccessVersion = 2;
+    state.setDenAccessVersion(2);
     state.setDirty();
   }
 
@@ -627,7 +627,7 @@ public final class NecromancerDenFixture {
     DenStaircase.build(
         l, new BlockPos(s.getX(), b.getY(), s.getZ() - 30), s.getY() - b.getY(), true);
     var state = CoreTestState.get(l);
-    state.denAccessVersion = 2;
+    state.setDenAccessVersion(2);
     state.setDirty();
   }
 
@@ -811,9 +811,9 @@ public final class NecromancerDenFixture {
     var exhibits =
         java.util.List.of(
             state.layout().base(),
-            state.arrowOrigin,
-            state.potionOrigin,
-            state.digestionOrigin,
+            state.getArrowOrigin(),
+            state.getPotionOrigin(),
+            state.getDigestionOrigin(),
             VisionFixture.base(l),
             MembraneFixture.base(l),
             BrainFixture.base(l),

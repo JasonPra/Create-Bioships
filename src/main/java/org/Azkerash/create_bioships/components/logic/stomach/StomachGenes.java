@@ -21,23 +21,23 @@ public final class StomachGenes {
   }
 
   public boolean longevity() {
-    return stomach.state().longevity > 0;
+    return stomach.state().getLongevity() > 0;
   }
 
   public int longevityTier() {
-    return stomach.state().longevity;
+    return stomach.state().getLongevity();
   }
 
   public int efficiency() {
-    return stomach.state().efficiency;
+    return stomach.state().getEfficiency();
   }
 
   public int capacityBonus() {
-    return stomach.state().longevity * LONGEVITY_CAPACITY;
+    return stomach.state().getLongevity() * LONGEVITY_CAPACITY;
   }
 
   public int pastePerMeal() {
-    return 1 + stomach.state().efficiency;
+    return 1 + stomach.state().getEfficiency();
   }
 
   /** Fifths of a hunger point: 4, 4.8, 5.2, 5.4 per paste. */
@@ -52,14 +52,14 @@ public final class StomachGenes {
   }
 
   public int extraComponentChance() {
-    return EXTRA_COMPONENT_CHANCE[stomach.state().efficiency];
+    return EXTRA_COMPONENT_CHANCE[stomach.state().getEfficiency()];
   }
 
   public boolean accepts(Serum serum) {
     return serum == ComponentRegistry.LONGEVITY_GENE.get()
-            && stomach.state().longevity < MAX_LONGEVITY
+            && stomach.state().getLongevity() < MAX_LONGEVITY
         || serum == ComponentRegistry.EFFICIENCY_GENE.get()
-            && stomach.state().efficiency < MAX_EFFICIENCY;
+            && stomach.state().getEfficiency() < MAX_EFFICIENCY;
   }
 
   public ItemInteractionResult inject(Player player, ItemStack injector) {
@@ -75,9 +75,9 @@ public final class StomachGenes {
 
   private void apply(Serum serum) {
     if (serum == ComponentRegistry.LONGEVITY_GENE.get()) {
-      stomach.state().longevity++;
+      stomach.state().incrementLongevity();
     } else {
-      stomach.state().efficiency++;
+      stomach.state().incrementEfficiency();
     }
     stomach.setChanged();
     if (stomach.getLevel() instanceof ServerLevel level) {
@@ -94,7 +94,7 @@ public final class StomachGenes {
    * Called once when the meal is rolled; pending outputs persist across blocked storage/reloads.
    */
   public void addExtraComponent(java.util.List<ItemStack> outputs, RandomSource random) {
-    if (stomach.state().efficiency == 0 || random.nextInt(100) >= extraComponentChance()) {
+    if (stomach.state().getEfficiency() == 0 || random.nextInt(100) >= extraComponentChance()) {
       return;
     }
     var eligible =
@@ -108,13 +108,13 @@ public final class StomachGenes {
 
   public CompoundTag save() {
     var tag = new CompoundTag();
-    tag.putInt("Longevity", stomach.state().longevity);
-    tag.putInt("Efficiency", stomach.state().efficiency);
+    tag.putInt("Longevity", stomach.state().getLongevity());
+    tag.putInt("Efficiency", stomach.state().getEfficiency());
     return tag;
   }
 
   public void load(CompoundTag tag) {
-    stomach.state().longevity = Math.clamp(tag.getInt("Longevity"), 0, MAX_LONGEVITY);
-    stomach.state().efficiency = Math.clamp(tag.getInt("Efficiency"), 0, MAX_EFFICIENCY);
+    stomach.state().setLongevity(Math.clamp(tag.getInt("Longevity"), 0, MAX_LONGEVITY));
+    stomach.state().setEfficiency(Math.clamp(tag.getInt("Efficiency"), 0, MAX_EFFICIENCY));
   }
 }

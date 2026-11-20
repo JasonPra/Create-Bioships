@@ -150,8 +150,8 @@ public final class WaterloggingFixture {
             + "Some plant/multipart blocks require special placement support.",
         350);
     var saved = CoreTestState.get(level);
-    saved.waterloggingBuilt = true;
-    saved.waterloggingCatalogSize = entries.size();
+    saved.setWaterloggingBuilt(true);
+    saved.setWaterloggingCatalogSize(entries.size());
     saved.setDirty();
   }
 

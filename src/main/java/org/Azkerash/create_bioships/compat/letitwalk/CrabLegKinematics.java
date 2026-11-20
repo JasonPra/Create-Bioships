@@ -12,9 +12,9 @@ import org.Azkerash.create_bioships.core.vision.VisionRaycaster;
 /** Uses Let It Walk's native constrained IK and terrain probing, without a hidden walker core. */
 public final class CrabLegKinematics {
   public static final LegGait GAIT = new LegGait(false, 2.4, 1.45, .8, .35, 1);
-  public final int height;
-  public final double scale;
-  public final double extension;
+  private final int height;
+  private final double scale;
+  private final double extension;
   private final JointChain chain;
 
   public CrabLegKinematics(int height) {
@@ -68,5 +68,17 @@ public final class CrabLegKinematics {
     }
     var ground = TerrainProbe.down(body.getLevel(), from, depth, body);
     return ground != null && TerrainProbe.standable(ground) ? ground : null;
+  }
+
+  public int getHeight() {
+    return this.height;
+  }
+
+  public double getScale() {
+    return this.scale;
+  }
+
+  public double getExtension() {
+    return this.extension;
   }
 }

@@ -66,7 +66,7 @@ public final class BrainSurfaceRenderer {
       return Vec3.ZERO;
     }
     var flat =
-        Vec3.atCenterOf(cell.subtract(snapshot.mesh.minimum))
+        Vec3.atCenterOf(cell.subtract(snapshot.mesh.getMinimum()))
             .add(Vec3.atLowerCornerOf(face.getNormal()).scale(.5));
     return snapshot.mesh.surface(flat).subtract(flat);
   }
@@ -111,16 +111,16 @@ public final class BrainSurfaceRenderer {
           (float) transform.scale().y(),
           (float) transform.scale().z());
       stack.translate(
-          mesh.minimum.getX() - transform.rotationPoint().x(),
-          mesh.minimum.getY() - transform.rotationPoint().y(),
-          mesh.minimum.getZ() - transform.rotationPoint().z());
+          mesh.getMinimum().getX() - transform.rotationPoint().x(),
+          mesh.getMinimum().getY() - transform.rotationPoint().y(),
+          mesh.getMinimum().getZ() - transform.rotationPoint().z());
       int light =
           LevelRenderer.getLightColor(
               mc.level,
               BlockPos.containing(
-                  client.renderPose().transformPosition(Vec3.atCenterOf(mesh.minimum))));
+                  client.renderPose().transformPosition(Vec3.atCenterOf(mesh.getMinimum()))));
       var vertices = buffers.getBuffer(type);
-      for (var quad : mesh.quads) {
+      for (var quad : mesh.getQuads()) {
         vertex(vertices, stack, quad.a(), light);
         vertex(vertices, stack, quad.b(), light);
         vertex(vertices, stack, quad.c(), light);
@@ -132,7 +132,7 @@ public final class BrainSurfaceRenderer {
           && org.Azkerash.create_bioships.client.combat.SubLevelHurtRenderer.flashing(
               snapshot.data.body())) {
         var red = buffers.getBuffer(hurt);
-        for (var q : mesh.quads) {
+        for (var q : mesh.getQuads()) {
           hurtVertex(red, stack, q.a(), light);
           hurtVertex(red, stack, q.b(), light);
           hurtVertex(red, stack, q.c(), light);
@@ -177,7 +177,7 @@ public final class BrainSurfaceRenderer {
       int light) {
     var data = snapshot.data;
     var mesh = snapshot.mesh;
-    var local = Vec3.atLowerCornerOf(data.port().subtract(mesh.minimum));
+    var local = Vec3.atLowerCornerOf(data.port().subtract(mesh.getMinimum()));
     var normal = Vec3.atLowerCornerOf(data.face().getNormal());
     var flat = local.add(.5, .5, .5).add(normal.scale(.5));
     var projected = mesh.surface(flat);

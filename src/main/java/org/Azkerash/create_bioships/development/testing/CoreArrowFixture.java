@@ -30,7 +30,7 @@ public final class CoreArrowFixture {
   private CoreArrowFixture() {}
 
   public static BlockPos core(ServerLevel level) {
-    return CoreTestState.get(level).arrowOrigin.above(2);
+    return CoreTestState.get(level).getArrowOrigin().above(2);
   }
 
   public static BlockPos dispenser(ServerLevel level) {
@@ -64,7 +64,7 @@ public final class CoreArrowFixture {
   }
 
   private static void sleeping(ServerLevel level) {
-    var base = CoreTestState.get(level).arrowOrigin;
+    var base = CoreTestState.get(level).getArrowOrigin();
     var flesh =
         net.minecraft.core.registries.BuiltInRegistries.BLOCK.get(
             net.minecraft.resources.ResourceLocation.parse("biomancy:packed_flesh"));
@@ -90,7 +90,7 @@ public final class CoreArrowFixture {
 
   public static void reset(ServerLevel level) {
     var state = CoreTestState.get(level);
-    var base = state.arrowOrigin;
+    var base = state.getArrowOrigin();
     for (int x = (base.getX() - 8) >> 4; x <= (base.getX() + 8) >> 4; x++) {
       for (int z = (base.getZ() - 10) >> 4; z <= (base.getZ() + 8) >> 4; z++) {
         level.setChunkForced(x, z, true);
@@ -146,11 +146,11 @@ public final class CoreArrowFixture {
     sleeping(level);
     control(level, base.offset(-3, 0, -8), "arrow_test start");
     control(level, base.offset(3, 0, -8), "arrow_test reset");
-    state.arrowBuilt = true;
-    state.arrowRunning = false;
-    state.arrowBody = null;
-    state.arrowPhase = 0;
-    state.arrowResult = "Ready";
+    state.setArrowBuilt(true);
+    state.setArrowRunning(false);
+    state.setArrowBody(null);
+    state.setArrowPhase(0);
+    state.setArrowResult("Ready");
     state.setDirty();
     explain(level);
   }
@@ -172,7 +172,7 @@ public final class CoreArrowFixture {
 
   private static void explain(ServerLevel level) {
     var state = CoreTestState.get(level);
-    var base = state.arrowOrigin;
+    var base = state.getArrowOrigin();
     for (var old :
         level.getEntitiesOfClass(
             Display.TextDisplay.class,
@@ -195,7 +195,7 @@ public final class CoreArrowFixture {
                     + "30s observation, then three front-facing dispensers.\n"
                     + "Then repeat on the corpse after 5 seconds.\n"
                     + "Expected: embedded arrows and fading wounds.\n"
-                    + state.arrowResult),
+                    + state.getArrowResult()),
             level.registryAccess()));
     tag.putString("billboard", "center");
     tag.putInt("line_width", 270);
@@ -209,10 +209,10 @@ public final class CoreArrowFixture {
 
   public static int start(ServerLevel level) {
     var state = CoreTestState.get(level);
-    if (!state.arrowBuilt || state.arrowBody != null || state.arrowRunning) {
+    if (!state.isArrowBuilt() || state.getArrowBody() != null || state.isArrowRunning()) {
       return 0;
     }
-    var base = state.arrowOrigin;
+    var base = state.getArrowOrigin();
     var body =
         SubLevelAssemblyHelper.assembleBlocks(
             level,
@@ -230,12 +230,12 @@ public final class CoreArrowFixture {
         .addForceLoadTicket(body, SubLevelLoadingTicketType.COMMAND_FORCED, Unit.INSTANCE);
     DevelopmentLifeSupport.pause(body);
     DevelopmentTestOwnership.assign(body);
-    state.arrowBody = body.getUniqueId();
-    state.arrowRunning = true;
-    state.arrowPhase = 0;
-    state.arrowNextAction = level.getGameTime() + 600;
-    state.arrowDeadline = level.getGameTime() + 800;
-    state.arrowResult = "Assembled: dispensers appear in 30 seconds";
+    state.setArrowBody(body.getUniqueId());
+    state.setArrowRunning(true);
+    state.setArrowPhase(0);
+    state.setArrowNextAction(level.getGameTime() + 600);
+    state.setArrowDeadline(level.getGameTime() + 800);
+    state.setArrowResult("Assembled: dispensers appear in 30 seconds");
     state.setDirty();
     explain(level);
     return 1;
@@ -275,16 +275,16 @@ public final class CoreArrowFixture {
 
   public static void tick(ServerLevel level) {
     var state = CoreTestState.get(level);
-    if (!state.arrowRunning || state.arrowPhase == 3) {
+    if (!state.isArrowRunning() || state.getArrowPhase() == 3) {
       return;
     }
-    var entry = SubLevelContainer.getContainer(level).getSubLevel(state.arrowBody);
+    var entry = SubLevelContainer.getContainer(level).getSubLevel(state.getArrowBody());
     if (!(entry instanceof ServerSubLevel body) || body.isRemoved()) {
       fail(level, "subject lost");
       return;
     }
     long now = level.getGameTime();
-    if (state.arrowPhase == 0) {
+    if (state.getArrowPhase() == 0) {
       boolean awake =
           targets(body).stream()
               .allMatch(
@@ -294,57 +294,57 @@ public final class CoreArrowFixture {
                         && block.getValue(EyeBlink.WAKE) == 0
                         && !block.getValue(EyeBlink.BLINK);
                   });
-      if (now < state.arrowNextAction && now % 20 == 0) {
-        state.arrowResult =
-            "Dispensers appear in " + ((state.arrowNextAction - now + 19) / 20) + "s";
+      if (now < state.getArrowNextAction() && now % 20 == 0) {
+        state.setArrowResult(
+            "Dispensers appear in " + ((state.getArrowNextAction() - now + 19) / 20) + "s");
         explain(level);
       }
-      if (now >= state.arrowNextAction
+      if (now >= state.getArrowNextAction()
           && awake
           && dispensers(level).stream().allMatch(level::isPositionEntityTicking)) {
-        state.arrowShotAt = now;
+        state.setArrowShotAt(now);
         fire(level);
-        state.arrowNextAction = now + 20;
-        state.arrowPhase = 1;
-        state.arrowDeadline = now + 160;
-        state.arrowResult = "Firing at living eyes";
+        state.setArrowNextAction(now + 20);
+        state.setArrowPhase(1);
+        state.setArrowDeadline(now + 160);
+        state.setArrowResult("Firing at living eyes");
         state.setDirty();
         explain(level);
       }
-    } else if (state.arrowPhase == 1 && wounded(body, state.arrowShotAt)) {
+    } else if (state.getArrowPhase() == 1 && wounded(body, state.getArrowShotAt())) {
       clearShooters(level);
-      state.arrowPhase = 2;
-      state.arrowNextAction = now + 100;
-      state.arrowDeadline = now + 300;
-      state.arrowResult = "Living eyes: PASS. Inspect before corpse round.";
+      state.setArrowPhase(2);
+      state.setArrowNextAction(now + 100);
+      state.setArrowDeadline(now + 300);
+      state.setArrowResult("Living eyes: PASS. Inspect before corpse round.");
       state.setDirty();
       explain(level);
-    } else if (state.arrowPhase == 1 && now >= state.arrowNextAction) {
-      retryMissing(level, body, state.arrowShotAt);
-      state.arrowNextAction = now + 20;
-    } else if (state.arrowPhase == 2 && now >= state.arrowNextAction) {
+    } else if (state.getArrowPhase() == 1 && now >= state.getArrowNextAction()) {
+      retryMissing(level, body, state.getArrowShotAt());
+      state.setArrowNextAction(now + 20);
+    } else if (state.getArrowPhase() == 2 && now >= state.getArrowNextAction()) {
       if (!SubLevelHealth.status(body).dead()) {
         SubLevelHealth.damage(body, SubLevelHealth.status(body).current(), "arrow_test_corpse");
-        state.arrowShotAt = now;
+        state.setArrowShotAt(now);
         fire(level);
-        state.arrowNextAction = now + 20;
-        state.arrowResult = "Firing at corpse eyes";
+        state.setArrowNextAction(now + 20);
+        state.setArrowResult("Firing at corpse eyes");
         state.setDirty();
         explain(level);
-      } else if (wounded(body, state.arrowShotAt)) {
+      } else if (wounded(body, state.getArrowShotAt())) {
         clearShooters(level);
-        state.arrowPhase = 3;
-        state.arrowResult = "PASS: core, land and aquatic eyes · living + corpse";
+        state.setArrowPhase(3);
+        state.setArrowResult("PASS: core, land and aquatic eyes · living + corpse");
         state.setDirty();
         explain(level);
         return;
       } else {
-        retryMissing(level, body, state.arrowShotAt);
-        state.arrowNextAction = now + 20;
+        retryMissing(level, body, state.getArrowShotAt());
+        state.setArrowNextAction(now + 20);
       }
     }
-    if (now >= state.arrowDeadline) {
-      fail(level, "timeout in phase " + state.arrowPhase);
+    if (now >= state.getArrowDeadline()) {
+      fail(level, "timeout in phase " + state.getArrowPhase());
     }
   }
 
@@ -368,7 +368,7 @@ public final class CoreArrowFixture {
     for (var arrow :
         level.getEntitiesOfClass(
             net.minecraft.world.entity.projectile.Arrow.class,
-            new AABB(CoreTestState.get(level).arrowOrigin).inflate(12),
+            new AABB(CoreTestState.get(level).getArrowOrigin()).inflate(12),
             ProjectileAttachment::attached)) {
       var data = arrow.getPersistentData().getCompound("create_bioships:embedded_projectile");
       if (data.hasUUID("body")
@@ -395,13 +395,13 @@ public final class CoreArrowFixture {
 
   private static void fail(ServerLevel level, String reason) {
     var state = CoreTestState.get(level);
-    state.arrowRunning = false;
-    state.arrowResult = "FAIL: " + reason;
+    state.setArrowRunning(false);
+    state.setArrowResult("FAIL: " + reason);
     state.setDirty();
     explain(level);
   }
 
   public static String status(ServerLevel level) {
-    return "Arrow test: " + CoreTestState.get(level).arrowResult;
+    return "Arrow test: " + CoreTestState.get(level).getArrowResult();
   }
 }

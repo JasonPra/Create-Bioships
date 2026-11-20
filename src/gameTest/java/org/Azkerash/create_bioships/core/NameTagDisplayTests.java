@@ -55,8 +55,8 @@ public final class NameTagDisplayTests {
     h.assertTrue(
         moved != null
             && moved.label().getString().equals("Junior test")
-            && moved.offset().y == 96
-            && moved.offset().x == -16,
+            && moved.offset().getY() == 96
+            && moved.offset().getX() == -16,
         "Assembly lost tag or hologram offsets");
     h.assertTrue(
         l.getBlockState(c.below()).getValue(BlockStateProperties.WATERLOGGED),
@@ -78,7 +78,7 @@ public final class NameTagDisplayTests {
     var reloaded = new NameTagDisplayEntity(c.below(), moved.getBlockState());
     reloaded.loadWithComponents(nbt, l.registryAccess());
     h.assertTrue(
-        reloaded.offset().z == -32 && reloaded.label().equals(moved.label()),
+        reloaded.offset().getZ() == -32 && reloaded.label().equals(moved.label()),
         "Panel data did not survive serialization");
     moved.clearContent();
     h.assertTrue(SubLevelNames.name(body).isEmpty(), "Removing tag retained managed name");

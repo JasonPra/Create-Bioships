@@ -138,7 +138,7 @@ public final class VisionFixture {
     }
     control(level, base.offset(-3, 0, -10), "vision_test start");
     control(level, base.offset(3, 0, -10), "vision_test reset");
-    CoreTestState.get(level).visionBuilt = true;
+    CoreTestState.get(level).setVisionBuilt(true);
     CoreTestState.get(level).setDirty();
     explain(level, "Ready: unassembled eyes cast no rays");
   }
@@ -167,7 +167,7 @@ public final class VisionFixture {
         return 0;
       }
     }
-    if (!CoreTestState.get(level).visionBuilt) {
+    if (!CoreTestState.get(level).isVisionBuilt()) {
       reset(level);
     }
     for (int lane = 0; lane < 2; lane++) {

@@ -76,10 +76,11 @@ public final class CreatureDecayTests {
                 CreatureDecay.advance(level, now);
                 var world = CreatureDecay.WorldState.get(level);
                 var id = CreatureDecay.familyId(parent);
-                var family = world.families.get(id);
+                var family = world.getFamilies().get(id);
                 helper.assertTrue(
-                    family.interval >= 20 && family.next > now, "Decay is not slow/scheduled");
-                long first = family.next;
+                    family.getInterval() >= 20 && family.getNext() > now,
+                    "Decay is not slow/scheduled");
+                long first = family.getNext();
                 CreatureDecay.advance(level, first - 1);
                 helper.assertTrue(
                     level.getBlockState(core.west()).is(Blocks.CHEST),
@@ -101,31 +102,31 @@ public final class CreatureDecayTests {
                     "Rot spilled chest contents or block loot");
                 // Persist a summary for an ordinary fragment which is not loaded in this world.
                 var absent = UUID.randomUUID();
-                family.members.put(
+                family.rememberMember(
                     absent,
                     new HashMap<>(Map.of(ResourceLocation.withDefaultNamespace("stone"), 1)));
                 var saved = world.save(new CompoundTag(), level.registryAccess());
                 var restored = CreatureDecay.WorldState.load(saved);
                 helper.assertTrue(
-                    restored.families.get(id).hasOrdinary(CreatureDecay.lastToRotRegistry()),
+                    restored.getFamilies().get(id).hasOrdinary(CreatureDecay.lastToRotRegistry()),
                     "Save/load forgot unloaded ordinary remains");
                 var remaining =
                     SubLevelHealth.blocks(parent).size() + SubLevelHealth.blocks(child).size();
-                CreatureDecay.advance(level, family.next);
+                CreatureDecay.advance(level, family.getNext());
                 helper.assertTrue(
                     SubLevelHealth.blocks(parent).size() + SubLevelHealth.blocks(child).size()
                         == remaining,
                     "Unloaded ordinary fragment did not block the final group");
-                family.members.remove(absent);
-                CreatureDecay.advance(level, family.next);
+                family.forgetMember(absent);
+                CreatureDecay.advance(level, family.getNext());
                 int after =
                     (parent.isRemoved() ? 0 : SubLevelHealth.blocks(parent).size())
                         + (child.isRemoved() ? 0 : SubLevelHealth.blocks(child).size());
                 helper.assertTrue(
                     after == remaining - 1 && after > 1,
                     "Final group did not begin while multiple registered components remain");
-                for (int i = 0; i < 8 && world.families.containsKey(id); i++) {
-                  CreatureDecay.advance(level, family.next);
+                for (int i = 0; i < 8 && world.getFamilies().containsKey(id); i++) {
+                  CreatureDecay.advance(level, family.getNext());
                 }
                 helper.runAfterDelay(
                     10,
@@ -136,7 +137,8 @@ public final class CreatureDecayTests {
                               && container.getSubLevel(child.getUniqueId()) == null,
                           "Rot left an empty corpse grid");
                       helper.assertTrue(
-                          !world.families.containsKey(id), "Deleted family retained stale members");
+                          !world.getFamilies().containsKey(id),
+                          "Deleted family retained stale members");
                       helper.assertTrue(
                           level
                               .getEntitiesOfClass(ItemEntity.class, new AABB(origin).inflate(10))

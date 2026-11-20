@@ -30,11 +30,11 @@ public final class DigestionFixture {
   private DigestionFixture() {}
 
   public static BlockPos mouth(ServerLevel level) {
-    return CoreTestState.get(level).digestionOrigin.offset(-3, 1, 0);
+    return CoreTestState.get(level).getDigestionOrigin().offset(-3, 1, 0);
   }
 
   public static BlockPos isolated(ServerLevel level) {
-    return CoreTestState.get(level).digestionOrigin.offset(3, 1, 0);
+    return CoreTestState.get(level).getDigestionOrigin().offset(3, 1, 0);
   }
 
   private static List<BlockPos> cells(ServerLevel level) {
@@ -52,7 +52,7 @@ public final class DigestionFixture {
 
   public static void reset(ServerLevel level) {
     var state = CoreTestState.get(level);
-    var base = state.digestionOrigin;
+    var base = state.getDigestionOrigin();
     for (int x = (base.getX() - 8) >> 4; x <= (base.getX() + 8) >> 4; x++) {
       for (int z = (base.getZ() - 9) >> 4; z <= (base.getZ() + 8) >> 4; z++) {
         level.setChunkForced(x, z, true);
@@ -125,11 +125,11 @@ public final class DigestionFixture {
     level.setBlock(isolated(level), ComponentRegistry.STOMACH.get().defaultBlockState(), 3);
     control(level, base.offset(-3, 0, -7), "digestion_test start");
     control(level, base.offset(3, 0, -7), "digestion_test reset");
-    state.digestionBuilt = true;
-    state.digestionRunning = false;
-    state.digestionBody = null;
-    state.digestionControl = null;
-    state.digestionResult = "Ready";
+    state.setDigestionBuilt(true);
+    state.setDigestionRunning(false);
+    state.setDigestionBody(null);
+    state.setDigestionControl(null);
+    state.setDigestionResult("Ready");
     state.setDirty();
     explain(level);
   }
@@ -151,7 +151,9 @@ public final class DigestionFixture {
 
   public static int start(ServerLevel level) {
     var state = CoreTestState.get(level);
-    if (!state.digestionBuilt || state.digestionRunning || state.digestionBody != null) {
+    if (!state.isDigestionBuilt()
+        || state.isDigestionRunning()
+        || state.getDigestionBody() != null) {
       return 0;
     }
     var m = mouth(level);
@@ -200,11 +202,11 @@ public final class DigestionFixture {
     SubLevelData.hunger(controlBody, SubLevelData.maximumHunger(controlBody));
     ((StomachBlockEntity) level.getBlockEntity(controlCore.north()))
         .enqueue(new ItemStack(Items.PORKCHOP), false);
-    state.digestionControl = controlBody.getUniqueId();
-    state.digestionBody = body.getUniqueId();
-    state.digestionRunning = true;
-    state.digestionDeadline = level.getGameTime() + 2400;
-    state.digestionResult = "Running: four meals through mouth; one seeded isolated control";
+    state.setDigestionControl(controlBody.getUniqueId());
+    state.setDigestionBody(body.getUniqueId());
+    state.setDigestionRunning(true);
+    state.setDigestionDeadline(level.getGameTime() + 2400);
+    state.setDigestionResult("Running: four meals through mouth; one seeded isolated control");
     state.setDirty();
     explain(level);
     return 1;
@@ -212,19 +214,19 @@ public final class DigestionFixture {
 
   public static void tick(ServerLevel level) {
     var state = CoreTestState.get(level);
-    if (!state.digestionRunning) {
+    if (!state.isDigestionRunning()) {
       return;
     }
-    var entry = SubLevelContainer.getContainer(level).getSubLevel(state.digestionBody);
+    var entry = SubLevelContainer.getContainer(level).getSubLevel(state.getDigestionBody());
     if (!(entry instanceof ServerSubLevel body) || body.isRemoved()) {
       finish(level, "FAIL: subject lost");
       return;
     }
     var core = body.getPlot().getCenterBlock();
     var controlEntry =
-        state.digestionControl == null
+        state.getDigestionControl() == null
             ? null
-            : SubLevelContainer.getContainer(level).getSubLevel(state.digestionControl);
+            : SubLevelContainer.getContainer(level).getSubLevel(state.getDigestionControl());
     if (!(controlEntry instanceof ServerSubLevel controlBody) || controlBody.isRemoved()) {
       finish(level, "FAIL: reset required for living control");
       return;
@@ -244,7 +246,7 @@ public final class DigestionFixture {
         return;
       }
     }
-    if (level.getGameTime() >= state.digestionDeadline) {
+    if (level.getGameTime() >= state.getDigestionDeadline()) {
       finish(level, "FAIL: digestion timed out");
     }
   }
@@ -271,19 +273,19 @@ public final class DigestionFixture {
 
   private static void finish(ServerLevel level, String result) {
     var state = CoreTestState.get(level);
-    state.digestionRunning = false;
-    state.digestionResult = result;
+    state.setDigestionRunning(false);
+    state.setDigestionResult(result);
     state.setDirty();
     explain(level);
   }
 
   public static String status(ServerLevel level) {
-    return CoreTestState.get(level).digestionResult;
+    return CoreTestState.get(level).getDigestionResult();
   }
 
   private static void explain(ServerLevel level) {
     var state = CoreTestState.get(level);
-    var base = state.digestionOrigin;
+    var base = state.getDigestionOrigin();
     for (var old :
         level.getEntitiesOfClass(
             Display.TextDisplay.class,
@@ -307,7 +309,7 @@ public final class DigestionFixture {
                     + "Seeded living control has no mouth or intestines.\n"
                     + "Inspect acid, digestion, components and hunger.\n"
                     + "Toolkit → Intestine connections: sac branches and open ends.\n"
-                    + state.digestionResult),
+                    + state.getDigestionResult()),
             level.registryAccess()));
     tag.putString("billboard", "center");
     tag.putInt("line_width", 300);

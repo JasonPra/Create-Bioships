@@ -33,11 +33,11 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
 
   public CerebralIdeScreen(CardWorkspaceMenu menu, Inventory inventory, Component title) {
     super(menu, inventory, title);
-    document = new SourceDocument(menu.initialSource);
+    document = new SourceDocument(menu.getInitialSource());
     document.move(0, false);
-    log = CerebralDiagnosticLogs.get(menu.identity);
+    log = CerebralDiagnosticLogs.get(menu.getIdentity());
     installedFingerprint =
-        menu.initiallyCompiled ? ProgramCardData.fingerprint(menu.initialSource) : "";
+        menu.isInitiallyCompiled() ? ProgramCardData.fingerprint(menu.getInitialSource()) : "";
     document.listener(
         value -> {
           dirty = true;
@@ -48,7 +48,7 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
           }
           refreshDiagnostics();
         });
-    if (menu.initiallyCompiled) {
+    if (menu.isInitiallyCompiled()) {
       status = "Compiled card · Changed source must be compiled again.";
     }
   }
@@ -172,14 +172,14 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
 
   private void save() {
     PacketDistributor.sendToServer(
-        new CardWorkspaceNetwork.Save(menu.containerId, menu.identity, editor.getValue()));
+        new CardWorkspaceNetwork.Save(menu.containerId, menu.getIdentity(), editor.getValue()));
     status = "Saving…";
   }
 
   private void compile() {
     analyzeNow();
     PacketDistributor.sendToServer(
-        new CardWorkspaceNetwork.Write(menu.containerId, menu.identity, editor.getValue()));
+        new CardWorkspaceNetwork.Write(menu.containerId, menu.getIdentity(), editor.getValue()));
     log.add(
         EditorAnalysis.logged(
             EditorProblem.Severity.INFO,
@@ -192,7 +192,7 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
   public static void receive(CardWorkspaceNetwork.Result result) {
     if (Minecraft.getInstance().screen instanceof CerebralIdeScreen screen
         && screen.menu.containerId == result.menu()
-        && screen.menu.identity.equals(result.identity())) {
+        && screen.menu.getIdentity().equals(result.identity())) {
       screen.status = result.message();
       screen.log.add(
           EditorAnalysis.logged(
@@ -230,14 +230,14 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
     }
     if (pollTicks++ % 20 == 0) {
       PacketDistributor.sendToServer(
-          new CardWorkspaceNetwork.Poll(menu.containerId, menu.identity));
+          new CardWorkspaceNetwork.Poll(menu.containerId, menu.getIdentity()));
     }
   }
 
   public static void receiveOutput(CardWorkspaceNetwork.Output result) {
     if (Minecraft.getInstance().screen instanceof CerebralIdeScreen screen
         && screen.menu.containerId == result.menu()
-        && screen.menu.identity.equals(result.identity())) {
+        && screen.menu.getIdentity().equals(result.identity())) {
       if (!screen.runtimeState.equals(result.state())
           && (result.state().startsWith("FAULTED") || result.state().startsWith("Compile error"))) {
         screen.log.add(

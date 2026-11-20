@@ -104,7 +104,7 @@ public final class ModularLimbFixture {
   }
 
   public static void reset(ServerLevel level) {
-    CoreTestState.get(level).modularLimbsBuilt = true;
+    CoreTestState.get(level).setModularLimbsBuilt(true);
     CoreTestState.get(level).setDirty();
     var base = base(level);
     for (int x = (base.getX() - 12) >> 4; x <= (base.getX() + 12) >> 4; x++) {

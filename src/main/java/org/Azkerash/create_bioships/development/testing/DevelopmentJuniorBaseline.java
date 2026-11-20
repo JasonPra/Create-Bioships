@@ -65,19 +65,20 @@ public final class DevelopmentJuniorBaseline {
       result.putString("name", body.getName());
     }
     var state = CoreTestState.get(level);
-    state.juniorBaseline = result;
-    state.juniorSubject = body.getUniqueId();
+    state.setJuniorBaseline(result);
+    state.setJuniorSubject(body.getUniqueId());
     state.setDirty();
   }
 
   public static ServerSubLevel reset(ServerLevel level) {
     var state = CoreTestState.get(level);
-    var snapshot = state.juniorBaseline;
+    var snapshot = state.getJuniorBaseline();
     if (snapshot.isEmpty()) {
       throw new IllegalStateException("Capture Junior's baseline first");
     }
     var container = SubLevelContainer.getContainer(level);
-    var old = state.juniorSubject == null ? null : container.getSubLevel(state.juniorSubject);
+    var old =
+        state.getJuniorSubject() == null ? null : container.getSubLevel(state.getJuniorSubject());
     var former = old instanceof ServerSubLevel b ? b : null;
     var formerData = former == null ? null : former.getUserDataTag();
     var access =
@@ -165,8 +166,8 @@ public final class DevelopmentJuniorBaseline {
         container.removeSubLevel(former, SubLevelRemovalReason.REMOVED);
       }
     }
-    state.juniorSubject = replacement.getUniqueId();
-    state.juniorFeedAt = level.getGameTime() + DevelopmentJuniorCare.INTERVAL;
+    state.setJuniorSubject(replacement.getUniqueId());
+    state.setJuniorFeedAt(level.getGameTime() + DevelopmentJuniorCare.INTERVAL);
     state.setDirty();
     return replacement;
   }

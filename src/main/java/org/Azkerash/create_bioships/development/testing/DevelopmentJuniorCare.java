@@ -85,22 +85,22 @@ public final class DevelopmentJuniorCare {
       return;
     }
     var state = CoreTestState.get(level);
-    if (state.juniorSubject == null) {
+    if (state.getJuniorSubject() == null) {
       return;
     }
     long now = level.getGameTime();
-    if (state.juniorFeedAt == 0) {
-      state.juniorFeedAt = now + INTERVAL;
+    if (state.getJuniorFeedAt() == 0) {
+      state.setJuniorFeedAt(now + INTERVAL);
       state.setDirty();
       return;
     }
-    if (now < state.juniorFeedAt) {
+    if (now < state.getJuniorFeedAt()) {
       return;
     }
-    state.juniorFeedAt = now + INTERVAL;
+    state.setJuniorFeedAt(now + INTERVAL);
     state.setDirty();
     var container = SubLevelContainer.getContainer(level);
-    var body = container == null ? null : container.getSubLevel(state.juniorSubject);
+    var body = container == null ? null : container.getSubLevel(state.getJuniorSubject());
     if (body instanceof ServerSubLevel server) {
       check(server);
     }

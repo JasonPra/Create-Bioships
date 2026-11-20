@@ -30,7 +30,7 @@ public final class BrainBlock
     SOUTH(Direction.SOUTH),
     WEST(Direction.WEST),
     EAST(Direction.EAST);
-    public final Direction face;
+    private final Direction face;
 
     Port(Direction face) {
       this.face = face;
@@ -47,6 +47,10 @@ public final class BrainBlock
         }
       }
       return NONE;
+    }
+
+    public Direction getFace() {
+      return this.face;
     }
   }
 

@@ -53,28 +53,31 @@ public final class CorePresetProbe {
       throw new IllegalStateException("Native fixture glue invalid: " + glue.size());
     }
     var state = CoreTestState.get(level);
-    if (state.combatOrigin.getY() != 64
-        || state.arrowOrigin.getY() != 64
-        || state.potionOrigin.getY() != 64) {
+    if (state.getCombatOrigin().getY() != 64
+        || state.getArrowOrigin().getY() != 64
+        || state.getPotionOrigin().getY() != 64) {
       throw new IllegalStateException("Fixture elevations disagree");
     }
     for (var origin :
         java.util.List.of(
-            state.combatOrigin, state.arrowOrigin, state.potionOrigin, layout.base())) {
+            state.getCombatOrigin(),
+            state.getArrowOrigin(),
+            state.getPotionOrigin(),
+            layout.base())) {
       if (!level.getBlockState(origin.below()).is(Blocks.BEDROCK)) {
         throw new IllegalStateException("Fixture floor missing at " + origin);
       }
     }
-    if (!state.combatBuilt || state.combatRunning) {
+    if (!state.isCombatBuilt() || state.isCombatRunning()) {
       throw new IllegalStateException("Combat fixture not ready");
     }
-    var combatCore = state.combatOrigin.above(9);
+    var combatCore = state.getCombatOrigin().above(9);
     if (!level.getBlockState(combatCore).is(ComponentRegistry.CORE.get())
         || !level.getBlockState(combatCore).getValue(CoreBlock.BLINK)) {
       throw new IllegalStateException("Combat fixture assembled before START");
     }
     if (!level
-        .getBlockState(state.combatOrigin.offset(13, 2, 0))
+        .getBlockState(state.getCombatOrigin().offset(13, 2, 0))
         .is(DevelopmentTestBlocks.GLASS.get())) {
       throw new IllegalStateException("Combat glass missing");
     }
@@ -188,11 +191,11 @@ public final class CorePresetProbe {
     }
     navigatorPlayer.containerMenu.clicked(
         1, 0, net.minecraft.world.inventory.ClickType.PICKUP, navigatorPlayer);
-    if (Math.abs(navigatorPlayer.getX() - state.combatOrigin.getX()) > 1
-        || Math.abs(navigatorPlayer.getZ() - (state.combatOrigin.getZ() - 18)) > 1) {
+    if (Math.abs(navigatorPlayer.getX() - state.getCombatOrigin().getX()) > 1
+        || Math.abs(navigatorPlayer.getZ() - (state.getCombatOrigin().getZ() - 18)) > 1) {
       throw new IllegalStateException("Navigator did not teleport to combat arena");
     }
-    if (state.combatOrigin.getX() != 1024 || state.combatOrigin.getZ() != 1024) {
+    if (state.getCombatOrigin().getX() != 1024 || state.getCombatOrigin().getZ() != 1024) {
       throw new IllegalStateException("Combat arena not isolated");
     }
     System.out.println("NAVIGATOR_PRESET_PASS menu=true teleport=true isolated=true");

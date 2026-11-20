@@ -20,25 +20,25 @@ public final class CombatFixtureTests {
       GameTestHelper helper) {
     var level = helper.getLevel();
     var state = CoreTestState.get(level);
-    state.combatOrigin = helper.absolutePos(new BlockPos(0, 3, 0));
+    state.setCombatOrigin(helper.absolutePos(new BlockPos(0, 3, 0)));
     CombatFixture.reset(level);
-    var core = state.combatOrigin.above(9);
+    var core = state.getCombatOrigin().above(9);
     helper.assertTrue(
         level.getBlockState(core).is(ComponentRegistry.CORE.get())
             && level.getBlockState(core).getValue(CoreBlock.BLINK),
         "Reset assembled subject prematurely");
     helper.assertTrue(
         level
-            .getBlockState(state.combatOrigin.offset(13, 2, 0))
+            .getBlockState(state.getCombatOrigin().offset(13, 2, 0))
             .is(DevelopmentTestBlocks.GLASS.get()),
         "Indestructible glass wall missing");
     helper.assertTrue(
         level
-            .getBlockState(state.combatOrigin.above(CombatFixture.HEIGHT))
+            .getBlockState(state.getCombatOrigin().above(CombatFixture.HEIGHT))
             .is(DevelopmentTestBlocks.GLASS.get()),
         "Indestructible roof missing");
     helper.assertTrue(
-        level.getBlockState(state.combatOrigin.below()).is(Blocks.BEDROCK),
+        level.getBlockState(state.getCombatOrigin().below()).is(Blocks.BEDROCK),
         "Combat floor is destructible");
     helper.assertTrue(
         DevelopmentTestBlocks.GLASS.get().asItem() == net.minecraft.world.item.Items.AIR,
@@ -50,16 +50,17 @@ public final class CombatFixtureTests {
         5,
         () -> {
           var start =
-              (CommandBlockEntity) level.getBlockEntity(state.combatOrigin.offset(-3, 0, -16));
+              (CommandBlockEntity) level.getBlockEntity(state.getCombatOrigin().offset(-3, 0, -16));
           start.getCommandBlock().performCommand(level);
           helper.assertTrue(
-              state.combatRunning && !state.combatEnemies.isEmpty(),
+              state.isCombatRunning() && !state.getCombatEnemies().isEmpty(),
               "Start did not enumerate enemies");
           helper.assertTrue(
-              !state.combatEnemies.contains("biomancy:primordial_flesh_blob"),
+              !state.getCombatEnemies().contains("biomancy:primordial_flesh_blob"),
               "Passive blob remained in hostile combat trials");
           var body =
-              (ServerSubLevel) SubLevelContainer.getContainer(level).getSubLevel(state.combatBody);
+              (ServerSubLevel)
+                  SubLevelContainer.getContainer(level).getSubLevel(state.getCombatBody());
           helper.assertTrue(
               body != null && SubLevelHealth.status(body).current() == 1,
               "Subject not assembled at one HP");
@@ -67,39 +68,40 @@ public final class CombatFixtureTests {
           SubLevelHealth.damage(body, 1, "regression");
           CombatFixture.tick(level);
           helper.assertTrue(
-              state.combatIndex == 1 && !first.equals(state.combatBody),
+              state.getCombatIndex() == 1 && !first.equals(state.getCombatBody()),
               "Death did not advance to a fresh subject");
           // Finish the suite without waiting for every enemy's 10-second observation window.
-          state.combatIndex = state.combatEnemies.size() - 1;
+          state.setCombatIndex(state.getCombatEnemies().size() - 1);
           body =
-              (ServerSubLevel) SubLevelContainer.getContainer(level).getSubLevel(state.combatBody);
+              (ServerSubLevel)
+                  SubLevelContainer.getContainer(level).getSubLevel(state.getCombatBody());
           SubLevelHealth.damage(body, 1, "regression");
           CombatFixture.tick(level);
           helper.assertTrue(
-              !state.combatRunning && state.combatBody == null,
+              !state.isCombatRunning() && state.getCombatBody() == null,
               "Completed suite did not reset automatically");
           helper.assertTrue(
               level.getBlockState(core).is(ComponentRegistry.CORE.get())
                   && level.getBlockState(core).getValue(CoreBlock.BLINK),
               "Final reset did not restore sleeping subject");
-          helper.assertTrue(state.combatResults.size() == 2, "Reset discarded results");
+          helper.assertTrue(state.getCombatResults().size() == 2, "Reset discarded results");
           var reset =
-              (CommandBlockEntity) level.getBlockEntity(state.combatOrigin.offset(3, 0, -16));
+              (CommandBlockEntity) level.getBlockEntity(state.getCombatOrigin().offset(3, 0, -16));
           reset.getCommandBlock().performCommand(level);
           reset.getCommandBlock().performCommand(level);
           helper.assertTrue(
-              !state.combatRunning && state.combatResults.size() == 2,
+              !state.isCombatRunning() && state.getCombatResults().size() == 2,
               "Manual reset lost saved results");
           helper.assertTrue(CombatFixture.TRIAL_TICKS == 200, "Combat timeout is not ten seconds");
-          state.combatResults.add("minecraft:breeze: FAIL (regression)");
-          state.combatResults.add("minecraft:vex: FAIL (regression)");
-          state.combatResults.add("minecraft:slime: FAIL (regression)");
-          state.combatResults.add("minecraft:phantom: FAIL (regression)");
-          state.combatResults.add("minecraft:shulker: FAIL (regression)");
+          state.getCombatResults().add("minecraft:breeze: FAIL (regression)");
+          state.getCombatResults().add("minecraft:vex: FAIL (regression)");
+          state.getCombatResults().add("minecraft:slime: FAIL (regression)");
+          state.getCombatResults().add("minecraft:phantom: FAIL (regression)");
+          state.getCombatResults().add("minecraft:shulker: FAIL (regression)");
           CombatFixture.toggleFailures(level, false);
-          helper.assertTrue(state.combatFailuresExpanded, "Failure dropdown did not open");
+          helper.assertTrue(state.isCombatFailuresExpanded(), "Failure dropdown did not open");
           CombatFixture.toggleFailures(level, true);
-          helper.assertTrue(state.combatFailurePage == 1, "Failure dropdown did not page");
+          helper.assertTrue(state.getCombatFailurePage() == 1, "Failure dropdown did not page");
           var labels = new java.util.ArrayList<net.minecraft.world.entity.Display.TextDisplay>();
           for (var entity : level.getAllEntities()) {
             if (entity instanceof net.minecraft.world.entity.Display.TextDisplay display
@@ -116,10 +118,10 @@ public final class CombatFixtureTests {
                               .contains("Shulker")),
               "Dropdown did not show failed entity name");
           CombatFixture.toggleFailures(level, false);
-          helper.assertTrue(!state.combatFailuresExpanded, "Failure dropdown did not close");
+          helper.assertTrue(!state.isCombatFailuresExpanded(), "Failure dropdown did not close");
           helper.assertTrue(
               level
-                  .getBlockState(state.combatOrigin.offset(-3, 1, -16))
+                  .getBlockState(state.getCombatOrigin().offset(-3, 1, -16))
                   .is(DevelopmentTestBlocks.BUTTON.get()),
               "Protected START button missing");
           for (var holder : DevelopmentTestBlocks.FLOOR.values()) {
@@ -130,7 +132,7 @@ public final class CombatFixtureTests {
           }
           var dragon = net.minecraft.world.entity.EntityType.ENDER_DRAGON.create(level);
           dragon.setPos(
-              net.minecraft.world.phys.Vec3.atLowerCornerOf(state.combatOrigin).add(22, 5, 0));
+              net.minecraft.world.phys.Vec3.atLowerCornerOf(state.getCombatOrigin()).add(22, 5, 0));
           dragon.aiStep();
           CombatFixture.contain(level, dragon);
           var box = dragon.getBoundingBox();
@@ -138,12 +140,12 @@ public final class CombatFixtureTests {
             box = box.minmax(part.getBoundingBox());
           }
           helper.assertTrue(
-              box.minX >= state.combatOrigin.getX() - 12
-                  && box.maxX <= state.combatOrigin.getX() + 13
-                  && box.minY >= state.combatOrigin.getY()
-                  && box.maxY <= state.combatOrigin.getY() + CombatFixture.HEIGHT
-                  && box.minZ >= state.combatOrigin.getZ() - 12
-                  && box.maxZ <= state.combatOrigin.getZ() + 13,
+              box.minX >= state.getCombatOrigin().getX() - 12
+                  && box.maxX <= state.getCombatOrigin().getX() + 13
+                  && box.minY >= state.getCombatOrigin().getY()
+                  && box.maxY <= state.getCombatOrigin().getY() + CombatFixture.HEIGHT
+                  && box.minZ >= state.getCombatOrigin().getZ() - 12
+                  && box.maxZ <= state.getCombatOrigin().getZ() + 13,
               "Dragon parts escaped containment: " + box);
           dragon.discard();
           helper.succeed();

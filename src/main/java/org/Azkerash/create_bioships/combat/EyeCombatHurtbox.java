@@ -41,7 +41,7 @@ public class EyeCombatHurtbox extends SubLevelCombatTarget {
   }
 
   public void bindEye(ServerSubLevel body, BlockPos cell) {
-    impactCell = cell;
+    this.setImpactCell(cell);
     entityData.set(GRID, java.util.Optional.of(body.getUniqueId()));
     entityData.set(CELL, cell);
     bind(body);
@@ -62,25 +62,27 @@ public class EyeCombatHurtbox extends SubLevelCombatTarget {
 
   @Override
   protected void position(ServerSubLevel body) {
-    if (impactCell == null) {
+    if (this.getImpactCell() == null) {
       return;
     }
-    var state = body.getLevel().getBlockState(impactCell);
+    var state = body.getLevel().getBlockState(this.getImpactCell());
     if (!accepts(state)) {
       discard();
       return;
     }
-    impactFace = facing(body, state);
-    var local = state.getShape(body.getLevel(), impactCell).bounds().move(impactCell);
+    this.setImpactFace(facing(body, state));
+    var local =
+        state.getShape(body.getLevel(), this.getImpactCell()).bounds().move(this.getImpactCell());
     var center = local.getCenter();
     double extent =
-        switch (impactFace.getAxis()) {
+        switch (this.getImpactFace().getAxis()) {
           case X -> local.getXsize();
           case Y -> local.getYsize();
           case Z -> local.getZsize();
         };
     focusForAttack(
-        body.logicalPose().transformPosition(center.relative(impactFace, extent / 2 + .02)));
+        body.logicalPose()
+            .transformPosition(center.relative(this.getImpactFace(), extent / 2 + .02)));
     var box = new dev.ryanhcode.sable.companion.math.BoundingBox3d(local);
     setBoundingBox(box.transform(body.logicalPose(), box).toMojang());
   }

@@ -85,7 +85,7 @@ public final class LocomotionFixture {
   }
 
   public static void reset(ServerLevel level) {
-    CoreTestState.get(level).locomotionBuilt = true;
+    CoreTestState.get(level).setLocomotionBuilt(true);
     CoreTestState.get(level).setDirty();
     var base = base(level);
     for (int x = (base.getX() - 12) >> 4; x <= (base.getX() + 12) >> 4; x++) {

@@ -28,12 +28,12 @@ public abstract class OrganInventory extends BlockEntity implements Container, M
 
   protected final org.Azkerash.create_bioships.core.component.ComponentState ownedState() {
     bind();
-    return binding == null ? localState() : binding.state;
+    return binding == null ? localState() : binding.getState();
   }
 
   public final NonNullList<ItemStack> items() {
     bind();
-    return binding == null ? localItems : binding.items;
+    return binding == null ? localItems : binding.getItems();
   }
 
   private void bind() {
@@ -56,10 +56,10 @@ public abstract class OrganInventory extends BlockEntity implements Container, M
                 net.minecraft.core.registries.BuiltInRegistries.BLOCK
                     .getKey(getBlockState().getBlock())
                     .toString(),
-                binding == null ? localItems : binding.items,
+                binding == null ? localItems : binding.getItems(),
                 localState());
     owner = body;
-    componentId = binding.id;
+    componentId = binding.getId();
   }
 
   @Override
@@ -145,14 +145,15 @@ public abstract class OrganInventory extends BlockEntity implements Container, M
     if (tag.hasUUID("ComponentInstance") && !componentId.equals(tag.getUUID("ComponentInstance"))) {
       if (owner != null && binding != null) {
         org.Azkerash.create_bioships.core.component.SubLevelComponentStore.release(
-            owner, binding.id, worldPosition);
+            owner, binding.getId(), worldPosition);
       }
       binding = null;
       owner = null;
       componentId = tag.getUUID("ComponentInstance");
     }
-    (binding == null ? localItems : binding.items).clear();
-    ContainerHelper.loadAllItems(tag, binding == null ? localItems : binding.items, registries);
+    (binding == null ? localItems : binding.getItems()).clear();
+    ContainerHelper.loadAllItems(
+        tag, binding == null ? localItems : binding.getItems(), registries);
   }
 
   /** One insertion implementation for transport, with an explicit simulation phase. */

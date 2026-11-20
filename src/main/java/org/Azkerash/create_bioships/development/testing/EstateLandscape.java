@@ -126,7 +126,7 @@ public final class EstateLandscape {
       }
     }
     var state = CoreTestState.get(l);
-    state.denLandscapeVersion = Math.max(1, state.denLandscapeVersion);
+    state.setDenLandscapeVersion(Math.max(1, state.getDenLandscapeVersion()));
     state.setDirty();
   }
 }

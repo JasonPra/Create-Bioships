@@ -193,7 +193,7 @@ public final class EstateInteriors {
           "Estate library has only " + power + " valid enchanting shelves");
     }
     var state = CoreTestState.get(l);
-    state.denFurnitureVersion = Math.max(1, state.denFurnitureVersion);
+    state.setDenFurnitureVersion(Math.max(1, state.getDenFurnitureVersion()));
     state.setDirty();
   }
 
@@ -300,7 +300,7 @@ public final class EstateInteriors {
       bed(l, foot, Direction.NORTH);
     }
     var state = CoreTestState.get(l);
-    state.denFurnitureVersion = 2;
+    state.setDenFurnitureVersion(2);
     state.setDirty();
   }
 
@@ -396,7 +396,7 @@ public final class EstateInteriors {
         }
       }
     }
-    state.denFurnitureVersion = 4;
+    state.setDenFurnitureVersion(4);
     state.setDirty();
   }
 }

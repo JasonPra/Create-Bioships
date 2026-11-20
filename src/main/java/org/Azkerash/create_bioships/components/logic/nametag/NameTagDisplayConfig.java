@@ -31,11 +31,11 @@ public record NameTagDisplayConfig(int menu, int x, int y, int z) implements Cus
   public static boolean handle(ServerPlayer player, NameTagDisplayConfig p) {
     if (!(player.containerMenu instanceof NameTagDisplayMenu menu)
         || menu.containerId != p.menu
-        || menu.display == null
+        || menu.getDisplay() == null
         || !menu.stillValid(player)) {
       return false;
     }
-    menu.display.setOffset(p.x, p.y, p.z);
+    menu.getDisplay().setOffset(p.x, p.y, p.z);
     menu.broadcastChanges();
     return true;
   }

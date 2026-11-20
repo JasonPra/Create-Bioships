@@ -32,12 +32,12 @@ public final class DevelopmentJuniorFixture {
 
   public static void install(ServerLevel level) {
     var state = CoreTestState.get(level);
-    if (state.juniorBaseline.isEmpty()) {
-      state.juniorBaseline = template(level);
+    if (state.getJuniorBaseline().isEmpty()) {
+      state.setJuniorBaseline(template(level));
       state.setDirty();
     }
     // Only the exhibit UUID identifies this reference creature; names elsewhere do not.
-    if (state.juniorSubject == null) {
+    if (state.getJuniorSubject() == null) {
       DevelopmentJuniorBaseline.reset(level);
     }
     JuniorAdminCommands.installControl(level);

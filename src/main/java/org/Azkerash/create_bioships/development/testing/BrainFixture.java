@@ -119,7 +119,7 @@ public final class BrainFixture {
     }
     control(level, base.offset(-3, 0, -8), "brain_test start");
     control(level, base.offset(3, 0, -8), "brain_test reset");
-    CoreTestState.get(level).brainBuilt = true;
+    CoreTestState.get(level).setBrainBuilt(true);
     CoreTestState.get(level).setDirty();
     control(level, base.offset(0, 0, -10), "brain_test feed");
     explain(level, "Ready: START assembles brain and mouth");
@@ -144,7 +144,7 @@ public final class BrainFixture {
     if (body(level) != null) {
       return 0;
     }
-    if (!CoreTestState.get(level).brainBuilt) {
+    if (!CoreTestState.get(level).isBrainBuilt()) {
       reset(level);
     }
     var origin = core(level);

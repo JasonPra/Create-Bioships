@@ -22,8 +22,8 @@ public class SubLevelCombatTarget extends LivingEntity {
       net.minecraft.network.syncher.SynchedEntityData.defineId(
           SubLevelCombatTarget.class, net.minecraft.network.syncher.EntityDataSerializers.FLOAT);
   private UUID bodyId, anchorThreat, anchorBody;
-  protected net.minecraft.core.BlockPos impactCell;
-  protected net.minecraft.core.Direction impactFace = net.minecraft.core.Direction.NORTH;
+  private net.minecraft.core.BlockPos impactCell;
+  private net.minecraft.core.Direction impactFace = net.minecraft.core.Direction.NORTH;
   private Vec3 anchor;
   private int anchorTick;
 
@@ -396,5 +396,21 @@ public class SubLevelCombatTarget extends LivingEntity {
   public void readAdditionalSaveData(CompoundTag tag) {
     super.readAdditionalSaveData(tag);
     bodyId = tag.hasUUID("sublevel") ? tag.getUUID("sublevel") : null;
+  }
+
+  public net.minecraft.core.BlockPos getImpactCell() {
+    return this.impactCell;
+  }
+
+  public void setImpactCell(net.minecraft.core.BlockPos value) {
+    this.impactCell = value;
+  }
+
+  public net.minecraft.core.Direction getImpactFace() {
+    return this.impactFace;
+  }
+
+  public void setImpactFace(net.minecraft.core.Direction value) {
+    this.impactFace = value;
   }
 }

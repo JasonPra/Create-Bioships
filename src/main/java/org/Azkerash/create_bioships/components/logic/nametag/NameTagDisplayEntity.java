@@ -24,7 +24,7 @@ public final class NameTagDisplayEntity extends OrganInventory {
   public static final int MIN = -256, MAX = 256;
 
   public static final class Offset implements ComponentState {
-    public int x, y = 24, z;
+    private int x, y = 24, z;
 
     public CompoundTag save(HolderLookup.Provider r) {
       var t = new CompoundTag();
@@ -38,6 +38,18 @@ public final class NameTagDisplayEntity extends OrganInventory {
       x = Math.clamp(t.getInt("LabelX"), MIN, MAX);
       y = t.contains("LabelY") ? Math.clamp(t.getInt("LabelY"), MIN, MAX) : 24;
       z = Math.clamp(t.getInt("LabelZ"), MIN, MAX);
+    }
+
+    public int getX() {
+      return this.x;
+    }
+
+    public int getY() {
+      return this.y;
+    }
+
+    public int getZ() {
+      return this.z;
     }
   }
 

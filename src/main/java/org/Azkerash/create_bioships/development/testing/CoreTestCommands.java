@@ -36,7 +36,7 @@ public final class CoreTestCommands {
   public static int start(ServerLevel level)
       throws com.simibubi.create.content.contraptions.AssemblyException {
     var state = CoreTestState.get(level);
-    if (!state.built || state.running) {
+    if (!state.isBuilt() || state.isRunning()) {
       return 0;
     }
     var layout = state.layout();
@@ -50,8 +50,8 @@ public final class CoreTestCommands {
     if (result == null || !(result.subLevel() instanceof ServerSubLevel body)) {
       return 0;
     }
-    state.running = true;
-    state.owned.add(body.getUniqueId());
+    state.setRunning(true);
+    state.getOwned().add(body.getUniqueId());
     state.setDirty();
     own(level, state, body);
     return 1;
@@ -60,7 +60,7 @@ public final class CoreTestCommands {
   private static void own(ServerLevel level, CoreTestState state, ServerSubLevel body) {
     DevelopmentLifeSupport.pause(body);
     DevelopmentTestOwnership.assign(body);
-    if (state.owned.add(body.getUniqueId())) {
+    if (state.getOwned().add(body.getUniqueId())) {
       state.setDirty();
     }
     var data = body.getUserDataTag();
@@ -75,13 +75,13 @@ public final class CoreTestCommands {
 
   public static void observe(ServerLevel level) {
     var state = CoreTestState.get(level);
-    if (!state.running) {
+    if (!state.isRunning()) {
       return;
     }
     var bounds = state.layout().arena().inflate(1);
     for (var body : SubLevelContainer.getContainer(level).getAllSubLevels()) {
       if (!body.isRemoved()
-          && (state.owned.contains(body.getUniqueId())
+          && (state.getOwned().contains(body.getUniqueId())
               || CoreAssemblyRules.isCreature(body)
                   && bounds.contains(
                       body.logicalPose()
@@ -128,11 +128,11 @@ public final class CoreTestCommands {
   public static void reset(ServerLevel level, CoreSplitFixture.Layout layout) {
     var state = CoreTestState.get(level);
     observe(level);
-    state.running = false;
+    state.setRunning(false);
     var container = SubLevelContainer.getContainer(level);
     for (var body : List.copyOf(container.getAllSubLevels())) {
       var data = body.getUserDataTag();
-      if (state.owned.contains(body.getUniqueId())
+      if (state.getOwned().contains(body.getUniqueId())
           || data != null && "core_split".equals(data.getString(FIXTURE))) {
         var logical = new AABB(body.getPlot().getCenterBlock()).inflate(10);
         for (var glue : level.getEntitiesOfClass(HoneyGlueEntity.class, logical)) {
@@ -149,9 +149,9 @@ public final class CoreTestCommands {
             net.minecraft.world.entity.item.ItemEntity.class, layout.arena())) {
       item.discard();
     }
-    state.owned.clear();
-    state.origin = layout.base();
-    state.built = true;
+    state.getOwned().clear();
+    state.setOrigin(layout.base());
+    state.setBuilt(true);
     state.setDirty();
     CoreSplitFixture.build(level, layout);
   }
@@ -188,7 +188,7 @@ public final class CoreTestCommands {
                     var source = ctx.getSource();
                     var level = source.getLevel();
                     var state = CoreTestState.get(level);
-                    if (!state.built) {
+                    if (!state.isBuilt()) {
                       source.sendFailure(
                           Component.literal("No core regression fixture in this world."));
                       return 0;
@@ -221,9 +221,9 @@ public final class CoreTestCommands {
                         () ->
                             Component.literal(
                                 "Core test: "
-                                    + (state.running ? "running" : "ready")
+                                    + (state.isRunning() ? "running" : "ready")
                                     + ", tracked grids: "
-                                    + state.owned.size()),
+                                    + state.getOwned().size()),
                         false);
                     return 1;
                   }));
@@ -237,7 +237,7 @@ public final class CoreTestCommands {
                   ctx -> {
                     var source = ctx.getSource();
                     var level = source.getLevel();
-                    if (!CoreTestState.get(level).combatBuilt) {
+                    if (!CoreTestState.get(level).isCombatBuilt()) {
                       source.sendFailure(Component.literal("No combat fixture in this world."));
                       return 0;
                     }
@@ -385,7 +385,7 @@ public final class CoreTestCommands {
                   ctx -> {
                     var level = ctx.getSource().getLevel();
                     var state = CoreTestState.get(level);
-                    if (!state.arrowBuilt) {
+                    if (!state.isArrowBuilt()) {
                       return 0;
                     }
                     if (action.equals("start")) {

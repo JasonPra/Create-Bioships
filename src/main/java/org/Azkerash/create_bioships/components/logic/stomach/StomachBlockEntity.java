@@ -33,19 +33,19 @@ public final class StomachBlockEntity extends OrganInventory implements IHaveGog
   @Override
   public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
     var tag = new CompoundTag();
-    tag.putInt("Acid", state().acid);
+    tag.putInt("Acid", state().getAcid());
     tag.put("Genes", genes.save());
-    tag.putInt("Progress", state().progress);
-    tag.putInt("Duration", state().duration);
+    tag.putInt("Progress", state().getProgress());
+    tag.putInt("Duration", state().getDuration());
     tag.putInt("Queued", queued());
     return tag;
   }
 
   @Override
   public void handleUpdateTag(CompoundTag tag, HolderLookup.Provider registries) {
-    state().acid = tag.getInt("Acid");
-    state().progress = tag.getInt("Progress");
-    state().duration = tag.getInt("Duration");
+    state().setAcid(tag.getInt("Acid"));
+    state().setProgress(tag.getInt("Progress"));
+    state().setDuration(tag.getInt("Duration"));
     clientQueued = tag.getInt("Queued");
     genes.load(tag.getCompound("Genes"));
   }
@@ -144,15 +144,15 @@ public final class StomachBlockEntity extends OrganInventory implements IHaveGog
   }
 
   public int acid() {
-    return state().acid;
+    return state().getAcid();
   }
 
   public int progress() {
-    return state().progress;
+    return state().getProgress();
   }
 
   public int duration() {
-    return state().duration;
+    return state().getDuration();
   }
 
   public int queued() {
@@ -182,9 +182,9 @@ public final class StomachBlockEntity extends OrganInventory implements IHaveGog
     return new ContainerData() {
       public int get(int index) {
         return switch (index) {
-          case 0 -> state().acid;
-          case 1 -> state().progress;
-          case 2 -> state().duration;
+          case 0 -> state().getAcid();
+          case 1 -> state().getProgress();
+          case 2 -> state().getDuration();
           case 3 -> genes.longevityTier();
           case 4 -> genes.efficiency();
           default -> 0;
@@ -200,8 +200,9 @@ public final class StomachBlockEntity extends OrganInventory implements IHaveGog
   }
 
   public boolean addToGoggleTooltip(List<Component> tooltip, boolean sneaking) {
-    tooltip.add(Component.literal("Stomach acid: " + state().acid + " / " + MAX_ACID));
-    tooltip.add(Component.literal("Digestion: " + state().progress + " / " + state().duration));
+    tooltip.add(Component.literal("Stomach acid: " + state().getAcid() + " / " + MAX_ACID));
+    tooltip.add(
+        Component.literal("Digestion: " + state().getProgress() + " / " + state().getDuration()));
     tooltip.add(Component.literal("Queued food: " + queued() + " / 576"));
     tooltip.add(
         Component.literal(

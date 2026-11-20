@@ -6,48 +6,51 @@ import net.minecraft.nbt.*;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
 
-/** Persistent fixture state and exact Sable identities, independent of rendering/geometry. */
+/**
+ * Persistent fixture state and exact Sable identities, independent of rendering/geometry. Mutators
+ * do not flush partial transitions; callers must mark SavedData dirty after a complete update.
+ */
 public final class CoreTestState extends SavedData {
-  boolean built, running, combatBuilt, combatRunning;
-  boolean visionBuilt, membraneBuilt, brainBuilt, locomotionBuilt, modularLimbsBuilt;
-  int legChamberVersion, denAccessVersion, denFurnitureVersion, denLandscapeVersion;
-  boolean waterloggingBuilt, aquariumBuilt, juniorHabitatBuilt, necromancerDenBuilt;
-  BlockPos juniorHabitatOrigin = BlockPos.ZERO;
-  int waterloggingCatalogSize;
-  UUID developmentOwner, juniorSubject;
-  long juniorFeedAt;
-  net.minecraft.nbt.CompoundTag juniorBaseline = new net.minecraft.nbt.CompoundTag();
-  BlockPos combatOrigin = new BlockPos(1024, DevelopmentWorldSetup.DEFAULT_TEST_Y, 1024);
-  boolean combatFailuresExpanded;
-  int combatFailurePage;
-  int combatIndex;
-  long combatDeadline;
-  int combatTrialSeconds = 10, combatActiveTrialSeconds = 10;
-  UUID combatBody, combatEnemy;
-  boolean combatAcquired;
-  boolean potionBuilt, potionRunning, potionResistanceHit;
-  BlockPos potionOrigin = new BlockPos(256, DevelopmentWorldSetup.DEFAULT_TEST_Y, 0);
-  UUID potionBody, potionZombie;
-  int potionResistancePhase;
-  double potionBaselineDamage, potionProtectedDamage, potionHitBefore;
-  int potionIndex;
-  long potionDeadline;
-  double potionBefore;
-  final List<String> potionResults = new ArrayList<>();
-  boolean digestionBuilt, digestionRunning;
-  BlockPos digestionOrigin = new BlockPos(384, DevelopmentWorldSetup.DEFAULT_TEST_Y, 0);
-  UUID digestionBody, digestionControl;
-  long digestionDeadline;
-  String digestionResult = "Ready";
-  boolean arrowBuilt, arrowRunning;
-  BlockPos arrowOrigin = new BlockPos(128, DevelopmentWorldSetup.DEFAULT_TEST_Y, 0);
-  UUID arrowBody;
-  int arrowPhase;
-  long arrowDeadline, arrowShotAt, arrowNextAction;
-  String arrowResult = "Ready";
-  final List<String> combatEnemies = new ArrayList<>(), combatResults = new ArrayList<>();
-  BlockPos origin = new BlockPos(0, DevelopmentWorldSetup.DEFAULT_TEST_Y, 0);
-  final Set<UUID> owned = new HashSet<>();
+  private boolean built, running, combatBuilt, combatRunning;
+  private boolean visionBuilt, membraneBuilt, brainBuilt, locomotionBuilt, modularLimbsBuilt;
+  private int legChamberVersion, denAccessVersion, denFurnitureVersion, denLandscapeVersion;
+  private boolean waterloggingBuilt, aquariumBuilt, juniorHabitatBuilt, necromancerDenBuilt;
+  private BlockPos juniorHabitatOrigin = BlockPos.ZERO;
+  private int waterloggingCatalogSize;
+  private UUID developmentOwner, juniorSubject;
+  private long juniorFeedAt;
+  private net.minecraft.nbt.CompoundTag juniorBaseline = new net.minecraft.nbt.CompoundTag();
+  private BlockPos combatOrigin = new BlockPos(1024, DevelopmentWorldSetup.DEFAULT_TEST_Y, 1024);
+  private boolean combatFailuresExpanded;
+  private int combatFailurePage;
+  private int combatIndex;
+  private long combatDeadline;
+  private int combatTrialSeconds = 10, combatActiveTrialSeconds = 10;
+  private UUID combatBody, combatEnemy;
+  private boolean combatAcquired;
+  private boolean potionBuilt, potionRunning, potionResistanceHit;
+  private BlockPos potionOrigin = new BlockPos(256, DevelopmentWorldSetup.DEFAULT_TEST_Y, 0);
+  private UUID potionBody, potionZombie;
+  private int potionResistancePhase;
+  private double potionBaselineDamage, potionProtectedDamage, potionHitBefore;
+  private int potionIndex;
+  private long potionDeadline;
+  private double potionBefore;
+  private final List<String> potionResults = new ArrayList<>();
+  private boolean digestionBuilt, digestionRunning;
+  private BlockPos digestionOrigin = new BlockPos(384, DevelopmentWorldSetup.DEFAULT_TEST_Y, 0);
+  private UUID digestionBody, digestionControl;
+  private long digestionDeadline;
+  private String digestionResult = "Ready";
+  private boolean arrowBuilt, arrowRunning;
+  private BlockPos arrowOrigin = new BlockPos(128, DevelopmentWorldSetup.DEFAULT_TEST_Y, 0);
+  private UUID arrowBody;
+  private int arrowPhase;
+  private long arrowDeadline, arrowShotAt, arrowNextAction;
+  private String arrowResult = "Ready";
+  private final List<String> combatEnemies = new ArrayList<>(), combatResults = new ArrayList<>();
+  private BlockPos origin = new BlockPos(0, DevelopmentWorldSetup.DEFAULT_TEST_Y, 0);
+  private final Set<UUID> owned = new HashSet<>();
 
   public CoreSplitFixture.Layout layout() {
     return new CoreSplitFixture.Layout(origin);
@@ -278,5 +281,537 @@ public final class CoreTestState extends SavedData {
     }
     tag.put("Owned", ids);
     return tag;
+  }
+
+  public boolean isBuilt() {
+    return this.built;
+  }
+
+  public void setBuilt(boolean value) {
+    this.built = value;
+  }
+
+  public boolean isRunning() {
+    return this.running;
+  }
+
+  public void setRunning(boolean value) {
+    this.running = value;
+  }
+
+  public boolean isCombatBuilt() {
+    return this.combatBuilt;
+  }
+
+  public void setCombatBuilt(boolean value) {
+    this.combatBuilt = value;
+  }
+
+  public boolean isCombatRunning() {
+    return this.combatRunning;
+  }
+
+  public void setCombatRunning(boolean value) {
+    this.combatRunning = value;
+  }
+
+  public boolean isVisionBuilt() {
+    return this.visionBuilt;
+  }
+
+  public void setVisionBuilt(boolean value) {
+    this.visionBuilt = value;
+  }
+
+  public boolean isMembraneBuilt() {
+    return this.membraneBuilt;
+  }
+
+  public void setMembraneBuilt(boolean value) {
+    this.membraneBuilt = value;
+  }
+
+  public boolean isBrainBuilt() {
+    return this.brainBuilt;
+  }
+
+  public void setBrainBuilt(boolean value) {
+    this.brainBuilt = value;
+  }
+
+  public boolean isLocomotionBuilt() {
+    return this.locomotionBuilt;
+  }
+
+  public void setLocomotionBuilt(boolean value) {
+    this.locomotionBuilt = value;
+  }
+
+  public boolean isModularLimbsBuilt() {
+    return this.modularLimbsBuilt;
+  }
+
+  public void setModularLimbsBuilt(boolean value) {
+    this.modularLimbsBuilt = value;
+  }
+
+  public int getLegChamberVersion() {
+    return this.legChamberVersion;
+  }
+
+  public void setLegChamberVersion(int value) {
+    this.legChamberVersion = value;
+  }
+
+  public int getDenAccessVersion() {
+    return this.denAccessVersion;
+  }
+
+  public void setDenAccessVersion(int value) {
+    this.denAccessVersion = value;
+  }
+
+  public int getDenFurnitureVersion() {
+    return this.denFurnitureVersion;
+  }
+
+  public void setDenFurnitureVersion(int value) {
+    this.denFurnitureVersion = value;
+  }
+
+  public int getDenLandscapeVersion() {
+    return this.denLandscapeVersion;
+  }
+
+  public void setDenLandscapeVersion(int value) {
+    this.denLandscapeVersion = value;
+  }
+
+  public boolean isWaterloggingBuilt() {
+    return this.waterloggingBuilt;
+  }
+
+  public void setWaterloggingBuilt(boolean value) {
+    this.waterloggingBuilt = value;
+  }
+
+  public boolean isAquariumBuilt() {
+    return this.aquariumBuilt;
+  }
+
+  public void setAquariumBuilt(boolean value) {
+    this.aquariumBuilt = value;
+  }
+
+  public boolean isJuniorHabitatBuilt() {
+    return this.juniorHabitatBuilt;
+  }
+
+  public void setJuniorHabitatBuilt(boolean value) {
+    this.juniorHabitatBuilt = value;
+  }
+
+  public boolean isNecromancerDenBuilt() {
+    return this.necromancerDenBuilt;
+  }
+
+  public void setNecromancerDenBuilt(boolean value) {
+    this.necromancerDenBuilt = value;
+  }
+
+  public BlockPos getJuniorHabitatOrigin() {
+    return this.juniorHabitatOrigin;
+  }
+
+  public void setJuniorHabitatOrigin(BlockPos value) {
+    this.juniorHabitatOrigin = value;
+  }
+
+  public int getWaterloggingCatalogSize() {
+    return this.waterloggingCatalogSize;
+  }
+
+  public void setWaterloggingCatalogSize(int value) {
+    this.waterloggingCatalogSize = value;
+  }
+
+  public UUID getDevelopmentOwner() {
+    return this.developmentOwner;
+  }
+
+  public void setDevelopmentOwner(UUID value) {
+    this.developmentOwner = value;
+  }
+
+  public UUID getJuniorSubject() {
+    return this.juniorSubject;
+  }
+
+  public void setJuniorSubject(UUID value) {
+    this.juniorSubject = value;
+  }
+
+  public long getJuniorFeedAt() {
+    return this.juniorFeedAt;
+  }
+
+  public void setJuniorFeedAt(long value) {
+    this.juniorFeedAt = value;
+  }
+
+  public net.minecraft.nbt.CompoundTag getJuniorBaseline() {
+    return this.juniorBaseline;
+  }
+
+  public void setJuniorBaseline(net.minecraft.nbt.CompoundTag value) {
+    this.juniorBaseline = value;
+  }
+
+  public BlockPos getCombatOrigin() {
+    return this.combatOrigin;
+  }
+
+  public void setCombatOrigin(BlockPos value) {
+    this.combatOrigin = value;
+  }
+
+  public boolean isCombatFailuresExpanded() {
+    return this.combatFailuresExpanded;
+  }
+
+  public void setCombatFailuresExpanded(boolean value) {
+    this.combatFailuresExpanded = value;
+  }
+
+  public int getCombatFailurePage() {
+    return this.combatFailurePage;
+  }
+
+  public void setCombatFailurePage(int value) {
+    this.combatFailurePage = value;
+  }
+
+  public void incrementCombatFailurePage() {
+    this.combatFailurePage++;
+  }
+
+  public int getCombatIndex() {
+    return this.combatIndex;
+  }
+
+  public void setCombatIndex(int value) {
+    this.combatIndex = value;
+  }
+
+  public void incrementCombatIndex() {
+    this.combatIndex++;
+  }
+
+  public long getCombatDeadline() {
+    return this.combatDeadline;
+  }
+
+  public void setCombatDeadline(long value) {
+    this.combatDeadline = value;
+  }
+
+  public int getCombatTrialSeconds() {
+    return this.combatTrialSeconds;
+  }
+
+  public void setCombatTrialSeconds(int value) {
+    this.combatTrialSeconds = value;
+  }
+
+  public int getCombatActiveTrialSeconds() {
+    return this.combatActiveTrialSeconds;
+  }
+
+  public void setCombatActiveTrialSeconds(int value) {
+    this.combatActiveTrialSeconds = value;
+  }
+
+  public UUID getCombatBody() {
+    return this.combatBody;
+  }
+
+  public void setCombatBody(UUID value) {
+    this.combatBody = value;
+  }
+
+  public UUID getCombatEnemy() {
+    return this.combatEnemy;
+  }
+
+  public void setCombatEnemy(UUID value) {
+    this.combatEnemy = value;
+  }
+
+  public boolean isCombatAcquired() {
+    return this.combatAcquired;
+  }
+
+  public void setCombatAcquired(boolean value) {
+    this.combatAcquired = value;
+  }
+
+  public boolean isPotionBuilt() {
+    return this.potionBuilt;
+  }
+
+  public void setPotionBuilt(boolean value) {
+    this.potionBuilt = value;
+  }
+
+  public boolean isPotionRunning() {
+    return this.potionRunning;
+  }
+
+  public void setPotionRunning(boolean value) {
+    this.potionRunning = value;
+  }
+
+  public boolean isPotionResistanceHit() {
+    return this.potionResistanceHit;
+  }
+
+  public void setPotionResistanceHit(boolean value) {
+    this.potionResistanceHit = value;
+  }
+
+  public BlockPos getPotionOrigin() {
+    return this.potionOrigin;
+  }
+
+  public void setPotionOrigin(BlockPos value) {
+    this.potionOrigin = value;
+  }
+
+  public UUID getPotionBody() {
+    return this.potionBody;
+  }
+
+  public void setPotionBody(UUID value) {
+    this.potionBody = value;
+  }
+
+  public UUID getPotionZombie() {
+    return this.potionZombie;
+  }
+
+  public void setPotionZombie(UUID value) {
+    this.potionZombie = value;
+  }
+
+  public int getPotionResistancePhase() {
+    return this.potionResistancePhase;
+  }
+
+  public void setPotionResistancePhase(int value) {
+    this.potionResistancePhase = value;
+  }
+
+  public double getPotionBaselineDamage() {
+    return this.potionBaselineDamage;
+  }
+
+  public void setPotionBaselineDamage(double value) {
+    this.potionBaselineDamage = value;
+  }
+
+  public double getPotionProtectedDamage() {
+    return this.potionProtectedDamage;
+  }
+
+  public void setPotionProtectedDamage(double value) {
+    this.potionProtectedDamage = value;
+  }
+
+  public double getPotionHitBefore() {
+    return this.potionHitBefore;
+  }
+
+  public void setPotionHitBefore(double value) {
+    this.potionHitBefore = value;
+  }
+
+  public int getPotionIndex() {
+    return this.potionIndex;
+  }
+
+  public void setPotionIndex(int value) {
+    this.potionIndex = value;
+  }
+
+  public void incrementPotionIndex() {
+    this.potionIndex++;
+  }
+
+  public long getPotionDeadline() {
+    return this.potionDeadline;
+  }
+
+  public void setPotionDeadline(long value) {
+    this.potionDeadline = value;
+  }
+
+  public double getPotionBefore() {
+    return this.potionBefore;
+  }
+
+  public void setPotionBefore(double value) {
+    this.potionBefore = value;
+  }
+
+  public List<String> getPotionResults() {
+    return this.potionResults;
+  }
+
+  public boolean isDigestionBuilt() {
+    return this.digestionBuilt;
+  }
+
+  public void setDigestionBuilt(boolean value) {
+    this.digestionBuilt = value;
+  }
+
+  public boolean isDigestionRunning() {
+    return this.digestionRunning;
+  }
+
+  public void setDigestionRunning(boolean value) {
+    this.digestionRunning = value;
+  }
+
+  public BlockPos getDigestionOrigin() {
+    return this.digestionOrigin;
+  }
+
+  public void setDigestionOrigin(BlockPos value) {
+    this.digestionOrigin = value;
+  }
+
+  public UUID getDigestionBody() {
+    return this.digestionBody;
+  }
+
+  public void setDigestionBody(UUID value) {
+    this.digestionBody = value;
+  }
+
+  public UUID getDigestionControl() {
+    return this.digestionControl;
+  }
+
+  public void setDigestionControl(UUID value) {
+    this.digestionControl = value;
+  }
+
+  public long getDigestionDeadline() {
+    return this.digestionDeadline;
+  }
+
+  public void setDigestionDeadline(long value) {
+    this.digestionDeadline = value;
+  }
+
+  public String getDigestionResult() {
+    return this.digestionResult;
+  }
+
+  public void setDigestionResult(String value) {
+    this.digestionResult = value;
+  }
+
+  public boolean isArrowBuilt() {
+    return this.arrowBuilt;
+  }
+
+  public void setArrowBuilt(boolean value) {
+    this.arrowBuilt = value;
+  }
+
+  public boolean isArrowRunning() {
+    return this.arrowRunning;
+  }
+
+  public void setArrowRunning(boolean value) {
+    this.arrowRunning = value;
+  }
+
+  public BlockPos getArrowOrigin() {
+    return this.arrowOrigin;
+  }
+
+  public void setArrowOrigin(BlockPos value) {
+    this.arrowOrigin = value;
+  }
+
+  public UUID getArrowBody() {
+    return this.arrowBody;
+  }
+
+  public void setArrowBody(UUID value) {
+    this.arrowBody = value;
+  }
+
+  public int getArrowPhase() {
+    return this.arrowPhase;
+  }
+
+  public void setArrowPhase(int value) {
+    this.arrowPhase = value;
+  }
+
+  public long getArrowDeadline() {
+    return this.arrowDeadline;
+  }
+
+  public void setArrowDeadline(long value) {
+    this.arrowDeadline = value;
+  }
+
+  public long getArrowShotAt() {
+    return this.arrowShotAt;
+  }
+
+  public void setArrowShotAt(long value) {
+    this.arrowShotAt = value;
+  }
+
+  public long getArrowNextAction() {
+    return this.arrowNextAction;
+  }
+
+  public void setArrowNextAction(long value) {
+    this.arrowNextAction = value;
+  }
+
+  public String getArrowResult() {
+    return this.arrowResult;
+  }
+
+  public void setArrowResult(String value) {
+    this.arrowResult = value;
+  }
+
+  public List<String> getCombatEnemies() {
+    return this.combatEnemies;
+  }
+
+  public List<String> getCombatResults() {
+    return this.combatResults;
+  }
+
+  public BlockPos getOrigin() {
+    return this.origin;
+  }
+
+  public void setOrigin(BlockPos value) {
+    this.origin = value;
+  }
+
+  public Set<UUID> getOwned() {
+    return this.owned;
   }
 }

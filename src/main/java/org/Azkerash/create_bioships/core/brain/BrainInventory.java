@@ -21,7 +21,7 @@ public final class BrainInventory implements Container {
   }
 
   public dev.ryanhcode.sable.sublevel.ServerSubLevel body() {
-    return brain.body;
+    return brain.getBody();
   }
 
   public BlockPos port() {
@@ -41,15 +41,15 @@ public final class BrainInventory implements Container {
   }
 
   public boolean isEmpty() {
-    return brain.cards.stream().allMatch(ItemStack::isEmpty);
+    return brain.getCards().stream().allMatch(ItemStack::isEmpty);
   }
 
   public ItemStack getItem(int slot) {
-    return brain.cards.get(slot);
+    return brain.getCards().get(slot);
   }
 
   public ItemStack removeItem(int slot, int count) {
-    var stack = ContainerHelper.removeItem(brain.cards, slot, count);
+    var stack = ContainerHelper.removeItem(brain.getCards(), slot, count);
     if (!stack.isEmpty()) {
       setChanged();
     }
@@ -57,7 +57,7 @@ public final class BrainInventory implements Container {
   }
 
   public ItemStack removeItemNoUpdate(int slot) {
-    var stack = ContainerHelper.takeItem(brain.cards, slot);
+    var stack = ContainerHelper.takeItem(brain.getCards(), slot);
     if (!stack.isEmpty()) {
       setChanged();
     }
@@ -65,7 +65,7 @@ public final class BrainInventory implements Container {
   }
 
   public void setItem(int slot, ItemStack stack) {
-    brain.cards.set(slot, stack);
+    brain.getCards().set(slot, stack);
     stack.limitSize(1);
     setChanged();
   }
@@ -75,7 +75,7 @@ public final class BrainInventory implements Container {
   }
 
   public void clearContent() {
-    brain.cards.clear();
+    brain.getCards().clear();
     setChanged();
   }
 
@@ -90,15 +90,16 @@ public final class BrainInventory implements Container {
   public boolean validAt(Player player, BlockPos port) {
     return port != null
         && port.equals(brain.port())
-        && !brain.body.isRemoved()
-        && player.level() == brain.body.getLevel()
-        && SubLevelData.isLiving(brain.body)
-        && !org.Azkerash.create_bioships.core.SubLevelHealth.status(brain.body).dead()
+        && !brain.getBody().isRemoved()
+        && player.level() == brain.getBody().getLevel()
+        && SubLevelData.isLiving(brain.getBody())
+        && !org.Azkerash.create_bioships.core.SubLevelHealth.status(brain.getBody()).dead()
         && org.Azkerash.create_bioships.core.access.SubLevelPermissions.canInspect(
-            brain.body, player.getUUID())
+            brain.getBody(), player.getUUID())
         && player
                 .getEyePosition()
-                .distanceToSqr(brain.body.logicalPose().transformPosition(Vec3.atCenterOf(port)))
+                .distanceToSqr(
+                    brain.getBody().logicalPose().transformPosition(Vec3.atCenterOf(port)))
             <= 64;
   }
 }

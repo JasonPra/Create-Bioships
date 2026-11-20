@@ -58,9 +58,9 @@ public final class JuniorAdminCommands {
                                       var state = CoreTestState.get(l);
                                       var container = SubLevelContainer.getContainer(l);
                                       var body =
-                                          state.juniorSubject == null
+                                          state.getJuniorSubject() == null
                                               ? null
-                                              : container.getSubLevel(state.juniorSubject);
+                                              : container.getSubLevel(state.getJuniorSubject());
                                       if (!(body instanceof ServerSubLevel b)) {
                                         c.getSource()
                                             .sendFailure(

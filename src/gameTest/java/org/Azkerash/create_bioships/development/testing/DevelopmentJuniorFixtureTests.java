@@ -25,13 +25,13 @@ public final class DevelopmentJuniorFixtureTests {
         20,
         () -> {
           var state = CoreTestState.get(l);
-          state.juniorSubject = null;
-          state.juniorBaseline = new net.minecraft.nbt.CompoundTag();
+          state.setJuniorSubject(null);
+          state.setJuniorBaseline(new net.minecraft.nbt.CompoundTag());
           var template = DevelopmentJuniorFixture.template(l);
           var owner =
               template.getCompound("user").getCompound(SubLevelData.ACCESS).getUUID("owner");
           DevelopmentJuniorFixture.install(l);
-          var id = state.juniorSubject;
+          var id = state.getJuniorSubject();
           h.runAfterDelay(
               80,
               () -> {
@@ -57,7 +57,7 @@ public final class DevelopmentJuniorFixtureTests {
                     "Bundled Junior life support is invalid");
                 DevelopmentJuniorFixture.install(l);
                 h.assertTrue(
-                    id.equals(state.juniorSubject),
+                    id.equals(state.getJuniorSubject()),
                     "Fixture duplicated Junior on repeat installation");
                 h.succeed();
               });
