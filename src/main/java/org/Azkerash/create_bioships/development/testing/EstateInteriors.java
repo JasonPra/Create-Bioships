@@ -125,7 +125,7 @@ public final class EstateInteriors {
       if (b == Blocks.LANTERN || b == Blocks.CHAIN) l.removeBlock(p, false);
     }
     table(l, floor, -2, 2, 2, 3);
-    chair(l, floor.offset(0, 0, 5), Direction.NORTH);
+    chair(l, floor.offset(0, 0, 4), Direction.NORTH);
     stand(l, floor.offset(3, 0, 5), Direction.SOUTH);
     put(l, floor.offset(-1, 1, 2), Blocks.LANTERN);
     // Discrete alcoves rather than walls buried behind a grid of shelves.
@@ -203,9 +203,9 @@ public final class EstateInteriors {
     pendant(l, kitchen, 0, 5, 5);
     // Guest seating around a low-volume table, with clear circulation around the stair doorway.
     table(l, kitchen, 8, -4, 9, -3);
-    for (int x : new int[] {7, 10}) {
+    for (int x : new int[] {8, 9}) {
       chair(l, kitchen.offset(x, 0, -5), Direction.SOUTH);
-      chair(l, kitchen.offset(x, 0, -1), Direction.NORTH);
+      chair(l, kitchen.offset(x, 0, -2), Direction.NORTH);
     }
     for (int y = 0; y < 2; y++) bookcase(l, kitchen.offset(11, y, -7), Direction.WEST, y == 0);
     put(l, kitchen.offset(8, 1, -4), Blocks.LANTERN);
@@ -218,14 +218,14 @@ public final class EstateInteriors {
     contents = clearOldFurniture(l, bedroom);
     bed(l, bedroom.offset(-1, 0, 7), Direction.NORTH);
     bed(l, bedroom.offset(0, 0, 7), Direction.NORTH);
-    for (int x : new int[] {-3, 2}) {
+    for (int x : new int[] {-2, 1}) {
       cabinet(l, bedroom.offset(x, 0, 6), Direction.SOUTH, contents);
       put(l, bedroom.offset(x, 1, 6), Blocks.LANTERN);
     }
     for (int z = 7; z <= 10; z++)
       for (int y = 0; y < 2; y++) cabinet(l, bedroom.offset(10, y, z), Direction.WEST, contents);
     table(l, bedroom, 6, 3, 8, 4);
-    chair(l, bedroom.offset(7, 0, 6), Direction.NORTH);
+    chair(l, bedroom.offset(7, 0, 5), Direction.NORTH);
     stand(l, bedroom.offset(9, 0, 5), Direction.SOUTH);
     put(l, bedroom.offset(6, 1, 3), Blocks.LANTERN);
     for (int z = -6; z <= -4; z++) bookcase(l, bedroom.offset(11, 0, z), Direction.WEST, z == -5);
@@ -254,6 +254,82 @@ public final class EstateInteriors {
     }
     var state = CoreTestState.get(l);
     state.denFurnitureVersion = 2;
+    state.setDirty();
+  }
+
+  private static void shiftCabinet(ServerLevel l, BlockPos from, BlockPos to) {
+    var entity = l.getBlockEntity(from);
+    if (entity == null || !l.getBlockState(from).is(FurnitureRegistry.OSSUARY_CABINET.get()))
+      return;
+    var saved = entity.saveWithoutMetadata(l.registryAccess());
+    var state = l.getBlockState(from);
+    if (entity instanceof Container c) c.clearContent();
+    l.removeBlock(from, false);
+    l.setBlock(to, state, 3);
+    var target = l.getBlockEntity(to);
+    if (target != null) {
+      target.loadWithComponents(saved, l.registryAccess());
+      target.setChanged();
+    }
+    if (l.getBlockState(from.above()).is(Blocks.LANTERN)) {
+      l.removeBlock(from.above(), false);
+      put(l, to.above(), Blocks.LANTERN);
+    }
+  }
+
+  public static void polish(ServerLevel l, BlockPos surface) {
+    for (int floor : new int[] {12, 24, 36}) {
+      for (int x = -12; x <= 12; x++)
+        for (int z = -12; z <= 12; z++) {
+          var p = surface.offset(x, floor, z);
+          if (l.getBlockState(p).is(Blocks.PURPLE_CARPET)) l.removeBlock(p, false);
+          if (l.getBlockState(p.below()).is(Blocks.SHROOMLIGHT))
+            put(l, p.below(), Blocks.DARK_OAK_PLANKS);
+        }
+      for (var face : Direction.Plane.HORIZONTAL)
+        for (int side : new int[] {-5, 5}) {
+          var tangent = face.getClockWise();
+          int x = face.getStepX() * 13 + tangent.getStepX() * side,
+              z = face.getStepZ() * 13 + tangent.getStepZ() * side;
+          var hook = surface.offset(x, floor + 4, z);
+          var outer = hook.relative(face.getOpposite());
+          l.setBlock(hook, Blocks.DEEPSLATE_BRICK_WALL.defaultBlockState(), 3);
+          l.setBlock(outer, Blocks.DEEPSLATE_BRICK_WALL.defaultBlockState(), 3);
+          for (var p : new BlockPos[] {hook, outer})
+            l.setBlock(p, Block.updateFromNeighbourShapes(l.getBlockState(p), l, p), 2);
+          l.setBlock(
+              outer.below(),
+              Blocks.LANTERN.defaultBlockState().setValue(LanternBlock.HANGING, true),
+              3);
+        }
+      for (int[] lamp : new int[][] {{0, 5}, {7, -4}, {-6, 7}})
+        pendant(l, surface.above(floor), lamp[0], lamp[1], 6);
+    }
+    var old = surface.offset(0, 24, 5);
+    if (l.getBlockState(old).is(FurnitureRegistry.OSSUARY_CHAIR.get())) l.removeBlock(old, false);
+    chair(l, surface.offset(0, 24, 4), Direction.NORTH);
+    old = surface.offset(7, 36, 6);
+    if (l.getBlockState(old).is(FurnitureRegistry.OSSUARY_CHAIR.get())) l.removeBlock(old, false);
+    chair(l, surface.offset(7, 36, 5), Direction.NORTH);
+    for (int x : new int[] {7, 10})
+      for (int z : new int[] {-5, -1})
+        if (l.getBlockState(surface.offset(x, 12, z)).is(FurnitureRegistry.OSSUARY_CHAIR.get()))
+          l.removeBlock(surface.offset(x, 12, z), false);
+    for (int x : new int[] {8, 9}) {
+      chair(l, surface.offset(x, 12, -5), Direction.SOUTH);
+      chair(l, surface.offset(x, 12, -2), Direction.NORTH);
+    }
+    shiftCabinet(l, surface.offset(-3, 36, 6), surface.offset(-2, 36, 6));
+    shiftCabinet(l, surface.offset(2, 36, 6), surface.offset(1, 36, 6));
+    var state = CoreTestState.get(l);
+    // The old connector road placed a street-lamp post and hook directly across the entrance.
+    for (int z = -38; z <= -36; z++)
+      for (int y = 0; y <= 4; y++) {
+        var p = surface.offset(0, y, z);
+        var b = l.getBlockState(p).getBlock();
+        if (b == Blocks.DEEPSLATE_BRICK_WALL || b == Blocks.LANTERN) l.removeBlock(p, false);
+      }
+    state.denFurnitureVersion = 4;
     state.setDirty();
   }
 }

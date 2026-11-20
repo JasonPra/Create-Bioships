@@ -123,6 +123,7 @@ public final class NecromancerDenFixture {
     EstateWaterworks.build(l, s);
     EstateRuins.build(l, s);
     EstateGardens.build(l, s);
+    EstateInteriors.polish(l, s);
     var state = CoreTestState.get(l);
     state.necromancerDenBuilt = true;
     state.setDirty();
@@ -383,8 +384,6 @@ public final class NecromancerDenFixture {
         for (int z = -11; z <= -3; z++)
           if (towerCell(x, z, 13)) put(l, s, x, y, z, Blocks.DARK_OAK_PLANKS);
     DenStaircase.build(l, s.offset(-6, 0, -5), 48, false);
-    DenStaircase.build(
-        l, new BlockPos(s.getX(), b.getY(), s.getZ() - 30), s.getY() - b.getY(), true);
     // Restore only the tower envelope; staircase clearance must never cut the facade.
     for (int y = 0; y <= 49; y++)
       for (int x = -14; x <= 14; x++)
@@ -410,7 +409,7 @@ public final class NecromancerDenFixture {
           put(l, s, x, y, z, material);
         }
     roads(l, s);
-    supportFrame(l, b);
+    supportFrameWithAccess(l, b, s);
     interiorLighting(l, s, b);
     for (int x : new int[] {-38, 38})
       for (int z : new int[] {-35, 0, 35}) put(l, b, x, 0, z, Blocks.CHISELED_POLISHED_BLACKSTONE);
@@ -482,13 +481,33 @@ public final class NecromancerDenFixture {
       l.addFreshEntity(display);
     }
     var state = CoreTestState.get(l);
-    state.denAccessVersion = 1;
+    state.denAccessVersion = 2;
     state.setDirty();
   }
 
   private static boolean textContains(
       net.minecraft.world.entity.Display.TextDisplay display, String text) {
     return display.saveWithoutId(new CompoundTag()).getString("text").contains(text);
+  }
+
+  /** Build the stair last: the ceiling web must never erase its upper treads. */
+  static void supportFrameWithAccess(ServerLevel l, BlockPos vault, BlockPos surface) {
+    supportFrame(l, vault);
+    DenStaircase.build(
+        l,
+        new BlockPos(surface.getX(), vault.getY(), surface.getZ() - 30),
+        surface.getY() - vault.getY(),
+        true);
+  }
+
+  public static void repairStairContinuity(ServerLevel l) {
+    var s = surface(l);
+    var b = base(l);
+    DenStaircase.build(
+        l, new BlockPos(s.getX(), b.getY(), s.getZ() - 30), s.getY() - b.getY(), true);
+    var state = CoreTestState.get(l);
+    state.denAccessVersion = 2;
+    state.setDirty();
   }
 
   private static void supportFrame(ServerLevel l, BlockPos b) {
@@ -662,6 +681,10 @@ public final class NecromancerDenFixture {
       }
       if (i % 32 == 0) {
         var lamp = p.offset(dz == 0 ? 0 : 4, 1, dx == 0 ? 0 : 4);
+        var den = surface(l);
+        if (Math.abs(lamp.getX() - den.getX()) <= 9
+            && lamp.getZ() - den.getZ() >= -42
+            && lamp.getZ() - den.getZ() <= -14) continue;
         int hx = dz == 0 ? 0 : -1, hz = dx == 0 ? 0 : -1;
         for (int up = 0; up < 4; up++)
           l.setBlock(lamp.above(up), Blocks.DEEPSLATE_BRICK_WALL.defaultBlockState(), 3);

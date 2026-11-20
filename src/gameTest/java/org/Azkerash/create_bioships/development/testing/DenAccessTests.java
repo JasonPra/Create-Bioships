@@ -21,7 +21,10 @@ public final class DenAccessTests {
         for (int z = -7; z <= 7; z++)
           l.setChunkForced((base.getX() + x) >> 4, (base.getZ() + z) >> 4, true);
       int height = vault ? 56 : 48;
-      DenStaircase.build(l, base, height, vault);
+      if (vault) {
+        var center = base.offset(0, 0, 30);
+        NecromancerDenFixture.supportFrameWithAccess(l, center, center.above(height));
+      } else DenStaircase.build(l, base, height, false);
       var profile = new GameProfile(UUID.randomUUID(), "StairWalker");
       var player = new ServerPlayer(l.getServer(), l, profile, ClientInformation.createDefault());
       player.connection = new net.neoforged.neoforge.common.util.FakePlayer(l, profile).connection;

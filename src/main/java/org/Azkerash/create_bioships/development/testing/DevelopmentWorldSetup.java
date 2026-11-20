@@ -79,6 +79,7 @@ public final class DevelopmentWorldSetup {
       DevelopmentJuniorFixture.install(level);
     }
     if (state.denAccessVersion < 1) NecromancerDenFixture.repairAccessAndLighting(level);
+    if (state.denAccessVersion < 2) NecromancerDenFixture.repairStairContinuity(level);
     if (state.denFurnitureVersion < 1)
       EstateInteriors.library(level, NecromancerDenFixture.surface(level));
     if (state.denFurnitureVersion < 2)
@@ -91,5 +92,7 @@ public final class DevelopmentWorldSetup {
       EstateRuins.build(level, NecromancerDenFixture.surface(level));
     if (state.denLandscapeVersion < 4)
       EstateGardens.build(level, NecromancerDenFixture.surface(level));
+    if (state.denFurnitureVersion < 4)
+      EstateInteriors.polish(level, NecromancerDenFixture.surface(level));
   }
 }
