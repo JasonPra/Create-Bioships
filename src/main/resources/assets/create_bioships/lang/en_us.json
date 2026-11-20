@@ -39,5 +39,6 @@
   "item.create_bioships.somatic_resonator": "Somatic Resonator",
   "block.create_bioships.flipper": "Flipper",
   "block.create_bioships.throne_of_azkerash": "Throne of Az'kerash",
-  "block.create_bioships.name_tag_displayer": "Name Tag Displayer"
+  "block.create_bioships.name_tag_displayer": "Name Tag Displayer",
+  "block.create_bioships.ossuary_table": "Ossuary Table"
 }

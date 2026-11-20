@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "CCC",
+    "BFB",
+    "B B"
+  ],
+  "key": {
+    "C": {
+      "item": "create_bioships:chitin_armor"
+    },
+    "B": {
+      "item": "minecraft:bone"
+    },
+    "F": {
+      "item": "biomancy:packed_flesh"
+    }
+  },
+  "result": {
+    "id": "create_bioships:ossuary_table",
+    "count": 2
+  }
+}

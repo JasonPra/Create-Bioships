@@ -100,6 +100,8 @@ public final class Create_bioships {
                 .displayItems(
                     (parameters, output) -> {
                       ComponentRegistry.addToCreative(output);
+                      org.Azkerash.create_bioships.furniture.FurnitureRegistry.addToCreative(
+                          output);
                       output.accept(BIOSHIP_GOGGLES.get());
                       output.accept(BIOSHIP_WRENCH.get());
                       output.accept(LIMB_POSITIONER.get());
@@ -139,6 +141,7 @@ public final class Create_bioships {
                 org.Azkerash.create_bioships.combat.SubLevelCombatTarget.attributes().build()));
     ENTITIES.register(bus);
     ComponentRegistry.register(bus);
+    org.Azkerash.create_bioships.furniture.FurnitureRegistry.register(bus);
     ITEMS.register(bus);
     TABS.register(bus);
   }

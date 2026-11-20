@@ -1,0 +1,215 @@
+{
+  "textures": {
+    "bone": "minecraft:block/bone_block_side",
+    "marrow": "minecraft:block/bone_block_top",
+    "flesh": "biomancy:block/packed_flesh",
+    "chitin": "create_bioships:block/living_core",
+    "particle": "minecraft:block/bone_block_side"
+  },
+  "elements": [
+    {
+      "to": [
+        4,
+        12,
+        4
+      ],
+      "faces": {
+        "up": {
+          "texture": "#bone",
+          "uv": [
+            1,
+            1,
+            4,
+            4
+          ]
+        },
+        "down": {
+          "texture": "#bone",
+          "uv": [
+            1,
+            1,
+            4,
+            4
+          ]
+        },
+        "north": {
+          "texture": "#bone",
+          "uv": [
+            1,
+            4,
+            4,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#bone",
+          "uv": [
+            1,
+            4,
+            4,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#bone",
+          "uv": [
+            1,
+            4,
+            4,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#bone",
+          "uv": [
+            1,
+            4,
+            4,
+            16
+          ]
+        }
+      },
+      "from": [
+        1,
+        0,
+        1
+      ]
+    },
+    {
+      "to": [
+        4.5,
+        3,
+        4.5
+      ],
+      "faces": {
+        "up": {
+          "texture": "#chitin",
+          "uv": [
+            0.5,
+            0.5,
+            4.5,
+            4.5
+          ]
+        },
+        "down": {
+          "texture": "#chitin",
+          "uv": [
+            0.5,
+            0.5,
+            4.5,
+            4.5
+          ]
+        },
+        "north": {
+          "texture": "#chitin",
+          "uv": [
+            0.5,
+            13,
+            4.5,
+            15
+          ]
+        },
+        "south": {
+          "texture": "#chitin",
+          "uv": [
+            0.5,
+            13,
+            4.5,
+            15
+          ]
+        },
+        "east": {
+          "texture": "#chitin",
+          "uv": [
+            0.5,
+            13,
+            4.5,
+            15
+          ]
+        },
+        "west": {
+          "texture": "#chitin",
+          "uv": [
+            0.5,
+            13,
+            4.5,
+            15
+          ]
+        }
+      },
+      "from": [
+        0.5,
+        1,
+        0.5
+      ]
+    },
+    {
+      "to": [
+        4.2,
+        11,
+        4.2
+      ],
+      "faces": {
+        "up": {
+          "texture": "#flesh",
+          "uv": [
+            0.8,
+            0.8,
+            4.2,
+            4.2
+          ]
+        },
+        "down": {
+          "texture": "#flesh",
+          "uv": [
+            0.8,
+            0.8,
+            4.2,
+            4.2
+          ]
+        },
+        "north": {
+          "texture": "#flesh",
+          "uv": [
+            0.8,
+            5,
+            4.2,
+            7
+          ]
+        },
+        "south": {
+          "texture": "#flesh",
+          "uv": [
+            0.8,
+            5,
+            4.2,
+            7
+          ]
+        },
+        "east": {
+          "texture": "#flesh",
+          "uv": [
+            0.8,
+            5,
+            4.2,
+            7
+          ]
+        },
+        "west": {
+          "texture": "#flesh",
+          "uv": [
+            0.8,
+            5,
+            4.2,
+            7
+          ]
+        }
+      },
+      "from": [
+        0.8,
+        9,
+        0.8
+      ]
+    }
+  ]
+}
