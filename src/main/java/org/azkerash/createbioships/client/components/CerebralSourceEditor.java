@@ -16,8 +16,9 @@ import org.lwjgl.glfw.GLFW;
  * Native source editor with original line numbers, lexical colors, folds and diagnostic squiggles.
  */
 public final class CerebralSourceEditor extends AbstractScrollWidget {
-  private static final int ROW_GAP_PIXELS = 3;
-  private static final int MIN_GUTTER_PIXELS = 34;
+  private static final float TEXT_SCALE = .75f;
+  private static final int ROW_GAP_PIXELS = 2;
+  private static final int MIN_GUTTER_PIXELS = 26;
   private static final int HORIZONTAL_SCROLL_STEP_PIXELS = 18;
   private static final long CARET_BLINK_PERIOD_MILLIS = 500;
 
@@ -65,11 +66,11 @@ public final class CerebralSourceEditor extends AbstractScrollWidget {
   }
 
   private int rowHeight() {
-    return font.lineHeight + ROW_GAP_PIXELS;
+    return textHeight() + ROW_GAP_PIXELS;
   }
 
   private int gutter() {
-    return Math.max(MIN_GUTTER_PIXELS, font.width(Integer.toString(document.lineCount())) + 18);
+    return Math.max(MIN_GUTTER_PIXELS, measure(Integer.toString(document.lineCount())) + 18);
   }
 
   private int textX() {
@@ -77,7 +78,22 @@ public final class CerebralSourceEditor extends AbstractScrollWidget {
   }
 
   private int measure(String value) {
-    return font.width(value.replace("\t", "    "));
+    return Math.round(font.width(value.replace("\t", "    ")) * TEXT_SCALE);
+  }
+
+  private int textHeight() {
+    return (int) Math.ceil(font.lineHeight * TEXT_SCALE);
+  }
+
+  /**
+   * Keep coordinates in GUI pixels; only glyphs scale, so clipping and mouse input stay aligned.
+   */
+  private void drawText(GuiGraphics g, String value, int x, int y, int color) {
+    g.pose().pushPose();
+    g.pose().translate(x, y, 0);
+    g.pose().scale(TEXT_SCALE, TEXT_SCALE, 1);
+    g.drawString(font, value, 0, 0, color, false);
+    g.pose().popPose();
   }
 
   private int xAt(int line, int column) {
@@ -172,13 +188,14 @@ public final class CerebralSourceEditor extends AbstractScrollWidget {
       if (index == completionIndex) {
         g.fill(completionX, y, completionX + completionWidth, y + rowHeight(), 0xff65435c);
       }
-      g.drawString(
-          font,
-          font.plainSubstrByWidth(completion.suggestions().get(index).label(), completionWidth - 8),
+      drawText(
+          g,
+          font.plainSubstrByWidth(
+              completion.suggestions().get(index).label(),
+              (int) ((completionWidth - 8) / TEXT_SCALE)),
           completionX + 4,
           y + 2,
-          0xffead8c9,
-          false);
+          0xffead8c9);
     }
     g.pose().popPose();
   }
@@ -193,7 +210,7 @@ public final class CerebralSourceEditor extends AbstractScrollWidget {
             Math.max(
                 120,
                 completion.suggestions().stream()
-                    .mapToInt(value -> font.width(value.label()) + 8)
+                    .mapToInt(value -> measure(value.label()) + 8)
                     .max()
                     .orElse(120)));
     completionFirst =
@@ -398,11 +415,12 @@ public final class CerebralSourceEditor extends AbstractScrollWidget {
     int x = 0;
     for (int i = 0; i < content.length(); ) {
       int next = i + Character.charCount(content.codePointAt(i));
-      int width = measure(content.substring(i, next));
+      int nextX = measure(content.substring(0, next));
+      int width = nextX - x;
       if (point < x + width / 2.0) {
         return document.lineStart(line) + i;
       }
-      x += width;
+      x = nextX;
       i = next;
     }
     return document.lineEnd(line);
@@ -469,15 +487,9 @@ public final class CerebralSourceEditor extends AbstractScrollWidget {
         g.fill(getX() + 3, y + 2, getX() + 5, y + 6, error ? 0xffee7180 : 0xff9bc878);
       }
       String number = Integer.toString(line + 1);
-      g.drawString(font, number, getX() + gutter() - 12 - font.width(number), y, 0xff967d8c, false);
+      drawText(g, number, getX() + gutter() - 12 - measure(number), y, 0xff967d8c);
       if (document.foldable(line)) {
-        g.drawString(
-            font,
-            document.collapsed(line) ? "+" : "-",
-            getX() + gutter() - 8,
-            y,
-            0xffdcc5c0,
-            false);
+        drawText(g, document.collapsed(line) ? "+" : "-", getX() + gutter() - 8, y, 0xffdcc5c0);
       }
       g.enableScissor(textX(), getY() + 1, getX() + width - 1, getY() + height - 1);
       if (document.lineAt(document.caret()) == line) {
@@ -493,21 +505,17 @@ public final class CerebralSourceEditor extends AbstractScrollWidget {
             y + rowHeight() - 1,
             0x995f426d);
       }
-      int x = textX() - horizontal, offset = document.lineStart(line);
+      int lineStart = document.lineStart(line);
       for (var part : parts.get(line)) {
-        if (part.start() > offset) {
-          x += measure(getValue().substring(offset, part.start()));
-        }
+        int x = xAt(line, part.start() - lineStart);
         String value = getValue().substring(part.start(), part.end()).replace("\t", "    ");
-        int width = font.width(value);
-        if (x + width >= textX() && x < getX() + this.width) {
-          g.drawString(font, value, x, y, color(part.kind()), false);
+        int end = xAt(line, part.end() - lineStart);
+        if (end >= textX() && x < getX() + this.width) {
+          drawText(g, value, x, y, color(part.kind()));
         }
-        x += width;
-        offset = part.end();
       }
       if (document.collapsed(line)) {
-        g.drawString(font, " …", x, y, 0xffb78b9d, false);
+        drawText(g, " …", xAt(line, document.line(line).length()), y, 0xffb78b9d);
       }
       for (var problem : problems) {
         if (problem.line() == line + 1) {
@@ -520,9 +528,9 @@ public final class CerebralSourceEditor extends AbstractScrollWidget {
           for (int at = start; at < end; at++) {
             g.fill(
                 at,
-                y + font.lineHeight + (at - start) % 2,
+                y + textHeight() + (at - start) % 2,
                 at + 1,
-                y + font.lineHeight + (at - start) % 2 + 1,
+                y + textHeight() + (at - start) % 2 + 1,
                 color);
           }
         }
@@ -531,7 +539,7 @@ public final class CerebralSourceEditor extends AbstractScrollWidget {
           && document.lineAt(document.caret()) == line
           && Util.getMillis() / CARET_BLINK_PERIOD_MILLIS % 2 == 0) {
         int caret = xAt(line, document.column());
-        g.fill(caret, y - 1, caret + 1, y + font.lineHeight + 1, 0xfff5e5d2);
+        g.fill(caret, y - 1, caret + 1, y + textHeight() + 1, 0xfff5e5d2);
       }
       g.disableScissor();
     }

@@ -14,6 +14,14 @@ import org.azkerash.createbioships.core.brain.program.editor.*;
 
 /** Source editing stays client-side; only explicit saves alter a physical card on the server. */
 public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspaceMenu> {
+  private static final int WINDOW_MARGIN = 4;
+  private static final int EDITOR_TOP = 39;
+  private static final int FOOTER_HEIGHT = 49;
+  private static final int STATUS_BOTTOM_OFFSET = 40;
+  private static final int BUTTON_BOTTOM_OFFSET = 26;
+  private static final int BUTTON_HEIGHT = 18;
+  private static final String SHORTCUTS =
+      "Ctrl+S save · Ctrl+Enter compile · Ctrl+Space suggest · Drag divider to resize";
   private static final int LIVE_ANALYSIS_DELAY_TICKS = 8;
   private static final int DIVIDER_HEIGHT = 8;
   private static final int DIAGNOSTIC_HEADER_HEIGHT = 18;
@@ -66,16 +74,16 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
 
   @Override
   protected void init() {
-    imageWidth = width - 20;
-    imageHeight = height - 24;
+    imageWidth = width - WINDOW_MARGIN * 2;
+    imageHeight = height - WINDOW_MARGIN * 2;
     super.init();
     int sourceHeight = MIN_SOURCE_HEIGHT;
     int panelHeight = MIN_DIAGNOSTIC_HEIGHT;
-    int panelTop = topPos + 39 + sourceHeight + DIVIDER_HEIGHT;
+    int panelTop = topPos + EDITOR_TOP + sourceHeight + DIVIDER_HEIGHT;
     editor =
         addRenderableWidget(
             new CerebralSourceEditor(
-                font, leftPos + 12, topPos + 39, imageWidth - 24, sourceHeight, document));
+                font, leftPos + 12, topPos + EDITOR_TOP, imageWidth - 24, sourceHeight, document));
     tracker =
         addRenderableWidget(
             new CerebralProblems(
@@ -132,20 +140,28 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
     analyzeNow();
     addRenderableWidget(
         Button.builder(Component.literal("Save draft"), b -> save())
-            .bounds(leftPos + 12, topPos + imageHeight - 32, 100, 20)
+            .bounds(leftPos + 12, topPos + imageHeight - BUTTON_BOTTOM_OFFSET, 100, BUTTON_HEIGHT)
             .build());
     addRenderableWidget(
         Button.builder(Component.literal("Close"), b -> onClose())
-            .bounds(leftPos + imageWidth - 72, topPos + imageHeight - 32, 60, 20)
+            .bounds(
+                leftPos + imageWidth - 72,
+                topPos + imageHeight - BUTTON_BOTTOM_OFFSET,
+                60,
+                BUTTON_HEIGHT)
             .build());
     addRenderableWidget(
         Button.builder(Component.literal("Compile & write"), b -> compile())
-            .bounds(leftPos + 118, topPos + imageHeight - 32, 106, 20)
+            .bounds(leftPos + 118, topPos + imageHeight - BUTTON_BOTTOM_OFFSET, 106, BUTTON_HEIGHT)
             .build());
     console =
         addRenderableWidget(
             new ProgramConsole(
-                font, leftPos + 12, topPos + 39, imageWidth - 24, imageHeight - 110));
+                font,
+                leftPos + 12,
+                topPos + EDITOR_TOP,
+                imageWidth - 24,
+                imageHeight - EDITOR_TOP - FOOTER_HEIGHT));
     console.lines(output);
     console.visible = showingConsole;
     editor.visible = !showingConsole;
@@ -175,7 +191,7 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
 
   /** Fractions survive window and GUI-scale changes; only widget bounds change during a drag. */
   private void resizePanels() {
-    int areaHeight = imageHeight - 110;
+    int areaHeight = imageHeight - EDITOR_TOP - FOOTER_HEIGHT;
     int available = Math.max(0, areaHeight - DIVIDER_HEIGHT - DIAGNOSTIC_HEADER_HEIGHT);
     int diagnosticHeight =
         layout.isDiagnosticsHidden()
@@ -353,7 +369,8 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
   @Override
   public boolean mouseDragged(double mx, double my, int button, double dx, double dy) {
     if (resizingPanels && button == 0) {
-      int available = imageHeight - 110 - DIVIDER_HEIGHT - DIAGNOSTIC_HEADER_HEIGHT;
+      int available =
+          imageHeight - EDITOR_TOP - FOOTER_HEIGHT - DIVIDER_HEIGHT - DIAGNOSTIC_HEADER_HEIGHT;
       layout.setDiagnosticFraction((editor.getY() + available - my) / Math.max(1, available));
       resizePanels();
       return true;
@@ -419,7 +436,7 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
         leftPos + 10,
         topPos + 37,
         leftPos + imageWidth - 10,
-        topPos + imageHeight - 69,
+        topPos + imageHeight - FOOTER_HEIGHT + 2,
         0xff100e16);
     if (!showingConsole && !layout.isDiagnosticsHidden()) {
       int color = overDivider(mx, my) || resizingPanels ? 0xffd8a3bd : 0xff815269;
@@ -435,17 +452,8 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
         font,
         font.plainSubstrByWidth(showingConsole ? runtimeState : status, imageWidth - 24),
         leftPos + 12,
-        topPos + imageHeight - 61,
+        topPos + imageHeight - STATUS_BOTTOM_OFFSET,
         OrganScreenStyle.TEXT,
-        false);
-    g.drawString(
-        font,
-        font.plainSubstrByWidth(
-            "Ctrl+S save · Ctrl+Enter compile · Ctrl+Space suggest · Drag divider to resize",
-            imageWidth - 24),
-        leftPos + 12,
-        topPos + imageHeight - 48,
-        OrganScreenStyle.MUTED,
         false);
   }
 
@@ -476,9 +484,13 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
     }
     if (mx >= leftPos + 12
         && mx < leftPos + imageWidth - 12
-        && my >= topPos + imageHeight - 63
-        && my < topPos + imageHeight - 50) {
-      g.renderTooltip(font, Component.literal(showingConsole ? runtimeState : status), mx, my);
+        && my >= topPos + imageHeight - STATUS_BOTTOM_OFFSET - 2
+        && my < topPos + imageHeight - STATUS_BOTTOM_OFFSET + 11) {
+      g.renderTooltip(
+          font,
+          Component.literal((showingConsole ? runtimeState : status) + "\n" + SHORTCUTS),
+          mx,
+          my);
     }
   }
 }

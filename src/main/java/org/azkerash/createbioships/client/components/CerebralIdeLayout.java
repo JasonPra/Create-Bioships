@@ -9,7 +9,7 @@ import net.neoforged.fml.loading.FMLPaths;
 
 /** Local UI preferences only: never stored on a card or synchronized with the server. */
 final class CerebralIdeLayout {
-  private static final double DEFAULT_DIAGNOSTIC_FRACTION = .22;
+  private static final double DEFAULT_DIAGNOSTIC_FRACTION = .16;
   private static final double MIN_FRACTION = .05;
   private static final double MAX_FRACTION = .75;
   private static final Path FILE =
@@ -24,7 +24,9 @@ final class CerebralIdeLayout {
         var values = new Properties();
         values.load(reader);
         layout.setDiagnosticFraction(
-            Double.parseDouble(values.getProperty("diagnosticFraction", ".22")));
+            Double.parseDouble(
+                values.getProperty(
+                    "diagnosticFraction", Double.toString(DEFAULT_DIAGNOSTIC_FRACTION))));
         layout.diagnosticsHidden =
             Boolean.parseBoolean(values.getProperty("diagnosticsHidden", "false"));
       } catch (IOException | IllegalArgumentException e) {
