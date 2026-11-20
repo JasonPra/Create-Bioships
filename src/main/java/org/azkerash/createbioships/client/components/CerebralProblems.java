@@ -57,6 +57,14 @@ final class CerebralProblems extends AbstractScrollWidget {
     setScrollAmount(0);
   }
 
+  void reflow() {
+    double scroll = scrollAmount();
+    var previous = entries;
+    entries = List.of();
+    entries(previous, fingerprint, log);
+    setScrollAmount(scroll);
+  }
+
   EditorProblem hovered(double mx, double my) {
     if (!visible || !withinContentAreaPoint(mx, my)) {
       return null;

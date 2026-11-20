@@ -11,6 +11,7 @@ public final class SourceEditorChecks {
   }
 
   public static void run() {
+    completionChecks();
     var document = new SourceDocument("if (true) {}");
     document.move(document.text().length() - 1, false);
     document.enter();
@@ -126,6 +127,42 @@ public final class SourceEditorChecks {
     var error = ProgramCompiler.compile("Console.WriteLine(missing);");
     check(
         !error.success() && error.diagnostic().column() > 0, "Unknown name lost its error marker");
+  }
+
+  private static void completionChecks() {
+    var call = new SourceDocument("Console.Wri");
+    var matches = SourceCompletion.suggest(call, false);
+    check(matches.suggestions().size() == 1, "Console API suggestion missing");
+    SourceCompletion.accept(call, matches, 0);
+    check(
+        call.text().equals("Console.WriteLine()") && call.column() == 18,
+        "Completion did not place caret inside arguments");
+    call.undo();
+    check(call.text().equals("Console.Wri"), "Completion was not a single undoable edit");
+    var stats = SourceCompletion.suggest(new SourceDocument("Brain."), false);
+    check(stats.suggestions().size() == 5, "Approved Brain API inventory changed");
+    check(
+        SourceCompletion.suggest(new SourceDocument("System."), true).suggestions().isEmpty(),
+        "Completion advertised an unsupported host API");
+    for (String source : List.of("// Console.Wri", "/* Brain.", "\"Brain.")) {
+      check(
+          SourceCompletion.suggest(new SourceDocument(source), true).suggestions().isEmpty(),
+          "Completion opened inside a comment or string");
+    }
+    var local = new SourceDocument("int pulse=0;\npul");
+    check(
+        SourceCompletion.suggest(local, false).suggestions().stream()
+            .anyMatch(value -> value.text().equals("pulse")),
+        "Local declaration not suggested");
+    var middle = new SourceDocument("Brain.HealZZ");
+    middle.move(10, false);
+    var replacement = SourceCompletion.suggest(middle, false);
+    SourceCompletion.accept(middle, replacement, 0);
+    check(middle.text().equals("Brain.Health"), "Completion left a stale identifier suffix");
+    local.selectAll();
+    check(
+        SourceCompletion.suggest(local, true).suggestions().isEmpty(),
+        "Completion overwrote an active selection");
   }
 
   private static void check(boolean condition, String message) {

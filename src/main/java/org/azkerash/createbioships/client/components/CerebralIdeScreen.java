@@ -15,6 +15,14 @@ import org.azkerash.createbioships.core.brain.program.editor.*;
 /** Source editing stays client-side; only explicit saves alter a physical card on the server. */
 public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspaceMenu> {
   private static final int LIVE_ANALYSIS_DELAY_TICKS = 8;
+  private static final int DIVIDER_HEIGHT = 8;
+  private static final int DIAGNOSTIC_HEADER_HEIGHT = 18;
+  private static final int MIN_SOURCE_HEIGHT = 36;
+  private static final int MIN_DIAGNOSTIC_HEIGHT = 24;
+  private final CerebralIdeLayout layout = CerebralIdeLayout.load();
+  private Button diagnosticsToggle;
+  private int dividerTop;
+  private boolean resizingPanels;
   private static final int STATUS_POLL_INTERVAL_TICKS = 20;
 
   private CerebralSourceEditor editor;
@@ -58,13 +66,12 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
 
   @Override
   protected void init() {
-    imageWidth = Math.min(760, width - 20);
+    imageWidth = width - 20;
     imageHeight = height - 24;
     super.init();
-    int areaHeight = imageHeight - 110;
-    int panelHeight = Math.max(34, Math.min(70, areaHeight / 3));
-    int sourceHeight = areaHeight - panelHeight - 18;
-    int panelTop = topPos + 39 + sourceHeight + 3;
+    int sourceHeight = MIN_SOURCE_HEIGHT;
+    int panelHeight = MIN_DIAGNOSTIC_HEIGHT;
+    int panelTop = topPos + 39 + sourceHeight + DIVIDER_HEIGHT;
     editor =
         addRenderableWidget(
             new CerebralSourceEditor(
@@ -74,7 +81,7 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
             new CerebralProblems(
                 font,
                 leftPos + 12,
-                panelTop + 15,
+                panelTop + DIAGNOSTIC_HEADER_HEIGHT,
                 imageWidth - 24,
                 panelHeight,
                 problem -> {
@@ -111,6 +118,17 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
                     })
                 .bounds(leftPos + imageWidth - 64, panelTop, 52, 12)
                 .build());
+    diagnosticsToggle =
+        addRenderableWidget(
+            Button.builder(
+                    Component.literal("Hide diagnostics"),
+                    b -> {
+                      layout.setDiagnosticsHidden(!layout.isDiagnosticsHidden());
+                      resizePanels();
+                      layout.save();
+                    })
+                .bounds(leftPos + 244, panelTop, 108, 12)
+                .build());
     analyzeNow();
     addRenderableWidget(
         Button.builder(Component.literal("Save draft"), b -> save())
@@ -143,7 +161,7 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
                 })
             .bounds(leftPos + imageWidth - 112, topPos + 25, 100, 12)
             .build());
-    updateVisibility();
+    resizePanels();
     setInitialFocus(showingConsole ? console : editor);
   }
 
@@ -155,8 +173,64 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
     refreshDiagnostics();
   }
 
+  /** Fractions survive window and GUI-scale changes; only widget bounds change during a drag. */
+  private void resizePanels() {
+    int areaHeight = imageHeight - 110;
+    int available = Math.max(0, areaHeight - DIVIDER_HEIGHT - DIAGNOSTIC_HEADER_HEIGHT);
+    int diagnosticHeight =
+        layout.isDiagnosticsHidden()
+            ? 0
+            : Math.max(
+                MIN_DIAGNOSTIC_HEIGHT,
+                Math.min(
+                    available - MIN_SOURCE_HEIGHT,
+                    (int) Math.round(available * layout.getDiagnosticFraction())));
+    int sourceHeight = Math.max(MIN_SOURCE_HEIGHT, available - diagnosticHeight);
+    editor.setHeight(sourceHeight);
+    editor.reflow();
+    dividerTop = editor.getY() + sourceHeight;
+    int panelTop = dividerTop + DIVIDER_HEIGHT;
+    tracker.setY(panelTop + DIAGNOSTIC_HEADER_HEIGHT);
+    tracker.setHeight(Math.max(1, diagnosticHeight));
+    tracker.reflow();
+    for (Button button : List.of(problemsTab, logTab, clearLog, diagnosticsToggle)) {
+      button.setY(panelTop);
+    }
+    // Keep header controls separate even at Minecraft's smallest supported GUI width.
+    int contentWidth = imageWidth - 24;
+    boolean compact = contentWidth < 360;
+    int toggleWidth = compact ? 52 : 108;
+    int clearWidth = compact ? 40 : 52;
+    int tabWidth = Math.min(112, (contentWidth - toggleWidth - clearWidth - 12) / 2);
+    int x = leftPos + 12;
+    for (Button tab : List.of(problemsTab, logTab)) {
+      tab.setX(x);
+      tab.setWidth(tabWidth);
+      x += tabWidth + 4;
+    }
+    diagnosticsToggle.setX(x);
+    diagnosticsToggle.setWidth(toggleWidth);
+    clearLog.setX(leftPos + imageWidth - 12 - clearWidth);
+    clearLog.setWidth(clearWidth);
+    diagnosticsToggle.setMessage(
+        Component.literal(
+            (layout.isDiagnosticsHidden() ? "Show" : "Hide") + (compact ? "" : " diagnostics")));
+    updateVisibility();
+  }
+
+  private boolean overDivider(double mx, double my) {
+    return !showingConsole
+        && !layout.isDiagnosticsHidden()
+        && mx >= editor.getX()
+        && mx < editor.getX() + editor.getWidth()
+        && my >= dividerTop
+        && my < dividerTop + DIVIDER_HEIGHT;
+  }
+
   private void updateVisibility() {
-    tracker.visible = problemsTab.visible = logTab.visible = clearLog.visible = !showingConsole;
+    boolean diagnosticsVisible = !showingConsole && !layout.isDiagnosticsHidden();
+    tracker.visible = problemsTab.visible = logTab.visible = clearLog.visible = diagnosticsVisible;
+    diagnosticsToggle.visible = !showingConsole;
   }
 
   private void refreshDiagnostics() {
@@ -256,6 +330,13 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
 
   @Override
   public boolean mouseClicked(double mx, double my, int button) {
+    if (editor.clickCompletion(mx, my, button)) {
+      return true;
+    }
+    if (button == 0 && overDivider(mx, my)) {
+      resizingPanels = true;
+      return true;
+    }
     var problem = tracker.hovered(mx, my);
     boolean navigable =
         button == 0
@@ -270,7 +351,37 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
   }
 
   @Override
+  public boolean mouseDragged(double mx, double my, int button, double dx, double dy) {
+    if (resizingPanels && button == 0) {
+      int available = imageHeight - 110 - DIVIDER_HEIGHT - DIAGNOSTIC_HEADER_HEIGHT;
+      layout.setDiagnosticFraction((editor.getY() + available - my) / Math.max(1, available));
+      resizePanels();
+      return true;
+    }
+    return super.mouseDragged(mx, my, button, dx, dy);
+  }
+
+  @Override
+  public boolean mouseReleased(double mx, double my, int button) {
+    if (resizingPanels && button == 0) {
+      resizingPanels = false;
+      layout.save();
+      return true;
+    }
+    return super.mouseReleased(mx, my, button);
+  }
+
+  @Override
+  public void removed() {
+    layout.save();
+    super.removed();
+  }
+
+  @Override
   public boolean keyPressed(int key, int scan, int modifiers) {
+    if (editor.isFocused() && editor.handleCompletionKey(key)) {
+      return true;
+    }
     if (hasControlDown() && key == org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER) {
       compile();
       return true;
@@ -310,6 +421,16 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
         leftPos + imageWidth - 10,
         topPos + imageHeight - 69,
         0xff100e16);
+    if (!showingConsole && !layout.isDiagnosticsHidden()) {
+      int color = overDivider(mx, my) || resizingPanels ? 0xffd8a3bd : 0xff815269;
+      g.fill(leftPos + 12, dividerTop + 3, leftPos + imageWidth - 12, dividerTop + 5, color);
+      g.fill(
+          leftPos + imageWidth / 2 - 10,
+          dividerTop + 1,
+          leftPos + imageWidth / 2 + 10,
+          dividerTop + 7,
+          color);
+    }
     g.drawString(
         font,
         font.plainSubstrByWidth(showingConsole ? runtimeState : status, imageWidth - 24),
@@ -319,7 +440,9 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
         false);
     g.drawString(
         font,
-        "Ctrl+S saves · Ctrl+Enter compiles · Tab indents",
+        font.plainSubstrByWidth(
+            "Ctrl+S save · Ctrl+Enter compile · Ctrl+Space suggest · Drag divider to resize",
+            imageWidth - 24),
         leftPos + 12,
         topPos + imageHeight - 48,
         OrganScreenStyle.MUTED,
@@ -334,6 +457,10 @@ public final class CerebralIdeScreen extends AbstractContainerScreen<CardWorkspa
   @Override
   public void render(GuiGraphics g, int mx, int my, float partial) {
     super.render(g, mx, my, partial);
+    editor.renderCompletions(g);
+    if (overDivider(mx, my) && !resizingPanels) {
+      g.renderTooltip(font, Component.literal("Drag to resize the editor and diagnostics"), mx, my);
+    }
     var hovered = editor.hoveredProblem(mx, my);
     if (hovered != null) {
       g.renderTooltip(font, Component.literal(hovered.message()), mx, my);

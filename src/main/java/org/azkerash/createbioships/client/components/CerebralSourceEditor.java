@@ -30,6 +30,10 @@ public final class CerebralSourceEditor extends AbstractScrollWidget {
   private List<List<Part>> parts = List.of();
   private int horizontal;
   private boolean selecting;
+  private SourceCompletion.Matches completion;
+  private int completionIndex, completionCaret;
+  private static final int MAX_COMPLETION_ROWS = 6;
+  private int completionX, completionY, completionWidth, completionFirst, completionRows;
 
   public CerebralSourceEditor(
       Font font, int x, int y, int width, int height, SourceDocument document) {
@@ -92,6 +96,146 @@ public final class CerebralSourceEditor extends AbstractScrollWidget {
     return rowHeight() * 3;
   }
 
+  void reflow() {
+    setScrollAmount(scrollAmount());
+    ensureCaret();
+  }
+
+  private void refreshCompletions(boolean explicit) {
+    completion = SourceCompletion.suggest(document, explicit);
+    completionIndex = 0;
+    completionCaret = document.caret();
+  }
+
+  boolean handleCompletionKey(int key) {
+    if (!visible || !isFocused()) {
+      return false;
+    }
+    if (Screen.hasControlDown() && key == GLFW.GLFW_KEY_SPACE) {
+      refreshCompletions(true);
+      return true;
+    }
+    if (!hasCompletions() || Screen.hasControlDown() || Screen.hasShiftDown()) {
+      return false;
+    }
+    switch (key) {
+      case GLFW.GLFW_KEY_UP ->
+          completionIndex = Math.floorMod(completionIndex - 1, completion.suggestions().size());
+      case GLFW.GLFW_KEY_DOWN ->
+          completionIndex = (completionIndex + 1) % completion.suggestions().size();
+      case GLFW.GLFW_KEY_TAB, GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER -> acceptCompletion();
+      case GLFW.GLFW_KEY_ESCAPE -> completion = null;
+      default -> {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private boolean hasCompletions() {
+    return completion != null
+        && !completion.suggestions().isEmpty()
+        && completionCaret == document.caret()
+        && visible
+        && isFocused();
+  }
+
+  private void acceptCompletion() {
+    SourceCompletion.accept(document, completion, completionIndex);
+    completion = null;
+    ensureCaret();
+  }
+
+  /** Draw outside the editor scissor so the suggestion list remains usable near its bottom edge. */
+  void renderCompletions(GuiGraphics g) {
+    if (!hasCompletions()) {
+      return;
+    }
+    positionCompletions();
+    g.pose().pushPose();
+    g.pose().translate(0, 0, 300);
+    g.fill(
+        completionX - 1,
+        completionY - 1,
+        completionX + completionWidth + 1,
+        completionY + completionRows * rowHeight() + 1,
+        0xffb78b9d);
+    g.fill(
+        completionX,
+        completionY,
+        completionX + completionWidth,
+        completionY + completionRows * rowHeight(),
+        0xff201923);
+    for (int row = 0; row < completionRows; row++) {
+      int index = completionFirst + row;
+      int y = completionY + row * rowHeight();
+      if (index == completionIndex) {
+        g.fill(completionX, y, completionX + completionWidth, y + rowHeight(), 0xff65435c);
+      }
+      g.drawString(
+          font,
+          font.plainSubstrByWidth(completion.suggestions().get(index).label(), completionWidth - 8),
+          completionX + 4,
+          y + 2,
+          0xffead8c9,
+          false);
+    }
+    g.pose().popPose();
+  }
+
+  private void positionCompletions() {
+    int screenHeight = Minecraft.getInstance().getWindow().getGuiScaledHeight();
+    int screenWidth = Minecraft.getInstance().getWindow().getGuiScaledWidth();
+    completionRows = Math.min(MAX_COMPLETION_ROWS, completion.suggestions().size());
+    completionWidth =
+        Math.min(
+            screenWidth - 8,
+            Math.max(
+                120,
+                completion.suggestions().stream()
+                    .mapToInt(value -> font.width(value.label()) + 8)
+                    .max()
+                    .orElse(120)));
+    completionFirst =
+        Math.max(
+            0,
+            Math.min(
+                completionIndex - completionRows + 1,
+                completion.suggestions().size() - completionRows));
+    completionX =
+        Math.max(
+            4,
+            Math.min(
+                xAt(document.lineAt(document.caret()), document.column()),
+                screenWidth - completionWidth - 4));
+    int caretY =
+        getY()
+            + innerPadding()
+            + document.visibleRow(document.lineAt(document.caret())) * rowHeight()
+            - (int) scrollAmount();
+    completionY = caretY + rowHeight();
+    if (completionY + completionRows * rowHeight() > screenHeight - 4) {
+      completionY = Math.max(4, caretY - completionRows * rowHeight());
+    }
+  }
+
+  boolean clickCompletion(double mx, double my, int button) {
+    if (!hasCompletions() || button != 0) {
+      return false;
+    }
+    positionCompletions();
+    if (mx >= completionX
+        && mx < completionX + completionWidth
+        && my >= completionY
+        && my < completionY + completionRows * rowHeight()) {
+      completionIndex = completionFirst + (int) (my - completionY) / rowHeight();
+      acceptCompletion();
+      return true;
+    }
+    completion = null;
+    return false;
+  }
+
   private void ensureCaret() {
     int line = document.lineAt(document.caret()),
         row = document.visibleRow(line),
@@ -115,6 +259,10 @@ public final class CerebralSourceEditor extends AbstractScrollWidget {
     if (!isFocused() || !visible) {
       return false;
     }
+    if (handleCompletionKey(key)) {
+      return true;
+    }
+    completion = null;
     boolean shift = Screen.hasShiftDown(), control = Screen.hasControlDown();
     if (control) {
       switch (key) {
@@ -168,6 +316,9 @@ public final class CerebralSourceEditor extends AbstractScrollWidget {
       }
     }
     ensureCaret();
+    if (key == GLFW.GLFW_KEY_BACKSPACE) {
+      refreshCompletions(false);
+    }
     return true;
   }
 
@@ -184,6 +335,7 @@ public final class CerebralSourceEditor extends AbstractScrollWidget {
     }
     document.type(c);
     ensureCaret();
+    refreshCompletions(false);
     return true;
   }
 
