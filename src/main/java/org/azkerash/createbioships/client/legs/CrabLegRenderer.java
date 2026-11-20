@@ -15,7 +15,10 @@ import org.azkerash.createbioships.core.legs.*;
 /** Segmented exoskeleton meshes follow the server's native Let It Walk IK solution. */
 @EventBusSubscriber(modid = "create_bioships", value = Dist.CLIENT)
 public final class CrabLegRenderer {
-  private record Snapshot(LegPosePayload previous, LegPosePayload current, long at) {}
+  private record Snapshot(
+      Map<net.minecraft.core.BlockPos, SubLevelLegs.Pose> previous,
+      LegPosePayload current,
+      long at) {}
 
   private static final Map<UUID, Snapshot> POSES = new HashMap<>();
   private static net.minecraft.client.multiplayer.ClientLevel world;
@@ -31,10 +34,17 @@ public final class CrabLegRenderer {
     if (level == null) {
       return;
     }
+    if (payload.poses().isEmpty()) {
+      POSES.remove(payload.body());
+      return;
+    }
     var old = POSES.get(payload.body());
-    POSES.put(
-        payload.body(),
-        new Snapshot(old == null ? payload : old.current, payload, level.getGameTime()));
+    var previous = new HashMap<net.minecraft.core.BlockPos, SubLevelLegs.Pose>();
+    for (var pose : (old == null ? payload : old.current).poses()) {
+      previous.put(pose.cell(), pose);
+    }
+    // Pose packets arrive at 5 Hz; the previous-pose index does not change between frames.
+    POSES.put(payload.body(), new Snapshot(Map.copyOf(previous), payload, level.getGameTime()));
   }
 
   @SubscribeEvent
@@ -55,8 +65,12 @@ public final class CrabLegRenderer {
       return;
     }
     POSES.entrySet().removeIf(e -> mc.level.getGameTime() - e.getValue().at > 40);
+    if (POSES.isEmpty()) {
+      return;
+    }
     var stack = event.getPoseStack();
     var camera = event.getCamera().getPosition();
+    boolean rendered = false;
     for (var snapshot : POSES.values()) {
       var body = container.getSubLevel(snapshot.current.body());
       if (!(body instanceof ClientSubLevel client) || body.isRemoved()) {
@@ -83,18 +97,12 @@ public final class CrabLegRenderer {
               ? org.azkerash.createbioships.client.combat.SubLevelHurtRenderer.hurtType(
                   net.minecraft.world.inventory.InventoryMenu.BLOCK_ATLAS)
               : null;
-      var previousPoses =
-          new HashMap<
-              net.minecraft.core.BlockPos,
-              org.azkerash.createbioships.core.legs.SubLevelLegs.Pose>();
-      for (var old : snapshot.previous.poses()) {
-        previousPoses.put(old.cell(), old);
-      }
       for (var pose : snapshot.current.poses()) {
         if (!mc.level.getBlockState(pose.cell()).is(ComponentRegistry.CRAB_LEG.get())) {
           continue;
         }
-        var previous = previousPoses.getOrDefault(pose.cell(), pose);
+        rendered = true;
+        var previous = snapshot.previous.getOrDefault(pose.cell(), pose);
         for (int i = 0; i < 3; i++) {
           var from =
               previous
@@ -140,7 +148,9 @@ public final class CrabLegRenderer {
       }
       stack.popPose();
     }
-    mc.renderBuffers().bufferSource().endBatch();
+    if (rendered) {
+      mc.renderBuffers().bufferSource().endBatch();
+    }
   }
 
   private static void socket(

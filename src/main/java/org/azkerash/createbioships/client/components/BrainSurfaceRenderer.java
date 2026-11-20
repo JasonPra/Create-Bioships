@@ -90,6 +90,10 @@ public final class BrainSurfaceRenderer {
       return;
     }
     BRAINS.entrySet().removeIf(e -> mc.level.getGameTime() - e.getValue().at > 100);
+    if (BRAINS.isEmpty()) {
+      return;
+    }
+    boolean rendered = false;
     var stack = event.getPoseStack();
     var camera = event.getCamera().getPosition();
     var buffers = mc.renderBuffers().bufferSource();
@@ -99,6 +103,7 @@ public final class BrainSurfaceRenderer {
       if (!(body instanceof ClientSubLevel client) || body.isRemoved()) {
         continue;
       }
+      rendered = true;
       var mesh = snapshot.mesh;
       var transform = client.renderPose();
       stack.pushPose();
@@ -144,7 +149,9 @@ public final class BrainSurfaceRenderer {
       panel(mc, stack, buffers, snapshot, light);
       stack.popPose();
     }
-    buffers.endBatch();
+    if (rendered) {
+      buffers.endBatch();
+    }
   }
 
   private static void vertex(
