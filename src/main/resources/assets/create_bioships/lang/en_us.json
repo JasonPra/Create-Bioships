@@ -42,5 +42,8 @@
   "block.create_bioships.name_tag_displayer": "Name Tag Displayer",
   "block.create_bioships.ossuary_table": "Ossuary Table",
   "block.create_bioships.ossuary_chair": "Ossuary Chair",
-  "block.create_bioships.ossuary_lectern": "Ossuary Reading Stand"
+  "block.create_bioships.ossuary_lectern": "Ossuary Reading Stand",
+  "block.create_bioships.ossuary_bookcase": "Ossuary Bookcase",
+  "block.create_bioships.ossuary_archive": "Chiseled Ossuary Bookcase",
+  "block.create_bioships.ossuary_cabinet": "Ossuary Cabinet"
 }

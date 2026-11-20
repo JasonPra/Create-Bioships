@@ -1,0 +1,80 @@
+{
+  "textures": {
+    "bone": "minecraft:block/bone_block_side",
+    "marrow": "minecraft:block/bone_block_top",
+    "flesh": "biomancy:block/packed_flesh",
+    "chitin": "create_bioships:block/living_core",
+    "particle": "minecraft:block/bone_block_side",
+    "books": "minecraft:block/bookshelf"
+  },
+  "elements": [
+    {
+      "to": [
+        9,
+        14,
+        15
+      ],
+      "faces": {
+        "up": {
+          "texture": "#books",
+          "uv": [
+            6,
+            4,
+            9,
+            15
+          ]
+        },
+        "down": {
+          "texture": "#books",
+          "uv": [
+            6,
+            4,
+            9,
+            15
+          ]
+        },
+        "north": {
+          "texture": "#books",
+          "uv": [
+            6,
+            2,
+            9,
+            7
+          ]
+        },
+        "south": {
+          "texture": "#books",
+          "uv": [
+            6,
+            2,
+            9,
+            7
+          ]
+        },
+        "east": {
+          "texture": "#books",
+          "uv": [
+            4,
+            2,
+            15,
+            7
+          ]
+        },
+        "west": {
+          "texture": "#books",
+          "uv": [
+            4,
+            2,
+            15,
+            7
+          ]
+        }
+      },
+      "from": [
+        6,
+        9,
+        4
+      ]
+    }
+  ]
+}

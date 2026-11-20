@@ -38,6 +38,31 @@ public final class FurnitureRegistry {
                           OssuaryLecternBlock.ReadingStandEntity::new, OSSUARY_LECTERN.get())
                       .build(null));
 
+  public static final DeferredBlock<OssuaryBookcaseBlock> OSSUARY_BOOKCASE =
+      block("ossuary_bookcase", () -> new OssuaryBookcaseBlock(properties()));
+  public static final DeferredBlock<OssuaryArchiveBlock> OSSUARY_ARCHIVE =
+      block("ossuary_archive", () -> new OssuaryArchiveBlock(properties()));
+  public static final DeferredBlock<OssuaryCabinetBlock> OSSUARY_CABINET =
+      block("ossuary_cabinet", () -> new OssuaryCabinetBlock(properties()));
+  public static final DeferredHolder<
+          BlockEntityType<?>, BlockEntityType<OssuaryArchiveBlock.ArchiveEntity>>
+      ARCHIVE_ENTITY =
+          ENTITIES.register(
+              "ossuary_archive",
+              () ->
+                  BlockEntityType.Builder.of(
+                          OssuaryArchiveBlock.ArchiveEntity::new, OSSUARY_ARCHIVE.get())
+                      .build(null));
+  public static final DeferredHolder<
+          BlockEntityType<?>, BlockEntityType<OssuaryCabinetBlock.CabinetEntity>>
+      CABINET_ENTITY =
+          ENTITIES.register(
+              "ossuary_cabinet",
+              () ->
+                  BlockEntityType.Builder.of(
+                          OssuaryCabinetBlock.CabinetEntity::new, OSSUARY_CABINET.get())
+                      .build(null));
+
   private FurnitureRegistry() {}
 
   static BlockBehaviour.Properties properties() {

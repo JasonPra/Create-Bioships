@@ -1,0 +1,280 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "facing": "south"
+      },
+      "apply": {
+        "model": "create_bioships:block/ossuary_archive_frame",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "slot_0_occupied": "true"
+      },
+      "apply": {
+        "model": "create_bioships:block/ossuary_archive_book_0",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "slot_1_occupied": "true"
+      },
+      "apply": {
+        "model": "create_bioships:block/ossuary_archive_book_1",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "slot_2_occupied": "true"
+      },
+      "apply": {
+        "model": "create_bioships:block/ossuary_archive_book_2",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "slot_3_occupied": "true"
+      },
+      "apply": {
+        "model": "create_bioships:block/ossuary_archive_book_3",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "slot_4_occupied": "true"
+      },
+      "apply": {
+        "model": "create_bioships:block/ossuary_archive_book_4",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "slot_5_occupied": "true"
+      },
+      "apply": {
+        "model": "create_bioships:block/ossuary_archive_book_5",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "facing": "west"
+      },
+      "apply": {
+        "model": "create_bioships:block/ossuary_archive_frame",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "slot_0_occupied": "true"
+      },
+      "apply": {
+        "model": "create_bioships:block/ossuary_archive_book_0",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "slot_1_occupied": "true"
+      },
+      "apply": {
+        "model": "create_bioships:block/ossuary_archive_book_1",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "slot_2_occupied": "true"
+      },
+      "apply": {
+        "model": "create_bioships:block/ossuary_archive_book_2",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "slot_3_occupied": "true"
+      },
+      "apply": {
+        "model": "create_bioships:block/ossuary_archive_book_3",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "slot_4_occupied": "true"
+      },
+      "apply": {
+        "model": "create_bioships:block/ossuary_archive_book_4",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "slot_5_occupied": "true"
+      },
+      "apply": {
+        "model": "create_bioships:block/ossuary_archive_book_5",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "north"
+      },
+      "apply": {
+        "model": "create_bioships:block/ossuary_archive_frame",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "slot_0_occupied": "true"
+      },
+      "apply": {
+        "model": "create_bioships:block/ossuary_archive_book_0",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "slot_1_occupied": "true"
+      },
+      "apply": {
+        "model": "create_bioships:block/ossuary_archive_book_1",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "slot_2_occupied": "true"
+      },
+      "apply": {
+        "model": "create_bioships:block/ossuary_archive_book_2",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "slot_3_occupied": "true"
+      },
+      "apply": {
+        "model": "create_bioships:block/ossuary_archive_book_3",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "slot_4_occupied": "true"
+      },
+      "apply": {
+        "model": "create_bioships:block/ossuary_archive_book_4",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "slot_5_occupied": "true"
+      },
+      "apply": {
+        "model": "create_bioships:block/ossuary_archive_book_5",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "east"
+      },
+      "apply": {
+        "model": "create_bioships:block/ossuary_archive_frame",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "slot_0_occupied": "true"
+      },
+      "apply": {
+        "model": "create_bioships:block/ossuary_archive_book_0",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "slot_1_occupied": "true"
+      },
+      "apply": {
+        "model": "create_bioships:block/ossuary_archive_book_1",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "slot_2_occupied": "true"
+      },
+      "apply": {
+        "model": "create_bioships:block/ossuary_archive_book_2",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "slot_3_occupied": "true"
+      },
+      "apply": {
+        "model": "create_bioships:block/ossuary_archive_book_3",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "slot_4_occupied": "true"
+      },
+      "apply": {
+        "model": "create_bioships:block/ossuary_archive_book_4",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "slot_5_occupied": "true"
+      },
+      "apply": {
+        "model": "create_bioships:block/ossuary_archive_book_5",
+        "y": 270
+      }
+    }
+  ]
+}

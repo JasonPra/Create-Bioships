@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "BCB",
+    "RRR",
+    "BCB"
+  ],
+  "key": {
+    "B": {
+      "item": "minecraft:bone"
+    },
+    "C": {
+      "item": "create_bioships:chitin_armor"
+    },
+    "R": {
+      "item": "minecraft:book"
+    }
+  },
+  "result": {
+    "id": "create_bioships:ossuary_bookcase",
+    "count": 1
+  }
+}

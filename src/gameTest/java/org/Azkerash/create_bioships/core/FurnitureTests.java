@@ -95,4 +95,62 @@ public final class FurnitureTests {
     player.stopRiding();
     h.succeed();
   }
+
+  @GameTest(template = "test_empty", batch = "estate_furniture", timeoutTicks = 40)
+  public static void archive_and_cabinet_keep_native_inventories_on_reload(GameTestHelper h) {
+    var l = h.getLevel();
+    var p = h.absolutePos(new BlockPos(2, 2, 2));
+    l.setBlock(
+        p,
+        FurnitureRegistry.OSSUARY_ARCHIVE
+            .get()
+            .defaultBlockState()
+            .setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH),
+        3);
+    var archive =
+        (net.minecraft.world.level.block.entity.ChiseledBookShelfBlockEntity) l.getBlockEntity(p);
+    archive.setItem(0, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.BOOK));
+    h.assertTrue(
+        l.getBlockState(p)
+            .getValue(
+                net.minecraft.world.level.block.ChiseledBookShelfBlock.SLOT_OCCUPIED_PROPERTIES
+                    .getFirst()),
+        "Archive did not display occupied native slot");
+    var restored =
+        net.minecraft.world.level.block.entity.BlockEntity.loadStatic(
+            p,
+            l.getBlockState(p),
+            archive.saveWithFullMetadata(l.registryAccess()),
+            l.registryAccess());
+    h.assertTrue(
+        restored instanceof net.minecraft.world.level.block.entity.ChiseledBookShelfBlockEntity a
+            && a.getItem(0).is(net.minecraft.world.item.Items.BOOK)
+            && a.getType() == FurnitureRegistry.ARCHIVE_ENTITY.get(),
+        "Archive lost saved book or custom type");
+    archive.removeItem(0, 1);
+    h.assertTrue(
+        !l.getBlockState(p)
+            .getValue(
+                net.minecraft.world.level.block.ChiseledBookShelfBlock.SLOT_OCCUPIED_PROPERTIES
+                    .getFirst()),
+        "Removing book left occupied slot");
+    l.setBlock(p.east(), FurnitureRegistry.OSSUARY_CABINET.get().defaultBlockState(), 3);
+    var cabinet =
+        (net.minecraft.world.level.block.entity.BarrelBlockEntity) l.getBlockEntity(p.east());
+    cabinet.setItem(
+        26, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.BONE, 17));
+    var saved =
+        net.minecraft.world.level.block.entity.BlockEntity.loadStatic(
+            p.east(),
+            l.getBlockState(p.east()),
+            cabinet.saveWithFullMetadata(l.registryAccess()),
+            l.registryAccess());
+    h.assertTrue(
+        saved instanceof net.minecraft.world.level.block.entity.BarrelBlockEntity c
+            && c.getContainerSize() == 27
+            && c.getItem(26).getCount() == 17
+            && c.getType() == FurnitureRegistry.CABINET_ENTITY.get(),
+        "Cabinet lost saved inventory or custom type");
+    h.succeed();
+  }
 }
