@@ -7,12 +7,14 @@ import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.*;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.Vec3;
 import org.azkerash.createbioships.components.ComponentRegistry;
+import org.azkerash.createbioships.core.flippers.FlipperGeometry;
 
 /** Disposable render samples only. No inventory, movement requests or saved creature state. */
 public final class FlipperBlockEntity extends BlockEntity {
+  public static final int POSE_INTERVAL_TICKS = 4;
+  private static final int STALE_POSE_TICKS = POSE_INTERVAL_TICKS * 3;
   private List<Vec3> previous, points;
   private long received;
 
@@ -21,37 +23,27 @@ public final class FlipperBlockEntity extends BlockEntity {
   }
 
   public static List<Vec3> rest(BlockState s) {
-    var outward =
-        Vec3.atLowerCornerOf(s.getValue(BlockStateProperties.HORIZONTAL_FACING).getNormal());
-    var base = new Vec3(.5, .5, .5).subtract(outward.scale(.5));
-    return List.of(
-        base.add(outward.scale(.08)),
-        base.add(outward.scale(.36)),
-        base.add(outward.scale(.64)),
-        base.add(outward.scale(.92)));
+    return FlipperGeometry.rest(s);
   }
 
   public List<Vec3> points(float partial) {
-    if (points == null || level == null || level.getGameTime() - received > 12) {
+    if (points == null || level == null || level.getGameTime() - received > STALE_POSE_TICKS) {
       return rest(getBlockState());
     }
-    double mix = Math.clamp((level.getGameTime() - received + partial) / 4d, 0, 1);
-    var result = new ArrayList<Vec3>();
-    for (int i = 0; i < points.size(); i++) {
-      result.add(previous.get(i).lerp(points.get(i), mix));
-    }
-    return result;
+    double mix = Math.clamp((level.getGameTime() - received + partial) / POSE_INTERVAL_TICKS, 0, 1);
+    return FlipperGeometry.interpolate(previous, points, mix);
   }
 
   public void pose(List<Vec3> next) {
-    if (next.size() != 4 || level == null) {
+    if (next.size() != FlipperGeometry.SECTIONS + 1 || level == null) {
       return;
     }
     if (points != null && points.equals(next)) {
+      previous = points;
       received = level.getGameTime();
       return;
     }
-    previous = points == null ? next : points;
+    previous = points == null ? next : points(0);
     points = List.copyOf(next);
     received = level.getGameTime();
     if (!level.isClientSide) {
@@ -80,7 +72,7 @@ public final class FlipperBlockEntity extends BlockEntity {
   public void handleUpdateTag(CompoundTag tag, HolderLookup.Provider registries) {
     super.handleUpdateTag(tag, registries);
     var list = tag.getList("Pose", 10);
-    if (list.size() != 4) {
+    if (list.size() != FlipperGeometry.SECTIONS + 1) {
       return;
     }
     var next = new ArrayList<Vec3>();

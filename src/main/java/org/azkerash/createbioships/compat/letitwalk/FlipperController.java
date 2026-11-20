@@ -12,14 +12,12 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.Vec3;
 import org.azkerash.createbioships.components.logic.flipper.FlipperBlockEntity;
 import org.azkerash.createbioships.core.brain.BrainMotorControls;
+import org.azkerash.createbioships.core.flippers.FlipperGeometry;
 import org.azkerash.createbioships.core.locomotion.SubLevelFacing;
 import org.azkerash.createbioships.core.pathfinding.SubLevelPathfinder;
-import org.azkerash.createbioships.mixin.WalkerSwimInvoker;
 import org.joml.Vector3d;
 
-/**
- * Native rowing, constrained IK and mass-aware swimming suspension, adapted for submerged routes.
- */
+/** Dedicated flipper strokes paired with native mass-aware swimming suspension. */
 public final class FlipperController {
   private static final class Context extends WalkerCoreBlockEntity {
     Context(ServerSubLevel body) {
@@ -41,7 +39,12 @@ public final class FlipperController {
 
   private final ServerSubLevel body;
   private final Context walker;
-  private final Map<BlockPos, LegRuntime> fins = new LinkedHashMap<>();
+  private final Map<BlockPos, LegRuntime> flippers = new LinkedHashMap<>();
+  private static final double IDLE_PHASE_STEP = .08;
+  private static final double DRIVEN_PHASE_STEP = .12;
+  private static final double DRIVE_RESPONSE = .15;
+  private static final double TURN_FULL_STROKE_RATE = .8;
+  private double phase, strokeDrive;
   private double holdY = Double.NaN;
   private boolean supporting;
 
@@ -51,7 +54,7 @@ public final class FlipperController {
   }
 
   public void rebuild(Collection<BlockPos> positions) {
-    fins.clear();
+    flippers.clear();
     var core = Vec3.atLowerCornerOf(walker.getBlockPos());
     int order = 0;
     for (var p : positions) {
@@ -73,14 +76,15 @@ public final class FlipperController {
         pivots[i] = arr(points.get(i));
         axes[i] = arr(a);
       }
+      // Native swimming physics needs support descriptors; these chains never drive animation.
       var built =
           new BuiltLeg(
               joints, List.of(), pivots, axes, arr(points.get(3)), true, axis, new double[3]);
       var fin = new LegRuntime(built, 0, order++, outward.x + outward.z > 0 ? 1 : -1, false);
-      fins.put(p.immutable(), fin);
+      flippers.put(p.immutable(), fin);
     }
     walker.legs.clear();
-    walker.legs.addAll(fins.values());
+    walker.legs.addAll(flippers.values());
     LegRuntime.countLegs(walker.legs);
   }
 
@@ -100,7 +104,7 @@ public final class FlipperController {
   public void update() {
     var active = new ArrayList<LegRuntime>();
     boolean submerged = wet(Vec3.atCenterOf(body.getPlot().getCenterBlock()));
-    for (var e : fins.entrySet()) {
+    for (var e : flippers.entrySet()) {
       if (wet(Vec3.atCenterOf(e.getKey()))) {
         active.add(e.getValue());
       }
@@ -108,8 +112,9 @@ public final class FlipperController {
     supporting = BrainMotorControls.active(body) && submerged && !active.isEmpty();
     if (!supporting) {
       holdY = Double.NaN;
-      if (body.getLevel().getGameTime() % 4 == 0) {
-        for (var p : fins.keySet()) {
+      strokeDrive = 0;
+      if (body.getLevel().getGameTime() % FlipperBlockEntity.POSE_INTERVAL_TICKS == 0) {
+        for (var p : flippers.keySet()) {
           if (body.getLevel().getBlockEntity(p) instanceof FlipperBlockEntity be) {
             be.pose(FlipperBlockEntity.rest(be.getBlockState()));
           }
@@ -148,31 +153,23 @@ public final class FlipperController {
     if (handle != null && handle.isValid()) {
       speed = handle.getLinearVelocity(new Vector3d()).length();
     }
-    // No bank target: flippers never reach for or anchor to land.
-    WalkerSwimInvoker.bioships$row(walker, active, body.logicalPose(), speed, Double.NaN, null);
-    if (body.getLevel().getGameTime() % 4 != 0) {
+    double effort = Math.max(walker.throttle, Math.abs(walker.yawRate) / TURN_FULL_STROKE_RATE);
+    effort = Math.clamp(Math.max(effort, speed / WalkerSwim.SWIM_SPEED), 0, 1);
+    strokeDrive += (effort - strokeDrive) * DRIVE_RESPONSE;
+    phase = (phase + IDLE_PHASE_STEP + DRIVEN_PHASE_STEP * strokeDrive) % (Math.PI * 2);
+    if (body.getLevel().getGameTime() % FlipperBlockEntity.POSE_INTERVAL_TICKS != 0) {
       return;
     }
-    var core = Vec3.atLowerCornerOf(walker.getBlockPos());
-    for (var e : fins.entrySet()) {
-      if (!(body.getLevel().getBlockEntity(e.getKey()) instanceof FlipperBlockEntity be)) {
-        continue;
+    for (var entry : flippers.entrySet()) {
+      if (body.getLevel().getBlockEntity(entry.getKey())
+          instanceof FlipperBlockEntity blockEntity) {
+        var samples =
+            active.contains(entry.getValue())
+                ? FlipperGeometry.stroke(
+                    blockEntity.getBlockState(), phase, strokeDrive, SubLevelFacing.local(body))
+                : FlipperBlockEntity.rest(blockEntity.getBlockState());
+        blockEntity.pose(samples);
       }
-      var leg = e.getValue();
-      if (!active.contains(leg) || leg.flightFoot == null) {
-        be.pose(FlipperBlockEntity.rest(be.getBlockState()));
-        continue;
-      }
-      var b = leg.built;
-      b.chain.solveRobust(arr(leg.flightFoot.subtract(core)), b.angles, 10, .01);
-      var result = new ArrayList<Vec3>();
-      for (var point : b.chain.forward(b.angles, null)) {
-        result.add(
-            new Vec3(point[0], point[1], point[2])
-                .add(core)
-                .subtract(Vec3.atLowerCornerOf(e.getKey())));
-      }
-      be.pose(result);
     }
   }
 

@@ -13,15 +13,13 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.*;
 import org.azkerash.createbioships.components.ComponentRegistry;
 import org.azkerash.createbioships.components.logic.flipper.FlipperBlockEntity;
-import org.joml.*;
+import org.azkerash.createbioships.core.flippers.FlipperGeometry;
 
-/**
- * Opaque, block-entity-stage meshes use the native controller's IK samples on either kind of world.
- */
+/** Opaque paddle sections follow fixed-length rowing samples on normal worlds and sublevels. */
 @EventBusSubscriber(modid = "create_bioships", value = Dist.CLIENT)
 public final class FlipperRenderer implements BlockEntityRenderer<FlipperBlockEntity> {
   private static final List<ModelResourceLocation> PARTS =
-      java.util.stream.IntStream.range(0, 3)
+      java.util.stream.IntStream.range(0, FlipperGeometry.SECTIONS)
           .mapToObj(
               i ->
                   ModelResourceLocation.standalone(
@@ -41,6 +39,11 @@ public final class FlipperRenderer implements BlockEntityRenderer<FlipperBlockEn
   }
 
   @Override
+  public net.minecraft.world.phys.AABB getRenderBoundingBox(FlipperBlockEntity flipper) {
+    return new net.minecraft.world.phys.AABB(flipper.getBlockPos()).inflate(FlipperGeometry.LENGTH);
+  }
+
+  @Override
   public void render(
       FlipperBlockEntity fin,
       float partial,
@@ -51,7 +54,7 @@ public final class FlipperRenderer implements BlockEntityRenderer<FlipperBlockEn
     var mc = Minecraft.getInstance();
     var points = fin.points(partial);
     var type = Sheets.cutoutBlockSheet();
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < FlipperGeometry.SECTIONS; i++) {
       var p = points.get(i);
       var delta = points.get(i + 1).subtract(p);
       if (delta.lengthSqr() < 1e-8) {
@@ -59,12 +62,8 @@ public final class FlipperRenderer implements BlockEntityRenderer<FlipperBlockEn
       }
       stack.pushPose();
       stack.translate(p.x, p.y, p.z);
-      stack.mulPose(
-          new Quaternionf()
-              .rotationTo(
-                  new Vector3f(0, 0, 1),
-                  new Vector3f((float) delta.x, (float) delta.y, (float) delta.z).normalize()));
-      stack.scale(1, 1, (float) (delta.length() / .28));
+      stack.mulPose(FlipperGeometry.orientation(delta));
+      stack.scale(1, 1, (float) (delta.length() / FlipperGeometry.SECTION_LENGTH));
       mc.getBlockRenderer()
           .getModelRenderer()
           .renderModel(

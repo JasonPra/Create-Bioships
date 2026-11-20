@@ -91,8 +91,14 @@ public final class FlipperBlock extends WaterloggedComponentBlock
 
   @Override
   protected VoxelShape getShape(BlockState s, BlockGetter l, BlockPos p, CollisionContext c) {
-    // Conservative swept paddle envelope; the fin cannot visually swing through a solid wall.
-    return box(0, 1, 0, 16, 15, 16);
+    // The paddle extends two blocks from its supporting face, beyond the placed socket block.
+    return switch (s.getValue(BlockStateProperties.HORIZONTAL_FACING)) {
+      case NORTH -> box(1, 1, -16, 15, 15, 16);
+      case SOUTH -> box(1, 1, 0, 15, 15, 32);
+      case EAST -> box(0, 1, 1, 32, 15, 15);
+      case WEST -> box(-16, 1, 1, 16, 15, 15);
+      default -> throw new IllegalStateException("Flippers require a horizontal attachment");
+    };
   }
 
   @Override

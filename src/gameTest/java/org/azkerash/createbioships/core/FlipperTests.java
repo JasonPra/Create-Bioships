@@ -15,6 +15,7 @@ import net.neoforged.neoforge.gametest.*;
 import org.azkerash.createbioships.components.ComponentRegistry;
 import org.azkerash.createbioships.components.logic.flipper.FlipperBlockEntity;
 import org.azkerash.createbioships.core.brain.BrainMotorControls;
+import org.azkerash.createbioships.core.flippers.FlipperGeometry;
 import org.azkerash.createbioships.core.flippers.SubLevelFlippers;
 import org.azkerash.createbioships.core.locomotion.SubLevelLocomotion;
 import org.azkerash.createbioships.core.pathfinding.SubLevelPathfinder;
@@ -23,6 +24,50 @@ import org.azkerash.createbioships.development.testing.DevelopmentLifeSupport;
 @GameTestHolder("create_bioships")
 @PrefixGameTestTemplate(false)
 public final class FlipperTests {
+  @GameTest(template = "test_empty", batch = "flipper_geometry", timeoutTicks = 20)
+  public static void two_block_flippers_keep_their_length_orientation_and_gentle_flex(
+      GameTestHelper h) {
+    for (var face : Direction.Plane.HORIZONTAL) {
+      var state =
+          ComponentRegistry.FLIPPER
+              .get()
+              .defaultBlockState()
+              .setValue(BlockStateProperties.HORIZONTAL_FACING, face);
+      var rest = FlipperGeometry.rest(state);
+      h.assertTrue(
+          Math.abs(rest.getFirst().distanceTo(rest.getLast()) + FlipperGeometry.SOCKET_OFFSET - 2)
+              < 1e-8,
+          "Flipper is not two blocks long");
+      var previous = rest;
+      for (int step = 0; step < 160; step++) {
+        var next = FlipperGeometry.stroke(state, step * .1, step / 159d, Direction.NORTH);
+        h.assertTrue(next.getFirst().equals(rest.getFirst()), "Stroke detached from socket");
+        for (var pose : List.of(next, FlipperGeometry.interpolate(previous, next, .5))) {
+          for (int section = 0; section < FlipperGeometry.SECTIONS; section++) {
+            var delta = pose.get(section + 1).subtract(pose.get(section));
+            h.assertTrue(
+                Math.abs(delta.length() - FlipperGeometry.SECTION_LENGTH) < 1e-7,
+                "Stroke or interpolation stretched a paddle section");
+            h.assertTrue(
+                delta.normalize().dot(FlipperGeometry.outward(state)) > .8,
+                "Flipper folded back on itself");
+            var rotation = FlipperGeometry.orientation(delta);
+            var up = rotation.transform(new org.joml.Vector3f(0, 1, 0));
+            var forward = rotation.transform(new org.joml.Vector3f(0, 0, 1));
+            h.assertTrue(
+                up.y > .9 && Double.isFinite(forward.x + forward.y + forward.z),
+                "Paddle rolled upside down");
+            h.assertTrue(
+                new Vec3(forward.x, forward.y, forward.z).distanceTo(delta.normalize()) < 1e-5,
+                "Paddle did not follow its stroke direction");
+          }
+        }
+        previous = next;
+      }
+    }
+    h.succeed();
+  }
+
   @GameTest(template = "test_empty", batch = "flipper_swimming", timeoutTicks = 300)
   public static void native_flippers_hold_depth_paddle_and_obey_water_motor_requests(
       GameTestHelper h) {
@@ -157,7 +202,7 @@ public final class FlipperTests {
         s.canSurvive(l, p) && s.getFluidState().is(net.minecraft.tags.FluidTags.WATER),
         "Waterlogging removed flipper/support");
     h.assertTrue(
-        !s.getCollisionShape(l, p).isEmpty() && s.getCollisionShape(l, p).bounds().getXsize() == 1,
+        !s.getCollisionShape(l, p).isEmpty() && s.getCollisionShape(l, p).bounds().getZsize() == 2,
         "Paddle collision only covered its tip");
     h.assertTrue(
         ComponentRegistry.FLIPPER.get().asItem() != net.minecraft.world.item.Items.AIR,

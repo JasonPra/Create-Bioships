@@ -33,7 +33,6 @@
     "SocketFootholdMixin",
     "SocketSoleClearanceMixin",
     "CreatureFootstepsMixin",
-    "WalkerSwimInvoker",
     "BiometricSubLevelCollisionMixin"
   ],
   "client": [
