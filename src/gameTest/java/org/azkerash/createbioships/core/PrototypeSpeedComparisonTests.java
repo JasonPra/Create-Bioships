@@ -39,6 +39,9 @@ public final class PrototypeSpeedComparisonTests {
     add(tests, PrototypeLocomotion.Mode.NATIVE, 2);
     add(tests, PrototypeLocomotion.Mode.NATIVE_FAST, 2);
     add(tests, PrototypeLocomotion.Mode.NATIVE_FAST, 6);
+    add(tests, PrototypeLocomotion.Mode.PROTOTYPE, 2);
+    add(tests, PrototypeLocomotion.Mode.PROTOTYPE, 6);
+    add(tests, PrototypeLocomotion.Mode.PROTOTYPE, 4);
     return tests;
   }
 
@@ -119,6 +122,8 @@ public final class PrototypeSpeedComparisonTests {
           class Sample implements Runnable {
             private int tick;
             private Vec3 start;
+            private java.util.Set<java.util.UUID> originalParts;
+            private boolean turned;
             private double minimumUp = 1;
             private double minimumY = Double.POSITIVE_INFINITY;
             private double maximumY = Double.NEGATIVE_INFINITY;
@@ -137,9 +142,36 @@ public final class PrototypeSpeedComparisonTests {
                 h.assertTrue(
                     SubLevelLegs.segments(body).size() == 12, "Missing physical leg segments");
                 start = point;
+                originalParts =
+                    SubLevelLegs.segments(body).stream()
+                        .map(dev.ryanhcode.sable.sublevel.ServerSubLevel::getUniqueId)
+                        .collect(java.util.stream.Collectors.toSet());
               }
               if (tick >= SETTLE_TICKS && tick < SETTLE_TICKS + MOVE_TICKS) {
-                BrainMotorControls.move(body, new Vec3(0, 0, speed), 0, SAMPLE_TICKS * 3);
+                if (index == 6 && tick == 240) {
+                  turned = Math.abs(body.logicalPose().orientation().y()) > .2;
+                  PrototypeLocomotion.set(body, PrototypeLocomotion.Mode.NATIVE);
+                }
+                if (index == 6 && tick == 280) {
+                  reloadController(body);
+                  h.assertTrue(
+                      PrototypeLocomotion.get(body) == PrototypeLocomotion.Mode.NATIVE,
+                      "Controller mode did not survive reconstruction");
+                  PrototypeLocomotion.set(body, mode);
+                  h.assertTrue(
+                      originalParts.equals(
+                          SubLevelLegs.segments(body).stream()
+                              .map(dev.ryanhcode.sable.sublevel.ServerSubLevel::getUniqueId)
+                              .collect(java.util.stream.Collectors.toSet())),
+                      "Controller reload replaced physical limbs");
+                }
+                if (index != 6 || tick < 240 || tick >= 280) {
+                  BrainMotorControls.move(
+                      body,
+                      new Vec3(0, 0, speed),
+                      index == 6 && tick < 240 ? .7 : 0,
+                      SAMPLE_TICKS * 3);
+                }
                 minimumUp =
                     Math.min(
                         minimumUp,
@@ -163,7 +195,23 @@ public final class PrototypeSpeedComparisonTests {
                         + minimumUp
                         + " yRange="
                         + (maximumY - minimumY));
-                // Report speed/instability rather than asserting that tuning must improve it.
+                if (mode == PrototypeLocomotion.Mode.PROTOTYPE) {
+                  h.assertTrue(minimumUp > .85, "Prototype lost upright support");
+                  h.assertTrue(maximumY - minimumY < 1, "Prototype collapsed or launched");
+                  h.assertTrue(
+                      (point.z - start.z) / (MOVE_TICKS / 20.0) > speed * .65,
+                      "Prototype could not sustain requested travel");
+                }
+                if (index == 6) {
+                  h.assertTrue(turned, "Prototype ignored turn request");
+                }
+                // Native comparison cases report tuning without asserting an improvement.
+                var container =
+                    dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(level);
+                for (var part : List.copyOf(SubLevelCreatureParts.members(body))) {
+                  container.removeSubLevel(
+                      part, dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason.REMOVED);
+                }
                 h.succeed();
               } else {
                 h.runAfterDelay(SAMPLE_TICKS, () -> run());
@@ -172,5 +220,25 @@ public final class PrototypeSpeedComparisonTests {
           }
           h.runAfterDelay(SAMPLE_TICKS, new Sample());
         });
+  }
+
+  private static void reloadController(dev.ryanhcode.sable.sublevel.ServerSubLevel body) {
+    try {
+      var field = SubLevelLegs.class.getDeclaredField("CONTROLLERS");
+      field.setAccessible(true);
+      @SuppressWarnings("unchecked")
+      var controllers =
+          (java.util.Map<
+                  dev.ryanhcode.sable.sublevel.ServerSubLevel,
+                  org.azkerash.createbioships.compat.letitwalk.CompactLimbController>)
+              field.get(null);
+      var old = controllers.remove(body);
+      old.save();
+      old.close();
+      controllers.put(
+          body, new org.azkerash.createbioships.compat.letitwalk.CompactLimbController(body));
+    } catch (ReflectiveOperationException e) {
+      throw new IllegalStateException(e);
+    }
   }
 }

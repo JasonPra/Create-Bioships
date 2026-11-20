@@ -19,10 +19,11 @@ import org.azkerash.createbioships.components.logic.legs.*;
 import org.azkerash.createbioships.core.*;
 import org.azkerash.createbioships.core.brain.BrainMotorControls;
 import org.azkerash.createbioships.core.legs.SubLevelLegs;
+import org.azkerash.createbioships.core.locomotion.prototype.*;
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
 
-/** One native Let It Walk gait/suspension context; compact sockets generate real limb sublevels. */
+/** Compact sockets generate real limb sublevels; native locomotion remains the default. */
 public final class CompactLimbController {
   public static final String DATA = "create_bioships:compact_limbs",
       PART = "create_bioships:compact_limb";
@@ -136,6 +137,8 @@ public final class CompactLimbController {
 
   private final ServerSubLevel body;
   private final Context walker;
+  private final PrototypeCompactMotor prototype;
+  private boolean prototypeActive;
   private final Map<BlockPos, Limb> limbs = new LinkedHashMap<>();
   private final Set<BlockPos> retiredSockets = new HashSet<>();
   private boolean dirty = true;
@@ -144,6 +147,7 @@ public final class CompactLimbController {
   public CompactLimbController(ServerSubLevel body) {
     this.body = body;
     walker = new Context(body);
+    prototype = new PrototypeCompactMotor(body);
     restore();
   }
 
@@ -567,6 +571,41 @@ public final class CompactLimbController {
     walker.leanRollTarget = Math.clamp(-Math.atan(x), -.6, .6);
   }
 
+  private List<PrototypeCompactMotor.Binding> prototypeBindings() {
+    var result = new ArrayList<PrototypeCompactMotor.Binding>();
+    var ranks = new EnumMap<Direction, Integer>(Direction.class);
+    var ordered = new ArrayList<>(limbs.values());
+    ordered.sort(
+        Comparator.comparingInt((Limb l) -> l.face.ordinal())
+            .thenComparingInt(
+                l -> l.face.getAxis() == Direction.Axis.X ? l.socket.getZ() : l.socket.getX()));
+    for (var limb : ordered) {
+      if (!loaded(limb)) {
+        continue;
+      }
+      int rank = ranks.merge(limb.face, 1, Integer::sum) - 1;
+      int group =
+          ((limb.face == Direction.NORTH || limb.face == Direction.WEST) ? 0 : 1) ^ (rank % 2);
+      var hip = restPoints(limb.socket, limb.face, limb.extension, limb.restAngle).getFirst();
+      var outward =
+          Vec3.atLowerCornerOf(limb.face.getNormal()).yRot((float) Math.toRadians(limb.restAngle));
+      var worldOutward = body.logicalPose().orientation().transform(v(outward));
+      result.add(
+          new PrototypeCompactMotor.Binding(
+              new PrototypeGait.Leg(
+                  limb.socket,
+                  body.logicalPose().transformPosition(hip),
+                  new Vec3(worldOutward.x, worldOutward.y, worldOutward.z),
+                  limb.extension + .5,
+                  limb.lengths[0],
+                  limb.lengths[1],
+                  limb.lengths[2],
+                  group),
+              List.copyOf(limb.bodies)));
+    }
+    return result;
+  }
+
   public void update() {
     rebuild();
     if (limbs.isEmpty()) {
@@ -590,6 +629,34 @@ public final class CompactLimbController {
     SocketJointRig.ensureContactFilters(walker, body.getLevel());
     for (var l : limbs.values()) {
       SocketJointRig.apply(l.runtime.built);
+    }
+    boolean usePrototype =
+        PrototypeLocomotion.get(body) == PrototypeLocomotion.Mode.PROTOTYPE && postureEnabled();
+    if (usePrototype != prototypeActive) {
+      if (!usePrototype) {
+        BuiltLegDriver.updateActualFeet(walker, body.getLevel());
+        for (var limb : limbs.values()) {
+          var leg = limb.runtime;
+          leg.state = LegRuntime.State.STANCE;
+          leg.anchor = leg.actualFoot;
+          leg.swingFrom = leg.actualFoot;
+          leg.swingTo = leg.actualFoot;
+          leg.lastFoothold = leg.actualFoot;
+          leg.settled = false;
+          leg.built.prevDesired = null;
+          leg.built.prevDesiredRot = null;
+        }
+      }
+      prototype.clear();
+      prototypeActive = usePrototype;
+    }
+    if (usePrototype) {
+      prototype.update(prototypeBindings());
+      physicalContacts = prototype.contacts();
+      if (body.getLevel().getGameTime() % 20 == 0) {
+        save();
+      }
+      return;
     }
     BuiltLegDriver.updateActualFeet(walker, body.getLevel());
     var family = new HashSet<UUID>();
@@ -700,6 +767,12 @@ public final class CompactLimbController {
     if (handle == null || !handle.isValid()) {
       return;
     }
+    if (PrototypeLocomotion.get(body) == PrototypeLocomotion.Mode.PROTOTYPE) {
+      if (allLoaded) {
+        prototype.physics(prototypeBindings(), dt);
+      }
+      return;
+    }
     // Match WalkerCoreBlockEntity's native physics ordering and support decisions.
     // Native WalkerBrain/WalkerPhysics determine loss of footing; no extra contact gate.
     WalkerPhysics.substep(walker, body, handle, dt);
@@ -766,6 +839,10 @@ public final class CompactLimbController {
             body.logicalPose()
                 .transformPositionInverse(
                     part.logicalPose().transformPosition(a.add(0, l.lengths[i], 0))));
+      }
+      if (prototypeActive) {
+        // Debug joints must describe the active controller, not the dormant native plan.
+        points = List.of(actual.get(0), actual.get(1), actual.get(3), actual.get(5));
       }
       result.add(new SubLevelLegs.Pose(l.socket, points, List.copyOf(actual)));
     }

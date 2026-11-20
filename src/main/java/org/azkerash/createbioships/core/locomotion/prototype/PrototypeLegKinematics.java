@@ -21,9 +21,9 @@ public final class PrototypeLegKinematics {
     var delta = target.subtract(socket);
     var along =
         delta.lengthSqr() > DEGENERATE_LENGTH_SQUARED ? delta.normalize() : new Vec3(0, -1, 0);
+    double epsilon = Math.min(REACH_EPSILON, Math.min(thigh, shin) * .1);
     double distance =
-        Math.clamp(
-            delta.length(), Math.abs(thigh - shin) + REACH_EPSILON, thigh + shin - REACH_EPSILON);
+        Math.clamp(delta.length(), Math.abs(thigh - shin) + epsilon, thigh + shin - epsilon);
     double projection = (thigh * thigh - shin * shin + distance * distance) / (2 * distance);
     double rise = Math.sqrt(Math.max(0, thigh * thigh - projection * projection));
     // Choose the knee above the hip-to-foot axis; this keeps the existing insect-like silhouette.
