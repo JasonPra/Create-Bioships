@@ -45,12 +45,12 @@ an access face.
 
 ## Behavior cards
 
-Blank Behavior Cards are nonstackable, craftable graph documents. Their initial
-`BehaviorGraph` contains a version and empty Nodes, Connections and Variables lists.
-The `create_bioships:behavior_cards` item tag controls which items fit the inventory.
-The current scope is storage and multiblock foundation: it does not execute behavior
-cards, provide factory behaviors, interpret Lua, or include a visual node editor.
-Those systems will be added as a separate feature.
+Blank Behavior Cards are nonstackable and craftable. The original `BehaviorGraph`
+placeholder remains readable for compatibility, but the programmable-card feature now targets
+versioned C# source rather than Lua or a visual graph language. See
+[the Cerebral IDE contract](brain-programming.md) for the supported first-version language,
+card persistence, execution limits and permissions. Factory Wander cards remain independent
+of editable source cards.
 
 ## Development fixture
 
@@ -80,4 +80,4 @@ The grid's brain controller synchronizes the active group and its access face. A
 
 The single port uses the cleaned administrative panel's flesh and bone frame, with a dark programming display, blinking `>_` cursor and logic glyph. Moving the port preserves the existing wrench and inventory behavior. Procedural surfaces share the existing hurt shader, and wound decals are projected onto the rounded surface.
 
-Factory behavior cards now execute through a grid-owned controller. Wander is the first registered program. Blank programmable cards still store their graph document; the visual editor and Lua execution remain future work.
+Factory behavior cards now execute through a grid-owned controller. Wander is the first registered program. Programmable cards are being extended with the Cerebral IDE and sandboxed C# execution; factory behaviors keep their existing controller.
