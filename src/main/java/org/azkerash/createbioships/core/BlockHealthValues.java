@@ -13,15 +13,21 @@ public final class BlockHealthValues {
 
   public static void registerBlocks() {
     VALUES.clear();
-    BuiltInRegistries.BLOCK.keySet().forEach(id -> VALUES.put(id, 10d));
+    BuiltInRegistries.BLOCK
+        .keySet()
+        .forEach(id -> VALUES.put(id, healthless(BuiltInRegistries.BLOCK.get(id)) ? 0d : 10d));
   }
 
   public static double health(BlockState state) {
-    return state.isAir()
-            || state.getBlock()
-                instanceof org.azkerash.createbioships.components.logic.legs.CompactLimbBlock
+    return state.isAir() || healthless(state.getBlock())
         ? 0
         : VALUES.getOrDefault(BuiltInRegistries.BLOCK.getKey(state.getBlock()), 10d);
+  }
+
+  private static boolean healthless(net.minecraft.world.level.block.Block block) {
+    // Plating is a protection pool, not living tissue. Armored organs retain their organ HP.
+    return block instanceof org.azkerash.createbioships.components.logic.armor.ArmorBlock
+        || block instanceof org.azkerash.createbioships.components.logic.legs.CompactLimbBlock;
   }
 
   public static NavigableMap<ResourceLocation, Double> entries() {

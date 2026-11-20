@@ -63,7 +63,7 @@ public final class ArmorTests {
         SubLevelArmor.absorb(body, core.east(), level.damageSources().starve(), 1) == 1,
         "Starvation was blocked by armor");
     helper.assertTrue(
-        SubLevelHealth.status(body).current() == 30, "Armor bookkeeping damaged health");
+        SubLevelHealth.status(body).current() == 20, "Armor bookkeeping damaged health");
     helper.succeed();
   }
 }

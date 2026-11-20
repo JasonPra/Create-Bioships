@@ -55,7 +55,7 @@ public final class CreaturePartsTests {
           SubLevelCreatureParts.attach(root, limb);
           h.assertTrue(SubLevelCreatureParts.root(limb) == root, "Limb did not resolve its owner");
           h.assertTrue(
-              SubLevelHealth.status(limb).maximum() == base + 20, "Limb capacity was not combined");
+              SubLevelHealth.status(limb).maximum() == base + 10, "Limb capacity was not combined");
           h.assertTrue(SubLevelHealth.status(limb).damage() == 3, "Linking healed existing damage");
           SubLevelHealth.damage(limb, 2, "limb_hit");
           h.assertTrue(SubLevelHealth.status(root).damage() == 5, "Limb damage did not reach root");
@@ -81,7 +81,7 @@ public final class CreaturePartsTests {
               "Corpse identity split");
           SubLevelCreatureParts.attach(root, limb);
           h.assertTrue(
-              SubLevelHealth.status(root).maximum() == base + 20,
+              SubLevelHealth.status(root).maximum() == base + 10,
               "Repeated link double counted health");
           var stomach = limb.getPlot().getCenterBlock().above(2);
           level.setBlock(

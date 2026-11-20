@@ -33,6 +33,12 @@ public final class SubLevelHealth {
     return SubLevelData.health(body);
   }
 
+  private static boolean tracked(BlockState state) {
+    return !state.isAir()
+        && !(state.getBlock()
+            instanceof org.azkerash.createbioships.components.logic.legs.CompactLimbBlock);
+  }
+
   private static void initialize(ServerSubLevel body) {
     if (CELLS.containsKey(body)) {
       return;
@@ -51,10 +57,11 @@ public final class SubLevelHealth {
         for (int x = 0; x < 16; x++) {
           for (int y = 0; y < 16; y++) {
             for (int z = 0; z < 16; z++) {
-              double hp = BlockHealthValues.health(section.getBlockState(x, y, z));
-              if (hp == 0) {
+              var state = section.getBlockState(x, y, z);
+              if (!tracked(state)) {
                 continue;
               }
+              double hp = BlockHealthValues.health(state);
               cells.put(
                   new BlockPos(
                           chunk.getPos().getMinBlockX() + x,
@@ -121,13 +128,14 @@ public final class SubLevelHealth {
     SubLevelOxygen.changed(body, pos, state);
     var cells = CELLS.get(body);
     double previous = cells.getOrDefault(pos.asLong(), 0d), next = BlockHealthValues.health(state);
+    // Keep zero-HP armor in the shared occupancy list for armor, decay and topology consumers.
+    if (tracked(state)) {
+      cells.put(pos.asLong(), next);
+    } else {
+      cells.remove(pos.asLong());
+    }
     if (previous == next) {
       return;
-    }
-    if (next == 0) {
-      cells.remove(pos.asLong());
-    } else {
-      cells.put(pos.asLong(), next);
     }
     if (SubLevelCreatureParts.isPart(body)) {
       SubLevelCreatureParts.healthContribution(

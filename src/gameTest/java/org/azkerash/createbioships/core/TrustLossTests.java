@@ -30,6 +30,8 @@ public final class TrustLossTests {
             origin.offset(x, -2, z), Blocks.BEDROCK.defaultBlockState(), Block.UPDATE_ALL);
       }
     }
+    // Trust percentages use a fixed 20-HP fixture; plating itself no longer supplies HP.
+    level.setBlock(origin.west(), Blocks.STONE.defaultBlockState(), Block.UPDATE_ALL);
     level.setBlock(origin, ComponentRegistry.CORE.get().defaultBlockState(), Block.UPDATE_ALL);
     level.setBlock(
         origin.east(), ComponentRegistry.CHITIN_ARMOR.get().defaultBlockState(), Block.UPDATE_ALL);
@@ -37,8 +39,8 @@ public final class TrustLossTests {
         SubLevelAssemblyHelper.assembleBlocks(
             level,
             origin,
-            List.of(origin, origin.east()),
-            new BoundingBox3i(origin, origin.east()));
+            List.of(origin.west(), origin, origin.east()),
+            new BoundingBox3i(origin.west(), origin.east()));
     CoreAssemblyRules.mark(level, result.getPlot().getCenterBlock());
     DevelopmentLifeSupport.pause(result);
     return result;
@@ -107,6 +109,7 @@ public final class TrustLossTests {
         root,
         () -> {
           level.removeBlock(cell.east(), false);
+          level.removeBlock(cell.west(), false);
           return true;
         });
     near(h, SubLevelData.trust(root), 79, "Component removal cost attack trust");
