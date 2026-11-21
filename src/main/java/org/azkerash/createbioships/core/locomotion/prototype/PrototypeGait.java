@@ -61,11 +61,27 @@ public final class PrototypeGait {
           leg.hip, leg.outward, target, leg.coxa, leg.thigh, leg.shin);
     }
 
+    default List<Vec3> solveRecovery(Leg leg, Vec3 target) {
+      return solve(leg, target);
+    }
+
+    default boolean clearPose(Leg leg, List<Vec3> points) {
+      return true;
+    }
+
+    default Vec3 massCenter() {
+      return null;
+    }
+
     default double mobility(Leg leg) {
       return 1;
     }
   }
 
+  private static final int TETRAPOD_LEGS = 8, TETRAPOD_SUPPORTS = 4;
+  private static final double TETRAPOD_MAX_GRADE = .25, TETRAPOD_MIN_UP = .9;
+  private static final double TETRAPOD_MAX_YAW_RATE = .15;
+  private static final int RECOVERY_STEP_TICKS = 12;
   private static final int CONTACT_RECHECK_TICKS = 10;
   private static final int RETRY_TICKS = 5;
   private static final int MIN_ANCHORED_STANCE_TICKS = 4;
@@ -86,6 +102,7 @@ public final class PrototypeGait {
 
   private static final class Foot {
     private Contact planted, destination;
+    private boolean recovery;
     private Vec3 from, point;
     private long started, nextProbe, nextStep;
     private int duration;
@@ -217,7 +234,7 @@ public final class PrototypeGait {
     // A cached floor hit cannot support the body after the leg has moved beyond its reach.
     for (var leg : legs) {
       var foot = feet.get(leg.socket);
-      if (foot.planted != null && !reachable(leg, foot.point, terrain)) {
+      if (foot.planted != null && !reachable(leg, foot.point, terrain, foot.recovery)) {
         foot.planted = null;
         if (anchored(leg)) {
           // Rotation across an edge can retire a foothold before its normal timer is due.
@@ -243,36 +260,13 @@ public final class PrototypeGait {
     } else if (planted.size() < 2) {
       surface = PrototypeStance.LEVEL;
     }
+    boolean tetrapod = stableTetrapod(legs, terrain);
     boolean careful =
-        (legs.stream().anyMatch(PrototypeGait::anchored)
+        (legs.stream().anyMatch(PrototypeGait::anchored) && !tetrapod
             || (legs.stream().anyMatch(PrototypeStance::adapts)
                 && Math.abs(surface.grade()) > PrototypeStance.ADAPTATION_GRADE));
     if (careful) {
-      // One foot swings at a time; retain the rear stance while the front reaches higher ground.
-      if (activeGroup >= 0 || contacts() < Math.min(3, legs.size())) {
-        return;
-      }
-      Leg chosen = null;
-      double best = 1;
-      for (var leg : legs) {
-        var foot = feet.get(leg.socket);
-        if (foot.planted == null || tick < foot.nextStep || terrain.mobility(leg) <= 0) {
-          continue;
-        }
-        boolean rear = leg.hip.subtract(center).dot(forward) < 0;
-        double threshold = Math.max(MIN_STRIDE_ERROR, leg.height * STRIDE_HEIGHT_FACTOR);
-        if (surface.grade() > 0 && leg.profile.rearLeverage()) {
-          threshold *= rear ? REAR_PLANT_THRESHOLD_FACTOR : FRONT_REACH_THRESHOLD_FACTOR;
-        }
-        double score = strideError(leg, foot, velocity, terrain) / threshold;
-        if (score > best) {
-          chosen = leg;
-          best = score;
-        }
-      }
-      if (chosen != null && contacts() - 1 >= Math.min(3, legs.size() - 1)) {
-        step(chosen, velocity, speed, tick, terrain);
-      }
+      carefulStep(legs, velocity, speed, tick, terrain, activeGroup);
       return;
     }
     int selectedGroup = activeGroup;
@@ -297,8 +291,23 @@ public final class PrototypeGait {
     int group = selectedGroup;
     long supports =
         legs.stream().filter(l -> l.group != group && feet.get(l.socket).planted != null).count();
-    if (supports == 0) {
+    if (supports < (tetrapod ? TETRAPOD_SUPPORTS : 1)) {
       return;
+    }
+    if (tetrapod) {
+      var supportPoints =
+          legs.stream()
+              .filter(leg -> leg.group != group)
+              .map(leg -> feet.get(leg.socket))
+              .filter(foot -> foot.planted != null)
+              .map(foot -> foot.point)
+              .toList();
+      var massCenter = terrain.massCenter();
+      if (!org.azkerash.createbioships.core.locomotion.SupportPolygon.containsProjection(
+          massCenter == null ? center : massCenter, supportPoints)) {
+        carefulStep(legs, velocity, speed, tick, terrain, activeGroup);
+        return;
+      }
     }
     for (var leg : legs) {
       var foot = feet.get(leg.socket);
@@ -315,6 +324,60 @@ public final class PrototypeGait {
       }
       step(leg, velocity, speed, tick, terrain);
     }
+  }
+
+  private void carefulStep(
+      List<Leg> legs, Vec3 velocity, double speed, long tick, Terrain terrain, int activeGroup) {
+    // One foot swings at a time; retain the rear stance while the front reaches higher ground.
+    if (activeGroup >= 0 || contacts() < Math.min(3, legs.size())) {
+      return;
+    }
+    Leg chosen = null;
+    double best = 1;
+    for (var leg : legs) {
+      var foot = feet.get(leg.socket);
+      if (foot.planted == null || tick < foot.nextStep || terrain.mobility(leg) <= 0) {
+        continue;
+      }
+      boolean rear = leg.hip.subtract(center).dot(forward) < 0;
+      double threshold = Math.max(MIN_STRIDE_ERROR, leg.height * STRIDE_HEIGHT_FACTOR);
+      if (surface.grade() > 0 && leg.profile.rearLeverage()) {
+        threshold *= rear ? REAR_PLANT_THRESHOLD_FACTOR : FRONT_REACH_THRESHOLD_FACTOR;
+      }
+      double score = strideError(leg, foot, velocity, terrain) / threshold;
+      if (score > best) {
+        chosen = leg;
+        best = score;
+      }
+    }
+    if (chosen != null && contacts() - 1 >= Math.min(3, legs.size() - 1)) {
+      step(chosen, velocity, speed, tick, terrain);
+    }
+  }
+
+  private boolean stableTetrapod(List<Leg> legs, Terrain terrain) {
+    if (legs.size() != TETRAPOD_LEGS
+        || contacts() < TETRAPOD_SUPPORTS
+        || Math.abs(surface.grade()) > TETRAPOD_MAX_GRADE
+        || planeUp.y < TETRAPOD_MIN_UP
+        || Math.abs(requestedYaw) > TETRAPOD_MAX_YAW_RATE) {
+      return false;
+    }
+    int firstGroup = 0;
+    for (var leg : legs) {
+      if (!anchored(leg)) {
+        return false;
+      }
+      if (leg.group == 0) {
+        firstGroup++;
+      }
+      var foot = feet.get(leg.socket);
+      if (foot.recovery
+          || foot.planted != null && terrain.normal(foot.planted).y < TETRAPOD_MIN_UP) {
+        return false;
+      }
+    }
+    return firstGroup == TETRAPOD_SUPPORTS;
   }
 
   private double strideError(Leg leg, Foot foot, Vec3 velocity, Terrain terrain) {
@@ -360,12 +423,17 @@ public final class PrototypeGait {
       foot.destination = destination;
       foot.started = tick;
       foot.duration = duration;
+      foot.recovery = false;
       steps++;
     }
   }
 
   private static boolean reachable(Leg leg, Vec3 point, Terrain terrain) {
-    var solved = terrain.solve(leg, point);
+    return reachable(leg, point, terrain, false);
+  }
+
+  private static boolean reachable(Leg leg, Vec3 point, Terrain terrain, boolean recovery) {
+    var solved = recovery ? terrain.solveRecovery(leg, point) : terrain.solve(leg, point);
     return solved.getLast().distanceTo(point) <= CONTACT_REACH_TOLERANCE;
   }
 
@@ -380,6 +448,29 @@ public final class PrototypeGait {
     var offset = footprint.subtract(center);
     var lead = planeUp.cross(offset).scale(requestedYaw * TURN_FOOT_LEAD_SECONDS);
     return PrototypeStance.foot(leg, footprint.add(lead), center, forward, surface.grade());
+  }
+
+  /** Lift only the trapped foot and preserve the other planted supports. */
+  public boolean recover(Leg leg, Vec3 obstacle, long tick, Terrain terrain) {
+    var foot = feet.get(leg.socket());
+    if (foot == null
+        || foot.point == null
+        || foot.destination != null
+        || (anchored(leg) && contacts() <= 3)) {
+      return false;
+    }
+    var target = FootholdRecovery.nearest(leg, foot.point, obstacle, terrain);
+    if (target == null) {
+      return false;
+    }
+    foot.from = foot.point;
+    foot.planted = null;
+    foot.destination = target;
+    foot.started = tick;
+    foot.duration = RECOVERY_STEP_TICKS;
+    foot.recovery = true;
+    steps++;
+    return true;
   }
 
   public List<Vec3> pose(Leg leg, double tick, Terrain terrain) {
@@ -404,7 +495,9 @@ public final class PrototypeGait {
         target = planted;
       }
     }
-    return terrain.solve(leg, target);
+    return foot != null && foot.recovery
+        ? terrain.solveRecovery(leg, target)
+        : terrain.solve(leg, target);
   }
 
   public static boolean anchored(Leg leg) {

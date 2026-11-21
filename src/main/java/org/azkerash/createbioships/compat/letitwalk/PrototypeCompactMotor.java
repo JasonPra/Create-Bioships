@@ -205,6 +205,51 @@ final class PrototypeCompactMotor {
         }
 
         @Override
+        public List<Vec3> solveRecovery(PrototypeGait.Leg leg, Vec3 target) {
+          var binding = definitions.get(leg.socket());
+          return binding == null
+              ? solve(leg, target)
+              : PrototypeJointPose.solveFullRange(
+                  leg, target, binding.restDirections(), binding.rootUp(), binding.limits());
+        }
+
+        @Override
+        public boolean clearPose(PrototypeGait.Leg leg, List<Vec3> points) {
+          var state = body.getLevel().getBlockState(leg.socket());
+          return state.hasProperty(
+                  org.azkerash.createbioships.components.logic.legs.CompactLegSocketBlock.HEIGHT)
+              && LimbPoseClearance.clear(
+                  body,
+                  points,
+                  state.getValue(
+                      org.azkerash.createbioships.components.logic.legs.CompactLegSocketBlock
+                          .HEIGHT),
+                  org.azkerash.createbioships.components.logic.legs.CompactLegSocketBlock
+                      .isArachnid(state));
+        }
+
+        @Override
+        public Vec3 massCenter() {
+          var center = Vec3.ZERO;
+          double total = 0;
+          for (var member : SubLevelCreatureParts.members(body)) {
+            var local = member.getMassTracker().getCenterOfMass();
+            double mass = member.getMassTracker().getMass();
+            if (local == null || !(mass > 0)) {
+              continue;
+            }
+            center =
+                center.add(
+                    member
+                        .logicalPose()
+                        .transformPosition(new Vec3(local.x(), local.y(), local.z()))
+                        .scale(mass));
+            total += mass;
+          }
+          return total > 0 ? center.scale(1 / total) : null;
+        }
+
+        @Override
         public double mobility(PrototypeGait.Leg leg) {
           var binding = definitions.get(leg.socket());
           return binding == null ? 0 : binding.mobility;
@@ -245,6 +290,21 @@ final class PrototypeCompactMotor {
                 terrain,
                 SubLevelFacing.world(body),
                 BrainMotorControls.current(body).yawRate()));
+  }
+
+  PrototypeGait.Contact recoveryTarget(
+      List<Binding> bindings, Binding binding, Vec3 foot, Vec3 obstacle) {
+    prepare(bindings);
+    return FootholdRecovery.nearest(binding.leg(), foot, obstacle, terrain);
+  }
+
+  Vec3 recoveryPosition(PrototypeGait.Contact contact) {
+    return terrain.position(contact);
+  }
+
+  boolean recover(List<Binding> bindings, Binding binding, Vec3 obstacle) {
+    prepare(bindings);
+    return gait.recover(binding.leg(), obstacle, body.getLevel().getGameTime(), terrain);
   }
 
   void climbIntent(Vec3 movement) {

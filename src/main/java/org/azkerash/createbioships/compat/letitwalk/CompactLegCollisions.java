@@ -132,6 +132,32 @@ public final class CompactLegCollisions {
     return new Snapshot(List.copyOf(boxes(body, poses)));
   }
 
+  /** Collision geometry for a proposed rigid, three-segment world-space limb pose. */
+  public static Snapshot snapshotPose(List<Vec3> points, int height, boolean arachnid) {
+    if (points.size() != 4) {
+      throw new IllegalArgumentException("A compact limb pose requires four endpoints");
+    }
+    var boxes = new ArrayList<Box>();
+    for (int segment = 0; segment < 3; segment++) {
+      var from = points.get(segment);
+      var to = points.get(segment + 1);
+      var delta = to.subtract(from);
+      if (delta.lengthSqr() < 1e-8) {
+        throw new IllegalArgumentException("A compact limb segment cannot have zero length");
+      }
+      var center = from.add(to).scale(.5);
+      double halfWidth = width(segment, height, arachnid) / 2;
+      boxes.add(
+          new Box(
+              new Vector3d(center.x, center.y, center.z),
+              new Vector3d(halfWidth, delta.length() / 2, halfWidth),
+              new Quaterniond()
+                  .rotationTo(
+                      new Vector3d(0, 1, 0), new Vector3d(delta.x, delta.y, delta.z).normalize())));
+    }
+    return new Snapshot(boxes);
+  }
+
   public static final class Snapshot {
     private record PreparedBox(
         Vector3d center, Vector3d extent, Vector3d x, Vector3d y, Vector3d z, AABB bounds) {}
@@ -159,6 +185,14 @@ public final class CompactLegCollisions {
                 new AABB(c.x - ex, c.y - ey, c.z - ez, c.x + ex, c.y + ey, c.z + ez)));
       }
       boxes = List.copyOf(prepared);
+    }
+
+    public AABB bounds() {
+      AABB result = null;
+      for (var box : boxes) {
+        result = result == null ? box.bounds : result.minmax(box.bounds);
+      }
+      return result;
     }
 
     public boolean overlaps(AABB obstacle, double tolerance) {

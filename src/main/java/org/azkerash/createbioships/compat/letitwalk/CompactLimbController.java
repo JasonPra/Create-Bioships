@@ -153,6 +153,112 @@ public final class CompactLimbController {
   private org.azkerash.createbioships.core.locomotion.NativeGaitPolicy.Gait nativeGait =
       org.azkerash.createbioships.core.locomotion.NativeGaitPolicy.WALK;
 
+  private static final int RECOVERY_STALL_TICKS = 40, RECOVERY_INTERVAL_TICKS = 20;
+  private static final int RECOVERY_INTENT_TICKS = 60, RECOVERY_SWING_TICKS = 12;
+  private static final int MAX_RECOVERY_PROBES = 4;
+  private static final double RECOVERY_LOOKAHEAD_BLOCKS = .8, RECOVERY_PROGRESS_BLOCKS = .2;
+  private Vec3 recoveryIntent = Vec3.ZERO, lastTravel;
+  private long recoveryExpires, nextRecovery, lastTravelTick;
+  private int recoveryCursor, recoveryAttempts, recoverySteps;
+  private NativeRecovery recovery;
+
+  private record NativeRecovery(
+      BlockPos socket, Vec3 from, PrototypeGait.Contact target, long started) {}
+
+  public record RecoveryStatus(int attempts, int steps) {}
+
+  public RecoveryStatus recoveryStatus() {
+    return new RecoveryStatus(recoveryAttempts, recoverySteps);
+  }
+
+  /** Only a physically stalled creature performs the bounded emergency placement search. */
+  private boolean recoveryReady() {
+    long now = body.getLevel().getGameTime();
+    var position = org.azkerash.createbioships.core.pathfinding.SubLevelPathfinder.position(body);
+    if (lastTravel == null
+        || position.distanceToSqr(lastTravel)
+            >= RECOVERY_PROGRESS_BLOCKS * RECOVERY_PROGRESS_BLOCKS) {
+      lastTravel = position;
+      lastTravelTick = now;
+    }
+    if (now < nextRecovery
+        || now > recoveryExpires
+        || now - lastTravelTick < RECOVERY_STALL_TICKS
+        || recoveryIntent.lengthSqr() < .001
+        || recovery != null
+        || wallAttached()) {
+      return false;
+    }
+    return true;
+  }
+
+  private void recoverObstructedLeg(List<PrototypeCompactMotor.Binding> bindings) {
+    if (!recoveryReady() || bindings.isEmpty()) {
+      return;
+    }
+    long now = body.getLevel().getGameTime();
+    nextRecovery = now + RECOVERY_INTERVAL_TICKS;
+    int probes = 0;
+    for (int checked = 0; checked < bindings.size() && probes < MAX_RECOVERY_PROBES; checked++) {
+      var binding = bindings.get(Math.floorMod(recoveryCursor++, bindings.size()));
+      var limb = limbs.get(binding.leg().socket());
+      if (limb == null || !loaded(limb)) {
+        continue;
+      }
+      var last = limb.bodies.getLast();
+      var foot = last.logicalPose().transformPosition(anchor(last).add(0, limb.lengths[2], 0));
+      for (var origin :
+          List.of(foot.add(0, .2, 0), last.logicalPose().transformPosition(anchor(last)))) {
+        if (probes++ >= MAX_RECOVERY_PROBES) {
+          break;
+        }
+        var hit =
+            org.azkerash.createbioships.core.legs.SurfaceContactProbe.cast(
+                body, origin, origin.add(recoveryIntent.scale(RECOVERY_LOOKAHEAD_BLOCKS)));
+        if (hit == null) {
+          continue;
+        }
+        recoveryAttempts++;
+        if (prototypeActive) {
+          if (prototype.recover(bindings, binding, hit.point())) {
+            recoverySteps++;
+            return;
+          }
+        } else {
+          var target = prototype.recoveryTarget(bindings, binding, foot, hit.point());
+          if (target != null) {
+            recovery = new NativeRecovery(limb.socket, foot, target, now);
+            recoverySteps++;
+            return;
+          }
+        }
+      }
+    }
+  }
+
+  private void applyRecovery() {
+    if (recovery == null) {
+      return;
+    }
+    var limb = limbs.get(recovery.socket);
+    var target = prototype.recoveryPosition(recovery.target);
+    long now = body.getLevel().getGameTime();
+    if (limb == null || target == null || now - recovery.started >= RECOVERY_SWING_TICKS) {
+      // Normal native landing/contact verification remains authoritative; never
+      // mark the leg grounded merely because a recovery animation has finished.
+      recovery = null;
+      return;
+    }
+    var leg = limb.runtime;
+    leg.state = LegRuntime.State.SWING;
+    leg.grounded = false;
+    leg.swingFrom = recovery.from;
+    leg.swingTo = target;
+    leg.swingStart = recovery.started;
+    leg.swingTicks = RECOVERY_SWING_TICKS;
+    leg.swingHeight = Math.max(.5, target.y - recovery.from.y + .25);
+  }
+
   public CompactLimbController(ServerSubLevel body) {
     this.body = body;
     walker = new Context(body);
@@ -167,6 +273,10 @@ public final class CompactLimbController {
   }
 
   public void climbIntent(Vec3 movement) {
+    if (movement.lengthSqr() > .001) {
+      recoveryIntent = movement.normalize();
+      recoveryExpires = body.getLevel().getGameTime() + RECOVERY_INTENT_TICKS;
+    }
     if (prototypeActive && hasArachnidLegs()) {
       prototype.climbIntent(movement);
     }
@@ -781,7 +891,9 @@ public final class CompactLimbController {
       prototypeActive = usePrototype;
     }
     if (usePrototype) {
-      prototype.update(prototypeBindings());
+      var bindings = prototypeBindings();
+      prototype.update(bindings);
+      recoverObstructedLeg(bindings);
       physicalContacts = prototype.contacts();
       if (body.getLevel().getGameTime() % 20 == 0) {
         save();
@@ -789,6 +901,14 @@ public final class CompactLimbController {
       return;
     }
     BuiltLegDriver.updateActualFeet(walker, body.getLevel());
+    if (postureEnabled()) {
+      if (recoveryReady()) {
+        recoverObstructedLeg(prototypeBindings());
+      }
+    } else {
+      recovery = null;
+      recoveryIntent = Vec3.ZERO;
+    }
     var family = new HashSet<UUID>();
     for (var p : SubLevelCreatureParts.members(body)) {
       family.add(p.getUniqueId());
@@ -863,6 +983,7 @@ public final class CompactLimbController {
             double permitted = Math.hypot(walker.targetVelocity.x, walker.targetVelocity.z);
             double factor = permitted > 1e-8 ? Math.min(1, wanted / permitted) : 0;
             walker.targetVelocity.mul(factor);
+            applyRecovery();
             BuiltLegDriver.solve(walker, body, body.getLevel().getGameTime());
           }
         });

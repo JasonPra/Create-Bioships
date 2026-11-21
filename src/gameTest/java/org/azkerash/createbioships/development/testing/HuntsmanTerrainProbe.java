@@ -24,9 +24,9 @@ import org.azkerash.createbioships.core.pathfinding.*;
 /** Opt-in normal-overworld experiment, excluded from shipping sources and standard tests. */
 @EventBusSubscriber(modid = "create_bioships")
 public final class HuntsmanTerrainProbe {
-  private static final int SETTLE_TICKS = 160, TRAVEL_TICKS = 400, SAMPLE_TICKS = 20;
+  private static final int SETTLE_TICKS = 160, TRAVEL_TICKS = 1200, SAMPLE_TICKS = 20;
   private static final int DESTINATION_DISTANCE_BLOCKS = 16, SPAWN_LIFT_BLOCKS = 9;
-  private static final double TRAVEL_SPEED = 3;
+  private static final double WALK_SPEED = 1.5, RUN_SPEED = 3;
 
   private record Site(String kind, BlockPos ground) {}
 
@@ -57,7 +57,7 @@ public final class HuntsmanTerrainProbe {
         Files.createDirectories(output);
         Files.writeString(
             output.resolve("results.csv"),
-            "site,controller,seed,x,y,z,route_found,planning_ms,travelled,net_distance,rejected,arrived_tick,min_up\n");
+            "site,appendage,controller,speed,seed,x,y,z,route_found,planning_ms,travelled,net_distance,rejected,arrived_tick,min_up,recovery_attempts,recovery_steps\n");
         level.getGameRules().getRule(GameRules.RULE_DOMOBSPAWNING).set(false, server);
         selectSites(level);
         spawn(level);
@@ -81,14 +81,17 @@ public final class HuntsmanTerrainProbe {
         travelled = 0;
         minUp = 1;
         rejected = arrived = next = 0;
-        var target = ground(level, SITES.get(trial / 2).ground.north(DESTINATION_DISTANCE_BLOCKS));
+        var target =
+            ground(
+                level,
+                SITES.get((trial / 2) % SITES.size()).ground.north(DESTINATION_DISTANCE_BLOCKS));
         if (target == null) {
           throw new IllegalStateException("Selected destination became unavailable");
         }
         goal =
             new Vec3(
                 target.getX() + .5,
-                target.getY() + position.y - SITES.get(trial / 2).ground.getY(),
+                target.getY() + position.y - SITES.get((trial / 2) % SITES.size()).ground.getY(),
                 target.getZ() + .5);
         long before = System.nanoTime();
         var planned = SubLevelPathfinder.find(subject, goal, SubLevelPathfinder.Mode.GROUND);
@@ -100,7 +103,7 @@ public final class HuntsmanTerrainProbe {
         NAVIGATOR.reset();
         System.out.println(
             "HUNTSMAN_START site="
-                + SITES.get(trial / 2)
+                + SITES.get((trial / 2) % SITES.size())
                 + " mode="
                 + PrototypeLocomotion.get(subject)
                 + " bounds="
@@ -126,7 +129,7 @@ public final class HuntsmanTerrainProbe {
                 subject,
                 route,
                 next,
-                TRAVEL_SPEED,
+                trial % 2 == 0 ? WALK_SPEED : RUN_SPEED,
                 SAMPLE_TICKS + 1,
                 SubLevelPathfinder.Mode.GROUND);
         next = progress.next();
@@ -157,13 +160,15 @@ public final class HuntsmanTerrainProbe {
       if (age < SETTLE_TICKS + TRAVEL_TICKS && arrived == 0) {
         return;
       }
-      var site = SITES.get(trial / 2);
+      var site = SITES.get((trial / 2) % SITES.size());
       String row =
           String.format(
               Locale.ROOT,
-              "%s,%s,%d,%d,%d,%d,%s,%.3f,%.3f,%.3f,%d,%d,%.5f%n",
+              "%s,%s,%s,%.1f,%d,%d,%d,%d,%s,%.3f,%.3f,%.3f,%d,%d,%.5f,%d,%d%n",
               site.kind,
-              PrototypeLocomotion.get(subject),
+              trial < SITES.size() * 2 ? "arachnid" : "crab",
+              trial < SITES.size() * 2 ? "procedural" : "native",
+              trial % 2 == 0 ? WALK_SPEED : RUN_SPEED,
               level.getSeed(),
               site.ground.getX(),
               site.ground.getY(),
@@ -174,7 +179,9 @@ public final class HuntsmanTerrainProbe {
               Math.hypot(position.x - start.x, position.z - start.z),
               rejected,
               arrived,
-              minUp);
+              minUp,
+              SubLevelLegs.recoveryStatus(subject).attempts(),
+              SubLevelLegs.recoveryStatus(subject).steps());
       Files.writeString(output.resolve("results.csv"), row, StandardOpenOption.APPEND);
       System.out.println("HUNTSMAN_RESULT " + row.strip());
       BrainMotorControls.stop(subject);
@@ -184,7 +191,7 @@ public final class HuntsmanTerrainProbe {
         }
       }
       trial++;
-      if (trial >= SITES.size() * 2) {
+      if (trial >= SITES.size() * 4) {
         done = true;
         server.halt(false);
       } else {
@@ -254,16 +261,16 @@ public final class HuntsmanTerrainProbe {
   }
 
   private static void spawn(ServerLevel level) {
-    var site = SITES.get(trial / 2);
+    var site = SITES.get((trial / 2) % SITES.size());
     for (int x = (site.ground.getX() - 32) >> 4; x <= (site.ground.getX() + 32) >> 4; x++) {
       for (int z = (site.ground.getZ() - 48) >> 4; z <= (site.ground.getZ() + 32) >> 4; z++) {
         level.setChunkForced(x, z, true);
       }
     }
-    subject = HuntsmanFixture.spawn(level, site.ground.above(SPAWN_LIFT_BLOCKS));
-    PrototypeLocomotion.set(
-        subject,
-        trial % 2 == 0 ? PrototypeLocomotion.Mode.NATIVE : PrototypeLocomotion.Mode.NATIVE_FAST);
+    subject =
+        HuntsmanFixture.spawn(
+            level, site.ground.above(SPAWN_LIFT_BLOCKS), trial < SITES.size() * 2);
+    PrototypeLocomotion.set(subject, PrototypeLocomotion.Mode.NATIVE);
     age = 0;
   }
 }

@@ -33,6 +33,11 @@ public final class HuntsmanFixture {
 
   /** Anatomical offsets in blocks from the core; north is the spider's front. */
   public static Map<BlockPos, BlockState> anatomy(BlockPos core) {
+    return anatomy(core, true);
+  }
+
+  /** Matching body/load permits a controlled comparison with friction-based crab legs. */
+  public static Map<BlockPos, BlockState> anatomy(BlockPos core, boolean arachnid) {
     var cells = new LinkedHashMap<BlockPos, BlockState>();
     var armor = ComponentRegistry.HUNTSMAN_ARMOR.get().defaultBlockState();
     // Low cephalothorax and a rounded, hollow abdomen, joined by a narrow waist.
@@ -82,7 +87,7 @@ public final class HuntsmanFixture {
       for (int row : LEG_ROWS) {
         cells.put(
             core.offset(side * 3, 0, row),
-            ComponentRegistry.ARACHNID_LEG
+            (arachnid ? ComponentRegistry.ARACHNID_LEG : ComponentRegistry.CRAB_LEG)
                 .get()
                 .defaultBlockState()
                 .setValue(CompactLegSocketBlock.HEIGHT, LEG_HEIGHT)
@@ -95,7 +100,11 @@ public final class HuntsmanFixture {
   }
 
   public static ServerSubLevel spawn(ServerLevel level, BlockPos core) {
-    var cells = anatomy(core);
+    return spawn(level, core, true);
+  }
+
+  public static ServerSubLevel spawn(ServerLevel level, BlockPos core, boolean arachnid) {
+    var cells = anatomy(core, arachnid);
     // Preflight the complete subject before writing anything. A failed spawn
     // cannot erase trees, terrain, another creature or a player's construction.
     for (var cell : cells.keySet()) {

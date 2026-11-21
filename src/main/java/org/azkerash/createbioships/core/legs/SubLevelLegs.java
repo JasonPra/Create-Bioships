@@ -145,6 +145,13 @@ public final class SubLevelLegs {
         : controller.surfaceMotion(movement);
   }
 
+  public static CompactLimbController.RecoveryStatus recoveryStatus(ServerSubLevel body) {
+    var controller = CONTROLLERS.get(SubLevelCreatureParts.root(body));
+    return controller == null
+        ? new CompactLimbController.RecoveryStatus(0, 0)
+        : controller.recoveryStatus();
+  }
+
   public static int contacts(ServerSubLevel body) {
     var c = CONTROLLERS.get(body);
     return c == null ? 0 : c.contacts();

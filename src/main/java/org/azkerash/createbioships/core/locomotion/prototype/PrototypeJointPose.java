@@ -31,6 +31,26 @@ public final class PrototypeJointPose {
       List<Vec3> restDirections,
       Vec3 rootUp,
       List<Limit> limits) {
+    return solve(leg, target, restDirections, rootUp, limits, false);
+  }
+
+  /** Emergency clearance can use the entire configured shoulder excursion, not walking bias. */
+  public static List<Vec3> solveFullRange(
+      PrototypeGait.Leg leg,
+      Vec3 target,
+      List<Vec3> restDirections,
+      Vec3 rootUp,
+      List<Limit> limits) {
+    return solve(leg, target, restDirections, rootUp, limits, true);
+  }
+
+  private static List<Vec3> solve(
+      PrototypeGait.Leg leg,
+      Vec3 target,
+      List<Vec3> restDirections,
+      Vec3 rootUp,
+      List<Limit> limits,
+      boolean recovery) {
     var up = rootUp.normalize();
     var rest = restDirections.getFirst().normalize();
     var side = rest.subtract(up.scale(rest.dot(up))).normalize();
@@ -42,11 +62,12 @@ public final class PrototypeJointPose {
     double resting = Math.asin(Math.clamp(rest.dot(up), -1, 1));
     List<Vec3> best = null;
     double error = Double.POSITIVE_INFINITY;
-    int expansions = leg.profile().adaptiveReach() ? 2 : 0;
-    for (int step : new int[] {0, 1, -1, 2, -2}) {
-      if (Math.abs(step) > expansions) {
-        continue;
-      }
+    int expansions =
+        recovery
+            ? (int) Math.ceil(limits.getFirst().bend / WORKING_RANGE_STEP)
+            : leg.profile().adaptiveReach() ? 2 : 0;
+    for (int sample = 0; sample <= expansions * 2; sample++) {
+      int step = (sample + 1) / 2 * (sample % 2 == 1 ? 1 : -1);
       double pitch =
           resting
               + Math.clamp(
