@@ -124,25 +124,66 @@ public final class CompactLegCollisions {
 
   public static boolean overlaps(
       ServerSubLevel body, List<SubLevelLegs.Pose> poses, AABB obstacle, double tolerance) {
-    var t = obstacle.deflate(tolerance);
-    var c = new Vector3d((t.minX + t.maxX) / 2, (t.minY + t.maxY) / 2, (t.minZ + t.maxZ) / 2);
-    var e = new Vector3d(t.getXsize() / 2, t.getYsize() / 2, t.getZsize() / 2);
-    for (var b : boxes(body, poses)) {
-      var q = b.rotation;
-      if (Intersectiond.testObOb(
-          b.center,
-          q.transform(new Vector3d(1, 0, 0)),
-          q.transform(new Vector3d(0, 1, 0)),
-          q.transform(new Vector3d(0, 0, 1)),
-          b.extent,
-          c,
-          new Vector3d(1, 0, 0),
-          new Vector3d(0, 1, 0),
-          new Vector3d(0, 0, 1),
-          e)) {
-        return true;
+    return snapshot(body, poses).overlaps(obstacle, tolerance);
+  }
+
+  /** Immutable geometry for one synchronous navigation search, with no repeated pose rebuilds. */
+  public static Snapshot snapshot(ServerSubLevel body, List<SubLevelLegs.Pose> poses) {
+    return new Snapshot(List.copyOf(boxes(body, poses)));
+  }
+
+  public static final class Snapshot {
+    private record PreparedBox(
+        Vector3d center, Vector3d extent, Vector3d x, Vector3d y, Vector3d z, AABB bounds) {}
+
+    private final List<PreparedBox> boxes;
+
+    private Snapshot(List<Box> source) {
+      var prepared = new ArrayList<PreparedBox>();
+      for (var box : source) {
+        var x = box.rotation.transform(new Vector3d(1, 0, 0));
+        var y = box.rotation.transform(new Vector3d(0, 1, 0));
+        var z = box.rotation.transform(new Vector3d(0, 0, 1));
+        var half = box.extent;
+        double ex = Math.abs(x.x) * half.x + Math.abs(y.x) * half.y + Math.abs(z.x) * half.z;
+        double ey = Math.abs(x.y) * half.x + Math.abs(y.y) * half.y + Math.abs(z.y) * half.z;
+        double ez = Math.abs(x.z) * half.x + Math.abs(y.z) * half.y + Math.abs(z.z) * half.z;
+        var c = box.center;
+        prepared.add(
+            new PreparedBox(
+                c,
+                half,
+                x,
+                y,
+                z,
+                new AABB(c.x - ex, c.y - ey, c.z - ez, c.x + ex, c.y + ey, c.z + ez)));
       }
+      boxes = List.copyOf(prepared);
     }
-    return false;
+
+    public boolean overlaps(AABB obstacle, double tolerance) {
+      var t = obstacle.deflate(tolerance);
+      var c = new Vector3d((t.minX + t.maxX) / 2, (t.minY + t.maxY) / 2, (t.minZ + t.maxZ) / 2);
+      var e = new Vector3d(t.getXsize() / 2, t.getYsize() / 2, t.getZsize() / 2);
+      for (var b : boxes) {
+        if (!b.bounds.intersects(t)) {
+          continue;
+        }
+        if (Intersectiond.testObOb(
+            b.center,
+            b.x,
+            b.y,
+            b.z,
+            b.extent,
+            c,
+            new Vector3d(1, 0, 0),
+            new Vector3d(0, 1, 0),
+            new Vector3d(0, 0, 1),
+            e)) {
+          return true;
+        }
+      }
+      return false;
+    }
   }
 }

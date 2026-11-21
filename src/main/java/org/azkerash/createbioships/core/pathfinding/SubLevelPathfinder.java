@@ -13,6 +13,7 @@ import org.azkerash.createbioships.core.locomotion.SubLevelLocomotion;
 public final class SubLevelPathfinder {
   public static final int MAX_ROUTE_DISTANCE_BLOCKS = 20;
   private static final int ROUTE_SEARCH_NODE_BUDGET = 256;
+  private static final double ROUTE_CLEARANCE_MARGIN_BLOCKS = .3;
   private static final int MAX_VISIBILITY_TESTS = 64;
   private static final int MIN_VERTICAL_SEARCH_RANGE = 8;
   private static final int VERTICAL_SEARCH_MARGIN = 2;
@@ -114,7 +115,10 @@ public final class SubLevelPathfinder {
       goal = BlockPos.containing(b.point().add(0, .01, 0));
       groundHeight = a.point().y;
     }
-    var bounds = SubLevelLocomotion.bounds(body).inflate(.3, 0, .3).deflate(.025);
+    var bounds =
+        SubLevelLocomotion.bounds(body)
+            .inflate(ROUTE_CLEARANCE_MARGIN_BLOCKS, 0, ROUTE_CLEARANCE_MARGIN_BLOCKS)
+            .deflate(.025);
     final var box =
         mode == Mode.GROUND
             ? new AABB(
@@ -127,7 +131,11 @@ public final class SubLevelPathfinder {
             : bounds;
     // Capture once per search; moving constructs are recaptured by the next search/live check.
     var obstacles = SubLevelObstacles.capture(body, box.inflate(MAX_ROUTE_DISTANCE_BLOCKS));
-    var terrain = new NavigationTerrainSnapshot(level, obstacles);
+    var footprint =
+        mode == Mode.GROUND && !SubLevelLocomotion.get(body).hasFins()
+            ? new NavigationFootprint(body)
+            : null;
+    var terrain = new NavigationTerrainSnapshot(level, obstacles, footprint);
     var origin = start;
     var reference = here;
     double stepHeight = mode == Mode.GROUND ? SubLevelLocomotion.stepHeight(body) : 1;
@@ -135,6 +143,17 @@ public final class SubLevelPathfinder {
         new Space() {
           private AABB at(double x, double y, double z) {
             return box.move(x + .5 - reference.x, y - origin.getY(), z + .5 - reference.z);
+          }
+
+          private boolean clear(AABB query) {
+            var offset =
+                new Vec3(query.minX - box.minX, query.minY - box.minY, query.minZ - box.minZ);
+            return terrain.clearPose(
+                query,
+                offset,
+                box.minY + offset.y,
+                footprint == null ? 0 : ROUTE_CLEARANCE_MARGIN_BLOCKS,
+                true);
           }
 
           public boolean passable(BlockPos cell, Mode kind) {
@@ -153,7 +172,7 @@ public final class SubLevelPathfinder {
             } else if (!level.getFluidState(cell).is(FluidTags.WATER)) {
               return false;
             }
-            if (terrain.clear(at(cell.getX(), cell.getY(), cell.getZ()))) {
+            if (clear(at(cell.getX(), cell.getY(), cell.getZ()))) {
               return true;
             }
             // Native stepping starts when the forward feet meet a ledge, before the hull
@@ -161,12 +180,12 @@ public final class SubLevelPathfinder {
             // leg envelope as a solid wall all the way down to the old floor.
             return kind == Mode.GROUND
                 && stepHeight > 0
-                && terrain.clear(at(cell.getX(), cell.getY() + stepHeight, cell.getZ()));
+                && clear(at(cell.getX(), cell.getY() + stepHeight, cell.getZ()));
           }
 
           private boolean swept(AABB from, AABB to) {
             for (double t : new double[] {0, .25, .5, .75, 1}) {
-              if (!terrain.clear(
+              if (!clear(
                   from.move(
                       (to.minX - from.minX) * t,
                       (to.minY - from.minY) * t,
@@ -200,7 +219,10 @@ public final class SubLevelPathfinder {
           }
         };
     var cells =
-        waypoints(space, start, search(space, start, goal, mode, ROUTE_SEARCH_NODE_BUDGET), mode);
+        visible(space, start, goal, mode, new HashMap<>())
+            ? List.of(goal)
+            : waypoints(
+                space, start, search(space, start, goal, mode, ROUTE_SEARCH_NODE_BUDGET), mode);
     double lift = here.y - origin.getY();
     return new Route(
         mode,
@@ -295,12 +317,16 @@ public final class SubLevelPathfinder {
     double radius = Math.max(box.getXsize(), box.getZsize()) / 2;
     double margin = .15 + Math.min(.4, radius * Math.abs(yawRate) * .1);
     var delta = movement.scale(.5);
-    if (movementSweepClear(body, box, delta, margin)) {
+    var flags = SubLevelLocomotion.get(body);
+    var footprint = flags.hasLegs() && !flags.hasFins() ? new NavigationFootprint(body) : null;
+    if (movementSweepClear(body, box, delta, margin, footprint, 0, wallBounds == null)) {
       return true;
     }
     // Permit bounded native step-up, while keeping tall walls blocked.
     double step = SubLevelLocomotion.stepHeight(body);
-    return step > 0 && movementSweepClear(body, box.move(0, step, 0), delta, margin);
+    return step > 0
+        && movementSweepClear(
+            body, box.move(0, step, 0), delta, margin, footprint, step, wallBounds == null);
   }
 
   private static double overlap(AABB a, AABB b) {
@@ -310,12 +336,35 @@ public final class SubLevelPathfinder {
   }
 
   private static boolean movementSweepClear(
-      ServerSubLevel body, AABB start, Vec3 delta, double margin) {
+      ServerSubLevel body,
+      AABB start,
+      Vec3 delta,
+      double margin,
+      NavigationFootprint footprint,
+      double lift,
+      boolean includeLegs) {
     var level = body.getLevel();
     var future = start.move(delta).inflate(margin, 0, margin);
     var sweep = start.minmax(future);
     var obstacles = SubLevelObstacles.capture(body, sweep);
     if (clear(level, obstacles, sweep)) {
+      return true;
+    }
+    var precise = new NavigationTerrainSnapshot(level, obstacles, footprint);
+    boolean preciseClear = footprint != null;
+    for (double fraction : preciseClear ? new double[] {0, .25, .5, .75, 1} : new double[0]) {
+      var offset = delta.scale(fraction);
+      if (!precise.clearPose(
+          start.move(offset).inflate(margin, 0, margin),
+          offset.add(0, lift, 0),
+          start.minY,
+          margin,
+          includeLegs)) {
+        preciseClear = false;
+        break;
+      }
+    }
+    if (preciseClear) {
       return true;
     }
     // Physics contact tolerance can leave a tiny starting overlap. Permit only escape:
