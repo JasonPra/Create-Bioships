@@ -87,10 +87,6 @@ public final class BrainMotorControls {
     }
     double limit =
         mode == org.azkerash.createbioships.core.pathfinding.SubLevelPathfinder.Mode.WATER
-                || org.azkerash.createbioships.core.locomotion.prototype.PrototypeLocomotion.get(
-                        body)
-                    == org.azkerash.createbioships.core.locomotion.prototype.PrototypeLocomotion
-                        .Mode.NATIVE
             ? MAX_COMMAND_SPEED
             : org.azkerash.createbioships.core.locomotion.prototype.PrototypeLocomotion
                 .MAX_SPEED_BLOCKS_PER_SECOND;

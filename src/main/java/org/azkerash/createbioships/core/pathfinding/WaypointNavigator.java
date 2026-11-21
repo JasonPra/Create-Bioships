@@ -34,6 +34,18 @@ public final class WaypointNavigator {
 
     boolean canStrafe();
 
+    default double maxTurnRate() {
+      return .8;
+    }
+
+    default double acceleration() {
+      return Double.POSITIVE_INFINITY;
+    }
+
+    default double yawAcceleration() {
+      return Double.POSITIVE_INFINITY;
+    }
+
     default double detourDistance() {
       return 2;
     }
@@ -45,6 +57,15 @@ public final class WaypointNavigator {
     void publish(List<Vec3> points, int next, SubLevelPathfinder.Mode mode);
   }
 
+  private static final int PROGRESS_TIMEOUT_TICKS = 40;
+  private static final double MIN_PROGRESS_BLOCKS = .2, MIN_HEADING_PROGRESS = .1;
+  private static final double TURN_FOOT_SPEED_BLOCKS_PER_SECOND = 1.2;
+  private static final double GROUND_ACCELERATION = 1.5, GROUND_YAW_ACCELERATION = .6;
+  private static final double APPROACH_SECONDS = .8;
+  private Vec3 progressPosition, progressForward, previousVelocity = Vec3.ZERO;
+  private long progressTick, commandTick = Long.MIN_VALUE;
+  private double previousYaw;
+  private int progressTarget = -1;
   private static final double ARRIVAL_RADIUS = .55;
   private static final double ARRIVAL_LOOKAHEAD_SECONDS = .15;
   private static final double STRAFE_SPEED_FACTOR = .65;
@@ -78,6 +99,11 @@ public final class WaypointNavigator {
     mode = null;
     terrainFactor = 1;
     terrainTick = Long.MIN_VALUE;
+    progressPosition = progressForward = null;
+    previousVelocity = Vec3.ZERO;
+    previousYaw = 0;
+    commandTick = Long.MIN_VALUE;
+    progressTarget = -1;
     revision++;
   }
 
@@ -112,9 +138,32 @@ public final class WaypointNavigator {
             return kind == SubLevelPathfinder.Mode.GROUND && SubLevelLocomotion.get(body).hasLegs();
           }
 
+          public double maxTurnRate() {
+            if (kind == SubLevelPathfinder.Mode.WATER) {
+              return .8;
+            }
+            var bounds = SubLevelLocomotion.bounds(body);
+            double radius = Math.max(bounds.getXsize(), bounds.getZsize()) / 2;
+            return Math.min(
+                org.azkerash.createbioships.core.locomotion.LegTurnDrive.MAX_YAW_RATE,
+                TURN_FOOT_SPEED_BLOCKS_PER_SECOND / Math.max(1, radius));
+          }
+
+          public double acceleration() {
+            return kind == SubLevelPathfinder.Mode.GROUND
+                ? GROUND_ACCELERATION
+                : Double.POSITIVE_INFINITY;
+          }
+
+          public double yawAcceleration() {
+            return kind == SubLevelPathfinder.Mode.GROUND
+                ? GROUND_YAW_ACCELERATION
+                : Double.POSITIVE_INFINITY;
+          }
+
           public double detourDistance() {
             var bounds = SubLevelLocomotion.bounds(body);
-            return Math.clamp(Math.max(bounds.getXsize(), bounds.getZsize()) / 2, 1, 4);
+            return Math.clamp(Math.max(bounds.getXsize(), bounds.getZsize()) / 2, 1, 12);
           }
 
           public boolean move(Vec3 velocity, double yawRate) {
@@ -188,7 +237,11 @@ public final class WaypointNavigator {
       return new Result(next, true, true, false, 0, 0, revision);
     }
     var choice = steering(world, position, next, speed);
-    boolean accepted = world.move(choice.velocity(), choice.yawRate());
+    boolean stalled = stalled(world, next, choice);
+    boolean accepted = !stalled && move(world, choice.velocity(), choice.yawRate());
+    if (stalled) {
+      move(world, Vec3.ZERO, 0);
+    }
     if (!accepted && world.tick() >= nextPlan) {
       nextPlan = world.tick() + REPLAN_INTERVAL_TICKS;
       // One bounded search per retry; no per-leg or per-frame obstacle scans.
@@ -215,7 +268,7 @@ public final class WaypointNavigator {
           detourNext++;
         }
         choice = steering(world, position, next, speed);
-        accepted = world.move(choice.velocity(), choice.yawRate());
+        accepted = !stalled && move(world, choice.velocity(), choice.yawRate());
       }
       if (!accepted && world.canStrafe() && localDetours < MAX_LOCAL_DETOURS) {
         var nose = world.forward();
@@ -226,7 +279,7 @@ public final class WaypointNavigator {
         for (int side : new int[] {1, -1}) {
           var direction = right.scale(side);
           var velocity = direction.scale(speed * STRAFE_SPEED_FACTOR);
-          if (world.move(velocity, facing.yawRate())) {
+          if (move(world, velocity, facing.yawRate())) {
             detour = List.of(position.add(direction.scale(world.detourDistance())));
             detourNext = 0;
             localDetour = true;
@@ -240,6 +293,11 @@ public final class WaypointNavigator {
           }
         }
       }
+    }
+    if (stalled && accepted) {
+      progressPosition = position;
+      progressForward = world.forward();
+      progressTick = world.tick();
     }
     if (detour.isEmpty()) {
       world.publish(primary, next, kind);
@@ -261,6 +319,17 @@ public final class WaypointNavigator {
 
   private SubLevelFacing.Steering steering(
       Environment world, Vec3 position, int next, double speed) {
+    var target = detour.isEmpty() ? primary.get(next) : detour.get(detourNext);
+    double approach = Math.min(speed, distance(position, target) / APPROACH_SECONDS);
+    var desired = desiredSteering(world, position, next, approach);
+    return new SubLevelFacing.Steering(
+        desired.velocity(),
+        Math.clamp(desired.yawRate(), -world.maxTurnRate(), world.maxTurnRate()),
+        desired.error());
+  }
+
+  private SubLevelFacing.Steering desiredSteering(
+      Environment world, Vec3 position, int next, double speed) {
     if (detour.isEmpty()) {
       return SubLevelFacing.towards(
           world.forward(),
@@ -280,6 +349,53 @@ public final class WaypointNavigator {
     var lateral =
         new Vec3(translation.x, 0, translation.z).normalize().scale(speed * STRAFE_SPEED_FACTOR);
     return new SubLevelFacing.Steering(lateral, facing.yawRate(), facing.error());
+  }
+
+  /** Motor acceptance is not evidence that physics has moved the creature. */
+  private boolean stalled(Environment world, int next, SubLevelFacing.Steering choice) {
+    var position = world.position();
+    var forward = world.forward().normalize();
+    if (progressPosition == null
+        || progressTarget != next
+        || distance(progressPosition, position) >= MIN_PROGRESS_BLOCKS
+        || Math.acos(Math.clamp(progressForward.dot(forward), -1, 1)) >= MIN_HEADING_PROGRESS) {
+      progressPosition = position;
+      progressForward = forward;
+      progressTarget = next;
+      progressTick = world.tick();
+      return false;
+    }
+    return world.tick() - progressTick >= PROGRESS_TIMEOUT_TICKS
+        && (choice.velocity().lengthSqr() > .001 || Math.abs(choice.yawRate()) > .01);
+  }
+
+  /** Smooth requested motion, leaving contact impulses and body rotation to the leg controller. */
+  private boolean move(Environment world, Vec3 desired, double yaw) {
+    yaw = Math.clamp(yaw, -world.maxTurnRate(), world.maxTurnRate());
+    if (desired.lengthSqr() < 1e-8 && Math.abs(yaw) < 1e-8) {
+      previousVelocity = Vec3.ZERO;
+      previousYaw = 0;
+      commandTick = world.tick();
+      return world.move(desired, yaw);
+    }
+    double seconds =
+        commandTick == Long.MIN_VALUE
+            ? .05
+            : Math.clamp((world.tick() - commandTick) / 20d, .05, 1);
+    var delta = desired.subtract(previousVelocity);
+    double maximum = world.acceleration() * seconds;
+    var velocity =
+        delta.length() > maximum ? previousVelocity.add(delta.normalize().scale(maximum)) : desired;
+    double turn =
+        Math.clamp(
+            yaw,
+            previousYaw - world.yawAcceleration() * seconds,
+            previousYaw + world.yawAcceleration() * seconds);
+    boolean accepted = world.move(velocity, turn);
+    previousVelocity = accepted ? velocity : Vec3.ZERO;
+    previousYaw = accepted ? turn : 0;
+    commandTick = world.tick();
+    return accepted;
   }
 
   private void clearDetour() {

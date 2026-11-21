@@ -16,6 +16,8 @@ final class NavigationTerrainSnapshot {
 
   private final NavigationFootprint footprint;
   private final Map<Query, Boolean> queries = new HashMap<>();
+  private final Map<net.minecraft.world.phys.shapes.VoxelShape, List<AABB>> shapeTemplates =
+      new IdentityHashMap<>();
   private final Long2ObjectOpenHashMap<List<AABB>> rows = new Long2ObjectOpenHashMap<>();
 
   NavigationTerrainSnapshot(ServerLevel level, SubLevelObstacles.Snapshot constructs) {
@@ -88,7 +90,18 @@ final class NavigationTerrainSnapshot {
     for (int x = chunkX << 4; x < (chunkX + 1) << 4; x++) {
       for (int z = chunkZ << 4; z < (chunkZ + 1) << 4; z++) {
         cell.set(x, y, z);
-        for (var shape : level.getBlockState(cell).getCollisionShape(level, cell).toAabbs()) {
+        var state = level.getBlockState(cell);
+        if (state.isAir()) {
+          continue;
+        }
+        var collision = state.getCollisionShape(level, cell);
+        if (collision.isEmpty()) {
+          continue;
+        }
+        // Most terrain blocks share a small set of immutable shape instances.
+        // Extract each template once, even across thousands of translated cells.
+        var template = shapeTemplates.computeIfAbsent(collision, shape -> shape.toAabbs());
+        for (var shape : template) {
           result.add(shape.move(x, y, z));
         }
       }

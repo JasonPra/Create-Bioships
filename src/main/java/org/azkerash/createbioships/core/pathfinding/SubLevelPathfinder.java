@@ -519,7 +519,15 @@ public final class SubLevelPathfinder {
       return false;
     }
     for (var p : BlockPos.betweenClosed(lo, hi)) {
-      for (var shape : level.getBlockState(p).getCollisionShape(level, p).toAabbs()) {
+      var state = level.getBlockState(p);
+      if (state.isAir()) {
+        continue;
+      }
+      var collision = state.getCollisionShape(level, p);
+      if (collision.isEmpty()) {
+        continue;
+      }
+      for (var shape : collision.toAabbs()) {
         if (shape.maxX + p.getX() > box.minX
             && shape.minX + p.getX() < box.maxX
             && shape.maxY + p.getY() > box.minY

@@ -80,7 +80,7 @@ public final class CompactLimbController {
     return false;
   }
 
-  private static final class Context extends WalkerCoreBlockEntity {
+  private final class Context extends WalkerCoreBlockEntity {
     private final ServerSubLevel owner;
 
     Context(ServerSubLevel body) {
@@ -113,7 +113,7 @@ public final class CompactLimbController {
                   == org.azkerash.createbioships.core.locomotion.prototype.PrototypeLocomotion.Mode
                       .NATIVE_FAST
           ? org.azkerash.createbioships.core.locomotion.prototype.PrototypeLocomotion.COMPARISON_RPM
-          : 32;
+          : nativeGait.rpm();
     }
 
     @Override
@@ -150,6 +150,8 @@ public final class CompactLimbController {
   private final Set<BlockPos> retiredSockets = new HashSet<>();
   private boolean dirty = true;
   private int physicalContacts;
+  private org.azkerash.createbioships.core.locomotion.NativeGaitPolicy.Gait nativeGait =
+      org.azkerash.createbioships.core.locomotion.NativeGaitPolicy.WALK;
 
   public CompactLimbController(ServerSubLevel body) {
     this.body = body;
@@ -810,17 +812,26 @@ public final class CompactLimbController {
                 org.azkerash.createbioships.core.locomotion.prototype.PrototypeLocomotion.get(body)
                     == org.azkerash.createbioships.core.locomotion.prototype.PrototypeLocomotion
                         .Mode.NATIVE_FAST;
+            nativeGait =
+                org.azkerash.createbioships.core.locomotion.NativeGaitPolicy.select(
+                    org.azkerash.createbioships.core.locomotion.NativeGaitPolicy.relative(
+                        new Vec3(local.x, local.y, local.z),
+                        org.azkerash.createbioships.core.locomotion.SubLevelFacing.local(body)),
+                    r.yawRate(),
+                    physicalContacts,
+                    limbs.size());
             int keys =
                 fast
                     ? org.azkerash.createbioships.core.locomotion.prototype.PrototypeLocomotion
                             .COMPARISON_GEAR
                         << WalkerBrain.GEAR_SHIFT
-                    : 1 << WalkerBrain.GEAR_SHIFT | WalkerBrain.KEY_CRAB;
-            boolean strafe = fast && Math.abs(local.x) > .05;
+                    : nativeGait.gear() << WalkerBrain.GEAR_SHIFT;
+            boolean strafe = Math.abs(local.x) > .05 || !fast && nativeGait.strafing();
             if (strafe) {
               keys |= WalkerBrain.KEY_CRAB;
             }
-            if (fast && !strafe && r.velocity().horizontalDistance() > 1) {
+            if (fast && !strafe && r.velocity().horizontalDistance() > 1
+                || !fast && nativeGait.galloping()) {
               keys |= WalkerBrain.KEY_GALLOP;
             }
             if (local.z < -.05) {

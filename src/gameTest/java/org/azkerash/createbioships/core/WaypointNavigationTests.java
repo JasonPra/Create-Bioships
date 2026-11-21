@@ -202,4 +202,56 @@ public final class WaypointNavigationTests {
         TerrainSpeedControl.recover(1, downhill, .1) == downhill, "Slope braking was delayed");
     h.succeed();
   }
+
+  @GameTest(template = "test_empty")
+  public static void accepted_but_stationary_motion_replans_and_strafes(GameTestHelper h) {
+    var world = new World();
+    world.position = new Vec3(2, 0, 0);
+    world.planned = List.of(new Vec3(2, 0, 6));
+    var navigator = new WaypointNavigator();
+    var primary = List.of(new Vec3(2, 0, 6));
+    var initial = navigator.follow(world, primary, 0, 2, SubLevelPathfinder.Mode.GROUND);
+    h.assertTrue(initial.accepted() && world.plans == 0, "Initial free command was not accepted");
+    world.tick = 41;
+    var recovery = navigator.follow(world, primary, 0, 2, SubLevelPathfinder.Mode.GROUND);
+    h.assertTrue(
+        world.plans == 1 && recovery.detouring() && recovery.accepted(),
+        "Accepted commands hid a physical stall");
+    h.assertTrue(
+        Math.abs(world.velocity.x) > 0 && recovery.next() == 0,
+        "Stall recovery skipped the primary target or failed to sidestep");
+    h.succeed();
+  }
+
+  @GameTest(template = "test_empty")
+  public static void gait_uses_running_speed_only_with_forward_supported_motion(GameTestHelper h) {
+    var policy =
+        org.azkerash.createbioships.core.locomotion.NativeGaitPolicy.select(
+            new Vec3(0, 0, -3), 0, 8, 8);
+    h.assertTrue(policy.galloping() && policy.gear() == 3, "Forward run never selected gallop");
+    for (var front : net.minecraft.core.Direction.Plane.HORIZONTAL) {
+      var motion = Vec3.atLowerCornerOf(front.getNormal()).scale(3);
+      var relative =
+          org.azkerash.createbioships.core.locomotion.NativeGaitPolicy.relative(motion, front);
+      h.assertTrue(
+          relative.z < 0 && Math.abs(relative.x) < 1e-8,
+          "Anatomical forward was misclassified as backward/sideways");
+    }
+    h.assertTrue(
+        !org.azkerash.createbioships.core.locomotion.NativeGaitPolicy.select(
+                new Vec3(0, 0, -3), .4, 8, 8)
+            .galloping(),
+        "Sharp turn retained gallop");
+    h.assertTrue(
+        !org.azkerash.createbioships.core.locomotion.NativeGaitPolicy.select(
+                new Vec3(2, 0, -2), 0, 8, 8)
+            .galloping(),
+        "Sidestep retained gallop");
+    h.assertTrue(
+        !org.azkerash.createbioships.core.locomotion.NativeGaitPolicy.select(
+                new Vec3(0, 0, -3), 0, 2, 8)
+            .galloping(),
+        "Insufficient contacts retained gallop");
+    h.succeed();
+  }
 }
