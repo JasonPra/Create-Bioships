@@ -47,6 +47,14 @@ public final class CerebralGuideScreen extends Screen {
                       + " game log.",
                   ""));
     }
+    if (resource.equals(org.azkerash.createbioships.equipment.BioshipGuideItem.RESOURCE)
+        && mc.level != null) {
+      var complete = new ArrayList<>(chapters);
+      complete.addAll(
+          org.azkerash.createbioships.guide.CraftingGuide.chapters(
+              mc.level.getRecipeManager(), mc.level.registryAccess()));
+      chapters = List.copyOf(complete);
+    }
     mc.setScreen(new CerebralGuideScreen(chapters, title));
   }
 
@@ -102,7 +110,7 @@ public final class CerebralGuideScreen extends Screen {
 
   private final class Index extends AbstractScrollWidget {
     Index(int x, int y, int width, int height) {
-      super(x, y, width, height, Component.literal("Scripting guide chapters"));
+      super(x, y, width, height, Component.literal("Guide chapters"));
     }
 
     protected int getInnerHeight() {

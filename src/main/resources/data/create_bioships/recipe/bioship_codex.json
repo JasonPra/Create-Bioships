@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "minecraft:book"
+    },
+    {
+      "item": "minecraft:bone"
+    },
+    {
+      "item": "biomancy:packed_flesh"
+    }
+  ],
+  "result": {
+    "id": "create_bioships:bioship_codex",
+    "count": 1
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "chapters": [
+    {
+      "title": "Welcome to living contraptions",
+      "body": "Codex Vitae is the general Create Bioships handbook. A creature is a living, physical contraption built around a Living Core. Organs keep it alive; a brain and behavior card give it a task; appendages provide movement or attacks.\n\nStart small. Prove that a simple body can breathe, eat, stand and move before extending its legs or adding a large shell. Body mass, limb reach and the terrain all matter.\n\nThe Locomotion Field Guide explains sockets, joint ranges and movement troubleshooting. Codex Cerebralis documents the supported C#-style scripting language and the card IDE.",
+      "example": ""
+    },
+    {
+      "title": "How to craft",
+      "body": "The crafting chapters after this introduction are taken from the recipes loaded in your current world. They include quantities, shaped grids and ingredient alternatives, so datapack changes appear here too.\n\nIn a shaped recipe, each bracket is one crafting slot. A dot means leave it empty. The letters below the grid identify the ingredients. Keep their relative arrangement. A shapeless recipe accepts its listed ingredients in any arrangement.\n\nCraft this book from a Book, a Bone and Packed Flesh. Many components use Biomancy Packed Flesh, bones and ordinary Minecraft materials. Base-material processing belongs to the supplying mod.",
+      "example": ""
+    },
+    {
+      "title": "Your first creature",
+      "body": "Craft a Living Core and place it in open space. Player placement automatically gives the core its own moving sublevel and records its owner. Build the body by attaching blocks to that living contraption.\n\nAdd a Brain, suitable breathing organs, a Feeding Mouth and a Stomach connected by Fleshy Intestines. Add solid mounting pads before fitting four balanced Scuttler Limbs. Compact leg sockets need a sturdy body face and cannot attach directly to the Living Core.\n\nFeed and inspect the creature before installing a Wander Behavior Card in its brain. Leave room for the whole body and its extended limbs. Placing another Living Core on an existing creature separates that new core into its own body.",
+      "example": ""
+    },
+    {
+      "title": "Tools you will use",
+      "body": "The Ossified Wrench handles supported block adjustments and removal. Use it on a compact limb socket to extend the limb; sneak-use removes a removable socket or component. The Living Core cannot be picked up like an ordinary wrenchable block.\n\nThe Synaptic Calibrator edits limb setup and individual joint limits. Aim at the socket for size/rest-pose settings and at a generated joint for that joint’s articulation settings.\n\nSymbiotic Goggles show component information. The Somatic Resonator opens a wheel for facing and digestive-network overlays. These are ordinary craftable tools.",
+      "example": ""
+    },
+    {
+      "title": "Reading the creature",
+      "body": "A Vital Readout exposes the creature’s current vital information. Use it when health, hunger or oxygen is changing unexpectedly. A Nerve Panel manages permitted identities.\n\nThe Debugging Panel has Overview, Legs, Components, Navigation, Collisions and Advice tabs. It reports the loaded components and recorded navigation failures and suggests checks. Refresh after making a change. A clearance rejection identifies a failed movement check; it does not prove which single joint is trapped.\n\nInspecting or configuring another player’s creature requires the appropriate permission.",
+      "example": ""
+    },
+    {
+      "title": "Breathing and life support",
+      "body": "Use lungs for an air-breathing creature and gills for an aquatic one. A lung does not need an exposed port. Gills need water at an unobstructed intake; covering that intake can stop it working.\n\nWatch oxygen supply and demand as the body grows. More body and more organs can change its requirements. An oxygen reserve only delays the consequences of inadequate breathing.\n\nCheck whether the creature is actually in the medium its respiratory setup supports, and read the current diagnostics before adding more copies of an organ.",
+      "example": ""
+    },
+    {
+      "title": "Feeding and digestion",
+      "body": "Offer edible food to a mouth or use its storage interface. The mouth, Fleshy Intestines and Stomach form the digestive route. Food must reach digestion before it replenishes the creature; a storage slot containing food is not itself proof that the body has eaten.\n\nUse the digestive overlay to check disconnected routes. Add a Stomach and make sure the mouth has a working intestine connection to it.\n\nThe hunting behavior collects nearby meat and fish drops through a mouth and uses the same digestive system. Care for sickness and inspect the digestive state if food is not being retained.",
+      "example": ""
+    },
+    {
+      "title": "Brains and behavior cards",
+      "body": "A Brain provides programmable behavior capacity. Open it to place a behavior card. Wander requests short routes with pauses. It still requires suitable movement appendages and an active living body.\n\nA Hunting Behavior Card has a prey-type whitelist. Use the card to edit that list; the preset hunting logic is not editable source. Hunting begins when hunger is at half or below and continues until the creature has fed.\n\nBlank Behavior Cards and Cerebral Program Cards open the IDE. Save draft preserves source on that particular card. Compile & write validates and writes an executable program. Saving a draft alone does not compile it. See Codex Cerebralis for syntax, commands and limits.",
+      "example": ""
+    },
+    {
+      "title": "Hunting and weapons",
+      "body": "Choose the prey types on the Hunting Behavior Card before inserting it. A hunter needs eyes to select visible prey, an appropriate locomotion setup to pursue it, and an attacking component. Ordinary feeding mouths can bite at close range.\n\nThe Eldritch and Graveplate maws can use acid attacks and open their mouths to telegraph them. The Fangbound Maw has independently articulated fangs and can briefly hold suitably small prey. Sneak-use it with an empty hand to release a grip.\n\nA hunter can be hungry and still fail to attack if its whitelist has no suitable visible target, its path is blocked or it cannot bring a weapon into range.",
+      "example": ""
+    },
+    {
+      "title": "Eyes and visibility",
+      "body": "Land Eyes and Aquatic Eyes contribute to the creature’s sight. Mount them with support behind them and a useful outward view. Multiple eyes improve the available viewpoints; they do not each run an independent unrestricted vision scan.\n\nClear glass is transparent to sight. Stained glass consumes extra sight range. Water reduces a land eye’s effective range; an aquatic eye keeps its normal range in water. Solid obstacles still block sight.\n\nAn eye cannot guarantee a route is physically passable: the body and articulated limbs are much wider than a sight line.",
+      "example": ""
+    },
+    {
+      "title": "Limbs and swimming",
+      "body": "Scuttler Limbs use friction-based footing. Clinging Limbs use adhesive toes and a laterigrade, outward-reaching rest shape. Both retain their physical combat and terrain-collision geometry.\n\nA usable stance needs enough planted feet. One or two adhesive toes do not qualify the whole creature for assisted suspension. Balanced eight-legged climbers can transfer alternating groups on stable ground; difficult terrain requires more careful stepping.\n\nFlippers provide swimming propulsion and extend two blocks from the supporting face. A flipper alone does not enable land walking. Leave space for their rowing motion. The Locomotion Field Guide covers joint settings and mirrored rest angles in detail.",
+      "example": ""
+    },
+    {
+      "title": "Armor, damage and repair",
+      "body": "Chitin Armor and Graveplate Carapace provide armor protection. Armor does not add hit points. The location and direction of an attack can matter, especially around armored mouths and exposed organs.\n\nA giant shell is also a larger, heavier body. Armor cannot compensate for insufficient support or an unreachable stance. Keep breathing, feeding and control components functional while enclosing the body.\n\nWeapon damage and ownership-based editing are separate systems. Being unable to dismantle another player’s creature does not automatically make it immune to attacks.",
+      "example": ""
+    },
+    {
+      "title": "Ownership and building",
+      "body": "The player who places a new core becomes its owner. Use a Nerve Panel to manage the allowed identities for that creature. Permission checks protect block placement, removal and private configuration.\n\nWhen you cannot build on a body, confirm that you own it or are permitted. Use supported tools and panels on their interactive face. A panel placed in the ordinary world without a living contraption behind it cannot configure a creature.\n\nDisconnected pieces and dead remains are not a substitute for a second live core. Inspect the affected body rather than assuming that a nearby component belongs to the creature you meant to edit.",
+      "example": ""
+    },
+    {
+      "title": "Genes and special components",
+      "body": "Longevity and Efficiency Gene Serums apply their supported component traits. Use the appropriate component interaction and inspect the resulting trait information. Their recipes appear in this book’s crafting chapters.\n\nThe Throne of Azkerash, display fixtures, modular sockets, joints and feet are separate components with their own recipes. Modular limb construction requires compatible joint and segment connections; the ready-made compact limbs generate their articulated parts from a socket.\n\nGenerated compact tissue is maintained by the socket. Craft and edit the socket instead of trying to manufacture or dismantle its hidden generated segments.",
+      "example": ""
+    },
+    {
+      "title": "Furniture and storage",
+      "body": "Ossuary Tables join into larger table arrangements. Ossuary Chairs provide seating. The Ossuary Reading Stand stores a book. Cabinets, Bookcases and Chiseled Archives provide their respective storage or shelf behavior. Ossuary Beds are placed as two connected halves.\n\nOssuary Bookcases contribute enchanting power. Chiseled storage is not a replacement for the normal bookshelf arrangement around an enchanting table; leave the required clear gap.\n\nFurniture is decorative construction, not life support. Keep creature organs, movement clearance and access paths usable when furnishing a build.",
+      "example": ""
+    },
+    {
+      "title": "When a creature gets stuck",
+      "body": "First check health, oxygen, hunger, brain activity and the installed card. Then inspect the Debugging Panel’s Legs, Navigation and Collisions tabs.\n\nAllow clearance for the whole articulated span, not just the shell. Long legs can catch on terrain or another moving contraption. Check the joint ranges and rest angles before increasing speed or forcing a narrower route.\n\nThe controller can retry routes, use legged sidesteps and attempt a bounded recovery step for a trapped limb. It cannot safely ignore terrain, exceed your joint limits or make every cliff passable. Test changes on a short route in the environment where you intend to use the creature.",
+      "example": ""
+    }
+  ]
+}
