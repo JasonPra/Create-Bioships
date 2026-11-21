@@ -46,6 +46,8 @@ public final class FeedingTrust {
     }
   }
 
+  // Borrowed from the block entity; Minecraft owns and closes the server level.
+  @SuppressWarnings("resource")
   private static ServerSubLevel recipient(BlockEntity entity) {
     if (entity == null
         || !(entity.getLevel() instanceof net.minecraft.server.level.ServerLevel level)) {

@@ -281,11 +281,17 @@ public final class FlipperController {
       }
       var impulse = new Vector3d(forward.x, 0, forward.z).mul(thrust * dt);
       var lever = new Vector3d(fin.offset().x, fin.offset().y, fin.offset().z);
-      handle.applyLinearAndAngularImpulse(impulse, lever.cross(impulse, new Vector3d()));
+      applyWorldImpulse(handle, impulse, lever.cross(impulse, new Vector3d()));
     }
     // Fluid drag dissipates momentum gradually; it never assigns a fixed turning speed.
-    handle.applyLinearAndAngularImpulse(
+    applyWorldImpulse(
+        handle,
         new Vector3d(velocity.x, 0, velocity.z).mul(-mass.getMass() * LINEAR_WATER_DRAG * dt),
         new Vector3d(0, -inertia * YAW_WATER_DRAG * spin.y * dt, 0));
+  }
+
+  private void applyWorldImpulse(RigidBodyHandle handle, Vector3d linear, Vector3d angular) {
+    org.azkerash.createbioships.core.physics.SubLevelImpulse.applyWorld(
+        body, handle, linear, angular);
   }
 }

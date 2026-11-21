@@ -57,6 +57,7 @@ final class LegTurnPhysics {
       ServerSubLevel body, RigidBodyHandle handle, Vec3 impulse, Vec3 point) {
     var force = new Vector3d(impulse.x, impulse.y, impulse.z);
     var lever = new Vector3d(point.x, point.y, point.z).sub(body.logicalPose().position());
-    handle.applyLinearAndAngularImpulse(force, lever.cross(force, new Vector3d()));
+    org.azkerash.createbioships.core.physics.SubLevelImpulse.applyWorld(
+        body, handle, force, lever.cross(force, new Vector3d()));
   }
 }
