@@ -18,6 +18,7 @@ import org.azkerash.createbioships.CreateBioships;
 public final class DevelopmentLoadout {
   public static final int NAVIGATOR_SLOT = 8, NAVIGATOR_MENU_SLOT = 44;
   public static final int TOOLKIT_SLOT = 7, TOOLKIT_MENU_SLOT = 43;
+  private static final int TOOLKIT_CHECK_INTERVAL_TICKS = 20;
   private static final String GIVEN = "create_bioships:development_kit";
 
   private DevelopmentLoadout() {}
@@ -38,6 +39,21 @@ public final class DevelopmentLoadout {
                         CreateBioships.MODID, "core_development")));
   }
 
+  /** Ordinary saves grant debugging only to development-runtime hosts/operators. */
+  public static boolean toolkitActive(Player player) {
+    if (active(player)) {
+      return true;
+    }
+    if (player == null || net.neoforged.fml.loading.FMLEnvironment.production) {
+      return false;
+    }
+    // The client may open its local UI; every debug packet is authorized again
+    // against the actual server player, including on dedicated development servers.
+    return !(player instanceof ServerPlayer server)
+        || server.getServer().getPlayerList().isOp(server.getGameProfile())
+        || server.getServer().isSingleplayerOwner(server.getGameProfile());
+  }
+
   public static boolean navigator(ItemStack stack) {
     return stack.is(DevelopmentNavigatorItem.ITEM.get());
   }
@@ -55,11 +71,13 @@ public final class DevelopmentLoadout {
   }
 
   public static boolean protectedItem(Player player, ItemStack stack) {
-    return active(player) && managed(stack);
+    return active(player) && navigator(stack)
+        || toolkitActive(player) && stack.is(DevelopmentToolkitItem.ITEM.get());
   }
 
   public static void prepare(ServerPlayer player) {
     if (!active(player)) {
+      ensureNavigator(player);
       return;
     }
     var persistent = player.getPersistentData();
@@ -90,6 +108,10 @@ public final class DevelopmentLoadout {
 
   public static void ensureNavigator(ServerPlayer player) {
     var inventory = player.getInventory();
+    if (!active(player) && toolkitActive(player)) {
+      ensureOrdinaryWorldToolkit(player);
+      return;
+    }
     if (!active(player)) {
       for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
         if (inventory.getItem(slot).is(DevelopmentToolkitItem.ITEM.get())) {
@@ -131,6 +153,18 @@ public final class DevelopmentLoadout {
       }
     }
     if (changed) {
+      inventory.setChanged();
+      player.inventoryMenu.broadcastChanges();
+    }
+  }
+
+  private static void ensureOrdinaryWorldToolkit(ServerPlayer player) {
+    var inventory = player.getInventory();
+    // Ordinary worlds have no reserved fixture slots or navigator. Preserve the
+    // player's arrangement and retry later if every inventory slot is occupied.
+    if (!inventory.contains(DevelopmentToolkitItem.ITEM.get().getDefaultInstance())
+        && inventory.getFreeSlot() >= 0) {
+      inventory.add(DevelopmentToolkitItem.ITEM.get().getDefaultInstance());
       inventory.setChanged();
       player.inventoryMenu.broadcastChanges();
     }
@@ -183,7 +217,8 @@ public final class DevelopmentLoadout {
 
   @SubscribeEvent
   public static void tick(net.neoforged.neoforge.event.tick.PlayerTickEvent.Post event) {
-    if (event.getEntity() instanceof ServerPlayer player) {
+    if (event.getEntity() instanceof ServerPlayer player
+        && (active(player) || player.tickCount % TOOLKIT_CHECK_INTERVAL_TICKS == 0)) {
       ensureNavigator(player);
     }
   }

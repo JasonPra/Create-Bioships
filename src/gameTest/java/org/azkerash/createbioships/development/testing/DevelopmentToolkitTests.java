@@ -71,6 +71,23 @@ public final class DevelopmentToolkitTests {
     h.assertTrue(
         !player.getInventory().contains(DevelopmentToolkitItem.ITEM.get().getDefaultInstance()),
         "Toolkit remained obtainable in normal world");
+    level.getServer().getPlayerList().op(player.getGameProfile());
+    try {
+      DevelopmentLoadout.prepare(player);
+      h.assertTrue(
+          DevelopmentToolkitItem.allowed(player),
+          "Developer operator did not receive a usable toolkit");
+      h.assertTrue(
+          !player.getInventory().contains(DevelopmentNavigatorItem.ITEM.get().getDefaultInstance()),
+          "Normal world received the fixture navigator");
+      int count = player.getInventory().countItem(DevelopmentToolkitItem.ITEM.get());
+      DevelopmentLoadout.ensureNavigator(player);
+      h.assertTrue(
+          player.getInventory().countItem(DevelopmentToolkitItem.ITEM.get()) == count,
+          "Repeated checks duplicated the toolkit");
+    } finally {
+      level.getServer().getPlayerList().deop(player.getGameProfile());
+    }
     h.succeed();
   }
 }

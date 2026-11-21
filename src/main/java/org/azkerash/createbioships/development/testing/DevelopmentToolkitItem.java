@@ -32,7 +32,7 @@ public final class DevelopmentToolkitItem extends Item {
   }
 
   public static boolean allowed(Player p) {
-    return DevelopmentLoadout.active(p)
+    return DevelopmentLoadout.toolkitActive(p)
         && p.getInventory().contains(ITEM.get().getDefaultInstance());
   }
 
