@@ -23,9 +23,18 @@ import org.azkerash.createbioships.development.testing.DevelopmentLifeSupport;
 public final class ArachnidMouthTests {
   private record Rig(ServerSubLevel body, MouthBlockEntity mouth) {}
 
+  private static int fixtureIndex;
+
   private static Rig rig(GameTestHelper h) {
     var level = h.getLevel();
-    var p = h.absolutePos(new BlockPos(3, 4, 3));
+    // Physical rigs need real loaded terrain, independent of the GameTest
+    // structure/plot origin chosen for the rest of the suite.
+    var p = new BlockPos(42_000 + fixtureIndex++ * 64, 84, 128);
+    for (int x = (p.getX() - 16) >> 4; x <= (p.getX() + 16) >> 4; x++) {
+      for (int z = (p.getZ() - 16) >> 4; z <= (p.getZ() + 16) >> 4; z++) {
+        level.setChunkForced(x, z, true);
+      }
+    }
     for (int x = -3; x <= 10; x++) {
       for (int z = -3; z <= 3; z++) {
         level.setBlock(p.offset(x, -2, z), Blocks.BEDROCK.defaultBlockState(), Block.UPDATE_ALL);
@@ -65,6 +74,36 @@ public final class ArachnidMouthTests {
             .add(0, -cow.getBbHeight() / 2, 0));
     h.getLevel().addFreshEntity(cow);
     return cow;
+  }
+
+  private static String diagnostics(Rig rig, LivingEntity prey) {
+    var center = rig.body.logicalPose().transformPosition(Vec3.atCenterOf(rig.mouth.getBlockPos()));
+    var facing = rig.body.logicalPose().orientation().transform(new org.joml.Vector3d(1, 0, 0));
+    var origin = center.add(facing.x * .65, facing.y * .65, facing.z * .65);
+    var hit =
+        rig.body
+            .getLevel()
+            .clip(
+                new net.minecraft.world.level.ClipContext(
+                    origin,
+                    prey.getBoundingBox().getCenter(),
+                    net.minecraft.world.level.ClipContext.Block.COLLIDER,
+                    net.minecraft.world.level.ClipContext.Fluid.NONE,
+                    prey));
+    return "active="
+        + rig.mouth.active()
+        + " brain="
+        + BrainBehaviors.active(rig.body)
+        + " pose="
+        + rig.body.logicalPose().orientation()
+        + " prey="
+        + prey.position()
+        + " mouth="
+        + center
+        + " hit="
+        + hit.getType()
+        + " at="
+        + hit.getLocation();
   }
 
   @GameTest(template = "test_empty", batch = "arachnid_grab", timeoutTicks = 120)
@@ -107,6 +146,10 @@ public final class ArachnidMouthTests {
                       h.assertTrue(
                           !rig.mouth.tryGrabPrey(cow), "Grab cooldown or range was bypassed");
                       cow.discard();
+                      dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(h.getLevel())
+                          .removeSubLevel(
+                              rig.body,
+                              dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason.REMOVED);
                       h.succeed();
                     });
               });
@@ -122,7 +165,7 @@ public final class ArachnidMouthTests {
           var cow = prey(h, rig);
           SubLevelData.hunger(rig.body, SubLevelData.maximumHunger(rig.body) / 2);
           BrainBehaviors.advance(rig.body);
-          h.assertTrue(rig.mouth.tryGrabPrey(cow), "Grip setup failed");
+          h.assertTrue(rig.mouth.tryGrabPrey(cow), "Grip setup failed: " + diagnostics(rig, cow));
           h.runAfterDelay(
               ArachnidMandibles.WINDUP_TICKS + 2,
               () -> {
@@ -145,6 +188,10 @@ public final class ArachnidMouthTests {
                       h.assertTrue(
                           !rig.mouth.isHandlingPrey(), "Destroyed mouth retained its victim");
                       cow.discard();
+                      dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(h.getLevel())
+                          .removeSubLevel(
+                              rig.body,
+                              dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason.REMOVED);
                       h.succeed();
                     });
               });
@@ -166,7 +213,8 @@ public final class ArachnidMouthTests {
           cow.setHealth(cow.getMaxHealth());
           SubLevelData.hunger(rig.body, SubLevelData.maximumHunger(rig.body) / 2);
           BrainBehaviors.advance(rig.body);
-          h.assertTrue(rig.mouth.tryGrabPrey(cow), "Timed grip did not start");
+          h.assertTrue(
+              rig.mouth.tryGrabPrey(cow), "Timed grip did not start: " + diagnostics(rig, cow));
           h.runAfterDelay(
               ArachnidMandibles.WINDUP_TICKS + ArachnidMandibles.HOLD_TICKS + 2,
               () -> {
@@ -211,6 +259,12 @@ public final class ArachnidMouthTests {
                             h.assertTrue(
                                 !rig.mouth.isHandlingPrey(), "Removed mouth kept an active grab");
                             cow.discard();
+                            dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(
+                                    h.getLevel())
+                                .removeSubLevel(
+                                    rig.body,
+                                    dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason
+                                        .REMOVED);
                             h.succeed();
                           });
                     });

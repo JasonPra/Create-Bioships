@@ -43,12 +43,39 @@ public final class ArachnidBodyMotor {
       double heightError,
       int anchors,
       double dt) {
+    return calculate(
+        velocity,
+        spin,
+        up,
+        normal,
+        requested,
+        supportVelocity,
+        yawRate,
+        heightError,
+        anchors,
+        dt,
+        normal);
+  }
+
+  /** Surface travel can change planes before all stance normals agree at an edge. */
+  public static PrototypeBodyMotor.Delta calculate(
+      Vec3 velocity,
+      Vec3 spin,
+      Vec3 up,
+      Vec3 normal,
+      Vec3 requested,
+      Vec3 supportVelocity,
+      double yawRate,
+      double heightError,
+      int anchors,
+      double dt,
+      Vec3 driveNormal) {
     if (anchors < MIN_ANCHORS || !Double.isFinite(heightError) || !(dt > 0 && dt <= .1)) {
       return new PrototypeBodyMotor.Delta(Vec3.ZERO, Vec3.ZERO);
     }
     normal = normal.normalize();
     var relative = velocity.subtract(supportVelocity);
-    var drive = tangent(requested.subtract(relative), normal);
+    var drive = tangent(requested.subtract(relative), driveNormal.normalize());
     drive = limit(drive, TANGENT_ACCELERATION * dt);
     double target = Math.clamp(heightError * HEIGHT_GAIN, -MAX_NORMAL_SPEED, MAX_NORMAL_SPEED);
     double pull =

@@ -216,19 +216,21 @@ public final class CreatureDiagnostics {
                   + " mouth/weapon, visible prey and a usable route are also required.",
           types.isEmpty() ? 2 : 0);
     }
+    boolean unbalancedAdhesion =
+        flags.hasWallClimbers() && !SubLevelLegs.hasBalancedAdhesiveSupport(body);
     add(
         rows,
         "Legs",
         "Physical support",
-        "Compact ground contacts: "
+        "Planted compact feet: "
             + SubLevelLegs.contacts(body)
             + "; segment bodies: "
             + SubLevelLegs.segments(body).size(),
-        flags.hasLegs() && SubLevelLegs.contacts(body) < 3
-            ? "For arachnid adhesion, retain at least three real supporting toes. Check reach and"
-                + " solid support; water does not anchor a toe."
+        unbalancedAdhesion
+            ? "Adhesive support is unbalanced. Spread planted feet around the center of mass;"
+                + " several toes on one side cannot hold the body. Check reach and solid support."
             : "",
-        flags.hasLegs() && SubLevelLegs.contacts(body) == 0 ? 1 : 0);
+        unbalancedAdhesion || flags.hasLegs() && SubLevelLegs.contacts(body) == 0 ? 1 : 0);
     var components = new TreeMap<String, Integer>();
     int sockets = 0, shownLegs = 0;
     for (var member : SubLevelCreatureParts.members(body)) {

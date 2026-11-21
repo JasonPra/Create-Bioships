@@ -21,6 +21,8 @@ import org.azkerash.createbioships.development.testing.DevelopmentLifeSupport;
 @GameTestHolder("create_bioships")
 @PrefixGameTestTemplate(false)
 public final class MawAcidAttackTests {
+  private static int fixtureIndex;
+
   private record Rig(
       ServerSubLevel body, MouthBlockEntity maw, StomachBlockEntity stomach, UUID owner) {}
 
@@ -30,7 +32,14 @@ public final class MawAcidAttackTests {
 
   private static Rig rig(GameTestHelper h, MouthBlock variant) {
     var level = h.getLevel();
-    var p = h.absolutePos(new BlockPos(2, 4, 2));
+    // Match other physical integration fixtures: stable world coordinates and
+    // loaded terrain, with space between independently scheduled attack checks.
+    var p = new BlockPos(44_000 + fixtureIndex++ * 64, 84, 128);
+    for (int x = (p.getX() - 16) >> 4; x <= (p.getX() + 32) >> 4; x++) {
+      for (int z = (p.getZ() - 16) >> 4; z <= (p.getZ() + 16) >> 4; z++) {
+        level.setChunkForced(x, z, true);
+      }
+    }
     for (int x = -1; x <= 16; x++) {
       for (int z = -2; z <= 2; z++) {
         level.setBlock(p.offset(x, -2, z), Blocks.BEDROCK.defaultBlockState(), Block.UPDATE_ALL);
@@ -137,6 +146,10 @@ public final class MawAcidAttackTests {
                           cow.getHealth() >= cow.getMaxHealth() - 5,
                           "Droplets multiplied impact damage");
                       cow.discard();
+                      dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(h.getLevel())
+                          .removeSubLevel(
+                              rig.body,
+                              dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason.REMOVED);
                       h.succeed();
                     });
               });
@@ -164,6 +177,10 @@ public final class MawAcidAttackTests {
                 h.assertTrue(
                     !rig.maw.getBlockState().getValue(MouthBlock.SPITTING),
                     "Cancelled attack left mouth open");
+                dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(h.getLevel())
+                    .removeSubLevel(
+                        rig.body,
+                        dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason.REMOVED);
                 h.succeed();
               });
         });

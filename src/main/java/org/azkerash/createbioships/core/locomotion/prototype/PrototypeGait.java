@@ -15,7 +15,31 @@ public final class PrototypeGait {
       double thigh,
       double shin,
       int group,
-      LegMotionProfile profile) {
+      LegMotionProfile profile,
+      double reach) {
+    public Leg(
+        BlockPos socket,
+        Vec3 hip,
+        Vec3 outward,
+        double height,
+        double coxa,
+        double thigh,
+        double shin,
+        int group,
+        LegMotionProfile profile) {
+      this(
+          socket,
+          hip,
+          outward,
+          height,
+          coxa,
+          thigh,
+          shin,
+          group,
+          profile,
+          (coxa + thigh + shin) * .5);
+    }
+
     public Leg(
         BlockPos socket,
         Vec3 hip,
@@ -81,6 +105,8 @@ public final class PrototypeGait {
   private static final int TETRAPOD_LEGS = 8, TETRAPOD_SUPPORTS = 4;
   private static final double TETRAPOD_MAX_GRADE = .25, TETRAPOD_MIN_UP = .9;
   private static final double TETRAPOD_MAX_YAW_RATE = .15;
+  private static final double CLIMB_STEP_LOOKAHEAD_SECONDS = .4, CLIMB_STEP_LEAD_BLOCKS = .5;
+  private static final double CLIMB_FRONT_PRIORITY = 1.2;
   private static final int RECOVERY_STEP_TICKS = 12;
   private static final int CONTACT_RECHECK_TICKS = 10;
   private static final int RETRY_TICKS = 5;
@@ -115,6 +141,14 @@ public final class PrototypeGait {
   private double requestedYaw;
   private static final double TURN_FOOT_LEAD_SECONDS = .4;
   private PrototypeStance.Surface surface = PrototypeStance.LEVEL;
+  private boolean supportReady;
+  private int unsupportedTicks;
+  private Vec3 weightShift;
+  private static final double WEIGHT_SHIFT_SPEED = 1.5, WEIGHT_SHIFT_MARGIN = .04;
+  private static final int BALANCE_SEARCH_STEPS = 8;
+  private static final double WEIGHT_SHIFT_GAIN = 4, WALL_MAX_UP = .7, WALL_APPROACH_DOT = -.1;
+  private static final int SUPPORT_TRANSFER_TICKS = 6;
+  private static final double SUPPORT_LOOKAHEAD_SECONDS = .2;
 
   /** An edited socket must plant relative to its new rest angle, not retain a cached old toe. */
   public void resetLeg(BlockPos socket) {
@@ -124,6 +158,9 @@ public final class PrototypeGait {
   public void clear() {
     feet.clear();
     surface = PrototypeStance.LEVEL;
+    supportReady = false;
+    unsupportedTicks = 0;
+    weightShift = null;
   }
 
   public void update(List<Leg> legs, Vec3 velocity, long tick, Terrain terrain) {
@@ -260,6 +297,10 @@ public final class PrototypeGait {
     } else if (planted.size() < 2) {
       surface = PrototypeStance.LEVEL;
     }
+    weightShift = null;
+    var massCenter = terrain.massCenter();
+    supportReady = supportsBody(legs, terrain, massCenter == null ? center : massCenter);
+    unsupportedTicks = supportReady ? 0 : unsupportedTicks + 1;
     boolean tetrapod = stableTetrapod(legs, terrain);
     boolean careful =
         (legs.stream().anyMatch(PrototypeGait::anchored) && !tetrapod
@@ -302,9 +343,9 @@ public final class PrototypeGait {
               .filter(foot -> foot.planted != null)
               .map(foot -> foot.point)
               .toList();
-      var massCenter = terrain.massCenter();
+      var supportedCenter = terrain.massCenter();
       if (!org.azkerash.createbioships.core.locomotion.SupportPolygon.containsProjection(
-          massCenter == null ? center : massCenter, supportPoints)) {
+          supportedCenter == null ? center : supportedCenter, supportPoints)) {
         carefulStep(legs, velocity, speed, tick, terrain, activeGroup);
         return;
       }
@@ -332,8 +373,9 @@ public final class PrototypeGait {
     if (activeGroup >= 0 || contacts() < Math.min(3, legs.size())) {
       return;
     }
-    Leg chosen = null;
-    double best = 1;
+    Leg chosen = null, pending = null;
+    double best = 1, pendingScore = 1;
+    var massCenter = terrain.massCenter();
     for (var leg : legs) {
       var foot = feet.get(leg.socket);
       if (foot.planted == null || tick < foot.nextStep || terrain.mobility(leg) <= 0) {
@@ -345,14 +387,51 @@ public final class PrototypeGait {
         threshold *= rear ? REAR_PLANT_THRESHOLD_FACTOR : FRONT_REACH_THRESHOLD_FACTOR;
       }
       double score = strideError(leg, foot, velocity, terrain) / threshold;
-      if (score > best) {
+      if (anchored(leg)
+          && planeUp.y < TETRAPOD_MIN_UP
+          && leg.hip.subtract(center).dot(velocity) > 0) {
+        score *= CLIMB_FRONT_PRIORITY;
+      }
+      if (anchored(leg) && massCenter != null && !balancedWithout(legs, leg, terrain, massCenter)) {
+        if (score > pendingScore) {
+          pending = leg;
+          pendingScore = score;
+        }
+      } else if (score > best) {
         chosen = leg;
         best = score;
       }
     }
-    if (chosen != null && contacts() - 1 >= Math.min(3, legs.size() - 1)) {
+    if (chosen != null
+        && contacts() - 1
+            >= (anchored(chosen) ? requiredContacts(legs) : Math.min(3, legs.size() - 1))) {
       step(chosen, velocity, speed, tick, terrain);
+    } else if (pending != null && supportReady && massCenter != null) {
+      var remaining = plantedPositions(legs, terrain, pending);
+      if (remaining.size() >= ArachnidBodyMotor.MIN_ANCHORS) {
+        var centre = remaining.stream().reduce(Vec3.ZERO, Vec3::add).scale(1d / remaining.size());
+        var normal = anchorNormal(legs, terrain);
+        double outside = 0, inside = 1;
+        for (int search = 0; search < BALANCE_SEARCH_STEPS; search++) {
+          double fraction = (outside + inside) / 2;
+          if (org.azkerash.createbioships.core.locomotion.SupportPolygon.containsProjection(
+              massCenter.lerp(centre, fraction), remaining, normal)) {
+            inside = fraction;
+          } else {
+            outside = fraction;
+          }
+        }
+        var shift = ArachnidBodyMotor.tangent(centre.subtract(massCenter), normal);
+        if (shift.lengthSqr() > 1e-8) {
+          weightShift = shift.scale(inside).add(shift.normalize().scale(WEIGHT_SHIFT_MARGIN));
+        }
+      }
     }
+  }
+
+  private boolean balancedWithout(List<Leg> legs, Leg moving, Terrain terrain, Vec3 massCenter) {
+    return org.azkerash.createbioships.core.locomotion.SupportPolygon.containsProjection(
+        massCenter, plantedPositions(legs, terrain, moving), anchorNormal(legs, terrain));
   }
 
   private boolean stableTetrapod(List<Leg> legs, Terrain terrain) {
@@ -381,7 +460,11 @@ public final class PrototypeGait {
   }
 
   private double strideError(Leg leg, Foot foot, Vec3 velocity, Terrain terrain) {
-    var difference = foot.point.subtract(ideal(leg, velocity, 0));
+    // Start a leading step before the body moves past the remaining support
+    // triangle. Waiting for large hip drift can deadlock a four-legged climber.
+    double lookahead =
+        anchored(leg) && planeUp.y < TETRAPOD_MIN_UP ? CLIMB_STEP_LOOKAHEAD_SECONDS : 0;
+    var difference = foot.point.subtract(ideal(leg, velocity, lookahead));
     // During an edge transfer one toe may be on a wall while the others remain on the floor.
     // Distance into that wall is body clearance, not a reason to immediately lift the new grip.
     return anchored(leg)
@@ -403,6 +486,9 @@ public final class PrototypeGait {
         Math.min(
             STRIDE_LEAD_FACTOR * leg.height,
             speed * (duration / (double) TICKS_PER_SECOND) * STRIDE_LEAD_FACTOR);
+    if (anchored(leg) && planeUp.y < TETRAPOD_MIN_UP && speed > STILL_SPEED) {
+      lead = Math.min(STRIDE_LEAD_FACTOR * leg.height, Math.max(lead, CLIMB_STEP_LEAD_BLOCKS));
+    }
     probes++;
     var destination =
         terrain.probe(
@@ -442,7 +528,7 @@ public final class PrototypeGait {
   }
 
   private Vec3 ideal(Leg leg, Vec3 velocity, double leadSeconds) {
-    double spread = (leg.coxa + leg.thigh + leg.shin) * .5;
+    double spread = leg.reach;
     var side = planar(leg.outward).normalize();
     var footprint = leg.hip.add(side.scale(spread)).add(planar(velocity).scale(leadSeconds));
     var offset = footprint.subtract(center);
@@ -475,6 +561,14 @@ public final class PrototypeGait {
 
   public List<Vec3> pose(Leg leg, double tick, Terrain terrain) {
     var foot = feet.get(leg.socket);
+    if (anchored(leg)
+        && !supportReady
+        && unsupportedTicks > SUPPORT_TRANSFER_TICKS
+        && (foot == null || foot.destination == null)) {
+      // Inadequate support must not pin kinematically posed bones to world-space
+      // toes while the unsupported hull falls under Sable's gravity.
+      return terrain.solve(leg, ideal(leg, Vec3.ZERO, 0).subtract(planeUp.scale(leg.height)));
+    }
     var target =
         foot == null || foot.point == null
             ? ideal(leg, Vec3.ZERO, 0).subtract(planeUp.scale(leg.height))
@@ -550,6 +644,43 @@ public final class PrototypeGait {
       }
     }
     return normal.lengthSqr() > 1e-8 ? normal.normalize() : planeUp;
+  }
+
+  /**
+   * Use the acquired obstacle face for travel while the body is still transferring off the floor.
+   */
+  public Vec3 movementNormal(List<Leg> legs, Terrain terrain, Vec3 intent) {
+    var faces = Vec3.ZERO;
+    for (var leg : legs) {
+      var foot = feet.get(leg.socket);
+      if (anchored(leg) && foot != null && foot.planted != null) {
+        var normal = terrain.normal(foot.planted);
+        if (normal.y < WALL_MAX_UP && normal.dot(intent) < WALL_APPROACH_DOT) {
+          faces = faces.add(normal);
+        }
+      }
+    }
+    return faces.lengthSqr() > 1e-8 ? faces.normalize() : anchorNormal(legs, terrain);
+  }
+
+  /** Contact-plane point for the acquired face; moving supports are resolved in world space. */
+  public Vec3 surfacePoint(List<Leg> legs, Terrain terrain, Vec3 normal) {
+    var sum = Vec3.ZERO;
+    int count = 0;
+    for (var leg : legs) {
+      var foot = feet.get(leg.socket);
+      if (anchored(leg)
+          && foot != null
+          && foot.planted != null
+          && terrain.normal(foot.planted).dot(normal) > SAME_SURFACE_NORMAL_DOT) {
+        var point = terrain.position(foot.planted);
+        if (point != null) {
+          sum = sum.add(point);
+          count++;
+        }
+      }
+    }
+    return count > 0 ? sum.scale(1d / count) : null;
   }
 
   public double anchorHeightError(List<Leg> legs, Vec3 normal) {
@@ -637,10 +768,60 @@ public final class PrototypeGait {
   }
 
   public int requiredContacts(List<Leg> legs) {
+    if (legs.stream().anyMatch(PrototypeGait::anchored)) {
+      // Three is the minimum non-collinear support polygon, not a sufficient
+      // support condition. supportsBody separately checks actual placement.
+      return ArachnidBodyMotor.MIN_ANCHORS;
+    }
     return Math.abs(surface.grade()) > PrototypeStance.ADAPTATION_GRADE
             && legs.stream().anyMatch(PrototypeStance::adapts)
         ? Math.max(Math.min(3, legs.size()), legs.size() / 2)
         : Math.max(2, legs.size() / 2);
+  }
+
+  private List<Vec3> plantedPositions(List<Leg> legs, Terrain terrain, Leg excluded) {
+    var contacts = new ArrayList<Vec3>();
+    for (var leg : legs) {
+      var foot = feet.get(leg.socket);
+      if ((excluded == null || !leg.socket.equals(excluded.socket))
+          && foot != null
+          && foot.planted != null) {
+        var contact = terrain.position(foot.planted);
+        if (contact != null) {
+          contacts.add(contact);
+        }
+      }
+    }
+    return contacts;
+  }
+
+  public boolean supportsBody(List<Leg> legs, Terrain terrain, Vec3 massCenter) {
+    var normal =
+        legs.stream().anyMatch(PrototypeGait::anchored)
+            ? anchorNormal(legs, terrain)
+            : new Vec3(0, 1, 0);
+    return org.azkerash.createbioships.core.locomotion.SupportPolygon.containsProjection(
+        massCenter, plantedPositions(legs, terrain, null), normal);
+  }
+
+  /** Wait for the swinging foot when advancing would move the load outside the planted feet. */
+  public Vec3 supportedMotion(List<Leg> legs, Terrain terrain, Vec3 requested) {
+    if (weightShift != null) {
+      // Transfer only as far as the next support boundary, rather than swaying
+      // all the way to the other feet's centroid on every step.
+      return weightShift
+          .normalize()
+          .scale(Math.min(WEIGHT_SHIFT_SPEED, weightShift.length() * WEIGHT_SHIFT_GAIN));
+    }
+    var massCenter = terrain.massCenter();
+    boolean swinging = feet.values().stream().anyMatch(foot -> foot.destination != null);
+    if (massCenter != null
+        && swinging
+        && !supportsBody(
+            legs, terrain, massCenter.add(requested.scale(SUPPORT_LOOKAHEAD_SECONDS)))) {
+      return Vec3.ZERO;
+    }
+    return requested;
   }
 
   public long getProbeCount() {

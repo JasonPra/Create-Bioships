@@ -463,7 +463,26 @@ public final class ArachnidLegTests {
     var up = body.logicalPose().orientation().transform(new Vector3d(0, 1, 0));
     var rotation = new org.joml.Quaterniond().rotationTo(up, new Vector3d(0, -1, 0));
     int ceilingY = base.getY() + 24;
-    var shift = new Vector3d(0, ceilingY - 2.7 - centre.y, 0);
+    // Place the neutral toes on the ceiling using the rig's actual anatomy,
+    // rather than the old leg model's fixed body clearance.
+    double standOff =
+        SubLevelLegs.poses(body).stream()
+            .mapToDouble(
+                pose -> {
+                  var state = level.getBlockState(pose.cell());
+                  var foot =
+                      org.azkerash.createbioships.compat.letitwalk.CompactLegGeometry.restPoints(
+                              pose.cell(),
+                              state.getValue(BlockStateProperties.HORIZONTAL_FACING),
+                              state.getValue(CompactLegSocketBlock.HEIGHT),
+                              0,
+                              true)
+                          .getLast();
+                  return body.getPlot().getCenterBlock().getY() + .5 - foot.y;
+                })
+            .average()
+            .orElseThrow();
+    var shift = new Vector3d(0, ceilingY - standOff - centre.y, 0);
     for (var member : SubLevelCreatureParts.members(body)) {
       var pose = member.logicalPose();
       var position =
@@ -550,5 +569,55 @@ public final class ArachnidLegTests {
     } catch (ReflectiveOperationException error) {
       throw new IllegalStateException(error);
     }
+  }
+
+  @GameTest(template = "test_empty", timeoutTicks = 160, batch = "insufficient_adhesive_support")
+  public static void one_and_two_legged_bodies_fall_instead_of_using_ground_anchor_suspension(
+      GameTestHelper h) {
+    var bodies = new ArrayList<dev.ryanhcode.sable.sublevel.ServerSubLevel>();
+    for (int count : new int[] {1, 2, 3}) {
+      var base = new BlockPos(29200 + count * 48, 80, 128);
+      for (int x = -12; x <= 12; x++) {
+        for (int z = -12; z <= 12; z++) {
+          var cell = base.offset(x, -1, z);
+          h.getLevel().getChunk(cell.getX() >> 4, cell.getZ() >> 4);
+          h.getLevel().setBlock(cell, Blocks.BEDROCK.defaultBlockState(), Block.UPDATE_ALL);
+        }
+      }
+      var body =
+          org.azkerash.createbioships.development.testing.HuntsmanFixture.spawn(
+              h.getLevel(), base.above(5));
+      int retained = 0;
+      var center = body.getPlot().getCenterBlock();
+      for (var entry :
+          org.azkerash.createbioships.development.testing.HuntsmanFixture.anatomy(BlockPos.ZERO)
+              .entrySet()) {
+        if (entry.getValue().is(ComponentRegistry.ARACHNID_LEG.get()) && retained++ >= count) {
+          h.getLevel().removeBlock(center.offset(entry.getKey()), false);
+        }
+      }
+      SubLevelLegs.request(body);
+      SubLevelContainer.getContainer(h.getLevel())
+          .addForceLoadTicket(
+              body,
+              dev.ryanhcode.sable.api.sublevel.ticket.SubLevelLoadingTicketType.COMMAND_FORCED,
+              net.minecraft.util.Unit.INSTANCE);
+      bodies.add(body);
+    }
+    h.runAfterDelay(
+        110,
+        () -> {
+          for (var body : bodies) {
+            double y =
+                org.azkerash.createbioships.core.pathfinding.SubLevelPathfinder.position(body).y;
+            h.assertTrue(
+                SubLevelLegs.contacts(body) <= 3 && y < 81.5,
+                "Insufficient/one-sided anchors held the full body above the floor: contacts="
+                    + SubLevelLegs.contacts(body)
+                    + " y="
+                    + y);
+          }
+          h.succeed();
+        });
   }
 }

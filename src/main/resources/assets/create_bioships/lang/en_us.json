@@ -50,7 +50,7 @@
   "item.create_bioships.program_behavior_card": "Cerebral Program Card",
   "item.create_bioships.cerebral_codex": "Codex Cerebralis",
   "block.create_bioships.arachnid_leg": "Clinging Limb",
-  "block.create_bioships.arachnid_leg.tooltip": "Adhesive toes. Needs at least three planted supports; larger rigs need more. Extend with the Ossified Wrench.",
+  "block.create_bioships.arachnid_leg.tooltip": "Adhesive toes. Planted feet must surround the body’s center of mass; one-sided contacts cannot hold it. Extend with the Ossified Wrench.",
   "block.create_bioships.armored_maw.acid_tooltip": "Acid spray: sneak + empty-hand use, or a redstone pulse. Opens for 1 second before firing; costs 50 stomach acid.",
   "entity.create_bioships.acid_burst": "Acid Spray",
   "block.create_bioships.huntsman_armor": "Graveplate Carapace",

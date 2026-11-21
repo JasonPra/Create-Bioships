@@ -152,6 +152,12 @@ public final class SubLevelLegs {
         : controller.recoveryStatus();
   }
 
+  /** Cached planted feet, resolved against their live support poses; no new probes. */
+  public static boolean hasBalancedAdhesiveSupport(ServerSubLevel body) {
+    var controller = CONTROLLERS.get(SubLevelCreatureParts.root(body));
+    return controller != null && controller.hasBalancedAdhesiveSupport();
+  }
+
   public static int contacts(ServerSubLevel body) {
     var c = CONTROLLERS.get(body);
     return c == null ? 0 : c.contacts();

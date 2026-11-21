@@ -24,7 +24,9 @@ import org.azkerash.createbioships.core.pathfinding.*;
 /** Opt-in normal-overworld experiment, excluded from shipping sources and standard tests. */
 @EventBusSubscriber(modid = "create_bioships")
 public final class HuntsmanTerrainProbe {
-  private static final int SETTLE_TICKS = 160, TRAVEL_TICKS = 1200, SAMPLE_TICKS = 20;
+  private static final int SETTLE_TICKS = 160,
+      TRAVEL_TICKS = Integer.getInteger("bioships.huntsmanTravelTicks", 1200),
+      SAMPLE_TICKS = 20;
   private static final int DESTINATION_DISTANCE_BLOCKS = 16, SPAWN_LIFT_BLOCKS = 9;
   private static final double WALK_SPEED = 1.5, RUN_SPEED = 3;
 

@@ -38,6 +38,7 @@ final class PrototypeCompactMotor {
   private static final double WALL_REACH_TOLERANCE = .15;
   private static final double MIN_FRICTION_UP = .7;
   private static final double WALL_SUPPORT_MAX_UP = .99;
+  private static final double EDGE_HULL_CLEARANCE = .2, MIN_EDGE_NORMAL_ALIGNMENT = .25;
   private final ServerSubLevel body;
   private final PrototypeGait gait = new PrototypeGait();
   private final Map<BlockPos, Binding> definitions = new HashMap<>();
@@ -118,8 +119,7 @@ final class PrototypeCompactMotor {
                 body, desired.add(up.scale(height)), desired.subtract(up.scale(height)));
           }
           var command = BrainMotorControls.current(body).velocity();
-          if (command.lengthSqr() < MIN_COMMAND_LENGTH_SQUARED
-              && body.getLevel().getGameTime() < climbIntentExpires) {
+          if (body.getLevel().getGameTime() < climbIntentExpires) {
             command = climbIntent;
           }
           var heading =
@@ -131,7 +131,9 @@ final class PrototypeCompactMotor {
                   .map(b -> b.leg.hip())
                   .reduce(Vec3.ZERO, Vec3::add)
                   .scale(1d / definitions.size());
-          if (heading.lengthSqr() > 0 && leg.hip().subtract(centre).dot(heading) >= 0) {
+          if (heading.lengthSqr() > 0
+              && (leg.hip().subtract(centre).dot(heading) >= 0
+                  || up.y < WALL_TRANSITION_MAX_NORMAL_DOT)) {
             // Preserve the foot's lateral spread. A ray from the hip forces side-mounted legs
             // to fold directly under their socket, even when a reachable wall toe exists beside it.
             var wallOrigin =
@@ -155,7 +157,8 @@ final class PrototypeCompactMotor {
         @Override
         public Vec3 up(PrototypeGait.Leg leg) {
           var legs = definitions.values().stream().map(Binding::leg).toList();
-          return gait.anchoredContacts(legs) >= ArachnidBodyMotor.MIN_ANCHORS
+          return gait.anchoredContacts(legs)
+                  >= Math.max(ArachnidBodyMotor.MIN_ANCHORS, gait.requiredContacts(legs))
               ? gait.anchorNormal(legs, this)
               : definitions.get(leg.socket()).rootUp;
         }
@@ -198,10 +201,20 @@ final class PrototypeCompactMotor {
         @Override
         public List<Vec3> solve(PrototypeGait.Leg leg, Vec3 target) {
           var binding = definitions.get(leg.socket());
-          return binding == null
-              ? PrototypeGait.Terrain.super.solve(leg, target)
-              : PrototypeJointPose.solve(
+          if (binding == null) {
+            return PrototypeGait.Terrain.super.solve(leg, target);
+          }
+          var walking =
+              PrototypeJointPose.solve(
                   leg, target, binding.restDirections, binding.rootUp, binding.limits);
+          if (PrototypeGait.anchored(leg)
+              && walking.getLast().distanceTo(target) > WALL_REACH_TOLERANCE) {
+            // Surface transfers can need more shoulder excursion than an ordinary
+            // walking pose; the saved joint windows remain hard limits.
+            return PrototypeJointPose.solveFullRange(
+                leg, target, binding.restDirections, binding.rootUp, binding.limits);
+          }
+          return walking;
         }
 
         @Override
@@ -280,12 +293,21 @@ final class PrototypeCompactMotor {
     previous.keySet().retainAll(ids);
     var family = new HashSet<UUID>();
     SubLevelCreatureParts.members(body).forEach(part -> family.add(part.getUniqueId()));
+    var request = BrainMotorControls.current(body);
+    var intent = request.velocity();
+    if (intent.lengthSqr() < MIN_COMMAND_LENGTH_SQUARED
+        && body.getLevel().getGameTime() < climbIntentExpires) {
+      // Collision can cancel propulsion while the feet still need to find the
+      // next grip. Retain intent for placement only; never bypass motor clearance.
+      intent = surfaceMotion(climbIntent);
+    }
+    final var placementIntent = intent;
     TerrainProbe.withIgnored(
         part -> family.contains(part.getUniqueId()),
         () ->
             gait.update(
                 bindings.stream().map(Binding::leg).toList(),
-                BrainMotorControls.current(body).velocity(),
+                placementIntent,
                 body.getLevel().getGameTime(),
                 terrain,
                 SubLevelFacing.world(body),
@@ -314,21 +336,52 @@ final class PrototypeCompactMotor {
 
   Vec3 surfaceMotion(Vec3 requested) {
     var legs = definitions.values().stream().map(Binding::leg).toList();
-    if (gait.anchoredContacts(legs) < ArachnidBodyMotor.MIN_ANCHORS) {
+    if (gait.anchoredContacts(legs)
+        < Math.max(ArachnidBodyMotor.MIN_ANCHORS, gait.requiredContacts(legs))) {
       return new Vec3(requested.x, 0, requested.z);
     }
-    var normal = gait.anchorNormal(legs, terrain);
+    var normal = gait.movementNormal(legs, terrain, requested);
     return ArachnidBodyMotor.surfaceMotion(requested, normal);
   }
 
   boolean wallAttached() {
     var legs = definitions.values().stream().map(Binding::leg).toList();
-    return gait.anchoredContacts(legs) >= ArachnidBodyMotor.MIN_ANCHORS
+    return gait.anchoredContacts(legs)
+            >= Math.max(ArachnidBodyMotor.MIN_ANCHORS, gait.requiredContacts(legs))
         && gait.anchorNormal(legs, terrain).y < WALL_SUPPORT_MAX_UP;
+  }
+
+  boolean hasBalancedSupport() {
+    var center = terrain.massCenter();
+    return center != null
+        && gait.supportsBody(
+            definitions.values().stream().map(Binding::leg).toList(), terrain, center);
   }
 
   int contacts() {
     return gait.contacts();
+  }
+
+  private double edgeClearance(List<PrototypeGait.Leg> legs, Vec3 up, Vec3 wallNormal) {
+    if (Math.abs(wallNormal.y) >= MIN_FRICTION_UP) {
+      return 0;
+    }
+    var plane = gait.surfacePoint(legs, terrain, wallNormal);
+    if (plane == null) {
+      return 0;
+    }
+    var box = body.boundingBox();
+    var nearest =
+        new Vec3(
+            wallNormal.x >= 0 ? box.minX() : box.maxX(),
+            wallNormal.y >= 0 ? box.minY() : box.maxY(),
+            wallNormal.z >= 0 ? box.minZ() : box.maxZ());
+    double gap = nearest.subtract(plane).dot(wallNormal);
+    // A long torso needs more room than the neutral hip-to-toe height while
+    // turning around an edge. Let the supported limbs push it away from the
+    // real contact plane; do not bypass the collision sweep or teleport it.
+    return Math.max(0, EDGE_HULL_CLEARANCE - gap)
+        / Math.max(MIN_EDGE_NORMAL_ALIGNMENT, up.dot(wallNormal));
   }
 
   void physics(List<Binding> bindings, double dt) {
@@ -370,25 +423,38 @@ final class PrototypeCompactMotor {
             gait.bodyUp(legs));
     int anchors = gait.anchoredContacts(legs);
     if (adhesive) {
-      if (anchors >= ArachnidBodyMotor.MIN_ANCHORS) {
+      if (anchors >= Math.max(ArachnidBodyMotor.MIN_ANCHORS, gait.requiredContacts(legs))) {
         var normal = gait.anchorNormal(legs, terrain);
+        var driveNormal =
+            body.getLevel().getGameTime() < climbIntentExpires
+                ? gait.movementNormal(legs, terrain, climbIntent)
+                : normal;
         delta =
             ArachnidBodyMotor.calculate(
                 vec(velocity),
                 vec(spin),
                 vec(up),
                 normal,
-                ArachnidBodyMotor.tangent(request.velocity(), normal).scale(mobility),
+                gait.supportedMotion(
+                        legs, terrain, ArachnidBodyMotor.tangent(request.velocity(), driveNormal))
+                    .scale(mobility),
                 gait.supportVelocity(legs, terrain),
                 request.yawRate() * mobility,
-                gait.anchorHeightError(legs, normal),
+                gait.anchorHeightError(legs, normal) + edgeClearance(legs, normal, driveNormal),
                 anchors,
-                dt);
+                dt,
+                driveNormal);
       } else if (gait.groundContacts(legs, terrain, MIN_FRICTION_UP) < gait.requiredContacts(legs)
           || vec(up).y < MIN_FRICTION_UP) {
         // Two wall toes cannot masquerade as floor support when the third anchor is lost.
         delta = new PrototypeBodyMotor.Delta(Vec3.ZERO, Vec3.ZERO);
       }
+    }
+    var massCenter = terrain.massCenter();
+    if (adhesive && (massCenter == null || !gait.supportsBody(legs, terrain, massCenter))) {
+      // Adhesive toes cannot cancel gravity or right the hull when their spatial
+      // support polygon misses its mass centre, even if several toes are planted.
+      delta = new PrototypeBodyMotor.Delta(Vec3.ZERO, Vec3.ZERO);
     }
     var turnAxis = adhesive ? gait.anchorNormal(legs, terrain) : new Vec3(0, 1, 0);
     var upright =

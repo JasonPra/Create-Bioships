@@ -141,7 +141,7 @@ public final class CompactLimbController {
     private double prototypeMobility;
   }
 
-  private static final int ARACHNID_ANATOMY_VERSION = 3;
+  private static final int ARACHNID_ANATOMY_VERSION = 4;
   private final ServerSubLevel body;
   private final Context walker;
   private final PrototypeCompactMotor prototype;
@@ -280,6 +280,10 @@ public final class CompactLimbController {
     if (prototypeActive && hasArachnidLegs()) {
       prototype.climbIntent(movement);
     }
+  }
+
+  public boolean hasBalancedAdhesiveSupport() {
+    return prototypeActive && hasArachnidLegs() && prototype.hasBalancedSupport();
   }
 
   public boolean wallAttached() {
@@ -787,12 +791,15 @@ public final class CompactLimbController {
       var outward = new Vec3(firstDirection.x, 0, firstDirection.z).normalize();
       var worldOutward = body.logicalPose().orientation().transform(v(outward));
       var worldHip = body.logicalPose().transformPosition(hip);
+      boolean adhesiveLeg =
+          CompactLegSocketBlock.isArachnid(body.getLevel().getBlockState(limb.socket));
+      double restHeight = adhesiveLeg ? hip.y - restPoints.getLast().y : limb.extension + .5;
       var leg =
           new PrototypeGait.Leg(
               limb.socket,
               worldHip,
               new Vec3(worldOutward.x, worldOutward.y, worldOutward.z),
-              limb.extension + .5,
+              restHeight,
               limb.lengths[0],
               limb.lengths[1],
               limb.lengths[2],
@@ -802,16 +809,19 @@ public final class CompactLimbController {
                   : LegMotionProfile.CRAB);
       // Locked/narrow joints can require a different neutral standing height, not stretched bones.
       var neutral =
-          worldHip
-              .add(
-                  (PrototypeGait.anchored(leg)
-                          ? ArachnidBodyMotor.tangent(
-                              new Vec3(worldOutward.x, worldOutward.y, worldOutward.z), rootUp)
-                          : new Vec3(worldOutward.x, 0, worldOutward.z))
-                      .normalize()
-                      .scale((limb.lengths[0] + limb.lengths[1] + limb.lengths[2]) * .5))
-              .subtract(
-                  (PrototypeGait.anchored(leg) ? rootUp : new Vec3(0, 1, 0)).scale(leg.height()));
+          adhesiveLeg
+              ? body.logicalPose().transformPosition(restPoints.getLast())
+              : worldHip
+                  .add(
+                      (PrototypeGait.anchored(leg)
+                              ? ArachnidBodyMotor.tangent(
+                                  new Vec3(worldOutward.x, worldOutward.y, worldOutward.z), rootUp)
+                              : new Vec3(worldOutward.x, 0, worldOutward.z))
+                          .normalize()
+                          .scale((limb.lengths[0] + limb.lengths[1] + limb.lengths[2]) * .5))
+                  .subtract(
+                      (PrototypeGait.anchored(leg) ? rootUp : new Vec3(0, 1, 0))
+                          .scale(leg.height()));
       var bounded =
           PrototypeJointPose.solve(leg, neutral, restDirections, rootUp, limb.prototypeLimits);
       double standingHeight =
@@ -830,7 +840,10 @@ public final class CompactLimbController {
               leg.thigh(),
               leg.shin(),
               leg.group(),
-              leg.profile());
+              leg.profile(),
+              adhesiveLeg
+                  ? ArachnidBodyMotor.tangent(bounded.getLast().subtract(worldHip), rootUp).length()
+                  : leg.reach());
       result.add(
           new PrototypeCompactMotor.Binding(
               leg,
@@ -1289,7 +1302,11 @@ public final class CompactLimbController {
           l.bodies.add(s);
         }
       }
-      var points = restPoints(l.socket, l.face, l.extension, l.restAngle, l.fanAngle);
+      var points =
+          l.arachnid && l.anatomyVersion < ARACHNID_ANATOMY_VERSION
+              ? CompactLegGeometry.previousArachnidRestPoints(
+                  l.socket, l.face, l.extension, l.restAngle + l.fanAngle)
+              : restPoints(l.socket, l.face, l.extension, l.restAngle, l.fanAngle);
       for (int i = 0; i < 3; i++) {
         var d = points.get(i + 1).subtract(points.get(i));
         l.lengths[i] = d.length();

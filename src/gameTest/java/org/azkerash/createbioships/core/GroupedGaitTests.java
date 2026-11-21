@@ -116,4 +116,62 @@ public final class GroupedGaitTests {
         "Recovery failed to find reachable higher ground");
     h.succeed();
   }
+
+  @GameTest(template = "test_empty")
+  public static void one_or_two_adhesive_toes_never_qualify_for_ground_suspension(
+      GameTestHelper h) {
+    for (int count : new int[] {1, 2}) {
+      var gait = new PrototypeGait();
+      var legs = legs(0, count);
+      gait.update(legs, Vec3.ZERO, 0, FLOOR);
+      h.assertTrue(
+          gait.requiredContacts(legs) >= 3 && gait.contacts() < gait.requiredContacts(legs),
+          "One/two toes qualified for the ground-motor fallback");
+    }
+    var pose =
+        org.azkerash.createbioships.compat.letitwalk.CompactLegGeometry.restPoints(
+            BlockPos.ZERO, net.minecraft.core.Direction.EAST, 4, 0, true);
+    double reach = pose.getLast().x - pose.getFirst().x;
+    double drop = pose.getFirst().y - pose.getLast().y;
+    h.assertTrue(reach > drop * 3, "Distal huntsman leg remained a vertical stilt");
+    h.assertTrue(
+        Math.abs(pose.getLast().z - pose.getFirst().z) < 1e-8,
+        "Anatomy revision changed the zero-degree rest angle");
+    h.succeed();
+  }
+
+  @GameTest(template = "test_empty")
+  public static void support_positions_must_surround_mass_on_ground_wall_and_ceiling(
+      GameTestHelper h) {
+    for (var normal : List.of(new Vec3(0, 1, 0), new Vec3(0, -1, 0), new Vec3(1, 0, 0))) {
+      var side = normal.x == 0 ? new Vec3(1, 0, 0) : new Vec3(0, 0, 1);
+      var along = side.cross(normal);
+      var balanced =
+          List.of(
+              side.scale(-2).add(along.scale(-2)),
+              side.scale(2).add(along.scale(-2)),
+              side.scale(2).add(along.scale(2)),
+              side.scale(-2).add(along.scale(2)));
+      h.assertTrue(
+          SupportPolygon.containsProjection(Vec3.ZERO, balanced, normal),
+          "Balanced contacts rejected in support plane");
+      var triangle =
+          List.of(side.scale(-3).subtract(along), side.scale(3).subtract(along), along.scale(3));
+      h.assertTrue(
+          SupportPolygon.containsProjection(Vec3.ZERO, triangle, normal),
+          "Three well-positioned toes could not support a centered body");
+      h.assertTrue(
+          !SupportPolygon.containsProjection(side.scale(4), balanced, normal),
+          "Moving the center of mass outside planted feet retained support");
+      h.assertTrue(
+          !SupportPolygon.containsProjection(
+              Vec3.ZERO, List.of(side.scale(-2), Vec3.ZERO, side.scale(2)), normal),
+          "Collinear toes formed a fictitious support area");
+      var sameSide = balanced.stream().map(point -> point.add(side.scale(4))).toList();
+      h.assertTrue(
+          !SupportPolygon.containsProjection(Vec3.ZERO, sameSide, normal),
+          "Several same-side toes counted as balanced support");
+    }
+    h.succeed();
+  }
 }

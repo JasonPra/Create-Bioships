@@ -26,7 +26,7 @@ import org.azkerash.createbioships.core.locomotion.SubLevelFacing;
 public final class HuntsmanFixture {
   public static final int LEG_HEIGHT = 4;
   private static final int SPAWN_LIFT_BLOCKS = 10, SPAWN_DISTANCE_BLOCKS = 24;
-  private static final int[] LEG_ROWS = {-3, -1, 1, 3};
+  private static final int[] LEG_ROWS = {-2, -1, 0, 1};
   private static final int[] REST_ANGLES = {-45, -15, 15, 45};
 
   private HuntsmanFixture() {}
@@ -42,22 +42,22 @@ public final class HuntsmanFixture {
     var armor = ComponentRegistry.HUNTSMAN_ARMOR.get().defaultBlockState();
     // Low cephalothorax and a rounded, hollow abdomen, joined by a narrow waist.
     for (int x = -2; x <= 2; x++) {
-      for (int y = 0; y <= 2; y++) {
-        for (int z = -3; z <= 1; z++) {
-          if (Math.abs(x) == 2 || y == 0 || y == 2 || z == -3 || z == 1) {
+      for (int y = 0; y <= 1; y++) {
+        for (int z = -2; z <= 1; z++) {
+          if (Math.abs(x) == 2 || y == 0 || y == 1 || z == -2 || z == 1) {
             cells.put(core.offset(x, y, z), armor);
           }
         }
       }
     }
     cells.put(core.south(2), armor);
-    for (int x = -3; x <= 3; x++) {
-      for (int y = 0; y <= 3; y++) {
-        for (int z = 3; z <= 8; z++) {
-          if ((Math.abs(x) == 3 && (z == 3 || z == 8)) || (y == 3 && Math.abs(x) == 3)) {
+    for (int x = -2; x <= 2; x++) {
+      for (int y = 0; y <= 2; y++) {
+        for (int z = 3; z <= 5; z++) {
+          if ((Math.abs(x) == 2 && (z == 3 || z == 5)) || (y == 2 && Math.abs(x) == 2)) {
             continue;
           }
-          if (Math.abs(x) >= 2 || y == 0 || y == 3 || z == 3 || z == 8) {
+          if (Math.abs(x) >= 2 || y == 0 || y == 2 || z == 3 || z == 5) {
             cells.put(core.offset(x, y, z), armor);
           }
         }
@@ -68,15 +68,15 @@ public final class HuntsmanFixture {
     cells.put(core.south(), ComponentRegistry.LUNG.get().defaultBlockState());
     cells.put(core.south(4).above(), ComponentRegistry.STOMACH.get().defaultBlockState());
     cells.put(
-        core.north(4),
+        core.north(3),
         ComponentRegistry.ARACHNID_MAW
             .get()
             .defaultBlockState()
             .setValue(BlockStateProperties.FACING, Direction.NORTH));
-    for (int row : new int[] {1, 2}) {
+    for (int row : new int[] {0, 1}) {
       for (int x : new int[] {-2, -1, 1, 2}) {
         cells.put(
-            core.offset(x, row, -4),
+            core.offset(x, row, -3),
             ComponentRegistry.LAND_EYE
                 .get()
                 .defaultBlockState()
@@ -119,7 +119,7 @@ public final class HuntsmanFixture {
             level,
             core,
             List.copyOf(cells.keySet()),
-            new BoundingBox3i(core.offset(-3, 0, -4), core.offset(3, 3, 8)));
+            new BoundingBox3i(core.offset(-3, 0, -3), core.offset(3, 2, 5)));
     var center = body.getPlot().getCenterBlock();
     CoreAssemblyRules.mark(level, center);
     SubLevelFacing.set(body, Direction.NORTH);

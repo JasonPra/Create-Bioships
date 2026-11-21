@@ -21,7 +21,9 @@ public final class WanderBehavior implements BrainBehavior {
   private static final int RETRY_PAUSE_TICKS = 60;
   private static final int PROGRESS_TIMEOUT_TICKS = 80;
   private static final int MOTOR_COMMAND_TICKS = 20;
-  private static final int ROUTE_ATTEMPTS = 8;
+  private static final int ROUTE_ATTEMPTS = 8, FORWARD_ROUTE_ATTEMPTS = 4;
+  private static final double INITIAL_WANDER_ARC = Math.toRadians(30),
+      FORWARD_WANDER_ARC = Math.PI / 2;
   private static final int ESCAPE_TICKS = 20;
   private static final double ESCAPE_SPEED = .65;
   private static final double MIN_RADIUS_SCALE = .2;
@@ -196,7 +198,15 @@ public final class WanderBehavior implements BrainBehavior {
 
   private boolean chooseRoute(ServerSubLevel body, Vec3 position, long now) {
     for (int attempt = 0; attempt < ROUTE_ATTEMPTS; attempt++) {
-      double angle = body.getLevel().random.nextDouble() * Math.PI * 2;
+      var forward = org.azkerash.createbioships.core.locomotion.SubLevelFacing.world(body);
+      double arc = attempt == 0 ? INITIAL_WANDER_ARC : FORWARD_WANDER_ARC;
+      // Prefer gradual changes of heading. Random destinations behind a broad
+      // animal can consume the whole walk in a stationary, foot-driven turn.
+      // Retain full-circle choices when forward routes are obstructed.
+      double angle =
+          attempt < FORWARD_ROUTE_ATTEMPTS
+              ? Math.atan2(forward.z, forward.x) + (body.getLevel().random.nextDouble() - .5) * arc
+              : body.getLevel().random.nextDouble() * Math.PI * 2;
       // Try shorter destinations too: an obstructed area may have no reachable goal 4–9 blocks
       // away.
       double scale = 1 - (1 - MIN_RADIUS_SCALE) * attempt / (ROUTE_ATTEMPTS - 1d);
