@@ -39,3 +39,12 @@ attachment direction, rather than separately simulated paddle sublevels; it does
 not track every lateral part of the moving stroke. Leave space around flippers.
 
 Recipe: packed flesh around a bone and chitin armor, yielding two flippers.
+
+Paddle skins, ribs and rims use trimmed exterior faces rather than overlapping
+cuboid surfaces. Adjacent moving section caps are inset by 1/16 model pixel at
+the joint to keep straight poses from drawing coincident caps; the socket,
+two-block tip reach and collision bounds retain their original dimensions.
+Run `python tools/verify_model_surfaces.py` to check static meshes, straight
+paddle joins and sampled articulated mouth poses for overlapping parallel faces.
+The furniture generator uses `scripts/model_surfaces.py` to retain this trimming
+when assets are regenerated. All trimming happens during asset authoring.

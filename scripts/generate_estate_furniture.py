@@ -1,5 +1,6 @@
 """Generate authored cuboid furniture models with face-sized UVs, loot, and recipes."""
 import json
+from model_surfaces import exterior_surfaces
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1] / 'src/main/resources'
 ASSETS = ROOT / 'assets/create_bioships'
@@ -111,3 +112,7 @@ def bed():
     write(ROOT/'data/minecraft/tags/item/beds.json',dict(replace=False,values=['create_bioships:ossuary_bed']))
 if __name__=='__main__':
     table();seating();storage();bed()
+    # Trim only after assembling inventory models as well, so joins between
+    # authored furniture parts cannot leave duplicate coplanar faces.
+    for path in sorted((ASSETS / 'models/block').glob('ossuary_*.json')):
+        write(path, exterior_surfaces(json.loads(path.read_text())))
