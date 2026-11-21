@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "KKK",
+    "FFF",
+    "KKK"
+  ],
+  "key": {
+    "K": {
+      "item": "minecraft:kelp"
+    },
+    "F": {
+      "item": "biomancy:packed_flesh"
+    }
+  },
+  "result": {
+    "id": "create_bioships:gills",
+    "count": 1
+  }
+}

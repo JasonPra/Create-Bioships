@@ -1,0 +1,20 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_ingredient": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "create_bioships:huntsman_maw"
+          }
+        ]
+      }
+    }
+  },
+  "rewards": {
+    "recipes": [
+      "create_bioships:arachnid_maw"
+    ]
+  }
+}

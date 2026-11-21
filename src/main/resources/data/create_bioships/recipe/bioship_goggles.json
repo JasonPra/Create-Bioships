@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "G G",
+    "BFB"
+  ],
+  "key": {
+    "G": {
+      "item": "minecraft:glass"
+    },
+    "B": {
+      "item": "minecraft:bone"
+    },
+    "F": {
+      "item": "biomancy:packed_flesh"
+    }
+  },
+  "result": {
+    "id": "create_bioships:bioship_goggles",
+    "count": 1
+  }
+}

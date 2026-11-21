@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "create_bioships:crab_leg"
+    },
+    {
+      "item": "minecraft:spider_eye"
+    },
+    {
+      "item": "minecraft:string"
+    },
+    {
+      "item": "create_bioships:chitin_armor"
+    }
+  ],
+  "result": {
+    "id": "create_bioships:arachnid_leg",
+    "count": 1
+  }
+}

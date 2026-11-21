@@ -1,0 +1,20 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_ingredient": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "create_bioships:land_eye"
+          }
+        ]
+      }
+    }
+  },
+  "rewards": {
+    "recipes": [
+      "create_bioships:aquatic_eye"
+    ]
+  }
+}

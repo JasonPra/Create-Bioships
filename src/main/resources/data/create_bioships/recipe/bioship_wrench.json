@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " B ",
+    " FB",
+    "F  "
+  ],
+  "key": {
+    "B": {
+      "item": "minecraft:bone"
+    },
+    "F": {
+      "item": "biomancy:packed_flesh"
+    }
+  },
+  "result": {
+    "id": "create_bioships:bioship_wrench",
+    "count": 1
+  }
+}

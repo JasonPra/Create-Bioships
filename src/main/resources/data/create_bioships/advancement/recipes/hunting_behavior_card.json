@@ -1,0 +1,20 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_ingredient": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "create_bioships:blank_behavior_card"
+          }
+        ]
+      }
+    }
+  },
+  "rewards": {
+    "recipes": [
+      "create_bioships:hunting_behavior_card"
+    ]
+  }
+}

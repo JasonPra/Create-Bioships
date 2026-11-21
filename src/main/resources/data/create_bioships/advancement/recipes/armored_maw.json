@@ -1,0 +1,20 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_ingredient": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "create_bioships:feeding_mouth"
+          }
+        ]
+      }
+    }
+  },
+  "rewards": {
+    "recipes": [
+      "create_bioships:armored_maw"
+    ]
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "biomancy:vial"
+    },
+    {
+      "item": "minecraft:golden_apple"
+    },
+    {
+      "item": "minecraft:redstone"
+    },
+    {
+      "item": "biomancy:packed_flesh"
+    }
+  ],
+  "result": {
+    "id": "create_bioships:longevity_gene_serum",
+    "count": 1
+  }
+}

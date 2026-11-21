@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "create_bioships:gills"
+    },
+    {
+      "item": "create_bioships:chitin_armor"
+    }
+  ],
+  "result": {
+    "id": "create_bioships:armored_gills",
+    "count": 1
+  }
+}

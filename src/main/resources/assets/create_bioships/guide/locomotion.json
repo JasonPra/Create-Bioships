@@ -71,8 +71,8 @@
       "example": ""
     },
     {
-      "title": "Arachnid Maw",
-      "body": "The Arachnid Maw uses huntsman chitin with two hinged jaws and independently moving fangs. Craft it from a Huntsman Eldritch Maw, spider eye and bone.\n\nIt remains a feeding mouth and retains the armored Maw’s acid attack. During hunting it can open and close on small prey, pull gently toward its mouth and bite while holding. A grab lasts at most three seconds, followed by recovery. Larger creatures and Sable combat proxy entities are not dragged as if they were small mobs.\n\nThe victim is not teleported or made into a passenger. Escape, intervening solid blocks, a dead/inactive mouth, fullness or loss of the active hunting program releases it. A hold does not survive reloading.\n\nSneak-use the empty hand on a busy mouth to release prey, subject to normal creature permissions. When not gripping, the existing acid control still applies. The Debugging Panel lists whether the mandibles are opening or holding prey.",
+      "title": "Fangbound Maw",
+      "body": "The Fangbound Maw uses huntsman chitin with two hinged jaws and independently moving fangs. Craft it from a Graveplate Maw, spider eye and bone.\n\nIt remains a feeding mouth and retains the armored Maw’s acid attack. During hunting it can open and close on small prey, pull gently toward its mouth and bite while holding. A grab lasts at most three seconds, followed by recovery. Larger creatures and Sable combat proxy entities are not dragged as if they were small mobs.\n\nThe victim is not teleported or made into a passenger. Escape, intervening solid blocks, a dead/inactive mouth, fullness or loss of the active hunting program releases it. A hold does not survive reloading.\n\nSneak-use the empty hand on a busy mouth to release prey, subject to normal creature permissions. When not gripping, the existing acid control still applies. The Debugging Panel lists whether the mandibles are opening or holding prey.",
       "example": ""
     }
   ]
